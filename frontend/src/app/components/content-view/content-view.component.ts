@@ -160,12 +160,12 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   }
 
   private async addTabsFromQueryParameters(): Promise<void> {
-    const _transformationsNotify = new Subject<void>();
+    const transformationsNotify$ = new Subject<void>();
     const ids = await this.queryParameterService.getIdsFromQueryParameters();
 
     this.store
       .select(selectAllTransformations)
-      .pipe(takeUntil(_transformationsNotify))
+      .pipe(takeUntil(transformationsNotify$))
       .subscribe(transformations => {
         for (const id of ids) {
           if (
@@ -186,8 +186,8 @@ export class ContentViewComponent implements OnInit, OnDestroy {
 
         // closing the store subscription after getting transformations, to prevent re-trigger on store changes
         if (transformations.length > 0) {
-          _transformationsNotify.next();
-          _transformationsNotify.complete();
+          transformationsNotify$.next();
+          transformationsNotify$.complete();
         }
       });
   }
