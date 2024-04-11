@@ -3,6 +3,7 @@
 This document describes [Kafka](https://kafka.apache.org/) execution of workflow / component revisions. 
 
 Naturally this depends strongly on the specific Kafka cluster setup. Of course, we cannot describe all possible scenarios here. Therefore we describe a docker-compose based demo setup, which should give you a good starting point for developing your individual setup.
+
 ## Setup
 
 We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose-kafka.yml`, modify the **hetida-designer-backend** service and add a **zookeeper** and a **kafka** service as follows:
