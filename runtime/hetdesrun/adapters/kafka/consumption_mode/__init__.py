@@ -56,9 +56,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     ]
 
     if len(kafka_input_wirings) == 0:
-        raise ValueError(
-            "No kafka input wirings in provided wiring for kafka consumption mode!"
-        )
+        raise ValueError("No kafka input wirings in provided wiring for kafka consumption mode!")
 
     try:
         relevant_id_parsing_results = [
@@ -76,8 +74,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     value_keys = {
         parse_value_and_msg_identifier(
             val_key
-            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
-            is not None
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), "")) is not None
             else ""
         )[1]
         for inp_wiring in kafka_input_wirings
@@ -85,11 +82,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
 
     first_value_key = parse_value_and_msg_identifier(
         val_key
-        if (
-            val_key := kafka_input_wirings[0].filters.get(
-                FilterKey("message_value_key"), ""
-            )
-        )
+        if (val_key := kafka_input_wirings[0].filters.get(FilterKey("message_value_key"), ""))
         is not None
         else ""
     )[1]
@@ -104,15 +97,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
             " In this case there are no additional single value input wirings allowed."
         )
 
-    if (
-        len(
-            {
-                parsing_result_tuple[0]
-                for parsing_result_tuple in relevant_id_parsing_results
-            }
-        )
-        != 1
-    ):
+    if len({parsing_result_tuple[0] for parsing_result_tuple in relevant_id_parsing_results}) != 1:
         raise ValueError(
             "More than one kafka_config present in input wirings configured for kafka adapter"
             " consumption mode. Kafka adapter consumption mode can only listen to one topic"
@@ -125,8 +110,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     message_identifiers = {
         parse_value_and_msg_identifier(
             val_key
-            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
-            is not None
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), "")) is not None
             else ""
         )[0]
         for inp_wiring in kafka_input_wirings
@@ -212,9 +196,7 @@ async def handle_message(
     logger.info(result_msg)
 
 
-def create_aiokafka_consumer(
-    topic: str, consumer_config: dict
-) -> aiokafka.AIOKafkaConsumer:
+def create_aiokafka_consumer(topic: str, consumer_config: dict) -> aiokafka.AIOKafkaConsumer:
     return aiokafka.AIOKafkaConsumer(topic, **(consumer_config))
 
 
@@ -228,7 +210,7 @@ async def start_consumption_mode() -> None:
     ) = extract_consumption_mode_config_info()  # may raise ValueError on invalid config
 
     consumer = create_aiokafka_consumer(
-        relevant_kafka_config.topic, **(relevant_kafka_config.consumer_config)
+        relevant_kafka_config.topic, relevant_kafka_config.consumer_config
     )
 
     group_id = relevant_kafka_config.consumer_config.get("group_id", None)
@@ -255,10 +237,7 @@ async def start_consumption_mode() -> None:
             # message context storing
 
             try:
-                if (
-                    relevant_kafka_config.consumer_commit_before
-                    and group_id is not None
-                ):
+                if relevant_kafka_config.consumer_commit_before and group_id is not None:
                     await consumer.commit()
                 await asyncio.create_task(
                     handle_message(
