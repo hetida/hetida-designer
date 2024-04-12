@@ -13,7 +13,6 @@ import { NavigationCategoryComponent } from '../navigation-category/navigation-c
 import { NavigationItemComponent } from '../navigation-item/navigation-item.component';
 import { NavigationContainerComponent } from './navigation-container.component';
 import { Transformation } from '../../../model/transformation';
-import { RouterTestingModule } from '@angular/router/testing';
 
 describe('NavigationContainerComponent', () => {
   let component: NavigationContainerComponent;
@@ -40,8 +39,7 @@ describe('NavigationContainerComponent', () => {
         FormsModule,
         ReactiveFormsModule,
         BasicTestModule,
-        BrowserAnimationsModule,
-        RouterTestingModule
+        BrowserAnimationsModule
       ],
       declarations: [
         NavigationContainerComponent,
