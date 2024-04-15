@@ -212,7 +212,7 @@ The frontend subdirectory also contains end-to-end tests via playwright document
 
 > **Note**: The backend was rewritten in Python for version 0.7. It is now developed together with the runtime.
 
-Dependencies: Python 3.9 (other versions are not
+Dependencies: Python 3.11 (other versions are not
 tested, but higher versions will probably work as well). 
 
 You may need additional packages like a C compiler (e.g. gcc) depending on your
