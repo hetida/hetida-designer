@@ -5,7 +5,7 @@ This means individual inputs or selections of inputs can be wired to Kafka topic
 
 On the other side individual outputs or selections of outputs can be wired to Kafka topics (with additional configuration) and after execution the output data is produced as Kafka messages to the respective topics.
 
-**For comparison**: [kafka execution](../execution/execution_via_kafka.md) expects a complete execution request as Kafka message payload (trafo id, wiring, ...). While this payload can contain input data in the form of wirings to the `direct_provisioning` adapter (see [adapter system intro](./intro.md) and [manual input](./manual_input.md)), its main use case is event-based execution job triggering.
+**For comparison**: [kafka execution](../execution/execution_via_kafka.md) expects a complete execution request as Kafka message payload (with arbitrary trafo id, wiring, ...). While this payload can contain input data in the form of wirings to the `direct_provisioning` adapter (see [adapter system intro](./intro.md) and [manual input](./manual_input.md)), its main use case is event-based execution job triggering.
 
 In contrast the Kafka adapter enables capabilities similar to Kafka streaming frameworks via its consumption mode:
 
