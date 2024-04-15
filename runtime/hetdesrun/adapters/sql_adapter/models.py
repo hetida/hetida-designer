@@ -161,4 +161,4 @@ class StructureResponse(BaseModel):
     name: str
     thingNodes: list[StructureThingNode]
     sources: list[SQLAdapterStructureSource]
-    sinks: list[object]
+    sinks: list[SQLAdapterStructureSink]

@@ -45,9 +45,9 @@ At the moment hetida designer is equipped with the following built-in adapters.
 
 #### Direct provisioning (Manual Input / Only Output)
 
-This adapter is a special adapter that allows to provide data directly when executing a workflow. That means the input values are part of the wiring, i.e. they are provided in the json object.
+The `direct_provisioning` adapter is a special adapter that allows to provide data directly when executing a workflow. That means the input values are part of the wiring, i.e. they are provided in the json object.
 
-In particular this adapter is responsible for the manual input in the designer test execution dialog.
+In particular this adapter is responsible for the [manual input](./manual_input.md) in the designer test execution dialog.
 
 On the output side it handles the case of returning data from outputs with the execution web request: Result data from Outputs "wired" to this adapter is returned as part of the execution response when executing a workflow via the hetida designer backend webservice. This also is the default if an output wiring is not provided for an output.
 

@@ -112,7 +112,8 @@ def get_all_db_sources(
 
 
 def filter_sql_sources(
-    sql_sources: Iterable[SQLAdapterStructureSource], filter_str: str  # noqa: A002
+    sql_sources: Iterable[SQLAdapterStructureSource],
+    filter_str: str,  # noqa: A002
 ) -> list[SQLAdapterStructureSource]:
     filter_lower = filter_str.lower()
 
@@ -180,7 +181,8 @@ def get_all_db_sinks(
 
 
 def filter_sql_sinks(
-    sql_sinks: Iterable[SQLAdapterStructureSink], filter_str: str  # noqa: A002
+    sql_sinks: Iterable[SQLAdapterStructureSink],
+    filter_str: str,  # noqa: A002
 ) -> list[SQLAdapterStructureSink]:
     filter_lower = filter_str.lower()
 

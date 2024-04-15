@@ -145,6 +145,7 @@ base_workflow_json: dict = {
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -284,6 +285,7 @@ series_input_workflow_json = {
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -423,6 +425,7 @@ def main(*, x, y):
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -594,6 +597,7 @@ plot_workflow_json = {
         "input_wirings": [],
         "output_wirings": [{"adapter_id": 1, "workflow_output_name": "z"}],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 

@@ -2,21 +2,22 @@
 
 import json
 import logging
+import os
 from posixpath import join as posix_urljoin
 from uuid import UUID, uuid4
 
 import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
+from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import (
     ConfigurationInput,
     PerformanceMeasuredStep,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
@@ -34,61 +35,6 @@ from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
-
-
-class ExecByIdInput(BaseModel):
-    id: UUID  # noqa: A003
-    wiring: WorkflowWiring | None = Field(
-        None,
-        description="The wiring to be used. "
-        "If no wiring is provided the stored test wiring will be used.",
-    )
-    run_pure_plot_operators: bool = Field(
-        False, description="Whether pure plot components should be run."
-    )
-    job_id: UUID = Field(
-        default_factory=uuid4,
-        description=(
-            "Id to identify an individual execution job, "
-            "will be generated if it is not provided."
-        ),
-    )
-
-
-class ExecLatestByGroupIdInput(BaseModel):
-    """Payload for execute-latest kafka endpoint
-
-    WARNING: Even when this input is not changed, the execution response might change if a new
-    latest transformation revision exists.
-
-    WARNING: The inputs and outputs may be different for different revisions. In such a case,
-    executing the last revision with the same input as before will not work, but will result in
-    errors.
-
-    The latest transformation will be determined by the released_timestamp of the released revisions
-    of the revision group which are stored in the database.
-
-    This transformation will be loaded from the DB and executed with the wiring sent with this
-    payload.
-    """
-
-    revision_group_id: UUID
-    wiring: WorkflowWiring
-    run_pure_plot_operators: bool = Field(
-        False, description="Whether pure plot components should be run."
-    )
-    job_id: UUID = Field(
-        default_factory=uuid4,
-        description="Optional job id, that can be used to track an execution job.",
-    )
-
-    def to_exec_by_id(self, id: UUID) -> ExecByIdInput:  # noqa: A002
-        return ExecByIdInput(
-            id=id,
-            wiring=self.wiring,
-            run_pure_plot_operators=self.run_pure_plot_operators,
-            job_id=self.job_id,
-        )
 
 
 class TrafoExecutionError(Exception):
@@ -233,6 +179,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             if exec_by_id_input.wiring is not None
             else transformation_revision.test_wiring,
             job_id=exec_by_id_input.job_id,
+            trafo_id=exec_by_id_input.id,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e
@@ -328,6 +275,9 @@ async def execute_transformation_revision(
     raises subtypes of TrafoExecutionError on errors.
     """
 
+    if exec_by_id_input.job_id is None:
+        exec_by_id_input.job_id = uuid4()
+
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
 
     # prepare execution input
@@ -344,4 +294,35 @@ async def execute_transformation_revision(
     exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
         prep_exec_input_measured_step
     )
+
     return exec_resp_frontend_dto
+
+
+async def perf_measured_execute_trafo_rev(
+    exec_by_id: ExecByIdInput,
+) -> ExecutionResponseFrontendDto:
+    """Wraps execution with performance measuring
+
+    Propagates all exceptions (expected: TrafoExecutionError and subclasses).
+    """
+    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "internal_full"
+    )
+
+    # following line may raise exceptions (TrafoExecutionError and subclasses):
+    exec_response = await execute_transformation_revision(exec_by_id)
+
+    internal_full_measured_step.stop()
+    exec_response.measured_steps.internal_full = internal_full_measured_step
+    if get_config().advanced_performance_measurement_active:
+        exec_response.process_id = os.getpid()
+
+    if get_config().log_execution_performance_info:
+        logger.info(
+            "Measured steps for job %s on process with PID %s:\n%s",
+            str(exec_response.job_id),
+            str(exec_response.process_id),
+            str(exec_response.measured_steps),
+        )
+
+    return exec_response

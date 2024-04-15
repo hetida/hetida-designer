@@ -80,6 +80,7 @@ def gen_execution_input_from_single_component(
         )
         if wf_wiring is None
         else wf_wiring,
+        trafo_id=tr_component.id,
     )
 
 

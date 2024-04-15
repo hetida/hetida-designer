@@ -179,6 +179,7 @@ base_workflow_json: dict = {
         "engine": "plain",
         "return_individual_node_results": True,
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 

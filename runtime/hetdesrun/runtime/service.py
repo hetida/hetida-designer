@@ -48,7 +48,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     execution_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id
     )
-    job_id_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
+    job_id_context_filter.bind_context(
+        currently_executed_job_id=runtime_input.job_id,
+        root_trafo_id=runtime_input.trafo_id,
+    )
 
     runtime_logger.info(
         "WORKFLOW EXECUTION INPUT JSON:\n%s",
