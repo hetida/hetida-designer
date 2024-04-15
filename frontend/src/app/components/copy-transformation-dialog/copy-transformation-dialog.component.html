@@ -72,8 +72,14 @@
   </form>
   <small class="block__small-info"
     >{{ data.transformation.type | titlecase }} revision ID:
-    {{ data.transformation.id }}</small
-  >
+    <a
+      [routerLink]="[]"
+      [queryParams]="{ id: data.transformation.id }"
+      target="_blank"
+    >
+      {{ data.transformation.id }}
+    </a>
+  </small>
   <small class="block__small-info"
     >{{ data.transformation.type | titlecase }} revision group ID:
     {{ data.transformation.revision_group_id }}</small
