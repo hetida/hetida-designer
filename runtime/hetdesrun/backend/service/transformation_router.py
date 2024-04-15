@@ -108,7 +108,9 @@ dashboard_router = HandleTrailingSlashAPIRouter(
     summary="Creates a transformation revision.",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_201_CREATED: {"description": "Successfully created the transformation revision"}
+        status.HTTP_201_CREATED: {
+            "description": "Successfully created the transformation revision"
+        }
     },
 )
 async def create_transformation_revision(
@@ -169,7 +171,9 @@ def change_code(
     summary="Returns combined list of all transformation revisions (components and workflows)",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"description": "Successfully got all transformation revisions"}
+        status.HTTP_200_OK: {
+            "description": "Successfully got all transformation revisions"
+        }
     },
 )
 async def get_all_transformation_revisions(
@@ -178,24 +182,26 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified type.",
     ),
-    state: State | None = Query(
+    state: State
+    | None = Query(
         None,
         description="Filter for specified state.",
     ),
-    categories: list[ValidStr] | None = Query(
+    categories: list[ValidStr]
+    | None = Query(
         None, description="Filter for specified list of categories.", alias="category"
     ),
-    category_prefix: ValidStr | None = Query(
+    category_prefix: ValidStr
+    | None = Query(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     ),
-    revision_group_id: UUID | None = Query(
-        None, description="Filter for specified revision group id."
-    ),
-    ids: list[UUID] | None = Query(
-        None, description="Filter for specified list of ids.", alias="id"
-    ),
-    names: list[NonEmptyValidStr] | None = Query(
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id."),
+    ids: list[UUID]
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
+    names: list[NonEmptyValidStr]
+    | None = Query(
         None, description=("Filter for specified list of names."), alias="name"
     ),
     include_dependencies: bool = Query(
@@ -322,7 +328,9 @@ async def get_all_transformation_revisions(
     logger.info("get all transformation revisions with %s", repr(filter_params))
 
     try:
-        transformation_revision_list = get_multiple_transformation_revisions(filter_params)
+        transformation_revision_list = get_multiple_transformation_revisions(
+            filter_params
+        )
     except DBIntegrityError as err:
         msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
         logger.error(msg)
@@ -339,7 +347,9 @@ async def get_all_transformation_revisions(
     component_indices: list[int] = []
 
     component_indices = [
-        index for index, tr in enumerate(transformation_revision_list) if tr.type == Type.COMPONENT
+        index
+        for index, tr in enumerate(transformation_revision_list)
+        if tr.type == Type.COMPONENT
     ]
     component_indices.sort(reverse=True)
 
@@ -366,7 +376,11 @@ async def get_all_transformation_revisions(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns the transformation revision with the given id.",
     status_code=status.HTTP_200_OK,
-    responses={status.HTTP_200_OK: {"description": "Successfully got the transformation revision"}},
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully got the transformation revision"
+        }
+    },
 )
 async def get_transformation_revision_by_id(
     id: UUID = Path(  # noqa: A002
@@ -403,31 +417,35 @@ async def get_transformation_revision_by_id(
     },
 )
 async def update_transformation_revisions(
-    updated_transformation_revisions_and_code_strings: list[TransformationRevision | str],
+    updated_transformation_revisions_and_code_strings: list[
+        TransformationRevision | str
+    ],
     response: Response,
     type: Type  # noqa: A002
     | None = Query(
         None,
         description="Filter for specified type.",
     ),
-    state: State | None = Query(
+    state: State
+    | None = Query(
         None,
         description="Filter for specified state.",
     ),
-    categories: list[ValidStr] | None = Query(
+    categories: list[ValidStr]
+    | None = Query(
         None, description="Filter for specified list of categories.", alias="category"
     ),
-    category_prefix: str | None = Query(
+    category_prefix: str
+    | None = Query(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     ),
-    revision_group_id: UUID | None = Query(
-        None, description="Filter for specified revision group id."
-    ),
-    ids: list[UUID] | None = Query(
-        None, description="Filter for specified list of ids.", alias="id"
-    ),
-    names: list[NonEmptyValidStr] | None = Query(
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id."),
+    ids: list[UUID]
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
+    names: list[NonEmptyValidStr]
+    | None = Query(
         None, description=("Filter for specified list of names."), alias="name"
     ),
     release_drafts: bool = Query(
@@ -447,8 +465,12 @@ async def update_transformation_revisions(
             "of the provided trafos that the selected/filtered ones depend on."
         ),
     ),
-    allow_overwrite_released: bool = Query(False, description="Only set to True for deployment."),
-    update_component_code: bool = Query(True, description="Only set to False for deployment."),
+    allow_overwrite_released: bool = Query(
+        False, description="Only set to True for deployment."
+    ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment."
+    ),
     strip_wirings: bool = Query(
         False,
         description=(
@@ -609,8 +631,12 @@ async def update_transformation_revisions(
 async def update_transformation_revision(
     id: UUID,  # noqa: A002
     updated_transformation_revision: TransformationRevision,
-    allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
-    update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    allow_overwrite_released: bool = Query(
+        False, description="Only set to True for deployment"
+    ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment"
+    ),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the database.
@@ -635,11 +661,13 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision,
-            allow_overwrite_released=allow_overwrite_released,
-            update_component_code=update_component_code,
-            strip_wiring=strip_wiring,
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(
+                updated_transformation_revision,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
+            )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as err:
@@ -739,7 +767,9 @@ async def handle_trafo_revision_execution_request(
     summary="Executes a transformation revision",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"description": "Successfully executed the transformation revision"}
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
     },
 )
 async def execute_transformation_revision_endpoint(
@@ -792,7 +822,9 @@ async def send_result_to_callback_url(
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)
             # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
-            msg = f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+            msg = (
+                f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+            )
             logger.error(msg)
             # no re-raise reasonable, see comment in execute_and_post function
 
@@ -813,7 +845,9 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             # no re-raise reasonable due to issue mentioned above
         else:
             await send_result_to_callback_url(callback_url, result)
-            logger.info("Sent result of execution with job_id %s", str(exec_by_id.job_id))
+            logger.info(
+                "Sent result of execution with job_id %s", str(exec_by_id.job_id)
+            )
     except Exception as e:
         logger.error(
             "An unexpected error occurred during execution with job id %s as background task:\n%s",
@@ -905,7 +939,9 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    return await handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input)
+    return await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
 
 
 async def execute_latest_and_post(
@@ -983,7 +1019,9 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
-    background_tasks.add_task(execute_latest_and_post, exec_latest_by_group_id_input, callback_url)
+    background_tasks.add_task(
+        execute_latest_and_post, exec_latest_by_group_id_input, callback_url
+    )
 
     return {
         "message": "Execution request for latest revision with "
@@ -1017,7 +1055,9 @@ async def update_transformation_dashboard_positioning(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    transformation_revision.test_wiring.dashboard_positionings = gridstack_item_positions
+    transformation_revision.test_wiring.dashboard_positionings = (
+        gridstack_item_positions
+    )
 
     try:
         update_or_create_single_transformation_revision(
@@ -1057,20 +1097,24 @@ async def transformation_dashboard(
         ...,
         examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
-    fromTimestamp: datetime.datetime | None = Query(
+    fromTimestamp: datetime.datetime
+    | None = Query(
         None, description="Override from timestamp. Expected to be explicit UTC."
     ),
-    toTimestamp: datetime.datetime | None = Query(
+    toTimestamp: datetime.datetime
+    | None = Query(
         None, description="Override to timestamp. Expected to be explicit UTC."
     ),
-    relNow: str | None = Query(
+    relNow: str
+    | None = Query(
         None,
         description=(
             'Override timerange relative to "now". '
             'E.g. "5min" describes the timerange [now - 5 minutes, now].'
         ),
     ),
-    autoreload: int | None = Query(None, description=("Autoreload interval in seconds")),
+    autoreload: int
+    | None = Query(None, description=("Autoreload interval in seconds")),
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
@@ -1106,7 +1150,11 @@ async def transformation_dashboard(
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
-    if fromTimestamp is not None and toTimestamp is not None and fromTimestamp > toTimestamp:
+    if (
+        fromTimestamp is not None
+        and toTimestamp is not None
+        and fromTimestamp > toTimestamp
+    ):
         msg = "fromTimestamp must be <= toTimestamp"
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
@@ -1120,7 +1168,9 @@ async def transformation_dashboard(
     override_mode: OverrideMode = (
         OverrideMode.Absolute
         if (fromTimestamp is not None)
-        else (OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride)
+        else (
+            OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride
+        )
     )
 
     # obtain transformation revisions (including wiring)
@@ -1145,7 +1195,9 @@ async def transformation_dashboard(
 
     # override timerange if requested:
     if calculated_from_timestamp is not None and calculated_to_timestamp is not None:
-        override_timestamps_in_wiring(wiring, calculated_from_timestamp, calculated_to_timestamp)
+        override_timestamps_in_wiring(
+            wiring, calculated_from_timestamp, calculated_to_timestamp
+        )
 
     # construct execution payload
     exec_by_id: ExecByIdInput = ExecByIdInput(
@@ -1155,8 +1207,8 @@ async def transformation_dashboard(
     )
 
     # execute
-    exec_resp: ExecutionResponseFrontendDto = await handle_trafo_revision_execution_request(
-        exec_by_id
+    exec_resp: ExecutionResponseFrontendDto = (
+        await handle_trafo_revision_execution_request(exec_by_id)
     )
 
     # construct dashboard html response
