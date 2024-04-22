@@ -1,6 +1,7 @@
 ## 0.9.8
 * Add Kafka adapter to send and receive data via Kafka individually per input/output. See [docs](./docs/adapter_system/kafka_adapter.md).
 * Some frontend bug fixes
+
 ## 0.9.7
 * Log execution performance metrics
 * UI: Add deep links to (multiple) workflows and components
