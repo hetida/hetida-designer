@@ -1,9 +1,11 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
+import asyncio
 import datetime
 import json
 import logging
 import random
+from collections.abc import Callable
 from enum import StrEnum
 from uuid import UUID
 
@@ -141,3 +143,56 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
     For logging etc.
     """
     return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
+
+
+def cache_conditionally(condition_func: Callable) -> Callable:
+    """Caching function intended to be used as a decorator.
+
+    * The result is only cached if it fulfills a condition that is checked by the condition function.
+    * The decorated function `func` (see cache_conditionally_decorator) must have exactly one hashable argument.
+    * cache_conditionally works for both synchronous and asynchronous functions.
+
+    Args:
+        condition_func (function): takes a result of `func`
+        and returns a boolean that determines whether this value should be cached
+    """  # noqa: E501
+
+    def cache_conditionally_decorator(func):
+        func_is_async = asyncio.iscoroutinefunction(func)
+        if func_is_async:
+            # Needed to lock cache access, as it is a shared resource
+            func.lock_ = asyncio.Lock()
+        func.cache_ = {}
+
+        async def async_cache_wrapper(arg):
+            async with func.lock_:
+                if arg in func.cache_:
+                    return func.cache_[arg]
+
+                val = await func(arg)
+
+                if condition_func(val):
+                    func.cache_[arg] = val
+
+            return val
+
+        def cache_wrapper(arg):
+            if arg in func.cache_:
+                return func.cache_[arg]
+
+            val = func(arg)
+            if condition_func(val):
+                func.cache_[arg] = val
+
+            return val
+
+        if func_is_async:
+            # Make cache and lock accessible
+            async_cache_wrapper.cache_ = func.cache_
+            async_cache_wrapper.lock_ = func.lock_
+            return async_cache_wrapper
+
+        cache_wrapper.cache_ = func.cache_
+        return cache_wrapper
+
+    return cache_conditionally_decorator
