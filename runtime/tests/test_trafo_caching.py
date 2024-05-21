@@ -100,6 +100,7 @@ def test_trafo_caching() -> None:
     # Load test trafos
     def load_trafo1():
         path = os.path.join(
+            "tests",
             "data",
             "components",
             "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.py",
@@ -113,6 +114,7 @@ def test_trafo_caching() -> None:
 
     def load_trafo2():
         path = os.path.join(
+            "tests",
             "data",
             "components",
             "test_optional_inputs_component.py",
