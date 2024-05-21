@@ -113,6 +113,12 @@ class RuntimeConfig(BaseSettings):
         env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
     )
 
+    enable_caching_for_trafo_execution: bool = Field(
+        False,
+        env="HD_ENABLE_CACHING_FOR_TRAFO_EXEC",
+        description=("Whether transformation revisions should be cached for execution"),
+    )
+
     ensure_db_schema: bool = Field(
         True,
         env="HD_ENSURE_DB_SCHEMA",
@@ -261,9 +267,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: ServiceCredentials | Json[
-        ServiceCredentials
-    ] | None = Field(
+    internal_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -288,9 +294,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: ServiceCredentials | Json[
-        ServiceCredentials
-    ] | None = Field(
+    external_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(

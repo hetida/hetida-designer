@@ -22,6 +22,7 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_single_transformation_revision,
     read_single_transformation_revision_with_caching,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -131,9 +132,14 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     an ad-hoc workflow structure for execution.
     """
     try:
-        transformation_revision = read_single_transformation_revision_with_caching(
-            exec_by_id_input.id
-        )
+        if get_config().enable_caching_for_trafo_execution:
+            transformation_revision = read_single_transformation_revision_with_caching(
+                exec_by_id_input.id
+            )
+        else:
+            transformation_revision = read_single_transformation_revision(
+                exec_by_id_input.id
+            )
         logger.info(
             "found transformation revision with id %s", str(exec_by_id_input.id)
         )
