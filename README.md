@@ -33,7 +33,7 @@ necessary information in our [contribution guidelines](./CONTRIBUTING.md).
 You'll have to install a recent version of [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/).
 The exact procedure depends on your operating system. Follow the links to find out more about how to install these dependencies on your machine.
 
-**Note for Windows Users**: On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy *Checkout as-is, commit Unix-sytyle line endings*. In every case, make sure that these settings match.
+**Note for Windows Users**: On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy *Checkout as-is, commit Unix-style line endings*. In every case, make sure that these settings match.
 
 #### Getting the source code
 
@@ -141,9 +141,9 @@ git checkout develop
 
 The application consists of three submodules: a backend REST service, a runtime that
 executes hetida designer workflows, and a frontend that allows you to interact with the
-backend and the runtime to build components, workflows and test them. Note that both backend and runtime can be run together or as separated services. The later is recommended for security reasons and to be able to scale the runtime separately from the application backend.
+backend and the runtime to build components, workflows and test them. Note that both backend and runtime can be run together or as separated services. The latter is recommended for security reasons and to be able to scale the runtime separately from the application backend.
 
-You'll find corresponding Dockerfile in the source code's root folder. You can start (parts of) hetida designer in standalone docker containers as follows.
+You'll find corresponding Dockerfiles in the source code's root folder. You can start (parts of) hetida designer in standalone docker containers as follows.
 
 #### Frontend
 
@@ -180,12 +180,12 @@ Make sure you have read and understood how to set up and start hetida designer u
 
 This is important, as usually you'll not want to develop on all three submodules of
 the application at the same time. A partial docker setup will help you to have your
-development environment up and running quickly as you'll only work locally on the
+development environment up and running quickly, as you'll only work locally on the
 submodule that you'd like to change.
 
-So first of all, follow the above instructions to set up a fully working local installation
+So first of all, follow the above instructions to set up a fully working local installation,
 either with [docker-compose](#gs-docker-compose) or with [standalone docker containers](#gs-docker-standalone). If using docker-compose, you should expose backend and runtime 
-ports in the docker-compose file as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
+ports in the docker-compose file, as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
 
 ```shell
 docker-compose -f docker-compose-dev.yml up -d
@@ -257,7 +257,7 @@ In the "Create new Workflow" dialog, enter a name (like "Demo") and for now leav
 
 ![create_workflow_dialog](./docs/assets/first_workflow/create_workflow_dialog.png)
 
-Next, you see the workflow editor which is empty. Switch to the component sidebar, open one of the category drawers, and drag and drop some components onto the workflow editor pane. Boxes appear indicating operators of your workflow (i.e. instances of the chosen components). 
+Next, you see the workflow editor, which is empty. Switch to the component sidebar, open one of the category drawers, and drag and drop some components onto the workflow editor pane. Boxes appear indicating operators of your workflow (i.e. instances of the chosen components). 
 
 In this tutorial, we create an example workflow for a univariate anomaly detection: A simple volatility detection on a time series. We add connections between operators by clicking on outputs on the right side of the boxes and then clicking on an input on the left side of another box. You can easily find the components used in the picture below by using the search filter in the component sidebar.
 
@@ -267,7 +267,7 @@ Some Notes:
 
 * You can delete connections by right-clicking on them and selecting "Delete Link". You can also delete operators (boxes) through their right-click menu.
 
-* Connection lines can be subdivided by left clicking on them and dragging one of the appearing handles to make them go around boxes. 
+* Connection lines can be subdivided by left-clicking on them and dragging one of the appearing handles to make them go around boxes. 
   
   ![connection_handles](./docs/assets/first_workflow/connection_handles.png)
 
@@ -277,7 +277,7 @@ Some Notes:
 
 * You can only drag *released* components/workflows onto the workflow pane. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. This way, workflow executions can be reproduced at all points in time. To edit a released component/workflow a new revision has to be created.
 
-Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. This is a point where hetida designer significantly differs from some similar-looking graphical analytics tools you may know: Data ingestion (and data egestion) is decoupled form the analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you loose the decoupling advantages and flexibility of the adapter system.
+Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. This is a point where hetida designer significantly differs from some similar-looking graphical analytics tools you may know: Data ingestion (and data egestion) is decoupled from the analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
 
 #### Configuring IO
 
@@ -440,7 +440,7 @@ There are several mechanisms that contribute to reaching this goal:
 
 * The fact that execution of each workflow revision is immediately available through a web service endpoint – there is **no extra deployment step necessary**. 
   
-  * Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (see [documentation](./docs/execution/execution_via_kafka.md))
+  * Note that a Kafka consumer for the same purpose is also built into the backend and can be activated and configured via environment variables of the designer backend (see [documentation](./docs/execution/execution_via_kafka.md))
 
 Read more about how to handle and write wirings and how to use the execution endpoints [here](./docs/execution/running_transformation_revisions.md)
 
@@ -467,6 +467,6 @@ Hetida designer allows to execute arbitrary Python code. The included plain exec
 * **Wiring**: To run a workflow revision a wiring is necessary. A wiring maps data sources / data sinks via adapters to the inputs/outputs of the workflow revision IO config.
 * **Adapter**: A small piece of software that provides access to data sources or data sinks in order to make them available for execution of workflow revisions. Typically, adapters connect to databases (SQL, NoSQL (e.g. timeseries databases). The base installation comes with some demo adapters and a local file adapter. You can of course [write your own adapter implementations](#adapter-system).
 * **Draft Mode /  Released Mode**: Workflow and component revisions can be in either of these modes. They are only editable in Draft Mode. Through **Publishing** they are switched to Release Mode. They can only be used as operators when in Released Mode. This guarantees trackable execution runs. You can of course create a new revision to make further edits.
-  **Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operatores as deprecated and invites to update to another revision.
+  **Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operators as deprecated and invites to update to another revision.
   **Delete**: Component and Workflow revisions in Draft Mode can be deleted.
   **Documentation**: To every workflow and component revision a markdown documentation can be written and used.
