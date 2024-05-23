@@ -5,8 +5,10 @@ import datetime
 import json
 import logging
 import random
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from enum import StrEnum
+from functools import wraps
+from typing import Any
 from uuid import UUID
 
 import requests  # noqa: F401
@@ -146,53 +148,55 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
 
 
 def cache_conditionally(condition_func: Callable) -> Callable:
-    """Caching function intended to be used as a decorator.
+    """Caching decorator that caches a result if a condition is fulfilled
 
-    * The result is only cached if it fulfills a condition that is checked by the condition function.
-    * The decorated function `func` (see cache_conditionally_decorator) must have exactly one hashable argument.
-    * cache_conditionally works for both synchronous and asynchronous functions.
+    * The result is only cached if it fulfills a condition that is checked by the condition function
+    * The decorated function `func` (see cache_conditionally_decorator) must have exactly one
+      hashable argument
+    * cache_conditionally works for both synchronous and asynchronous functions
+    * The implementation is NOT thread-safe
 
     Args:
-        condition_func (function): takes a result of `func`
+        condition_func (function): Takes a result of `func`
         and returns a boolean that determines whether this value should be cached
-    """  # noqa: E501
+    """
 
-    def cache_conditionally_decorator(func):
-        func_is_async = asyncio.iscoroutinefunction(func)
-        if func_is_async:
-            # Needed to lock cache access, as it is a shared resource
-            func.lock_ = asyncio.Lock()
-        func.cache_ = {}
+    def cache_conditionally_decorator(
+        func: Callable | Coroutine,
+    ) -> Callable | Coroutine:
+        cache: dict = {}
 
-        async def async_cache_wrapper(arg):
-            async with func.lock_:
-                if arg in func.cache_:
-                    return func.cache_[arg]
+        if asyncio.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_cache_wrapper(arg: Any) -> Any:
+                if arg in cache:
+                    return cache[arg]
 
                 val = await func(arg)
 
                 if condition_func(val):
-                    func.cache_[arg] = val
+                    cache[arg] = val
 
-            return val
+                return val
 
-        def cache_wrapper(arg):
-            if arg in func.cache_:
-                return func.cache_[arg]
-
-            val = func(arg)
-            if condition_func(val):
-                func.cache_[arg] = val
-
-            return val
-
-        if func_is_async:
-            # Make cache and lock accessible
-            async_cache_wrapper.cache_ = func.cache_
-            async_cache_wrapper.lock_ = func.lock_
+            async_cache_wrapper.cache_ = cache  # type: ignore
             return async_cache_wrapper
 
-        cache_wrapper.cache_ = func.cache_
+        # Function is synchronous
+        @wraps(func)  # type: ignore
+        def cache_wrapper(arg: Any) -> Any:
+            if arg in cache:
+                return cache[arg]
+
+            val = func(arg)  # type: ignore
+
+            if condition_func(val):
+                cache[arg] = val
+
+            return val
+
+        cache_wrapper.cache_ = cache  # type: ignore
         return cache_wrapper
 
     return cache_conditionally_decorator
