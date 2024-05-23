@@ -5,7 +5,7 @@
   "homepage": "https://neusta-sd-west.de/data-science/hetida-designer/",
   "license": "MIT",
   "engines": {
-    "node": "16.20.2"
+    "node": "18.20.2"
   },
   "repository": {
     "type": "git",
@@ -48,7 +48,7 @@
     "@ngrx/store": "^16.3.0",
     "@types/source-map": "0.5.7",
     "angular-auth-oidc-client": "^16.0.1",
-    "angular-plotly.js": "^4.0.4",
+    "angular-plotly.js": "^5.2.2",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",
     "hd-wiring": "0.6.1",
@@ -83,11 +83,11 @@
     "@types/lodash": "^4.14.202",
     "@types/marked": "^4.3.2",
     "@types/node": "^20.12.7",
-    "@types/plotly.js": "^1.54.22",
+    "@types/plotly.js": "^2.29.4",
     "@types/uuid": "^3.4.13",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
-    "eslint": "^8.56.0",
+    "eslint": "^8.57.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsdoc": "^42.0.0",

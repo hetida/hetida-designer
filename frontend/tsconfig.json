@@ -4,9 +4,7 @@
     "baseUrl": "./",
     "downlevelIteration": true,
     "paths": {
-      "@models/*": [
-        "src/app/models/*"
-      ]
+      "@models/*": ["src/app/models/*"]
     },
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
@@ -22,14 +20,9 @@
     "strictBindCallApply": true,
     "noUnusedParameters": true,
     "target": "ES2022",
-    "typeRoots": [
-      "node_modules/@types",
-      "types"
-    ],
-    "lib": [
-      "es2018",
-      "dom"
-    ],
-    "useDefineForClassFields": false
+    "typeRoots": ["node_modules/@types", "types"],
+    "lib": ["es2018", "dom"],
+    "useDefineForClassFields": false,
+    "preserveSymlinks": true
   }
 }

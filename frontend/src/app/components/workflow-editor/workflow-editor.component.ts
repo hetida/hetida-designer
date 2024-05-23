@@ -611,7 +611,10 @@ export class WorkflowEditorComponent {
   }
 
   private _updateWorkflowIfNecessary(): void {
-    if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
+    if (
+      !this.hasChanges ||
+      this.currentWorkflow.state === RevisionState.RELEASED
+    ) {
       return;
     }
     this.transformationService
