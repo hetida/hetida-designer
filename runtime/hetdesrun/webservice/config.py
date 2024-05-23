@@ -113,10 +113,14 @@ class RuntimeConfig(BaseSettings):
         env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
     )
 
-    enable_caching_for_trafo_execution: bool = Field(
+    enable_caching_for_non_draft_trafos_for_execution: bool = Field(
         False,
-        env="HD_ENABLE_CACHING_FOR_TRAFO_EXEC",
-        description=("Whether transformation revisions should be cached for execution"),
+        env="HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC",
+        description=(
+            "Cache transformation revisions for execution if their state is not DRAFT."
+            "Instead of always loading them from the database."
+            "The caching mechanism is NOT thread-safe."
+        ),
     )
 
     ensure_db_schema: bool = Field(

@@ -132,17 +132,21 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     an ad-hoc workflow structure for execution.
     """
     try:
-        if get_config().enable_caching_for_trafo_execution:
+        if get_config().enable_caching_for_non_draft_trafos_for_execution:
             transformation_revision = read_single_transformation_revision_with_caching(
                 exec_by_id_input.id
+            )
+            logger.info(
+                "found possibly cached transformation revision with id %s",
+                str(exec_by_id_input.id),
             )
         else:
             transformation_revision = read_single_transformation_revision(
                 exec_by_id_input.id
             )
-        logger.info(
-            "found transformation revision with id %s", str(exec_by_id_input.id)
-        )
+            logger.info(
+                "found transformation revision with id %s", str(exec_by_id_input.id)
+            )
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 
