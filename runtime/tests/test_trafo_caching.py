@@ -72,7 +72,7 @@ def _db_with_sample_trafos(mocked_clean_test_db_session):
 
     # Load a transformation revision with state DRAFT
     with open(
-        "transformations/components/test/pass-through-string_100_draft_d28bcb31-2254-4987-9862-75773e55884f.json"
+        "tests/data/components/pass-through-string_100_draft_d28bcb31-2254-4987-9862-75773e55884f.json"
     ) as f:
         trafo_data = json.load(f)
     store_single_transformation_revision(TransformationRevision(**trafo_data))
