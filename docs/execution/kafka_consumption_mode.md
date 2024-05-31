@@ -12,7 +12,7 @@ First you need the Kafka adapter to be active and registered and Kafka configura
 
 Then you can set up a separate container using the hetida designer runtime Docker image running in consumption mode by setting the environment variable `HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE` to a json object which is equal to the execution payload (described for example [here](./running_transformation_revisions.md)) except that no `job_id` is set. Consumption mode will automatically create a new job id for each execution triggered by a Kafka message.
 
-The provided input wiring determines to which topic consumption mode will listen continuosly. Note that all other functionalities like backend/runtime api endpoints will not run on a container in consumption mode.
+The provided input wiring determines to which topic consumption mode will listen continuously. Note that all other functionalities like backend/runtime API endpoints will not run on a container in consumption mode.
 
 Example:
 ```json
@@ -39,16 +39,17 @@ Example:
 }
 ```
 
-The example above will listen to the topic behind the Kafka configuration with key `ingestion_status` using this Kafka config's consumer config. Since message value key is set it expects the message to be in the multi-value message format.
+The example above will listen to the topic behind the Kafka configuration with key `ingestion_status` using this Kafka config's consumer config. Since message value key is set, it expects the message to be in the multi-value message format.
 
-Each time it receives a new message it will run the trafo with id `1946d5f8-44a8-724c-176f-16f3e49963af` and provide the value under message value key `analytic_result` to the input with name `input`. Note that data in the message under message value keys that are not wired to an input is ignored.
+Each time it receives a new message, it will run the trafo with id `1946d5f8-44a8-724c-176f-16f3e49963af` and provide the value under message value key `analytic_result` to the input with name `input`. Note that data in the message under message value keys that are not wired to an input is ignored.
 
-The wiring above does nothing with the trafo's outputs, which is equivalent to having them wired to the direct_provisioning adapter. In consumption mode outputs wired to the direct_provisioning adapter will not be sent anywhere but are just logged in the container's log. Typically in a real scenario you want to wire outputs to a real adapter when using consumption mode: Either an adapter that persists results or sends them to another system, or again to the Kafka adapter in another topic.
+The wiring above does nothing with the trafo's outputs, which is equivalent to having them wired to the direct_provisioning adapter. In consumption mode, outputs wired to the direct_provisioning adapter will not be sent anywhere but are just logged in the container's log. Typically, in a real scenario you want to wire outputs to a real adapter when using consumption mode: Either an adapter that persists results or sends them to another system, or again to the Kafka adapter in another topic.
 
+It is recommended to enable the caching of non-draft transformations for execution for this use-case in order to avoid reloading the transformation revision on handling each message: This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
 
 # Notes
 * Consumption mode can only listen to one topic with one Kafka config. So the input wirings must all be tied to the same Kafka config object.
-* In the same spirit, if more than one inputs are wired via Kafka adapter then for every input wiring message value keys must be set and the message must be in multi value format. Furthermore message identifier must be equal (typcially empty string) for all Kafka adapter input wirings.
+* In the same spirit, if more than one inputs are wired via Kafka adapter then for every input wiring message value keys must be set and the message must be in multi value format. Furthermore, message identifier must be equal (typically empty string) for all Kafka adapter input wirings.
 * Commit strategy, connection details etc. are all determined by the Kafka config attributes, in particular the `consumer_config` attribute.
 * The Kafka Config object(s) configured for the container in consumption mode is not required to be the same or exist in other hetida designer services (in particular the hd backend).
-* However you typically want the consumption mode container to have `HD_IS_RUNTIME_SERVICE` being set to `true` in order to carry out trafo execution in the same container to avoid data being transferred via rest.
+* However, you typically want the consumption mode container to have `HD_IS_RUNTIME_SERVICE` being set to `true` in order to carry out trafo execution in the same container to avoid data being transferred via rest.

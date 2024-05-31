@@ -23,6 +23,7 @@ from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFo
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
     read_single_transformation_revision,
+    read_single_transformation_revision_with_caching,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -131,12 +132,21 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     an ad-hoc workflow structure for execution.
     """
     try:
-        transformation_revision = read_single_transformation_revision(
-            exec_by_id_input.id
-        )
-        logger.info(
-            "found transformation revision with id %s", str(exec_by_id_input.id)
-        )
+        if get_config().enable_caching_for_non_draft_trafos_for_execution:
+            transformation_revision = read_single_transformation_revision_with_caching(
+                exec_by_id_input.id
+            )
+            logger.info(
+                "found possibly cached transformation revision with id %s",
+                str(exec_by_id_input.id),
+            )
+        else:
+            transformation_revision = read_single_transformation_revision(
+                exec_by_id_input.id
+            )
+            logger.info(
+                "found transformation revision with id %s", str(exec_by_id_input.id)
+            )
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 
@@ -175,9 +185,11 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
                 name=str(tr_workflow.id),
                 run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
             ),
-            workflow_wiring=exec_by_id_input.wiring
-            if exec_by_id_input.wiring is not None
-            else transformation_revision.test_wiring,
+            workflow_wiring=(
+                exec_by_id_input.wiring
+                if exec_by_id_input.wiring is not None
+                else transformation_revision.test_wiring
+            ),
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
         )
