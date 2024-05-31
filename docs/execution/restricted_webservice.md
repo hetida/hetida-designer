@@ -6,9 +6,11 @@ This enables to offer execution of one or more transformation revisions
 * as a separately scalable service
 * to 3rd parties / other services without publishing all backend and runtime capabilities
 
-Another use case is employing a hetida designer workflow and an adapter for data ingestion: The workflow may do some necessary data cleanup / preparation and its output is wired to a configured adapter. The resulting webservice can be exposed separately to data pushing services. In this case, it is recommended to enable the caching of workflows for execution. This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
+Another use case is employing a hetida designer workflow and an adapter for data ingestion: The workflow may do some necessary data cleanup / preparation and its output is wired to a configured adapter. The resulting webservice can be exposed separately to data pushing services.
 
 Using this, you probably want to let both `HD_IS_BACKEND` and `HD_IS_RUNTIME` remain true — especially the latter enables actual execution in the same container.
+
+Furthermore it is recommended to enable the caching of non-draft transformations for execution in order to avoid reloading non-draft transformation revisions on handling each request: This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
 
 A typical setup consists of
 * An ordinary designer backend and runtime only reachable internally by your data scientists for exploration and development

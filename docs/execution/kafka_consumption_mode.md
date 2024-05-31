@@ -1,6 +1,6 @@
 # Kafka consumption mode
 
-The [Kafka adapter](../adapter_system/kafka_adapter.md) provides a separate consumption mode in which a hetida designer container can be started to listen to (i.e. to consume from) a Kafka topic and on each message retrieval run a fixed preconfigured transformation with a preconfigured wiring where one or more inputs are wired to / supplied from the received message. It is recommended to enable the caching of workflows for execution in this use-case. This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
+The [Kafka adapter](../adapter_system/kafka_adapter.md) provides a separate consumption mode in which a hetida designer container can be started to listen to (i.e. to consume from) a Kafka topic and on each message retrieval run a fixed preconfigured transformation with a preconfigured wiring where one or more inputs are wired to / supplied from the received message.
 
 In contrast to [kafka execution](./execution_via_kafka.md) this allows to chain, split and distribute data handling / transformation / analytics via hetida designer transformations along and through multiple Kafka topics and enables versatile streaming functionality similar to Kafka streaming frameworks like [Kafka Streams](https://kafka.apache.org/documentation/streams/) or [faust-streaming](https://github.com/faust-streaming/faust).
 
@@ -45,6 +45,7 @@ Each time it receives a new message, it will run the trafo with id `1946d5f8-44a
 
 The wiring above does nothing with the trafo's outputs, which is equivalent to having them wired to the direct_provisioning adapter. In consumption mode, outputs wired to the direct_provisioning adapter will not be sent anywhere but are just logged in the container's log. Typically, in a real scenario you want to wire outputs to a real adapter when using consumption mode: Either an adapter that persists results or sends them to another system, or again to the Kafka adapter in another topic.
 
+It is recommended to enable the caching of non-draft transformations for execution for this use-case in order to avoid reloading the transformation revision on handling each message: This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
 
 # Notes
 * Consumption mode can only listen to one topic with one Kafka config. So the input wirings must all be tied to the same Kafka config object.
