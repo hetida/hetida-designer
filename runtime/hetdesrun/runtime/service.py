@@ -132,7 +132,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             "Input Data Validation Error during data provision",
             exc_info=True,
         )
-        WorkflowExecutionResult.from_exception(
+        return WorkflowExecutionResult.from_exception(
             exc, currently_executed_process_stage, runtime_input.job_id
         )
 
@@ -197,9 +197,11 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         runtime_logger.info(
             "Execution Results:\n%s",
-            all_results_str
-            if len(all_results_str) <= 100
-            else (all_results_str[:50] + " ... " + all_results_str[-50:]),
+            (
+                all_results_str
+                if len(all_results_str) <= 100
+                else (all_results_str[:50] + " ... " + all_results_str[-50:])
+            ),
         )
 
         node_results: str | None = all_results_str
