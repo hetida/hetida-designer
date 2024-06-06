@@ -1,0 +1,34 @@
+{
+    "element_types": [
+        {
+            "id": 1,
+            "name": "Type1"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "id": 1,
+            "name": "Node 1",
+            "description": "Root Node",
+            "element_type_id": 1,
+            "entity_uuid": "entity_uuid_1",
+            "parent_node_id": null
+        },
+        {
+            "id": 2,
+            "name": "Node 2",
+            "description": "Child 1 of Node 1",
+            "element_type_id": 1,
+            "entity_uuid": "entity_uuid_2",
+            "parent_node_id": 1
+        },
+        {
+            "id": 3,
+            "name": "Node 3",
+            "description": "Child 2 of Node 1",
+            "element_type_id": 1,
+            "entity_uuid": "entity_uuid_3",
+            "parent_node_id": 1
+        }
+    ]
+}

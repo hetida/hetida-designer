@@ -1,0 +1,38 @@
+{
+    "element_types": [
+        {
+            "id": 1,
+            "name": "Type1"
+        },
+        {
+            "id": 2,
+            "name": "Type2"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "id": 1,
+            "name": "Root Node",
+            "description": "Root Node of the hierarchy",
+            "element_type_id": 1,
+            "entity_uuid": "entity_uuid_1",
+            "parent_node_id": null
+        },
+        {
+            "id": 2,
+            "name": "Child Node Level 1",
+            "description": "First child of Root Node",
+            "element_type_id": 2,
+            "entity_uuid": "entity_uuid_2",
+            "parent_node_id": 1
+        },
+        {
+            "id": 3,
+            "name": "Child Node Level 2",
+            "description": "Child of First Child",
+            "element_type_id": 2,
+            "entity_uuid": "entity_uuid_3",
+            "parent_node_id": 2
+        }
+    ]
+}
