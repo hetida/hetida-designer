@@ -1,8 +1,9 @@
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
@@ -12,7 +13,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import backref, declarative_base, relationship, validates
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
@@ -132,3 +133,153 @@ class Descendant(NamedTuple):
     depth: int
     transformation_id: UUID
     operator_id: UUID
+
+
+class ElementTypeOrm(Base):
+    __tablename__ = "element_type"
+    id = Column("element_type_id", Integer, primary_key=True, nullable=False)
+    name = Column(String(255), index=True, nullable=False, unique=True)
+    icon = Column(String(255), nullable=True)
+    description = Column(String(1024), nullable=True)
+    property_sets: list["PropertySetOrm"] = relationship(
+        "PropertySetOrm",
+        secondary="element_type_to_property_set",
+        back_populates="element_types",
+        uselist=True,
+    )
+    thing_nodes: list["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm", back_populates="element_type"
+    )
+
+    __table_args__ = (UniqueConstraint("name", name="_element_type_name_uc"),)
+
+
+class PropertyMetadataOrm(Base):
+    __tablename__ = "property_metadata"
+    id = Column("property_metadata_id", Integer, primary_key=True, nullable=False)
+    property_set_id = Column(
+        Integer, ForeignKey("property_set.property_set_id"), nullable=False
+    )
+    column_name = Column(String(255), nullable=False)
+    column_label = Column(String(255), nullable=False)
+    column_type = Column(Enum("STRING", "INT", "FLOAT", "BOOLEAN"))
+    field_length = Column(Integer, nullable=True)
+    nullable = Column(Boolean, default=True, nullable=False)
+    order_no = Column(Integer, nullable=False)
+    property_set: Optional["PropertySetOrm"] = relationship(
+        "PropertySetOrm",
+        back_populates="properties_metadata",
+        uselist=False,
+        cascade="all",
+    )
+    __table_args__ = (
+        CheckConstraint("field_length > 0", name="_field_length_positive_ck"),
+        UniqueConstraint("property_set_id", name="_property_metadata_psid_uc"),
+    )
+
+
+class PropertySetOrm(Base):
+    __tablename__ = "property_set"
+    id = Column("property_set_id", Integer, primary_key=True, nullable=False)
+    name = Column(String(255), index=True, nullable=False)
+    description = Column(String(1024), nullable=True)
+    reference_table_name = Column(String(100), unique=True, nullable=False)
+    property_set_type = Column(String(50), nullable=False)
+    element_types: list[ElementTypeOrm] = relationship(
+        "ElementTypeOrm",
+        secondary="element_type_to_property_set",
+        back_populates="property_sets",
+        uselist=True,
+    )
+    properties_metadata: list[PropertyMetadataOrm] = relationship(
+        "PropertyMetadataOrm",
+        back_populates="property_set",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (UniqueConstraint("name", name="_property_set_name_uc"),)
+
+    @validates("property_set_type")
+    def validate_property_set_type(self, key: str, value: str) -> str:  # noqa: ARG002
+        valid_types = ["INTERNAL", "EXTERNAL"]
+        if value not in valid_types:
+            raise ValueError(f"Invalid value for {key}: {value}")
+        return value
+
+
+class ThingNodeOrm(Base):
+    __tablename__ = "thing_node"
+
+    id = Column(
+        "thing_node_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    )
+    name = Column(String(255), index=True, nullable=False, unique=True)
+    description = Column(String(1024), nullable=True)
+    parent_node_id = Column(
+        Integer, ForeignKey("thing_node.thing_node_id"), nullable=True
+    )
+    element_type_id = Column(
+        Integer, ForeignKey("element_type.element_type_id"), nullable=False
+    )
+    entity_uuid = Column(String(36), nullable=False)
+    element_type: ElementTypeOrm = relationship(
+        "ElementTypeOrm", back_populates="thing_nodes", uselist=False
+    )
+    children: list["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm",
+        backref=backref("parent", remote_side=[id]),
+        cascade="all, delete-orphan",
+    )
+    source: Optional["SourceOrm"] = relationship(
+        "SourceOrm", back_populates="thing_node", uselist=False
+    )
+    sink: Optional["SinkOrm"] = relationship(
+        "SinkOrm", back_populates="thing_node", uselist=False
+    )
+
+    __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
+
+
+class SourceOrm(Base):
+    __tablename__ = "source"
+    id = Column(
+        "source_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    )
+    thing_node_id = Column(Integer, ForeignKey("thing_node.thing_node_id"))
+    name = Column(String(255), nullable=False)
+    type = Column(String, nullable=False)
+    visible = Column(Boolean, default=True)
+    path = Column(String(255), nullable=True)
+    metadata_key = Column(String(255), nullable=True)
+    filters = Column(JSON, nullable=True)
+    thing_node: ThingNodeOrm = relationship("ThingNodeOrm", back_populates="source")
+
+
+class SinkOrm(Base):
+    __tablename__ = "sink"
+    id = Column(
+        "sink_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    )
+    thing_node_id = Column(Integer, ForeignKey("thing_node.thing_node_id"))
+    name = Column(String(255), nullable=False)
+    type = Column(String(255), nullable=False)
+    visible = Column(Boolean, default=True)
+    path = Column(String(255), nullable=True)
+    metadata_key = Column(String(255), nullable=True)
+    filters = Column(JSON, nullable=True)
+    thing_node: ThingNodeOrm = relationship("ThingNodeOrm", back_populates="sink")
+
+
+class ElementTypeToPropertySetOrm(Base):
+    __tablename__ = "element_type_to_property_set"
+    element_type_id = Column(
+        Integer,
+        ForeignKey("element_type.element_type_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    property_set_id = Column(
+        Integer,
+        ForeignKey("property_set.property_set_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    order_no = Column(Integer, nullable=False)
