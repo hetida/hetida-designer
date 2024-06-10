@@ -1,6 +1,5 @@
 """Models for runtime execution endpoint"""
 
-
 import datetime
 import traceback as tb
 from enum import Enum, StrEnum
@@ -13,8 +12,12 @@ from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
 from hetdesrun.models.base import Result
 from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
+from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.reference_context import (
+    get_deepcopy_of_reproducibility_reference_context,
+)
 from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
 from hetdesrun.utils import Type, check_explicit_utc
 
@@ -301,9 +304,11 @@ class WorkflowExecutionError(BaseModel):
 def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
     last_trace = tb.extract_tb(exception.__traceback__)[-1]
     return ErrorLocation(
-        file=last_trace.filename
-        if last_trace.filename != "<string>"
-        else "COMPONENT CODE",
+        file=(
+            last_trace.filename
+            if last_trace.filename != "<string>"
+            else "COMPONENT CODE"
+        ),
         function_name=last_trace.name,
         line_number=last_trace.lineno,
     )
@@ -330,23 +335,31 @@ class WorkflowExecutionInfo(BaseModel):
     ) -> "WorkflowExecutionInfo":
         return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
-                type=type(exception).__name__
-                if cause is None
-                else type(cause).__name__,
+                type=(
+                    type(exception).__name__ if cause is None else type(cause).__name__
+                ),
                 message=str(exception) if cause is None else str(cause),
-                extra_information=exception.extra_information
-                if isinstance(exception, ComponentException)
-                else None,
-                error_code=exception.error_code
-                if isinstance(exception, ComponentException)
-                else None,
+                extra_information=(
+                    exception.extra_information
+                    if isinstance(exception, ComponentException)
+                    else None
+                ),
+                error_code=(
+                    exception.error_code
+                    if isinstance(exception, ComponentException)
+                    else None
+                ),
                 process_stage=process_stage,
-                operator_info=OperatorInfo.from_runtime_execution_error(exception)
-                if isinstance(exception, RuntimeExecutionError)
-                else None,
-                location=get_location_of_exception(exception)
-                if cause is None
-                else get_location_of_exception(cause),
+                operator_info=(
+                    OperatorInfo.from_runtime_execution_error(exception)
+                    if isinstance(exception, RuntimeExecutionError)
+                    else None
+                ),
+                location=(
+                    get_location_of_exception(exception)
+                    if cause is None
+                    else get_location_of_exception(cause)
+                ),
             ),
             traceback=tb.format_exc(),
             output_results_by_output_name={},
@@ -371,6 +384,11 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
             " set to true."
         ),
     )
+    resolved_reproducibility_references: ReproducibilityReference = Field(
+        default_factory=get_deepcopy_of_reproducibility_reference_context,
+        description="Resolved references to information needed to reproduce an execution result."
+        "The provided data can be used to replace data that would usually be produced at runtime.",
+    )
 
     @classmethod
     def from_exception(
@@ -381,8 +399,12 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         cause: BaseException | None = None,
         node_results: str | None = None,
     ) -> "WorkflowExecutionResult":
+        # Access the current context to retrieve resolved reproducibility references
+        repr_reference = get_deepcopy_of_reproducibility_reference_context()
+
         return WorkflowExecutionResult(
             **super().from_exception(exception, process_stage, job_id, cause).dict(),
             result="failure",
             node_results=node_results,
+            resolved_reproducibility_references=repr_reference,
         )

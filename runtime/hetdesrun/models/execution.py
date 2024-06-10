@@ -2,7 +2,11 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.reference_context import (
+    get_deepcopy_of_reproducibility_reference_context,
+)
 
 
 class ExecByIdBase(BaseModel):
@@ -11,6 +15,11 @@ class ExecByIdBase(BaseModel):
         None,
         description="The wiring to be used. "
         "If no wiring is provided the stored test wiring will be used.",
+    )
+    resolved_reproducibility_references: ReproducibilityReference = Field(
+        default_factory=get_deepcopy_of_reproducibility_reference_context,
+        description="Resolved references to information needed to reproduce an execution result."
+        "The provided data can be used to replace data that would usually be produced at runtime.",
     )
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
