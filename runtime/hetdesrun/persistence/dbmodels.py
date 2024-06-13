@@ -13,7 +13,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import backref, declarative_base, relationship, validates
+from sqlalchemy.orm import Mapped, backref, declarative_base, relationship, validates
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
@@ -137,7 +137,13 @@ class Descendant(NamedTuple):
 
 class ElementTypeOrm(Base):
     __tablename__ = "element_type"
-    id = Column("element_type_id", Integer, primary_key=True, nullable=False)
+    id: UUIDType = Column(
+        "element_type_id",
+        UUIDType(binary=False),
+        primary_key=True,
+        nullable=False,
+        default=uuid4,
+    )
     name = Column(String(255), index=True, nullable=False, unique=True)
     icon = Column(String(255), nullable=True)
     description = Column(String(1024), nullable=True)
@@ -156,9 +162,17 @@ class ElementTypeOrm(Base):
 
 class PropertyMetadataOrm(Base):
     __tablename__ = "property_metadata"
-    id = Column("property_metadata_id", Integer, primary_key=True, nullable=False)
-    property_set_id = Column(
-        Integer, ForeignKey("property_set.property_set_id"), nullable=False
+    id: UUIDType = Column(
+        "property_metadata_id",
+        UUIDType(binary=False),
+        primary_key=True,
+        nullable=False,
+        default=uuid4,
+    )
+    property_set_id: UUIDType = Column(
+        UUIDType(binary=False),
+        ForeignKey("property_set.property_set_id"),
+        nullable=False,
     )
     column_name = Column(String(255), nullable=False)
     column_label = Column(String(255), nullable=False)
@@ -180,7 +194,13 @@ class PropertyMetadataOrm(Base):
 
 class PropertySetOrm(Base):
     __tablename__ = "property_set"
-    id = Column("property_set_id", Integer, primary_key=True, nullable=False)
+    id: UUIDType = Column(
+        "property_set_id",
+        UUIDType(binary=False),
+        primary_key=True,
+        nullable=False,
+        default=uuid4,
+    )
     name = Column(String(255), index=True, nullable=False)
     description = Column(String(1024), nullable=True)
     reference_table_name = Column(String(100), unique=True, nullable=False)
@@ -210,31 +230,37 @@ class PropertySetOrm(Base):
 class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
 
-    id = Column(
-        "thing_node_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    id: UUIDType = Column(
+        "thing_node_id", UUIDType(binary=False), primary_key=True, default=uuid4
     )
     name = Column(String(255), index=True, nullable=False, unique=True)
     description = Column(String(1024), nullable=True)
-    parent_node_id = Column(
-        Integer, ForeignKey("thing_node.thing_node_id"), nullable=True
+    parent_node_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id"), nullable=True
     )
-    element_type_id = Column(
-        Integer, ForeignKey("element_type.element_type_id"), nullable=False
+    element_type_id: UUIDType = Column(
+        UUIDType(binary=False),
+        ForeignKey("element_type.element_type_id"),
+        nullable=False,
     )
     entity_uuid = Column(String(36), nullable=False)
-    element_type: ElementTypeOrm = relationship(
+    element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
-    children: list["ThingNodeOrm"] = relationship(
+    children: Mapped[list["ThingNodeOrm"]] = relationship(
         "ThingNodeOrm",
         backref=backref("parent", remote_side=[id]),
         cascade="all, delete-orphan",
     )
-    source: Optional["SourceOrm"] = relationship(
-        "SourceOrm", back_populates="thing_node", uselist=False
+    sources: Mapped[list["SourceOrm"]] = relationship(
+        "SourceOrm",
+        back_populates="thing_node",
+        cascade="all, delete-orphan",
     )
-    sink: Optional["SinkOrm"] = relationship(
-        "SinkOrm", back_populates="thing_node", uselist=False
+    sinks: Mapped[list["SinkOrm"]] = relationship(
+        "SinkOrm",
+        back_populates="thing_node",
+        cascade="all, delete-orphan",
     )
 
     __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
@@ -242,43 +268,45 @@ class ThingNodeOrm(Base):
 
 class SourceOrm(Base):
     __tablename__ = "source"
-    id = Column(
-        "source_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    id: UUIDType = Column(
+        "source_id", UUIDType(binary=False), primary_key=True, default=uuid4
     )
-    thing_node_id = Column(Integer, ForeignKey("thing_node.thing_node_id"))
+    thing_node_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
+    )
     name = Column(String(255), nullable=False)
     type = Column(String, nullable=False)
     visible = Column(Boolean, default=True)
-    path = Column(String(255), nullable=True)
-    metadata_key = Column(String(255), nullable=True)
-    filters = Column(JSON, nullable=True)
-    thing_node: ThingNodeOrm = relationship("ThingNodeOrm", back_populates="source")
+    thing_node: Mapped["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm", back_populates="sources"
+    )
 
 
 class SinkOrm(Base):
     __tablename__ = "sink"
-    id = Column(
-        "sink_id", Integer, primary_key=True, nullable=False, autoincrement=True
+    id: UUIDType = Column(
+        "sink_id", UUIDType(binary=False), primary_key=True, default=uuid4
     )
-    thing_node_id = Column(Integer, ForeignKey("thing_node.thing_node_id"))
+    thing_node_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
+    )
     name = Column(String(255), nullable=False)
     type = Column(String(255), nullable=False)
     visible = Column(Boolean, default=True)
-    path = Column(String(255), nullable=True)
-    metadata_key = Column(String(255), nullable=True)
-    filters = Column(JSON, nullable=True)
-    thing_node: ThingNodeOrm = relationship("ThingNodeOrm", back_populates="sink")
+    thing_node: Mapped["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm", back_populates="sinks"
+    )
 
 
 class ElementTypeToPropertySetOrm(Base):
     __tablename__ = "element_type_to_property_set"
-    element_type_id = Column(
-        Integer,
+    element_type_id: UUIDType = Column(
+        UUIDType(binary=False),
         ForeignKey("element_type.element_type_id", ondelete="CASCADE"),
         primary_key=True,
     )
-    property_set_id = Column(
-        Integer,
+    property_set_id: UUIDType = Column(
+        UUIDType(binary=False),
         ForeignKey("property_set.property_set_id", ondelete="CASCADE"),
         primary_key=True,
     )
