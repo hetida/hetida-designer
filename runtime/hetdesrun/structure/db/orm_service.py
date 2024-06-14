@@ -1,8 +1,11 @@
+import json
 import logging
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy_utils import UUIDType
 
 from hetdesrun.persistence.dbmodels import (
     ElementTypeOrm,
@@ -76,9 +79,6 @@ def update_source(
                 source.name = source_update.name
                 source.type = source_update.type
                 source.visible = source_update.visible
-                source.path = source_update.path
-                source.metadata_key = source_update.metadataKey
-                source.filters = source_update.filters
                 return Source.from_orm_model(source)
             return None
         except NoResultFound as e:
@@ -163,9 +163,6 @@ def update_sink(
                 sink.name = sink_update.name
                 sink.type = sink_update.type
                 sink.visible = sink_update.visible
-                sink.path = sink_update.path
-                sink.metadata_key = sink_update.metadataKey
-                sink.filters = sink_update.filters
                 return Sink.from_orm_model(sink)
             return None
         except NoResultFound as e:
@@ -410,46 +407,6 @@ def get_descendants_tn_ids(
             raise
 
     return descendant_ids
-
-
-def save_node_and_descendants(session: SQLAlchemySession, thingnode: ThingNode) -> None:
-    try:
-        store_single_thingnode(thingnode)
-    except DBIntegrityError as e:
-        if thingnode.id is not None:
-            update_tn(thingnode.id, thingnode)
-        else:
-            raise ValueError("thingnode.id should not be None") from e
-
-    thingnode.id = (
-        session.query(ThingNodeOrm.id).filter_by(name=thingnode.name).scalar()
-    )
-
-    if thingnode.source:
-        thingnode.source.thingNodeId = thingnode.id
-        try:
-            store_single_source(thingnode.source)
-        except DBIntegrityError:
-            update_source(thingnode.source.id, thingnode.source)
-
-    if thingnode.sink:
-        thingnode.sink.thingNodeId = thingnode.id
-        try:
-            store_single_sink(thingnode.sink)
-        except DBIntegrityError:
-            update_sink(thingnode.sink.id, thingnode.sink)
-
-    for child in thingnode.children:
-        child.parent_node_id = thingnode.id
-        save_node_and_descendants(session, child)
-
-
-def update_structure(thingnode: ThingNode) -> None:
-    with get_session()() as session, session.begin():
-        if thingnode.parent_node_id is None:
-            save_node_and_descendants(session, thingnode)
-        else:
-            raise ValueError("The provided ThingNode is not a root node.")
 
 
 # Element Type Services
@@ -938,3 +895,120 @@ def update_et2ps(
                 )
                 logger.error(msg)
             raise
+
+
+# Structure Services
+
+
+def process_element_types(data: dict) -> list[ElementType]:
+    element_types = []
+    for element_type_data in data.get("element_types", []):
+        try:
+            element_type = ElementType(**element_type_data)
+            element_types.append(element_type)
+        except ValidationError as e:
+            msg = f"Error validating ElementType: {e}"
+            logger.error(msg)
+    return element_types
+
+
+def process_sources(data: dict) -> tuple[list[Source], dict]:
+    sources: list[Source] = []
+    sources_by_node_id: dict[UUIDType, list[Source]] = {}
+    for source_data in data.get("sources", []):
+        try:
+            source = Source(**source_data)
+            sources.append(source)
+            if source.thingNodeId not in sources_by_node_id:
+                sources_by_node_id[source.thingNodeId] = []
+            sources_by_node_id[source.thingNodeId].append(source)
+        except ValidationError as e:
+            msg = f"Error validating Source: {e}"
+            logger.error(msg)
+    return sources, sources_by_node_id
+
+
+def process_sinks(data: dict) -> tuple[list[Sink], dict]:
+    sinks: list[Sink] = []
+    sinks_by_node_id: dict[UUIDType, list[Sink]] = {}
+    for sink_data in data.get("sinks", []):
+        try:
+            sink = Sink(**sink_data)
+            sinks.append(sink)
+            if sink.thingNodeId not in sinks_by_node_id:
+                sinks_by_node_id[sink.thingNodeId] = []
+            sinks_by_node_id[sink.thingNodeId].append(sink)
+        except ValidationError as e:
+            msg = f"Error validating Sink: {e}"
+            logger.error(msg)
+    return sinks, sinks_by_node_id
+
+
+def process_thing_nodes(data: dict) -> dict:
+    nodes_by_id = {}
+    for node_data in data.get("thing_nodes", []):
+        try:
+            node = ThingNode(**node_data)
+            nodes_by_id[node.id] = node
+        except ValidationError as e:
+            msg = f"Error validating ThingNode: {e}"
+            logger.error(msg)
+    return nodes_by_id
+
+
+def update_node_hierarchy(nodes_by_id: dict) -> None:
+    for node in nodes_by_id.values():
+        if node.parent_node_id is not None:
+            parent_node = nodes_by_id[node.parent_node_id]
+            parent_node.children.append(node.id)
+
+
+def process_json_data(
+    data: dict,
+) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
+    element_types = process_element_types(data)
+    sources, sources_by_node_id = process_sources(data)
+    sinks, sinks_by_node_id = process_sinks(data)
+    nodes_by_id = process_thing_nodes(data)
+    update_node_hierarchy(nodes_by_id)
+    return element_types, list(nodes_by_id.values()), sources, sinks
+
+
+def load_structure_from_json_file(
+    file_path: str,
+) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
+    with open(file_path) as file:
+        data = json.load(file)
+    element_types, thing_nodes, sources, sinks = process_json_data(data)
+    return element_types, thing_nodes, sources, sinks
+
+
+def flush_items(session: SQLAlchemySession, items: list) -> None:
+    for item in items:
+        try:
+            orm_item = item.to_orm_model()
+            session.add(orm_item)
+            session.flush()
+        except IntegrityError as e:
+            msg = (
+                f"Integrity Error while trying to store Item "
+                f"with id {orm_item.id}. Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise DBIntegrityError(msg) from e
+
+
+def update_structure(file_path: str) -> None:
+    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
+        file_path
+    )
+
+    with get_session()() as session, session.begin():
+        flush_items(session, element_types)
+    with get_session()() as session, session.begin():
+        # breakpoint()
+        flush_items(session, thing_nodes)
+    with get_session()() as session, session.begin():
+        flush_items(session, sources)
+    with get_session()() as session, session.begin():
+        flush_items(session, sinks)
