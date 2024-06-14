@@ -12,6 +12,8 @@ from hetdesrun.persistence.dbmodels import (
     ElementTypeToPropertySetOrm,
     PropertyMetadataOrm,
     PropertySetOrm,
+    SinkOrm,
+    SourceOrm,
     ThingNodeOrm,
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
@@ -38,6 +40,7 @@ from hetdesrun.structure.db.orm_service import (
     get_children_tn_ids,
     get_descendants_tn_ids,
     get_parent_tn_id,
+    load_structure_from_json_file,
     read_single_element_type,
     read_single_et2ps,
     read_single_property_metadata,
@@ -408,97 +411,6 @@ def test_delete_thingnode_integrity_error(mocked_clean_test_db_session):
     delete_tn(1)
 
 
-def test_update_structure(mocked_clean_test_db_session):
-    et_object1 = ElementType(id=1, name="Type1")
-    store_single_element_type(et_object1)
-    et_object2 = ElementType(id=2, name="Type2")
-    store_single_element_type(et_object2)
-    et_object3 = ElementType(id=3, name="Type3")
-    store_single_element_type(et_object3)
-
-    source1 = Source(
-        id=1,
-        thingNodeId=2,
-        name="Source1",
-        type=ExternalType.METADATA_INT,
-        visible=True,
-        path="path/to/source",
-        metadataKey="key1",
-        filters={},
-    )
-
-    sink1 = Sink(
-        id=1,
-        thingNodeId=3,
-        name="Sink1",
-        type=ExternalType.METADATA_INT,
-        visible=True,
-        path="path/to/sink",
-        metadataKey="key2",
-        filters={},
-    )
-
-    leaf_node_with_source = ThingNode(
-        id=2,
-        name="LeafNodeWithSource",
-        parent_node_id=1,
-        element_type_id=et_object2.id,
-        entity_uuid="leaf_uuid_1",
-        source=source1,
-        children=[],
-    )
-
-    leaf_node_with_sink = ThingNode(
-        id=3,
-        name="LeafNodeWithSink",
-        parent_node_id=1,
-        element_type_id=et_object3.id,
-        entity_uuid="leaf_uuid_2",
-        sink=sink1,
-        children=[],
-    )
-
-    root_node = ThingNode(
-        id=1,
-        name="RootNode",
-        element_type_id=et_object1.id,
-        entity_uuid="root_uuid",
-        children=[leaf_node_with_source, leaf_node_with_sink],
-    )
-
-    update_structure(root_node)
-
-    saved_root_node = read_single_thingnode(root_node.id)
-    assert saved_root_node.name == "RootNode"
-    assert saved_root_node.entity_uuid == "root_uuid"
-
-    saved_leaf_with_source = read_single_thingnode(leaf_node_with_source.id)
-    assert saved_leaf_with_source.source is not None
-    assert saved_leaf_with_source.source.name == "Source1"
-
-    saved_leaf_with_sink = read_single_thingnode(leaf_node_with_sink.id)
-    assert saved_leaf_with_sink.sink is not None
-    assert saved_leaf_with_sink.sink.name == "Sink1"
-
-    assert len(saved_root_node.children) == 2
-
-
-def test_update_structure_with_non_root_node(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
-    store_single_element_type(et_object)
-
-    non_root_node = ThingNode(
-        id=2,
-        name="NonRootNode",
-        parent_node_id=1,
-        element_type_id=1,
-        entity_uuid="non_root_uuid",
-    )
-
-    with pytest.raises(ValueError, match="The provided ThingNode is not a root node."):
-        update_structure(non_root_node)
-
-
 # CRUD Operations for ElementType
 def test_store_single_element_type(mocked_clean_test_db_session):
     et_object = ElementType(id=1, name="Type1")
@@ -846,3 +758,53 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
     duration = end_time - start_time
     print(f"Bulk delete of {num_records} records took {duration:.2f} seconds")
     assert duration < 20, f"Bulk delete took too long: {duration:.2f} seconds"
+
+
+# CRUD Operations for Structure
+
+
+def test_load_structure_from_json_file(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file.json"
+
+    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
+        file_path
+    )
+
+    assert len(element_types) == 3
+    assert len(thing_nodes) == 3
+    assert len(sources) == 1
+    assert len(sinks) == 1
+
+    assert element_types[0] == ElementType(id=1, name="Type1")
+
+
+def test_update_structure(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file.json"
+
+    update_structure(file_path)
+
+    session = mocked_clean_test_db_session()
+
+    element_types = session.query(ElementTypeOrm).all()
+    assert len(element_types) == 3
+    assert element_types[0].name == "Type1"
+    assert element_types[1].name == "Type2"
+    assert element_types[2].name == "Type3"
+
+    thing_nodes = session.query(ThingNodeOrm).all()
+    assert len(thing_nodes) == 3
+    assert thing_nodes[0].name == "RootNode"
+    assert thing_nodes[1].name == "LeafNodeWith2Sources1Sink"
+    assert thing_nodes[2].name == "LeafNodeWith1Source2Sinks"
+
+    sources = session.query(SourceOrm).all()
+    assert len(sources) == 3
+    assert sources[0].name == "Source1"
+    assert sources[1].name == "Source2"
+    assert sources[2].name == "Source3"
+
+    sinks = session.query(SinkOrm).all()
+    assert len(sinks) == 3
+    assert sinks[0].name == "Sink1"
+    assert sinks[1].name == "Sink2"
+    assert sinks[2].name == "Sink3"
