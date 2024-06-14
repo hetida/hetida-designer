@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Literal, Optional
+from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
@@ -17,25 +18,35 @@ from hetdesrun.structure.db.external_types import ExternalType
 
 
 class ThingNode(BaseModel):
-    id: int | None = Field(None, description="The primary key for the ThingNode table")
+    id: UUID | None = Field(None, description="The primary key for the ThingNode table")
     name: str = Field(..., description="Unique name of the Thing Node")
     description: str | None = Field(None, description="Description of the Thing Node")
-    parent_node_id: int | None = Field(
-        None, description="Parent node ID if this is a child node"
+    parent_node_id: UUID | None = Field(
+        None, description="Parent node UUID if this is a child node"
     )
-    element_type_id: int = Field(
+    element_type_id: UUID = Field(
         ..., description="Foreign key to the ElementType table"
     )
     entity_uuid: str = Field(..., description="UUID identifier for the entity")
-    children: list["ThingNode"] = Field(
-        default_factory=list, description="List of child ThingNodes"
+    children: list[UUID] = Field(
+        default_factory=list, description="List of child ThingNodes UUIDs"
     )
-    source: Optional["Source"] = Field(
-        None, description="Source associated with the ThingNode"
+    sources: list[UUID] = Field(
+        default_factory=list,
+        description="List of Source UUIDs associated with the ThingNode",
     )
-    sink: Optional["Sink"] = Field(
-        None, description="Sink associated with the ThingNode"
+    sinks: list[UUID] = Field(
+        default_factory=list,
+        description="List of Sink UUIDs associated with the ThingNode",
     )
+
+    @validator("sources", "sinks")
+    def sources_and_sinks_only_for_leaf_nodes(
+        cls, v: Any, values: dict[str, Any], field: Any
+    ) -> Any:
+        if "children" in values and values["children"] and v:
+            raise ValueError(f"{field.name} can only be set if there are no children")
+        return v
 
     class Config:
         orm_mode = True
@@ -48,9 +59,9 @@ class ThingNode(BaseModel):
             parent_node_id=self.parent_node_id,
             element_type_id=self.element_type_id,
             entity_uuid=self.entity_uuid,
-            children=[child.to_orm_model() for child in self.children],
-            source=self.source.to_orm_model() if self.source else None,
-            sink=self.sink.to_orm_model() if self.sink else None,
+            children=[ThingNodeOrm(id=child_id) for child_id in self.children],
+            sources=[SourceOrm(id=source_id) for source_id in self.sources],
+            sinks=[SinkOrm(id=sink_id) for sink_id in self.sinks],
         )
 
     @classmethod
@@ -63,11 +74,9 @@ class ThingNode(BaseModel):
                 parent_node_id=orm_model.parent_node_id,
                 element_type_id=orm_model.element_type_id,
                 entity_uuid=orm_model.entity_uuid,
-                children=[cls.from_orm_model(child) for child in orm_model.children],
-                source=Source.from_orm_model(orm_model.source)
-                if orm_model.source
-                else None,
-                sink=Sink.from_orm_model(orm_model.sink) if orm_model.sink else None,
+                children=[child.id for child in orm_model.children],
+                sources=[source.id for source in orm_model.sources],
+                sinks=[sink.id for sink in orm_model.sinks],
             )
         except ValidationError as e:
             msg = (
@@ -87,18 +96,24 @@ class Filter(BaseModel):
     required: bool
 
 
+# class ReferencedHDSource(BaseModel):
+#     id: str
+#     adapter_key: str | int
+#     filters:
+
+
 class Source(BaseModel):
-    id: int  # noqa: A003
-    thingNodeId: int | None
+    id: UUID  # noqa: A003
+    thingNodeId: UUID | None
     name: str
     type: ExternalType  # noqa: A003
     visible: bool | None = True
-    path: str
-    metadataKey: str | None = None
-    filters: dict[str, Filter] | None = {}
+    # referenced_hd_source: RefrencedHDSource
+    # preset_filters: dict[str, Any]
+    # passthrough_filters: list[str]
 
     class Config:
-        orm_model = True
+        orm_mode = True
 
     def to_orm_model(self) -> SourceOrm:
         return SourceOrm(
@@ -107,9 +122,6 @@ class Source(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
-            path=self.path,
-            metadata_key=self.metadataKey,
-            filters=self.filters,
         )
 
     @classmethod
@@ -120,24 +132,18 @@ class Source(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
-            path=orm_model.path,
-            metadataKey=orm_model.metadata_key,
-            filters=orm_model.filters,
         )
 
 
 class Sink(BaseModel):
-    id: int  # noqa: A003
-    thingNodeId: int | None
+    id: UUID  # noqa: A003
+    thingNodeId: UUID | None
     name: str
     type: ExternalType  # noqa: A003
     visible: bool | None = True
-    path: str
-    metadataKey: str | None = None
-    filters: dict[str, Filter] | None = {}
 
     class Config:
-        orm_model = True
+        orm_mode = True
 
     def to_orm_model(self) -> SinkOrm:
         return SinkOrm(
@@ -146,9 +152,6 @@ class Sink(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
-            path=self.path,
-            metadata_key=self.metadataKey,
-            filters=self.filters,
         )
 
     @classmethod
@@ -159,14 +162,11 @@ class Sink(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
-            path=orm_model.path,
-            metadataKey=orm_model.metadata_key,
-            filters=orm_model.filters,
         )
 
 
 class PropertySet(BaseModel):
-    id: int | None = Field(None, description="The primary key for the PropertySet")
+    id: UUID | None = Field(None, description="The primary key for the PropertySet")
     name: str = Field(..., description="The name of the PropertySet.")
     description: str | None = Field(
         None, description="A detailed description of the PropertySet."
@@ -218,7 +218,7 @@ class PropertySet(BaseModel):
 
 
 class ElementType(BaseModel):
-    id: int | None = Field(
+    id: UUID | None = Field(
         None, description="The primary key for the ElementType table"
     )
     name: str = Field(..., description="Unique name of the ElementType")
@@ -227,7 +227,7 @@ class ElementType(BaseModel):
     property_sets: list[PropertySet] = Field(
         default_factory=list, description="List of associated PropertySets"
     )
-    thing_nodes: list[ThingNode] = Field(
+    thing_nodes: list["ThingNode"] = Field(
         default_factory=list, description="List of associated ThingNodes"
     )
 
@@ -262,10 +262,10 @@ class ElementType(BaseModel):
 
 
 class PropertyMetadata(BaseModel):
-    id: int | None = Field(
+    id: UUID | None = Field(
         None, description="The primary key ID of the property metadata."
     )
-    property_set_id: int | None = Field(
+    property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
     )
     column_name: str = Field(
@@ -330,10 +330,10 @@ class PropertyMetadata(BaseModel):
 
 
 class ElementTypeToPropertySet(BaseModel):
-    element_type_id: int = Field(
+    element_type_id: UUID = Field(
         ..., description="The foreign key ID linking to the ElementType."
     )
-    property_set_id: int = Field(
+    property_set_id: UUID = Field(
         ..., description="The foreign key ID linking to the PropertySet."
     )
     order_no: int = Field(
