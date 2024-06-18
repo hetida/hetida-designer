@@ -197,7 +197,7 @@ async def consume_execution_trigger_message(
                     job_id=exec_latest_by_group_id_input.job_id,
                 )
             logger.info(
-                "Start execution of trafo rev %s with job id %s from Kafka consumer %s",
+                "Start execution of trafo rev %s with job_id=%s from Kafka consumer %s",
                 str(exec_by_id_input.id),
                 str(exec_by_id_input.job_id),
                 kafka_ctx.consumer_id,
@@ -207,13 +207,14 @@ async def consume_execution_trigger_message(
             except TrafoExecutionError as e:
                 log_msg = (
                     f"Kafka consumer failed to execute trafo rev {exec_by_id_input.id}"
-                    f" for job {exec_by_id_input.job_id}. Error Message: {str(e)}. Aborting."
+                    f" for job_id={exec_by_id_input.job_id}. Error Message: {str(e)}. Aborting."
                 )
                 kafka_ctx.last_unhandled_exception = e
                 logger.error(log_msg)
                 continue
             logger.info(
-                "Kafka consumer %s finished execution for job %s with result status %s. Error: %s",
+                "Kafka consumer %s finished execution for job_id=%s with result status %s."
+                "Error: %s",
                 kafka_ctx.consumer_id,
                 str(exec_by_id_input.job_id),
                 str(exec_result.result),
@@ -235,7 +236,7 @@ async def producer_send_result_msg(
     """Send an execution result message to Kafka result/response topic"""
     message_value = exec_result.json().encode("utf8")
     logger.info(
-        "Start sending result message to Kafka response topic for job %s",
+        "Start sending result message to Kafka response topic for job_id=%s",
         str(exec_result.job_id),
     )
     await kakfa_ctx.producer.send_and_wait(
@@ -244,6 +245,6 @@ async def producer_send_result_msg(
         value=message_value,
     )
     logger.info(
-        "Finished sending result message to Kafka response topic for job %s",
+        "Finished sending result message to Kafka response topic for job_id=%s",
         str(exec_result.job_id),
     )

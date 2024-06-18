@@ -835,10 +835,10 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     try:
         try:
             result = await handle_trafo_revision_execution_request(exec_by_id)
-            logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
+            logger.info("Finished execution with job_id=%s", str(exec_by_id.job_id))
         except HTTPException as http_exc:
             logger.error(
-                "Execution with job id %s as background task failed:\n%s",
+                "Execution with job_id=%s as background task failed:\n%s",
                 str(exec_by_id.job_id),
                 str(http_exc.detail),
             )
@@ -846,11 +846,11 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
         else:
             await send_result_to_callback_url(callback_url, result)
             logger.info(
-                "Sent result of execution with job_id %s", str(exec_by_id.job_id)
+                "Sent result of execution with job_id=%s", str(exec_by_id.job_id)
             )
     except Exception as e:
         logger.error(
-            "An unexpected error occurred during execution with job id %s as background task:\n%s",
+            "An unexpected error occurred during execution with job_id=%s as background task:\n%s",
             str(exec_by_id.job_id),
             str(e),
         )
@@ -887,7 +887,7 @@ async def execute_asynchronous_transformation_revision_endpoint(
     """
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
-    return {"message": f"Execution request with job id {exec_by_id.job_id} accepted"}
+    return {"message": f"Execution request with job_id={exec_by_id.job_id} accepted"}
 
 
 async def handle_latest_trafo_revision_execution_request(
@@ -955,12 +955,12 @@ async def execute_latest_and_post(
                 exec_latest_by_group_id_input
             )
             logger.info(
-                "Finished execution with job_id %s",
+                "Finished execution with job_id=%s",
                 str(exec_latest_by_group_id_input.job_id),
             )
         except HTTPException as http_exc:
             logger.error(
-                "Execution with job id %s as background task failed:\n%s",
+                "Execution with job_id=%s as background task failed:\n%s",
                 str(exec_latest_by_group_id_input.job_id),
                 str(http_exc.detail),
             )
@@ -973,7 +973,7 @@ async def execute_latest_and_post(
             )
     except Exception as e:
         logger.error(
-            "An unexpected error occurred during execution with job_id %s as background task:\n%s",
+            "An unexpected error occurred during execution with job_id=%s as background task:\n%s",
             str(exec_latest_by_group_id_input.job_id),
             str(e),
         )
@@ -1025,7 +1025,7 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
 
     return {
         "message": "Execution request for latest revision with "
-        f"job id {exec_latest_by_group_id_input.job_id} accepted"
+        f"job_id={exec_latest_by_group_id_input.job_id} accepted"
     }
 
 

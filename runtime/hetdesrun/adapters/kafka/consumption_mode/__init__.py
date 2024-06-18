@@ -173,7 +173,7 @@ async def handle_message(
 
     logger.info(
         f"Trigger execution of trafo {str(exec_input.id)} via Kakfa consumption mode from message "
-        f"with message job id {str(msg_obj.job_id)} with job id {str(new_job_id)}.\n"
+        f"with message job id {str(msg_obj.job_id)} with job_id={str(new_job_id)}.\n"
         "Kafka message: "
         "topic={}:partition={:d}:offset={:d}: key={} timestamp={}".format(
             kafka_msg.topic,
@@ -195,7 +195,7 @@ async def handle_message(
     # That's why we log properly here
     result_msg = (
         f"Finished execution of trafo {str(exec_input.id)} via Kakfa consumption mode from message"
-        f" with message job id {str(msg_obj.job_id)} with job id {str(new_job_id)}.\n"
+        f" with message job id {str(msg_obj.job_id)} with job_id={str(new_job_id)}.\n"
         "Kafka message:"
     ) + (
         "topic={}:partition={:d}:offset={:d}: key={} timestamp={}".format(
