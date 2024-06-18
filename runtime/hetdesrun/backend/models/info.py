@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
+from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.run import WorkflowExecutionInfo
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -48,6 +49,11 @@ class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
     result: str
     output_results_by_output_name: dict[str, Any] = {}
     output_types_by_output_name: dict[str, DataType] = {}
+    resolved_reproducibility_references: ReproducibilityReference = Field(
+        default_factory=ReproducibilityReference,
+        description="Resolved references to information needed to reproduce an execution result."
+        "The provided data can be used to replace data that would usually be produced at runtime.",
+    )
     process_id: int | None = Field(
         None,
         description=(

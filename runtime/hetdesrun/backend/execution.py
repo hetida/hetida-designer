@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from copy import deepcopy
 from posixpath import join as posix_urljoin
 from uuid import UUID, uuid4
 
@@ -27,6 +28,9 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.reference_context import (
+    set_reproducibility_reference_context,
+)
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.runtime.service import runtime_service
 from hetdesrun.utils import Type
@@ -291,6 +295,10 @@ async def execute_transformation_revision(
         exec_by_id_input.job_id = uuid4()
 
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+
+    # Set the reproducibility reference context to the provided reference of the exec object
+    repr_reference = deepcopy(exec_by_id_input.resolved_reproducibility_references)
+    set_reproducibility_reference_context(repr_reference)
 
     # prepare execution input
 
