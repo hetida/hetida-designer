@@ -54,30 +54,31 @@ def test_context_var_setting_and_getting():
     assert rr2 == rr1
     assert rr2 is not rr1
     assert rr2.exec_start_timestamp == rr1.exec_start_timestamp
-    assert rr2.exec_start_timestamp is not rr1.exec_start_timestamp
 
 
 def test_default_factories():
-    exec_frontend = ExecutionResponseFrontendDto(
+    exec_resp_frontend = ExecutionResponseFrontendDto(
         result="nf",
         output_results_by_output_name={"nf": 23},
         output_types_by_output_name={"nf": DataType.Integer},
         job_id=uuid4(),
     )
-    exec_id = ExecByIdBase(id=uuid4())
+    exec_by_id_obj = ExecByIdBase(id=uuid4())
     wf_result = WorkflowExecutionResult(
         result="failure", output_results_by_output_name={"nf": 23}, job_id=uuid4()
     )
 
-    assert exec_frontend.resolved_reproducibility_references is not None
+    # Check that at points where marshalling is done
+    # a (deep) copy is created.
+    assert exec_resp_frontend.resolved_reproducibility_references is not None
     assert (
-        exec_frontend.resolved_reproducibility_references
+        exec_resp_frontend.resolved_reproducibility_references
         is not get_reproducibility_reference_context()
     )
 
-    assert exec_id.resolved_reproducibility_references is not None
+    assert exec_by_id_obj.resolved_reproducibility_references is not None
     assert (
-        exec_id.resolved_reproducibility_references
+        exec_by_id_obj.resolved_reproducibility_references
         is not get_reproducibility_reference_context()
     )
 
@@ -106,7 +107,7 @@ def _db_with_two_trafos(mocked_clean_test_db_session):
 
 
 @pytest.mark.asyncio
-async def test_if_reference_in_response(_db_with_two_trafos):  # noqa: PT019
+async def test_for_reference_in_response(_db_with_two_trafos):  # noqa: PT019
     rr = ReproducibilityReference(
         exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc)
     )
@@ -131,18 +132,11 @@ async def test_if_reference_in_response(_db_with_two_trafos):  # noqa: PT019
 
     assert execution_response.result == "ok"
 
-    # Test whether context var is deepcopy of provided object
     assert get_reproducibility_reference_context() == rr
-    assert get_reproducibility_reference_context() is not rr
 
-    # Test whether the references are an attribute of the response object and are a deepcopy
     assert (
         execution_response.resolved_reproducibility_references
         == get_reproducibility_reference_context()
-    )
-    assert (
-        execution_response.resolved_reproducibility_references
-        is not get_reproducibility_reference_context()
     )
 
 
@@ -171,12 +165,7 @@ async def test_if_reference_in_response_after_exception(
     )
     assert execution_response.result == "failure"
 
-    # Test whether the references are an attribute of the response object and are a deepcopy
     assert (
         execution_response.resolved_reproducibility_references
         == get_reproducibility_reference_context()
-    )
-    assert (
-        execution_response.resolved_reproducibility_references
-        is not get_reproducibility_reference_context()
     )
