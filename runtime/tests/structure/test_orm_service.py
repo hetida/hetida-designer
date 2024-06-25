@@ -1,5 +1,6 @@
 import json
 import time
+import uuid
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
@@ -134,10 +135,10 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
 
 def test_invalid_thing_node_orm_creation(mocked_clean_test_db_session):
     session = mocked_clean_test_db_session()
-    et_orm_object = ElementTypeOrm(id=1, name="TypeOrm1")
+    et_orm_object = ElementTypeOrm(id=uuid.uuid4(), name="TypeOrm1")
     add_et(session, et_orm_object)
     tn_orm_object = ThingNodeOrm(
-        id="invalid", name=123, element_type_id="invalid", entity_uuid="invalid"
+        id=uuid.uuid4(), name=123, element_type_id=uuid.uuid4(), entity_uuid="invalid"
     )
 
     with pytest.raises(DBIntegrityError):
@@ -156,7 +157,12 @@ def test_invalid_thing_node_creation():
 
 def test_valid_thing_node_creation():
     try:
-        ThingNode(id=1, name="valid_name", element_type_id=1, entity_uuid="valid_uuid")
+        ThingNode(
+            id=uuid.uuid4(),
+            name="valid_name",
+            element_type_id=uuid.uuid4(),
+            entity_uuid="valid_uuid",
+        )
     except ValidationError:
         pytest.fail("Valid ThingNode creation raised ValidationError unexpectedly.")
 
@@ -168,7 +174,7 @@ def test_invalid_element_type_creation():
 
 def test_valid_element_type_creation():
     try:
-        ElementType(id=1, name="valid_name")
+        ElementType(id=uuid.uuid4(), name="valid_name")
     except ValidationError:
         pytest.fail("Valid ElementType creation raised ValidationError unexpectedly.")
 
@@ -186,7 +192,7 @@ def test_invalid_property_set_creation():
 def test_valid_property_set_creation():
     try:
         PropertySet(
-            id=1,
+            id=uuid.uuid4(),
             name="valid_name",
             reference_table_name="valid_name",
             property_set_type="INTERNAL",
@@ -204,7 +210,9 @@ def test_invalid_element_type_to_property_set_creation():
 
 def test_valid_element_type_to_property_set_creation():
     try:
-        ElementTypeToPropertySet(element_type_id=1, property_set_id=1, order_no=1)
+        ElementTypeToPropertySet(
+            element_type_id=uuid.uuid4(), property_set_id=uuid.uuid4(), order_no=1
+        )
     except ValidationError:
         pytest.fail(
             "Valid ElementTypeToPropertySet creation raised ValidationError unexpectedly."
@@ -225,8 +233,8 @@ def test_invalid_property_metadata_creation():
 def test_valid_property_metadata_creation():
     try:
         PropertyMetadata(
-            id=1,
-            property_set_id=1,
+            id=uuid.uuid4(),
+            property_set_id=uuid.uuid4(),
             column_name="valid column",
             column_label="valid_label",
             column_type="STRING",
@@ -792,10 +800,13 @@ def test_update_structure(mocked_clean_test_db_session):
     assert element_types[2].name == "Type3"
 
     thing_nodes = session.query(ThingNodeOrm).all()
-    assert len(thing_nodes) == 3
+    assert len(thing_nodes) == 6
     assert thing_nodes[0].name == "RootNode"
-    assert thing_nodes[1].name == "LeafNodeWith2Sources1Sink"
-    assert thing_nodes[2].name == "LeafNodeWith1Source2Sinks"
+    assert thing_nodes[1].name == "ChildNode1"
+    assert thing_nodes[2].name == "ChildNode2"
+    assert thing_nodes[3].name == "ChildNode3"
+    assert thing_nodes[4].name == "LeafNodeWith2Sources1Sink"
+    assert thing_nodes[5].name == "LeafNodeWith1Source2Sinks"
 
     sources = session.query(SourceOrm).all()
     assert len(sources) == 3
