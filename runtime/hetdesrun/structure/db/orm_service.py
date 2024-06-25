@@ -998,6 +998,79 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
             raise DBIntegrityError(msg) from e
 
 
+def flush_thing_nodes_without_dependencies(
+    session: SQLAlchemySession, thing_nodes: list
+) -> None:
+    for node in thing_nodes:
+        tn = ThingNodeOrm(
+            id=node.id,
+            name=node.name,
+            element_type_id=node.element_type_id,
+            entity_uuid=node.entity_uuid,
+        )
+        session.add(tn)
+    session.flush()
+
+
+def flush_sources_and_sinks_without_dependencies(
+    session: SQLAlchemySession, sources: list, sinks: list
+) -> None:
+    for source in sources:
+        src = SourceOrm(
+            id=source.id,
+            name=source.name,
+            type=source.type,
+            visible=source.visible,
+            thing_node_id=None,
+        )
+        session.add(src)
+
+    for sink in sinks:
+        snk = SinkOrm(
+            id=sink.id,
+            name=sink.name,
+            type=sink.type,
+            visible=sink.visible,
+            thing_node_id=None,
+        )
+        session.add(snk)
+    session.flush()
+
+
+def update_thing_nodes_with_dependencies(
+    session: SQLAlchemySession, thing_nodes: list
+) -> None:
+    for node in thing_nodes:
+        tn = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node.id).one()
+        tn.parent_node_id = node.parent_node_id
+        tn.children = [
+            session.query(ThingNodeOrm).filter(ThingNodeOrm.id == child_id).one()
+            for child_id in node.children
+        ]
+        tn.sources = [
+            session.query(SourceOrm).filter(SourceOrm.id == source_id).one()
+            for source_id in node.sources
+        ]
+        tn.sinks = [
+            session.query(SinkOrm).filter(SinkOrm.id == sink_id).one()
+            for sink_id in node.sinks
+        ]
+    session.flush()
+
+
+def update_sources_and_sinks_with_dependencies(
+    session: SQLAlchemySession, sources: list, sinks: list
+) -> None:
+    for source in sources:
+        src = session.query(SourceOrm).filter(SourceOrm.id == source.id).one()
+        src.thing_node_id = source.thingNodeId
+
+    for sink in sinks:
+        snk = session.query(SinkOrm).filter(SinkOrm.id == sink.id).one()
+        snk.thing_node_id = sink.thingNodeId
+    session.flush()
+
+
 def update_structure(file_path: str) -> None:
     element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
         file_path
@@ -1005,10 +1078,15 @@ def update_structure(file_path: str) -> None:
 
     with get_session()() as session, session.begin():
         flush_items(session, element_types)
+
     with get_session()() as session, session.begin():
-        # breakpoint()
-        flush_items(session, thing_nodes)
+        flush_thing_nodes_without_dependencies(session, thing_nodes)
+
     with get_session()() as session, session.begin():
-        flush_items(session, sources)
+        flush_sources_and_sinks_without_dependencies(session, sources, sinks)
+
     with get_session()() as session, session.begin():
-        flush_items(session, sinks)
+        update_thing_nodes_with_dependencies(session, thing_nodes)
+
+    with get_session()() as session, session.begin():
+        update_sources_and_sinks_with_dependencies(session, sources, sinks)
