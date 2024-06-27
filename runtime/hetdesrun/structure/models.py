@@ -104,7 +104,7 @@ class Filter(BaseModel):
 
 class Source(BaseModel):
     id: UUID  # noqa: A003
-    thingNodeId: UUID | None
+    thingNodeId: UUID
     name: str
     type: ExternalType  # noqa: A003
     visible: bool | None = True
@@ -137,7 +137,7 @@ class Source(BaseModel):
 
 class Sink(BaseModel):
     id: UUID  # noqa: A003
-    thingNodeId: UUID | None
+    thingNodeId: UUID
     name: str
     type: ExternalType  # noqa: A003
     visible: bool | None = True
