@@ -218,9 +218,7 @@ class PropertySet(BaseModel):
 
 
 class ElementType(BaseModel):
-    id: UUID = Field(
-        ..., description="The primary key for the ElementType table"
-    )
+    id: UUID = Field(..., description="The primary key for the ElementType table")
     name: str = Field(..., description="Unique name of the ElementType")
     icon: str | None = Field(None, description="Icon representing the ElementType")
     description: str | None = Field(None, description="Description of the ElementType")
@@ -262,9 +260,7 @@ class ElementType(BaseModel):
 
 
 class PropertyMetadata(BaseModel):
-    id: UUID = Field(
-        ..., description="The primary key ID of the property metadata."
-    )
+    id: UUID = Field(..., description="The primary key ID of the property metadata.")
     property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
     )
