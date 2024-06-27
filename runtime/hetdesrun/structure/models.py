@@ -18,7 +18,7 @@ from hetdesrun.structure.db.external_types import ExternalType
 
 
 class ThingNode(BaseModel):
-    id: UUID | None = Field(None, description="The primary key for the ThingNode table")
+    id: UUID = Field(..., description="The primary key for the ThingNode table")
     name: str = Field(..., description="Unique name of the Thing Node")
     description: str | None = Field(None, description="Description of the Thing Node")
     parent_node_id: UUID | None = Field(
@@ -166,7 +166,7 @@ class Sink(BaseModel):
 
 
 class PropertySet(BaseModel):
-    id: UUID | None = Field(None, description="The primary key for the PropertySet")
+    id: UUID = Field(..., description="The primary key for the PropertySet")
     name: str = Field(..., description="The name of the PropertySet.")
     description: str | None = Field(
         None, description="A detailed description of the PropertySet."
@@ -218,9 +218,7 @@ class PropertySet(BaseModel):
 
 
 class ElementType(BaseModel):
-    id: UUID | None = Field(
-        None, description="The primary key for the ElementType table"
-    )
+    id: UUID = Field(..., description="The primary key for the ElementType table")
     name: str = Field(..., description="Unique name of the ElementType")
     icon: str | None = Field(None, description="Icon representing the ElementType")
     description: str | None = Field(None, description="Description of the ElementType")
@@ -262,9 +260,7 @@ class ElementType(BaseModel):
 
 
 class PropertyMetadata(BaseModel):
-    id: UUID | None = Field(
-        None, description="The primary key ID of the property metadata."
-    )
+    id: UUID = Field(..., description="The primary key ID of the property metadata.")
     property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
     )
