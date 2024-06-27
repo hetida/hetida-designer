@@ -1,4 +1,3 @@
-import json
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
@@ -8,7 +7,7 @@ from sqlalchemy.future.engine import Engine
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import update_structure
 from hetdesrun.structure.models import Sink, Source, ThingNode
-from hetdesrun.structure.structure_service import get_children
+from hetdesrun.structure.structure_service import get_children, get_item
 
 
 @pytest.fixture()
@@ -105,3 +104,33 @@ def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
 def test_get_children_non_existent(mocked_clean_test_db_session):
     with pytest.raises(DBNotFoundError):
         get_children("99999999-9999-9999-9999-999999999999")
+
+
+@pytest.mark.usefixtures("_db_test_get_children")
+def test_get_item_thing_node(mocked_clean_test_db_session):
+    item_id = "00000000-0000-0000-0000-000000000004"
+    result = get_item(item_id)
+    assert isinstance(result, ThingNode)
+    assert result.name == "RootNode"
+
+
+@pytest.mark.usefixtures("_db_test_get_children")
+def test_get_item_source(mocked_clean_test_db_session):
+    item_id = "11111111-1111-1111-1111-111111111114"
+    result = get_item(item_id)
+    assert isinstance(result, Source)
+    assert result.name == "Source1"
+
+
+@pytest.mark.usefixtures("_db_test_get_children")
+def test_get_item_sink(mocked_clean_test_db_session):
+    item_id = "66666666-6666-6666-6666-666666666669"
+    result = get_item(item_id)
+    assert isinstance(result, Sink)
+    assert result.name == "Sink1"
+
+
+@pytest.mark.usefixtures("_db_test_get_children")
+def test_get_item_non_existent(mocked_clean_test_db_session):
+    with pytest.raises(DBNotFoundError):
+        get_item("99999999-9999-9999-9999-999999999999")
