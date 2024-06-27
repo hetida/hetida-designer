@@ -22,24 +22,21 @@
             "thingNodeId": "44444444-4444-4444-4444-444444444444",
             "name": "Source1",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Source1"
+            "visible": true
         },
         {
             "id": "11111111-1111-1111-1111-111111111115",
             "thingNodeId": "44444444-4444-4444-4444-444444444444",
             "name": "Source2",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Source2"
+            "visible": true
         },
         {
             "id": "11111111-1111-1111-1111-111111111116",
             "thingNodeId": "55555555-5555-5555-5555-555555555555",
             "name": "Source3",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Source3"
+            "visible": true
         }
     ],
     "sinks": [
@@ -48,24 +45,21 @@
             "thingNodeId": "55555555-5555-5555-5555-555555555555",
             "name": "Sink1",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Sink1"
+            "visible": true
         },
         {
             "id": "66666666-6666-6666-6666-666666666670",
             "thingNodeId": "55555555-5555-5555-5555-555555555555",
             "name": "Sink2",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Sink2"
+            "visible": true
         },
         {
             "id": "66666666-6666-6666-6666-666666666671",
             "thingNodeId": "44444444-4444-4444-4444-444444444444",
             "name": "Sink3",
             "type": "metadata(int)",
-            "visible": true,
-            "description": "Description for Sink3"
+            "visible": true
         }
     ],
     "thing_nodes": [
