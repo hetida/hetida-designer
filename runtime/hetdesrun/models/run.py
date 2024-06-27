@@ -1,6 +1,5 @@
 """Models for runtime execution endpoint"""
 
-
 import datetime
 import traceback as tb
 from enum import Enum, StrEnum
@@ -281,6 +280,7 @@ class ProcessStage(StrEnum):
     """ "Stages of the execution process."""
 
     PARSING_WORKFLOW = "PARSING_WORKFLOW"
+    RESOLVE_VIRTUAL_WIRINGS = "RESOLVE_VIRTUAL_WIRINGS"
     LOADING_DATA_FROM_ADAPTERS = "LOADING_DATA_FROM_ADAPTERS"
     PARSING_LOADED_DATA = "PARSING_LOADED_DATA"
     EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
@@ -301,9 +301,11 @@ class WorkflowExecutionError(BaseModel):
 def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
     last_trace = tb.extract_tb(exception.__traceback__)[-1]
     return ErrorLocation(
-        file=last_trace.filename
-        if last_trace.filename != "<string>"
-        else "COMPONENT CODE",
+        file=(
+            last_trace.filename
+            if last_trace.filename != "<string>"
+            else "COMPONENT CODE"
+        ),
         function_name=last_trace.name,
         line_number=last_trace.lineno,
     )
@@ -330,23 +332,31 @@ class WorkflowExecutionInfo(BaseModel):
     ) -> "WorkflowExecutionInfo":
         return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
-                type=type(exception).__name__
-                if cause is None
-                else type(cause).__name__,
+                type=(
+                    type(exception).__name__ if cause is None else type(cause).__name__
+                ),
                 message=str(exception) if cause is None else str(cause),
-                extra_information=exception.extra_information
-                if isinstance(exception, ComponentException)
-                else None,
-                error_code=exception.error_code
-                if isinstance(exception, ComponentException)
-                else None,
+                extra_information=(
+                    exception.extra_information
+                    if isinstance(exception, ComponentException)
+                    else None
+                ),
+                error_code=(
+                    exception.error_code
+                    if isinstance(exception, ComponentException)
+                    else None
+                ),
                 process_stage=process_stage,
-                operator_info=OperatorInfo.from_runtime_execution_error(exception)
-                if isinstance(exception, RuntimeExecutionError)
-                else None,
-                location=get_location_of_exception(exception)
-                if cause is None
-                else get_location_of_exception(cause),
+                operator_info=(
+                    OperatorInfo.from_runtime_execution_error(exception)
+                    if isinstance(exception, RuntimeExecutionError)
+                    else None
+                ),
+                location=(
+                    get_location_of_exception(exception)
+                    if cause is None
+                    else get_location_of_exception(cause)
+                ),
             ),
             traceback=tb.format_exc(),
             output_results_by_output_name={},

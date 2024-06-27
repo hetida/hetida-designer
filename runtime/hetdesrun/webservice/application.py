@@ -154,6 +154,9 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         local_file_adapter_router,
     )
     from hetdesrun.adapters.sql_adapter.webservice import sql_adapter_router
+    from hetdesrun.adapters.virtual_structure_adapter.webservice import (
+        virtual_structure_adapter_router,
+    )
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -177,6 +180,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         get_config().is_runtime_service
         and len(get_config().restrict_to_trafo_exec_service) == 0
     ):
+        app.include_router(virtual_structure_adapter_router)
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
@@ -204,6 +208,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         get_config().is_backend_service
         and len(get_config().restrict_to_trafo_exec_service) == 0
     ):
+        app.include_router(virtual_structure_adapter_router)
         if (
             get_sql_adapter_config().active
             and not get_sql_adapter_config().service_in_runtime
