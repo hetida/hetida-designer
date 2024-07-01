@@ -247,20 +247,11 @@ class ThingNodeOrm(Base):
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
-    children: Mapped[list["ThingNodeOrm"]] = relationship(
-        "ThingNodeOrm",
-        backref=backref("parent", remote_side=[id]),
-        cascade="all, delete-orphan",
+    sources = relationship(
+        "SourceOrm", back_populates="thing_node", cascade="all, delete-orphan"
     )
-    sources: Mapped[list["SourceOrm"]] = relationship(
-        "SourceOrm",
-        back_populates="thing_node",
-        cascade="all, delete-orphan",
-    )
-    sinks: Mapped[list["SinkOrm"]] = relationship(
-        "SinkOrm",
-        back_populates="thing_node",
-        cascade="all, delete-orphan",
+    sinks = relationship(
+        "SinkOrm", back_populates="thing_node", cascade="all, delete-orphan"
     )
 
     __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
@@ -268,34 +259,36 @@ class ThingNodeOrm(Base):
 
 class SourceOrm(Base):
     __tablename__ = "source"
-    id: UUIDType = Column(
-        "source_id", UUIDType(binary=False), primary_key=True, default=uuid4
-    )
-    thing_node_id: UUIDType = Column(
+
+    id = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False, unique=True)
+    type = Column(String(255), nullable=False)
+    visible = Column(Boolean, default=True)
+    adapter_key = Column(String(255), nullable=False)
+    source_id = Column(UUIDType(binary=False), nullable=False)
+    thing_node_id = Column(
         UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
-    name = Column(String(255), nullable=False)
-    type = Column(String, nullable=False)
-    visible = Column(Boolean, default=True)
-    thing_node: Mapped["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="sources"
-    )
+    thing_node = relationship("ThingNodeOrm", back_populates="sources")
+    preset_filters = Column(JSON, nullable=True)
+    passthrough_filters = Column(JSON, nullable=True)
 
 
 class SinkOrm(Base):
     __tablename__ = "sink"
-    id: UUIDType = Column(
-        "sink_id", UUIDType(binary=False), primary_key=True, default=uuid4
-    )
-    thing_node_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
-    )
-    name = Column(String(255), nullable=False)
+
+    id = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False, unique=True)
     type = Column(String(255), nullable=False)
     visible = Column(Boolean, default=True)
-    thing_node: Mapped["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="sinks"
+    adapter_key = Column(String(255), nullable=False)
+    sink_id = Column(UUIDType(binary=False), nullable=False)
+    thing_node_id = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
+    thing_node = relationship("ThingNodeOrm", back_populates="sinks")
+    preset_filters = Column(JSON, nullable=True)
+    passthrough_filters = Column(JSON, nullable=True)
 
 
 class ElementTypeToPropertySetOrm(Base):
