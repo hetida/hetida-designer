@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.kafka.config import KafkaConfig
@@ -57,7 +57,9 @@ def async_test_client_with_kafka_adapter(
     two_kafka_configs,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
-    return AsyncClient(app=app_without_auth, base_url="http://test")
+    return AsyncClient(
+        transport=ASGITransport(app=app_without_auth), base_url="http://test"
+    )
 
 
 @pytest_asyncio.fixture

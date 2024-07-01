@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence import get_db_engine, sessionmaker
@@ -69,7 +69,9 @@ def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
 
 @pytest.fixture
 def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
-    return AsyncClient(app=app_without_auth, base_url="http://test")
+    return AsyncClient(
+        transport=ASGITransport(app=app_without_auth), base_url="http://test"
+    )
 
 
 @pytest.fixture
