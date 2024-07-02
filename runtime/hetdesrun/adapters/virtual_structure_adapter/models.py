@@ -15,11 +15,11 @@ class StructureThingNode(BaseModel):
 
     @classmethod
     def from_structure_service(cls, struct_tn: ThingNode) -> "StructureThingNode":
-        return StructureThingNode(
+        return cls(
             id=struct_tn.id,
             parentId=struct_tn.parent_node_id,
             name=struct_tn.name,
-            description=struct_tn.description,  # TODO problematic?
+            description=struct_tn.description,
         )
 
 
@@ -27,8 +27,7 @@ class StructureVirtualSource(BaseModel):
     id: UUID  # noqa: A003
     thingNodeId: UUID
     name: str
-    # TODO Change, create custom type?
-    type: ExternalType = ExternalType.DATAFRAME  # noqa: A003
+    type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str | None = None
@@ -36,11 +35,11 @@ class StructureVirtualSource(BaseModel):
 
     @classmethod
     def from_structure_service(cls, struct_source: Source) -> "StructureVirtualSource":
-        return StructureVirtualSource(
+        return cls(
             id=struct_source.id,
             thingNodeId=struct_source.thingNodeId,
             name=struct_source.name,
-            type=struct_source.type,  # TODO problematic?
+            type=struct_source.type,
             path="",
         )
 
@@ -49,8 +48,7 @@ class StructureVirtualSink(BaseModel):
     id: UUID  # noqa: A003
     thingNodeId: UUID
     name: str
-    # TODO Change, create custom type?
-    type: ExternalType = ExternalType.DATAFRAME  # noqa: A003
+    type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str | None = None
@@ -58,12 +56,12 @@ class StructureVirtualSink(BaseModel):
 
     @classmethod
     def from_structure_service(cls, struct_sink: Sink) -> "StructureVirtualSink":
-        return StructureVirtualSink(
+        return cls(
             id=struct_sink.id,
             thingNodeId=struct_sink.thingNodeId,
             name=struct_sink.name,
-            type=struct_sink.type,  # TODO problematic?
-            path="",
+            type=struct_sink.type,
+            path="",  # TODO Fill appropriately
         )
 
 
