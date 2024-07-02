@@ -17,7 +17,9 @@ def check_wiring_for_virtual_structure_adapter(workflow_wiring: WorkflowWiring) 
 
 
 # TODO Probably make it async later
-def resolve_virtual_wirings(workflow_wiring: WorkflowWiring) -> WorkflowWiring:
+def resolve_virtual_structure_wirings(
+    workflow_wiring: WorkflowWiring,
+) -> WorkflowWiring:
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
     input_ref_ids = [

@@ -28,7 +28,7 @@ from hetdesrun.wiring import (
     check_wiring_for_virtual_structure_adapter,
     resolve_and_load_data_from_wiring,
     resolve_and_send_data_from_wiring,
-    resolve_virtual_wirings,
+    resolve_virtual_structure_wirings,
 )
 
 runtime_logger.addFilter(job_id_context_filter)
@@ -88,13 +88,13 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         )
 
     # Resolve virtual wirings if necessary
-    currently_executed_process_stage = ProcessStage.RESOLVE_VIRTUAL_WIRINGS
+    currently_executed_process_stage = ProcessStage.RESOLVE_VIRTUAL_STRUCTURE_WIRINGS
     try:
         resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
             currently_executed_process_stage.value
         )
         if check_wiring_for_virtual_structure_adapter(runtime_input.workflow_wiring):
-            runtime_input.workflow_wiring = resolve_virtual_wirings(
+            runtime_input.workflow_wiring = resolve_virtual_structure_wirings(
                 runtime_input.workflow_wiring
             )
             runtime_logger.info(runtime_input.workflow_wiring)
