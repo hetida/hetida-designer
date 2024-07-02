@@ -28,25 +28,6 @@ class ThingNode(BaseModel):
         ..., description="Foreign key to the ElementType table"
     )
     entity_uuid: str = Field(..., description="UUID identifier for the entity")
-    children: list[UUID] = Field(
-        default_factory=list, description="List of child ThingNodes UUIDs"
-    )
-    sources: list[UUID] = Field(
-        default_factory=list,
-        description="List of Source UUIDs associated with the ThingNode",
-    )
-    sinks: list[UUID] = Field(
-        default_factory=list,
-        description="List of Sink UUIDs associated with the ThingNode",
-    )
-
-    @validator("sources", "sinks")
-    def sources_and_sinks_only_for_leaf_nodes(
-        cls, v: Any, values: dict[str, Any], field: Any
-    ) -> Any:
-        if "children" in values and values["children"] and v:
-            raise ValueError(f"{field.name} can only be set if there are no children")
-        return v
 
     class Config:
         orm_mode = True
@@ -59,9 +40,6 @@ class ThingNode(BaseModel):
             parent_node_id=self.parent_node_id,
             element_type_id=self.element_type_id,
             entity_uuid=self.entity_uuid,
-            children=[ThingNodeOrm(id=child_id) for child_id in self.children],
-            sources=[SourceOrm(id=source_id) for source_id in self.sources],
-            sinks=[SinkOrm(id=sink_id) for sink_id in self.sinks],
         )
 
     @classmethod
@@ -74,9 +52,6 @@ class ThingNode(BaseModel):
                 parent_node_id=orm_model.parent_node_id,
                 element_type_id=orm_model.element_type_id,
                 entity_uuid=orm_model.entity_uuid,
-                children=[child.id for child in orm_model.children],
-                sources=[source.id for source in orm_model.sources],
-                sinks=[sink.id for sink in orm_model.sinks],
             )
         except ValidationError as e:
             msg = (
@@ -91,26 +66,27 @@ class FilterType(str, Enum):
 
 
 class Filter(BaseModel):
-    name: str
-    type: FilterType  # noqa: A003
-    required: bool
-
-
-# class ReferencedHDSource(BaseModel):
-#     id: str
-#     adapter_key: str | int
-#     filters:
+    name: str = Field(..., description="Name of the filter")
+    type: FilterType = Field(..., description="Type of the filter")  # noqa: A003
+    required: bool = Field(..., description="Indicates if the filter is required")
 
 
 class Source(BaseModel):
-    id: UUID  # noqa: A003
-    thingNodeId: UUID
-    name: str
-    type: ExternalType  # noqa: A003
-    visible: bool | None = True
-    # referenced_hd_source: RefrencedHDSource
-    # preset_filters: dict[str, Any]
-    # passthrough_filters: list[str]
+    id: UUID = Field(..., description="Unique identifier for the source")  # noqa: A003
+    thingNodeId: UUID = Field(
+        ..., description="ID of the ThingNode this source is associated with"
+    )
+    name: str = Field(..., description="Name of the source")
+    type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
+    visible: bool = Field(True, description="Visibility of the source")
+    preset_filters: dict[str, Any] | None = Field(
+        None, description="Preset filters for the source"
+    )
+    passthrough_filters: list[str] | None = Field(
+        None, description="Passthrough filters for the source"
+    )
+    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    source_id: UUID = Field(..., description="Referenced HD Source identifier")
 
     class Config:
         orm_mode = True
@@ -122,6 +98,10 @@ class Source(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
+            preset_filters=self.preset_filters,
+            passthrough_filters=self.passthrough_filters,
+            adapter_key=self.adapter_key,
+            source_id=self.source_id,
         )
 
     @classmethod
@@ -132,15 +112,35 @@ class Source(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
+            preset_filters=orm_model.preset_filters,
+            passthrough_filters=orm_model.passthrough_filters,
+            adapter_key=orm_model.adapter_key,
+            source_id=orm_model.source_id,
         )
+
+    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
+    def validate_filters(cls, v):
+        if not v:
+            return {}
+        return v
 
 
 class Sink(BaseModel):
-    id: UUID  # noqa: A003
-    thingNodeId: UUID
-    name: str
-    type: ExternalType  # noqa: A003
-    visible: bool | None = True
+    id: UUID = Field(..., description="Unique identifier for the sink")  # noqa: A003
+    thingNodeId: UUID = Field(
+        ..., description="ID of the ThingNode this sink is associated with"
+    )
+    name: str = Field(..., description="Name of the sink")
+    type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
+    visible: bool = Field(True, description="Visibility of the sink")
+    preset_filters: dict[str, Any] | None = Field(
+        None, description="Preset filters for the sink"
+    )
+    passthrough_filters: list[str] | None = Field(
+        None, description="Passthrough filters for the sink"
+    )
+    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
 
     class Config:
         orm_mode = True
@@ -152,6 +152,10 @@ class Sink(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
+            preset_filters=self.preset_filters,
+            passthrough_filters=self.passthrough_filters,
+            adapter_key=self.adapter_key,
+            sink_id=self.sink_id,
         )
 
     @classmethod
@@ -162,7 +166,17 @@ class Sink(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
+            preset_filters=orm_model.preset_filters,
+            passthrough_filters=orm_model.passthrough_filters,
+            adapter_key=orm_model.adapter_key,
+            sink_id=orm_model.sink_id,
         )
+
+    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
+    def validate_filters(cls, v):
+        if not v:
+            return {}
+        return v
 
 
 class PropertySet(BaseModel):

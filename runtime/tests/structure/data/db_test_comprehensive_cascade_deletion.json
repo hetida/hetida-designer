@@ -1,38 +1,60 @@
 {
     "element_types": [
         {
-            "id": 1,
+            "id": "00000000-0000-0000-0000-000000000001",
             "name": "Type1"
         },
         {
-            "id": 2,
+            "id": "00000000-0000-0000-0000-000000000002",
             "name": "Type2"
         }
     ],
     "thing_nodes": [
         {
-            "id": 1,
+            "id": "00000000-0000-0000-0000-000000000001",
             "name": "Root Node",
             "description": "Root Node of the hierarchy",
-            "element_type_id": 1,
+            "element_type_id": "00000000-0000-0000-0000-000000000001",
             "entity_uuid": "entity_uuid_1",
             "parent_node_id": null
         },
         {
-            "id": 2,
+            "id": "00000000-0000-0000-0000-000000000002",
             "name": "Child Node Level 1",
             "description": "First child of Root Node",
-            "element_type_id": 2,
+            "element_type_id": "00000000-0000-0000-0000-000000000002",
             "entity_uuid": "entity_uuid_2",
-            "parent_node_id": 1
+            "parent_node_id": "00000000-0000-0000-0000-000000000001"
         },
         {
-            "id": 3,
+            "id": "00000000-0000-0000-0000-000000000003",
             "name": "Child Node Level 2",
             "description": "Child of First Child",
-            "element_type_id": 2,
+            "element_type_id": "00000000-0000-0000-0000-000000000002",
             "entity_uuid": "entity_uuid_3",
-            "parent_node_id": 2
+            "parent_node_id": "00000000-0000-0000-0000-000000000002"
+        }
+    ],
+    "sources": [
+        {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "thingNodeId": "00000000-0000-0000-0000-000000000003",
+            "name": "Source1",
+            "type": "metadata(int)",
+            "visible": true,
+            "adapter_key": "key1",
+            "source_id": "00000000-0000-0000-0000-000000000101"
+        }
+    ],
+    "sinks": [
+        {
+            "id": "66666666-6666-6666-6666-666666666666",
+            "thingNodeId": "00000000-0000-0000-0000-000000000003",
+            "name": "Sink1",
+            "type": "metadata(int)",
+            "visible": true,
+            "adapter_key": "key1",
+            "sink_id": "00000000-0000-0000-0000-000000000201"
         }
     ]
 }
