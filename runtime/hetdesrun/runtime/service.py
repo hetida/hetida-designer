@@ -25,7 +25,6 @@ from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
 from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
-    check_wiring_for_virtual_structure_adapter,
     resolve_and_load_data_from_wiring,
     resolve_and_send_data_from_wiring,
     resolve_virtual_structure_wirings,
