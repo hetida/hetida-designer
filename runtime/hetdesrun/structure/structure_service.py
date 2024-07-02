@@ -41,22 +41,30 @@ def get_children(
         )
 
 
-def get_item(item_id: UUID) -> ThingNode | Source | Sink:
+def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
     with get_session()() as session:
         thing_node = (
-            session.query(ThingNodeOrm).filter(ThingNodeOrm.id == item_id).one_or_none()
+            session.query(ThingNodeOrm).filter(ThingNodeOrm.id == tn_id).one_or_none()
         )
         if thing_node:
             return ThingNode.from_orm_model(thing_node)
 
-        source = session.query(SourceOrm).filter(SourceOrm.id == item_id).one_or_none()
+    raise DBNotFoundError(f"No ThingNode found for ID {tn_id}")
+
+
+def get_single_source_from_db(src_id: UUID) -> Source:
+    with get_session()() as session:
+        source = session.query(SourceOrm).filter(SourceOrm.id == src_id).one_or_none()
         if source:
             return Source.from_orm_model(source)
 
-        sink = session.query(SinkOrm).filter(SinkOrm.id == item_id).one_or_none()
+    raise DBNotFoundError(f"No Source found for ID {src_id}")
+
+
+def get_single_sink_from_db(sink_id: UUID) -> Sink:
+    with get_session()() as session:
+        sink = session.query(SinkOrm).filter(SinkOrm.id == sink_id).one_or_none()
         if sink:
             return Sink.from_orm_model(sink)
 
-        raise DBNotFoundError(
-            f"No ThingNode, Source, or Sink found for item_id {item_id}"
-        )
+    raise DBNotFoundError(f"No Sink found for ID {sink_id}")

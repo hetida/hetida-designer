@@ -10,9 +10,12 @@ from hetdesrun.adapters.virtual_structure_adapter.models import (
     StructureVirtualSource,
 )
 from hetdesrun.adapters.virtual_structure_adapter.structure import (
-    get_single_node,
+    get_single_sink,
+    get_single_source,
+    get_single_thingnode,
     get_structure,
 )
+from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
@@ -26,10 +29,33 @@ virtual_structure_adapter_router = HandleTrailingSlashAPIRouter(
     response_model=StructureResponse,
     dependencies=[],
 )
-async def get_structure_endpoint(parentId: str | None = None) -> StructureResponse:
-    if parentId:
-        parentId = UUID(parentId)
-    return get_structure(parent_id=parentId)
+async def get_structure_endpoint(parentId: UUID | None = None) -> StructureResponse:
+    """Returns one level of the thingnode hierarchy for lazy-loading in the frontend"""
+    try:
+        structure = get_structure(parent_id=parentId)
+    except DBNotFoundError as exc:  # TODO Should this even be raised?
+        logger.info("The provided UUID (%s) has no children", parentId)
+        raise HTTPException(
+            status_code=404, detail=f"The provided UUID ({parentId}) has no children"
+        ) from exc
+    return structure
+
+
+@virtual_structure_adapter_router.get(
+    "/thingNodes/{id}",
+    response_model=StructureThingNode,
+    dependencies=[],
+)
+async def get_single_thingnode_endpoint(node_id: UUID) -> StructureThingNode:
+    try:
+        node = get_single_thingnode(node_id)
+    except DBNotFoundError as exc:
+        logger.info("No ThingNode found for provided UUID (%s)", node_id)
+        raise HTTPException(
+            status_code=404, detail=f"No ThingNode found for provided UUID ({node_id})"
+        ) from exc
+
+    return node
 
 
 @virtual_structure_adapter_router.get(
@@ -37,16 +63,14 @@ async def get_structure_endpoint(parentId: str | None = None) -> StructureRespon
     response_model=StructureVirtualSource,
     dependencies=[],
 )
-async def get_single_source(source_id: UUID) -> StructureVirtualSource:
-    source = get_single_node(source_id)
-
-    if source is None:
-        raise HTTPException(status_code=404, detail="Could not find the source")
-
-    if not isinstance(source, StructureVirtualSource):
+async def get_single_source_endpoint(source_id: UUID) -> StructureVirtualSource:
+    try:
+        source = get_single_source(source_id)
+    except DBNotFoundError as exc:
+        logger.info("No Source found for provided UUID (%s)", source_id)
         raise HTTPException(
-            status_code=400, detail="The requested UUID is not a source"
-        )
+            status_code=404, detail=f"No Source found for provided UUID ({source_id})"
+        ) from exc
 
     return source
 
@@ -56,32 +80,13 @@ async def get_single_source(source_id: UUID) -> StructureVirtualSource:
     response_model=StructureVirtualSink,
     dependencies=[],
 )
-async def get_single_sink(sink_id: UUID) -> StructureVirtualSink:
-    sink = get_single_node(sink_id)
-
-    if sink is None:
-        raise HTTPException(status_code=404, detail="Could not find the sink")
-
-    if not isinstance(sink, StructureVirtualSink):
-        raise HTTPException(status_code=400, detail="The requested UUID is not a sink")
+async def get_single_sink_endpoint(sink_id: UUID) -> StructureVirtualSink:
+    try:
+        sink = get_single_sink(sink_id)
+    except DBNotFoundError as exc:
+        logger.info("No Sink found for provided UUID (%s)", sink_id)
+        raise HTTPException(
+            status_code=404, detail=f"No Sink found for provided UUID ({sink_id})"
+        ) from exc
 
     return sink
-
-
-@virtual_structure_adapter_router.get(
-    "/thingNodes/{id}",
-    response_model=StructureThingNode,
-    dependencies=[],
-)
-async def get_single_thingnode(node_id: UUID) -> StructureThingNode:
-    node = get_single_node(node_id)
-
-    if node is None:
-        raise HTTPException(status_code=404, detail="Could not find the thingnode")
-
-    if not isinstance(node, StructureThingNode):
-        raise HTTPException(
-            status_code=400, detail="The requested UUID is not a thingnode"
-        )
-
-    return node

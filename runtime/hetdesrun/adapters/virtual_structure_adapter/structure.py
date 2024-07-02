@@ -8,7 +8,12 @@ from hetdesrun.adapters.virtual_structure_adapter.models import (
     StructureVirtualSource,
 )
 from hetdesrun.structure.models import Sink, Source
-from hetdesrun.structure.structure_service import get_children, get_item
+from hetdesrun.structure.structure_service import (
+    get_children,
+    get_single_sink_from_db,
+    get_single_source_from_db,
+    get_single_thingnode_from_db,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +47,22 @@ def get_structure(parent_id: UUID | None = None) -> StructureResponse:
     )
 
 
-def get_single_node(
-    node_id: UUID,
-) -> StructureThingNode | StructureVirtualSource | StructureVirtualSink:
-    node = get_item(node_id)
-
-    if isinstance(node, Source):
-        return StructureVirtualSource.from_structure_service(node)
-
-    if isinstance(node, Sink):
-        return StructureVirtualSink.from_structure_service(node)
-
+def get_single_thingnode(
+    tn_id: UUID,
+) -> StructureThingNode:
+    node = get_single_thingnode_from_db(tn_id)
     return StructureThingNode.from_structure_service(node)
+
+
+def get_single_source(
+    src_id: UUID,
+) -> StructureVirtualSource:
+    source = get_single_source_from_db(src_id)
+    return StructureVirtualSource.from_structure_service(source)
+
+
+def get_single_sink(
+    sink_id: UUID,
+) -> StructureVirtualSink:
+    sink = get_single_sink_from_db(sink_id)
+    return StructureVirtualSink.from_structure_service(sink)
