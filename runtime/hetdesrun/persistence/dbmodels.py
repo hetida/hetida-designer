@@ -244,6 +244,7 @@ class ThingNodeOrm(Base):
         nullable=False,
     )
     entity_uuid = Column(String(36), nullable=False)
+    meta_data = Column(String(1024), nullable=True) 
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
