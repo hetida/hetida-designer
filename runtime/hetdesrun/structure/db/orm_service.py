@@ -1,5 +1,7 @@
 import json
 import logging
+from collections import defaultdict, deque
+from uuid import UUID
 
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -79,6 +81,10 @@ def update_source(
                 source.name = source_update.name
                 source.type = source_update.type
                 source.visible = source_update.visible
+                source.preset_filters = source_update.preset_filters
+                source.passthrough_filters = source_update.passthrough_filters
+                source.adapter_key = source_update.adapter_key
+                source.source_id = source_update.source_id
                 return Source.from_orm_model(source)
             return None
         except NoResultFound as e:
@@ -163,6 +169,10 @@ def update_sink(
                 sink.name = sink_update.name
                 sink.type = sink_update.type
                 sink.visible = sink_update.visible
+                sink.preset_filters = sink_update.preset_filters
+                sink.passthrough_filters = sink_update.passthrough_filters
+                sink.adapter_key = sink_update.adapter_key
+                sink.sink_id = sink_update.sink_id
                 return Sink.from_orm_model(sink)
             return None
         except NoResultFound as e:
@@ -273,8 +283,34 @@ def delete_tn(id: int, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
+
+            sources = (
+                session.query(SourceOrm)
+                .filter(SourceOrm.thing_node_id == thingnode.id)
+                .all()
+            )
+            for source in sources:
+                session.delete(source)
+
+            sinks = (
+                session.query(SinkOrm)
+                .filter(SinkOrm.thing_node_id == thingnode.id)
+                .all()
+            )
+            for sink in sinks:
+                session.delete(sink)
+
+            children = (
+                session.query(ThingNodeOrm)
+                .filter(ThingNodeOrm.parent_node_id == thingnode.id)
+                .all()
+            )
+            for child in children:
+                delete_tn(child.id, log_error)
+
             session.delete(thingnode)
             session.commit()
+
         except Exception as e:
             session.rollback()
             if log_error:
@@ -286,7 +322,7 @@ def delete_tn(id: int, log_error: bool = True) -> None:  # noqa: A002
 
 
 def update_tn(
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     tn_update: ThingNode,
     log_error: bool = True,
 ) -> ThingNode | None:
@@ -299,7 +335,6 @@ def update_tn(
                 thingnode.parent_node_id = tn_update.parent_node_id
                 thingnode.element_type_id = tn_update.element_type_id
                 thingnode.entity_uuid = tn_update.entity_uuid
-                thingnode.children = tn_update.children
                 return ThingNode.from_orm_model(thingnode)
             return None
         except DBNotFoundError as e:
@@ -515,16 +550,24 @@ def delete_et_cascade(id: int, log_error: bool = True) -> None:  # noqa: A002
             raise
 
 
+from typing import Union
+from uuid import UUID
+
+
 def update_et(
-    id: int,  # noqa: A002
-    updated_data: dict,
+    id: UUID,  # noqa: A002
+    et_update: ElementType,
     log_error: bool = True,
-) -> ElementType:
+) -> ElementType | None:
     with get_session()() as session, session.begin():
         try:
             element_type = fetch_et_by_id(session, id, log_error)
-            for key, value in updated_data.items():
-                setattr(element_type, key, value)
+            if element_type:
+                    element_type.name = et_update.name
+                    element_type.icon = et_update.icon
+                    element_type.description = et_update.description
+                    element_type.property_sets = et_update.property_sets
+                    element_type.thing_nodes = et_update.thing_nodes
             return ElementType.from_orm_model(element_type)
         except DBNotFoundError as e:
             session.rollback()
@@ -912,15 +955,13 @@ def process_element_types(data: dict) -> list[ElementType]:
     return element_types
 
 
-def process_sources(data: dict) -> tuple[list[Source], dict]:
-    sources: list[Source] = []
-    sources_by_node_id: dict[UUIDType, list[Source]] = {}
+def process_sources(data: dict) -> tuple[list[Source], dict[UUID, list[Source]]]:
+    sources = []
+    sources_by_node_id = defaultdict(list)
     for source_data in data.get("sources", []):
         try:
             source = Source(**source_data)
             sources.append(source)
-            if source.thingNodeId not in sources_by_node_id:
-                sources_by_node_id[source.thingNodeId] = []
             sources_by_node_id[source.thingNodeId].append(source)
         except ValidationError as e:
             msg = f"Error validating Source: {e}"
@@ -928,15 +969,13 @@ def process_sources(data: dict) -> tuple[list[Source], dict]:
     return sources, sources_by_node_id
 
 
-def process_sinks(data: dict) -> tuple[list[Sink], dict]:
-    sinks: list[Sink] = []
-    sinks_by_node_id: dict[UUIDType, list[Sink]] = {}
+def process_sinks(data: dict) -> tuple[list[Sink], dict[UUID, list[Sink]]]:
+    sinks = []
+    sinks_by_node_id = defaultdict(list)
     for sink_data in data.get("sinks", []):
         try:
             sink = Sink(**sink_data)
             sinks.append(sink)
-            if sink.thingNodeId not in sinks_by_node_id:
-                sinks_by_node_id[sink.thingNodeId] = []
             sinks_by_node_id[sink.thingNodeId].append(sink)
         except ValidationError as e:
             msg = f"Error validating Sink: {e}"
@@ -944,7 +983,7 @@ def process_sinks(data: dict) -> tuple[list[Sink], dict]:
     return sinks, sinks_by_node_id
 
 
-def process_thing_nodes(data: dict) -> dict:
+def process_thing_nodes(data: dict) -> dict[UUID, ThingNode]:
     nodes_by_id = {}
     for node_data in data.get("thing_nodes", []):
         try:
@@ -956,11 +995,32 @@ def process_thing_nodes(data: dict) -> dict:
     return nodes_by_id
 
 
-def update_node_hierarchy(nodes_by_id: dict) -> None:
+def topological_sort_thing_nodes(nodes_by_id: dict[UUID, ThingNode]) -> list[ThingNode]:
+    in_degree = {node_id: 0 for node_id in nodes_by_id}
+
     for node in nodes_by_id.values():
-        if node.parent_node_id is not None:
-            parent_node = nodes_by_id[node.parent_node_id]
-            parent_node.children.append(node.id)
+        if node.parent_node_id:
+            in_degree[node.id] += 1
+
+    queue = deque(
+        [node for node_id, node in nodes_by_id.items() if in_degree[node_id] == 0]
+    )
+
+    sorted_nodes = []
+
+    while queue:
+        node = queue.popleft()
+        sorted_nodes.append(node)
+        for child_node in nodes_by_id.values():
+            if child_node.parent_node_id == node.id:
+                in_degree[child_node.id] -= 1
+                if in_degree[child_node.id] == 0:
+                    queue.append(child_node)
+
+    if len(sorted_nodes) != len(nodes_by_id):
+        raise ValueError("cycle detected in ThingNodes")
+
+    return sorted_nodes
 
 
 def process_json_data(
@@ -970,8 +1030,8 @@ def process_json_data(
     sources, sources_by_node_id = process_sources(data)
     sinks, sinks_by_node_id = process_sinks(data)
     nodes_by_id = process_thing_nodes(data)
-    update_node_hierarchy(nodes_by_id)
-    return element_types, list(nodes_by_id.values()), sources, sinks
+    sorted_nodes = topological_sort_thing_nodes(nodes_by_id)
+    return element_types, sorted_nodes, sources, sinks
 
 
 def load_structure_from_json_file(
@@ -998,79 +1058,6 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
             raise DBIntegrityError(msg) from e
 
 
-def flush_thing_nodes_without_dependencies(
-    session: SQLAlchemySession, thing_nodes: list
-) -> None:
-    for node in thing_nodes:
-        tn = ThingNodeOrm(
-            id=node.id,
-            name=node.name,
-            element_type_id=node.element_type_id,
-            entity_uuid=node.entity_uuid,
-        )
-        session.add(tn)
-    session.flush()
-
-
-def flush_sources_and_sinks_without_dependencies(
-    session: SQLAlchemySession, sources: list, sinks: list
-) -> None:
-    for source in sources:
-        src = SourceOrm(
-            id=source.id,
-            name=source.name,
-            type=source.type,
-            visible=source.visible,
-            thing_node_id=None,
-        )
-        session.add(src)
-
-    for sink in sinks:
-        snk = SinkOrm(
-            id=sink.id,
-            name=sink.name,
-            type=sink.type,
-            visible=sink.visible,
-            thing_node_id=None,
-        )
-        session.add(snk)
-    session.flush()
-
-
-def update_thing_nodes_with_dependencies(
-    session: SQLAlchemySession, thing_nodes: list
-) -> None:
-    for node in thing_nodes:
-        tn = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node.id).one()
-        tn.parent_node_id = node.parent_node_id
-        tn.children = [
-            session.query(ThingNodeOrm).filter(ThingNodeOrm.id == child_id).one()
-            for child_id in node.children
-        ]
-        tn.sources = [
-            session.query(SourceOrm).filter(SourceOrm.id == source_id).one()
-            for source_id in node.sources
-        ]
-        tn.sinks = [
-            session.query(SinkOrm).filter(SinkOrm.id == sink_id).one()
-            for sink_id in node.sinks
-        ]
-    session.flush()
-
-
-def update_sources_and_sinks_with_dependencies(
-    session: SQLAlchemySession, sources: list, sinks: list
-) -> None:
-    for source in sources:
-        src = session.query(SourceOrm).filter(SourceOrm.id == source.id).one()
-        src.thing_node_id = source.thingNodeId
-
-    for sink in sinks:
-        snk = session.query(SinkOrm).filter(SinkOrm.id == sink.id).one()
-        snk.thing_node_id = sink.thingNodeId
-    session.flush()
-
-
 def update_structure(file_path: str) -> None:
     element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
         file_path
@@ -1078,15 +1065,6 @@ def update_structure(file_path: str) -> None:
 
     with get_session()() as session, session.begin():
         flush_items(session, element_types)
-
-    with get_session()() as session, session.begin():
-        flush_thing_nodes_without_dependencies(session, thing_nodes)
-
-    with get_session()() as session, session.begin():
-        flush_sources_and_sinks_without_dependencies(session, sources, sinks)
-
-    with get_session()() as session, session.begin():
-        update_thing_nodes_with_dependencies(session, thing_nodes)
-
-    with get_session()() as session, session.begin():
-        update_sources_and_sinks_with_dependencies(session, sources, sinks)
+        flush_items(session, thing_nodes)
+        flush_items(session, sources)
+        flush_items(session, sinks)
