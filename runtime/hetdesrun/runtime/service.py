@@ -93,11 +93,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
             currently_executed_process_stage.value
         )
-        if check_wiring_for_virtual_structure_adapter(runtime_input.workflow_wiring):
-            runtime_input.workflow_wiring = resolve_virtual_structure_wirings(
-                runtime_input.workflow_wiring
-            )
-            runtime_logger.info(runtime_input.workflow_wiring)
+        resolve_virtual_structure_wirings(runtime_input.workflow_wiring)
+        runtime_logger.debug(
+            "Resolved virtual structure wirings: ", runtime_input.workflow_wiring
+        )
 
         resolve_wirings_measured_step.stop()
     except AdapterHandlingException as exc:

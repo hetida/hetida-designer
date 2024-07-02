@@ -9,17 +9,10 @@ from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import WorkflowWiring
 
 
-def check_wiring_for_virtual_structure_adapter(workflow_wiring: WorkflowWiring) -> bool:
-    return any(
-        wiring.adapter_id == "virtual-structure-adapter"
-        for wiring in workflow_wiring.input_wirings + workflow_wiring.output_wirings
-    )
-
-
 # TODO Probably make it async later
 def resolve_virtual_structure_wirings(
     workflow_wiring: WorkflowWiring,
-) -> WorkflowWiring:
+) -> None:
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
     input_ref_ids = [
@@ -46,8 +39,6 @@ def resolve_virtual_structure_wirings(
             new_wiring.filters | workflow_wiring.input_wirings[idx].filters
         )
         workflow_wiring.input_wirings[idx] = new_wiring
-
-    return workflow_wiring
 
 
 async def resolve_and_load_data_from_wiring(
