@@ -26,6 +26,9 @@ def resolve_virtual_structure_wirings(
         if wiring.adapter_id == "virtual-structure-adapter"
     ]
 
+    if not input_ref_ids and not output_ref_ids:
+        return
+
     # Combine input and output wirings to call the structure service
     ref_ids = [id_tuple[1] for id_tuple in input_ref_ids + output_ref_ids]
 
