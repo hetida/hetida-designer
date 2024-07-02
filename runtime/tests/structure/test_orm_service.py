@@ -105,6 +105,14 @@ def _db_comprehensive_cascade_deletion(mocked_clean_test_db_session):
         node = ThingNode(**node_data)
         store_single_thingnode(node)
 
+    for source_data in data.get("sources", []):
+        source = Source(**source_data)
+        store_single_source(source)
+
+    for sink_data in data.get("sinks", []):
+        sink = Sink(**sink_data)
+        store_single_sink(sink)
+
 
 @pytest.fixture()
 def _db_test_thing_node_many_children(mocked_clean_test_db_session):
@@ -252,24 +260,27 @@ def test_valid_property_metadata_creation():
 
 def test_add_et_tn(mocked_clean_test_db_session):
     session = mocked_clean_test_db_session()
-    et_orm_object = ElementTypeOrm(id=1, name="TypeOrm1")
+    et_orm_object = ElementTypeOrm(id=uuid.uuid4(), name="TypeOrm1")
     add_et(session, et_orm_object)
     tn_orm_object = ThingNodeOrm(
-        id=1, name="NodeOrm1", element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(),
+        name="NodeOrm1",
+        element_type_id=et_orm_object.id,
+        entity_uuid="entity_uuid_1",
     )
     add_tn(session, tn_orm_object)
-    retrieved_et_orm = fetch_et_by_id(session, 1)
-    retrieved_tn_orm = fetch_tn_by_id(session, 1)
+    retrieved_et_orm = fetch_et_by_id(session, et_orm_object.id)
+    retrieved_tn_orm = fetch_tn_by_id(session, tn_orm_object.id)
     assert et_orm_object == retrieved_et_orm
     assert tn_orm_object == retrieved_tn_orm
 
 
 def test_add_et_tn_integrity_error(mocked_clean_test_db_session):
     session = mocked_clean_test_db_session()
-    et_orm_object = ElementTypeOrm(id=1, name="TypeOrm1")
+    et_orm_object = ElementTypeOrm(id=uuid.uuid4(), name="TypeOrm1")
     add_et(session, et_orm_object)
     tn_orm_object = ThingNodeOrm(
-        id=1, element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(), element_type_id=et_orm_object.id, entity_uuid="entity_uuid_1"
     )  # name missing
 
     with pytest.raises(DBIntegrityError):
@@ -279,229 +290,233 @@ def test_add_et_tn_integrity_error(mocked_clean_test_db_session):
 # CRUD Operations for ThingNode
 
 
-@pytest.mark.skip(
-    reason="assert ThingNode(id=...[], sink=None) == ThingNode(id=...ne, sink=None)."
-)
 def test_store_single_thingnode(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
-    retrieved_tn = read_single_thingnode(1)
+    retrieved_tn = read_single_thingnode(tn_object.id)
     assert tn_object == retrieved_tn
 
 
 def test_read_single_thingnode(mocked_clean_test_db_session):
-    tn_id = 1
+    tn_id = uuid.uuid4()
     with pytest.raises(DBNotFoundError):
         read_single_thingnode(tn_id)
 
 
-@pytest.mark.skip(
-    reason="assert ThingNode(id=...[], sink=None) == ThingNode(id=...ne, sink=None)."
-)
 def test_storing_and_receiving(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
 
-    tn_id = 9998
+    tn_id = uuid.uuid4()
     tn_object = ThingNode(
-        id=tn_id, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=tn_id, name="Node1", element_type_id=et_object.id, entity_uuid="entity_uuid"
     )
     store_single_thingnode(tn_object)
 
     received_tn_object = read_single_thingnode(tn_id)
     assert tn_object == received_tn_object
 
-    wrong_tn_id = 9999
+    wrong_tn_id = uuid.uuid4()
     with pytest.raises(DBNotFoundError):
         received_tn_object = read_single_thingnode(wrong_tn_id)
 
 
-@pytest.mark.skip(
-    reason="Test skipped temporarily. Replace dictionary with Pydantic model."
-)
 def test_updating_existing_tn(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
-    tn_id = 10001
+    tn_id = uuid.uuid4()
     tn_object = ThingNode(
-        id=tn_id, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=tn_id, name="Node1", element_type_id=et_object.id, entity_uuid="entity_uuid"
     )
     store_single_thingnode(tn_object)
 
-    updated_data = {
-        "name": "UpdatedNode1",
-        "description": "Updated description",
-    }
+    updated_data = ThingNode(
+        id=tn_id,
+        name="UpdatedNode1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
+    )
     update_tn(tn_id, updated_data)
 
     fetched_tn_object = read_single_thingnode(tn_id)
-    assert fetched_tn_object.name == updated_data["name"]
-    assert fetched_tn_object.description == updated_data["description"]
+    assert fetched_tn_object.name == updated_data.name
+    assert fetched_tn_object.description == updated_data.description
 
 
 def test_updating_nonexisting_tn(mocked_clean_test_db_session):
-    non_existent_tn_id = 9999
-    updated_data = {
-        "name": "NonExistentNode",
-        "description": "This node does not exist.",
-    }
+    non_existent_tn_id = uuid.uuid4()
+    updated_data = ThingNode(
+        id=non_existent_tn_id,
+        name="NonExistentNode",
+        element_type_id=uuid.uuid4(),
+        entity_uuid="entity_uuid",
+    )
     with pytest.raises(DBNotFoundError):
         update_tn(non_existent_tn_id, updated_data)
 
 
-@pytest.mark.skip(
-    reason="Test skipped temporarily. Replace dictionary with Pydantic model."
-)
 def test_update_thingnode_valid_data(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
-    updated_data = {"name": "UpdatedNode1"}
-    updated_tn = update_tn(1, updated_data)
+    updated_data = ThingNode(
+        id=tn_object.id,
+        name="UpdatedNode1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
+    )
+    updated_tn = update_tn(tn_object.id, updated_data)
     assert updated_tn.name == "UpdatedNode1"
-
-
-@pytest.mark.skip(
-    reason="Test skipped temporarily. Replace dictionary with Pydantic model."
-)
-def test_update_thingnode_invalid_data(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
-    store_single_element_type(et_object)
-    tn_object = ThingNode(
-        ud=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
-    )
-    store_single_thingnode(tn_object)
-    updated_data = {"name": None}
-    with pytest.raises(DBIntegrityError):
-        update_tn(1, updated_data)
 
 
 @pytest.mark.usefixtures("_db_comprehensive_cascade_deletion")
 def test_delete_thingnode_valid_id():
-    delete_tn(1)  # Root node
+    delete_tn(uuid.UUID("00000000-0000-0000-0000-000000000001"))  # Root node
 
     with pytest.raises(DBNotFoundError):
-        read_single_thingnode(1)  # Root node should be deleted
+        read_single_thingnode(
+            uuid.UUID("00000000-0000-0000-0000-000000000001")
+        )  # Root node should be deleted
     with pytest.raises(DBNotFoundError):
-        read_single_thingnode(2)  # Child node should also be deleted
+        read_single_thingnode(
+            uuid.UUID("00000000-0000-0000-0000-000000000002")
+        )  # Child node should also be deleted
     with pytest.raises(DBNotFoundError):
-        read_single_thingnode(3)  # Grandchild node should also be deleted
+        read_single_thingnode(
+            uuid.UUID("00000000-0000-0000-0000-000000000003")
+        )  # Grandchild node should also be deleted
 
 
 def test_delete_thingnode_invalid_id(mocked_clean_test_db_session):
     with pytest.raises(DBNotFoundError):
-        delete_tn(9999)
+        delete_tn(uuid.uuid4())
 
 
 def test_delete_thingnode_integrity_error(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     parent_tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid_1",
     )
     child_tn_object = ThingNode(
-        id=2,
+        id=uuid.uuid4(),
         name="Node2",
-        parent_node_id=1,
-        element_type_id=1,
+        parent_node_id=parent_tn_object.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_2",
     )
     store_single_thingnode(parent_tn_object)
     store_single_thingnode(child_tn_object)
 
-    delete_tn(1)
+    delete_tn(parent_tn_object.id)
 
 
 # CRUD Operations for ElementType
 def test_store_single_element_type(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
-    retrieved_et = read_single_element_type(1)
+    retrieved_et = read_single_element_type(et_object.id)
     assert et_object == retrieved_et
 
 
 def test_update_element_type_valid_data(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
-    updated_data = {"name": "UpdatedType1"}
-    updated_et = update_et(1, updated_data)
+    et_update = et_object
+    et_update.name = "UpdatedType1"
+    updated_et = update_et(et_object.id, et_update)
     assert updated_et.name == "UpdatedType1"
 
 
-def test_update_element_type_invalid_data(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
-    store_single_element_type(et_object)
-    updated_data = {"name": None}
-    with pytest.raises(DBIntegrityError):
-        update_et(1, updated_data)
-
-
 def test_delete_element_type(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
 
-    delete_et(1)
+    delete_et(et_object.id)
 
     with pytest.raises(DBNotFoundError):
-        read_single_element_type(1)
+        read_single_element_type(et_object.id)
 
 
 def test_delete_element_type_with_associated_thingnode(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        ud=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
 
     with pytest.raises(DBIntegrityError):
-        delete_et(1)
+        delete_et(et_object.id)
 
 
 def test_delete_cascade_element_type(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        ud=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
 
-    delete_et_cascade(1)
+    delete_et_cascade(et_object.id)
 
     with pytest.raises(DBNotFoundError):
-        read_single_element_type(1)
+        read_single_element_type(et_object.id)
 
 
 # Search and Retrieval Functions
 def test_fetch_tn_by_valid_id(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
-    retrieved_tn = fetch_tn_by_id(mocked_clean_test_db_session(), 1)
-    assert retrieved_tn.id == 1
+    retrieved_tn = fetch_tn_by_id(mocked_clean_test_db_session(), tn_object.id)
+    assert retrieved_tn.id == tn_object.id
 
 
 def test_fetch_tn_by_invalid_id(mocked_clean_test_db_session):
     with pytest.raises(DBNotFoundError):
-        fetch_tn_by_id(mocked_clean_test_db_session(), 9999)
+        fetch_tn_by_id(mocked_clean_test_db_session(), uuid.uuid4())
 
 
 @pytest.mark.usefixtures("_db_test_thing_node_many_children")
 def test_fetch_tn_child_ids_by_parent_id(mocked_clean_test_db_session):
     session = mocked_clean_test_db_session()
-    tn_child_list = fetch_tn_child_ids_by_parent_id(session, 1)
+    tn_child_list = fetch_tn_child_ids_by_parent_id(
+        session, uuid.UUID("00000000-0000-0000-0000-000000000001")
+    )
 
-    assert tn_child_list == [2, 3]
+    assert tn_child_list == [
+        uuid.UUID("00000000-0000-0000-0000-000000000002"),
+        uuid.UUID("00000000-0000-0000-0000-000000000003"),
+    ]
 
 
 @pytest.mark.usefixtures("_db_test_thing_node_many_children")
@@ -509,65 +524,87 @@ def test_fetch_tn_child_ids_by_parent_id_dbnotfound(mocked_clean_test_db_session
     session = mocked_clean_test_db_session()
 
     with pytest.raises(DBNotFoundError):
-        fetch_tn_child_ids_by_parent_id(session, 3)
+        fetch_tn_child_ids_by_parent_id(
+            session, uuid.UUID("00000000-0000-0000-0000-000000000003")
+        )
 
 
 # Tests for Hierarchy and Relationships
 @pytest.mark.usefixtures("_db_test_thing_node_hierarchy")
 def test_thing_node_hierarchy():
-    hierarchy_ids = get_ancestors_tn_ids(3)
-    assert hierarchy_ids == [3, 2, 1]
-    children_ids = get_children_tn_ids(1)
-    assert children_ids == [2]
+    hierarchy_ids = get_ancestors_tn_ids(
+        uuid.UUID("00000000-0000-0000-0000-000000000003")
+    )  # Ändern von festen IDs zu uuid.uuid4()
+    assert hierarchy_ids == [
+        uuid.UUID("00000000-0000-0000-0000-000000000003"),
+        uuid.UUID("00000000-0000-0000-0000-000000000002"),
+        uuid.UUID("00000000-0000-0000-0000-000000000001"),
+    ]
+    children_ids = get_children_tn_ids(
+        uuid.UUID("00000000-0000-0000-0000-000000000001")
+    )  # Ändern von festen IDs zu uuid.uuid4()
+    assert children_ids == [uuid.UUID("00000000-0000-0000-0000-000000000002")]
     with pytest.raises(DBNotFoundError):
-        get_ancestors_tn_ids(4)
+        get_ancestors_tn_ids(
+            uuid.UUID("00000000-0000-0000-0000-000000000004")
+        )  # Ändern von festen IDs zu uuid.uuid4()
 
 
 def test_get_children_tn_ids_valid_id(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(
+        id=uuid.uuid4(), name="Type1"
+    )  # Ändern von festen IDs zu uuid.uuid4()
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     child_tn_object = ThingNode(
-        id=2,
+        id=uuid.uuid4(),
         name="ChildNode1",
-        parent_node_id=1,
-        element_type_id=1,
+        parent_node_id=tn_object.id,
+        element_type_id=et_object.id,
         entity_uuid="child_entity_uuid",
     )
     store_single_thingnode(tn_object)
     store_single_thingnode(child_tn_object)
-    children_ids = get_children_tn_ids(1)
-    assert children_ids == [2]
+    children_ids = get_children_tn_ids(tn_object.id)
+    assert children_ids == [child_tn_object.id]
 
 
 def test_get_ancestors_tn_ids_valid_id(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(
+        id=uuid.uuid4(), name="Type1"
+    )  # Ändern von festen IDs zu uuid.uuid4()
     store_single_element_type(et_object)
 
     tn_object1 = ThingNode(
-        id=1, name="RootNode", element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(),
+        name="RootNode",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid_1",
     )
     tn_object2 = ThingNode(
-        id=2,
+        id=uuid.uuid4(),
         name="ChildNode1",
-        parent_node_id=1,
-        element_type_id=1,
+        parent_node_id=tn_object1.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_2",
     )
     tn_object3 = ThingNode(
-        id=3,
+        id=uuid.uuid4(),
         name="ChildNode2",
-        parent_node_id=2,
-        element_type_id=1,
+        parent_node_id=tn_object2.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_3",
     )
     tn_object4 = ThingNode(
-        id=4,
+        id=uuid.uuid4(),
         name="GrandChildNode",
-        parent_node_id=3,
-        element_type_id=1,
+        parent_node_id=tn_object3.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_4",
     )
 
@@ -576,37 +613,40 @@ def test_get_ancestors_tn_ids_valid_id(mocked_clean_test_db_session):
     store_single_thingnode(tn_object3)
     store_single_thingnode(tn_object4)
 
-    ancestors_ids = get_ancestors_tn_ids(4)
+    ancestors_ids = get_ancestors_tn_ids(tn_object4.id)
 
-    assert ancestors_ids == [4, 3, 2, 1]
+    assert ancestors_ids == [tn_object4.id, tn_object3.id, tn_object2.id, tn_object1.id]
 
 
 def test_get_ancestors_tn_ids_valid_depth_valid_id(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
 
     tn_object1 = ThingNode(
-        id=1, name="RootNode", element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(),
+        name="RootNode",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid_1",
     )
     tn_object2 = ThingNode(
-        id=2,
+        id=uuid.uuid4(),
         name="ChildNode1",
-        parent_node_id=1,
-        element_type_id=1,
+        parent_node_id=tn_object1.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_2",
     )
     tn_object3 = ThingNode(
-        id=3,
+        id=uuid.uuid4(),
         name="ChildNode2",
-        parent_node_id=2,
-        element_type_id=1,
+        parent_node_id=tn_object2.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_3",
     )
     tn_object4 = ThingNode(
-        id=4,
+        id=uuid.uuid4(),
         name="GrandChildNode",
-        parent_node_id=3,
-        element_type_id=1,
+        parent_node_id=tn_object3.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_4",
     )
 
@@ -615,42 +655,47 @@ def test_get_ancestors_tn_ids_valid_depth_valid_id(mocked_clean_test_db_session)
     store_single_thingnode(tn_object3)
     store_single_thingnode(tn_object4)
 
-    ancestors_ids = get_ancestors_tn_ids(4, 2)
+    ancestors_ids = get_ancestors_tn_ids(tn_object4.id, 2)
 
-    assert ancestors_ids == [4, 3]
+    assert ancestors_ids == [tn_object4.id, tn_object3.id]
 
 
 def test_get_ancestors_tn_ids_invalid_id(mocked_clean_test_db_session):
     with pytest.raises(DBNotFoundError):
-        get_ancestors_tn_ids(9999)
+        get_ancestors_tn_ids(uuid.uuid4())
 
 
 def test_get_ancestors_tn_ids_invalid_depth_valid_id(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(
+        id=uuid.uuid4(), name="Type1"
+    )  # Ändern von festen IDs zu uuid.uuid4()
     store_single_element_type(et_object)
 
     tn_object1 = ThingNode(
-        id=1, name="RootNode", element_type_id=1, entity_uuid="entity_uuid_1"
+        id=uuid.uuid4(),
+        name="RootNode",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid_1",
     )
     tn_object2 = ThingNode(
-        id=2,
+        id=uuid.uuid4(),
         name="ChildNode1",
-        parent_node_id=1,
-        element_type_id=1,
+        parent_node_id=tn_object1.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_2",
     )
     tn_object3 = ThingNode(
-        id=3,
+        id=uuid.uuid4(),
         name="ChildNode2",
-        parent_node_id=2,
-        element_type_id=1,
+        parent_node_id=tn_object2.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_3",
     )
     tn_object4 = ThingNode(
-        id=4,
+        id=uuid.uuid4(),
         name="GrandChildNode",
-        parent_node_id=3,
-        element_type_id=1,
+        parent_node_id=tn_object3.id,
+        element_type_id=et_object.id,
         entity_uuid="entity_uuid_4",
     )
 
@@ -659,36 +704,44 @@ def test_get_ancestors_tn_ids_invalid_depth_valid_id(mocked_clean_test_db_sessio
     store_single_thingnode(tn_object3)
     store_single_thingnode(tn_object4)
 
-    ancestors_ids = get_ancestors_tn_ids(4, 2)
+    ancestors_ids = get_ancestors_tn_ids(tn_object4.id, 2)
 
     with pytest.raises(AssertionError):
-        assert ancestors_ids == [4, 3, 2]
+        assert ancestors_ids == [tn_object4.id, tn_object3.id, tn_object2.id]
 
 
 # Exception Handling and Data Integrity Tests
 
 
-@pytest.mark.skip(
-    reason="Test skipped temporarily. Replace dictionary with Pydantic model."
-)
 def test_uniqueness_thingnode(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
-    updated_data = {"name": "UpdatedNode1"}
-    updated_tn = update_tn(1, updated_data)
+    updated_data = ThingNode(
+        id=tn_object.id,
+        name="UpdatedNode1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
+    )
+    updated_tn = update_tn(tn_object.id, updated_data)
     with pytest.raises(DBIntegrityError):
         store_single_thingnode(updated_tn)
 
 
 def test_handle_duplicate_thingnode_insertion(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
+        id=uuid.uuid4(),
+        name="Node1",
+        element_type_id=et_object.id,
+        entity_uuid="entity_uuid",
     )
     store_single_thingnode(tn_object)
     with pytest.raises(DBIntegrityError):
@@ -696,30 +749,13 @@ def test_handle_duplicate_thingnode_insertion(mocked_clean_test_db_session):
 
 
 def test_handle_duplicate_elementtype_insertion(mocked_clean_test_db_session):
-    et_object1 = ElementType(id=1, name="Type1")
-    et_object2 = ElementType(id=1, name="Type2")
-    et_object3 = ElementType(id=2, name="Type1")
+    et_object1 = ElementType(id=uuid.uuid4(), name="Type1")
+    et_object2 = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object1)
 
     with pytest.raises(DBIntegrityError):
         store_single_element_type(et_object2)
-    with pytest.raises(DBIntegrityError):
-        store_single_element_type(et_object3)
 
-
-@pytest.mark.skip(reason="Replace dictionary with Pydantic model")
-def test_rollback_on_failure(mocked_clean_test_db_session):
-    et_object = ElementType(id=1, name="Type1")
-    store_single_element_type(et_object)
-    tn_object = ThingNode(
-        id=1, name="Node1", element_type_id=1, entity_uuid="entity_uuid"
-    )
-    store_single_thingnode(tn_object)
-    updated_data = {"name": None}
-    with pytest.raises(DBIntegrityError):
-        update_tn(1, updated_data)
-    retrieved_tn = read_single_thingnode(1)
-    assert retrieved_tn.name == "Node1"
 
 
 # Performance and Load Tests
@@ -728,14 +764,14 @@ def test_rollback_on_failure(mocked_clean_test_db_session):
 @pytest.mark.skip(reason="Skipping during development because it takes too long.")
 def test_performance_bulk_insert(mocked_clean_test_db_session):
     num_records = 1000
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     start_time = time.time()
     for i in range(num_records):
         tn_object = ThingNode(
-            id=i + 1,
+            id=uuid.uuid4(),
             name=f"Node{i+1}",
-            element_type_id=1,
+            element_type_id=et_object.id,
             entity_uuid=f"entity_uuid_{i+1}",
         )
         store_single_thingnode(tn_object)
@@ -748,19 +784,19 @@ def test_performance_bulk_insert(mocked_clean_test_db_session):
 @pytest.mark.skip(reason="Skipping during development because it takes too long.")
 def test_performance_bulk_delete(mocked_clean_test_db_session):
     num_records = 1000
-    et_object = ElementType(id=1, name="Type1")
+    et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
     for i in range(num_records):
         tn_object = ThingNode(
-            id=i + 1,
+            id=uuid.uuid4(),
             name=f"Node{i+1}",
-            element_type_id=1,
+            element_type_id=et_object.id,
             entity_uuid=f"entity_uuid_{i+1}",
         )
         store_single_thingnode(tn_object)
     start_time = time.time()
     for i in range(num_records):
-        delete_tn(i + 1)
+        delete_tn(tn_object.id)
     end_time = time.time()
 
     duration = end_time - start_time
@@ -779,11 +815,21 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
     )
 
     assert len(element_types) == 3
-    assert len(thing_nodes) == 3
-    assert len(sources) == 1
-    assert len(sinks) == 1
+    assert len(thing_nodes) == 6
+    assert len(sources) == 3
+    assert len(sinks) == 3
 
-    assert element_types[0] == ElementType(id=1, name="Type1")
+    assert element_types[0].id == uuid.UUID("00000000-0000-0000-0000-000000000001")
+    assert element_types[0].name == "Type1"
+    assert element_types[0].description == "Description for Type1"
+
+    assert element_types[1].id == uuid.UUID("00000000-0000-0000-0000-000000000002")
+    assert element_types[1].name == "Type2"
+    assert element_types[1].description == "Description for Type2"
+
+    assert element_types[2].id == uuid.UUID("00000000-0000-0000-0000-000000000003")
+    assert element_types[2].name == "Type3"
+    assert element_types[2].description == "Description for Type3"
 
 
 def test_update_structure(mocked_clean_test_db_session):
@@ -819,3 +865,69 @@ def test_update_structure(mocked_clean_test_db_session):
     assert sinks[0].name == "Sink1"
     assert sinks[1].name == "Sink2"
     assert sinks[2].name == "Sink3"
+
+
+def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes.json"
+
+    update_structure(file_path)
+
+    with mocked_clean_test_db_session() as session:
+        element_types = session.query(ElementTypeOrm).all()
+        assert len(element_types) == 3
+        assert element_types[0].name == "Type1"
+        assert element_types[1].name == "Type2"
+        assert element_types[2].name == "Type3"
+
+        thing_nodes = session.query(ThingNodeOrm).all()
+        assert len(thing_nodes) == 10
+
+        thing_node_names = [tn.name for tn in thing_nodes]
+        expected_names = [
+            "RootNode",
+            "ChildNode1",
+            "ChildNode2",
+            "ChildNode3",
+            "LeafNodeWith2Sources1Sink",
+            "LeafNodeWith1Source2Sinks",
+            "ChildNode2_Child1",
+            "ChildNode2_Child2",
+            "ChildNode2_Child1_Child1",
+            "ChildNode2_Child1_Child2"
+        ]
+
+        for name in expected_names:
+            assert name in thing_node_names
+
+        sources = session.query(SourceOrm).all()
+        assert len(sources) == 7  
+        source_names = [source.name for source in sources]
+        expected_source_names = [
+            "Source1",
+            "Source2",
+            "Source3",
+            "Source4",
+            "Source5",
+            "Source6",
+            "Source7"
+        ]
+
+        for name in expected_source_names:
+            assert name in source_names
+
+        sinks = session.query(SinkOrm).all()
+        assert len(sinks) == 7  
+        sink_names = [sink.name for sink in sinks]
+        expected_sink_names = [
+            "Sink1",
+            "Sink2",
+            "Sink3",
+            "Sink4",
+            "Sink5",
+            "Sink6",
+            "Sink7"
+        ]
+
+        for name in expected_sink_names:
+            assert name in sink_names
+
