@@ -378,7 +378,7 @@ class ElementTypeToPropertySet(BaseModel):
 
 
 class CompleteStructure(BaseModel):
-    thingnodes: list[ThingNode] = Field(
+    thing_nodes: list[ThingNode] = Field(
         ..., description="All thingnodes of the structure"
     )
     sources: list[Source] = Field(..., description="All sources of the structure")

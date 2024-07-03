@@ -12,7 +12,7 @@ from hetdesrun.adapters.virtual_structure_adapter.structure import (
     get_structure,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
-from hetdesrun.structure.db.orm_service import update_structure
+from hetdesrun.structure.db.orm_service import update_structure_from_file
 
 # TODO Check if tests are overkill
 
@@ -20,7 +20,7 @@ from hetdesrun.structure.db.orm_service import update_structure
 @pytest.fixture()
 def _fill_db(mocked_clean_test_db_session):
     file_path = "tests/virtual_structure_adapter/data/structure_test.json"
-    update_structure(file_path)
+    update_structure_from_file(file_path)
 
 
 @pytest.mark.skip(reason="Wait until necessity of description is clarified")

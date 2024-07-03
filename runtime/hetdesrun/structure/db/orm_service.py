@@ -21,6 +21,7 @@ from hetdesrun.persistence.structure_service_dbmodels import (
 from hetdesrun.structure.db import SQLAlchemySession, get_session
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.models import (
+    CompleteStructure,
     ElementType,
     ElementTypeToPropertySet,
     PropertyMetadata,
@@ -943,59 +944,9 @@ def update_et2ps(
 # Structure Services
 
 
-def process_element_types(data: dict) -> list[ElementType]:
-    element_types = []
-    for element_type_data in data.get("element_types", []):
-        try:
-            element_type = ElementType(**element_type_data)
-            element_types.append(element_type)
-        except ValidationError as e:
-            msg = f"Error validating ElementType: {e}"
-            logger.error(msg)
-    return element_types
+def topological_sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
+    nodes_by_id = {node.id: node for node in nodes}
 
-
-def process_sources(data: dict) -> tuple[list[Source], dict[UUID, list[Source]]]:
-    sources = []
-    sources_by_node_id = defaultdict(list)
-    for source_data in data.get("sources", []):
-        try:
-            source = Source(**source_data)
-            sources.append(source)
-            sources_by_node_id[source.thingNodeId].append(source)
-        except ValidationError as e:
-            msg = f"Error validating Source: {e}"
-            logger.error(msg)
-    return sources, sources_by_node_id
-
-
-def process_sinks(data: dict) -> tuple[list[Sink], dict[UUID, list[Sink]]]:
-    sinks = []
-    sinks_by_node_id = defaultdict(list)
-    for sink_data in data.get("sinks", []):
-        try:
-            sink = Sink(**sink_data)
-            sinks.append(sink)
-            sinks_by_node_id[sink.thingNodeId].append(sink)
-        except ValidationError as e:
-            msg = f"Error validating Sink: {e}"
-            logger.error(msg)
-    return sinks, sinks_by_node_id
-
-
-def process_thing_nodes(data: dict) -> dict[UUID, ThingNode]:
-    nodes_by_id = {}
-    for node_data in data.get("thing_nodes", []):
-        try:
-            node = ThingNode(**node_data)
-            nodes_by_id[node.id] = node
-        except ValidationError as e:
-            msg = f"Error validating ThingNode: {e}"
-            logger.error(msg)
-    return nodes_by_id
-
-
-def topological_sort_thing_nodes(nodes_by_id: dict[UUID, ThingNode]) -> list[ThingNode]:
     in_degree = {node_id: 0 for node_id in nodes_by_id}
 
     for node in nodes_by_id.values():
@@ -1023,24 +974,23 @@ def topological_sort_thing_nodes(nodes_by_id: dict[UUID, ThingNode]) -> list[Thi
     return sorted_nodes
 
 
-def process_json_data(
-    data: dict,
-) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
-    element_types = process_element_types(data)
-    sources, sources_by_node_id = process_sources(data)
-    sinks, sinks_by_node_id = process_sinks(data)
-    nodes_by_id = process_thing_nodes(data)
-    sorted_nodes = topological_sort_thing_nodes(nodes_by_id)
-    return element_types, sorted_nodes, sources, sinks
-
-
 def load_structure_from_json_file(
     file_path: str,
 ) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
     with open(file_path) as file:
-        data = json.load(file)
-    element_types, thing_nodes, sources, sinks = process_json_data(data)
-    return element_types, thing_nodes, sources, sinks
+        structure_json = json.load(file)
+
+    complete_structure = CompleteStructure(**structure_json)
+    complete_structure.thing_nodes = topological_sort_thing_nodes(
+        complete_structure.thing_nodes
+    )
+
+    return (
+        complete_structure.element_types,
+        complete_structure.thing_nodes,
+        complete_structure.sources,
+        complete_structure.sinks,
+    )
 
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
@@ -1058,7 +1008,7 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
             raise DBIntegrityError(msg) from e
 
 
-def update_structure(file_path: str) -> None:
+def update_structure_from_file(file_path: str) -> None:
     element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
         file_path
     )
@@ -1068,3 +1018,11 @@ def update_structure(file_path: str) -> None:
         flush_items(session, thing_nodes)
         flush_items(session, sources)
         flush_items(session, sinks)
+
+
+def update_structure(complete_structure: CompleteStructure) -> None:
+    with get_session()() as session, session.begin():
+        flush_items(session, complete_structure.element_types)
+        flush_items(session, complete_structure.thing_nodes)
+        flush_items(session, complete_structure.sources)
+        flush_items(session, complete_structure.sinks)

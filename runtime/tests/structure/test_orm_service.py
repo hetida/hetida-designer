@@ -58,7 +58,7 @@ from hetdesrun.structure.db.orm_service import (
     update_et2ps,
     update_pm,
     update_ps,
-    update_structure,
+    update_structure_from_file,
     update_tn,
 )
 from hetdesrun.structure.models import (
@@ -834,7 +834,7 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
 def test_update_structure(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_test_load_structure_from_json_file.json"
 
-    update_structure(file_path)
+    update_structure_from_file(file_path)
 
     session = mocked_clean_test_db_session()
 
@@ -869,7 +869,7 @@ def test_update_structure(mocked_clean_test_db_session):
 def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes.json"
 
-    update_structure(file_path)
+    update_structure_from_file(file_path)
 
     with mocked_clean_test_db_session() as session:
         element_types = session.query(ElementTypeOrm).all()

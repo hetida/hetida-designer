@@ -1,3 +1,4 @@
+import json
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
@@ -5,15 +6,15 @@ from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.structure.db.exceptions import DBNotFoundError
-from hetdesrun.structure.db.orm_service import update_structure
-from hetdesrun.structure.models import Sink, Source, ThingNode
+from hetdesrun.structure.db.orm_service import update_structure_from_file
+from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
 from hetdesrun.structure.structure_service import get_children
 
 
 @pytest.fixture()
 def _db_test_get_children(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_test_get_children.json"
-    update_structure(file_path)
+    update_structure_from_file(file_path)
 
 
 @event.listens_for(Engine, "connect")
@@ -104,3 +105,18 @@ def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
 def test_get_children_non_existent(mocked_clean_test_db_session):
     with pytest.raises(DBNotFoundError):
         get_children("99999999-9999-9999-9999-999999999999")
+
+
+def test_complete_structure_object_creation():
+    with open("tests/structure/data/db_test_get_children.json") as file:
+        data = json.load(file)
+    cs = CompleteStructure(**data)
+
+    assert len(cs.thing_nodes) == 6
+    assert len(cs.element_types) == 3
+    assert len(cs.sources) == 3
+    assert len(cs.sinks) == 3
+
+    tn_names = [tn.name for tn in cs.thing_nodes]
+    expected_tn_names = [tn["name"] for tn in data["thing_nodes"]]
+    assert all(name in tn_names for name in expected_tn_names)
