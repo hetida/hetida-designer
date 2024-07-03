@@ -11,7 +11,7 @@ Use Case examples:
 This guide assumes the default docker-compose setup described in the project README.
 
 ## Export / Import via hdctl bash tool
-The hdctl Bash tool provides a comfortable [sync](./sync) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
+The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
 
 The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
 
@@ -169,6 +169,19 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
 To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
+
+#### More fine-granular wiring stripping
+The api endpoints which **hdctl** uses (`/api/transformations` GET and PUT) support more fine-granular control over wiring stripping behaviour. These options are not present in the `import_transformations` functions. The addiitional url query parameters are:
+
+* `strip_wirings_with_adapter_id`: strip all input wirings and output wirings with that adapter id. Can be provided multiple times
+* `keep_only_wirings_with_adapter_id`: Keep only input wirings and output wirings with that adapter id. Can be specified multiple times and then keeps only wirings having one of the specified adapter ids.
+
+Note that for the GET endpoint, if `components_as_code` is set to `true`, you have to also activate `expand_component_code` in order to allow changing the test wiring stored in the component code that is returned.
+
+Typical use cases are:
+* Transfering trafos between hetida designer instance, where an adapter is present on the source instance but not on the target instance.
+* Backup without including test wirings that may not work when restoring dure to changed environment (adapters not present anymore)
+
 
 ### Deprecate older revisions when importing new ones
 

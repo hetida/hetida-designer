@@ -457,7 +457,7 @@ class BlobStorageStructureSource(BaseModel):
                 )
         if not str(file_ok.job_id) == job_id:
             raise ValueError(
-                f"The job id '{job_id}' of the source's name '{name}' "
+                f"The job_id={job_id} of the source's name '{name}' "
                 f"must match to the job id '{file_ok.job_id}' in its id '{id}'!"
             )
 

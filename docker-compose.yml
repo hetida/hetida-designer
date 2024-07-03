@@ -1,12 +1,10 @@
-version: "3.5"
-
 volumes:
   postgres_data:
     driver: local
   designer_obj_repo:
     driver: local
   local_files:
-    driver: local    
+    driver: local
 
 services:
   hetida-designer-frontend:
@@ -15,7 +13,7 @@ services:
       - 80:8080
     depends_on:
       - hetida-designer-backend
-      - hetida-designer-demo-adapter-python      
+      - hetida-designer-demo-adapter-python
 
   hetida-designer-backend:
     image: hetida/designer-backend
@@ -24,12 +22,12 @@ services:
     environment:
       - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
       - HD_ENSURE_DB_SCHEMA=true
-      - HD_IS_RUNTIME_SERVICE=false   
+      - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
     depends_on:
       hetida-designer-db:
         condition: service_healthy
-      hetida-designer-runtime: 
+      hetida-designer-runtime:
         condition: "service_started"
 
   hetida-designer-runtime:

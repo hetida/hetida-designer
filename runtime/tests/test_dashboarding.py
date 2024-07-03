@@ -2,7 +2,7 @@ import json
 from unittest import mock
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
@@ -35,12 +35,15 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(app=app_with_auth, base_url="http://test")
+    return AsyncClient(
+        transport=ASGITransport(app=app_with_auth), base_url="http://test"
+    )
 
 
 @pytest.mark.asyncio
 async def test_unauthorized_dashboard_endpoint(
-    _db_with_multits_viz_component, async_test_client  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
 ):
     async with async_test_client as client:
         response = await client.get(
@@ -56,7 +59,8 @@ async def test_unauthorized_dashboard_endpoint(
 
 @pytest.mark.asyncio
 async def test_unauthorized_dashboard_positioning(
-    _db_with_multits_viz_component, async_test_client  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
 ):
     async with async_test_client as client:
         response = await client.put(
@@ -68,7 +72,8 @@ async def test_unauthorized_dashboard_positioning(
 
 @pytest.mark.asyncio
 async def test_authorized_dashboard_endpoint(
-    _db_with_multits_viz_component, async_test_client_with_auth  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client_with_auth,
 ):
     async with async_test_client_with_auth as client:
         response = await client.get(

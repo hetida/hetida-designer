@@ -1,846 +1,847 @@
 {
-    "code_modules": [
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hdutils import plotly_fig_to_json_dict\n\n\nimport pandas as pd\n\nimport plotly.graph_objects as go\n\nfrom plotly.graph_objects import Figure\nimport plotly.express as px\n\nimport plotly.io as pio\n\npio.templates.default = None\n\n\ndef single_plotly_timeseries_plot(\n    series: pd.Series,\n    traces_opts: dict = {\"line_color\": \"#1199bb\"},\n    line_opts: dict = {},\n) -> Figure:\n    \"\"\"Create a single time series line plot Plotly figure\n    \n    Returns the plotly figure object.\n    \"\"\"\n\n    df = pd.DataFrame(\n        {\"value\": series, \"timestamp\": series.index}, index=series.index\n    ).sort_index()\n    # fig = px.line(df, x=\"timestamp\", y=\"value\", **line_opts)\n    fig = go.Figure([go.Scatter(x=df.index, y=df[\"value\"], mode=\"lines\")])\n\n    layout_opts: dict = {\n        \"xaxis_title\": \"Time\",\n        \"yaxis_title\": \"Values\",\n        \"autosize\": True,\n        \"height\": 200,\n    }\n    if series.name is not None:\n        layout_opts[\"yaxis_title\"] = series.name\n    fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/\n    fig.update_traces(traces_opts)  # set line color?\n\n    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))\n\n    fig.update_yaxes(automargin=True)\n    fig.update_xaxes(automargin=True)\n\n    return fig\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"series\": DataType.Series},\n    outputs={\"plot\": DataType.PlotlyJson},\n)\ndef main(*, series):\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"plot\": plotly_fig_to_json_dict(single_plotly_timeseries_plot(series))}\n",
-            "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"data\": DataType.Any, \"filter_series\": DataType.Series},\n    outputs={\"filtered\": DataType.Any},\n)\ndef main(*, data, filter_series):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:12\": 1.2,\n    ...            \"2019-08-01T15:44:12\": None,\n    ...            \"2019-08-03T16:20:15\": 0.3,\n    ...            \"2019-08-05T12:00:34\": 0.5,\n    ...        }\n    ...    ),\n    ...    filter_series = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:12\": True,\n    ...            \"2019-08-01T15:44:12\": True,\n    ...            \"2019-08-03T16:20:15\": False,\n    ...            \"2020-08-05T12:00:34\": True,\n    ...            \"2021-08-05T12:00:34\": False,\n    ...        }\n    ...    ),\n    ... )[\"filtered\"]\n    2019-08-01T15:20:12    1.2\n    2019-08-01T15:44:12    NaN\n    dtype: float64\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    filter_bool = filter_series.astype(\"bool\")\n    return {\"filtered\": data[filter_bool.reindex(data.index, fill_value=False)]}\n",
-            "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport datetime\nimport pandas as pd\nimport numpy as np\nfrom sklearn.linear_model import LinearRegression\n\n\ndef rul_regression_linear(\n    train_series: pd.Series,\n    limit: float,\n    num_pred_series_future_days: int,\n    pred_series_frequency: str = \"min\",\n):\n    \"\"\"Linear Regression for univariate Remaining Useful Life (RUL) prediction\n    \n    train-series: pd.Series with datetime index and float values. The input data to train\n        the regression model.\n    limit: the limit value against which rul should be made.\n    \n    returns: Tuple (pred_y, timestamp_limit_reached, intercept, slope)\n    \"\"\"\n\n    train_x_vals = pd.Series(train_series.index, index=train_series.index)\n\n    min_timestamp, max_timestamp = train_x_vals.min(), train_x_vals.max()\n\n    train_x_diffs = (\n        train_x_vals - min_timestamp\n    )  # time_deltas to chronologically first timestamp\n\n    lg = LinearRegression()\n    lg.fit(\n        train_x_diffs.dt.total_seconds().values.reshape(-1, 1),\n        train_series.values.reshape(-1, 1),\n    )\n    intercept, slope = lg.intercept_[0], lg.coef_[0]\n\n    max_timestamp_preds = max_timestamp + datetime.timedelta(\n        days=num_pred_series_future_days\n    )\n    pred_x_vals = pd.date_range(\n        start=min_timestamp, end=max_timestamp_preds, freq=pred_series_frequency\n    )\n    pred_x_diffs = pd.Series(pred_x_vals - min_timestamp)\n    pred_y = pd.Series(\n        lg.predict(pred_x_diffs.dt.total_seconds().values.reshape(-1, 1)).reshape(\n            1, -1\n        )[0],\n        index=pred_x_vals,\n    )\n\n    if slope == 0:\n        limit_reached_secs_from_min_timestamp = None\n    else:\n\n        limit_reached_secs_from_min_timestamp = ((limit - intercept) / slope)[0]\n\n    if limit_reached_secs_from_min_timestamp is not None:\n        timestamp_limit_reached = min_timestamp + datetime.timedelta(\n            seconds=limit_reached_secs_from_min_timestamp\n        )\n    else:\n        timestamp_limit_reached = pd.NaT\n    return pred_y, timestamp_limit_reached, intercept, slope\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\n        \"num_pred_series_future_days\": DataType.Integer,\n        \"pred_series_frequency\": DataType.String,\n        \"timeseries\": DataType.Series,\n        \"limit\": DataType.Float,\n    },\n    outputs={\n        \"intercept\": DataType.Float,\n        \"limit_violation_prediction_timestamp\": DataType.String,\n        \"pred_series\": DataType.Series,\n        \"slope\": DataType.Float,\n    },\n)\ndef main(*, num_pred_series_future_days, pred_series_frequency, timeseries, limit):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pred_y, timestamp_limit_reached, intercept, slope = rul_regression_linear(\n        timeseries, limit, num_pred_series_future_days, pred_series_frequency\n    )\n    return {\n        \"pred_series\": pred_y,\n        \"intercept\": intercept,\n        \"slope\": slope,\n        \"limit_violation_prediction_timestamp\": timestamp_limit_reached.to_pydatetime().isoformat()\n        if timestamp_limit_reached != pd.NaT\n        else None,\n    }\n",
-            "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"data\": DataType.Series}, outputs={\"diff\": DataType.Series})\ndef main(*, data):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(\n    ...     data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:00\": 0.0,\n    ...            \"2019-08-01T15:20:01\": 5.0,\n    ...            \"2019-08-01T15:20:05\": 1.0,\n    ...            \"2019-08-01T15:20:09\": 9.0,\n    ...        }\n    ...     )\n    ... )[\"diff\"]\n    2019-08-01 15:20:01    5.0\n    2019-08-01 15:20:05   -4.0\n    2019-08-01 15:20:09    8.0\n    dtype: float64\n\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your code here.\n\n    data_dropna = data.dropna()\n\n    if pd.api.types.is_numeric_dtype(data_dropna.index.dtype):\n        data_dropna = data_dropna.sort_index()\n\n    else:\n        try:\n            data_dropna.index = pd.to_datetime(data_dropna.index)\n\n        except TypeError:\n            raise TypeError(\"indices of data must be numeric or datetime\")\n        data_dropna = data_dropna.sort_index()\n    data_diff = np.ediff1d(data_dropna.values)\n\n    return {\"diff\": pd.Series(data_diff, index=data_dropna.index[1:])}\n\n",
-            "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.Float}, outputs={\"output\": DataType.Float})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
-            "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\nimport dateparser\nimport pytz\nfrom pandas._libs.tslibs import OutOfBoundsDatetime, Timestamp\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"data\": DataType.Any, \"start\": DataType.String, \"stop\": DataType.String},\n    outputs={\"interval\": DataType.Any},\n)\ndef main(*, data, start, stop):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(\n    ...     data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:10\": 1.7,\n    ...            \"2019-08-01T15:20:20\": 27.0,\n    ...            \"2019-08-01T15:20:25\": 0.3,\n    ...            \"2019-08-01T15:20:30\": 0.5,\n    ...        }\n    ...     ),\n    ...     start = \"2019-08-01T15:20:12\", \n    ...     stop = \"2019-12-01T15:23:00\"   \n    ...     )[\"interval\"]\n    2019-08-01 15:20:20    27.0\n    2019-08-01 15:20:25     0.3\n    2019-08-01 15:20:30     0.5\n    dtype: float64\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if data.empty:\n        return {\"interval\": data}\n\n    try:\n        data.index = pd.to_datetime(data.index)\n    except ValueError:\n        data.index = pd.to_datetime(data.index, utc=True)\n\n    data = data.sort_index()\n\n    if start is not None:\n        try:\n            if data.index.tzinfo is None:\n                parsed_start_date = dateparser.parse(\n                    start,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": False},\n                )\n            else:\n                parsed_start_date = dateparser.parse(\n                    start,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": True},\n                ).replace(tzinfo=pytz.UTC)\n        except (ValueError, TypeError, AttributeError):\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n        if parsed_start_date is None:\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n    else:\n        parsed_start_date = None\n\n    if stop is not None:\n        try:\n            if data.index.tzinfo is None:\n                parsed_stop_date = dateparser.parse(\n                    stop,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": False},\n                )\n            else:\n                parsed_stop_date = dateparser.parse(\n                    stop, settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": True}\n                ).replace(tzinfo=pytz.UTC)\n        except (ValueError, TypeError):\n            raise ValueError(f\"stop timestamp could not be parsed: {stop}\")\n        if parsed_stop_date is None:\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n    else:\n        parsed_stop_date = None\n\n    if (\n        (parsed_start_date is not None)\n        and (parsed_stop_date is not None)\n        and (parsed_start_date > parsed_stop_date)\n    ):\n        raise ValueError(\"start timestamp cannot be after stop timestamp\")\n\n    if parsed_start_date is not None and parsed_stop_date is not None:\n        return {\"interval\": data.loc[parsed_start_date:parsed_stop_date]}\n    elif parsed_start_date is None and parsed_stop_date is not None:\n        return {\"interval\": data.loc[:parsed_stop_date]}\n    elif parsed_start_date is not None and parsed_stop_date is None:\n        return {\"interval\": data.loc[parsed_start_date:]}\n    else:\n        return {\"interval\": data}\n",
-            "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.Series}, outputs={\"output\": DataType.Series})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
-            "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"left\": DataType.Any, \"right\": DataType.Any},\n    outputs={\"result\": DataType.Any},\n)\ndef main(*, left, right):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(left = pd.Series(\n    ...        {\n    ...\t    \t        \"2019-08-01T15:20:12\": 1.2,\n    ...\t\t        \"2019-08-01T15:44:12\": None,\n    ...\t    \t        \"2019-08-03T16:20:15\": 0.3,\n    ...\t\t        \"2019-08-05T12:00:34\": 0.5,\n    ...\t\t    }\n    ...    ),\n    ...    right = pd.Series(\n    ...        {\n    ...\t\t        \"2019-08-01T15:20:12\": 1.2,\n    ...\t   \t        \"2019-08-01T15:44:12\": 27,\n    ...\t\t        \"2019-08-03T16:20:15\": 3.6,\n    ...\t                \"2020-08-05T12:00:34\": 17,\n    ...\t\t        \"2021-08-05T12:00:34\": None,      \n    ...\t        }\n    ...    ),\n    ... )[\"result\"]\n    2019-08-01T15:20:12     True\n    2019-08-01T15:44:12    False\n    2019-08-03T16:20:15    False\n    2019-08-05T12:00:34    False\n    2020-08-05T12:00:34    False\n    2021-08-05T12:00:34    False\n    dtype: bool\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    try:\n        return {\"result\": left >= right}\n    except ValueError:\n        return {\"result\": left.ge(right)}\n",
-            "uuid": "f759e4c0-1468-0f2e-9740-41302b860193"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"timeseries_data\": DataType.Any}, outputs={\"last_index\": DataType.Any}\n)\ndef main(*, timeseries_data):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if len(timeseries_data) == 0:\n        return {\"last_index\": None}\n\n    return {\"last_index\": timeseries_data.index.max().to_pydatetime().isoformat()}\n",
-            "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\nfrom hdutils import plotly_fig_to_json_dict\n\nimport pandas as pd\nimport numpy as np\n\nfrom plotly.graph_objects import Figure\nimport plotly.express as px\n\nimport plotly.io as pio\n\npio.templates.default = None\n\n\ndef timeseries_comparison_plot(\n    series_1: pd.Series,\n    series_2: pd.Series,\n    limit_violation_timestamp: str,\n    limit: float,\n    traces_opts: dict = {},\n    layout_opts: dict = {\n        \"xaxis_title\": \"Time\",\n        \"yaxis_title\": \"Values\",\n        \"autosize\": True,\n        \"height\": 200,\n    },\n    line_opts: dict = {},\n) -> Figure:\n    \"\"\"Create a single time series line plot Plotly figure\n    \n    Returns the plotly figure object.\n    \"\"\"\n\n    fig = Figure()\n    # Only thing I figured is - I could do this\n\n    s1 = series_1.sort_index()\n\n    fig.add_scatter(\n        x=s1.index, y=s1, mode=\"lines\", name=s1.name if s1.name else \"series_1\"\n    )  # Not what is desired - need a line\n\n    s2 = series_2.sort_index()\n\n    fig.add_scatter(\n        x=s2.index, y=s2, mode=\"lines\", name=s2.name if s2.name else \"series_2\"\n    )  # Not what is desired - need a line\n\n    fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/\n    fig.update_traces(traces_opts)  # set line color?\n\n    vline_y_min = np.min([series_1.min(), series_2.min(), limit])\n    vline_y_max = np.max([series_1.max(), series_2.max(), limit])\n\n    hline_x_min = np.min([series_1.index.min(), series_2.index.min()])\n    hline_x_max = np.max([series_1.index.max(), series_2.index.max()])\n\n    fig.update_layout(\n        shapes=(\n            [\n                dict(\n                    type=\"line\",\n                    yref=\"y\",\n                    y0=vline_y_min,\n                    y1=vline_y_max,\n                    xref=\"x\",\n                    x0=limit_violation_timestamp,\n                    x1=limit_violation_timestamp,\n                )\n            ]\n            if limit_violation_timestamp is not None\n            else []\n        )\n        + [\n            dict(\n                type=\"line\",\n                yref=\"y\",\n                y0=limit,\n                y1=limit,\n                xref=\"x\",\n                x0=hline_x_min,\n                x1=hline_x_max,\n                line={\"color\": \"red\", \"width\": 1},\n            )\n        ]\n    )\n\n    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))\n\n    fig.update_yaxes(automargin=True)\n    fig.update_xaxes(automargin=True)\n    return fig\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\n        \"base_series\": DataType.Series,\n        \"predictions\": DataType.Series,\n        \"limit\": DataType.Float,\n        \"limit_violation_prediction_timestamp\": DataType.String,\n    },\n    outputs={\"rul_regression_result_plot\": DataType.PlotlyJson},\n)\ndef main(*, base_series, predictions, limit, limit_violation_prediction_timestamp):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\n        \"rul_regression_result_plot\": plotly_fig_to_json_dict(\n            timeseries_comparison_plot(\n                base_series, predictions, limit_violation_prediction_timestamp, limit\n            )\n        )\n    }\n",
-            "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051"
-        },
-        {
-            "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.String}, outputs={\"output\": DataType.String})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
-            "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b"
-        }
-    ],
-    "components": [
-        {
-            "code_module_uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "70753b5c-4a8d-fb0b-36d0-076fc7cd7967",
-                    "name": "series",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
-                    "name": "plot",
-                    "type": "PLOTLYJSON"
-                }
-            ],
-            "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
-                    "name": "data",
-                    "type": "ANY"
-                },
-                {
-                    "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
-                    "name": "filter_series",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
-                    "name": "filtered",
-                    "type": "ANY"
-                }
-            ],
-            "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "6c78164c-2fa7-90d0-bfbd-a09a571046b5",
-                    "name": "limit",
-                    "type": "FLOAT"
-                },
-                {
-                    "id": "278dc2d7-73da-3c38-a1ad-ea7d186ac887",
-                    "name": "num_pred_series_future_days",
-                    "type": "INT"
-                },
-                {
-                    "id": "425f3ef8-e7ae-6ba9-c2c1-dcc594b3c61a",
-                    "name": "pred_series_frequency",
-                    "type": "STRING"
-                },
-                {
-                    "id": "c482c011-a393-ff58-67d6-c4caec939083",
-                    "name": "timeseries",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "cf404526-75de-f1ff-f961-200e99dde8d6",
-                    "name": "intercept",
-                    "type": "FLOAT"
-                },
-                {
-                    "id": "9643ae27-3cb4-f5a7-886d-5865d206486c",
-                    "name": "limit_violation_prediction_timestamp",
-                    "type": "STRING"
-                },
-                {
-                    "id": "2ac7a056-8d7c-b5a7-f35a-d3676a77afbf",
-                    "name": "pred_series",
-                    "type": "SERIES"
-                },
-                {
-                    "id": "1828c68d-c5c9-f31a-f2e9-3493409f53ed",
-                    "name": "slope",
-                    "type": "FLOAT"
-                }
-            ],
-            "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "41d0c7d6-e752-ed73-3f58-50791cf1ed6a",
-                    "name": "data",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "fbade8ef-7e0a-b310-a971-0b935be91a9c",
-                    "name": "diff",
-                    "type": "SERIES"
-                }
-            ],
-            "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
-                    "name": "input",
-                    "type": "FLOAT"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "57043fae-046c-7dee-2f17-8e069a2dac90",
-                    "name": "output",
-                    "type": "FLOAT"
-                }
-            ],
-            "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "1039e08a-964f-2cc8-cffd-37d53078daf8",
-                    "name": "data",
-                    "type": "ANY"
-                },
-                {
-                    "id": "7e7ecf61-c319-f6be-1a3f-1526a879fd9a",
-                    "name": "start",
-                    "type": "STRING"
-                },
-                {
-                    "id": "a1154696-3e13-8fe2-ee80-3dea4e879b7d",
-                    "name": "stop",
-                    "type": "STRING"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "21fe8c45-8a45-9d81-4e17-0c73ca7a66f4",
-                    "name": "interval",
-                    "type": "ANY"
-                }
-            ],
-            "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "f103c395-92b6-444d-320a-93950ed6d857",
-                    "name": "input",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
-                    "name": "output",
-                    "type": "SERIES"
-                }
-            ],
-            "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "211c703a-891e-0dcd-a5d6-49756e02cf53",
-                    "name": "left",
-                    "type": "ANY"
-                },
-                {
-                    "id": "a1e4707a-d2ba-46ea-b866-627fd12bc5d0",
-                    "name": "right",
-                    "type": "ANY"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "6023ec09-572e-d0a9-b71c-78a85b9dac7b",
-                    "name": "result",
-                    "type": "ANY"
-                }
-            ],
-            "uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "06f2cfef-51fa-fe5f-1a71-8ccfe1fd7419",
-                    "name": "timeseries_data",
-                    "type": "ANY"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "a688a7d0-dede-d300-fd72-c6b76f42139f",
-                    "name": "last_index",
-                    "type": "STRING"
-                }
-            ],
-            "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "64734a41-f66b-9394-b961-44dd0b5e74f1",
-                    "name": "base_series",
-                    "type": "SERIES"
-                },
-                {
-                    "id": "c53283a0-82e6-c162-6d79-1acc92206950",
-                    "name": "limit",
-                    "type": "FLOAT"
-                },
-                {
-                    "id": "e2f270a0-3c80-9f57-776e-ecc396268ac1",
-                    "name": "limit_violation_prediction_timestamp",
-                    "type": "STRING"
-                },
-                {
-                    "id": "120f0e00-3ee6-743b-22a9-b0f1481c7b60",
-                    "name": "predictions",
-                    "type": "SERIES"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "aebbc55f-1e4a-c035-bbd0-2475307536c9",
-                    "name": "rul_regression_result_plot",
-                    "type": "PLOTLYJSON"
-                }
-            ],
-            "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
-            "tag": "1.0.0"
-        },
-        {
-            "code_module_uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
-                    "name": "input",
-                    "type": "STRING"
-                }
-            ],
-            "name": null,
-            "outputs": [
-                {
-                    "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
-                    "name": "output",
-                    "type": "STRING"
-                }
-            ],
-            "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
-            "tag": "1.0.0"
-        }
-    ],
-    "configuration": {
-        "engine": "plain",
-        "name": "3d504361-e351-4d52-8734-391aa47e8f24",
-        "return_individual_node_results": false,
-        "run_pure_plot_operators": true
+  "code_modules": [
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hdutils import plotly_fig_to_json_dict\n\n\nimport pandas as pd\n\nimport plotly.graph_objects as go\n\nfrom plotly.graph_objects import Figure\nimport plotly.express as px\n\nimport plotly.io as pio\n\npio.templates.default = None\n\n\ndef single_plotly_timeseries_plot(\n    series: pd.Series,\n    traces_opts: dict = {\"line_color\": \"#1199bb\"},\n    line_opts: dict = {},\n) -> Figure:\n    \"\"\"Create a single time series line plot Plotly figure\n    \n    Returns the plotly figure object.\n    \"\"\"\n\n    df = pd.DataFrame(\n        {\"value\": series, \"timestamp\": series.index}, index=series.index\n    ).sort_index()\n    # fig = px.line(df, x=\"timestamp\", y=\"value\", **line_opts)\n    fig = go.Figure([go.Scatter(x=df.index, y=df[\"value\"], mode=\"lines\")])\n\n    layout_opts: dict = {\n        \"xaxis_title\": \"Time\",\n        \"yaxis_title\": \"Values\",\n        \"autosize\": True,\n        \"height\": 200,\n    }\n    if series.name is not None:\n        layout_opts[\"yaxis_title\"] = series.name\n    fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/\n    fig.update_traces(traces_opts)  # set line color?\n\n    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))\n\n    fig.update_yaxes(automargin=True)\n    fig.update_xaxes(automargin=True)\n\n    return fig\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"series\": DataType.Series},\n    outputs={\"plot\": DataType.PlotlyJson},\n)\ndef main(*, series):\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"plot\": plotly_fig_to_json_dict(single_plotly_timeseries_plot(series))}\n",
+      "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c"
     },
-    "workflow": {
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"data\": DataType.Any, \"filter_series\": DataType.Series},\n    outputs={\"filtered\": DataType.Any},\n)\ndef main(*, data, filter_series):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:12\": 1.2,\n    ...            \"2019-08-01T15:44:12\": None,\n    ...            \"2019-08-03T16:20:15\": 0.3,\n    ...            \"2019-08-05T12:00:34\": 0.5,\n    ...        }\n    ...    ),\n    ...    filter_series = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:12\": True,\n    ...            \"2019-08-01T15:44:12\": True,\n    ...            \"2019-08-03T16:20:15\": False,\n    ...            \"2020-08-05T12:00:34\": True,\n    ...            \"2021-08-05T12:00:34\": False,\n    ...        }\n    ...    ),\n    ... )[\"filtered\"]\n    2019-08-01T15:20:12    1.2\n    2019-08-01T15:44:12    NaN\n    dtype: float64\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    filter_bool = filter_series.astype(\"bool\")\n    return {\"filtered\": data[filter_bool.reindex(data.index, fill_value=False)]}\n",
+      "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport datetime\nimport pandas as pd\nimport numpy as np\nfrom sklearn.linear_model import LinearRegression\n\n\ndef rul_regression_linear(\n    train_series: pd.Series,\n    limit: float,\n    num_pred_series_future_days: int,\n    pred_series_frequency: str = \"min\",\n):\n    \"\"\"Linear Regression for univariate Remaining Useful Life (RUL) prediction\n    \n    train-series: pd.Series with datetime index and float values. The input data to train\n        the regression model.\n    limit: the limit value against which rul should be made.\n    \n    returns: Tuple (pred_y, timestamp_limit_reached, intercept, slope)\n    \"\"\"\n\n    train_x_vals = pd.Series(train_series.index, index=train_series.index)\n\n    min_timestamp, max_timestamp = train_x_vals.min(), train_x_vals.max()\n\n    train_x_diffs = (\n        train_x_vals - min_timestamp\n    )  # time_deltas to chronologically first timestamp\n\n    lg = LinearRegression()\n    lg.fit(\n        train_x_diffs.dt.total_seconds().values.reshape(-1, 1),\n        train_series.values.reshape(-1, 1),\n    )\n    intercept, slope = lg.intercept_[0], lg.coef_[0]\n\n    max_timestamp_preds = max_timestamp + datetime.timedelta(\n        days=num_pred_series_future_days\n    )\n    pred_x_vals = pd.date_range(\n        start=min_timestamp, end=max_timestamp_preds, freq=pred_series_frequency\n    )\n    pred_x_diffs = pd.Series(pred_x_vals - min_timestamp)\n    pred_y = pd.Series(\n        lg.predict(pred_x_diffs.dt.total_seconds().values.reshape(-1, 1)).reshape(\n            1, -1\n        )[0],\n        index=pred_x_vals,\n    )\n\n    if slope == 0:\n        limit_reached_secs_from_min_timestamp = None\n    else:\n\n        limit_reached_secs_from_min_timestamp = ((limit - intercept) / slope)[0]\n\n    if limit_reached_secs_from_min_timestamp is not None:\n        timestamp_limit_reached = min_timestamp + datetime.timedelta(\n            seconds=limit_reached_secs_from_min_timestamp\n        )\n    else:\n        timestamp_limit_reached = pd.NaT\n    return pred_y, timestamp_limit_reached, intercept, slope\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\n        \"num_pred_series_future_days\": DataType.Integer,\n        \"pred_series_frequency\": DataType.String,\n        \"timeseries\": DataType.Series,\n        \"limit\": DataType.Float,\n    },\n    outputs={\n        \"intercept\": DataType.Float,\n        \"limit_violation_prediction_timestamp\": DataType.String,\n        \"pred_series\": DataType.Series,\n        \"slope\": DataType.Float,\n    },\n)\ndef main(*, num_pred_series_future_days, pred_series_frequency, timeseries, limit):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pred_y, timestamp_limit_reached, intercept, slope = rul_regression_linear(\n        timeseries, limit, num_pred_series_future_days, pred_series_frequency\n    )\n    return {\n        \"pred_series\": pred_y,\n        \"intercept\": intercept,\n        \"slope\": slope,\n        \"limit_violation_prediction_timestamp\": timestamp_limit_reached.to_pydatetime().isoformat()\n        if timestamp_limit_reached != pd.NaT\n        else None,\n    }\n",
+      "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"data\": DataType.Series}, outputs={\"diff\": DataType.Series})\ndef main(*, data):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(\n    ...     data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:00\": 0.0,\n    ...            \"2019-08-01T15:20:01\": 5.0,\n    ...            \"2019-08-01T15:20:05\": 1.0,\n    ...            \"2019-08-01T15:20:09\": 9.0,\n    ...        }\n    ...     )\n    ... )[\"diff\"]\n    2019-08-01 15:20:01    5.0\n    2019-08-01 15:20:05   -4.0\n    2019-08-01 15:20:09    8.0\n    dtype: float64\n\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your code here.\n\n    data_dropna = data.dropna()\n\n    if pd.api.types.is_numeric_dtype(data_dropna.index.dtype):\n        data_dropna = data_dropna.sort_index()\n\n    else:\n        try:\n            data_dropna.index = pd.to_datetime(data_dropna.index)\n\n        except TypeError:\n            raise TypeError(\"indices of data must be numeric or datetime\")\n        data_dropna = data_dropna.sort_index()\n    data_diff = np.ediff1d(data_dropna.values)\n\n    return {\"diff\": pd.Series(data_diff, index=data_dropna.index[1:])}\n\n",
+      "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.Float}, outputs={\"output\": DataType.Float})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
+      "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\nimport dateparser\nimport pytz\nfrom pandas._libs.tslibs import OutOfBoundsDatetime, Timestamp\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"data\": DataType.Any, \"start\": DataType.String, \"stop\": DataType.String},\n    outputs={\"interval\": DataType.Any},\n)\ndef main(*, data, start, stop):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(\n    ...     data = pd.Series(\n    ...        {\n    ...            \"2019-08-01T15:20:10\": 1.7,\n    ...            \"2019-08-01T15:20:20\": 27.0,\n    ...            \"2019-08-01T15:20:25\": 0.3,\n    ...            \"2019-08-01T15:20:30\": 0.5,\n    ...        }\n    ...     ),\n    ...     start = \"2019-08-01T15:20:12\", \n    ...     stop = \"2019-12-01T15:23:00\"   \n    ...     )[\"interval\"]\n    2019-08-01 15:20:20    27.0\n    2019-08-01 15:20:25     0.3\n    2019-08-01 15:20:30     0.5\n    dtype: float64\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if data.empty:\n        return {\"interval\": data}\n\n    try:\n        data.index = pd.to_datetime(data.index)\n    except ValueError:\n        data.index = pd.to_datetime(data.index, utc=True)\n\n    data = data.sort_index()\n\n    if start is not None:\n        try:\n            if data.index.tzinfo is None:\n                parsed_start_date = dateparser.parse(\n                    start,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": False},\n                )\n            else:\n                parsed_start_date = dateparser.parse(\n                    start,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": True},\n                ).replace(tzinfo=pytz.UTC)\n        except (ValueError, TypeError, AttributeError):\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n        if parsed_start_date is None:\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n    else:\n        parsed_start_date = None\n\n    if stop is not None:\n        try:\n            if data.index.tzinfo is None:\n                parsed_stop_date = dateparser.parse(\n                    stop,\n                    settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": False},\n                )\n            else:\n                parsed_stop_date = dateparser.parse(\n                    stop, settings={\"TIMEZONE\": \"UTC\", \"RETURN_AS_TIMEZONE_AWARE\": True}\n                ).replace(tzinfo=pytz.UTC)\n        except (ValueError, TypeError):\n            raise ValueError(f\"stop timestamp could not be parsed: {stop}\")\n        if parsed_stop_date is None:\n            raise ValueError(f\"start timestamp could not be parsed: {start}\")\n    else:\n        parsed_stop_date = None\n\n    if (\n        (parsed_start_date is not None)\n        and (parsed_stop_date is not None)\n        and (parsed_start_date > parsed_stop_date)\n    ):\n        raise ValueError(\"start timestamp cannot be after stop timestamp\")\n\n    if parsed_start_date is not None and parsed_stop_date is not None:\n        return {\"interval\": data.loc[parsed_start_date:parsed_stop_date]}\n    elif parsed_start_date is None and parsed_stop_date is not None:\n        return {\"interval\": data.loc[:parsed_stop_date]}\n    elif parsed_start_date is not None and parsed_stop_date is None:\n        return {\"interval\": data.loc[parsed_start_date:]}\n    else:\n        return {\"interval\": data}\n",
+      "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.Series}, outputs={\"output\": DataType.Series})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
+      "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"left\": DataType.Any, \"right\": DataType.Any},\n    outputs={\"result\": DataType.Any},\n)\ndef main(*, left, right):\n    \"\"\"entrypoint function for this component\n\n    Usage example:\n    >>> main(left = pd.Series(\n    ...        {\n    ...\t    \t        \"2019-08-01T15:20:12\": 1.2,\n    ...\t\t        \"2019-08-01T15:44:12\": None,\n    ...\t    \t        \"2019-08-03T16:20:15\": 0.3,\n    ...\t\t        \"2019-08-05T12:00:34\": 0.5,\n    ...\t\t    }\n    ...    ),\n    ...    right = pd.Series(\n    ...        {\n    ...\t\t        \"2019-08-01T15:20:12\": 1.2,\n    ...\t   \t        \"2019-08-01T15:44:12\": 27,\n    ...\t\t        \"2019-08-03T16:20:15\": 3.6,\n    ...\t                \"2020-08-05T12:00:34\": 17,\n    ...\t\t        \"2021-08-05T12:00:34\": None,      \n    ...\t        }\n    ...    ),\n    ... )[\"result\"]\n    2019-08-01T15:20:12     True\n    2019-08-01T15:44:12    False\n    2019-08-03T16:20:15    False\n    2019-08-05T12:00:34    False\n    2020-08-05T12:00:34    False\n    2021-08-05T12:00:34    False\n    dtype: bool\n    \"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    try:\n        return {\"result\": left >= right}\n    except ValueError:\n        return {\"result\": left.ge(right)}\n",
+      "uuid": "f759e4c0-1468-0f2e-9740-41302b860193"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\"timeseries_data\": DataType.Any}, outputs={\"last_index\": DataType.Any}\n)\ndef main(*, timeseries_data):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if len(timeseries_data) == 0:\n        return {\"last_index\": None}\n\n    return {\"last_index\": timeseries_data.index.max().to_pydatetime().isoformat()}\n",
+      "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\nfrom hdutils import plotly_fig_to_json_dict\n\nimport pandas as pd\nimport numpy as np\n\nfrom plotly.graph_objects import Figure\nimport plotly.express as px\n\nimport plotly.io as pio\n\npio.templates.default = None\n\n\ndef timeseries_comparison_plot(\n    series_1: pd.Series,\n    series_2: pd.Series,\n    limit_violation_timestamp: str,\n    limit: float,\n    traces_opts: dict = {},\n    layout_opts: dict = {\n        \"xaxis_title\": \"Time\",\n        \"yaxis_title\": \"Values\",\n        \"autosize\": True,\n        \"height\": 200,\n    },\n    line_opts: dict = {},\n) -> Figure:\n    \"\"\"Create a single time series line plot Plotly figure\n    \n    Returns the plotly figure object.\n    \"\"\"\n\n    fig = Figure()\n    # Only thing I figured is - I could do this\n\n    s1 = series_1.sort_index()\n\n    fig.add_scatter(\n        x=s1.index, y=s1, mode=\"lines\", name=s1.name if s1.name else \"series_1\"\n    )  # Not what is desired - need a line\n\n    s2 = series_2.sort_index()\n\n    fig.add_scatter(\n        x=s2.index, y=s2, mode=\"lines\", name=s2.name if s2.name else \"series_2\"\n    )  # Not what is desired - need a line\n\n    fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/\n    fig.update_traces(traces_opts)  # set line color?\n\n    vline_y_min = np.min([series_1.min(), series_2.min(), limit])\n    vline_y_max = np.max([series_1.max(), series_2.max(), limit])\n\n    hline_x_min = np.min([series_1.index.min(), series_2.index.min()])\n    hline_x_max = np.max([series_1.index.max(), series_2.index.max()])\n\n    fig.update_layout(\n        shapes=(\n            [\n                dict(\n                    type=\"line\",\n                    yref=\"y\",\n                    y0=vline_y_min,\n                    y1=vline_y_max,\n                    xref=\"x\",\n                    x0=limit_violation_timestamp,\n                    x1=limit_violation_timestamp,\n                )\n            ]\n            if limit_violation_timestamp is not None\n            else []\n        )\n        + [\n            dict(\n                type=\"line\",\n                yref=\"y\",\n                y0=limit,\n                y1=limit,\n                xref=\"x\",\n                x0=hline_x_min,\n                x1=hline_x_max,\n                line={\"color\": \"red\", \"width\": 1},\n            )\n        ]\n    )\n\n    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))\n\n    fig.update_yaxes(automargin=True)\n    fig.update_xaxes(automargin=True)\n    return fig\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={\n        \"base_series\": DataType.Series,\n        \"predictions\": DataType.Series,\n        \"limit\": DataType.Float,\n        \"limit_violation_prediction_timestamp\": DataType.String,\n    },\n    outputs={\"rul_regression_result_plot\": DataType.PlotlyJson},\n)\ndef main(*, base_series, predictions, limit, limit_violation_prediction_timestamp):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\n        \"rul_regression_result_plot\": plotly_fig_to_json_dict(\n            timeseries_comparison_plot(\n                base_series, predictions, limit_violation_prediction_timestamp, limit\n            )\n        )\n    }\n",
+      "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051"
+    },
+    {
+      "code": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(inputs={\"input\": DataType.String}, outputs={\"output\": DataType.String})\ndef main(*, input):\n    \"\"\"entrypoint function for this component\"\"\"\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
+      "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b"
+    }
+  ],
+  "components": [
+    {
+      "code_module_uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "70753b5c-4a8d-fb0b-36d0-076fc7cd7967",
+          "name": "series",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+          "name": "plot",
+          "type": "PLOTLYJSON"
+        }
+      ],
+      "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
+          "name": "data",
+          "type": "ANY"
+        },
+        {
+          "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
+          "name": "filter_series",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+          "name": "filtered",
+          "type": "ANY"
+        }
+      ],
+      "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "6c78164c-2fa7-90d0-bfbd-a09a571046b5",
+          "name": "limit",
+          "type": "FLOAT"
+        },
+        {
+          "id": "278dc2d7-73da-3c38-a1ad-ea7d186ac887",
+          "name": "num_pred_series_future_days",
+          "type": "INT"
+        },
+        {
+          "id": "425f3ef8-e7ae-6ba9-c2c1-dcc594b3c61a",
+          "name": "pred_series_frequency",
+          "type": "STRING"
+        },
+        {
+          "id": "c482c011-a393-ff58-67d6-c4caec939083",
+          "name": "timeseries",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "cf404526-75de-f1ff-f961-200e99dde8d6",
+          "name": "intercept",
+          "type": "FLOAT"
+        },
+        {
+          "id": "9643ae27-3cb4-f5a7-886d-5865d206486c",
+          "name": "limit_violation_prediction_timestamp",
+          "type": "STRING"
+        },
+        {
+          "id": "2ac7a056-8d7c-b5a7-f35a-d3676a77afbf",
+          "name": "pred_series",
+          "type": "SERIES"
+        },
+        {
+          "id": "1828c68d-c5c9-f31a-f2e9-3493409f53ed",
+          "name": "slope",
+          "type": "FLOAT"
+        }
+      ],
+      "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "41d0c7d6-e752-ed73-3f58-50791cf1ed6a",
+          "name": "data",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "fbade8ef-7e0a-b310-a971-0b935be91a9c",
+          "name": "diff",
+          "type": "SERIES"
+        }
+      ],
+      "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
+          "name": "input",
+          "type": "FLOAT"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "57043fae-046c-7dee-2f17-8e069a2dac90",
+          "name": "output",
+          "type": "FLOAT"
+        }
+      ],
+      "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "1039e08a-964f-2cc8-cffd-37d53078daf8",
+          "name": "data",
+          "type": "ANY"
+        },
+        {
+          "id": "7e7ecf61-c319-f6be-1a3f-1526a879fd9a",
+          "name": "start",
+          "type": "STRING"
+        },
+        {
+          "id": "a1154696-3e13-8fe2-ee80-3dea4e879b7d",
+          "name": "stop",
+          "type": "STRING"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "21fe8c45-8a45-9d81-4e17-0c73ca7a66f4",
+          "name": "interval",
+          "type": "ANY"
+        }
+      ],
+      "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "f103c395-92b6-444d-320a-93950ed6d857",
+          "name": "input",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+          "name": "output",
+          "type": "SERIES"
+        }
+      ],
+      "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "211c703a-891e-0dcd-a5d6-49756e02cf53",
+          "name": "left",
+          "type": "ANY"
+        },
+        {
+          "id": "a1e4707a-d2ba-46ea-b866-627fd12bc5d0",
+          "name": "right",
+          "type": "ANY"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "6023ec09-572e-d0a9-b71c-78a85b9dac7b",
+          "name": "result",
+          "type": "ANY"
+        }
+      ],
+      "uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "06f2cfef-51fa-fe5f-1a71-8ccfe1fd7419",
+          "name": "timeseries_data",
+          "type": "ANY"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "a688a7d0-dede-d300-fd72-c6b76f42139f",
+          "name": "last_index",
+          "type": "STRING"
+        }
+      ],
+      "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "64734a41-f66b-9394-b961-44dd0b5e74f1",
+          "name": "base_series",
+          "type": "SERIES"
+        },
+        {
+          "id": "c53283a0-82e6-c162-6d79-1acc92206950",
+          "name": "limit",
+          "type": "FLOAT"
+        },
+        {
+          "id": "e2f270a0-3c80-9f57-776e-ecc396268ac1",
+          "name": "limit_violation_prediction_timestamp",
+          "type": "STRING"
+        },
+        {
+          "id": "120f0e00-3ee6-743b-22a9-b0f1481c7b60",
+          "name": "predictions",
+          "type": "SERIES"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "aebbc55f-1e4a-c035-bbd0-2475307536c9",
+          "name": "rul_regression_result_plot",
+          "type": "PLOTLYJSON"
+        }
+      ],
+      "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
+      "tag": "1.0.0"
+    },
+    {
+      "code_module_uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+          "name": "input",
+          "type": "STRING"
+        }
+      ],
+      "name": null,
+      "outputs": [
+        {
+          "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+          "name": "output",
+          "type": "STRING"
+        }
+      ],
+      "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+      "tag": "1.0.0"
+    }
+  ],
+  "configuration": {
+    "engine": "plain",
+    "name": "3d504361-e351-4d52-8734-391aa47e8f24",
+    "return_individual_node_results": false,
+    "run_pure_plot_operators": true
+  },
+  "workflow": {
+    "connections": [
+      {
+        "input_in_workflow_id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
+        "input_name": "output",
+        "output_in_workflow_id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
+        "output_name": "series"
+      },
+      {
+        "input_in_workflow_id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
+        "input_name": "output",
+        "output_in_workflow_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
+        "output_name": "inp_series"
+      },
+      {
+        "input_in_workflow_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
+        "input_name": "series_from_last_step",
+        "output_in_workflow_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "output_name": "inp_series"
+      }
+    ],
+    "id": "f7fc96d2-2648-4e43-88d4-84525bddc26d",
+    "inputs": [
+      {
+        "constant": false,
+        "constantValue": {
+          "value": ""
+        },
+        "id": "1ab7579f-eb3a-4725-944b-e96272ff279d",
+        "id_of_sub_node": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
+        "name": "inp_series",
+        "name_in_subnode": "input",
+        "type": "SERIES"
+      },
+      {
+        "constant": false,
+        "constantValue": {
+          "value": ""
+        },
+        "id": "716b7b23-2168-4a6b-a8f5-3369dbdc830c",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "limit",
+        "name_in_subnode": "limit",
+        "type": "FLOAT"
+      },
+      {
+        "constant": false,
+        "constantValue": {
+          "value": ""
+        },
+        "id": "2b35188c-2ecf-400d-8826-86a7c0cc2aee",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "num_days_forecast",
+        "name_in_subnode": "num_days_forecast",
+        "type": "INT"
+      },
+      {
+        "constant": false,
+        "constantValue": {
+          "value": ""
+        },
+        "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
+        "id_of_sub_node": "244973af-0daa-4d4e-9a6f-570642162b7f",
+        "name": "postive_step_size",
+        "name_in_subnode": "postive_step_size",
+        "type": "FLOAT"
+      }
+    ],
+    "name": null,
+    "outputs": [
+      {
+        "id": "69a90572-028f-4f40-b153-7dd6dc26dc67",
+        "id_of_sub_node": "ca5ce637-5736-491b-b2e2-13ec1748a538",
+        "name": "before_step_detect",
+        "name_in_subnode": "plot",
+        "type": "PLOTLYJSON"
+      },
+      {
+        "id": "36d95060-e3c2-485c-8abf-a10875a9adb6",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "intercept",
+        "name_in_subnode": "intercept",
+        "type": "FLOAT"
+      },
+      {
+        "id": "634f74ff-ac6d-456c-97a8-ea5188e6ec3c",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "limit_violation_timestamp",
+        "name_in_subnode": "limit_violation_timestamp",
+        "type": "STRING"
+      },
+      {
+        "id": "67d1a7e6-aa76-4918-b701-005c8ba4d667",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "rul_regression_result_plot",
+        "name_in_subnode": "rul_regression_result_plot",
+        "type": "PLOTLYJSON"
+      },
+      {
+        "id": "d1fc90eb-2c5e-4639-ba47-87f2903fadfd",
+        "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "name": "slope",
+        "name_in_subnode": "slope",
+        "type": "FLOAT"
+      }
+    ],
+    "sub_nodes": [
+      {
+        "component_uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+        "id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
+        "name": null
+      },
+      {
+        "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
+        "name": null
+      },
+      {
         "connections": [
-            {
-                "input_in_workflow_id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
-                "input_name": "output",
-                "output_in_workflow_id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
-                "output_name": "series"
-            },
-            {
-                "input_in_workflow_id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
-                "input_name": "output",
-                "output_in_workflow_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
-                "output_name": "inp_series"
-            },
-            {
-                "input_in_workflow_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
-                "input_name": "series_from_last_step",
-                "output_in_workflow_id": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "output_name": "inp_series"
-            }
+          {
+            "input_in_workflow_id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
+            "input_name": "diff",
+            "output_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
+            "output_name": "left"
+          },
+          {
+            "input_in_workflow_id": "addefd98-a5bb-4878-a237-71289fb17ac2",
+            "input_name": "output",
+            "output_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
+            "output_name": "right"
+          },
+          {
+            "input_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
+            "input_name": "result",
+            "output_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
+            "output_name": "filter_series"
+          },
+          {
+            "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "input_name": "output",
+            "output_in_workflow_id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
+            "output_name": "data"
+          },
+          {
+            "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "input_name": "output",
+            "output_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
+            "output_name": "data"
+          },
+          {
+            "input_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
+            "input_name": "filtered",
+            "output_in_workflow_id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
+            "output_name": "timeseries_data"
+          },
+          {
+            "input_in_workflow_id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
+            "input_name": "last_index",
+            "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
+            "output_name": "start"
+          },
+          {
+            "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "input_name": "output",
+            "output_in_workflow_id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
+            "output_name": "timeseries_data"
+          },
+          {
+            "input_in_workflow_id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
+            "input_name": "last_index",
+            "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
+            "output_name": "stop"
+          },
+          {
+            "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "input_name": "output",
+            "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
+            "output_name": "data"
+          },
+          {
+            "input_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
+            "input_name": "interval",
+            "output_in_workflow_id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
+            "output_name": "input"
+          }
         ],
-        "id": "f7fc96d2-2648-4e43-88d4-84525bddc26d",
+        "id": "244973af-0daa-4d4e-9a6f-570642162b7f",
         "inputs": [
-            {
-                "constant": false,
-                "constantValue": {
-                    "value": ""
-                },
-                "id": "1ab7579f-eb3a-4725-944b-e96272ff279d",
-                "id_of_sub_node": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
-                "name": "inp_series",
-                "name_in_subnode": "input",
-                "type": "SERIES"
+          {
+            "constant": false,
+            "constantValue": {
+              "value": ""
             },
-            {
-                "constant": false,
-                "constantValue": {
-                    "value": ""
-                },
-                "id": "716b7b23-2168-4a6b-a8f5-3369dbdc830c",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "limit",
-                "name_in_subnode": "limit",
-                "type": "FLOAT"
+            "id": "b8e04c00-b389-4ec1-8e3e-ba1645551745",
+            "id_of_sub_node": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "name": "inp_series",
+            "name_in_subnode": "input",
+            "type": "SERIES"
+          },
+          {
+            "constant": false,
+            "constantValue": {
+              "value": 0.25
             },
-            {
-                "constant": false,
-                "constantValue": {
-                    "value": ""
-                },
-                "id": "2b35188c-2ecf-400d-8826-86a7c0cc2aee",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "num_days_forecast",
-                "name_in_subnode": "num_days_forecast",
-                "type": "INT"
-            },
-            {
-                "constant": false,
-                "constantValue": {
-                    "value": ""
-                },
-                "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
-                "id_of_sub_node": "244973af-0daa-4d4e-9a6f-570642162b7f",
-                "name": "postive_step_size",
-                "name_in_subnode": "postive_step_size",
-                "type": "FLOAT"
-            }
+            "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
+            "id_of_sub_node": "addefd98-a5bb-4878-a237-71289fb17ac2",
+            "name": "postive_step_size",
+            "name_in_subnode": "input",
+            "type": "FLOAT"
+          }
         ],
         "name": null,
         "outputs": [
-            {
-                "id": "69a90572-028f-4f40-b153-7dd6dc26dc67",
-                "id_of_sub_node": "ca5ce637-5736-491b-b2e2-13ec1748a538",
-                "name": "before_step_detect",
-                "name_in_subnode": "plot",
-                "type": "PLOTLYJSON"
-            },
-            {
-                "id": "36d95060-e3c2-485c-8abf-a10875a9adb6",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "intercept",
-                "name_in_subnode": "intercept",
-                "type": "FLOAT"
-            },
-            {
-                "id": "634f74ff-ac6d-456c-97a8-ea5188e6ec3c",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "limit_violation_timestamp",
-                "name_in_subnode": "limit_violation_timestamp",
-                "type": "STRING"
-            },
-            {
-                "id": "67d1a7e6-aa76-4918-b701-005c8ba4d667",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "rul_regression_result_plot",
-                "name_in_subnode": "rul_regression_result_plot",
-                "type": "PLOTLYJSON"
-            },
-            {
-                "id": "d1fc90eb-2c5e-4639-ba47-87f2903fadfd",
-                "id_of_sub_node": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "name": "slope",
-                "name_in_subnode": "slope",
-                "type": "FLOAT"
-            }
+          {
+            "id": "fb643e6f-98d9-4df8-a69e-0c7e142c768d",
+            "id_of_sub_node": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
+            "name": "series_from_last_step",
+            "name_in_subnode": "output",
+            "type": "SERIES"
+          }
         ],
         "sub_nodes": [
-            {
-                "component_uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
-                "id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
-                "name": null
-            },
-            {
-                "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-                "id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
-                "name": null
-            },
-            {
-                "connections": [
-                    {
-                        "input_in_workflow_id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
-                        "input_name": "diff",
-                        "output_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
-                        "output_name": "left"
-                    },
-                    {
-                        "input_in_workflow_id": "addefd98-a5bb-4878-a237-71289fb17ac2",
-                        "input_name": "output",
-                        "output_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
-                        "output_name": "right"
-                    },
-                    {
-                        "input_in_workflow_id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
-                        "input_name": "result",
-                        "output_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
-                        "output_name": "filter_series"
-                    },
-                    {
-                        "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "input_name": "output",
-                        "output_in_workflow_id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
-                        "output_name": "data"
-                    },
-                    {
-                        "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "input_name": "output",
-                        "output_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
-                        "output_name": "data"
-                    },
-                    {
-                        "input_in_workflow_id": "fa226958-06de-4d79-8777-e053a18b15a5",
-                        "input_name": "filtered",
-                        "output_in_workflow_id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
-                        "output_name": "timeseries_data"
-                    },
-                    {
-                        "input_in_workflow_id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
-                        "input_name": "last_index",
-                        "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
-                        "output_name": "start"
-                    },
-                    {
-                        "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "input_name": "output",
-                        "output_in_workflow_id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
-                        "output_name": "timeseries_data"
-                    },
-                    {
-                        "input_in_workflow_id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
-                        "input_name": "last_index",
-                        "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
-                        "output_name": "stop"
-                    },
-                    {
-                        "input_in_workflow_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "input_name": "output",
-                        "output_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
-                        "output_name": "data"
-                    },
-                    {
-                        "input_in_workflow_id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
-                        "input_name": "interval",
-                        "output_in_workflow_id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
-                        "output_name": "input"
-                    }
-                ],
-                "id": "244973af-0daa-4d4e-9a6f-570642162b7f",
-                "inputs": [
-                    {
-                        "constant": false,
-                        "constantValue": {
-                            "value": ""
-                        },
-                        "id": "b8e04c00-b389-4ec1-8e3e-ba1645551745",
-                        "id_of_sub_node": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "name": "inp_series",
-                        "name_in_subnode": "input",
-                        "type": "SERIES"
-                    },
-                    {
-                        "constant": false,
-                        "constantValue": {
-                            "value": 0.25
-                        },
-                        "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-                        "id_of_sub_node": "addefd98-a5bb-4878-a237-71289fb17ac2",
-                        "name": "postive_step_size",
-                        "name_in_subnode": "input",
-                        "type": "FLOAT"
-                    }
-                ],
-                "name": null,
-                "outputs": [
-                    {
-                        "id": "fb643e6f-98d9-4df8-a69e-0c7e142c768d",
-                        "id_of_sub_node": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
-                        "name": "series_from_last_step",
-                        "name_in_subnode": "output",
-                        "type": "SERIES"
-                    }
-                ],
-                "sub_nodes": [
-                    {
-                        "component_uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
-                        "id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
-                        "id": "addefd98-a5bb-4878-a237-71289fb17ac2",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
-                        "id": "fa226958-06de-4d79-8777-e053a18b15a5",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
-                        "id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
-                        "id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
-                        "id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-                        "id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-                        "id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
-                        "id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
-                        "name": null
-                    }
-                ],
-                "tr_id": "tr_id",
-                "tr_name": "tr_name",
-                "tr_tag": "tr_tag"
-            },
-            {
-                "connections": [
-                    {
-                        "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "input_name": "pred_series",
-                        "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "output_name": "predictions"
-                    },
-                    {
-                        "input_in_workflow_id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
-                        "input_name": "output",
-                        "output_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "output_name": "limit"
-                    },
-                    {
-                        "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "input_name": "limit_violation_prediction_timestamp",
-                        "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "output_name": "limit_violation_prediction_timestamp"
-                    },
-                    {
-                        "input_in_workflow_id": "82132623-2aaa-4797-b478-3857d93bde09",
-                        "input_name": "output",
-                        "output_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "output_name": "timeseries"
-                    },
-                    {
-                        "input_in_workflow_id": "82132623-2aaa-4797-b478-3857d93bde09",
-                        "input_name": "output",
-                        "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "output_name": "base_series"
-                    },
-                    {
-                        "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "input_name": "limit_violation_prediction_timestamp",
-                        "output_in_workflow_id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
-                        "output_name": "input"
-                    },
-                    {
-                        "input_in_workflow_id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
-                        "input_name": "output",
-                        "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "output_name": "limit"
-                    }
-                ],
-                "id": "223b0263-af3b-4324-b9f0-c441860edb42",
-                "inputs": [
-                    {
-                        "constant": false,
-                        "constantValue": {
-                            "value": ""
-                        },
-                        "id": "890386ce-5e0c-4a24-b714-b49f0de93a3a",
-                        "id_of_sub_node": "82132623-2aaa-4797-b478-3857d93bde09",
-                        "name": "inp_series",
-                        "name_in_subnode": "input",
-                        "type": "SERIES"
-                    },
-                    {
-                        "constant": false,
-                        "constantValue": {
-                            "value": 1.3
-                        },
-                        "id": "b338e339-93a5-4f0e-b1d4-165e70b1e794",
-                        "id_of_sub_node": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
-                        "name": "limit",
-                        "name_in_subnode": "input",
-                        "type": "FLOAT"
-                    },
-                    {
-                        "constant": false,
-                        "constantValue": {
-                            "value": 30
-                        },
-                        "id": "2d5dfada-f777-4067-a065-41ffd2994817",
-                        "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "name": "num_days_forecast",
-                        "name_in_subnode": "num_pred_series_future_days",
-                        "type": "INT"
-                    },
-                    {
-                        "constant": true,
-                        "constantValue": {
-                            "value": "5min"
-                        },
-                        "id": "7b73f9d6-d469-4b2a-956f-557daaf4ccf4",
-                        "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "name": null,
-                        "name_in_subnode": "pred_series_frequency",
-                        "type": "STRING"
-                    }
-                ],
-                "name": null,
-                "outputs": [
-                    {
-                        "id": "93cf92d4-4082-464e-bc21-724513e59d41",
-                        "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "name": "intercept",
-                        "name_in_subnode": "intercept",
-                        "type": "FLOAT"
-                    },
-                    {
-                        "id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
-                        "id_of_sub_node": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
-                        "name": "limit_violation_timestamp",
-                        "name_in_subnode": "output",
-                        "type": "STRING"
-                    },
-                    {
-                        "id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
-                        "id_of_sub_node": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "name": "rul_regression_result_plot",
-                        "name_in_subnode": "rul_regression_result_plot",
-                        "type": "PLOTLYJSON"
-                    },
-                    {
-                        "id": "02699d2d-865e-493a-bae2-7e79577d549c",
-                        "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "name": "slope",
-                        "name_in_subnode": "slope",
-                        "type": "FLOAT"
-                    }
-                ],
-                "sub_nodes": [
-                    {
-                        "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
-                        "id": "82132623-2aaa-4797-b478-3857d93bde09",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
-                        "id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
-                        "id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
-                        "id": "4426ace6-15a5-4a0b-927b-558d50c28915",
-                        "name": null
-                    },
-                    {
-                        "component_uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
-                        "id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
-                        "name": null
-                    }
-                ],
-                "tr_id": "tr_id",
-                "tr_name": "tr_name",
-                "tr_tag": "tr_tag"
-            }
+          {
+            "component_uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
+            "id": "06086b0b-c67a-4741-9d77-95d928f5a48e",
+            "name": null
+          },
+          {
+            "component_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+            "id": "addefd98-a5bb-4878-a237-71289fb17ac2",
+            "name": null
+          },
+          {
+            "component_uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+            "id": "fa226958-06de-4d79-8777-e053a18b15a5",
+            "name": null
+          },
+          {
+            "component_uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
+            "id": "adcabc05-afe9-49f5-8356-51b1b4e049bd",
+            "name": null
+          },
+          {
+            "component_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
+            "id": "c46ce00f-31e6-4da3-91d1-4ed336a5d495",
+            "name": null
+          },
+          {
+            "component_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
+            "id": "664c0aa9-eaa3-4b4a-adf7-559bcbd8e1a6",
+            "name": null
+          },
+          {
+            "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+            "id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+            "name": null
+          },
+          {
+            "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+            "id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
+            "name": null
+          },
+          {
+            "component_uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
+            "id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
+            "name": null
+          }
         ],
         "tr_id": "tr_id",
         "tr_name": "tr_name",
         "tr_tag": "tr_tag"
-    },
-    "workflow_wiring": {
-        "input_wirings": [
-            {
-                "adapter_id": 1,
-                "filters": {
-                    "value": "{\"2020-05-07T01:00:00.000Z\": 2.39644748,\"2020-05-07T02:00:00.000Z\": 2.4080285331,\"2020-05-07T03:00:00.000Z\": 2.3540845158,\"2020-05-07T04:00:00.000Z\": 2.377081574,\"2020-05-07T05:00:00.000Z\": 2.3825706704,\"2020-05-07T06:00:00.000Z\": 2.3969814116,\"2020-05-07T07:00:00.000Z\": 2.3902110487,\"2020-05-07T08:00:00.000Z\": 2.8876608764,\"2020-05-07T09:00:00.000Z\": 2.8554512351,\"2020-05-07T10:00:00.000Z\": 2.9011506947,\"2020-05-07T11:00:00.000Z\": 2.8739810027,\"2020-05-07T12:00:00.000Z\": 2.8642327429,\"2020-05-07T13:00:00.000Z\": 2.8609388862,\"2020-05-07T14:00:00.000Z\": 2.8691609675,\"2020-05-07T15:00:00.000Z\": 2.8516302986,\"2020-05-07T16:00:00.000Z\": 2.8860791586,\"2020-05-07T17:00:00.000Z\": 2.8417859745,\"2020-05-07T18:00:00.000Z\": 2.8577750865, \"2020-05-07T19:00:00.000Z\": 2.861678322,\"2020-05-07T20:00:00.000Z\": 2.8064804686,\"2020-05-07T21:00:00.000Z\": 2.8447594889,\"2020-05-07T22:00:00.000Z\": 2.855936299,\"2020-05-07T23:00:00.000Z\": 2.8142863343,\"2020-05-08T00:00:00.000Z\": 2.8373024815,\"2020-05-08T01:00:00.000Z\": 2.8435283639}"
-                },
-                "ref_id": null,
-                "workflow_input_name": "inp_series"
-            },
-            {
-                "adapter_id": 1,
-                "filters": {
-                    "value": "1.3"
-                },
-                "ref_id": null,
-                "workflow_input_name": "limit"
-            },
-            {
-                "adapter_id": 1,
-                "filters": {
-                    "value": "30"
-                },
-                "ref_id": null,
-                "workflow_input_name": "num_days_forecast"
-            },
-            {
-                "adapter_id": 1,
-                "filters": {
-                    "value": "0.25"
-                },
-                "ref_id": null,
-                "workflow_input_name": "postive_step_size"
-            }
+      },
+      {
+        "connections": [
+          {
+            "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "input_name": "pred_series",
+            "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "output_name": "predictions"
+          },
+          {
+            "input_in_workflow_id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
+            "input_name": "output",
+            "output_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "output_name": "limit"
+          },
+          {
+            "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "input_name": "limit_violation_prediction_timestamp",
+            "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "output_name": "limit_violation_prediction_timestamp"
+          },
+          {
+            "input_in_workflow_id": "82132623-2aaa-4797-b478-3857d93bde09",
+            "input_name": "output",
+            "output_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "output_name": "timeseries"
+          },
+          {
+            "input_in_workflow_id": "82132623-2aaa-4797-b478-3857d93bde09",
+            "input_name": "output",
+            "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "output_name": "base_series"
+          },
+          {
+            "input_in_workflow_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "input_name": "limit_violation_prediction_timestamp",
+            "output_in_workflow_id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
+            "output_name": "input"
+          },
+          {
+            "input_in_workflow_id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
+            "input_name": "output",
+            "output_in_workflow_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "output_name": "limit"
+          }
         ],
-        "output_wirings": [
-            {
-                "adapter_id": 1,
-                "ref_id": null,
-                "workflow_output_name": "before_step_detect"
+        "id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "inputs": [
+          {
+            "constant": false,
+            "constantValue": {
+              "value": ""
             },
-            {
-                "adapter_id": 1,
-                "ref_id": null,
-                "workflow_output_name": "intercept"
+            "id": "890386ce-5e0c-4a24-b714-b49f0de93a3a",
+            "id_of_sub_node": "82132623-2aaa-4797-b478-3857d93bde09",
+            "name": "inp_series",
+            "name_in_subnode": "input",
+            "type": "SERIES"
+          },
+          {
+            "constant": false,
+            "constantValue": {
+              "value": 1.3
             },
-            {
-                "adapter_id": 1,
-                "ref_id": null,
-                "workflow_output_name": "limit_violation_timestamp"
+            "id": "b338e339-93a5-4f0e-b1d4-165e70b1e794",
+            "id_of_sub_node": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
+            "name": "limit",
+            "name_in_subnode": "input",
+            "type": "FLOAT"
+          },
+          {
+            "constant": false,
+            "constantValue": {
+              "value": 30
             },
-            {
-                "adapter_id": 1,
-                "ref_id": null,
-                "workflow_output_name": "rul_regression_result_plot"
+            "id": "2d5dfada-f777-4067-a065-41ffd2994817",
+            "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "name": "num_days_forecast",
+            "name_in_subnode": "num_pred_series_future_days",
+            "type": "INT"
+          },
+          {
+            "constant": true,
+            "constantValue": {
+              "value": "5min"
             },
-            {
-                "adapter_id": 1,
-                "ref_id": null,
-                "workflow_output_name": "slope"
-            }
-        ]
-    }
+            "id": "7b73f9d6-d469-4b2a-956f-557daaf4ccf4",
+            "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "name": null,
+            "name_in_subnode": "pred_series_frequency",
+            "type": "STRING"
+          }
+        ],
+        "name": null,
+        "outputs": [
+          {
+            "id": "93cf92d4-4082-464e-bc21-724513e59d41",
+            "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "name": "intercept",
+            "name_in_subnode": "intercept",
+            "type": "FLOAT"
+          },
+          {
+            "id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
+            "id_of_sub_node": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
+            "name": "limit_violation_timestamp",
+            "name_in_subnode": "output",
+            "type": "STRING"
+          },
+          {
+            "id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
+            "id_of_sub_node": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "name": "rul_regression_result_plot",
+            "name_in_subnode": "rul_regression_result_plot",
+            "type": "PLOTLYJSON"
+          },
+          {
+            "id": "02699d2d-865e-493a-bae2-7e79577d549c",
+            "id_of_sub_node": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "name": "slope",
+            "name_in_subnode": "slope",
+            "type": "FLOAT"
+          }
+        ],
+        "sub_nodes": [
+          {
+            "component_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+            "id": "82132623-2aaa-4797-b478-3857d93bde09",
+            "name": null
+          },
+          {
+            "component_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+            "id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
+            "name": null
+          },
+          {
+            "component_uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+            "id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
+            "name": null
+          },
+          {
+            "component_uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
+            "id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+            "name": null
+          },
+          {
+            "component_uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
+            "id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+            "name": null
+          }
+        ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
+        "tr_tag": "tr_tag"
+      }
+    ],
+    "tr_id": "tr_id",
+    "tr_name": "tr_name",
+    "tr_tag": "tr_tag"
+  },
+  "workflow_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": 1,
+        "filters": {
+          "value": "{\"2020-05-07T01:00:00.000Z\": 2.39644748,\"2020-05-07T02:00:00.000Z\": 2.4080285331,\"2020-05-07T03:00:00.000Z\": 2.3540845158,\"2020-05-07T04:00:00.000Z\": 2.377081574,\"2020-05-07T05:00:00.000Z\": 2.3825706704,\"2020-05-07T06:00:00.000Z\": 2.3969814116,\"2020-05-07T07:00:00.000Z\": 2.3902110487,\"2020-05-07T08:00:00.000Z\": 2.8876608764,\"2020-05-07T09:00:00.000Z\": 2.8554512351,\"2020-05-07T10:00:00.000Z\": 2.9011506947,\"2020-05-07T11:00:00.000Z\": 2.8739810027,\"2020-05-07T12:00:00.000Z\": 2.8642327429,\"2020-05-07T13:00:00.000Z\": 2.8609388862,\"2020-05-07T14:00:00.000Z\": 2.8691609675,\"2020-05-07T15:00:00.000Z\": 2.8516302986,\"2020-05-07T16:00:00.000Z\": 2.8860791586,\"2020-05-07T17:00:00.000Z\": 2.8417859745,\"2020-05-07T18:00:00.000Z\": 2.8577750865, \"2020-05-07T19:00:00.000Z\": 2.861678322,\"2020-05-07T20:00:00.000Z\": 2.8064804686,\"2020-05-07T21:00:00.000Z\": 2.8447594889,\"2020-05-07T22:00:00.000Z\": 2.855936299,\"2020-05-07T23:00:00.000Z\": 2.8142863343,\"2020-05-08T00:00:00.000Z\": 2.8373024815,\"2020-05-08T01:00:00.000Z\": 2.8435283639}"
+        },
+        "ref_id": null,
+        "workflow_input_name": "inp_series"
+      },
+      {
+        "adapter_id": 1,
+        "filters": {
+          "value": "1.3"
+        },
+        "ref_id": null,
+        "workflow_input_name": "limit"
+      },
+      {
+        "adapter_id": 1,
+        "filters": {
+          "value": "30"
+        },
+        "ref_id": null,
+        "workflow_input_name": "num_days_forecast"
+      },
+      {
+        "adapter_id": 1,
+        "filters": {
+          "value": "0.25"
+        },
+        "ref_id": null,
+        "workflow_input_name": "postive_step_size"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "workflow_output_name": "before_step_detect"
+      },
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "workflow_output_name": "intercept"
+      },
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "workflow_output_name": "limit_violation_timestamp"
+      },
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "workflow_output_name": "rul_regression_result_plot"
+      },
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "workflow_output_name": "slope"
+      }
+    ]
+  },
+  "trafo_id": "f7fc96d2-2648-4e43-88d4-84525bddc26d"
 }

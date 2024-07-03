@@ -38,7 +38,7 @@ class MinimallyMoreCapableJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def _get_execution_context() -> dict:
+def _get_execution_context() -> dict[str, str | None]:
     try:
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
     except LookupError:
@@ -71,6 +71,10 @@ class ExecutionContextFilter(logging.Filter):
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
+    def get_value(self, key: str) -> str | None:
+        context_dict = _get_execution_context()
+        return context_dict.get(key, None)
+
     def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_execution_context()
 
@@ -101,7 +105,7 @@ class ExecutionContextFilter(logging.Filter):
 execution_context_filter = ExecutionContextFilter()
 
 
-def _get_job_id_context() -> dict:
+def _get_job_id_context() -> dict[str, str | None | UUID]:
     try:
         return _JOB_ID_LOGGING_CONTEXT_VAR.get()
     except LookupError:
@@ -127,6 +131,10 @@ class JobIdContextFilter(logging.Filter):
 
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+
+    def get_value(self, key: str) -> str | None | UUID:
+        context_dict = _get_job_id_context()
+        return context_dict.get(key, None)
 
     def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_job_id_context()

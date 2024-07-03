@@ -23,7 +23,7 @@ Notes:
 * You can provide both functions or coroutine functions (Awaitables)
 * The types returned by a loading function must comply with the the hetida designer data types.
   For example the adapter may return pandas Series objects (which can be used in SERIES inputs)
-* A send data function should return an empty dictionary. The option to return an actual data 
+* A send data function should return an empty dictionary. The option to return an actual data
   dictionary exists only to support the built-in direct provisioning adapter.
 * FilteredSource and FilteredSink Protocol types can be imported from hetdesrun.models for type
   annotations or you provide your own structurally equivalent type.
@@ -55,38 +55,37 @@ from hetdesrun.adapters.blob_storage.write_blob import (  # noqa: E402
     send_data as blob_storage_send_data,
 )
 
-register_source_adapter(
-    adapter_key="blob-storage-adapter", load_func=blob_storage_load_data
-)
+register_source_adapter(adapter_key="blob-storage-adapter", load_func=blob_storage_load_data)
 
-register_sink_adapter(
-    adapter_key="blob-storage-adapter", send_func=blob_storage_send_data
-)
+register_sink_adapter(adapter_key="blob-storage-adapter", send_func=blob_storage_send_data)
 
 
 # Registering local file adapter
-from hetdesrun.adapters.local_file import load_data as local_file_load_data
+from hetdesrun.adapters.local_file import load_data as local_file_load_data  # noqa: E402
+from hetdesrun.adapters.local_file import send_data as local_file_send_data  # noqa: E402
 
-# noqa: E402
-from hetdesrun.adapters.local_file import send_data as local_file_send_data
-
-register_source_adapter(
-    adapter_key="local-file-adapter", load_func=local_file_load_data
-)
+register_source_adapter(adapter_key="local-file-adapter", load_func=local_file_load_data)
 
 register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
 
 # Registering sql adapter
 
-# noqa: E402
-from hetdesrun.adapters.sql_adapter import load_data as sql_adapter_load_data
+from hetdesrun.adapters.sql_adapter import load_data as sql_adapter_load_data  # noqa: E402
 
 register_source_adapter(adapter_key="sql-adapter", load_func=sql_adapter_load_data)
 
-# noqa: E402
-from hetdesrun.adapters.sql_adapter import send_data as sql_adapter_send_data
+from hetdesrun.adapters.sql_adapter import send_data as sql_adapter_send_data  # noqa: E402
 
 register_sink_adapter(adapter_key="sql-adapter", send_func=sql_adapter_send_data)
+
+# Register kafka adapter
+from hetdesrun.adapters.kafka import load_data as kafka_adapter_load_data  # noqa: E402
+
+register_source_adapter(adapter_key="kafka", load_func=kafka_adapter_load_data)
+
+from hetdesrun.adapters.kafka import send_data as kafka_adapter_send_data  # noqa: E402
+
+register_sink_adapter(adapter_key="kafka", send_func=kafka_adapter_send_data)
 
 
 # Registering File Support Handlers for the local file adapter

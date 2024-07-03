@@ -15,7 +15,7 @@ The "Extract Attributes" components reads `attrs` from the underlying Dataframe/
 The "Add/Update Attributes" components update the metadata dictionary stored in `attrs` of the underlying Dataframe/Series.
 
 ## Providing and outputting metadata with manual input (direct provisioning)
-You can provide such metadata when manual inputting data by entering
+You can provide such metadata when manual inputting data by using a wrapped format as follows:
 ```json
 {
     "__hd_wrapped_data_object__": "DATAFRAME",
@@ -45,9 +45,9 @@ for a MULTITSFRAME input or
 ```
 for a SERIES input.
 
-Here the content of the `__data__` field can be anything which the corresponding actual DataFrame or Series parsing may understand.
+Here the content of the `__data__` field can be anything which the corresponding actual DataFrame or Series parsing may understand. See below for more parsing options!
 
-This "wrapper" format is also received when using the direct provisioning adapter for oupts ("Output Only").
+This "wrapper" format is also received when using the direct provisioning adapter for outputs ("Output Only").
 
 Note that the unwrapped format (i.e. sending only the content of the `__data__` field unwrapped) also works and provides the parsed object with an empty dictionary `{}` as `.attrs` attribute.
 
@@ -79,6 +79,15 @@ The following metadata fields should be attached to timeseries objects (typicall
     # single timeseries)
 
     "ref_metrics": ["sensor_a", "sensor_b"],
+
+
+    # Fixed frequency (timedelta between subsequent datapoints) of the timeseries as
+    # Pandas date offset alias or a timedelta string.
+    # In combination with an offset this defines the absolute timestamps at which data is expected.
+
+    "ref_data_frequency": {"sensor_a": 5min}
+    "ref_data_frequency_offset": {"sensor_a": 4min}
+
 }
 ```
 
@@ -92,4 +101,37 @@ Several builtin adapters support sending and receiving metadata:
 * The direct provisioning adapter's special format was mentioned above.
 * See [here](./adapter_system/generic_rest_adapters/web_service_interface.md) for how to provide and receive `.attrs` metadata for your own generic rest adapters.
 * The [sql adapter](./adapter_system/sql_adapter.md) timeseries table feature provides the metadata from the above convention for its MULTITSFRAME source(s).
+
+## Wrapped format parsing options
+The wrapped format allows to specifiy the actual data in different ways and to add corresponding parsing options. For example 
+
+```json
+{
+	"__hd_wrapped_data_object__": "SERIES",
+	"__metadata__": {},
+	"__data__": {
+		"name": "series_name",
+		"index": [
+				"2020-01-01T01:15:27.000Z",
+				"2020-01-01T01:15:27.000Z",
+				"2020-01-03T08:20:04.000Z"
+		],
+		"data": [
+			42.2,
+			18.7,
+			25.9
+		]
+		},
+		"__data_parsing_options__": {
+			"orient": "split"
+		}
+	}
+```
+provides SERIES data with a name, in "split" format (see Pandas [read_json](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html) documentation). In particular this allows to provide / enter duplicate indices via direct_provisioning.
+
+You may provide other parsing options as well, but you have to make sure that the structure under `__data__` is parsable with your parsing options.
+
+hetida designer always outputs the wrapped format for ouputs wired against the `direct_provisioning` adapter. For SERIES it uses the non-default "split" orient in order to preserve index duplicated. For DATAFRAME / MULTITSFRAME it expects all relevant information to be present in columns and therefore uses the default json serialization format for dataframes.
+
+
 
