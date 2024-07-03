@@ -68,10 +68,6 @@ import { OptionalFieldsDialogComponent } from './components/optional-fields-dial
 import { from, map } from 'rxjs';
 
 const httpLoaderFactory = (configService: ConfigService) => {
-  // we need to first load the hetida designer config upon app initialization, then use its values to initialize the auth module
-  // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
-  // the calls can be split again once we migrate to v14 of the oidc library, see
-  // https://github.com/damienbod/angular-auth-oidc-client/blob/main/docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
   const authConfig = from(configService.getConfig()).pipe(
     map(config => {
       return {

@@ -23,6 +23,6 @@
     "typeRoots": ["node_modules/@types", "types"],
     "lib": ["es2018", "dom"],
     "useDefineForClassFields": false,
-    "preserveSymlinks": true
+    "preserveSymlinks": false
   }
 }

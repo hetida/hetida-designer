@@ -75,7 +75,7 @@ hd-copy-transformation-dialog {
 }
 
 .mat-icon {
-  border-radius: 100%;
+  padding: 1px;
 }
 
 .mat-divider-horizontal {
@@ -152,17 +152,18 @@ hd-copy-transformation-dialog {
 .mat-mdc-dialog-actions {
   justify-content: flex-end !important;
   border-top: 1px solid !important;
-  margin: 20px 24px 0 24px !important;
+  margin: 0 24px 0 24px !important;
   padding: 8px 0 8px 0 !important;
 }
 
 .mat-mdc-dialog-content {
-  padding: 20px 24px 0px 24px !important;
+  padding: 0 24px 0 24px !important;
 }
 
 .mat-mdc-dialog-title {
   background-color: $hd-yellow;
   padding: 0 0 0 24px !important;
+  margin: 0 0 20px 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between;

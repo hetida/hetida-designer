@@ -109,11 +109,11 @@
   }
 
   .mat-mdc-menu-item:hover:not([disabled]) {
-    background-color: $hd-grey-dark;
+    background-color: $hd-grey-dark !important;
   }
 
   .mat-mdc-menu-item:focus:not([disabled]) {
-    background-color: $hd-grey-dark;
+    background-color: $hd-grey-dark !important;
   }
 
   .dark-theme {

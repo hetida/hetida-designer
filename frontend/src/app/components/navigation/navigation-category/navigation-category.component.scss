@@ -41,3 +41,7 @@
     display: flex;
   }
 }
+
+.mat-expansion-panel:not([class*='mat-elevation-z']) {
+  box-shadow: none;
+}
