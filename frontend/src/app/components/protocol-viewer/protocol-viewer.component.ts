@@ -147,7 +147,7 @@ export class ProtocolViewerComponent implements AfterViewInit {
   outputIsPlotlyJson(outputKey: string): boolean {
     const resultType =
       this.executionResponse.output_types_by_output_name[outputKey];
-    return resultType === IOType.PLOTLYJSON;
+    return resultType === IOType.PLOTLYJSON.toString();
   }
 
   stringifyJson(value: any) {
