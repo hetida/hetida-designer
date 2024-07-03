@@ -2,11 +2,13 @@
     "element_types": [
         {
             "id": "00000000-0000-0000-0000-000000000001",
-            "name": "Type1"
+            "name": "Type1",
+            "description": "Description for Type1"
         },
         {
             "id": "00000000-0000-0000-0000-000000000002",
-            "name": "Type2"
+            "name": "Type2",
+            "description": "Description for Type2"
         }
     ],
     "thing_nodes": [

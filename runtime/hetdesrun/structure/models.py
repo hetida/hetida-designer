@@ -28,6 +28,9 @@ class ThingNode(BaseModel):
         ..., description="Foreign key to the ElementType table"
     )
     entity_uuid: str = Field(..., description="UUID identifier for the entity")
+    meta_data: dict[str, Any] | None = Field(
+        None, description="Optional metadata for the Thing Node"
+    )
 
     class Config:
         orm_mode = True
@@ -40,6 +43,7 @@ class ThingNode(BaseModel):
             parent_node_id=self.parent_node_id,
             element_type_id=self.element_type_id,
             entity_uuid=self.entity_uuid,
+            meta_data=self.meta_data,
         )
 
     @classmethod
@@ -52,6 +56,7 @@ class ThingNode(BaseModel):
                 parent_node_id=orm_model.parent_node_id,
                 element_type_id=orm_model.element_type_id,
                 entity_uuid=orm_model.entity_uuid,
+                meta_data=orm_model.meta_data,
             )
         except ValidationError as e:
             msg = (

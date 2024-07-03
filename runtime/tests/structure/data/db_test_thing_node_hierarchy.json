@@ -2,7 +2,8 @@
     "element_types": [
         {
             "id": "00000000-0000-0000-0000-000000000001",
-            "name": "Type1"
+            "name": "Type1",
+            "description": "Description for Type1"
         }
     ],
     "thing_nodes": [
