@@ -1,9 +1,8 @@
-import os
 import logging
+import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool, text
+from sqlalchemy import engine_from_config, pool, text
 
 from alembic import context
 
@@ -75,7 +74,7 @@ def run_migrations_online():
     alembic_logger = logging.getLogger("alembic")
     configure_logging(alembic_logger)
 
-    from hetdesrun.persistence import get_db_engine
+    from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     connectable = get_db_engine()
 

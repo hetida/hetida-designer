@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from hetdesrun.persistence.dbmodels import (
+from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     ElementTypeToPropertySetOrm,
     PropertyMetadataOrm,
@@ -20,7 +20,7 @@ from hetdesrun.structure.db.external_types import ExternalType
 class ThingNode(BaseModel):
     id: UUID = Field(..., description="The primary key for the ThingNode table")
     name: str = Field(..., description="Unique name of the Thing Node")
-    description: str | None = Field(None, description="Description of the Thing Node")
+    description: str = Field("", description="Description of the Thing Node")
     parent_node_id: UUID | None = Field(
         None, description="Parent node UUID if this is a child node"
     )
@@ -375,3 +375,14 @@ class ElementTypeToPropertySet(BaseModel):
             property_set_id=orm_model.property_set_id,
             order_no=orm_model.order_no,
         )
+
+
+class CompleteStructure(BaseModel):
+    thingnodes: list[ThingNode] = Field(
+        ..., description="All thingnodes of the structure"
+    )
+    sources: list[Source] = Field(..., description="All sources of the structure")
+    sinks: list[Sink] = Field(..., description="All sinks of the structure")
+    element_types: list[ElementType] = Field(
+        ..., description="All element types of the structure"
+    )

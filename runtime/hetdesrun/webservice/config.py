@@ -8,6 +8,7 @@ from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 from hetdesrun.models.execution import ExecByIdBase
+from hetdesrun.structure.models import CompleteStructure
 from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
@@ -325,6 +326,16 @@ class RuntimeConfig(BaseSettings):
         "",
         description="Path to directory where to look for import sources during autoimport",
         env="HD_BACKEND_AUTOIMPORT_DIRECTORY",
+    )
+
+    # TODO More detailed description is probably necessary
+    structure_to_prepopulate_virtual_structure_adapter: CompleteStructure | None = (
+        Field(
+            None,
+            description="A structure in JSON-format."
+            "Containing all thingnodes, sources, sinks and element types of the users data",
+            env="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
+        )
     )
 
     hd_adapters: str = Field(

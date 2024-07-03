@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
 
-from hetdesrun.persistence.dbmodels import (
+from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     ElementTypeToPropertySetOrm,
     PropertyMetadataOrm,

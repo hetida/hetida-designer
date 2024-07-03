@@ -1,7 +1,7 @@
 import pytest
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence.db_engine_and_session import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,

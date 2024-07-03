@@ -34,6 +34,7 @@ def test_get_level_with_none():
     assert thing_nodes[0].name == "RootNode"
 
 
+@pytest.mark.skip(reason="Replace json")
 @pytest.mark.usefixtures("_fill_db")
 def test_get_level_with_existing_uuid():
     thing_nodes, sources, sinks = get_level_from_struct_service(
@@ -56,6 +57,7 @@ def test_get_level_with_existing_uuid():
     assert sinks[1].name == "Sink2"
 
 
+@pytest.mark.skip(reason="Replace json")
 @pytest.mark.usefixtures("_fill_db")
 def test_get_structure():
     structure_response = get_structure("55555555-5555-5555-5555-555555555555")

@@ -1,7 +1,7 @@
 import pytest
 
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence.db_engine_and_session import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (

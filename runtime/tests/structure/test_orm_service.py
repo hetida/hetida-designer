@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
-from hetdesrun.persistence.dbmodels import (
+from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     ElementTypeToPropertySetOrm,
     PropertyMetadataOrm,

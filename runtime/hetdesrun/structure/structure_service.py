@@ -1,6 +1,10 @@
 from uuid import UUID
 
-from hetdesrun.persistence.dbmodels import SinkOrm, SourceOrm, ThingNodeOrm
+from hetdesrun.persistence.structure_service_dbmodels import (
+    SinkOrm,
+    SourceOrm,
+    ThingNodeOrm,
+)
 from hetdesrun.structure.db import get_session
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.models import Sink, Source, ThingNode
