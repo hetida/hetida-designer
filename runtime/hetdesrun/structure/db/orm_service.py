@@ -563,11 +563,11 @@ def update_et(
         try:
             element_type = fetch_et_by_id(session, id, log_error)
             if element_type:
-                    element_type.name = et_update.name
-                    element_type.icon = et_update.icon
-                    element_type.description = et_update.description
-                    element_type.property_sets = et_update.property_sets
-                    element_type.thing_nodes = et_update.thing_nodes
+                element_type.name = et_update.name
+                element_type.icon = et_update.icon
+                element_type.description = et_update.description
+                element_type.property_sets = et_update.property_sets
+                element_type.thing_nodes = et_update.thing_nodes
             return ElementType.from_orm_model(element_type)
         except DBNotFoundError as e:
             session.rollback()

@@ -757,7 +757,6 @@ def test_handle_duplicate_elementtype_insertion(mocked_clean_test_db_session):
         store_single_element_type(et_object2)
 
 
-
 # Performance and Load Tests
 
 
@@ -893,14 +892,14 @@ def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session
             "ChildNode2_Child1",
             "ChildNode2_Child2",
             "ChildNode2_Child1_Child1",
-            "ChildNode2_Child1_Child2"
+            "ChildNode2_Child1_Child2",
         ]
 
         for name in expected_names:
             assert name in thing_node_names
 
         sources = session.query(SourceOrm).all()
-        assert len(sources) == 7  
+        assert len(sources) == 7
         source_names = [source.name for source in sources]
         expected_source_names = [
             "Source1",
@@ -909,14 +908,14 @@ def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session
             "Source4",
             "Source5",
             "Source6",
-            "Source7"
+            "Source7",
         ]
 
         for name in expected_source_names:
             assert name in source_names
 
         sinks = session.query(SinkOrm).all()
-        assert len(sinks) == 7  
+        assert len(sinks) == 7
         sink_names = [sink.name for sink in sinks]
         expected_sink_names = [
             "Sink1",
@@ -925,9 +924,8 @@ def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session
             "Sink4",
             "Sink5",
             "Sink6",
-            "Sink7"
+            "Sink7",
         ]
 
         for name in expected_sink_names:
             assert name in sink_names
-
