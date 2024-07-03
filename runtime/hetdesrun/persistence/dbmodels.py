@@ -14,6 +14,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, backref, declarative_base, relationship, validates
+from sqlalchemy.types import JSON
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
@@ -244,7 +245,7 @@ class ThingNodeOrm(Base):
         nullable=False,
     )
     entity_uuid = Column(String(36), nullable=False)
-    meta_data = Column(String(1024), nullable=True) 
+    meta_data = Column(JSON, nullable=True)
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )

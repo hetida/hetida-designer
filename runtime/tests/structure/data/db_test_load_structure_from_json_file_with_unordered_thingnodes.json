@@ -153,7 +153,10 @@
             "element_type_id": "00000000-0000-0000-0000-000000000002",
             "entity_uuid": "child1_uuid",
             "parent_node_id": "00000000-0000-0000-0000-000000000004",
-            "description": "Description for ChildNode1"
+            "description": "Description for ChildNode1",
+            "meta_data": {
+                "info": "example metadata for ChildNode1"
+            }
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",
@@ -162,7 +165,9 @@
             "entity_uuid": "child2_uuid",
             "parent_node_id": "11111111-1111-1111-1111-111111111111",
             "description": "Description for ChildNode2",
-            "metadata": "Metadata for ChildNode2"
+            "meta_data": {
+                "info": "example metadata for ChildNode2"
+            }
         },
         {
             "id": "33333333-3333-3333-3333-333333333333",
@@ -170,7 +175,10 @@
             "element_type_id": "00000000-0000-0000-0000-000000000001",
             "entity_uuid": "child3_uuid",
             "parent_node_id": "22222222-2222-2222-2222-222222222222",
-            "description": "Description for ChildNode3"
+            "description": "Description for ChildNode3",
+            "meta_data": {
+                "info": "example metadata for ChildNode3"
+            }
         },
         {
             "id": "44444444-4444-4444-4444-444444444444",
@@ -178,7 +186,10 @@
             "element_type_id": "00000000-0000-0000-0000-000000000002",
             "entity_uuid": "leaf_uuid_1",
             "parent_node_id": "33333333-3333-3333-3333-333333333333",
-            "description": "Description for LeafNodeWith2Sources1Sink"
+            "description": "Description for LeafNodeWith2Sources1Sink",
+            "meta_data": {
+                "info": "example metadata for LeafNodeWith2Sources1Sink"
+            }
         },
         {
             "id": "55555555-5555-5555-5555-555555555555",
@@ -186,7 +197,10 @@
             "element_type_id": "00000000-0000-0000-0000-000000000003",
             "entity_uuid": "leaf_uuid_2",
             "parent_node_id": "33333333-3333-3333-3333-333333333333",
-            "description": "Description for LeafNodeWith1Source2Sinks"
+            "description": "Description for LeafNodeWith1Source2Sinks",
+            "meta_data": {
+                "info": "example metadata for LeafNodeWith1Source2Sinks"
+            }
         },
         {
             "id": "66666666-6666-6666-6666-666666666666",
@@ -195,7 +209,9 @@
             "entity_uuid": "child2_child1_uuid",
             "parent_node_id": "22222222-2222-2222-2222-222222222222",
             "description": "Description for ChildNode2_Child1",
-            "metadata": "Metadata for ChildNode2_Child1"
+            "meta_data": {
+                "info": "example metadata for ChildNode2_Child1"
+            }
         },
         {
             "id": "77777777-7777-7777-7777-777777777777",
@@ -204,7 +220,9 @@
             "entity_uuid": "child2_child2_uuid",
             "parent_node_id": "22222222-2222-2222-2222-222222222222",
             "description": "Description for ChildNode2_Child2",
-            "metadata": "Metadata for ChildNode2_Child2"
+            "meta_data": {
+                "info": "example metadata for ChildNode2_Child2"
+            }
         },
         {
             "id": "88888888-8888-8888-8888-888888888888",
@@ -213,7 +231,9 @@
             "entity_uuid": "child2_child1_child1_uuid",
             "parent_node_id": "66666666-6666-6666-6666-666666666666",
             "description": "Description for ChildNode2_Child1_Child1",
-            "metadata": "Metadata for ChildNode2_Child1_Child1"
+            "meta_data": {
+                "info": "example metadata for ChildNode2_Child1_Child1"
+            }
         },
         {
             "id": "99999999-9999-9999-9999-999999999999",
@@ -222,7 +242,9 @@
             "entity_uuid": "child2_child1_child2_uuid",
             "parent_node_id": "66666666-6666-6666-6666-666666666666",
             "description": "Description for ChildNode2_Child1_Child2",
-            "metadata": "Metadata for ChildNode2_Child1_Child2"
+            "meta_data": {
+                "info": "example metadata for ChildNode2_Child1_Child2"
+            }
         },
         {
             "id": "00000000-0000-0000-0000-000000000004",
@@ -230,7 +252,10 @@
             "element_type_id": "00000000-0000-0000-0000-000000000001",
             "entity_uuid": "root_uuid",
             "parent_node_id": null,
-            "description": "Description for RootNode"
+            "description": "Description for RootNode",
+            "meta_data": {
+                "info": "example metadata for RootNode"
+            }
         }
     ]
 }

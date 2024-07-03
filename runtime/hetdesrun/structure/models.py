@@ -28,7 +28,9 @@ class ThingNode(BaseModel):
         ..., description="Foreign key to the ElementType table"
     )
     entity_uuid: str = Field(..., description="UUID identifier for the entity")
-    meta_data: str | None = Field(None, description="Optional metadata for the Thing Node")
+    meta_data: dict[str, Any] | None = Field(
+        None, description="Optional metadata for the Thing Node"
+    )
 
     class Config:
         orm_mode = True
