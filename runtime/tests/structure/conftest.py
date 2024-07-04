@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 from sqlalchemy.future.engine import Engine
 
-from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.structure_service_dbmodels import Base
 from hetdesrun.structure.db import get_db_engine, sessionmaker
 
 
