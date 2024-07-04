@@ -1031,20 +1031,36 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
 
 
 def update_structure_from_file(file_path: str) -> None:
-    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
-        file_path
-    )
+    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(file_path)
 
     with get_session()() as session, session.begin():
         flush_items(session, element_types)
-        flush_items(session, thing_nodes)
         flush_items(session, sources)
         flush_items(session, sinks)
+        flush_items(session, thing_nodes)
+
+        for thing_node in thing_nodes:
+            orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
+            if orm_thing_node is None:
+                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
+            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
+            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+            session.add(orm_thing_node)
+        session.flush()
 
 
 def update_structure(complete_structure: CompleteStructure) -> None:
     with get_session()() as session, session.begin():
         flush_items(session, complete_structure.element_types)
-        flush_items(session, complete_structure.thing_nodes)
         flush_items(session, complete_structure.sources)
         flush_items(session, complete_structure.sinks)
+        flush_items(session, complete_structure.thing_nodes)
+
+        for thing_node in complete_structure.thing_nodes:
+            orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
+            if orm_thing_node is None:
+                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
+            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
+            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+            session.add(orm_thing_node)
+        session.flush()

@@ -31,6 +31,8 @@ class ThingNode(BaseModel):
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
     )
+    sources: list[UUID] = Field(default_factory=list, description="List of source IDs")
+    sinks: list[UUID] = Field(default_factory=list, description="List of sink IDs")
 
     class Config:
         orm_mode = True
@@ -57,6 +59,8 @@ class ThingNode(BaseModel):
                 element_type_id=orm_model.element_type_id,
                 entity_uuid=orm_model.entity_uuid,
                 meta_data=orm_model.meta_data,
+                sources=[source.id for source in orm_model.sources],
+                sinks=[sink.id for sink in orm_model.sinks],
             )
         except ValidationError as e:
             msg = (
@@ -78,9 +82,6 @@ class Filter(BaseModel):
 
 class Source(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the source")  # noqa: A003
-    thingNodeId: UUID = Field(
-        ..., description="ID of the ThingNode this source is associated with"
-    )
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
@@ -99,7 +100,6 @@ class Source(BaseModel):
     def to_orm_model(self) -> SourceOrm:
         return SourceOrm(
             id=self.id,
-            thing_node_id=self.thingNodeId,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -113,7 +113,6 @@ class Source(BaseModel):
     def from_orm_model(cls, orm_model: SourceOrm) -> "Source":
         return Source(
             id=orm_model.id,
-            thingNodeId=orm_model.thing_node_id,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
@@ -132,9 +131,6 @@ class Source(BaseModel):
 
 class Sink(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the sink")  # noqa: A003
-    thingNodeId: UUID = Field(
-        ..., description="ID of the ThingNode this sink is associated with"
-    )
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
@@ -153,7 +149,6 @@ class Sink(BaseModel):
     def to_orm_model(self) -> SinkOrm:
         return SinkOrm(
             id=self.id,
-            thing_node_id=self.thingNodeId,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -167,7 +162,6 @@ class Sink(BaseModel):
     def from_orm_model(cls, orm_model: SinkOrm) -> "Sink":
         return Sink(
             id=orm_model.id,
-            thingNodeId=orm_model.thing_node_id,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,

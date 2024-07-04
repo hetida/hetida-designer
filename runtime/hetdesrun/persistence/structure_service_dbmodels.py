@@ -133,10 +133,10 @@ class ThingNodeOrm(Base):
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
     sources = relationship(
-        "SourceOrm", back_populates="thing_node", cascade="all, delete-orphan"
+        "SourceOrm", secondary="thingnode_source_association", back_populates="thing_nodes"
     )
     sinks = relationship(
-        "SinkOrm", back_populates="thing_node", cascade="all, delete-orphan"
+        "SinkOrm", secondary="thingnode_sink_association", back_populates="thing_nodes"
     )
 
     __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
@@ -157,6 +157,9 @@ class SourceOrm(Base):
     thing_node = relationship("ThingNodeOrm", back_populates="sources")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
+    thing_nodes = relationship(
+        "ThingNodeOrm", secondary="thingnode_source_association", back_populates="sources"
+    )
 
 
 class SinkOrm(Base):
@@ -174,6 +177,21 @@ class SinkOrm(Base):
     thing_node = relationship("ThingNodeOrm", back_populates="sinks")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
+    thing_nodes = relationship(
+        "ThingNodeOrm", secondary="thingnode_sink_association", back_populates="sinks"
+    )
+
+
+class ThingNodeSourceAssociation(Base):
+    __tablename__ = "thingnode_source_association"
+    thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.thing_node_id"), primary_key=True)
+    source_id = Column(UUIDType(binary=False), ForeignKey("source.id"), primary_key=True)
+
+
+class ThingNodeSinkAssociation(Base):
+    __tablename__ = "thingnode_sink_association"
+    thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.thing_node_id"), primary_key=True)
+    sink_id = Column(UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True)
 
 
 class ElementTypeToPropertySetOrm(Base):

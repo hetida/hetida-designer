@@ -809,7 +809,7 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
 
 
 def test_load_structure_from_json_file(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file.json"
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
 
     element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
         file_path
@@ -868,8 +868,8 @@ def test_update_structure(mocked_clean_test_db_session):
     assert sinks[2].name == "Sink3"
 
 
-def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes.json"
+def test_update_structure_from_file_with_unordered_thingnodes_and_many_to_many_relationship(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
 
     update_structure_from_file(file_path)
 
