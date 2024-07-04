@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 from sqlite3 import Connection as SQLite3Connection
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
@@ -47,6 +48,7 @@ from hetdesrun.structure.db.orm_service import (
     read_single_property_metadata,
     read_single_property_set,
     read_single_thingnode,
+    sort_thing_nodes,
     store_single_element_type,
     store_single_et2ps,
     store_single_property_metadata,
@@ -929,3 +931,54 @@ def test_update_structure_with_unordered_thingnodes(mocked_clean_test_db_session
 
         for name in expected_sink_names:
             assert name in sink_names
+
+
+def test_sort_thing_nodes():
+    root_node = ThingNode(
+        id=UUID("00000000-0000-0000-0000-000000000008"),
+        name="RootNode",
+        description="",
+        parent_node_id=None,
+        element_type_id=UUID("00000000-0000-0000-0000-000000000001"),
+        entity_uuid="root_uuid",
+        meta_data={},
+    )
+    child_node1 = ThingNode(
+        id=UUID("00000000-0000-0000-0000-000000000009"),
+        name="ChildNode1",
+        description="",
+        parent_node_id=root_node.id,
+        element_type_id=UUID("00000000-0000-0000-0000-000000000002"),
+        entity_uuid="child1_uuid",
+        meta_data={},
+    )
+    child_node2 = ThingNode(
+        id=UUID("00000000-0000-0000-0000-000000000004"),
+        name="ChildNode2",
+        description="",
+        parent_node_id=root_node.id,
+        element_type_id=UUID("00000000-0000-0000-0000-000000000003"),
+        entity_uuid="child2_uuid",
+        meta_data={},
+    )
+    child_node3 = ThingNode(
+        id=UUID("00000000-0000-0000-0000-000000000002"),
+        name="ChildNode3",
+        description="",
+        parent_node_id=child_node1.id,
+        element_type_id=UUID("00000000-0000-0000-0000-000000000003"),
+        entity_uuid="child3_uuid",
+        meta_data={},
+    )
+
+    nodes = [child_node3, child_node2, child_node1, root_node]
+    sorted_nodes = sort_thing_nodes(nodes)
+
+    # Preorder Traversal (Depth-First)
+    # expected_order = [root_node, child_node1, child_node3, child_node2]
+
+    # Level-Order Traversal (Breadth-First)
+    # child_node2.id > child_node1.id, but on same level. child_node3 is child of child_node1.
+    expected_order = [root_node, child_node2, child_node1, child_node3]
+
+    assert sorted_nodes == expected_order
