@@ -974,6 +974,30 @@ def topological_sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
     return sorted_nodes
 
 
+def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
+    children_by_node_id = {node.id: [] for node in nodes}
+    root_nodes = []
+
+    for node in nodes:
+        if node.parent_node_id:
+            if node.parent_node_id not in children_by_node_id:
+                children_by_node_id[node.parent_node_id] = []
+            children_by_node_id[node.parent_node_id].append(node)
+        else:
+            root_nodes.append(node)
+
+    sorted_nodes = []
+
+    def append_children(nodes: list[ThingNode]):
+        for node in nodes:
+            sorted_nodes.append(node)
+            append_children(children_by_node_id[node.id])
+
+    append_children(root_nodes)
+
+    return sorted_nodes
+
+
 def load_structure_from_json_file(
     file_path: str,
 ) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
@@ -981,9 +1005,7 @@ def load_structure_from_json_file(
         structure_json = json.load(file)
 
     complete_structure = CompleteStructure(**structure_json)
-    complete_structure.thing_nodes = topological_sort_thing_nodes(
-        complete_structure.thing_nodes
-    )
+    complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
 
     return (
         complete_structure.element_types,
