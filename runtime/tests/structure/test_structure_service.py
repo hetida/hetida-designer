@@ -13,7 +13,7 @@ from hetdesrun.structure.structure_service import get_children
 
 @pytest.fixture()
 def _db_test_get_children(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_get_children.json"
+    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
     update_structure_from_file(file_path)
 
 
@@ -65,8 +65,11 @@ def test_get_children_level3(mocked_clean_test_db_session):
     result = get_children(child2_id)
     assert isinstance(result, tuple)
     assert len(result) == 3
-    assert len(result[0]) == 1
-    assert result[0][0].name == "ChildNode3"
+    assert len(result[0]) == 3 
+    child_names = [node.name for node in result[0]]
+    assert "ChildNode3" in child_names
+    assert "ChildNode2_Child1" in child_names
+    assert "ChildNode2_Child2" in child_names
     assert len(result[1]) == 0
     assert len(result[2]) == 0
 
@@ -87,18 +90,18 @@ def test_get_children_leaves(mocked_clean_test_db_session):
 
 @pytest.mark.usefixtures("_db_test_get_children")
 def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
-    leaf1_id = "44444444-4444-4444-4444-444444444444"
+    leaf1_id = "33333333-3333-3333-3333-333333333333" 
     result = get_children(leaf1_id)
     assert isinstance(result, tuple)
     assert len(result) == 3
-    assert len(result[0]) == 0
-    assert len(result[1]) == 2
-    assert len(result[2]) == 1
+    assert len(result[0]) == 2
+    assert len(result[1]) == 0 
+    assert len(result[2]) == 1 
     sources = result[1]
     sinks = result[2]
-    assert sources[0].name == "Source1"
-    assert sources[1].name == "Source2"
-    assert sinks[0].name == "Sink3"
+    assert sources[0].name == "Source4"
+    assert sources[1].name == "Source5"
+    assert sinks[0].name == "Sink4"
 
 
 @pytest.mark.usefixtures("_db_test_get_children")
@@ -108,14 +111,14 @@ def test_get_children_non_existent(mocked_clean_test_db_session):
 
 
 def test_complete_structure_object_creation():
-    with open("tests/structure/data/db_test_get_children.json") as file:
+    with open("tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json") as file:
         data = json.load(file)
     cs = CompleteStructure(**data)
 
-    assert len(cs.thing_nodes) == 6
+    assert len(cs.thing_nodes) == 10 
     assert len(cs.element_types) == 3
-    assert len(cs.sources) == 3
-    assert len(cs.sinks) == 3
+    assert len(cs.sources) == 7
+    assert len(cs.sinks) == 7
 
     tn_names = [tn.name for tn in cs.thing_nodes]
     expected_tn_names = [tn["name"] for tn in data["thing_nodes"]]
