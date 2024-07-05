@@ -117,6 +117,7 @@ class ThingNodeOrm(Base):
     id: UUIDType = Column(
         "thing_node_id", UUIDType(binary=False), primary_key=True, default=uuid4
     )
+    external_id = Column(String(36), nullable=False, unique=True, index=True)
     name = Column(String(255), index=True, nullable=False, unique=True)
     description = Column(String(1024), nullable=True)
     parent_node_id: UUIDType = Column(
@@ -127,7 +128,6 @@ class ThingNodeOrm(Base):
         ForeignKey("element_type.element_type_id"),
         nullable=False,
     )
-    entity_uuid = Column(String(36), nullable=False)
     meta_data = Column(JSON, nullable=True)
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
@@ -151,6 +151,7 @@ class SourceOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     source_id = Column(UUIDType(binary=False), nullable=False)
+    meta_data = Column(JSON, nullable=True)
     thing_node_id = Column(
         UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
@@ -171,6 +172,7 @@ class SinkOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     sink_id = Column(UUIDType(binary=False), nullable=False)
+    meta_data = Column(JSON, nullable=True)
     thing_node_id = Column(
         UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
