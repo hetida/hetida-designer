@@ -25,7 +25,6 @@ class StructureThingNode(BaseModel):
 
 class StructureVirtualSource(BaseModel):
     id: UUID  # noqa: A003
-    thingNodeId: UUID
     name: str
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
@@ -37,16 +36,18 @@ class StructureVirtualSource(BaseModel):
     def from_structure_service(cls, struct_source: Source) -> "StructureVirtualSource":
         return cls(
             id=struct_source.id,
-            thingNodeId=struct_source.thingNodeId,
             name=struct_source.name,
             type=struct_source.type,
-            path="",
+            path="",  # TODO Fill appropriately
+            metadataKey=struct_source.meta_data.get("metadataKey")
+            if struct_source.meta_data
+            else None,
+            filters=struct_source.preset_filters,
         )
 
 
 class StructureVirtualSink(BaseModel):
     id: UUID  # noqa: A003
-    thingNodeId: UUID
     name: str
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
@@ -58,10 +59,13 @@ class StructureVirtualSink(BaseModel):
     def from_structure_service(cls, struct_sink: Sink) -> "StructureVirtualSink":
         return cls(
             id=struct_sink.id,
-            thingNodeId=struct_sink.thingNodeId,
             name=struct_sink.name,
             type=struct_sink.type,
             path="",  # TODO Fill appropriately
+            metadataKey=struct_sink.meta_data.get("metadataKey")
+            if struct_sink.meta_data
+            else None,
+            filters=struct_sink.preset_filters,
         )
 
 

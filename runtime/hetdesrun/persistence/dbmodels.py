@@ -1,9 +1,8 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
-    Boolean,
     CheckConstraint,
     Column,
     DateTime,
@@ -13,8 +12,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, backref, declarative_base, relationship, validates
-from sqlalchemy.types import JSON
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type

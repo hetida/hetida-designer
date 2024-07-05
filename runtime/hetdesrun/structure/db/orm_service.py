@@ -1,9 +1,8 @@
 import json
 import logging
-from collections import defaultdict, deque
+from collections import deque
 from uuid import UUID
 
-from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -34,16 +33,19 @@ from hetdesrun.structure.models import (
 logger = logging.getLogger(__name__)
 
 
-def fetch_all_element_types(session):
+def fetch_all_element_types(session: SQLAlchemySession) -> list[ElementTypeOrm]:
     return session.query(ElementTypeOrm).all()
 
-def fetch_all_thing_nodes(session):
+
+def fetch_all_thing_nodes(session: SQLAlchemySession) -> list[ThingNodeOrm]:
     return session.query(ThingNodeOrm).all()
 
-def fetch_all_sources(session):
+
+def fetch_all_sources(session: SQLAlchemySession) -> list[SourceOrm]:
     return session.query(SourceOrm).all()
 
-def fetch_all_sinks(session):
+
+def fetch_all_sinks(session: SQLAlchemySession) -> list[SinkOrm]:
     return session.query(SinkOrm).all()
 
 
@@ -222,7 +224,9 @@ def delete_sink(id: int, log_error: bool = True) -> None:  # noqa: A002
                 logger.error(msg)
             raise
 
+
 # Thing Node Services
+
 
 def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
     try:
@@ -236,12 +240,14 @@ def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
         logger.error(msg)
         raise DBIntegrityError(msg) from e
 
+
 def store_single_thingnode(
     thingnode: ThingNode,
 ) -> None:
     with get_session()() as session, session.begin():
         orm_tn = thingnode.to_orm_model()
         add_tn(session, orm_tn)
+
 
 def fetch_tn_by_id(
     session: SQLAlchemySession,
@@ -260,6 +266,7 @@ def fetch_tn_by_id(
 
     return result
 
+
 def fetch_tn_by_external_id(
     session: SQLAlchemySession,
     external_id: str,  # noqa: A002
@@ -276,6 +283,7 @@ def fetch_tn_by_external_id(
         raise DBNotFoundError(msg)
 
     return result
+
 
 def fetch_tn_child_ids_by_parent_id(
     session: SQLAlchemySession, parent_id: UUID | None, log_error: bool = True
@@ -295,6 +303,7 @@ def fetch_tn_child_ids_by_parent_id(
 
     return list(results)
 
+
 def read_single_thingnode(
     id: UUID,  # noqa: A002
     log_error: bool = True,
@@ -303,6 +312,7 @@ def read_single_thingnode(
         orm_tn = fetch_tn_by_id(session, id, log_error)
         return ThingNode.from_orm_model(orm_tn)
 
+
 def read_single_thingnode_by_external_id(
     external_id: str,  # noqa: A002
     log_error: bool = True,
@@ -310,6 +320,7 @@ def read_single_thingnode_by_external_id(
     with get_session()() as session, session.begin():
         orm_tn = fetch_tn_by_external_id(session, external_id, log_error)
         return ThingNode.from_orm_model(orm_tn)
+
 
 def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
@@ -352,6 +363,7 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
                 logger.error(msg)
             raise
 
+
 def update_tn(
     id: UUID,  # noqa: A002
     tn_update: ThingNode,
@@ -390,9 +402,10 @@ def update_tn(
                 logger.error(msg)
             raise
 
+
 def get_parent_tn_id(
     session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
-) -> UUID | None:
+) -> UUIDType | None:
     try:
         thingnode = fetch_tn_by_id(session, id, log_error)
         if thingnode:
@@ -404,6 +417,7 @@ def get_parent_tn_id(
             logger.error(msg)
         raise
 
+
 def get_children_tn_ids(id: UUID, log_error: bool = True) -> list[UUID]:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
@@ -413,6 +427,7 @@ def get_children_tn_ids(id: UUID, log_error: bool = True) -> list[UUID]:  # noqa
             return results
         except DBNotFoundError:
             return []
+
 
 def get_ancestors_tn_ids(
     id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
@@ -436,6 +451,7 @@ def get_ancestors_tn_ids(
             raise
 
     return ancestors_ids
+
 
 def get_descendants_tn_ids(
     id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
@@ -496,7 +512,7 @@ def store_single_element_type(
 
 def fetch_et_by_id(
     session: SQLAlchemySession,
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> ElementTypeOrm:
     result: ElementTypeOrm | None = session.execute(
@@ -513,7 +529,7 @@ def fetch_et_by_id(
 
 
 def read_single_element_type(
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> ElementType:
     with get_session()() as session, session.begin():
@@ -521,7 +537,7 @@ def read_single_element_type(
         return ElementType.from_orm_model(orm_et)
 
 
-def delete_et(id: int, log_error: bool = True) -> None:  # noqa: A002
+def delete_et(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             element_type = fetch_et_by_id(session, id, log_error)
@@ -548,7 +564,7 @@ def delete_et(id: int, log_error: bool = True) -> None:  # noqa: A002
             raise DBIntegrityError(msg) from e
 
 
-def delete_et_cascade(id: int, log_error: bool = True) -> None:  # noqa: A002
+def delete_et_cascade(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             element_type = fetch_et_by_id(session, id, log_error)
@@ -574,10 +590,6 @@ def delete_et_cascade(id: int, log_error: bool = True) -> None:  # noqa: A002
                 msg = f"Unexpected error while deleting ElementType with id {id}: {str(e)}"
                 logger.error(msg)
             raise
-
-
-from typing import Union
-from uuid import UUID
 
 
 def update_et(
@@ -1000,7 +1012,7 @@ def topological_sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
 
 
 def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
-    children_by_node_id = {node.id: [] for node in nodes}
+    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
     root_nodes = []
 
     for node in nodes:
@@ -1013,7 +1025,7 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
 
     sorted_nodes = []
 
-    def append_children(nodes: list[ThingNode]):
+    def append_children(nodes: list[ThingNode]) -> None:
         for node in nodes:
             sorted_nodes.append(node)
             append_children(children_by_node_id[node.id])
@@ -1056,7 +1068,9 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
 
 
 def update_structure_from_file(file_path: str) -> None:
-    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(file_path)
+    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
+        file_path
+    )
 
     with get_session()() as session, session.begin():
         flush_items(session, element_types)
@@ -1067,9 +1081,17 @@ def update_structure_from_file(file_path: str) -> None:
         for thing_node in thing_nodes:
             orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
             if orm_thing_node is None:
-                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
-            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
-            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+                raise ValueError(
+                    f"ThingNode with ID {thing_node.id} not found in the database."
+                )
+            orm_thing_node.sources = (
+                session.query(SourceOrm)
+                .filter(SourceOrm.id.in_(thing_node.sources))
+                .all()
+            )
+            orm_thing_node.sinks = (
+                session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+            )
             session.add(orm_thing_node)
         session.flush()
 
@@ -1084,8 +1106,16 @@ def update_structure(complete_structure: CompleteStructure) -> None:
         for thing_node in complete_structure.thing_nodes:
             orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
             if orm_thing_node is None:
-                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
-            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
-            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+                raise ValueError(
+                    f"ThingNode with ID {thing_node.id} not found in the database."
+                )
+            orm_thing_node.sources = (
+                session.query(SourceOrm)
+                .filter(SourceOrm.id.in_(thing_node.sources))
+                .all()
+            )
+            orm_thing_node.sinks = (
+                session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+            )
             session.add(orm_thing_node)
         session.flush()

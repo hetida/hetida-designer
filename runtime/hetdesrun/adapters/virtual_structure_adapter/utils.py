@@ -2,8 +2,8 @@ from hetdesrun.models.wiring import InputWiring
 
 
 def get_actual_sources_and_sinks_for_virtual_sources_and_sinks(
-    ref_id_list: list[str],
-) -> dict[str, InputWiring]:
+    ref_id_list: list[str | None],
+) -> dict[str | None, InputWiring]:
     actual_inputs_dict = {}
     for ref_id in ref_id_list:
         actual_source = InputWiring(  # noqa: Q003

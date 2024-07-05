@@ -21,10 +21,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.db.external_types import ExternalType
 from hetdesrun.structure.db.orm_service import (
-    fetch_all_element_types,
-    fetch_all_thing_nodes,
-    fetch_all_sources,
-    fetch_all_sinks,
     add_et,
     add_et2ps,
     add_pm,
@@ -36,6 +32,10 @@ from hetdesrun.structure.db.orm_service import (
     delete_pm,
     delete_ps,
     delete_tn,
+    fetch_all_element_types,
+    fetch_all_sinks,
+    fetch_all_sources,
+    fetch_all_thing_nodes,
     fetch_et2ps_by_id,
     fetch_et_by_id,
     fetch_pm_by_id,
@@ -84,19 +84,28 @@ ThingNode.update_forward_refs()
 
 @pytest.fixture()
 def _db_test_thing_node_hierarchy(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
     update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_comprehensive_cascade_deletion(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
     update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_test_thing_node_many_children(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
     update_structure_from_file(file_path)
 
 
@@ -130,9 +139,7 @@ def test_invalid_thing_node_orm_creation(mocked_clean_test_db_session):
 
 def test_invalid_thing_node_creation():
     with pytest.raises(ValidationError):
-        ThingNode(
-            id="invalid", name=123, element_type_id="invalid"
-        )
+        ThingNode(id="invalid", name=123, element_type_id="invalid")
 
 
 def test_valid_thing_node_creation():
@@ -481,11 +488,15 @@ def test_fetch_tn_by_invalid_id(mocked_clean_test_db_session):
 @pytest.mark.usefixtures("_db_test_thing_node_many_children")
 def test_fetch_tn_child_ids_by_parent_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
-        parent_id = uuid.UUID("00000000-0000-0000-0000-000000000004")  # RootNode ID from the JSON file
+        parent_id = uuid.UUID(
+            "00000000-0000-0000-0000-000000000004"
+        )  # RootNode ID from the JSON file
         tn_child_list = fetch_tn_child_ids_by_parent_id(session, parent_id)
 
         assert len(tn_child_list) > 0  # Ensure that the list is not empty
-        assert all(isinstance(child_id, uuid.UUID) for child_id in tn_child_list)  # Ensure all elements are UUIDs
+        assert all(
+            isinstance(child_id, uuid.UUID) for child_id in tn_child_list
+        )  # Ensure all elements are UUIDs
 
 
 @pytest.mark.usefixtures("_db_test_thing_node_many_children")
@@ -501,11 +512,14 @@ def test_fetch_tn_child_ids_by_parent_id_dbnotfound(mocked_clean_test_db_session
 # Tests for Hierarchy and Relationships
 @pytest.mark.usefixtures("_db_test_thing_node_hierarchy")
 def test_thing_node_hierarchy(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
 
     with open(file_path) as file:
         data = json.load(file)
-    
+
     with mocked_clean_test_db_session() as session:
         # Fetch all elements from the database
         element_types_in_db = fetch_all_element_types(session)
@@ -514,24 +528,38 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):
         sinks_in_db = fetch_all_sinks(session)
 
         # Compare the counts
-        assert len(element_types_in_db) == len(data["element_types"]), "Mismatch in element types count"
-        assert len(thing_nodes_in_db) == len(data["thing_nodes"]), "Mismatch in thing nodes count"
+        assert len(element_types_in_db) == len(
+            data["element_types"]
+        ), "Mismatch in element types count"
+        assert len(thing_nodes_in_db) == len(
+            data["thing_nodes"]
+        ), "Mismatch in thing nodes count"
         assert len(sources_in_db) == len(data["sources"]), "Mismatch in sources count"
         assert len(sinks_in_db) == len(data["sinks"]), "Mismatch in sinks count"
 
         # Compare the IDs to ensure all elements are correctly loaded
-        element_type_ids_in_db = {str(element_type.id) for element_type in element_types_in_db}
+        element_type_ids_in_db = {
+            str(element_type.id) for element_type in element_types_in_db
+        }
         thing_node_ids_in_db = {str(thing_node.id) for thing_node in thing_nodes_in_db}
         source_ids_in_db = {str(source.id) for source in sources_in_db}
         sink_ids_in_db = {str(sink.id) for sink in sinks_in_db}
 
-        element_type_ids_in_json = {element_type["id"] for element_type in data["element_types"]}
-        thing_node_ids_in_json = {thing_node["id"] for thing_node in data["thing_nodes"]}
+        element_type_ids_in_json = {
+            element_type["id"] for element_type in data["element_types"]
+        }
+        thing_node_ids_in_json = {
+            thing_node["id"] for thing_node in data["thing_nodes"]
+        }
         source_ids_in_json = {source["id"] for source in data["sources"]}
         sink_ids_in_json = {sink["id"] for sink in data["sinks"]}
 
-        assert element_type_ids_in_db == element_type_ids_in_json, "Mismatch in element type IDs"
-        assert thing_node_ids_in_db == thing_node_ids_in_json, "Mismatch in thing node IDs"
+        assert (
+            element_type_ids_in_db == element_type_ids_in_json
+        ), "Mismatch in element type IDs"
+        assert (
+            thing_node_ids_in_db == thing_node_ids_in_json
+        ), "Mismatch in thing node IDs"
         assert source_ids_in_db == source_ids_in_json, "Mismatch in source IDs"
         assert sink_ids_in_db == sink_ids_in_json, "Mismatch in sink IDs"
 
@@ -771,6 +799,7 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
     num_records = 1000
     et_object = ElementType(id=uuid.uuid4(), name="Type1")
     store_single_element_type(et_object)
+    tn_objects = []
     for i in range(num_records):
         tn_object = ThingNode(
             id=uuid.uuid4(),
@@ -779,8 +808,10 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
             element_type_id=et_object.id,
         )
         store_single_thingnode(tn_object)
+        tn_objects.append(tn_object)
+
     start_time = time.time()
-    for i in range(num_records):
+    for tn_object in tn_objects:
         delete_tn(tn_object.id)
     end_time = time.time()
 
@@ -793,25 +824,60 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
 
 
 def test_load_structure_from_json_file(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
 
-    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(file_path)
+    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
+        file_path
+    )
 
     with mocked_clean_test_db_session() as session, session.begin():
         for et in element_types:
-            add_tn(session, ElementTypeOrm(id=et.id, name=et.name, description=et.description))
+            add_tn(
+                session,
+                ElementTypeOrm(id=et.id, name=et.name, description=et.description),
+            )
         for source in sources:
-            add_tn(session, SourceOrm(id=source.id, name=source.name, type=source.type, visible=source.visible,
-                                      adapter_key=source.adapter_key, source_id=source.source_id,
-                                      meta_data=source.meta_data))
+            add_tn(
+                session,
+                SourceOrm(
+                    id=source.id,
+                    name=source.name,
+                    type=source.type,
+                    visible=source.visible,
+                    adapter_key=source.adapter_key,
+                    source_id=source.source_id,
+                    meta_data=source.meta_data,
+                ),
+            )
         for sink in sinks:
-            add_tn(session, SinkOrm(id=sink.id, name=sink.name, type=sink.type, visible=sink.visible,
-                                    adapter_key=sink.adapter_key, sink_id=sink.sink_id, meta_data=sink.meta_data))
+            add_tn(
+                session,
+                SinkOrm(
+                    id=sink.id,
+                    name=sink.name,
+                    type=sink.type,
+                    visible=sink.visible,
+                    adapter_key=sink.adapter_key,
+                    sink_id=sink.sink_id,
+                    meta_data=sink.meta_data,
+                ),
+            )
         for tn in thing_nodes:
-            orm_tn = ThingNodeOrm(id=tn.id, external_id=tn.external_id, name=tn.name, description=tn.description,
-                                  parent_node_id=tn.parent_node_id, element_type_id=tn.element_type_id,
-                                  meta_data=tn.meta_data)
-            orm_tn.sources = session.query(SourceOrm).filter(SourceOrm.id.in_(tn.sources)).all()
+            orm_tn = ThingNodeOrm(
+                id=tn.id,
+                external_id=tn.external_id,
+                name=tn.name,
+                description=tn.description,
+                parent_node_id=tn.parent_node_id,
+                element_type_id=tn.element_type_id,
+                meta_data=tn.meta_data,
+            )
+            orm_tn.sources = (
+                session.query(SourceOrm).filter(SourceOrm.id.in_(tn.sources)).all()
+            )
             orm_tn.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_(tn.sinks)).all()
             add_tn(session, orm_tn)
 
@@ -820,18 +886,17 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
         db_sources = fetch_all_sources(session)
         db_sinks = fetch_all_sinks(session)
 
-    
         assert len(element_types) == len(db_element_types)
         assert len(thing_nodes) == len(db_thing_nodes)
         assert len(sources) == len(db_sources)
         assert len(sinks) == len(db_sinks)
 
-        for et, db_et in zip(element_types, db_element_types):
+        for et, db_et in zip(element_types, db_element_types, strict=True):
             assert et.id == db_et.id
             assert et.name == db_et.name
             assert et.description == db_et.description
 
-        for tn, db_tn in zip(thing_nodes, db_thing_nodes):
+        for tn, db_tn in zip(thing_nodes, db_thing_nodes, strict=True):
             assert tn.id == db_tn.id
             assert tn.external_id == db_tn.external_id
             assert tn.name == db_tn.name
@@ -840,7 +905,7 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
             assert tn.description == db_tn.description
             assert tn.meta_data == db_tn.meta_data
 
-        for source, db_source in zip(sources, db_sources):
+        for source, db_source in zip(sources, db_sources, strict=True):
             assert source.id == db_source.id
             assert source.name == db_source.name
             assert source.type == db_source.type
@@ -849,8 +914,7 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
             assert source.source_id == db_source.source_id
             assert source.meta_data == db_source.meta_data
 
-
-        for sink, db_sink in zip(sinks, db_sinks):
+        for sink, db_sink in zip(sinks, db_sinks, strict=True):
             assert sink.id == db_sink.id
             assert sink.name == db_sink.name
             assert sink.type == db_sink.type
@@ -861,7 +925,10 @@ def test_load_structure_from_json_file(mocked_clean_test_db_session):
 
 
 def test_update_structure(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
 
     update_structure_from_file(file_path)
 
@@ -882,12 +949,26 @@ def test_update_structure(mocked_clean_test_db_session):
         db_sinks.sort(key=lambda s: s.name)
 
         expected_element_types = [
-            {"id": uuid.UUID("00000000-0000-0000-0000-000000000001"), "name": "Type1", "description": "Description for Type1"},
-            {"id": uuid.UUID("00000000-0000-0000-0000-000000000002"), "name": "Type2", "description": "Description for Type2"},
-            {"id": uuid.UUID("00000000-0000-0000-0000-000000000003"), "name": "Type3", "description": "Description for Type3"},
+            {
+                "id": uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                "name": "Type1",
+                "description": "Description for Type1",
+            },
+            {
+                "id": uuid.UUID("00000000-0000-0000-0000-000000000002"),
+                "name": "Type2",
+                "description": "Description for Type2",
+            },
+            {
+                "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
+                "name": "Type3",
+                "description": "Description for Type3",
+            },
         ]
 
-        for expected, db_et in zip(expected_element_types, db_element_types):
+        for expected, db_et in zip(
+            expected_element_types, db_element_types, strict=True
+        ):
             assert expected["id"] == db_et.id
             assert expected["name"] == db_et.name
             assert expected["description"] == db_et.description
@@ -905,7 +986,7 @@ def test_update_structure(mocked_clean_test_db_session):
             {"name": "RootNode"},
         ]
 
-        for expected, db_tn in zip(expected_thing_nodes, db_thing_nodes):
+        for expected, db_tn in zip(expected_thing_nodes, db_thing_nodes, strict=True):
             assert expected["name"] == db_tn.name
 
         expected_sources = [
@@ -918,7 +999,7 @@ def test_update_structure(mocked_clean_test_db_session):
             {"name": "Source7"},
         ]
 
-        for expected, db_source in zip(expected_sources, db_sources):
+        for expected, db_source in zip(expected_sources, db_sources, strict=True):
             assert expected["name"] == db_source.name
 
         expected_sinks = [
@@ -931,12 +1012,17 @@ def test_update_structure(mocked_clean_test_db_session):
             {"name": "Sink7"},
         ]
 
-        for expected, db_sink in zip(expected_sinks, db_sinks):
+        for expected, db_sink in zip(expected_sinks, db_sinks, strict=True):
             assert expected["name"] == db_sink.name
 
 
-def test_update_structure_from_file_with_unordered_thingnodes_and_many_to_many_relationship(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+def test_update_structure_from_file_with_unordered_thingnodes_and_many_to_many_relationship(
+    mocked_clean_test_db_session,
+):
+    file_path = (
+        "tests/structure/data/"
+        "db_test_load_structure_from_json_file_with_unordered_thingnodes_many2many.json"
+    )
 
     update_structure_from_file(file_path)
 

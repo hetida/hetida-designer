@@ -91,7 +91,7 @@ class Source(BaseModel):
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
-    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: UUID = Field(..., description="Referenced HD Source identifier")
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
@@ -128,7 +128,7 @@ class Source(BaseModel):
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v):
+    def validate_filters(cls, v: Any) -> Any:
         if not v:
             return {}
         return v
@@ -145,7 +145,7 @@ class Sink(BaseModel):
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )
-    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
@@ -182,7 +182,7 @@ class Sink(BaseModel):
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v):
+    def validate_filters(cls, v: Any) -> Any:
         if not v:
             return {}
         return v
