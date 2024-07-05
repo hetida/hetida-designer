@@ -156,7 +156,7 @@ class SourceOrm(Base):
     thing_node_id: UUIDType | None = Column(
         UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
-    thing_node: "ThingNodeOrm" | None = relationship(
+    thing_node: Optional["ThingNodeOrm"] = relationship(
         "ThingNodeOrm", back_populates="sources"
     )
     preset_filters: dict | None = Column(JSON, nullable=True)
@@ -181,7 +181,7 @@ class SinkOrm(Base):
     thing_node_id: UUIDType | None = Column(
         UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
     )
-    thing_node: "ThingNodeOrm" | None = relationship(
+    thing_node: Optional["ThingNodeOrm"] = relationship(
         "ThingNodeOrm", back_populates="sinks"
     )
     preset_filters: dict | None = Column(JSON, nullable=True)
