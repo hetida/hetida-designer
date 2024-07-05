@@ -34,6 +34,19 @@ from hetdesrun.structure.models import (
 logger = logging.getLogger(__name__)
 
 
+def fetch_all_element_types(session):
+    return session.query(ElementTypeOrm).all()
+
+def fetch_all_thing_nodes(session):
+    return session.query(ThingNodeOrm).all()
+
+def fetch_all_sources(session):
+    return session.query(SourceOrm).all()
+
+def fetch_all_sinks(session):
+    return session.query(SinkOrm).all()
+
+
 # Source Services
 
 
@@ -209,9 +222,7 @@ def delete_sink(id: int, log_error: bool = True) -> None:  # noqa: A002
                 logger.error(msg)
             raise
 
-
 # Thing Node Services
-
 
 def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
     try:
@@ -225,7 +236,6 @@ def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
         logger.error(msg)
         raise DBIntegrityError(msg) from e
 
-
 def store_single_thingnode(
     thingnode: ThingNode,
 ) -> None:
@@ -233,10 +243,9 @@ def store_single_thingnode(
         orm_tn = thingnode.to_orm_model()
         add_tn(session, orm_tn)
 
-
 def fetch_tn_by_id(
     session: SQLAlchemySession,
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> ThingNodeOrm:
     result: ThingNodeOrm | None = session.execute(
@@ -251,10 +260,26 @@ def fetch_tn_by_id(
 
     return result
 
+def fetch_tn_by_external_id(
+    session: SQLAlchemySession,
+    external_id: str,  # noqa: A002
+    log_error: bool = True,
+) -> ThingNodeOrm:
+    result: ThingNodeOrm | None = session.execute(
+        select(ThingNodeOrm).where(ThingNodeOrm.external_id == external_id)
+    ).scalar_one_or_none()
+
+    if result is None:
+        msg = f"Found no thing node in database with external_id {external_id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
 
 def fetch_tn_child_ids_by_parent_id(
-    session: SQLAlchemySession, parent_id: int | None, log_error: bool = True
-) -> list[int]:
+    session: SQLAlchemySession, parent_id: UUID | None, log_error: bool = True
+) -> list[UUID]:
     results = (
         session.execute(
             select(ThingNodeOrm.id).where(ThingNodeOrm.parent_node_id == parent_id)
@@ -270,17 +295,23 @@ def fetch_tn_child_ids_by_parent_id(
 
     return list(results)
 
-
 def read_single_thingnode(
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> ThingNode:
     with get_session()() as session, session.begin():
         orm_tn = fetch_tn_by_id(session, id, log_error)
         return ThingNode.from_orm_model(orm_tn)
 
+def read_single_thingnode_by_external_id(
+    external_id: str,  # noqa: A002
+    log_error: bool = True,
+) -> ThingNode:
+    with get_session()() as session, session.begin():
+        orm_tn = fetch_tn_by_external_id(session, external_id, log_error)
+        return ThingNode.from_orm_model(orm_tn)
 
-def delete_tn(id: int, log_error: bool = True) -> None:  # noqa: A002
+def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
@@ -321,7 +352,6 @@ def delete_tn(id: int, log_error: bool = True) -> None:  # noqa: A002
                 logger.error(msg)
             raise
 
-
 def update_tn(
     id: UUID,  # noqa: A002
     tn_update: ThingNode,
@@ -335,7 +365,8 @@ def update_tn(
                 thingnode.description = tn_update.description
                 thingnode.parent_node_id = tn_update.parent_node_id
                 thingnode.element_type_id = tn_update.element_type_id
-                thingnode.entity_uuid = tn_update.entity_uuid
+                thingnode.external_id = tn_update.external_id
+                thingnode.meta_data = tn_update.meta_data
                 return ThingNode.from_orm_model(thingnode)
             return None
         except DBNotFoundError as e:
@@ -359,16 +390,13 @@ def update_tn(
                 logger.error(msg)
             raise
 
-
 def get_parent_tn_id(
-    session: SQLAlchemySession, id: int, log_error: bool = True  # noqa: A002
-) -> int | None:
+    session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
+) -> UUID | None:
     try:
         thingnode = fetch_tn_by_id(session, id, log_error)
         if thingnode:
-            if thingnode.parent_node_id is not None:
-                return int(thingnode.parent_node_id)
-            return None
+            return thingnode.parent_node_id
         return None
     except DBNotFoundError:
         if log_error:
@@ -376,8 +404,7 @@ def get_parent_tn_id(
             logger.error(msg)
         raise
 
-
-def get_children_tn_ids(id: int, log_error: bool = True) -> list[int]:  # noqa: A002
+def get_children_tn_ids(id: UUID, log_error: bool = True) -> list[UUID]:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
@@ -387,10 +414,9 @@ def get_children_tn_ids(id: int, log_error: bool = True) -> list[int]:  # noqa: 
         except DBNotFoundError:
             return []
 
-
 def get_ancestors_tn_ids(
-    id: int, depth: int = -1, log_error: bool = True  # noqa: A002
-) -> list[int]:  # noqa: A002
+    id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
+) -> list[UUID]:  # noqa: A002
     ancestors_ids = []
     current_depth = 0
     current_id = id
@@ -411,10 +437,9 @@ def get_ancestors_tn_ids(
 
     return ancestors_ids
 
-
 def get_descendants_tn_ids(
-    id: int, depth: int = -1, log_error: bool = True  # noqa: A002
-) -> list[int]:
+    id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
+) -> list[UUID]:
     descendant_ids = []
     nodes_to_visit = [(id, 0)]
 
