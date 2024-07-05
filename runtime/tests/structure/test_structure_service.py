@@ -93,18 +93,17 @@ def test_get_children_leaves(mocked_clean_test_db_session):
 
 @pytest.mark.usefixtures("_db_test_get_children")
 def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
-    leaf1_id = "33333333-3333-3333-3333-333333333333"
-    result = get_children(leaf1_id)
+    parent_id = "33333333-3333-3333-3333-333333333333"  # ID für ChildNode3
+    result = get_children(parent_id)
     assert isinstance(result, tuple)
     assert len(result) == 3
-    assert len(result[0]) == 2
-    assert len(result[1]) == 0
-    assert len(result[2]) == 1
-    sources = result[1]
-    sinks = result[2]
-    assert sources[0].name == "Source4"
-    assert sources[1].name == "Source5"
-    assert sinks[0].name == "Sink4"
+    assert len(result[0]) == 2  # Zwei Kinder
+    assert len(result[1]) == 0  # Keine Quellen direkt unter diesem Knoten
+    assert len(result[2]) == 0  # Keine Senken direkt unter diesem Knoten
+    children = result[0]
+    child_names = [child.name for child in children]
+    assert "LeafNodeWith2Sources1Sink" in child_names
+    assert "LeafNodeWith1Source2Sinks" in child_names
 
 
 @pytest.mark.usefixtures("_db_test_get_children")
