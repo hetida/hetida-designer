@@ -22,7 +22,7 @@ Base = declarative_base()
 class ElementTypeOrm(Base):
     __tablename__ = "element_type"
     id: UUIDType = Column(
-        "element_type_id",
+        "id",
         UUIDType(binary=False),
         primary_key=True,
         nullable=False,
@@ -47,7 +47,7 @@ class ElementTypeOrm(Base):
 class PropertyMetadataOrm(Base):
     __tablename__ = "property_metadata"
     id: UUIDType = Column(
-        "property_metadata_id",
+        "id",
         UUIDType(binary=False),
         primary_key=True,
         nullable=False,
@@ -55,7 +55,7 @@ class PropertyMetadataOrm(Base):
     )
     property_set_id: UUIDType = Column(
         UUIDType(binary=False),
-        ForeignKey("property_set.property_set_id"),
+        ForeignKey("property_set.id"),
         nullable=False,
     )
     column_name = Column(String(255), nullable=False)
@@ -79,7 +79,7 @@ class PropertyMetadataOrm(Base):
 class PropertySetOrm(Base):
     __tablename__ = "property_set"
     id: UUIDType = Column(
-        "property_set_id",
+        "id",
         UUIDType(binary=False),
         primary_key=True,
         nullable=False,
@@ -114,17 +114,15 @@ class PropertySetOrm(Base):
 class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
 
-    id: UUIDType = Column(
-        "thing_node_id", UUIDType(binary=False), primary_key=True, default=uuid4
-    )
+    id: UUIDType = Column("id", UUIDType(binary=False), primary_key=True, default=uuid4)
     name = Column(String(255), index=True, nullable=False, unique=True)
     description = Column(String(1024), nullable=True)
     parent_node_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id"), nullable=True
+        UUIDType(binary=False), ForeignKey("thing_node.id"), nullable=True
     )
     element_type_id: UUIDType = Column(
         UUIDType(binary=False),
-        ForeignKey("element_type.element_type_id"),
+        ForeignKey("element_type.id"),
         nullable=False,
     )
     entity_uuid = Column(String(36), nullable=False)
@@ -151,9 +149,7 @@ class SourceOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     source_id = Column(UUIDType(binary=False), nullable=False)
-    thing_node_id = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
-    )
+    thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
     thing_node = relationship("ThingNodeOrm", back_populates="sources")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
@@ -168,9 +164,7 @@ class SinkOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     sink_id = Column(UUIDType(binary=False), nullable=False)
-    thing_node_id = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.thing_node_id")
-    )
+    thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
     thing_node = relationship("ThingNodeOrm", back_populates="sinks")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
@@ -180,12 +174,12 @@ class ElementTypeToPropertySetOrm(Base):
     __tablename__ = "element_type_to_property_set"
     element_type_id: UUIDType = Column(
         UUIDType(binary=False),
-        ForeignKey("element_type.element_type_id", ondelete="CASCADE"),
+        ForeignKey("element_type.id", ondelete="CASCADE"),
         primary_key=True,
     )
     property_set_id: UUIDType = Column(
         UUIDType(binary=False),
-        ForeignKey("property_set.property_set_id", ondelete="CASCADE"),
+        ForeignKey("property_set.id", ondelete="CASCADE"),
         primary_key=True,
     )
     order_no = Column(Integer, nullable=False)

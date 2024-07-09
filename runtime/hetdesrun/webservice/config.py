@@ -329,13 +329,11 @@ class RuntimeConfig(BaseSettings):
     )
 
     # TODO More detailed description is probably necessary
-    structure_to_prepopulate_virtual_structure_adapter: CompleteStructure | None = (
-        Field(
-            None,
-            description="A structure in JSON-format."
-            "Containing all thingnodes, sources, sinks and element types of the users data",
-            env="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
-        )
+    structure_to_prepopulate_virtual_structure_adapter: CompleteStructure | None = Field(
+        None,
+        description="A structure in JSON-format."
+        "Containing all thingnodes, sources, sinks and element types of the users data",
+        env="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
     )
 
     hd_adapters: str = Field(
