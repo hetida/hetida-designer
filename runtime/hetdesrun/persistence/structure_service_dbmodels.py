@@ -142,6 +142,11 @@ class ThingNodeOrm(Base):
 
     __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
 
+    def __repr__(self):
+        return (f"<ThingNodeOrm(id={self.id}, parent_node_id={self.parent_node_id}, "
+                f"sources={[source.id for source in self.sources]}, "
+                f"sinks={[sink.id for sink in self.sinks]})>")
+
 
 class SourceOrm(Base):
     __tablename__ = "source"
