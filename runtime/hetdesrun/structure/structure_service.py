@@ -4,8 +4,11 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
+    ElementTypeOrm,
+    ThingNodeSourceAssociation,
+    ThingNodeSinkAssociation
 )
-from hetdesrun.structure.db import get_session
+from hetdesrun.structure.db import SQLAlchemySession, get_session
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.models import Sink, Source, ThingNode
 
@@ -72,3 +75,57 @@ def get_single_sink_from_db(sink_id: UUID) -> Sink:
             return Sink.from_orm_model(sink)
 
     raise DBNotFoundError(f"No Sink found for ID {sink_id}")
+
+
+def delete_structure():
+    with get_session()() as session:
+        try:
+            root_node = session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == None).one_or_none()
+            if root_node:
+                _delete_structure_recursive(session, root_node.id)
+
+            element_types = session.query(ElementTypeOrm).all()
+            for element_type in element_types:
+                session.delete(element_type)
+
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
+
+def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID):
+    child_nodes = session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == node_id).all()
+    
+    for child_node in child_nodes:
+        _delete_structure_recursive(session, child_node.id)
+    
+    sources_to_delete = session.query(SourceOrm).join(ThingNodeSourceAssociation).filter(ThingNodeSourceAssociation.thing_node_id == node_id).all()
+    sinks_to_delete = session.query(SinkOrm).join(ThingNodeSinkAssociation).filter(ThingNodeSinkAssociation.thing_node_id == node_id).all()
+
+    for source in sources_to_delete:
+        session.query(ThingNodeSourceAssociation).filter_by(source_id=source.id).delete()
+        session.delete(source)
+    for sink in sinks_to_delete:
+        session.query(ThingNodeSinkAssociation).filter_by(sink_id=sink.id).delete()
+        session.delete(sink)
+    
+    remaining_sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == node_id).all()
+    remaining_sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == node_id).all()
+    
+    for source in remaining_sources:
+        session.delete(source)
+    for sink in remaining_sinks:
+        session.delete(sink)
+
+    node_to_delete = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node_id).one_or_none()
+    if node_to_delete:
+        session.delete(node_to_delete)
+
+    orphaned_sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == None).all()
+    orphaned_sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == None).all()
+
+    for source in orphaned_sources:
+        session.delete(source)
+    for sink in orphaned_sinks:
+        session.delete(sink)
