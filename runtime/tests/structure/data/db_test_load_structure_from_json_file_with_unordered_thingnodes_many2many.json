@@ -19,356 +19,686 @@
     "sources": [
         {
             "id": "11111111-1111-1111-1111-111111111111",
-            "name": "Source1",
+            "name": "Energieverbräuche Pumpe 1",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key1",
-            "source_id": "00000000-0000-0000-0000-000000000101",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 0,
-                "max": 100,
-                "unit": "Celsius",
-                "info": "example metadata for Source1"
+                "1019139": {
+                    "min": 0,
+                    "max": 100,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 1"
+                },
+                "1019145": {
+                    "min": 0,
+                    "max": 150,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 2"
+                },
+                "1195250994": {
+                    "min": 0,
+                    "max": 200,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 3"
+                },
+                "1258567249": {
+                    "min": 0,
+                    "max": 250,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 4"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019139, 1019145, 1195250994, 1258567249"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-06T07:40:00.000000000Z",
+                "timestampTo": "2024-06-07T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111112",
-            "name": "Source2",
+            "name": "Energieverbräuche Pumpe 2",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key2",
-            "source_id": "00000000-0000-0000-0000-000000000102",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 10,
-                "max": 200,
-                "unit": "Celsius",
-                "info": "example metadata for Source2"
+                "1019146": {
+                    "min": 0,
+                    "max": 120,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 5"
+                },
+                "1019147": {
+                    "min": 0,
+                    "max": 170,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 6"
+                },
+                "1195250995": {
+                    "min": 0,
+                    "max": 220,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 7"
+                },
+                "1258567250": {
+                    "min": 0,
+                    "max": 270,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 8"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019146, 1019147, 1195250995, 1258567250"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-08T07:40:00.000000000Z",
+                "timestampTo": "2024-06-09T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111113",
-            "name": "Source3",
+            "name": "Energieverbräuche Pumpe 3",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key3",
-            "source_id": "00000000-0000-0000-0000-000000000103",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 20,
-                "max": 300,
-                "unit": "Celsius",
-                "info": "example metadata for Source3"
+                "1019148": {
+                    "min": 0,
+                    "max": 130,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 9"
+                },
+                "1019149": {
+                    "min": 0,
+                    "max": 180,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 10"
+                },
+                "1195250996": {
+                    "min": 0,
+                    "max": 230,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 11"
+                },
+                "1258567251": {
+                    "min": 0,
+                    "max": 280,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 12"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019148, 1019149, 1195250996, 1258567251"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-10T07:40:00.000000000Z",
+                "timestampTo": "2024-06-11T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111114",
-            "name": "Source4",
+            "name": "Energieverbräuche Pumpe 4",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key4",
-            "source_id": "00000000-0000-0000-0000-000000000104",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 30,
-                "max": 400,
-                "unit": "Celsius",
-                "info": "example metadata for Source4"
+                "1019150": {
+                    "min": 0,
+                    "max": 140,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 13"
+                },
+                "1019151": {
+                    "min": 0,
+                    "max": 190,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 14"
+                },
+                "1195250997": {
+                    "min": 0,
+                    "max": 240,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 15"
+                },
+                "1258567252": {
+                    "min": 0,
+                    "max": 290,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 16"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019150, 1019151, 1195250997, 1258567252"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-12T07:40:00.000000000Z",
+                "timestampTo": "2024-06-13T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111115",
-            "name": "Source5",
+            "name": "Energieverbräuche Pumpe 5",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key5",
-            "source_id": "00000000-0000-0000-0000-000000000105",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 40,
-                "max": 500,
-                "unit": "Celsius",
-                "info": "example metadata for Source5"
+                "1019152": {
+                    "min": 0,
+                    "max": 150,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 17"
+                },
+                "1019153": {
+                    "min": 0,
+                    "max": 200,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 18"
+                },
+                "1195250998": {
+                    "min": 0,
+                    "max": 250,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 19"
+                },
+                "1258567253": {
+                    "min": 0,
+                    "max": 300,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 20"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019152, 1019153, 1195250998, 1258567253"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-14T07:40:00.000000000Z",
+                "timestampTo": "2024-06-15T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111116",
-            "name": "Source6",
+            "name": "Energieverbräuche Pumpe 6",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key6",
-            "source_id": "00000000-0000-0000-0000-000000000106",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 50,
-                "max": 600,
-                "unit": "Celsius",
-                "info": "example metadata for Source6"
+                "1019154": {
+                    "min": 0,
+                    "max": 160,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 21"
+                },
+                "1019155": {
+                    "min": 0,
+                    "max": 210,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 22"
+                },
+                "1195250999": {
+                    "min": 0,
+                    "max": 260,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 23"
+                },
+                "1258567254": {
+                    "min": 0,
+                    "max": 310,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 24"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019154, 1019155, 1195250999, 1258567254"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-16T07:40:00.000000000Z",
+                "timestampTo": "2024-06-17T07:40:00.000000000Z"
             }
         },
         {
             "id": "11111111-1111-1111-1111-111111111117",
-            "name": "Source7",
+            "name": "Energieverbräuche Pumpe 7",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key7",
-            "source_id": "00000000-0000-0000-0000-000000000107",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
-                "min": 60,
-                "max": 700,
-                "unit": "Celsius",
-                "info": "example metadata for Source7"
+                "1019156": {
+                    "min": 0,
+                    "max": 170,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 25"
+                },
+                "1019157": {
+                    "min": 0,
+                    "max": 220,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 26"
+                },
+                "1195251000": {
+                    "min": 0,
+                    "max": 270,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 27"
+                },
+                "1258567255": {
+                    "min": 0,
+                    "max": 320,
+                    "unit": "kW/h",
+                    "info": "Energieverbrauchsdaten für Pumpe 28"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1019156, 1019157, 1195251000, 1258567255"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-18T07:40:00.000000000Z",
+                "timestampTo": "2024-06-19T07:40:00.000000000Z"
             }
         }
     ],
     "sinks": [
         {
             "id": "66666666-6666-6666-6666-666666666666",
-            "name": "Sink1",
+            "name": "Energieabgabe Pumpe 1",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key4",
-            "sink_id": "00000000-0000-0000-0000-000000000201",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 0,
-                "max": 100,
-                "unit": "Celsius",
-                "info": "example metadata for Sink1"
+                "2019139": {
+                    "min": 0,
+                    "max": 100,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 1"
+                },
+                "2019145": {
+                    "min": 0,
+                    "max": 150,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 2"
+                },
+                "2195250994": {
+                    "min": 0,
+                    "max": 200,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 3"
+                },
+                "2258567249": {
+                    "min": 0,
+                    "max": 250,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 4"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019139, 2019145, 2195250994, 2258567249"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-06T07:40:00.000000000Z",
+                "timestampTo": "2024-06-07T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666667",
-            "name": "Sink2",
+            "name": "Energieabgabe Pumpe 2",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key5",
-            "sink_id": "00000000-0000-0000-0000-000000000202",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 10,
-                "max": 200,
-                "unit": "Celsius",
-                "info": "example metadata for Sink2"
+                "2019146": {
+                    "min": 0,
+                    "max": 120,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 5"
+                },
+                "2019147": {
+                    "min": 0,
+                    "max": 170,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 6"
+                },
+                "2195250995": {
+                    "min": 0,
+                    "max": 220,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 7"
+                },
+                "2258567250": {
+                    "min": 0,
+                    "max": 270,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 8"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019146, 2019147, 2195250995, 2258567250"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-08T07:40:00.000000000Z",
+                "timestampTo": "2024-06-09T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666668",
-            "name": "Sink3",
+            "name": "Energieabgabe Pumpe 3",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key6",
-            "sink_id": "00000000-0000-0000-0000-000000000203",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 20,
-                "max": 300,
-                "unit": "Celsius",
-                "info": "example metadata for Sink3"
+                "2019148": {
+                    "min": 0,
+                    "max": 130,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 9"
+                },
+                "2019149": {
+                    "min": 0,
+                    "max": 180,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 10"
+                },
+                "2195250996": {
+                    "min": 0,
+                    "max": 230,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 11"
+                },
+                "2258567251": {
+                    "min": 0,
+                    "max": 280,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 12"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019148, 2019149, 2195250996, 2258567251"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-10T07:40:00.000000000Z",
+                "timestampTo": "2024-06-11T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666669",
-            "name": "Sink4",
+            "name": "Energieabgabe Pumpe 4",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key7",
-            "sink_id": "00000000-0000-0000-0000-000000000204",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 30,
-                "max": 400,
-                "unit": "Celsius",
-                "info": "example metadata for Sink4"
+                "2019150": {
+                    "min": 0,
+                    "max": 140,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 13"
+                },
+                "2019151": {
+                    "min": 0,
+                    "max": 190,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 14"
+                },
+                "2195250997": {
+                    "min": 0,
+                    "max": 240,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 15"
+                },
+                "2258567252": {
+                    "min": 0,
+                    "max": 290,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 16"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019150, 2019151, 2195250997, 2258567252"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-12T07:40:00.000000000Z",
+                "timestampTo": "2024-06-13T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666670",
-            "name": "Sink5",
+            "name": "Energieabgabe Pumpe 5",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key8",
-            "sink_id": "00000000-0000-0000-0000-000000000205",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 40,
-                "max": 500,
-                "unit": "Celsius",
-                "info": "example metadata for Sink5"
+                "2019152": {
+                    "min": 0,
+                    "max": 150,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 17"
+                },
+                "2019153": {
+                    "min": 0,
+                    "max": 200,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 18"
+                },
+                "2195250998": {
+                    "min": 0,
+                    "max": 250,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 19"
+                },
+                "2258567253": {
+                    "min": 0,
+                    "max": 300,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 20"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019152, 2019153, 2195250998, 2258567253"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-14T07:40:00.000000000Z",
+                "timestampTo": "2024-06-15T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666671",
-            "name": "Sink6",
+            "name": "Energieabgabe Pumpe 6",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key9",
-            "sink_id": "00000000-0000-0000-0000-000000000206",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 50,
-                "max": 600,
-                "unit": "Celsius",
-                "info": "example metadata for Sink6"
+                "2019154": {
+                    "min": 0,
+                    "max": 160,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 21"
+                },
+                "2019155": {
+                    "min": 0,
+                    "max": 210,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 22"
+                },
+                "2195250999": {
+                    "min": 0,
+                    "max": 260,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 23"
+                },
+                "2258567254": {
+                    "min": 0,
+                    "max": 310,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 24"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019154, 2019155, 2195250999, 2258567254"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-16T07:40:00.000000000Z",
+                "timestampTo": "2024-06-17T07:40:00.000000000Z"
             }
         },
         {
             "id": "66666666-6666-6666-6666-666666666672",
-            "name": "Sink7",
+            "name": "Energieabgabe Pumpe 7",
             "type": "multitsframe",
             "visible": true,
-            "adapter_key": "key10",
-            "sink_id": "00000000-0000-0000-0000-000000000207",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values_sink",
             "meta_data": {
-                "min": 60,
-                "max": 700,
-                "unit": "Celsius",
-                "info": "example metadata for Sink7"
+                "2019156": {
+                    "min": 0,
+                    "max": 170,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 25"
+                },
+                "2019157": {
+                    "min": 0,
+                    "max": 220,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 26"
+                },
+                "2195251000": {
+                    "min": 0,
+                    "max": 270,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 27"
+                },
+                "2258567255": {
+                    "min": 0,
+                    "max": 320,
+                    "unit": "kW/h",
+                    "info": "Energieabgabedaten für Pumpe 28"
+                }
+            },
+            "preset_filters": {
+                "metrics": "2019156, 2019157, 2195251000, 2258567255"
+            },
+            "passthrough_filters": {
+                "timestampFrom": "2024-06-18T07:40:00.000000000Z",
+                "timestampTo": "2024-06-19T07:40:00.000000000Z"
             }
         }
     ],
     "thing_nodes": [
         {
+            "id": "00000000-0000-0000-0000-000000000004",
+            "name": "Wasserwerk 1",
+            "element_type_id": "00000000-0000-0000-0000-000000000001",
+            "parent_node_id": null,
+            "description": "Das Hauptwasserwerk",
+            "meta_data": {
+                "info": "Hauptverwaltung des Wasserwerks"
+            },
+            "sources": [],
+            "sinks": []
+        },
+        {
             "id": "11111111-1111-1111-1111-111111111111",
-            "external_id": "ext-1111",
-            "name": "ChildNode1",
+            "name": "Anlage 1",
             "element_type_id": "00000000-0000-0000-0000-000000000002",
             "parent_node_id": "00000000-0000-0000-0000-000000000004",
-            "description": "Description for ChildNode1",
+            "description": "Anlage 1 des Wasserwerks",
             "meta_data": {
-                "type": "example type for ChildNode1"
+                "info": "Erste Anlage des Wasserwerks"
             },
             "sources": [
                 "11111111-1111-1111-1111-111111111111",
                 "11111111-1111-1111-1111-111111111112"
             ],
             "sinks": [
-                "66666666-6666-6666-6666-666666666666"
+                "66666666-6666-6666-6666-666666666666",
+                "66666666-6666-6666-6666-666666666667"
             ]
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",
-            "external_id": "ext-2222",
-            "name": "ChildNode2",
-            "element_type_id": "00000000-0000-0000-0000-000000000003",
-            "parent_node_id": "11111111-1111-1111-1111-111111111111",
-            "description": "Description for ChildNode2",
+            "name": "Anlage 2",
+            "element_type_id": "00000000-0000-0000-0000-000000000002",
+            "parent_node_id": "00000000-0000-0000-0000-000000000004",
+            "description": "Anlage 2 des Wasserwerks",
             "meta_data": {
-                "address": "example address for ChildNode2"
+                "info": "Zweite Anlage des Wasserwerks"
             },
             "sources": [
-                "11111111-1111-1111-1111-111111111113"
+                "11111111-1111-1111-1111-111111111113",
+                "11111111-1111-1111-1111-111111111114"
             ],
             "sinks": [
-                "66666666-6666-6666-6666-666666666667",
-                "66666666-6666-6666-6666-666666666668"
+                "66666666-6666-6666-6666-666666666668",
+                "66666666-6666-6666-6666-666666666669"
             ]
         },
         {
             "id": "33333333-3333-3333-3333-333333333333",
-            "external_id": "ext-3333",
-            "name": "ChildNode3",
-            "element_type_id": "00000000-0000-0000-0000-000000000001",
-            "parent_node_id": "22222222-2222-2222-2222-222222222222",
-            "description": "Description for ChildNode3",
-            "meta_data": {
-                "status": "example status for ChildNode3"
-            },
-            "sources": [
-                "11111111-1111-1111-1111-111111111114",
-                "11111111-1111-1111-1111-111111111115"
-            ],
-            "sinks": [
-                "66666666-6666-6666-6666-666666666669"
-            ]
-        },
-        {
-            "id": "44444444-4444-4444-4444-444444444444",
-            "external_id": "ext-4444",
-            "name": "LeafNodeWith2Sources1Sink",
-            "element_type_id": "00000000-0000-0000-0000-000000000002",
-            "parent_node_id": "33333333-3333-3333-3333-333333333333",
-            "description": "Description for LeafNodeWith2Sources1Sink",
-            "meta_data": {
-                "info": "example info for LeafNodeWith2Sources1Sink"
-            },
-            "sources": [
-                "11111111-1111-1111-1111-111111111114",
-                "11111111-1111-1111-1111-111111111115"
-            ],
-            "sinks": [
-                "66666666-6666-6666-6666-666666666669"
-            ]
-        },
-        {
-            "id": "55555555-5555-5555-5555-555555555555",
-            "external_id": "ext-5555",
-            "name": "LeafNodeWith1Source2Sinks",
+            "name": "Sensor 1",
             "element_type_id": "00000000-0000-0000-0000-000000000003",
-            "parent_node_id": "33333333-3333-3333-3333-333333333333",
-            "description": "Description for LeafNodeWith1Source2Sinks",
+            "parent_node_id": "11111111-1111-1111-1111-111111111111",
+            "description": "Sensor 1 in Anlage 1",
             "meta_data": {
-                "type": "example type for LeafNodeWith1Source2Sinks"
+                "info": "Sensor zur Überwachung von Pumpe 1"
             },
             "sources": [
-                "11111111-1111-1111-1111-111111111114",
-                "11111111-1111-1111-1111-111111111115"
-            ],
-            "sinks": [
-                "66666666-6666-6666-6666-666666666669"
-            ]
-        },
-        {
-            "id": "66666666-6666-6666-6666-666666666666",
-            "external_id": "ext-6666",
-            "name": "ChildNode2_Child1",
-            "element_type_id": "00000000-0000-0000-0000-000000000002",
-            "parent_node_id": "22222222-2222-2222-2222-222222222222",
-            "description": "Description for ChildNode2_Child1",
-            "meta_data": {
-                "address": "example address for ChildNode2_Child1"
-            },
-            "sources": [
-                "11111111-1111-1111-1111-111111111114",
-                "11111111-1111-1111-1111-111111111115"
+                "11111111-1111-1111-1111-111111111111"
             ],
             "sinks": [
                 "66666666-6666-6666-6666-666666666666"
             ]
         },
         {
-            "id": "77777777-7777-7777-7777-777777777777",
-            "external_id": "ext-7777",
-            "name": "ChildNode2_Child2",
+            "id": "44444444-4444-4444-4444-444444444444",
+            "name": "Sensor 2",
             "element_type_id": "00000000-0000-0000-0000-000000000003",
-            "parent_node_id": "22222222-2222-2222-2222-222222222222",
-            "description": "Description for ChildNode2_Child2",
+            "parent_node_id": "11111111-1111-1111-1111-111111111111",
+            "description": "Sensor 2 in Anlage 1",
             "meta_data": {
-                "status": "example status for ChildNode2_Child2"
+                "info": "Sensor zur Überwachung von Pumpe 2"
             },
             "sources": [
-                "11111111-1111-1111-1111-111111111114",
-                "11111111-1111-1111-1111-111111111115"
+                "11111111-1111-1111-1111-111111111112"
             ],
             "sinks": [
                 "66666666-6666-6666-6666-666666666667"
             ]
         },
         {
-            "id": "88888888-8888-8888-8888-888888888888",
-            "external_id": "ext-8888",
-            "name": "ChildNode2_Child1_Child1",
-            "element_type_id": "00000000-0000-0000-0000-000000000001",
-            "parent_node_id": "66666666-6666-6666-6666-666666666666",
-            "description": "Description for ChildNode2_Child1_Child1",
+            "id": "55555555-5555-5555-5555-555555555555",
+            "name": "Sensor 3",
+            "element_type_id": "00000000-0000-0000-0000-000000000003",
+            "parent_node_id": "22222222-2222-2222-2222-222222222222",
+            "description": "Sensor 3 in Anlage 2",
             "meta_data": {
-                "type": "example type for ChildNode2_Child1_Child1"
+                "info": "Sensor zur Überwachung von Pumpe 3"
             },
             "sources": [
-                "11111111-1111-1111-1111-111111111115"
+                "11111111-1111-1111-1111-111111111113"
             ],
             "sinks": [
                 "66666666-6666-6666-6666-666666666668"
             ]
         },
         {
-            "id": "99999999-9999-9999-9999-999999999999",
-            "external_id": "ext-9999",
-            "name": "ChildNode2_Child1_Child2",
-            "element_type_id": "00000000-0000-0000-0000-000000000002",
-            "parent_node_id": "66666666-6666-6666-6666-666666666666",
-            "description": "Description for ChildNode2_Child1_Child2",
+            "id": "66666666-6666-6666-6666-666666666666",
+            "name": "Sensor 4",
+            "element_type_id": "00000000-0000-0000-0000-000000000003",
+            "parent_node_id": "22222222-2222-2222-2222-222222222222",
+            "description": "Sensor 4 in Anlage 2",
             "meta_data": {
-                "address": "example address for ChildNode2_Child1_Child2"
+                "info": "Sensor zur Überwachung von Pumpe 4"
             },
             "sources": [
                 "11111111-1111-1111-1111-111111111114"
@@ -378,17 +708,52 @@
             ]
         },
         {
-            "id": "00000000-0000-0000-0000-000000000004",
-            "external_id": "ext-0000",
-            "name": "RootNode",
-            "element_type_id": "00000000-0000-0000-0000-000000000001",
-            "parent_node_id": null,
-            "description": "Description for RootNode",
+            "id": "77777777-7777-7777-7777-777777777777",
+            "name": "Sensor 5",
+            "element_type_id": "00000000-0000-0000-0000-000000000003",
+            "parent_node_id": "11111111-1111-1111-1111-111111111115",
+            "description": "Sensor 5 in Anlage 3",
             "meta_data": {
-                "info": "example info for RootNode"
+                "info": "Sensor zur Überwachung von Pumpe 5"
             },
-            "sources": [],
-            "sinks": []
+            "sources": [
+                "11111111-1111-1111-1111-111111111115"
+            ],
+            "sinks": [
+                "66666666-6666-6666-6666-666666666670"
+            ]
+        },
+        {
+            "id": "88888888-8888-8888-8888-888888888888",
+            "name": "Sensor 6",
+            "element_type_id": "00000000-0000-0000-0000-000000000003",
+            "parent_node_id": "11111111-1111-1111-1111-111111111116",
+            "description": "Sensor 6 in Anlage 3",
+            "meta_data": {
+                "info": "Sensor zur Überwachung von Pumpe 6"
+            },
+            "sources": [
+                "11111111-1111-1111-1111-111111111116"
+            ],
+            "sinks": [
+                "66666666-6666-6666-6666-666666666671"
+            ]
+        },
+        {
+            "id": "99999999-9999-9999-9999-999999999999",
+            "name": "Sensor 7",
+            "element_type_id": "00000000-0000-0000-0000-000000000003",
+            "parent_node_id": "11111111-1111-1111-1111-111111111117",
+            "description": "Sensor 7 in Anlage 4",
+            "meta_data": {
+                "info": "Sensor zur Überwachung von Pumpe 7"
+            },
+            "sources": [
+                "11111111-1111-1111-1111-111111111117"
+            ],
+            "sinks": [
+                "66666666-6666-6666-6666-666666666672"
+            ]
         }
     ]
 }
