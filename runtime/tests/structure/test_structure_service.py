@@ -7,8 +7,10 @@ from sqlalchemy.future.engine import Engine
 
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import update_structure_from_file
-from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
-from hetdesrun.structure.structure_service import get_children
+from hetdesrun.structure.models import CompleteStructure
+from hetdesrun.structure.structure_service import get_children, delete_structure
+from hetdesrun.structure.db.orm_service import fetch_all_element_types, fetch_all_thing_nodes, fetch_all_sources, fetch_all_sinks
+
 
 
 @pytest.fixture()
@@ -127,3 +129,25 @@ def test_complete_structure_object_creation():
     tn_names = [tn.name for tn in cs.thing_nodes]
     expected_tn_names = [tn["name"] for tn in data["thing_nodes"]]
     assert all(name in tn_names for name in expected_tn_names)
+
+
+@pytest.mark.usefixtures("_db_test_get_children")
+def test_delete_structure_root(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        
+        delete_structure()
+
+        remaining_thing_nodes = fetch_all_thing_nodes(session)
+        assert len(remaining_thing_nodes) == 0
+
+        remaining_sources = fetch_all_sources(session)
+        assert len(remaining_sources) == 0
+
+        remaining_sinks = fetch_all_sinks(session)
+        assert len(remaining_sinks) == 0
+
+        remaining_element_types = fetch_all_element_types(session)
+        assert len(remaining_element_types) == 0
+
+
+
