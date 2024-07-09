@@ -11,9 +11,6 @@ from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
-    ElementTypeToPropertySetOrm,
-    PropertyMetadataOrm,
-    PropertySetOrm,
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
