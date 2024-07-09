@@ -6,8 +6,6 @@ test('Confirm release a component', async ({
   browserName
 }) => {
   if (browserName !== "firefox") {
-
-
     // Arrange
     const componentCategory = 'Test';
     const componentName = `Test release a component ${browserName}`;
@@ -196,8 +194,6 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
       );
       await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
     }
-
   }
   await hetidaDesigner.clearTest();
-
 });

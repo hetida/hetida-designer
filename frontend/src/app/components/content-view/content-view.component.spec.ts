@@ -13,6 +13,8 @@ import {
   ContentViewComponent,
   selectContentViewStoreState
 } from './content-view.component';
+import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({ selector: 'hd-home', template: '' })
 class HomeStubComponent {}
@@ -27,7 +29,9 @@ describe('ContentViewComponent', () => {
         BasicTestModule,
         FormsModule,
         MonacoEditorModule.forRoot(),
-        NgHetidaFlowchartModule
+        NgHetidaFlowchartModule,
+        RouterTestingModule,
+        HttpClientModule
       ],
       declarations: [
         ContentViewComponent,

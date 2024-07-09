@@ -145,6 +145,7 @@ base_workflow_json: dict = {
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -284,6 +285,7 @@ series_input_workflow_json = {
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -423,6 +425,7 @@ def main(*, x, y):
             }
         ],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 
@@ -437,12 +440,16 @@ async def test_single_node_workflow_with_dataframe_input_and_series_output(
     assert status_code == 200
 
     assert output["result"] == "ok"
-
-    assert output["output_results_by_output_name"]["z"]["__data__"] == {
-        "0": 3.0,
-        "1": 4.0,
-        "2": 5.5,
-    }
+    assert output["output_results_by_output_name"]["z"]["__data__"]["data"] == [
+        3.0,
+        4.0,
+        5.5,
+    ]
+    assert output["output_results_by_output_name"]["z"]["__data__"]["index"] == [
+        0,
+        1,
+        2,
+    ]
 
 
 plot_workflow_json = {
@@ -590,6 +597,7 @@ plot_workflow_json = {
         "input_wirings": [],
         "output_wirings": [{"adapter_id": 1, "workflow_output_name": "z"}],
     },
+    "trafo_id": str(get_uuid_from_seed("my_workflow")),
 }
 
 

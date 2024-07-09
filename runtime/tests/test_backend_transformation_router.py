@@ -8,8 +8,8 @@ from uuid import UUID
 import pytest
 from fastapi import HTTPException
 
-from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import expand_code, update_code
+from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
@@ -19,7 +19,10 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.trafoutils.io.load import load_json
+from hetdesrun.trafoutils.io.load import (
+    load_json,
+    transformation_revision_from_python_code,
+)
 from hetdesrun.utils import State, get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -632,6 +635,109 @@ async def test_get_all_transformation_revisions_with_no_db_entries(
         response = await ac.get("/api/transformations/")
 
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_transformation_revisions_strip_wirings(
+    async_test_client, mocked_clean_test_db_session
+):
+    """Tests the different ways of stripping wirings from the response"""
+    tr_dict = deepcopy(tr_json_component_1)
+    tr_dict["io_interface"]["inputs"].append(
+        {
+            "id": str(get_uuid_from_seed("operator input 2")),
+            "name": "operator_input_2",
+            "data_type": "INT",
+            "type": "REQUIRED",
+        }
+    )
+    tr_dict["test_wiring"]["input_wirings"].append(
+        {
+            "workflow_input_name": "operator_input_2",
+            "adapter_id": "other",
+            "use_default_value": False,
+            "filters": {"value": "100"},
+        },
+    )
+    tr = TransformationRevision(**tr_dict)
+
+    # now has two input wirings:
+    # * first with adapter_id "direct_provisioning"
+    # * second with adapter_id "other"
+    #
+    # has one output wiring with adapter_id "direct_provisioning"
+
+    store_single_transformation_revision(tr)
+    async with async_test_client as ac:
+        # default settings have no effect
+        resp = await ac.get("/api/transformations/", params={})
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert len(resp_json) == 1
+        assert TransformationRevision(**resp_json[0]) == tr
+
+        # strip_wirings removes all wirings
+        resp = await ac.get("/api/transformations/", params={"strip_wirings": True})
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert len(resp_json) == 1
+        trafo_from_resp = TransformationRevision(**resp_json[0])
+        assert trafo_from_resp != tr
+        assert len(trafo_from_resp.test_wiring.input_wirings) == 0
+        assert len(trafo_from_resp.test_wiring.output_wirings) == 0
+
+        # strip_wirings_with_adapter_id removes only certain wirings
+        resp = await ac.get(
+            "/api/transformations/", params={"strip_wirings_with_adapter_id": "other"}
+        )
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert len(resp_json) == 1
+        trafo_from_resp = TransformationRevision(**resp_json[0])
+        assert trafo_from_resp != tr
+        assert len(trafo_from_resp.test_wiring.input_wirings) == 1
+        assert (
+            trafo_from_resp.test_wiring.input_wirings[0].adapter_id
+            == "direct_provisioning"
+        )
+        assert len(trafo_from_resp.test_wiring.output_wirings) == 1
+        assert (
+            trafo_from_resp.test_wiring.input_wirings[0].adapter_id
+            == "direct_provisioning"
+        )
+
+        # keep_only_wirings_with_adapter_id keeps only certain wirings
+        resp = await ac.get(
+            "/api/transformations/",
+            params={"keep_only_wirings_with_adapter_id": "other"},
+        )
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert len(resp_json) == 1
+        trafo_from_resp = TransformationRevision(**resp_json[0])
+        assert trafo_from_resp != tr
+        assert len(trafo_from_resp.test_wiring.input_wirings) == 1
+        assert trafo_from_resp.test_wiring.input_wirings[0].adapter_id == "other"
+        assert len(trafo_from_resp.test_wiring.output_wirings) == 0
+
+        # keep_only_wirings_with_adapter_id keeps only certain wirings
+        # for components_as_code if expand_component_code is True
+        resp = await ac.get(
+            "/api/transformations/",
+            params={
+                "keep_only_wirings_with_adapter_id": "other",
+                "components_as_code": True,
+                "expand_component_code": True,
+            },
+        )
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert len(resp_json) == 1
+        trafo_from_resp = transformation_revision_from_python_code(resp_json[0])
+        assert trafo_from_resp != tr
+        assert len(trafo_from_resp.test_wiring.input_wirings) == 1
+        assert trafo_from_resp.test_wiring.input_wirings[0].adapter_id == "other"
+        assert len(trafo_from_resp.test_wiring.output_wirings) == 0
 
 
 @pytest.mark.asyncio
@@ -2065,11 +2171,11 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             "output_results_by_output_name"
         ]
         assert "output" in output_results_by_output_name
-        assert len(output_results_by_output_name["output"]["__data__"]) == 2
         assert (
-            output_results_by_output_name["output"]["__data__"][
-                "2020-05-01T02:00:00.000Z"
-            ]
+            len(output_results_by_output_name["output"]["__data__"]) == 3
+        )  # split format
+        assert (
+            output_results_by_output_name["output"]["__data__"]["data"][1]
             == None  # noqa: E711
         )
 
@@ -2106,11 +2212,9 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             "output_results_by_output_name"
         ]
         assert "output" in output_results_by_output_name
-        assert len(output_results_by_output_name["output"]["__data__"]) == 2
+        assert len(output_results_by_output_name["output"]["__data__"]) == 3
         assert (
-            output_results_by_output_name["output"]["__data__"][
-                "2020-05-01T02:00:00.000Z"
-            ]
+            output_results_by_output_name["output"]["__data__"]["data"][1]
             == None  # noqa: E711
         )
 

@@ -200,7 +200,7 @@ async def run_kafka_msg(
             loop = asyncio.get_event_loop()
 
             with mock.patch(
-                "hetdesrun.backend.kafka.consumer.execute_transformation_revision",
+                "hetdesrun.backend.kafka.consumer.perf_measured_execute_trafo_rev",
                 exec_func_mock,
             ):
                 results = loop.run_until_complete(

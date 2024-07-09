@@ -3,12 +3,12 @@ import logging
 from copy import deepcopy
 from uuid import UUID
 
+from pydantic import StrictInt, StrictStr
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -26,7 +26,7 @@ from hetdesrun.persistence.models.exceptions import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.utils import State, Type
+from hetdesrun.utils import State, Type, cache_conditionally
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,14 @@ def read_single_transformation_revision(
 ) -> TransformationRevision:
     with get_session()() as session, session.begin():
         return select_tr_by_id(session, id, log_error)
+
+
+@cache_conditionally(lambda trafo: trafo.state != State.DRAFT)
+def read_single_transformation_revision_with_caching(
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> TransformationRevision:
+    return read_single_transformation_revision(id, log_error)
 
 
 def update_tr(
@@ -297,11 +305,16 @@ def update_or_create_single_transformation_revision(
     allow_overwrite_released: bool = False,
     update_component_code: bool = True,
     strip_wiring: bool = False,
+    strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+    keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
 ) -> TransformationRevision:
-    with get_session()() as session, session.begin():
-        if strip_wiring:
-            transformation_revision.test_wiring = WorkflowWiring()
+    transformation_revision.strip_wirings(
+        strip_wiring=strip_wiring,
+        strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
+        keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
+    )
 
+    with get_session()() as session, session.begin():
         try:
             existing_transformation_revision = select_tr_by_id(
                 session, transformation_revision.id, log_error=False

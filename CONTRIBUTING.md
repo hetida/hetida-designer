@@ -1,8 +1,8 @@
 # Contributing to the hetida designer
 
-We greatly appreciate your contribution to the hetida designer!
+We greatly appreciate your contribution to hetida designer!
 
-There are many ways you can help us to make the hetida designer even better:
+There are many ways you can help us to make hetida designer even better:
 
 - [Ask a question or request support](#question)
 - [Report an issue or bug](#issue)

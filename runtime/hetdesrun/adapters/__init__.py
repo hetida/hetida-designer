@@ -13,8 +13,17 @@ on registering your own data adapters.
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from typing import Any, TypedDict
+from typing import Any
 
+from hetdesrun.adapters.base import (
+    SINK_ADAPTERS,
+    SOURCE_ADAPTERS,
+    ClientWiringInvalidErrorTuple,
+    ConnectionErrorTuple,
+    OutputDataErrorTuple,
+    SinkAdapter,
+    SourceAdapter,
+)
 from hetdesrun.adapters.exceptions import (  # noqa: F401
     AdapterClientWiringInvalidError,
     AdapterConnectionError,
@@ -30,41 +39,7 @@ from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisione
 from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
-ConnectionErrorTuple = (
-    tuple[type[AdapterConnectionError]]
-    | tuple[type[AdapterConnectionError], type[Exception]]
-)
-
-OutputDataErrorTuple = (
-    tuple[type[AdapterOutputDataError]]
-    | tuple[type[AdapterOutputDataError], type[Exception]]
-)
-
-ClientWiringInvalidErrorTuple = (
-    tuple[type[AdapterClientWiringInvalidError]]
-    | tuple[type[AdapterClientWiringInvalidError], type[Exception]]
-)
-
 logger = logging.getLogger(__name__)
-
-
-class SourceAdapter(TypedDict):
-    load_sources_func: Callable
-    connection_error_classes: ConnectionErrorTuple
-    output_data_error_classes: OutputDataErrorTuple
-    client_wiring_invalid_error_classes: ClientWiringInvalidErrorTuple
-
-
-class SinkAdapter(TypedDict):
-    send_sinks_func: Callable
-    connection_error_classes: ConnectionErrorTuple
-    output_data_error_classes: OutputDataErrorTuple
-    client_wiring_invalid_error_classes: ClientWiringInvalidErrorTuple
-
-
-SOURCE_ADAPTERS: dict[int | str, SourceAdapter] = {}
-
-SINK_ADAPTERS: dict[int | str, SinkAdapter] = {}
 
 
 def prepare_exc_classes(

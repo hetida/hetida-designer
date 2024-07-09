@@ -1,134 +1,135 @@
 {
-    "code_modules": [
-        {
-            "code": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dividend\": {\"data_type\": \"INT\"},\n        \"divisor\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"result\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"Raise Exception\",\n    \"category\": \"Test\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"in code explicitly\",\n    \"id\": \"7533248c-f127-4d57-9e5f-2e6ec8ab6bb0\",\n    \"revision_group_id\": \"0d513f1d-6c73-4411-85d4-bc2f02b541b5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-08-24T14:27:09.095346+00:00\",\n}\n\n\ndef main(*, dividend, divisor):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    if divisor == 0:\n        raise ValueError(\"The divisor must not equal zero!\")\n    return {\"result\": dividend/divisor}",
-            "uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0"
-        }
-    ],
-    "components": [
-        {
-            "code_module_uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0",
-            "function_name": "main",
-            "inputs": [
-                {
-                    "default": false,
-                    "default_value": null,
-                    "id": "864c37a9-de65-41b4-8d8c-d836cc7ca3a1",
-                    "name": "dividend",
-                    "type": "INT"
-                },
-                {
-                    "default": false,
-                    "default_value": null,
-                    "id": "cd3d26f7-8b0a-4517-a7ec-9da4a795cc6b",
-                    "name": "divisor",
-                    "type": "INT"
-                }
-            ],
-            "name": "Raise Exception",
-            "outputs": [
-                {
-                    "id": "4d8d19ed-e133-4bb3-a62b-2a1beb3f3723",
-                    "name": "result",
-                    "type": "FLOAT"
-                }
-            ],
-            "tag": "in code explicitly",
-            "uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0"
-        }
-    ],
-    "configuration": {
-        "engine": "plain",
-        "name": "2717b30b-4dcd-448c-bdba-b74039265405",
-        "return_individual_node_results": false,
-        "run_pure_plot_operators": true
-    },
-    "job_id": "2d7a60c4-59a0-45fe-90f3-c4d26c324b8c",
-    "workflow": {
-        "connections": [],
-        "id": "3a3af21a-f1aa-45fd-83f9-3efb416f4942",
-        "inputs": [
-            {
-                "constant": false,
-                "constantValue": null,
-                "default": true,
-                "default_value": "asdf",
-                "id": "76c94015-c2a3-43f4-b699-f7cbd28458e8",
-                "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
-                "name": "dividend",
-                "name_in_subnode": "dividend",
-                "type": "INT"
-            },
-            {
-                "constant": false,
-                "constantValue": null,
-                "default": false,
-                "default_value": null,
-                "id": "7f2b0c05-aa7b-4603-8d3d-b9bc63bc25cb",
-                "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
-                "name": "divisor",
-                "name_in_subnode": "divisor",
-                "type": "INT"
-            }
-        ],
-        "name": "Raise Exception Workflow",
-        "outputs": [
-            {
-                "id": "2e66f203-0adb-447d-a596-feec125db50e",
-                "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
-                "name": "result",
-                "name_in_subnode": "result",
-                "type": "FLOAT"
-            }
-        ],
-        "sub_nodes": [
-            {
-                "component_uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0",
-                "id": "3ccdc5b7-988a-4454-a6de-7251257ac299",
-                "name": "Raise Exception"
-            }
-        ],
-        "tr_id": "2717b30b-4dcd-448c-bdba-b74039265405",
-        "tr_name": "Raise Exception Workflow",
-        "tr_tag": "default value"
-    },
-    "workflow_wiring": {
-        "input_wirings": [
-            {
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "asdf"
-                },
-                "ref_id": null,
-                "ref_id_type": null,
-                "ref_key": null,
-                "type": null,
-                "use_default_value": true,
-                "workflow_input_name": "dividend"
-            },
-            {
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "0"
-                },
-                "ref_id": null,
-                "ref_id_type": null,
-                "ref_key": null,
-                "type": null,
-                "use_default_value": false,
-                "workflow_input_name": "divisor"
-            }
-        ],
-        "output_wirings": [
-            {
-                "adapter_id": 1,
-                "filters": {},
-                "ref_id": null,
-                "ref_id_type": null,
-                "ref_key": null,
-                "type": null,
-                "workflow_output_name": "result"
-            }
-        ]
+  "code_modules": [
+    {
+      "code": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dividend\": {\"data_type\": \"INT\"},\n        \"divisor\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"result\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"Raise Exception\",\n    \"category\": \"Test\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"in code explicitly\",\n    \"id\": \"7533248c-f127-4d57-9e5f-2e6ec8ab6bb0\",\n    \"revision_group_id\": \"0d513f1d-6c73-4411-85d4-bc2f02b541b5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-08-24T14:27:09.095346+00:00\",\n}\n\n\ndef main(*, dividend, divisor):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    if divisor == 0:\n        raise ValueError(\"The divisor must not equal zero!\")\n    return {\"result\": dividend/divisor}",
+      "uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0"
     }
+  ],
+  "components": [
+    {
+      "code_module_uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0",
+      "function_name": "main",
+      "inputs": [
+        {
+          "default": false,
+          "default_value": null,
+          "id": "864c37a9-de65-41b4-8d8c-d836cc7ca3a1",
+          "name": "dividend",
+          "type": "INT"
+        },
+        {
+          "default": false,
+          "default_value": null,
+          "id": "cd3d26f7-8b0a-4517-a7ec-9da4a795cc6b",
+          "name": "divisor",
+          "type": "INT"
+        }
+      ],
+      "name": "Raise Exception",
+      "outputs": [
+        {
+          "id": "4d8d19ed-e133-4bb3-a62b-2a1beb3f3723",
+          "name": "result",
+          "type": "FLOAT"
+        }
+      ],
+      "tag": "in code explicitly",
+      "uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0"
+    }
+  ],
+  "configuration": {
+    "engine": "plain",
+    "name": "2717b30b-4dcd-448c-bdba-b74039265405",
+    "return_individual_node_results": false,
+    "run_pure_plot_operators": true
+  },
+  "job_id": "2d7a60c4-59a0-45fe-90f3-c4d26c324b8c",
+  "workflow": {
+    "connections": [],
+    "id": "3a3af21a-f1aa-45fd-83f9-3efb416f4942",
+    "inputs": [
+      {
+        "constant": false,
+        "constantValue": null,
+        "default": true,
+        "default_value": "asdf",
+        "id": "76c94015-c2a3-43f4-b699-f7cbd28458e8",
+        "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
+        "name": "dividend",
+        "name_in_subnode": "dividend",
+        "type": "INT"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "default": false,
+        "default_value": null,
+        "id": "7f2b0c05-aa7b-4603-8d3d-b9bc63bc25cb",
+        "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
+        "name": "divisor",
+        "name_in_subnode": "divisor",
+        "type": "INT"
+      }
+    ],
+    "name": "Raise Exception Workflow",
+    "outputs": [
+      {
+        "id": "2e66f203-0adb-447d-a596-feec125db50e",
+        "id_of_sub_node": "3ccdc5b7-988a-4454-a6de-7251257ac299",
+        "name": "result",
+        "name_in_subnode": "result",
+        "type": "FLOAT"
+      }
+    ],
+    "sub_nodes": [
+      {
+        "component_uuid": "7533248c-f127-4d57-9e5f-2e6ec8ab6bb0",
+        "id": "3ccdc5b7-988a-4454-a6de-7251257ac299",
+        "name": "Raise Exception"
+      }
+    ],
+    "tr_id": "2717b30b-4dcd-448c-bdba-b74039265405",
+    "tr_name": "Raise Exception Workflow",
+    "tr_tag": "default value"
+  },
+  "workflow_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "asdf"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "use_default_value": true,
+        "workflow_input_name": "dividend"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "0"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "use_default_value": false,
+        "workflow_input_name": "divisor"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": 1,
+        "filters": {},
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_output_name": "result"
+      }
+    ]
+  },
+  "trafo_id": "3a3af21a-f1aa-45fd-83f9-3efb416f4942"
 }

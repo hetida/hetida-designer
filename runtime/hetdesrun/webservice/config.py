@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
+from hetdesrun.models.execution import ExecByIdBase
 from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
@@ -58,6 +59,12 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    log_execution_performance_info: bool = Field(
+        False,
+        description="Whether performance info (measured steps) are logged.",
+        env="HD_LOG_EXECUTION_PERFORMANCE_INFO",
+    )
+
     swagger_prefix: str = Field(
         "",
         env="OPENAPI_PREFIX",
@@ -104,6 +111,16 @@ class RuntimeConfig(BaseSettings):
             "execution happen in one sacalable containerized service."
         ),
         env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
+    )
+
+    enable_caching_for_non_draft_trafos_for_execution: bool = Field(
+        False,
+        env="HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC",
+        description=(
+            "Cache transformation revisions for execution if their state is not DRAFT."
+            "Instead of always loading them from the database."
+            "The caching mechanism is NOT thread-safe."
+        ),
     )
 
     ensure_db_schema: bool = Field(
@@ -254,9 +271,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: ServiceCredentials | Json[
-        ServiceCredentials
-    ] | None = Field(
+    internal_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -281,9 +298,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: ServiceCredentials | Json[
-        ServiceCredentials
-    ] | None = Field(
+    external_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(
@@ -319,7 +336,10 @@ class RuntimeConfig(BaseSettings):
         "|http://hetida-designer-runtime:8090/adapters/localfile,"
         "sql-adapter|SQL Adapter"
         "|http://localhost:8090/adapters/sql"
-        "|http://localhost:8090/adapters/sql",
+        "|http://localhost:8090/adapters/sql,"
+        "kafka|Kafka Adapter"
+        "|http://localhost:8090/adapters/kafka"
+        "|http://localhost:8090/adapters/kafka",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
@@ -368,6 +388,19 @@ class RuntimeConfig(BaseSettings):
     )
     hd_adapters_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
+    )
+
+    hd_kafka_consumption_mode: None | ExecByIdBase = Field(
+        None,
+        description=(
+            "If this is set, all backend, runtime and adapter webservices are deactivated. "
+            "Instead a kafka consumer is started listening on the kafka topic from the kafka "
+            "adapter inputs of the topic/configuration of the provided wiring (exactly one kafka "
+            "config is allowed to occur in the input wirings). Whenever it receives a kafka "
+            "message it will execute the transformation with the wiring forwarding the kafka "
+            "message content into the kafka adapter input wirings."
+        ),
+        env="HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE",
     )
 
     hd_kafka_consumer_enabled: bool = Field(

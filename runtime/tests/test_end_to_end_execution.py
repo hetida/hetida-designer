@@ -80,6 +80,7 @@ def gen_execution_input_from_single_component(
         )
         if wf_wiring is None
         else wf_wiring,
+        trafo_id=tr_component.id,
     )
 
 
@@ -149,11 +150,8 @@ async def test_direct_provisioning_series_metadata(
         assert exec_result.output_results_by_output_name["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {"test": 42},
-            "__data__": {
-                "0": 2.3,
-                "1": 2.4,
-                "2": 2.5,
-            },
+            "__data__": {"name": None, "index": [0, 1, 2], "data": [2.3, 2.4, 2.5]},
+            "__data_parsing_options__": {"orient": "split"},
         }
 
 

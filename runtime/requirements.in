@@ -8,7 +8,7 @@ httptools
 psycopg2
 sqlalchemy[mypy]<2
 SQLAlchemy-Utils
-aiokafka
+aiokafka[snappy]
 alembic
 pandas<2.1.4
 numpy
