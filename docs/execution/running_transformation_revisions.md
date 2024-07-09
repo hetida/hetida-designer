@@ -284,5 +284,7 @@ The execution result is then sent to the specified callback url in the request b
 
 ## Running workflow and component revisions using Kafka
 
-see the documentation for [Execution via Apache Kafka](./execution_via_kafka.md).
+See the documentation for
+* [Execution via Apache Kafka](./execution_via_kafka.md)
+* [Kafka Consumption Mode](./kafka_consumption_mode.md)
 

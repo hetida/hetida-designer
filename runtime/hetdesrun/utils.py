@@ -1,10 +1,14 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
+import asyncio
 import datetime
 import json
 import logging
 import random
+from collections.abc import Callable, Coroutine
 from enum import StrEnum
+from functools import wraps
+from typing import Any
 from uuid import UUID
 
 import requests  # noqa: F401
@@ -141,3 +145,58 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
     For logging etc.
     """
     return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
+
+
+def cache_conditionally(condition_func: Callable) -> Callable:
+    """Caching decorator that caches a result if a condition is fulfilled
+
+    * The result is only cached if it fulfills a condition that is checked by the condition function
+    * The decorated function `func` (see cache_conditionally_decorator) must have exactly one
+      hashable argument
+    * cache_conditionally works for both synchronous and asynchronous functions
+    * The implementation is NOT thread-safe
+
+    Args:
+        condition_func (function): Takes a result of `func`
+        and returns a boolean that determines whether this value should be cached
+    """
+
+    def cache_conditionally_decorator(
+        func: Callable | Coroutine,
+    ) -> Callable | Coroutine:
+        cache: dict = {}
+
+        if asyncio.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_cache_wrapper(arg: Any) -> Any:
+                if arg in cache:
+                    return cache[arg]
+
+                val = await func(arg)
+
+                if condition_func(val):
+                    cache[arg] = val
+
+                return val
+
+            async_cache_wrapper.cache_ = cache  # type: ignore
+            return async_cache_wrapper
+
+        # Function is synchronous
+        @wraps(func)  # type: ignore
+        def cache_wrapper(arg: Any) -> Any:
+            if arg in cache:
+                return cache[arg]
+
+            val = func(arg)  # type: ignore
+
+            if condition_func(val):
+                cache[arg] = val
+
+            return val
+
+        cache_wrapper.cache_ = cache  # type: ignore
+        return cache_wrapper
+
+    return cache_conditionally_decorator

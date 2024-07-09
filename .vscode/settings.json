@@ -1,64 +1,65 @@
 {
-    "sqltools.connections": [
-        {
-            "database": "hetida_designer_db",
-            "dialect": "PostgreSQL",
-            "name": "hetida-designer-db",
-            "password": "designer",
-            "port": 5430,
-            "server": "localhost",
-            "username": "hetida"
-        }
-    ],
-    "search.exclude": {
-        "**/__pycache__": true,
-        "**/.git": true,
-        "**/runtime/venv": true,
-        "**/runtime/nix_venv*": true,
-        "**/demo-adapter-python/nix_venv*": true,
-        "**/demo-adapter-python/venv": true,
-        ".tmp": true,
-        "**/.mypy_cache": true,
-        "**/.pytest_cache": true,
-        "**/.coverage": true,
-        "**/.ruff_cache": true
-    },
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/runtime/venv": true,
-        "**/runtime/nix_venv*": true,
-        "**/demo-adapter-python/nix_venv*": true,
-        "**/demo-adapter-python/venv": true,
-        ".tmp": true,
-        "**/.mypy_cache": true,
-        "**/.pytest_cache": true,
-        "**/.coverage": true,
-        "**/.ruff_cache": true
-    },
-    "python.linting.enabled": true,
+  "sqltools.connections": [
+    {
+      "database": "hetida_designer_db",
+      "dialect": "PostgreSQL",
+      "name": "hetida-designer-db",
+      "password": "designer",
+      "port": 5430,
+      "server": "localhost",
+      "username": "hetida"
+    }
+  ],
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/.git": true,
+    "**/runtime/venv": true,
+    "**/runtime/nix_venv*": true,
+    "**/demo-adapter-python/nix_venv*": true,
+    "**/demo-adapter-python/venv": true,
+    ".tmp": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.coverage": true,
+    "**/.ruff_cache": true
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/runtime/venv": true,
+    "**/runtime/nix_venv*": true,
+    "**/demo-adapter-python/nix_venv*": true,
+    "**/demo-adapter-python/venv": true,
+    ".tmp": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.coverage": true,
+    "**/.ruff_cache": true
+  },
+  "python.linting.enabled": true,
+  "editor.formatOnSave": true,
+  "[python]": {
     "editor.formatOnSave": true,
-    "[python]": {
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports.ruff": "explicit"
-        }
-    },
-    "python.formatting.provider": "black",
-    "ruff.importStrategy": "fromEnvironment",
-    "ruff.args": [
-        "--config=runtime/pyproject.toml"
-    ],
-    "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python",
-    "python.linting.mypyArgs": [
-        "--config-file=runtime/mypy.ini"
-    ],
-    "mypy.configFile": "runtime/mypy.ini",
-    "mypy.runUsingActiveInterpreter": true,
-    "mypy.targets": [
-        "runtime/hetdesrun",
-        "runtime/main.py",
-        "demo-adapter-python/demo_adapter_python",
-        "demo-adapter-python/main.py"
-    ],
-    "editor.indentSize": "tabSize"
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "python.formatting.provider": "black",
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.args": [
+    "--config=runtime/pyproject.toml"
+  ],
+  "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python",
+  "python.linting.mypyArgs": [
+    "--config-file=runtime/mypy.ini"
+  ],
+  "mypy.configFile": "runtime/mypy.ini",
+  "mypy.runUsingActiveInterpreter": true,
+  "mypy.targets": [
+    "runtime/hetdesrun",
+    "runtime/main.py",
+    "demo-adapter-python/demo_adapter_python",
+    "demo-adapter-python/main.py"
+  ],
+  "editor.indentSize": "tabSize",
+  "editor.detectIndentation": false
 }

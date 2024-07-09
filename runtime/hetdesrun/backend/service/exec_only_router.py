@@ -48,8 +48,6 @@ async def restricted_execute_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    # TODO: Maybe this endpoint should cache at least released trafos?
-
     if exec_by_id.id not in get_config().restrict_to_trafo_exec_service:
         msg = (
             f"Restricted execution called with a trafo id {str(exec_by_id.id)} which "

@@ -8,7 +8,7 @@ import pytest_asyncio
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from jose import constants, jwk, jwt
 
 from hetdesrun.webservice.application import init_app
@@ -153,7 +153,8 @@ def service_client_credentials():
     return ServiceCredentials(
         realm="my-realm",
         grant_credentials=ClientCredentialsGrantCredentials(
-            client_id="my-client", client_secret="my-client-secret"  # noqa: S106
+            client_id="my-client",
+            client_secret="my-client-secret",  # noqa: S106
         ),
         auth_url="https://test.com/auth",
         post_client_kwargs={"verify": False},
@@ -193,7 +194,9 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(app=app_with_auth, base_url="http://test")
+    return AsyncClient(
+        transport=ASGITransport(app=app_with_auth), base_url="http://test"
+    )
 
 
 @pytest_asyncio.fixture

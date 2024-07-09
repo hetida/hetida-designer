@@ -20,5 +20,5 @@ def test_serialization():
     # None is present after serialization:
 
     loaded_json = json.loads(om.json())
-    assert loaded_json["s"]["__data__"]["2"] is None
-    assert isinstance(loaded_json["s"]["__data__"]["1"], float)
+    assert loaded_json["s"]["__data__"]["data"][2] is None
+    assert isinstance(loaded_json["s"]["__data__"]["data"][1], float)

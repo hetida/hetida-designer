@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
@@ -144,10 +145,16 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.kafka.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
     )
+    from hetdesrun.adapters.kafka.webservice import kafka_adapter_router
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
@@ -178,7 +185,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
-
+        if (
+            get_kafka_adapter_config().active
+            and get_kafka_adapter_config().service_in_runtime
+        ):
+            app.include_router(kafka_adapter_router)
         if (
             get_sql_adapter_config().active
             and get_sql_adapter_config().service_in_runtime
@@ -205,6 +216,13 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 sql_adapter_router
             )  # auth dependency set individually per endpoint
+        if (
+            get_kafka_adapter_config().active
+            and not get_kafka_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                kafka_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             base_item_router, prefix="/api", dependencies=get_auth_deps()
@@ -224,7 +242,8 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             transformation_router, prefix="/api", dependencies=get_auth_deps()
         )
         app.include_router(
-            dashboard_router, prefix="/api"  # individual auth dependency
+            dashboard_router,
+            prefix="/api",  # individual auth dependency
         )
         possible_maintenance_secret = get_config().maintenance_secret
         if (

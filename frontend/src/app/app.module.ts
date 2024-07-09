@@ -100,7 +100,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ComponentEditorComponent,
     ContentViewComponent,
     DocumentationEditorComponent,
-    DocumentationEditorComponent,
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,

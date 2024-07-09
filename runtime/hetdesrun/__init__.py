@@ -53,7 +53,7 @@ def configure_logging(
         "%(asctime)s %(process)d %(levelname)s: %(message)s "
         "[in %(pathname)s:%(lineno)d"
         + (
-            ", job id: %(currently_executed_job_id)s"
+            ", job_id=%(currently_executed_job_id)s"
             if log_job_id_context or log_execution_context
             else ""
         )

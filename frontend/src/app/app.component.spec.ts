@@ -18,6 +18,7 @@ import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-v
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { WorkflowEditorComponent } from './components/workflow-editor/workflow-editor.component';
 import { appReducers } from './store/app.reducers';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('AppComponent', () => {
   const mockAuthService = jasmine.createSpyObj<AuthService>('AuthSerivce', [
@@ -35,7 +36,8 @@ describe('AppComponent', () => {
         NgHetidaFlowchartModule,
         MonacoEditorModule,
         StoreModule.forRoot(appReducers),
-        HttpClientModule
+        HttpClientModule,
+        RouterTestingModule
       ],
       providers: [
         {

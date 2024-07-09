@@ -10,7 +10,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
-from pydantic import BaseModel, Field, parse_file_as
+from pydantic import BaseModel, Field, StrictInt, StrictStr, parse_file_as
 
 from hetdesrun.component.code_utils import (
     CodeParsingException,
@@ -83,7 +83,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
     return json.dumps(input_info["default_value"])
 
 
-def transformation_revision_from_python_code(code: str) -> Any:
+def transformation_revision_from_python_code(code: str) -> TransformationRevision:
     """Get the TransformationRevision as a json-like object from just the Python code
 
     This uses information from the register decorator or a global variable COMPONENT_INFO
@@ -217,9 +217,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
         test_wiring=test_wiring,
     )
 
-    tr_json = json.loads(transformation_revision.json())
-
-    return tr_json
+    return transformation_revision
 
 
 def load_transformation_revisions_from_directory(  # noqa: PLR0912
@@ -244,7 +242,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 python_code = load_python_file(path)
                 if python_code is not None:
                     try:
-                        transformation_json = transformation_revision_from_python_code(
+                        transformation = transformation_revision_from_python_code(
                             python_code
                         )
                     except ComponentCodeImportError as e:
@@ -254,27 +252,28 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                             path,
                             str(e),
                         )
+                        continue
 
             if ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
-            try:
-                transformation = TransformationRevision(**transformation_json)
-            except ValueError as err:
-                logger.error(
-                    "ValueError for json from path %s:\n%s", download_path, str(err)
-                )
-            else:
-                transformation_dict[transformation.id] = transformation
-                if ext == ".py":
-                    if transform_py_to_json:
-                        path = save_transformation_into_directory(
-                            transformation_revision=transformation,
-                            directory_path=download_path,
-                        )
-                        path_dict[transformation.id] = path
-                else:
+                try:
+                    transformation = TransformationRevision(**transformation_json)
+                except ValueError as err:
+                    logger.error(
+                        "ValueError for json from path %s:\n%s", download_path, str(err)
+                    )
+                    continue
+            transformation_dict[transformation.id] = transformation
+            if ext == ".py":
+                if transform_py_to_json:
+                    path = save_transformation_into_directory(
+                        transformation_revision=transformation,
+                        directory_path=download_path,
+                    )
                     path_dict[transformation.id] = path
+            else:
+                path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
 
@@ -322,6 +321,24 @@ class MultipleTrafosUpdateConfig(BaseModel):
             "This can be necessary if an adapter used in a test wiring is not "
             "available on this system."
         ),
+    )
+    strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Field(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " test wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_wirings this allows to"
+        " fine-granulary exclude only those parts of test wirings corresponding to"
+        " adapters which are not present.",
+    )
+    keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Field(
+        set(),
+        description="In each test wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_wirings"
+        " if you actually want to remove all wirings in the test wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the test wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation.",
     )
     abort_on_error: bool = Field(
         False,

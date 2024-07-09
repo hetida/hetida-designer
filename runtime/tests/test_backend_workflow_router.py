@@ -715,11 +715,12 @@ async def test_execute_for_full_workflow_dto_with_nan(
         output_results_by_output_name = response.json()["output_results_by_output_name"]
         assert "series_from_last_step" in output_results_by_output_name
         assert (
-            len(output_results_by_output_name["series_from_last_step"]["__data__"]) == 2
+            len(output_results_by_output_name["series_from_last_step"]["__data__"])
+            == 3  # split orient
         )
         assert (
-            output_results_by_output_name["series_from_last_step"]["__data__"][
-                "2020-05-01T03:00:00.000Z"
+            output_results_by_output_name["series_from_last_step"]["__data__"]["data"][
+                1
             ]
             == None  # noqa: E711
         )
