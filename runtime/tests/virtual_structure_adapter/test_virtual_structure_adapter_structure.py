@@ -1,5 +1,3 @@
-from uuid import UUID
-
 import pytest
 
 from hetdesrun.adapters.virtual_structure_adapter.models import (
@@ -11,7 +9,6 @@ from hetdesrun.adapters.virtual_structure_adapter.structure import (
     get_level_from_struct_service,
     get_structure,
 )
-from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import update_structure_from_file
 
 # TODO Check if tests are overkill

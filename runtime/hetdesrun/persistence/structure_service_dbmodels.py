@@ -13,7 +13,6 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, declarative_base, relationship, validates
-from sqlalchemy.types import JSON
 from sqlalchemy_utils import UUIDType
 
 Base = declarative_base()
@@ -115,6 +114,7 @@ class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
 
     id: UUIDType = Column("id", UUIDType(binary=False), primary_key=True, default=uuid4)
+    external_id = Column(String(36), nullable=False, unique=True, index=True)
     name = Column(String(255), index=True, nullable=False, unique=True)
     description = Column(String(1024), nullable=True)
     parent_node_id: UUIDType = Column(
@@ -125,19 +125,27 @@ class ThingNodeOrm(Base):
         ForeignKey("element_type.id"),
         nullable=False,
     )
-    entity_uuid = Column(String(36), nullable=False)
     meta_data = Column(JSON, nullable=True)
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
-    sources = relationship(
-        "SourceOrm", back_populates="thing_node", cascade="all, delete-orphan"
+    sources: list["SourceOrm"] = relationship(
+        "SourceOrm",
+        secondary="thingnode_source_association",
+        back_populates="thing_nodes",
     )
-    sinks = relationship(
-        "SinkOrm", back_populates="thing_node", cascade="all, delete-orphan"
+    sinks: list["SinkOrm"] = relationship(
+        "SinkOrm", secondary="thingnode_sink_association", back_populates="thing_nodes"
     )
 
     __table_args__ = (UniqueConstraint("name", name="_thing_node_name_uc"),)
+
+    def __repr__(self) -> str:
+        return (
+            f"<ThingNodeOrm(id={self.id}, parent_node_id={self.parent_node_id}, "
+            f"sources={[source.id for source in self.sources]}, "
+            f"sinks={[sink.id for sink in self.sinks]})>"
+        )
 
 
 class SourceOrm(Base):
@@ -149,10 +157,16 @@ class SourceOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     source_id = Column(UUIDType(binary=False), nullable=False)
+    meta_data: dict | None = Column(JSON, nullable=True)
     thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
     thing_node = relationship("ThingNodeOrm", back_populates="sources")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
+    thing_nodes: list["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm",
+        secondary="thingnode_source_association",
+        back_populates="sources",
+    )
 
 
 class SinkOrm(Base):
@@ -164,10 +178,36 @@ class SinkOrm(Base):
     visible = Column(Boolean, default=True)
     adapter_key = Column(String(255), nullable=False)
     sink_id = Column(UUIDType(binary=False), nullable=False)
+    meta_data: dict | None = Column(JSON, nullable=True)
     thing_node_id = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
     thing_node = relationship("ThingNodeOrm", back_populates="sinks")
     preset_filters = Column(JSON, nullable=True)
     passthrough_filters = Column(JSON, nullable=True)
+    thing_nodes: list["ThingNodeOrm"] = relationship(
+        "ThingNodeOrm",
+        secondary="thingnode_sink_association",
+        back_populates="sinks",
+    )
+
+
+class ThingNodeSourceAssociation(Base):
+    __tablename__ = "thingnode_source_association"
+    thing_node_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
+    )
+    source_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("source.id"), primary_key=True
+    )
+
+
+class ThingNodeSinkAssociation(Base):
+    __tablename__ = "thingnode_sink_association"
+    thing_node_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
+    )
+    sink_id: UUIDType = Column(
+        UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True
+    )
 
 
 class ElementTypeToPropertySetOrm(Base):

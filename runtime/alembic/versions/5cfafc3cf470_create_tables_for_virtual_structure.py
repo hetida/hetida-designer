@@ -94,6 +94,7 @@ def upgrade():
             nullable=False,
             default=sa.text("uuid_generate_v4()"),
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.String(length=1024), nullable=True),
         sa.Column(
@@ -108,7 +109,6 @@ def upgrade():
             sa.ForeignKey("element_type.id"),
             nullable=False,
         ),
-        sa.Column("entity_uuid", sa.String(length=36), nullable=False),
         sa.Column("meta_data", sa.JSON(), nullable=True),
         sa.UniqueConstraint("name", name="_thing_node_name_uc"),
     )
@@ -128,6 +128,7 @@ def upgrade():
         sa.Column("visible", sa.Boolean(), default=True),
         sa.Column("adapter_key", sa.String(length=255), nullable=False),
         sa.Column("source_id", UUIDType(binary=False), nullable=False),
+        sa.Column("meta_data", sa.JSON(), nullable=True),
         sa.Column(
             "thing_node_id",
             UUIDType(binary=False),
@@ -153,6 +154,7 @@ def upgrade():
         sa.Column("visible", sa.Boolean(), default=True),
         sa.Column("adapter_key", sa.String(length=255), nullable=False),
         sa.Column("sink_id", UUIDType(binary=False), nullable=False),
+        sa.Column("meta_data", sa.JSON(), nullable=True),
         sa.Column(
             "thing_node_id",
             UUIDType(binary=False),
@@ -183,8 +185,48 @@ def upgrade():
         sa.Column("order_no", sa.Integer(), nullable=False),
     )
 
+    op.create_table(
+        "thingnode_source_association",
+        sa.Column(
+            "thing_node_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("thing_node.id"),
+            primary_key=True,
+            nullable=True,
+        ),
+        sa.Column(
+            "source_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("source.id"),
+            primary_key=True,
+            nullable=True,
+        ),
+    )
+
+    op.create_table(
+        "thingnode_sink_association",
+        sa.Column(
+            "thing_node_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("thing_node.id"),
+            primary_key=True,
+            nullable=True,
+        ),
+        sa.Column(
+            "sink_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("sink.id"),
+            primary_key=True,
+            nullable=True,
+        ),
+    )
+
 
 def downgrade():
+    op.drop_table("thingnode_source_association")
+
+    op.drop_table("thingnode_sink_association")
+
     op.drop_table("element_type_to_property_set")
 
     op.drop_table("sink")

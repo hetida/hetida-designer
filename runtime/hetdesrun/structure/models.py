@@ -19,6 +19,7 @@ from hetdesrun.structure.db.external_types import ExternalType
 
 class ThingNode(BaseModel):
     id: UUID = Field(..., description="The primary key for the ThingNode table")
+    external_id: str = Field(..., description="Externally provided unique identifier")
     name: str = Field(..., description="Unique name of the Thing Node")
     description: str = Field("", description="Description of the Thing Node")
     parent_node_id: UUID | None = Field(
@@ -27,10 +28,11 @@ class ThingNode(BaseModel):
     element_type_id: UUID = Field(
         ..., description="Foreign key to the ElementType table"
     )
-    entity_uuid: str = Field(..., description="UUID identifier for the entity")
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
     )
+    sources: list[UUID] = Field(default_factory=list, description="List of source IDs")
+    sinks: list[UUID] = Field(default_factory=list, description="List of sink IDs")
 
     class Config:
         orm_mode = True
@@ -38,11 +40,11 @@ class ThingNode(BaseModel):
     def to_orm_model(self) -> ThingNodeOrm:
         return ThingNodeOrm(
             id=self.id,
+            external_id=self.external_id,
             name=self.name,
             description=self.description,
             parent_node_id=self.parent_node_id,
             element_type_id=self.element_type_id,
-            entity_uuid=self.entity_uuid,
             meta_data=self.meta_data,
         )
 
@@ -51,12 +53,14 @@ class ThingNode(BaseModel):
         try:
             return ThingNode(
                 id=orm_model.id,
+                external_id=orm_model.external_id,
                 name=orm_model.name,
                 description=orm_model.description,
                 parent_node_id=orm_model.parent_node_id,
                 element_type_id=orm_model.element_type_id,
-                entity_uuid=orm_model.entity_uuid,
                 meta_data=orm_model.meta_data,
+                sources=[source.id for source in orm_model.sources],
+                sinks=[sink.id for sink in orm_model.sinks],
             )
         except ValidationError as e:
             msg = (
@@ -78,9 +82,6 @@ class Filter(BaseModel):
 
 class Source(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the source")  # noqa: A003
-    thingNodeId: UUID = Field(
-        ..., description="ID of the ThingNode this source is associated with"
-    )
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
@@ -90,8 +91,11 @@ class Source(BaseModel):
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
-    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: UUID = Field(..., description="Referenced HD Source identifier")
+    meta_data: dict[str, Any] | None = Field(
+        None, description="Optional metadata for the Thing Node"
+    )
 
     class Config:
         orm_mode = True
@@ -99,7 +103,6 @@ class Source(BaseModel):
     def to_orm_model(self) -> SourceOrm:
         return SourceOrm(
             id=self.id,
-            thing_node_id=self.thingNodeId,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -107,13 +110,13 @@ class Source(BaseModel):
             passthrough_filters=self.passthrough_filters,
             adapter_key=self.adapter_key,
             source_id=self.source_id,
+            meta_data=self.meta_data,
         )
 
     @classmethod
     def from_orm_model(cls, orm_model: SourceOrm) -> "Source":
         return Source(
             id=orm_model.id,
-            thingNodeId=orm_model.thing_node_id,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
@@ -121,10 +124,11 @@ class Source(BaseModel):
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,
             source_id=orm_model.source_id,
+            meta_data=orm_model.meta_data,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v):
+    def validate_filters(cls, v: Any) -> Any:
         if not v:
             return {}
         return v
@@ -132,9 +136,6 @@ class Source(BaseModel):
 
 class Sink(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the sink")  # noqa: A003
-    thingNodeId: UUID = Field(
-        ..., description="ID of the ThingNode this sink is associated with"
-    )
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
@@ -144,8 +145,11 @@ class Sink(BaseModel):
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )
-    adapter_key: str | int = Field(..., description="Adapter key or identifier")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
+    meta_data: dict[str, Any] | None = Field(
+        None, description="Optional metadata for the Thing Node"
+    )
 
     class Config:
         orm_mode = True
@@ -153,7 +157,6 @@ class Sink(BaseModel):
     def to_orm_model(self) -> SinkOrm:
         return SinkOrm(
             id=self.id,
-            thing_node_id=self.thingNodeId,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -161,13 +164,13 @@ class Sink(BaseModel):
             passthrough_filters=self.passthrough_filters,
             adapter_key=self.adapter_key,
             sink_id=self.sink_id,
+            meta_data=self.meta_data,
         )
 
     @classmethod
     def from_orm_model(cls, orm_model: SinkOrm) -> "Sink":
         return Sink(
             id=orm_model.id,
-            thingNodeId=orm_model.thing_node_id,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
@@ -175,10 +178,11 @@ class Sink(BaseModel):
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,
             sink_id=orm_model.sink_id,
+            meta_data=orm_model.meta_data,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v):
+    def validate_filters(cls, v: Any) -> Any:
         if not v:
             return {}
         return v
