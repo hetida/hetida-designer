@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
 
+from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     ElementTypeToPropertySetOrm,
@@ -17,7 +18,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SourceOrm,
     ThingNodeOrm,
 )
-from hetdesrun.structure.db import SQLAlchemySession, get_session
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.models import (
     CompleteStructure,

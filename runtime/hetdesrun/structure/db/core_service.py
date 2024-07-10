@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import Column, Integer, MetaData, Table, inspect
 from sqlalchemy.sql.type_api import TypeEngine
 
-from hetdesrun.structure.db import get_db_engine
+from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
 logger = logging.getLogger(__name__)
 

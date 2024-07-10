@@ -4,8 +4,8 @@ from unittest import mock
 import pytest
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.persistence.db_engine_and_session import get_db_engine, sessionmaker
 from hetdesrun.persistence.structure_service_dbmodels import Base
-from hetdesrun.structure.db import get_db_engine, sessionmaker
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +28,7 @@ def clean_test_db_engine(test_db_engine: Engine) -> Engine:
 @pytest.fixture()
 def mocked_clean_test_db_session(clean_test_db_engine):
     with mock.patch(
-        "hetdesrun.structure.db.Session",
+        "hetdesrun.persistence.db_engine_and_session.Session",
         sessionmaker(clean_test_db_engine),
     ) as _fixture:
         yield _fixture
