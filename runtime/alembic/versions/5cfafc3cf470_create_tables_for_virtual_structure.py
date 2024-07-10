@@ -29,10 +29,17 @@ def upgrade():
             nullable=False,
             default=sa.text("uuid_generate_v4()"),
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("icon", sa.String(length=255), nullable=True),
         sa.Column("description", sa.String(length=1024), nullable=True),
         sa.UniqueConstraint("name", name="_element_type_name_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_element_type_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table property_set
@@ -45,6 +52,8 @@ def upgrade():
             nullable=False,
             default=sa.text("uuid_generate_v4()"),
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.String(length=1024), nullable=True),
         sa.Column(
@@ -52,6 +61,11 @@ def upgrade():
         ),
         sa.Column("property_set_type", sa.String(length=50), nullable=False),
         sa.UniqueConstraint("name", name="_property_set_name_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_property_set_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table property_metadata
@@ -70,6 +84,8 @@ def upgrade():
             sa.ForeignKey("property_set.id"),
             nullable=False,
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("column_name", sa.String(length=255), nullable=False),
         sa.Column("column_label", sa.String(length=255), nullable=False),
         sa.Column(
@@ -82,6 +98,11 @@ def upgrade():
         sa.Column("order_no", sa.Integer(), nullable=False),
         sa.CheckConstraint("field_length > 0", name="_field_length_positive_ck"),
         sa.UniqueConstraint("property_set_id", name="_property_metadata_psid_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_property_metadata_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table thing_node
@@ -95,6 +116,7 @@ def upgrade():
             default=sa.text("uuid_generate_v4()"),
         ),
         sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.String(length=1024), nullable=True),
         sa.Column(
@@ -111,6 +133,11 @@ def upgrade():
         ),
         sa.Column("meta_data", sa.JSON(), nullable=True),
         sa.UniqueConstraint("name", name="_thing_node_name_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_thing_node_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table source
@@ -123,6 +150,8 @@ def upgrade():
             nullable=False,
             default=sa.text("uuid_generate_v4()"),
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("type", sa.String(length=255), nullable=False),
         sa.Column("visible", sa.Boolean(), default=True),
@@ -137,6 +166,11 @@ def upgrade():
         ),
         sa.Column("preset_filters", sa.JSON(), nullable=True),
         sa.Column("passthrough_filters", sa.JSON(), nullable=True),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_source_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table sink
@@ -149,6 +183,8 @@ def upgrade():
             nullable=False,
             default=sa.text("uuid_generate_v4()"),
         ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("type", sa.String(length=255), nullable=False),
         sa.Column("visible", sa.Boolean(), default=True),
@@ -163,6 +199,11 @@ def upgrade():
         ),
         sa.Column("preset_filters", sa.JSON(), nullable=True),
         sa.Column("passthrough_filters", sa.JSON(), nullable=True),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_sink_external_id_stakeholder_key_uc",
+        ),
     )
 
     # Create table element_type_to_property_set
