@@ -342,7 +342,9 @@ class ElementType(BaseModel):
 class PropertyMetadata(BaseModel):
     id: UUID = Field(..., description="The primary key ID of the property metadata.")
     external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertyMetadata")
+    stakeholder_key: str = Field(
+        ..., description="Stakeholder key for the PropertyMetadata"
+    )
     property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
     )

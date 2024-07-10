@@ -43,7 +43,11 @@ class ElementTypeOrm(Base):
 
     __table_args__ = (
         UniqueConstraint("name", name="_element_type_name_uc"),
-        UniqueConstraint("external_id", "stakeholder_key", name="_element_type_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_element_type_external_id_stakeholder_key_uc",
+        ),
     )
 
 
@@ -62,7 +66,9 @@ class PropertyMetadataOrm(Base):
         ForeignKey("property_set.id"),
         nullable=False,
     )
-    property_set_external_id = Column(String(36), ForeignKey("property_set.external_id"), nullable=False)
+    property_set_external_id = Column(
+        String(36), ForeignKey("property_set.external_id"), nullable=False
+    )
     column_name = Column(String(255), nullable=False)
     column_label = Column(String(255), nullable=False)
     column_type = Column(Enum("STRING", "INT", "FLOAT", "BOOLEAN"))
@@ -78,7 +84,11 @@ class PropertyMetadataOrm(Base):
     __table_args__ = (
         CheckConstraint("field_length > 0", name="_field_length_positive_ck"),
         UniqueConstraint("property_set_id", name="_property_metadata_psid_uc"),
-        UniqueConstraint("external_id", "stakeholder_key", name="_property_metadata_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_property_metadata_external_id_stakeholder_key_uc",
+        ),
     )
 
 
@@ -110,7 +120,11 @@ class PropertySetOrm(Base):
 
     __table_args__ = (
         UniqueConstraint("name", name="_property_set_name_uc"),
-        UniqueConstraint("external_id", "stakeholder_key", name="_property_set_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_property_set_external_id_stakeholder_key_uc",
+        ),
     )
 
     @validates("property_set_type")
@@ -123,9 +137,7 @@ class PropertySetOrm(Base):
 
 class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
-    id: UUIDType = Column(
-        UUIDType(binary=False), primary_key=True, default=uuid4
-    )
+    id: UUIDType = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
     external_id = Column(String(36), nullable=False)
     stakeholder_key = Column(String(255), nullable=False)
     name = Column(String(255), index=True, nullable=False, unique=True)
@@ -133,13 +145,17 @@ class ThingNodeOrm(Base):
     parent_node_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id"), nullable=True
     )
-    parent_external_node_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    parent_external_node_id = Column(
+        String(36), ForeignKey("thing_node.external_id"), nullable=True
+    )
     element_type_id: UUIDType = Column(
         UUIDType(binary=False),
         ForeignKey("element_type.id"),
         nullable=False,
     )
-    element_type_external_id = Column(String(36), ForeignKey("element_type.external_id"), nullable=False)
+    element_type_external_id = Column(
+        String(36), ForeignKey("element_type.external_id"), nullable=False
+    )
     meta_data = Column(JSON, nullable=True)
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
@@ -155,7 +171,11 @@ class ThingNodeOrm(Base):
 
     __table_args__ = (
         UniqueConstraint("name", name="_thing_node_name_uc"),
-        UniqueConstraint("external_id", "stakeholder_key", name="_thing_node_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_thing_node_external_id_stakeholder_key_uc",
+        ),
     )
 
     def __repr__(self) -> str:
@@ -180,7 +200,9 @@ class SourceOrm(Base):
     thing_node_id: UUIDType | None = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id")
     )
-    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    thing_node_external_id = Column(
+        String(36), ForeignKey("thing_node.external_id"), nullable=True
+    )
     thing_node: Optional["ThingNodeOrm"] = relationship(
         "ThingNodeOrm", back_populates="sources"
     )
@@ -193,7 +215,11 @@ class SourceOrm(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("external_id", "stakeholder_key", name="_source_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_source_external_id_stakeholder_key_uc",
+        ),
     )
 
 
@@ -211,7 +237,9 @@ class SinkOrm(Base):
     thing_node_id: UUIDType | None = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id")
     )
-    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    thing_node_external_id = Column(
+        String(36), ForeignKey("thing_node.external_id"), nullable=True
+    )
     thing_node: Optional["ThingNodeOrm"] = relationship(
         "ThingNodeOrm", back_populates="sinks"
     )
@@ -224,7 +252,11 @@ class SinkOrm(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("external_id", "stakeholder_key", name="_sink_external_id_stakeholder_key_uc"),
+        UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_sink_external_id_stakeholder_key_uc",
+        ),
     )
 
 
@@ -236,8 +268,12 @@ class ThingNodeSourceAssociation(Base):
     source_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("source.id"), primary_key=True
     )
-    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
-    source_external_id = Column(String(36), ForeignKey("source.external_id"), nullable=True)
+    thing_node_external_id = Column(
+        String(36), ForeignKey("thing_node.external_id"), nullable=True
+    )
+    source_external_id = Column(
+        String(36), ForeignKey("source.external_id"), nullable=True
+    )
 
 
 class ThingNodeSinkAssociation(Base):
@@ -248,7 +284,9 @@ class ThingNodeSinkAssociation(Base):
     sink_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True
     )
-    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    thing_node_external_id = Column(
+        String(36), ForeignKey("thing_node.external_id"), nullable=True
+    )
     sink_external_id = Column(String(36), ForeignKey("sink.external_id"), nullable=True)
 
 
@@ -259,11 +297,15 @@ class ElementTypeToPropertySetOrm(Base):
         ForeignKey("element_type.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    element_type_external_id = Column(String(36), ForeignKey("element_type.external_id"), nullable=False)
+    element_type_external_id = Column(
+        String(36), ForeignKey("element_type.external_id"), nullable=False
+    )
     property_set_id: UUIDType = Column(
         UUIDType(binary=False),
         ForeignKey("property_set.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    property_set_external_id = Column(String(36), ForeignKey("property_set.external_id"), nullable=False)
+    property_set_external_id = Column(
+        String(36), ForeignKey("property_set.external_id"), nullable=False
+    )
     order_no = Column(Integer, nullable=False)
