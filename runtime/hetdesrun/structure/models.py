@@ -20,13 +20,20 @@ from hetdesrun.structure.db.external_types import ExternalType
 class ThingNode(BaseModel):
     id: UUID = Field(..., description="The primary key for the ThingNode table")
     external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the Thing Node")
     name: str = Field(..., description="Unique name of the Thing Node")
     description: str = Field("", description="Description of the Thing Node")
     parent_node_id: UUID | None = Field(
         None, description="Parent node UUID if this is a child node"
     )
+    parent_external_node_id: str | None = Field(
+        None, description="Externally provided unique identifier for the parent node"
+    )
     element_type_id: UUID = Field(
         ..., description="Foreign key to the ElementType table"
+    )
+    element_type_external_id: str = Field(
+        ..., description="Externally provided unique identifier for the element type"
     )
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
@@ -41,10 +48,13 @@ class ThingNode(BaseModel):
         return ThingNodeOrm(
             id=self.id,
             external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             name=self.name,
             description=self.description,
             parent_node_id=self.parent_node_id,
+            parent_external_node_id=self.parent_external_node_id,
             element_type_id=self.element_type_id,
+            element_type_external_id=self.element_type_external_id,
             meta_data=self.meta_data,
         )
 
@@ -54,10 +64,13 @@ class ThingNode(BaseModel):
             return ThingNode(
                 id=orm_model.id,
                 external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
                 name=orm_model.name,
                 description=orm_model.description,
                 parent_node_id=orm_model.parent_node_id,
+                parent_external_node_id=orm_model.parent_external_node_id,
                 element_type_id=orm_model.element_type_id,
+                element_type_external_id=orm_model.element_type_external_id,
                 meta_data=orm_model.meta_data,
                 sources=[source.id for source in orm_model.sources],
                 sinks=[sink.id for sink in orm_model.sinks],
@@ -82,6 +95,8 @@ class Filter(BaseModel):
 
 class Source(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the source")  # noqa: A003
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the Source")
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
@@ -94,7 +109,13 @@ class Source(BaseModel):
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: UUID = Field(..., description="Referenced HD Source identifier")
     meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Thing Node"
+        None, description="Optional metadata for the Source"
+    )
+    thing_node_id: UUID | None = Field(
+        None, description="Thing node UUID if this is associated with a thing node"
+    )
+    thing_node_external_id: str | None = Field(
+        None, description="Externally provided unique identifier for the thing node"
     )
 
     class Config:
@@ -103,6 +124,8 @@ class Source(BaseModel):
     def to_orm_model(self) -> SourceOrm:
         return SourceOrm(
             id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -111,12 +134,16 @@ class Source(BaseModel):
             adapter_key=self.adapter_key,
             source_id=self.source_id,
             meta_data=self.meta_data,
+            thing_node_id=self.thing_node_id,
+            thing_node_external_id=self.thing_node_external_id,
         )
 
     @classmethod
     def from_orm_model(cls, orm_model: SourceOrm) -> "Source":
         return Source(
             id=orm_model.id,
+            external_id=orm_model.external_id,
+            stakeholder_key=orm_model.stakeholder_key,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
@@ -125,6 +152,8 @@ class Source(BaseModel):
             adapter_key=orm_model.adapter_key,
             source_id=orm_model.source_id,
             meta_data=orm_model.meta_data,
+            thing_node_id=orm_model.thing_node_id,
+            thing_node_external_id=orm_model.thing_node_external_id,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
@@ -136,6 +165,8 @@ class Source(BaseModel):
 
 class Sink(BaseModel):
     id: UUID = Field(..., description="Unique identifier for the sink")  # noqa: A003
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the Sink")
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
@@ -148,7 +179,13 @@ class Sink(BaseModel):
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
     meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Thing Node"
+        None, description="Optional metadata for the Sink"
+    )
+    thing_node_id: UUID | None = Field(
+        None, description="Thing node UUID if this is associated with a thing node"
+    )
+    thing_node_external_id: str | None = Field(
+        None, description="Externally provided unique identifier for the thing node"
     )
 
     class Config:
@@ -157,6 +194,8 @@ class Sink(BaseModel):
     def to_orm_model(self) -> SinkOrm:
         return SinkOrm(
             id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             name=self.name,
             type=self.type,
             visible=self.visible,
@@ -165,12 +204,16 @@ class Sink(BaseModel):
             adapter_key=self.adapter_key,
             sink_id=self.sink_id,
             meta_data=self.meta_data,
+            thing_node_id=self.thing_node_id,
+            thing_node_external_id=self.thing_node_external_id,
         )
 
     @classmethod
     def from_orm_model(cls, orm_model: SinkOrm) -> "Sink":
         return Sink(
             id=orm_model.id,
+            external_id=orm_model.external_id,
+            stakeholder_key=orm_model.stakeholder_key,
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
@@ -179,6 +222,8 @@ class Sink(BaseModel):
             adapter_key=orm_model.adapter_key,
             sink_id=orm_model.sink_id,
             meta_data=orm_model.meta_data,
+            thing_node_id=orm_model.thing_node_id,
+            thing_node_external_id=orm_model.thing_node_external_id,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
@@ -190,6 +235,8 @@ class Sink(BaseModel):
 
 class PropertySet(BaseModel):
     id: UUID = Field(..., description="The primary key for the PropertySet")
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
     name: str = Field(..., description="The name of the PropertySet.")
     description: str | None = Field(
         None, description="A detailed description of the PropertySet."
@@ -207,6 +254,8 @@ class PropertySet(BaseModel):
     def to_orm_model(self) -> PropertySetOrm:
         return PropertySetOrm(
             id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             name=self.name,
             description=self.description,
             reference_table_name=self.reference_table_name,
@@ -218,6 +267,8 @@ class PropertySet(BaseModel):
         try:
             return PropertySet(
                 id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
                 name=orm_model.name,
                 description=orm_model.description,
                 reference_table_name=orm_model.reference_table_name,
@@ -242,6 +293,8 @@ class PropertySet(BaseModel):
 
 class ElementType(BaseModel):
     id: UUID = Field(..., description="The primary key for the ElementType table")
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
     name: str = Field(..., description="Unique name of the ElementType")
     icon: str | None = Field(None, description="Icon representing the ElementType")
     description: str | None = Field(None, description="Description of the ElementType")
@@ -258,6 +311,8 @@ class ElementType(BaseModel):
     def to_orm_model(self) -> ElementTypeOrm:
         return ElementTypeOrm(
             id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             name=self.name,
             icon=self.icon,
             description=self.description,
@@ -270,6 +325,8 @@ class ElementType(BaseModel):
         try:
             return cls(
                 id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
                 name=orm_model.name,
                 icon=orm_model.icon,
                 description=orm_model.description,
@@ -284,8 +341,15 @@ class ElementType(BaseModel):
 
 class PropertyMetadata(BaseModel):
     id: UUID = Field(..., description="The primary key ID of the property metadata.")
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(
+        ..., description="Stakeholder key for the PropertyMetadata"
+    )
     property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
+    )
+    property_set_external_id: str = Field(
+        ..., description="Externally provided unique identifier for the Property Set"
     )
     column_name: str = Field(
         ..., description="The name of the column in the property set."
@@ -318,7 +382,10 @@ class PropertyMetadata(BaseModel):
     def to_orm_model(self) -> PropertyMetadataOrm:
         return PropertyMetadataOrm(
             id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
             property_set_id=self.property_set_id,
+            property_set_external_id=self.property_set_external_id,
             column_name=self.column_name,
             column_label=self.column_label,
             column_type=self.column_type,
@@ -332,7 +399,10 @@ class PropertyMetadata(BaseModel):
         try:
             return cls(
                 id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
                 property_set_id=orm_model.property_set_id,
+                property_set_external_id=orm_model.property_set_external_id,
                 column_name=orm_model.column_name,
                 column_label=orm_model.column_label,
                 column_type=orm_model.column_type,
@@ -352,8 +422,14 @@ class ElementTypeToPropertySet(BaseModel):
     element_type_id: UUID = Field(
         ..., description="The foreign key ID linking to the ElementType."
     )
+    element_type_external_id: str = Field(
+        ..., description="Externally provided unique identifier for the ElementType"
+    )
     property_set_id: UUID = Field(
         ..., description="The foreign key ID linking to the PropertySet."
+    )
+    property_set_external_id: str = Field(
+        ..., description="Externally provided unique identifier for the PropertySet"
     )
     order_no: int = Field(
         ...,
@@ -366,7 +442,9 @@ class ElementTypeToPropertySet(BaseModel):
     def to_orm_model(self) -> ElementTypeToPropertySetOrm:
         return ElementTypeToPropertySetOrm(
             element_type_id=self.element_type_id,
+            element_type_external_id=self.element_type_external_id,
             property_set_id=self.property_set_id,
+            property_set_external_id=self.property_set_external_id,
             order_no=self.order_no,
         )
 
@@ -376,7 +454,9 @@ class ElementTypeToPropertySet(BaseModel):
     ) -> "ElementTypeToPropertySet":
         return cls(
             element_type_id=orm_model.element_type_id,
+            element_type_external_id=orm_model.element_type_external_id,
             property_set_id=orm_model.property_set_id,
+            property_set_external_id=orm_model.property_set_external_id,
             order_no=orm_model.order_no,
         )
 
