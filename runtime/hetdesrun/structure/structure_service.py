@@ -59,6 +59,10 @@ def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
     raise DBNotFoundError(f"No ThingNode found for ID {tn_id}")
 
 
+def get_collection_of_thingnodes_from_db(tn_ids: list[UUID]) -> dict[UUID, ThingNode]:
+    return {tn_id: get_single_thingnode_from_db(tn_id) for tn_id in tn_ids}
+
+
 def get_single_source_from_db(src_id: UUID) -> Source:
     with get_session()() as session:
         source = session.query(SourceOrm).filter(SourceOrm.id == src_id).one_or_none()
@@ -68,6 +72,10 @@ def get_single_source_from_db(src_id: UUID) -> Source:
     raise DBNotFoundError(f"No Source found for ID {src_id}")
 
 
+def get_collection_of_sources_from_db(src_ids: list[UUID]) -> dict[UUID, Source]:
+    return {src_id: get_single_source_from_db(src_id) for src_id in src_ids}
+
+
 def get_single_sink_from_db(sink_id: UUID) -> Sink:
     with get_session()() as session:
         sink = session.query(SinkOrm).filter(SinkOrm.id == sink_id).one_or_none()
@@ -75,6 +83,10 @@ def get_single_sink_from_db(sink_id: UUID) -> Sink:
             return Sink.from_orm_model(sink)
 
     raise DBNotFoundError(f"No Sink found for ID {sink_id}")
+
+
+def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
+    return {sink_id: get_single_sink_from_db(sink_id) for sink_id in sink_ids}
 
 
 def delete_structure() -> None:

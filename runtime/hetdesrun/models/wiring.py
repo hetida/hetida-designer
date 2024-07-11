@@ -6,6 +6,7 @@ from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
+from hetdesrun.structure.models import Sink, Source
 
 ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
 RESERVED_FILTER_KEYS = ["from", "to", "id"]
@@ -94,6 +95,18 @@ class OutputWiring(BaseModel):
                 filters[key] = ""
         return filters
 
+    @classmethod
+    def from_structure_sink(cls, struct_sink: Sink) -> "OutputWiring":
+        # TODO Fill ref_key or leave out ref_id_type
+        return cls(
+            workflow_output_name="dummy",
+            adapter_id=struct_sink.adapter_key,
+            ref_id=str(struct_sink.source_id),
+            ref_id_type=RefIdType.SINK,
+            type=struct_sink.type,
+            filters=struct_sink.preset_filters,  # TODO Understand this attribute
+        )
+
 
 class InputWiring(BaseModel):
     workflow_input_name: str = Field(..., alias="workflow_input_name")
@@ -170,6 +183,17 @@ class InputWiring(BaseModel):
             if value is None:
                 filters[key] = ""
         return filters
+
+    @classmethod
+    def from_structure_source(cls, struct_source: Source) -> "InputWiring":
+        return cls(
+            workflow_input_name="dummy",
+            adapter_id=struct_source.adapter_key,
+            ref_id=str(struct_source.source_id),
+            ref_id_type=RefIdType.SOURCE,
+            type=struct_source.type,
+            filters=struct_source.preset_filters,  # TODO Understand this attribute
+        )
 
 
 class GridstackItemPositioning(BaseModel):

@@ -125,13 +125,13 @@ if in_memory_db:
             "during importing of main.py."
         )
         run_trafo_rev_deployment()
-        logger.info("Prepopulating the virtual structure adapter")
-        from hetdesrun.structure.db.orm_service import update_structure
+        # logger.info("Prepopulating the virtual structure adapter")
+        # from hetdesrun.structure.db.orm_service import update_structure
 
-        complete_structure = (
-            get_config().structure_to_prepopulate_virtual_structure_adapter
-        )
-        update_structure(complete_structure)
+        # complete_structure = (
+        #     get_config().structure_to_prepopulate_virtual_structure_adapter
+        # )
+        # update_structure(complete_structure)
 
 
 if __name__ == "__main__":
