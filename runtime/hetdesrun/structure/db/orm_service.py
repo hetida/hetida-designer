@@ -1035,21 +1035,47 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
     return sorted_nodes
 
 
+def create_mapping_between_external_and_internal_ids(tn_list: list[ThingNode]):
+    return {tn.stakeholder_key + tn.external_id: tn.id for tn in tn_list}
+
+
+def fill_parent_uuids_of_thing_nodes(
+    id_mapping: dict[str, UUID], node_list: list[ThingNode]
+) -> None:
+    for node in node_list:
+        if node.parent_external_node_id:
+            parent_uuid = id_mapping[
+                node.stakeholder_key + node.parent_external_node_id
+            ]
+            node.parent_node_id = parent_uuid
+
+
+def fill_parent_uuids_of_sources_and_sinks(
+    id_mapping: dict[str, UUID], node_list: list[Source] | list[Sink]
+) -> None:
+    for node in node_list:
+        if node.thing_node_external_id:
+            parent_uuid = id_mapping[node.stakeholder_key + node.thing_node_external_id]
+            node.thing_node_id = parent_uuid
+
+
+def fill_all_parent_uuids(complete_structure: CompleteStructure) -> None:
+    id_mapping = create_mapping_between_external_and_internal_ids(
+        complete_structure.thing_nodes
+    )
+    fill_parent_uuids_of_thing_nodes(id_mapping, complete_structure.thing_nodes)
+    fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sources)
+    fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sinks)
+
+
 def load_structure_from_json_file(
     file_path: str,
-) -> tuple[list[ElementType], list[ThingNode], list[Source], list[Sink]]:
+) -> CompleteStructure:
     with open(file_path) as file:
         structure_json = json.load(file)
-
     complete_structure = CompleteStructure(**structure_json)
-    complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
 
-    return (
-        complete_structure.element_types,
-        complete_structure.thing_nodes,
-        complete_structure.sources,
-        complete_structure.sinks,
-    )
+    return complete_structure
 
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
@@ -1068,36 +1094,14 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
 
 
 def update_structure_from_file(file_path: str) -> None:
-    element_types, thing_nodes, sources, sinks = load_structure_from_json_file(
-        file_path
-    )
-
-    with get_session()() as session, session.begin():
-        flush_items(session, element_types)
-        flush_items(session, sources)
-        flush_items(session, sinks)
-        flush_items(session, thing_nodes)
-
-        for thing_node in thing_nodes:
-            orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
-            if orm_thing_node is None:
-                raise ValueError(
-                    f"ThingNode with ID {thing_node.id} not found in the database."
-                )
-            orm_thing_node.sources = (
-                session.query(SourceOrm)
-                .filter(SourceOrm.id.in_(thing_node.sources))
-                .all()
-            )
-            orm_thing_node.sinks = (
-                session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
-            )
-            session.add(orm_thing_node)
-        session.flush()
+    complete_structure = load_structure_from_json_file(file_path)
+    update_structure(complete_structure)
 
 
-# TODO Is there no sorting?
 def update_structure(complete_structure: CompleteStructure) -> None:
+    fill_all_parent_uuids(complete_structure)
+    complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
+
     with get_session()() as session, session.begin():
         flush_items(session, complete_structure.element_types)
         flush_items(session, complete_structure.sources)
