@@ -251,19 +251,16 @@ def test_tr_validator_io_interface_fits_to_content():
 
 def test_tr_validator_disabled_requires_released_timestamp():
     tr_json_disabled_no_released_timestamp = deepcopy(tr_json_valid_released_example)
-    tr_json_disabled_no_released_timestamp[
-        "disabled_timestamp"
-    ] = tr_json_disabled_no_released_timestamp["released_timestamp"]
+    tr_json_disabled_no_released_timestamp["disabled_timestamp"] = (
+        tr_json_disabled_no_released_timestamp["released_timestamp"]
+    )
     tr_json_disabled_no_released_timestamp["state"] = "DISABLED"
     tr_json_disabled_no_released_timestamp["released_timestamp"] = None
-    tr_set_released_timestamp = TransformationRevision(
-        **tr_json_disabled_no_released_timestamp
-    )
+    tr_set_released_timestamp = TransformationRevision(**tr_json_disabled_no_released_timestamp)
 
     assert tr_set_released_timestamp.released_timestamp is not None
     assert (
-        tr_set_released_timestamp.released_timestamp
-        == tr_set_released_timestamp.disabled_timestamp
+        tr_set_released_timestamp.released_timestamp == tr_set_released_timestamp.disabled_timestamp
     )
 
 
@@ -273,25 +270,21 @@ def test_tr_validator_timestampsset_corresponding_to_state():
     with pytest.raises(ValueError, match="released_timestamp must not be set"):
         TransformationRevision(**tr_json_draft_with_released_timestamp)
 
-    tr_json_released_without_released_timestamp = deepcopy(
-        tr_json_valid_released_example
-    )
+    tr_json_released_without_released_timestamp = deepcopy(tr_json_valid_released_example)
     tr_json_released_without_released_timestamp["released_timestamp"] = None
 
     with pytest.raises(ValueError, match="released_timestamp must be set"):
         TransformationRevision(**tr_json_released_without_released_timestamp)
 
     tr_json_released_with_disabled_timestamp = deepcopy(tr_json_valid_released_example)
-    tr_json_released_with_disabled_timestamp[
-        "disabled_timestamp"
-    ] = tr_json_released_with_disabled_timestamp["released_timestamp"]
+    tr_json_released_with_disabled_timestamp["disabled_timestamp"] = (
+        tr_json_released_with_disabled_timestamp["released_timestamp"]
+    )
 
     with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
         TransformationRevision(**tr_json_released_with_disabled_timestamp)
 
-    tr_json_disabled_without_disabled_timestamp = deepcopy(
-        tr_json_valid_released_example
-    )
+    tr_json_disabled_without_disabled_timestamp = deepcopy(tr_json_valid_released_example)
     tr_json_disabled_without_disabled_timestamp["state"] = "DISABLED"
 
     with pytest.raises(ValueError, match="disabled_timestamp must be set"):
@@ -309,9 +302,7 @@ def test_wrap_component_in_tr_workflow():
     assert valid_component_tr_dict["state"] == tr_workflow.state
     assert tr_workflow.type == Type.WORKFLOW
     assert len(tr_workflow.content.operators) == 1
-    assert valid_component_tr_dict["id"] == str(
-        tr_workflow.content.operators[0].transformation_id
-    )
+    assert valid_component_tr_dict["id"] == str(tr_workflow.content.operators[0].transformation_id)
     assert len(valid_component_tr_dict["io_interface"]["inputs"]) == len(
         tr_workflow.content.operators[0].inputs
     )
@@ -322,9 +313,7 @@ def test_wrap_component_in_tr_workflow():
     assert len(tr_component.io_interface.outputs) == len(tr_workflow.content.outputs)
 
     assert len(tr_component.io_interface.inputs) == len(tr_workflow.io_interface.inputs)
-    assert len(tr_component.io_interface.outputs) == len(
-        tr_workflow.io_interface.outputs
-    )
+    assert len(tr_component.io_interface.outputs) == len(tr_workflow.io_interface.outputs)
 
 
 def test_to_workflow_node():
@@ -336,12 +325,8 @@ def test_to_workflow_node():
         uuid4(), nested_nodes(tr_workflow, nested_transformations)
     )
 
-    assert len(workflow_node.inputs) == len(
-        valid_component_tr_dict["io_interface"]["inputs"]
-    )
-    assert len(workflow_node.outputs) == len(
-        valid_component_tr_dict["io_interface"]["outputs"]
-    )
+    assert len(workflow_node.inputs) == len(valid_component_tr_dict["io_interface"]["inputs"])
+    assert len(workflow_node.outputs) == len(valid_component_tr_dict["io_interface"]["outputs"])
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
     assert workflow_node.name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
@@ -367,23 +352,14 @@ def test_transformation_validation_for_change_dynamic_input_to_constant(
         wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["inputs"][0]
     ]
     del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["inputs"][0]
-    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0][
-        "name"
-    ]
-    wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0][
-        "value"
-    ] = ""
+    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0]["name"]
+    wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0]["value"] = ""
     # link from dynamic workflow input #0 b44 to operator #0 ea5 input 156
-    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["links"][3][
-        "start"
-    ]["connector"]["name"]
-    assert (
-        len(wf_tr_with_changed_dynamic_input_to_constant_dict["io_interface"]["inputs"])
-        == 3
-    )
-    resulting_tr = TransformationRevision(
-        **wf_tr_with_changed_dynamic_input_to_constant_dict
-    )
+    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["links"][3]["start"][
+        "connector"
+    ]["name"]
+    assert len(wf_tr_with_changed_dynamic_input_to_constant_dict["io_interface"]["inputs"]) == 3
+    resulting_tr = TransformationRevision(**wf_tr_with_changed_dynamic_input_to_constant_dict)
     # new link from constant workflow input b44 to operator #0 input 156
     assert "For the io interface input 'b44" in caplog.text
     assert "there is no workflow content input with the same id" in caplog.text

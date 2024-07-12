@@ -56,9 +56,7 @@ blob_storage_adapter_router = HandleTrailingSlashAPIRouter(
     # no auth for info endpoint
 )
 async def get_info_endpoint() -> InfoResponse:
-    return InfoResponse(
-        id="blob-storage-adapter", name="BLOB Storage Adapter", version=VERSION
-    )
+    return InfoResponse(id="blob-storage-adapter", name="BLOB Storage Adapter", version=VERSION)
 
 
 @blob_storage_adapter_router.get(
@@ -116,7 +114,7 @@ async def get_structure_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sources_endpoint(
-    filter_str: str | None = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter"),
 ) -> MultipleSourcesResponse:
     logger.info("GET sources for filter string '%s'", filter_str)
     try:
@@ -157,7 +155,7 @@ async def get_sources_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sinks_endpoint(
-    filter_str: str | None = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter"),
 ) -> MultipleSinksResponse:
     logger.info("GET sinks for filter string '%s'", filter_str)
     try:

@@ -24,9 +24,7 @@ from hetdesrun.webservice.auth_outgoing import (
 
 
 def test_blob_storage_extract_namespace_from_root_tag() -> None:
-    root_tag = (
-        "{https://sts.amazonaws.com/doc/2011-06-15/}AssumeRoleWithWebIdentityResponse"
-    )
+    root_tag = "{https://sts.amazonaws.com/doc/2011-06-15/}AssumeRoleWithWebIdentityResponse"
     namespace = extract_namespace_from_root_tag(root_tag)
     assert namespace == "https://sts.amazonaws.com/doc/2011-06-15/"
 
@@ -54,8 +52,7 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
     credential_info = parse_credential_info_from_xml_string(xml_response_text, now)
     assert credential_info.credentials.access_key_id == "access_key_id"
     assert (
-        credential_info.credentials.secret_access_key
-        == "secret_access_key"  # noqa: S105
+        credential_info.credentials.secret_access_key == "secret_access_key"  # noqa: S105
     )
     assert credential_info.credentials.session_token == "session_token"  # noqa: S105
     assert credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
@@ -69,9 +66,7 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
     unexpected_xml_response_text = "<Code>AccessDenied</Code>"
     with pytest.raises(StorageAuthenticationError) as exc_info:
         parse_credential_info_from_xml_string(unexpected_xml_response_text, now)
-    assert "The authentication request does not have the expected structure" in str(
-        exc_info.value
-    )
+    assert "The authentication request does not have the expected structure" in str(exc_info.value)
 
     missing_session_token_xml_response_text = """
     <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
@@ -91,12 +86,8 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
     </AssumeRoleWithWebIdentityResponse>
     """  # noqa: S105
     with pytest.raises(StorageAuthenticationError) as exc_info:
-        parse_credential_info_from_xml_string(
-            missing_session_token_xml_response_text, now
-        )
-    assert "At least one of the required Credentials could not be found" in str(
-        exc_info.value
-    )
+        parse_credential_info_from_xml_string(missing_session_token_xml_response_text, now)
+    assert "At least one of the required Credentials could not be found" in str(exc_info.value)
 
 
 def test_blob_storage_authentication_parse_xml_error_response() -> None:
@@ -147,16 +138,16 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
             ):
                 credential_info = await obtain_credential_info_from_sts_rest_api()
                 assert credential_info.credentials == credentials
-                assert (
-                    credential_info.issue_timestamp.isoformat()
-                    == "2023-01-31T11:08:05+00:00"
-                )
+                assert credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
                 assert credential_info.expiration_time_in_seconds == 3600
 
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
-                side_effect=StorageAuthenticationError,
-            ), pytest.raises(StorageAuthenticationError):
+            with (
+                mock.patch(
+                    "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
+                    side_effect=StorageAuthenticationError,
+                ),
+                pytest.raises(StorageAuthenticationError),
+            ):
                 await obtain_credential_info_from_sts_rest_api()
 
         with mock.patch(
@@ -194,9 +185,7 @@ def test_blob_storage_authentication_credentials_still_valid_enough(
 
     assert credentials_still_valid_enough(credential_info) is True
 
-    credential_info.issue_timestamp = credential_info.issue_timestamp - timedelta(
-        minutes=50
-    )
+    credential_info.issue_timestamp = credential_info.issue_timestamp - timedelta(minutes=50)
 
     assert credentials_still_valid_enough(credential_info) is False
 
@@ -269,9 +258,7 @@ async def test_blob_storage_authentication_obtain_or_refresh_credential_info_new
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts_rest_api",
         return_value=result_credential_info,
     ) as mocked_obtain_credential_info_from_sts_rest_api:
-        credential_info = await obtain_or_refresh_credential_info(
-            existing_credential_info=None
-        )
+        credential_info = await obtain_or_refresh_credential_info(existing_credential_info=None)
 
         # original credential info should be returned, since it is still valid.
         assert credential_info == result_credential_info
@@ -301,9 +288,7 @@ async def test_blob_storage_authentication_obtain_or_refresh_credential_info_ref
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises() -> (
-    None
-):
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts_rest_api",
         side_effect=StorageAuthenticationError,
@@ -356,7 +341,8 @@ def service_credentials() -> ServiceCredentials:
     return ServiceCredentials(
         realm="my-realm",
         grant_credentials=ClientCredentialsGrantCredentials(
-            client_id="my-client", client_secret="abcd"  # noqa: S106
+            client_id="my-client",
+            client_secret="abcd",  # noqa: S106
         ),
         auth_url="https://test.com/auth",
         post_client_kwargs={"verify": False},
@@ -371,16 +357,22 @@ async def test_blob_storage_adapter_get_access_token(access_token: str) -> None:
     ):
         assert await get_access_token() == access_token
 
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
-        side_effect=ValueError,
-    ), pytest.raises(StorageAuthenticationError, match="Cannot get access token"):
+    with (
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
+            side_effect=ValueError,
+        ),
+        pytest.raises(StorageAuthenticationError, match="Cannot get access token"),
+    ):
         await get_access_token()
 
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
-        return_value={},
-    ), pytest.raises(StorageAuthenticationError, match="Cannot extract access token"):
+    with (
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
+            return_value={},
+        ),
+        pytest.raises(StorageAuthenticationError, match="Cannot extract access token"),
+    ):
         await get_access_token()
 
     with mock.patch(

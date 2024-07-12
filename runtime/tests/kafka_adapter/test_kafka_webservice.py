@@ -5,9 +5,7 @@ import pytest
 async def test_access_kafka_adapter_info(
     open_async_test_client_with_kafka_adapter,
 ) -> None:
-    response = await open_async_test_client_with_kafka_adapter.get(
-        "adapters/kafka/info"
-    )
+    response = await open_async_test_client_with_kafka_adapter.get("adapters/kafka/info")
     assert response.status_code == 200
     assert "version" in response.json()
 
@@ -16,9 +14,7 @@ async def test_access_kafka_adapter_info(
 async def test_kafka_adapter_get_structure_from_webservice(
     open_async_test_client_with_kafka_adapter,
 ):
-    response = await open_async_test_client_with_kafka_adapter.get(
-        "/adapters/kafka/structure"
-    )
+    response = await open_async_test_client_with_kafka_adapter.get("/adapters/kafka/structure")
 
     assert response.status_code == 200
 
@@ -48,9 +44,7 @@ async def test_kafka_adapter_get_structure_from_webservice(
 async def test_kafka_adapter_sources(
     open_async_test_client_with_kafka_adapter,
 ):
-    response = await open_async_test_client_with_kafka_adapter.get(
-        "/adapters/kafka/sources"
-    )
+    response = await open_async_test_client_with_kafka_adapter.get("/adapters/kafka/sources")
 
     assert response.status_code == 200
 
@@ -78,9 +72,7 @@ async def test_kafka_adapter_sources(
 async def test_kafka_adapter_sinks(
     open_async_test_client_with_kafka_adapter,
 ):
-    response = await open_async_test_client_with_kafka_adapter.get(
-        "/adapters/kafka/sinks"
-    )
+    response = await open_async_test_client_with_kafka_adapter.get("/adapters/kafka/sinks")
 
     assert response.status_code == 200
 

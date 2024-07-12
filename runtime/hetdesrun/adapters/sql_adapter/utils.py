@@ -27,8 +27,7 @@ def from_url_representation(url_rep: str) -> str:
 @functools.cache
 def get_configured_dbs_by_key() -> dict[str, SQLAdapterDBConfig]:
     return {
-        configured_db.key: configured_db
-        for configured_db in get_sql_adapter_config().sql_databases
+        configured_db.key: configured_db for configured_db in get_sql_adapter_config().sql_databases
     }
 
 

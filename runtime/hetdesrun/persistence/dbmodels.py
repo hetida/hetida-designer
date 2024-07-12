@@ -26,9 +26,7 @@ class TransformationRevisionDBModel(Base):
     id: UUIDType = Column(  # noqa: A003
         UUIDType(binary=False), primary_key=True, default=uuid4
     )
-    revision_group_id: UUIDType = Column(
-        UUIDType(binary=False), default=uuid4, nullable=False
-    )
+    revision_group_id: UUIDType = Column(UUIDType(binary=False), default=uuid4, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
     category = Column(String, nullable=False)
@@ -36,9 +34,7 @@ class TransformationRevisionDBModel(Base):
     state = Column(Enum(State), nullable=False)
     type = Column(Enum(Type), nullable=False)  # noqa: A003
     documentation = Column(String, nullable=False)
-    workflow_content = Column(
-        JSON(none_as_null=True), nullable=True, default=lambda: None
-    )
+    workflow_content = Column(JSON(none_as_null=True), nullable=True, default=lambda: None)
     component_code = Column(String, nullable=True)
     io_interface = Column(JSON, nullable=False)
     test_wiring = Column(JSON, nullable=False)

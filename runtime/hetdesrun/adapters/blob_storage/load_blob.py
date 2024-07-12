@@ -35,9 +35,7 @@ def get_object(
     if get_blob_adapter_config().checksum_algorithm == "":  # noqa: PLC1901
         return s3_client.get_object(Bucket=bucket_name, Key=object_key_string)
 
-    return s3_client.get_object(
-        Bucket=bucket_name, Key=object_key_string, ChecksumMode="ENABLED"
-    )
+    return s3_client.get_object(Bucket=bucket_name, Key=object_key_string, ChecksumMode="ENABLED")
 
 
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
@@ -60,9 +58,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         raise AdapterClientWiringInvalidError(error) from error
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
-    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
-        source.id
-    )
+    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(source.id)
     # This must work because otherwise get_source_by_thing_node_id_and_metadata_key
     # would have raised a StructureObjectNotFound error already.
     object_key = ObjectKey.from_string(object_key_string)
@@ -85,8 +81,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
-            f"The bucket '{bucket.name}' contains no object "
-            f"with the key '{object_key.string}'!"
+            f"The bucket '{bucket.name}' contains no object " f"with the key '{object_key.string}'!"
         ) from error
 
     if object_key.file_extension == FileExtension.H5:

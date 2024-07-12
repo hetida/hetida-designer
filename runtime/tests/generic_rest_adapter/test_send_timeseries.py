@@ -17,12 +17,15 @@ async def test_end_to_end_send_only_timeseries_data_works():
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch(  # noqa: SIM117
-        "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
-        return_value="https://hetida.de",
-    ), mock.patch(
-        "hetdesrun.adapters.generic_rest.send_ts_data.AsyncClient.post",
-        new=post_mock,
+    with (
+        mock.patch(  # noqa: SIM117
+            "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
+            return_value="https://hetida.de",
+        ),
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.send_ts_data.AsyncClient.post",
+            new=post_mock,
+        ),
     ):
         ts_1 = pd.Series(
             [1.2, 3.4, 5.9],
@@ -126,9 +129,7 @@ async def test_end_to_end_send_only_timeseries_data_works():
         ts_3.attrs = ts_3_attrs
         await send_data(
             {
-                "outp_1": FilteredSink(
-                    ref_id="sink_id_1", type="timeseries(float)", filters={}
-                ),
+                "outp_1": FilteredSink(ref_id="sink_id_1", type="timeseries(float)", filters={}),
             },
             {"outp_1": ts_3},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
@@ -157,9 +158,7 @@ async def test_end_to_end_send_only_timeseries_data_works():
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_timeseries_data_exception_handling():
     ts_5 = pd.Series([1.0], index=["not a timestamp"])
-    with pytest.raises(
-        AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"
-    ):
+    with pytest.raises(AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"):
         await send_data(
             {"outp_5": FilteredSink(ref_id="sink_id_5", type="timeseries(float)")},
             {"outp_5": ts_5},

@@ -50,9 +50,8 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
     try:
         headers = await get_generic_rest_adapter_auth_headers(external=False)
     except ServiceAuthenticationError as e:
-        msg = (
-            "Failure trying to get auth headers for adapter base url request. Error was:\n"
-            + str(e)
+        msg = "Failure trying to get auth headers for adapter base url request. Error was:\n" + str(
+            e
         )
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
@@ -88,10 +87,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
             try:
                 resp = await client.get(url, headers=headers)
             except httpx.HTTPError as e:
-                msg = (
-                    f"Failure connecting to hd backend adapters endpoint ({url}): "
-                    + str(e)
-                )
+                msg = f"Failure connecting to hd backend adapters endpoint ({url}): " + str(e)
                 logger.info(msg)
                 raise AdapterConnectionError(msg) from e
 
@@ -122,9 +118,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
             logger.info(msg)
             raise AdapterHandlingException(msg) from e
 
-        logger.info(
-            "Finished getting Generic REST Adapter URLS from HD Backend url %s", url
-        )
+        logger.info("Finished getting Generic REST Adapter URLS from HD Backend url %s", url)
 
     return loaded_generic_rest_adapters
 
@@ -136,14 +130,10 @@ async def update_generic_adapter_base_urls_cache() -> None:
     global generic_rest_adapter_urls  # noqa: PLW0602
     with generic_rest_adapter_urls_lock:
         for generic_adapter_info in generic_adapter_infos:
-            generic_rest_adapter_urls[
-                generic_adapter_info.id
-            ] = generic_adapter_info.internalUrl
+            generic_rest_adapter_urls[generic_adapter_info.id] = generic_adapter_info.internalUrl
 
 
-async def get_generic_rest_adapter_base_url(
-    adapter_key: str, retry: bool = True
-) -> str:
+async def get_generic_rest_adapter_base_url(adapter_key: str, retry: bool = True) -> str:
     """Load url from cache and update url cache if necessary"""
     try:
         return generic_rest_adapter_urls[adapter_key]

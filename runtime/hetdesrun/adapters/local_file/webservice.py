@@ -7,7 +7,6 @@ can be wired.
 Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugin of this adapter.
 """
 
-
 from fastapi import HTTPException, Query
 
 from hetdesrun.adapters.local_file import VERSION
@@ -44,9 +43,7 @@ local_file_adapter_router = HandleTrailingSlashAPIRouter(
     # no auth for info endpoint
 )
 async def get_info_endpoint() -> InfoResponse:
-    return InfoResponse(
-        id="local-file-adapter", name="Local File Adapter", version=VERSION
-    )
+    return InfoResponse(id="local-file-adapter", name="Local File Adapter", version=VERSION)
 
 
 @local_file_adapter_router.get(
@@ -64,7 +61,7 @@ async def get_structure_endpoint(parentId: str | None = None) -> StructureRespon
     dependencies=get_auth_deps(),
 )
 async def get_sources_endpoint(
-    filter_str: str | None = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter"),
 ) -> MultipleSourcesResponse:
     found_sources = get_sources(filter_str=filter_str)
     return MultipleSourcesResponse(
@@ -79,7 +76,7 @@ async def get_sources_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sinks_endpoint(
-    filter_str: str | None = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter"),
 ) -> MultipleSinksResponse:
     found_sinks = get_sinks(filter_str=filter_str)
     return MultipleSinksResponse(

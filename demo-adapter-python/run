@@ -50,29 +50,29 @@ test() {
 # }
 
 lint() {
-    ruff demo_adapter_python tests "${@}"
+    ruff check demo_adapter_python tests "${@}"
 }
 
 imsort() {
-    ruff --select I demo_adapter_python tests --fix "${@}"
+    ruff check --select I demo_adapter_python tests --fix "${@}"
 }
 
 typecheck() {
-    python3 -m mypy demo_adapter_python
+    python3 -m mypy demo_adapter_python tests
 }
 
 format() {
-    ruff --select I demo_adapter_python tests --fix "${@}" && echo "--> Ruff import sorting run."
-    black demo_adapter_python tests "${@}" && echo "--> Black run."
+    ruff check --select I demo_adapter_python tests --fix "${@}" && echo "--> Ruff import sorting run."
+    ruff format demo_adapter_python tests "${@}" && echo "--> ruff format run."
 }
 
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
-    echo "--> Running black in check mode" && black demo_adapter_python tests --check &&
+    echo "--> Running ruff format in check mode" && ruff format demo_adapter_python tests --check &&
         echo "--> Running tests" && python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy demo_adapter_python tests &&
-        echo "--> Running ruff" && ruff demo_adapter_python tests &&
+        echo "--> Running ruff" && ruff check demo_adapter_python tests &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 

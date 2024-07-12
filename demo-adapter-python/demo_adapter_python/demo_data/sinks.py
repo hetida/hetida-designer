@@ -25,9 +25,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {
-            "frequency": {"name": "frequency", "type": "free_text", "required": False}
-        },
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantA.millingUnit.influx.anomaly_score",
@@ -35,9 +33,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant A / Milling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {
-            "frequency": {"name": "frequency", "type": "free_text", "required": False}
-        },
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantA.picklingUnit.outfeed.anomaly_score",
@@ -45,9 +41,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Outfeed Anomaly Score",
         "path": "Plant A / Pickling Unit / Outfeed",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {
-            "frequency": {"name": "frequency", "type": "free_text", "required": False}
-        },
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantA.millingUnit.outfeed.anomaly_score",
@@ -55,9 +49,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Outfeed Anomaly Score",
         "path": "Plant A / Milling Unit / Outfeed",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {
-            "frequency": {"name": "frequency", "type": "free_text", "required": False}
-        },
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantB.picklingUnit.influx.anomaly_score",
@@ -93,9 +85,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {
-            "column_names": {"name": "columns", "type": "free_text", "required": False}
-        },
+        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantB.alerts",
@@ -110,9 +100,7 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Anomalies",
         "path": "Plant A",
         "type": ExternalType.MULTITSFRAME,
-        "filters": {
-            "metric_names": {"name": "metrics", "type": "free_text", "required": False}
-        },
+        "filters": {"metric_names": {"name": "metrics", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantB.anomalies",
@@ -142,9 +130,7 @@ def get_sinks(
             and len(snk["id"]) != len(parent_id)  # only true subnodes!
         ]
     else:
-        selected_sinks = [
-            snk for snk in sinks_json_objects if snk["thingNodeId"] == parent_id
-        ]
+        selected_sinks = [snk for snk in sinks_json_objects if snk["thingNodeId"] == parent_id]
 
     if filter_str is not None:
         selected_sinks = [

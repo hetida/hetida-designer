@@ -25,9 +25,7 @@ class MaintenanceActionResult(BaseModel):
 
 
 class MaintenancePayload(BaseModel):
-    maintenance_secret: SecretStr = Field(
-        ..., description="Required maintenance secret."
-    )
+    maintenance_secret: SecretStr = Field(..., description="Required maintenance secret.")
 
 
 maintenance_router = HandleTrailingSlashAPIRouter(
@@ -71,10 +69,7 @@ def handle_maintenance_operation_request(
     try:
         func(directly_in_db=True)
     except Exception as exc:  # noqa: BLE001
-        msg = (
-            f"Exception during maintenance operation {maintenance_operation_name}:\n"
-            + str(exc)
-        )
+        msg = f"Exception during maintenance operation {maintenance_operation_name}:\n" + str(exc)
         logger.error(msg)
         response.status_code = 500
         return MaintenanceActionResult(success=False, error=msg)

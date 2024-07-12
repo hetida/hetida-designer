@@ -63,9 +63,9 @@ def test_transformation_validators_accept_valid_workflow():
 
 def test_transformation_validator_input_names_unique_identifies_double_name():
     transformation_with_double_input_name = deepcopy(valid_transformation)
-    transformation_with_double_input_name["inputs"][1][
-        "name"
-    ] = transformation_with_double_input_name["inputs"][0]["name"]
+    transformation_with_double_input_name["inputs"][1]["name"] = (
+        transformation_with_double_input_name["inputs"][0]["name"]
+    )
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationRevisionFrontendDto(**transformation_with_double_input_name)
@@ -75,9 +75,9 @@ def test_transformation_validator_input_names_unique_identifies_double_name():
 
 def test_transformation_validator_output_names_unique_identifies_double_name():
     transformation_with_double_output_name = deepcopy(valid_transformation)
-    transformation_with_double_output_name["outputs"][1][
-        "name"
-    ] = transformation_with_double_output_name["outputs"][0]["name"]
+    transformation_with_double_output_name["outputs"][1]["name"] = (
+        transformation_with_double_output_name["outputs"][0]["name"]
+    )
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationRevisionFrontendDto(**transformation_with_double_output_name)
@@ -90,27 +90,17 @@ def test_transformation_dto_to_transformation_revision():
         **valid_transformation
     ).to_transformation_revision()
 
-    assert len(transformation_revision.io_interface.inputs) == len(
-        valid_transformation["inputs"]
-    )
-    assert len(transformation_revision.io_interface.outputs) == len(
-        valid_transformation["outputs"]
-    )
+    assert len(transformation_revision.io_interface.inputs) == len(valid_transformation["inputs"])
+    assert len(transformation_revision.io_interface.outputs) == len(valid_transformation["outputs"])
 
 
 def test_transformation_dto_from_transformation_revision():
     transformation_revision = TransformationRevisionFrontendDto(
         **valid_transformation
     ).to_transformation_revision()
-    transformation_revision_dto = (
-        TransformationRevisionFrontendDto.from_transformation_revision(
-            transformation_revision
-        )
+    transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
     )
 
-    assert len(transformation_revision_dto.inputs) == len(
-        valid_transformation["inputs"]
-    )
-    assert len(transformation_revision_dto.outputs) == len(
-        valid_transformation["outputs"]
-    )
+    assert len(transformation_revision_dto.inputs) == len(valid_transformation["inputs"])
+    assert len(transformation_revision_dto.outputs) == len(valid_transformation["outputs"])

@@ -219,9 +219,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     externally_determined_gap_timestamps: pd.Series | None
 
     @validator("timeseries")
-    def timeseries_index_has_datetime_dtype(
-        cls, timeseries: pd.Series | None
-    ) -> pd.Series | None:
+    def timeseries_index_has_datetime_dtype(cls, timeseries: pd.Series | None) -> pd.Series | None:
         if timeseries is None:
             return timeseries
         if len(timeseries) == 0:
@@ -307,9 +305,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
         return percentile
 
     @validator("min_amount_datapoints")
-    def check_min_amount_datapoints_non_negative(
-        cls, min_amount_datapoints: int
-    ) -> int:
+    def check_min_amount_datapoints_non_negative(cls, min_amount_datapoints: int) -> int:
         if min_amount_datapoints < 0:
             raise ComponentInputValidationException(
                 "The minimum amount of datapoints has to be a non-negative integer.",
@@ -551,20 +547,16 @@ def constrict_intervals_df_to_interval(
         gap_start_before_interval_start_index = gap_intervals[
             gap_intervals["start_time"] < interval_start_timestamp
         ].index
-        gap_intervals.loc[
-            gap_start_before_interval_start_index, "start_time"
-        ] = interval_start_timestamp
-        gap_intervals.loc[
-            gap_start_before_interval_start_index, "start_inclusive"
-        ] = True
+        gap_intervals.loc[gap_start_before_interval_start_index, "start_time"] = (
+            interval_start_timestamp
+        )
+        gap_intervals.loc[gap_start_before_interval_start_index, "start_inclusive"] = True
 
     if interval_end_timestamp is not None:
         gap_end_after_interval_end_index = gap_intervals[
             gap_intervals["end_time"] > interval_end_timestamp
         ].index
-        gap_intervals.loc[
-            gap_end_after_interval_end_index, "end_time"
-        ] = interval_end_timestamp
+        gap_intervals.loc[gap_end_after_interval_end_index, "end_time"] = interval_end_timestamp
         gap_intervals.loc[gap_end_after_interval_end_index, "end_inclusive"] = True
 
     gap_intervals = gap_intervals.drop(
@@ -603,9 +595,7 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
-    intervals["same_end_time"] = (
-        intervals["end_time"] != intervals["end_time"].shift()
-    ).cumsum()
+    intervals["same_end_time"] = (intervals["end_time"] != intervals["end_time"].shift()).cumsum()
     intervals = intervals.groupby(intervals["same_end_time"]).agg(
         {
             "start_time": "first",
@@ -615,9 +605,7 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
-    intervals["overlap"] = (
-        intervals["start_time"] >= intervals["end_time"].shift()
-    ).cumsum()
+    intervals["overlap"] = (intervals["start_time"] >= intervals["end_time"].shift()).cumsum()
     intervals = intervals.groupby(intervals["overlap"]).agg(
         {
             "start_time": "first",
@@ -659,9 +647,7 @@ def shift_timestamp_to_the_left_onto_rhythm(
     the mathematical method `floor`, but instead of a decimal place takes into account the
     specified frequency.
     """
-    return (timestamp - data_frequency_offset).floor(
-        freq=data_frequency
-    ) + data_frequency_offset
+    return (timestamp - data_frequency_offset).floor(freq=data_frequency) + data_frequency_offset
 
 
 def shift_timestamp_to_the_right_onto_rhythm(
@@ -678,9 +664,7 @@ def shift_timestamp_to_the_right_onto_rhythm(
     mathematical method `ceil`, but instead of a decimal place, it takes into account the
     specified frequency.
     """
-    return (timestamp - data_frequency_offset).ceil(
-        freq=data_frequency
-    ) + data_frequency_offset
+    return (timestamp - data_frequency_offset).ceil(freq=data_frequency) + data_frequency_offset
 
 
 interval_inclusive_from_boundaries_inclusive = {
@@ -706,9 +690,7 @@ def generate_replacement_locations(
         strict=True,
     ):
         if all_gap_points and gap_start_time == gap_end_time:
-            replacement_locations = replacement_locations.append(
-                pd.DatetimeIndex([gap_start_time])
-            )
+            replacement_locations = replacement_locations.append(pd.DatetimeIndex([gap_start_time]))
         else:
             if data_frequency_offset is None:
                 data_frequency_offset = gap_start_time
@@ -825,9 +807,7 @@ def main(
     if timeseries is not None:
         if interval_start_timestamp is None:
             if "ref_interval_start_timestamp" in timeseries.attrs:
-                interval_start_timestamp = timeseries.attrs[
-                    "ref_interval_start_timestamp"
-                ]
+                interval_start_timestamp = timeseries.attrs["ref_interval_start_timestamp"]
             elif "from" in timeseries.attrs:
                 interval_start_timestamp = timeseries.attrs["from"]
 
@@ -839,18 +819,14 @@ def main(
 
         if expected_data_frequency is None and "ref_data_frequency" in timeseries.attrs:
             expected_data_frequency = timeseries.attrs["ref_data_frequency"]
-            freqstr2timedelta(
-                expected_data_frequency, 'timeseries.attrs["ref_data_frequency"]'
-            )
+            freqstr2timedelta(expected_data_frequency, 'timeseries.attrs["ref_data_frequency"]')
             auto_frequency_determination = False
 
         if (
             expected_data_frequency_offset is None
             and "ref_data_frequency_offset" in timeseries.attrs
         ):
-            expected_data_frequency_offset = timeseries.attrs[
-                "ref_data_frequency_offset"
-            ]
+            expected_data_frequency_offset = timeseries.attrs["ref_data_frequency_offset"]
             freqstr2timedelta(
                 expected_data_frequency_offset,
                 'timeseries.attrs["ref_data_frequency_offset"]',
@@ -891,18 +867,15 @@ def main(
         )
 
     if input_params.expected_data_frequency_offset is None:
-        input_params.expected_data_frequency_offset = (
-            determine_expected_data_frequency_offset(
-                constricted_timeseries_without_bounds,
-                input_params.interval_start_timestamp,
-            )
+        input_params.expected_data_frequency_offset = determine_expected_data_frequency_offset(
+            constricted_timeseries_without_bounds,
+            input_params.interval_start_timestamp,
         )
 
     # The offset might still be None
     if input_params.expected_data_frequency_offset is not None:
         input_params.expected_data_frequency_offset = (
-            input_params.expected_data_frequency_offset
-            % input_params.expected_data_frequency
+            input_params.expected_data_frequency_offset % input_params.expected_data_frequency
         )
 
     constricted_gap_intervals = (

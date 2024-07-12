@@ -6,6 +6,7 @@ category together with the transitive dependency closure.
 
 This module contains filtering functions for ensembles of transformation revisions.
 """
+
 from uuid import UUID
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -38,10 +39,7 @@ def basic_trafo_filter_map(
             allow = False
         if filter_params.state is not None and trafo.state != filter_params.state:
             allow = False
-        if (
-            filter_params.categories is not None
-            and trafo.category not in filter_params.categories
-        ):
+        if filter_params.categories is not None and trafo.category not in filter_params.categories:
             allow = False
         if filter_params.category_prefix is not None and not trafo.category.startswith(
             filter_params.category_prefix
@@ -133,9 +131,7 @@ def filter_and_order_trafos(
 
     The resulting list then can be imported/put/updated one after another.
     """
-    transformation_dict = {
-        trafo_rev.id: trafo_rev for trafo_rev in transformation_revisions
-    }
+    transformation_dict = {trafo_rev.id: trafo_rev for trafo_rev in transformation_revisions}
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
     # obtain filter map including dependency handling

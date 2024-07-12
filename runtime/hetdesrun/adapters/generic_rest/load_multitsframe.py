@@ -23,12 +23,10 @@ async def load_multitsframes_from_adapter(
     data_to_load: dict[str, FilteredSource], adapter_key: str
 ) -> dict[str, pd.DataFrame]:
     for filtered_source in data_to_load.values():
-        if (
-            not isinstance(filtered_source.filters.get("timestampFrom", None), str)
-        ) or (not isinstance(filtered_source.filters.get("timestampTo", None), str)):
-            raise AdapterClientWiringInvalidError(
-                "MultiTSFrame data with no to/from filters."
-            )
+        if (not isinstance(filtered_source.filters.get("timestampFrom", None), str)) or (
+            not isinstance(filtered_source.filters.get("timestampTo", None), str)
+        ):
+            raise AdapterClientWiringInvalidError("MultiTSFrame data with no to/from filters.")
 
         filtered_source.filters["from"] = filtered_source.filters.pop("timestampFrom")
         filtered_source.filters["to"] = filtered_source.filters.pop("timestampTo")

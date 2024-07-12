@@ -52,18 +52,13 @@ async def get_sources_from_bucket(
             object_key = ObjectKey.from_string(object_key_string)
         except ValueError:
             # ignore objects with keys that do not match the expected name scheme
-            logger.warning(
-                "The string %s cannot be parsed into an object key.", object_key_string
-            )
+            logger.warning("The string %s cannot be parsed into an object key.", object_key_string)
             continue
 
         # ignore objects that do not match the configured hierarchy
         thing_node_id_from_ok_and_bucket = object_key.to_thing_node_id(bucket)
         if thing_node_id_from_ok_and_bucket in thing_node_ids and (
-            (
-                thing_node_id is not None
-                and thing_node_id == thing_node_id_from_ok_and_bucket
-            )
+            (thing_node_id is not None and thing_node_id == thing_node_id_from_ok_and_bucket)
             or thing_node_id is None
         ):
             source = BlobStorageStructureSource.from_structure_bucket_and_object_key(
@@ -183,9 +178,7 @@ async def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
         logger.error(msg)
         raise StructureObjectNotFound(msg)
 
-    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
-        source_id
-    )
+    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(source_id)
     try:
         object_key = ObjectKey.from_string(object_key_string)
     except ValueError as error:
@@ -234,17 +227,13 @@ async def get_source_by_thing_node_id_and_metadata_key(
     """
     thing_node_ids = list(get_adapter_structure().thing_node_by_id.keys())
     if thing_node_id not in thing_node_ids:
-        msg = (
-            f"No thing node with id '{thing_node_id}' occurs in the adapter structure!"
-        )
+        msg = f"No thing node with id '{thing_node_id}' occurs in the adapter structure!"
         logger.error(msg)
         raise StructureObjectNotFound(msg)
 
     bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(thing_node_id)
     try:
-        object_key = ObjectKey.from_thing_node_id_and_metadata_key(
-            thing_node_id, metadata_key
-        )
+        object_key = ObjectKey.from_thing_node_id_and_metadata_key(thing_node_id, metadata_key)
     except ValueError as error:
         msg = (
             f"Cannot get object key from thing node id '{thing_node_id}' and "
@@ -282,8 +271,7 @@ def get_sink_by_thing_node_id_and_metadata_key(
 
     except KeyError as error:
         msg = (
-            f"Found no sink with thing node id {thing_node_id} "
-            f"and metadata key {metadata_key}!"
+            f"Found no sink with thing node id {thing_node_id} " f"and metadata key {metadata_key}!"
         )
         logger.error(msg)
         raise StructureObjectNotFound(msg) from error

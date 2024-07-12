@@ -1,16 +1,17 @@
 -c requirements.txt
 -c requirements-base.txt
-pytest
 coverage
-pytest-cov
-pytest-asyncio
-rope
-mypy
-nest_asyncio
-types-requests
-types-pytz
 ipykernel
 moto<5.0
-ruff
+mypy
+nest_asyncio
+pytest
+pytest-asyncio
+pytest-cov
 pytest-random-order
+pytest-xdist
+rope
+ruff
+types-pytz
+types-requests
 watchfiles

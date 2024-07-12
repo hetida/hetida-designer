@@ -21,7 +21,7 @@ The component generates a simple table of the provided data using Plotly.
 The json input of a typical call of this component is
 ```
 {
-	"data": {
+        "data": {
         "col_1": ["a", "a", "a", "b", "c", "d", "b"],
         "col_2": [2, 3, 2, 4, 4, 4, 4]
     }
@@ -106,9 +106,7 @@ def main(*, data, auto_col_width=True):
         data=[
             go.Table(
                 columnwidth=(
-                    [auto_col_with(data[col]) for col in columns]
-                    if auto_col_width
-                    else None
+                    [auto_col_with(data[col]) for col in columns] if auto_col_width else None
                 ),
                 header=dict(  # noqa: C408
                     values=columns, fill_color="paleturquoise", align="left"

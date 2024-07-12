@@ -72,9 +72,7 @@ def test_get_global_from_code_with_it(expanded_component_code: str):
 
 
 def test_get_global_from_code_without_it(reduced_component_code: str):
-    value_of_gobal = get_global_from_code(
-        reduced_component_code, "TEST_WIRING_FROM_PY_FILE_IMPORT"
-    )
+    value_of_gobal = get_global_from_code(reduced_component_code, "TEST_WIRING_FROM_PY_FILE_IMPORT")
     assert value_of_gobal is None
 
 
@@ -82,9 +80,7 @@ def test_get_global_from_code_with_invalid_syntax(
     component_code_with_syntax_error: str,
 ):
     with pytest.raises(CodeParsingException):
-        get_global_from_code(
-            component_code_with_syntax_error, "TEST_WIRING_FROM_PY_FILE_IMPORT"
-        )
+        get_global_from_code(component_code_with_syntax_error, "TEST_WIRING_FROM_PY_FILE_IMPORT")
 
 
 def test_add_module_level_variable(reduced_component_code: str):
@@ -112,13 +108,8 @@ def test_update_one_of_two_module_level_variable_assignments(
     expanded_component_code: str,
 ):
     second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
-    expanded_component_code_with_second_test_wiring = (
-        expanded_component_code + second_test_wiring
-    )
-    assert (
-        '"adapter_id": "direct_provisioning"'
-        in expanded_component_code_with_second_test_wiring
-    )
+    expanded_component_code_with_second_test_wiring = expanded_component_code + second_test_wiring
+    assert '"adapter_id": "direct_provisioning"' in expanded_component_code_with_second_test_wiring
     assert (
         'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n'
         in expanded_component_code_with_second_test_wiring
@@ -131,9 +122,7 @@ def test_update_one_of_two_module_level_variable_assignments(
     )
 
     assert '"adapter_id": "direct_provisioning"' not in updated_code
-    assert (
-        'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' not in updated_code
-    )
+    assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' not in updated_code
     assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
 
 

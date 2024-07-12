@@ -224,9 +224,7 @@ async def consume_execution_trigger_message(
             await producer_send_result_msg(kafka_ctx, exec_result)
         except Exception as e:  # noqa: BLE001
             kafka_ctx.last_unhandled_exception = e
-            logger.error(
-                "Unexpected Error during Kafka execution: %s. Aborting.", str(e)
-            )
+            logger.error("Unexpected Error during Kafka execution: %s. Aborting.", str(e))
             continue
 
 

@@ -23,16 +23,12 @@ from hetdesrun.reference_context import (
 
 
 def test_utc_validation():
-    with pytest.raises(
-        ValueError, match="The execution start timestamp must be timezone-aware"
-    ):
+    with pytest.raises(ValueError, match="The execution start timestamp must be timezone-aware"):
         _ = ReproducibilityReference(
             exec_start_timestamp=datetime.now()  # noqa: DTZ005
         )
 
-    with pytest.raises(
-        ValueError, match="The execution start timestamp must be in UTC"
-    ):
+    with pytest.raises(ValueError, match="The execution start timestamp must be in UTC"):
         __ = ReproducibilityReference(
             exec_start_timestamp=datetime.now(tz=timezone(timedelta(hours=1)))
         )
@@ -43,9 +39,7 @@ def test_context_var_setting_and_getting():
     assert get_reproducibility_reference_context() == ReproducibilityReference()
 
     # Test setter
-    rr1 = ReproducibilityReference(
-        exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc)
-    )
+    rr1 = ReproducibilityReference(exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc))
     set_reproducibility_reference_context(rr1)
     assert get_reproducibility_reference_context() == rr1
 
@@ -84,8 +78,7 @@ def test_default_factories():
 
     assert wf_result.resolved_reproducibility_references is not None
     assert (
-        wf_result.resolved_reproducibility_references
-        is not get_reproducibility_reference_context()
+        wf_result.resolved_reproducibility_references is not get_reproducibility_reference_context()
     )
 
 
@@ -108,9 +101,7 @@ def _db_with_two_trafos(mocked_clean_test_db_session):
 
 @pytest.mark.asyncio
 async def test_for_reference_in_response(_db_with_two_trafos):  # noqa: PT019
-    rr = ReproducibilityReference(
-        exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc)
-    )
+    rr = ReproducibilityReference(exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc))
 
     exec_by_id_input = ExecByIdInput(
         id="2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
@@ -142,11 +133,10 @@ async def test_for_reference_in_response(_db_with_two_trafos):  # noqa: PT019
 
 @pytest.mark.asyncio
 async def test_if_reference_in_response_after_exception(
-    _db_with_two_trafos, caplog  # noqa: PT019
+    _db_with_two_trafos,  # noqa: PT019
+    caplog,
 ):
-    rr = ReproducibilityReference(
-        exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc)
-    )
+    rr = ReproducibilityReference(exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc))
 
     exec_by_id_input = ExecByIdInput(
         id="c4dbcc42-eaec-4587-a362-ce6567f21d92",

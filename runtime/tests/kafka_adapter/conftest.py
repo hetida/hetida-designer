@@ -57,9 +57,7 @@ def async_test_client_with_kafka_adapter(
     two_kafka_configs,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
-    return AsyncClient(
-        transport=ASGITransport(app=app_without_auth), base_url="http://test"
-    )
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
 
 
 @pytest_asyncio.fixture

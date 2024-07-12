@@ -173,15 +173,11 @@ async def mock_failed_execute_transformation_revision(*args, **kwargs):
     raise TrafoExecutionError("Something went wrong")
 
 
-async def mock_failed_execute_transformation_revision_with_arbitrary_exc(
-    *args, **kwargs
-):
+async def mock_failed_execute_transformation_revision_with_arbitrary_exc(*args, **kwargs):
     raise Exception("Something went horribly wrong")
 
 
-async def run_kafka_msg(
-    msg_str, exec_func_mock=mock_successful_execute_transformation_revision
-):
+async def run_kafka_msg(msg_str, exec_func_mock=mock_successful_execute_transformation_revision):
     with mock.patch(
         "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.consumer",
         new_callable=mock.PropertyMock,
@@ -203,9 +199,7 @@ async def run_kafka_msg(
                 "hetdesrun.backend.kafka.consumer.perf_measured_execute_trafo_rev",
                 exec_func_mock,
             ):
-                results = loop.run_until_complete(
-                    asyncio.gather(kafka_ctx.consumer_task)
-                )
+                results = loop.run_until_complete(asyncio.gather(kafka_ctx.consumer_task))
                 await kafka_ctx.stop()
 
     return results, kafka_ctx, mocked_ctx_producer
@@ -232,9 +226,7 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
         "hetdesrun.backend.kafka.consumer.get_latest_revision_id",
         return_value=UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89"),
     ) as _mocked_get_latest_id:
-        results, kafka_ctx, mocked_producer = await run_kafka_msg(
-            exec_latest_by_group_id_input_msg
-        )
+        results, kafka_ctx, mocked_producer = await run_kafka_msg(exec_latest_by_group_id_input_msg)
 
         assert kafka_ctx.last_unhandled_exception is None
 

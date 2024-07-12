@@ -65,9 +65,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
         return None
 
     if "data_type" not in input_info:
-        raise ValueError(
-            "For optional inputs a data type must be provided in the COMPONENT_INFO!"
-        )
+        raise ValueError("For optional inputs a data type must be provided in the COMPONENT_INFO!")
 
     if isinstance(input_info["default_value"], str) and input_info["data_type"] in (
         "STRING",
@@ -167,9 +165,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
     try:
         test_wiring = WorkflowWiring(**test_wiring_dict)
     except ValueError as error:
-        logger.warning(
-            "The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error)
-        )
+        logger.warning("The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error))
         test_wiring = WorkflowWiring()
 
     transformation_revision = TransformationRevision(
@@ -191,8 +187,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
                     value=get_json_default_value_from_python_object(input_info),
                     type=(
                         InputType.OPTIONAL
-                        if isinstance(input_info, dict)
-                        and "default_value" in input_info
+                        if isinstance(input_info, dict) and "default_value" in input_info
                         else InputType.REQUIRED
                     ),
                 )
@@ -242,9 +237,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 python_code = load_python_file(path)
                 if python_code is not None:
                     try:
-                        transformation = transformation_revision_from_python_code(
-                            python_code
-                        )
+                        transformation = transformation_revision_from_python_code(python_code)
                     except ComponentCodeImportError as e:
                         logging.error(
                             "Could not load main function from %s\n"
@@ -260,9 +253,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 try:
                     transformation = TransformationRevision(**transformation_json)
                 except ValueError as err:
-                    logger.error(
-                        "ValueError for json from path %s:\n%s", download_path, str(err)
-                    )
+                    logger.error("ValueError for json from path %s:\n%s", download_path, str(err))
                     continue
             transformation_dict[transformation.id] = transformation
             if ext == ".py":
@@ -427,10 +418,6 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: 
                 config_file=import_source["config_file"],
             )
 
-    return {
-        key: val for key, val in import_sources.items() if val["is_dir"] is not None
-    }
-
 
 class Importable(BaseModel):
     transformation_revisions: list[TransformationRevision]
@@ -450,16 +437,12 @@ def load_import_source(
 
     # Load trafo revisions
     if import_source.is_dir:
-        trafo_revisions_dict, _ = load_transformation_revisions_from_directory(
-            import_source.path
-        )
+        trafo_revisions_dict, _ = load_transformation_revisions_from_directory(import_source.path)
         trafo_revisions = list(trafo_revisions_dict.values())
     else:
         trafo_revisions = load_trafos_from_trafo_list_json_file(import_source.path)
 
-    return Importable(
-        transformation_revisions=trafo_revisions, import_config=import_config
-    )
+    return Importable(transformation_revisions=trafo_revisions, import_config=import_config)
 
 
 def load_import_sources(import_sources: Iterable[ImportSource]) -> list[Importable]:

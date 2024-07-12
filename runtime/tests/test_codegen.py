@@ -392,21 +392,13 @@ def test_add_test_wiring_dictionary():
     component_tr_path = "tests/data/components/reduced_code.json"
     component_tr = TransformationRevision(**load_json(component_tr_path))
     component_code_path = "tests/data/components/reduced_code.py"
-    component_code_without_test_wiring_dictionary = load_python_file(
-        component_code_path
-    )
+    component_code_without_test_wiring_dictionary = load_python_file(component_code_path)
 
-    assert (
-        "TEST_WIRING_FROM_PY_FILE_IMPORT"
-        not in component_code_without_test_wiring_dictionary
-    )
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" not in component_code_without_test_wiring_dictionary
     component_code_with_new_test_wiring_dictionary = add_test_wiring_dictionary(
         component_code_without_test_wiring_dictionary, component_tr
     )
-    assert (
-        "TEST_WIRING_FROM_PY_FILE_IMPORT"
-        in component_code_with_new_test_wiring_dictionary
-    )
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" in component_code_with_new_test_wiring_dictionary
 
     assert "24" not in component_code_without_test_wiring_dictionary
     component_tr.test_wiring.input_wirings[1].filters["value"] = "24"
@@ -418,9 +410,7 @@ def test_add_test_wiring_dictionary():
 
 def test_expand_code():
     reduced_component_tr_path = "tests/data/components/reduced_code.json"
-    reduced_component_tr = TransformationRevision(
-        **load_json(reduced_component_tr_path)
-    )
+    reduced_component_tr = TransformationRevision(**load_json(reduced_component_tr_path))
 
     expanded_component_code_path = "tests/data/components/expanded_code.py"
     expanded_component_code = load_python_file(expanded_component_code_path)

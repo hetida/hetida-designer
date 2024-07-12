@@ -215,8 +215,7 @@ class RuntimeConfig(BaseSettings):
     auth_role_key: str = Field(
         "roles",
         description=(
-            "Under which key of the access token payload the roles will"
-            " be expected as a list."
+            "Under which key of the access token payload the roles will" " be expected as a list."
         ),
         env="HD_AUTH_ROLE_KEY",
     )
@@ -271,9 +270,7 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: (
-        ServiceCredentials | Json[ServiceCredentials] | None
-    ) = Field(
+    internal_auth_client_credentials: ServiceCredentials | Json[ServiceCredentials] | None = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -298,9 +295,7 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: (
-        ServiceCredentials | Json[ServiceCredentials] | None
-    ) = Field(
+    external_auth_client_credentials: ServiceCredentials | Json[ServiceCredentials] | None = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(
@@ -350,9 +345,7 @@ class RuntimeConfig(BaseSettings):
         description="URL to runtime",
     )
 
-    hd_runtime_verify_certs: bool = Field(
-        True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
-    )
+    hd_runtime_verify_certs: bool = Field(True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS")
 
     # For scripts (e.g. transformation deployment)
     hd_backend_api_url: str = Field(
@@ -383,12 +376,8 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
         description="Basic Auth User",
     )
-    hd_backend_verify_certs: bool = Field(
-        True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"
-    )
-    hd_adapters_verify_certs: bool = Field(
-        True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
-    )
+    hd_backend_verify_certs: bool = Field(True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS")
+    hd_adapters_verify_certs: bool = Field(True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS")
 
     hd_kafka_consumption_mode: None | ExecByIdBase = Field(
         None,
@@ -490,9 +479,7 @@ class RuntimeConfig(BaseSettings):
         return v
 
     @validator("maintenance_secret")
-    def maintenance_secret_allowed_characters(
-        cls, v: SecretStr | None
-    ) -> SecretStr | None:
+    def maintenance_secret_allowed_characters(cls, v: SecretStr | None) -> SecretStr | None:
         if v is None:
             return v
         if not maintenance_secret_pattern.fullmatch(v.get_secret_value()):
@@ -531,9 +518,7 @@ class RuntimeConfig(BaseSettings):
                 drivername=values["sqlalchemy_db_drivername"],
                 username=values["sqlalchemy_db_user"],
                 password=(
-                    pw_secret.get_secret_value()
-                    if isinstance(pw_secret, SecretStr)
-                    else pw_secret
+                    pw_secret.get_secret_value() if isinstance(pw_secret, SecretStr) else pw_secret
                 ),
                 host=values["sqlalchemy_db_host"],
                 port=values["sqlalchemy_db_port"],

@@ -176,14 +176,10 @@ def main(*, series, list_of_time_intervals):
         end_inclusive = interval.end_inclusive
 
         above_start = (
-            timestamps >= interval.start
-            if start_inclusive
-            else timestamps > interval.start
+            timestamps >= interval.start if start_inclusive else timestamps > interval.start
         )
 
-        below_end = (
-            timestamps <= interval.end if end_inclusive else timestamps < interval.end
-        )
+        below_end = timestamps <= interval.end if end_inclusive else timestamps < interval.end
 
         in_interval = pd.Series(above_start & below_end, index=timestamps)
         in_intervals = in_intervals | in_interval

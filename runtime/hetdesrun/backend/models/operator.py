@@ -23,8 +23,7 @@ class WorkflowOperatorFrontendDto(BasicInformation):
             state = values["state"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if operator has state DRAFT if the attribute "
-                "'state' is missing!"
+                "Cannot check if operator has state DRAFT if the attribute " "'state' is missing!"
             ) from e
         if state == State.DRAFT:
             raise ValueError(
@@ -65,12 +64,10 @@ class WorkflowOperatorFrontendDto(BasicInformation):
             tag=operator.version_tag,
             itemId=operator.transformation_id,
             inputs=[
-                ConnectorFrontendDto.from_connector(connector)
-                for connector in operator.inputs
+                ConnectorFrontendDto.from_connector(connector) for connector in operator.inputs
             ],
             outputs=[
-                ConnectorFrontendDto.from_connector(connector)
-                for connector in operator.outputs
+                ConnectorFrontendDto.from_connector(connector) for connector in operator.outputs
             ],
             posX=operator.position.x,
             posY=operator.position.y,

@@ -35,7 +35,7 @@ def format_code_with_black(code: str) -> str:
             code,
             fast=False,
             mode=black.Mode(
-                target_versions={black.TargetVersion.PY311},  # python3.11
+                target_versions={black.TargetVersion.PY312},  # python3.12
             ),
         )
     except black.NothingChanged:
@@ -64,9 +64,7 @@ def get_module_doc_string(code: str) -> str | None:
     return parsed_cst.get_docstring()
 
 
-def get_global_from_code(
-    code: str, variable_name: str, default_value: Any = None
-) -> Any:
+def get_global_from_code(code: str, variable_name: str, default_value: Any = None) -> Any:
     """Extracts content from a global assignment in the provided code
 
     Using ast.literal_eval allows to store metadata directly in Python code
@@ -117,9 +115,7 @@ def get_global_from_code(
     return default_value
 
 
-def cst_from_python_value(
-    value: Any, format_with_black: bool = False
-) -> cst.BaseExpression:
+def cst_from_python_value(value: Any, format_with_black: bool = False) -> cst.BaseExpression:
     """Get CST representation for a constant Python expression
 
     libcst hast no Constant class like ast.
@@ -179,11 +175,7 @@ class GlobalAssignValueTransformer(cst.CSTTransformer):
                 for stmt in cst.ensure_type(element, cst.SimpleStatementLine).body:
                     if m.matches(
                         stmt,
-                        m.Assign(
-                            targets=[
-                                m.AssignTarget(target=m.Name(value=self.variable_name))
-                            ]
-                        ),
+                        m.Assign(targets=[m.AssignTarget(target=m.Name(value=self.variable_name))]),
                     ):
                         gathered_assigns.append(stmt)
         self.assigns = set(gathered_assigns)
@@ -200,14 +192,8 @@ class GlobalAssignValueTransformer(cst.CSTTransformer):
                 cst.SimpleStatementLine(
                     body=[
                         cst.Assign(
-                            targets=[
-                                cst.AssignTarget(
-                                    target=cst.Name(value=self.variable_name)
-                                )
-                            ],
-                            value=cst_from_python_value(
-                                self.value, format_with_black=True
-                            ),
+                            targets=[cst.AssignTarget(target=cst.Name(value=self.variable_name))],
+                            value=cst_from_python_value(self.value, format_with_black=True),
                         )
                     ]
                 )
