@@ -1,3 +1,4 @@
+import uuid
 from enum import Enum
 from typing import Any, Literal
 from uuid import UUID
@@ -18,7 +19,10 @@ from hetdesrun.structure.db.exceptions import DBIntegrityError
 
 
 class ThingNode(BaseModel):
-    id: UUID = Field(..., description="The primary key for the ThingNode table")
+    id: UUID = Field(
+        default_factory=uuid.uuid4,
+        description="The primary key for the ThingNode table",
+    )
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the Thing Node")
     name: str = Field(..., description="Unique name of the Thing Node")
@@ -94,7 +98,9 @@ class Filter(BaseModel):
 
 
 class Source(BaseModel):
-    id: UUID = Field(..., description="Unique identifier for the source")  # noqa: A003
+    id: UUID = Field(
+        default_factory=uuid.uuid4, description="Unique identifier for the source"
+    )  # noqa: A003
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the Source")
     name: str = Field(..., description="Name of the source")
@@ -164,7 +170,9 @@ class Source(BaseModel):
 
 
 class Sink(BaseModel):
-    id: UUID = Field(..., description="Unique identifier for the sink")  # noqa: A003
+    id: UUID = Field(
+        default_factory=uuid.uuid4, description="Unique identifier for the sink"
+    )  # noqa: A003
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the Sink")
     name: str = Field(..., description="Name of the sink")
@@ -234,7 +242,9 @@ class Sink(BaseModel):
 
 
 class PropertySet(BaseModel):
-    id: UUID = Field(..., description="The primary key for the PropertySet")
+    id: UUID = Field(
+        default_factory=uuid.uuid4, description="The primary key for the PropertySet"
+    )
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
     name: str = Field(..., description="The name of the PropertySet.")
@@ -292,7 +302,10 @@ class PropertySet(BaseModel):
 
 
 class ElementType(BaseModel):
-    id: UUID = Field(..., description="The primary key for the ElementType table")
+    id: UUID = Field(
+        default_factory=uuid.uuid4,
+        description="The primary key for the ElementType table",
+    )
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
     name: str = Field(..., description="Unique name of the ElementType")
@@ -340,7 +353,10 @@ class ElementType(BaseModel):
 
 
 class PropertyMetadata(BaseModel):
-    id: UUID = Field(..., description="The primary key ID of the property metadata.")
+    id: UUID = Field(
+        default_factory=uuid.uuid4,
+        description="The primary key ID of the property metadata.",
+    )
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(
         ..., description="Stakeholder key for the PropertyMetadata"

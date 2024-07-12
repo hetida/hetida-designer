@@ -1096,6 +1096,7 @@ def update_structure_from_file(file_path: str) -> None:
         session.flush()
 
 
+# TODO Is there no sorting?
 def update_structure(complete_structure: CompleteStructure) -> None:
     with get_session()() as session, session.begin():
         flush_items(session, complete_structure.element_types)
