@@ -107,15 +107,13 @@ class Source(BaseModel):
         None, description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
-    source_id: UUID = Field(..., description="Referenced HD Source identifier")
+    source_id: str = Field(..., description="Referenced HD Source identifier")
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Source"
     )
-    thing_node_id: UUID | None = Field(
-        None, description="Thing node UUID if this is associated with a thing node"
-    )
-    thing_node_external_id: str | None = Field(
-        None, description="Externally provided unique identifier for the thing node"
+    thing_node_external_ids: list[str] | None = Field(
+        None,
+        description="List of externally provided unique identifiers for the thing nodes",
     )
 
     class Config:
@@ -134,8 +132,7 @@ class Source(BaseModel):
             adapter_key=self.adapter_key,
             source_id=self.source_id,
             meta_data=self.meta_data,
-            thing_node_id=self.thing_node_id,
-            thing_node_external_id=self.thing_node_external_id,
+            thing_node_external_ids=self.thing_node_external_ids,
         )
 
     @classmethod
@@ -152,8 +149,7 @@ class Source(BaseModel):
             adapter_key=orm_model.adapter_key,
             source_id=orm_model.source_id,
             meta_data=orm_model.meta_data,
-            thing_node_id=orm_model.thing_node_id,
-            thing_node_external_id=orm_model.thing_node_external_id,
+            thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
@@ -177,7 +173,7 @@ class Sink(BaseModel):
         None, description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
-    sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
+    sink_id: str = Field(..., description="Referenced HD Sink identifier")
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Sink"
     )
@@ -222,8 +218,7 @@ class Sink(BaseModel):
             adapter_key=orm_model.adapter_key,
             sink_id=orm_model.sink_id,
             meta_data=orm_model.meta_data,
-            thing_node_id=orm_model.thing_node_id,
-            thing_node_external_id=orm_model.thing_node_external_id,
+            thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
     @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
@@ -296,7 +291,6 @@ class ElementType(BaseModel):
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
     name: str = Field(..., description="Unique name of the ElementType")
-    icon: str | None = Field(None, description="Icon representing the ElementType")
     description: str | None = Field(None, description="Description of the ElementType")
     property_sets: list[PropertySet] = Field(
         default_factory=list, description="List of associated PropertySets"
@@ -314,7 +308,6 @@ class ElementType(BaseModel):
             external_id=self.external_id,
             stakeholder_key=self.stakeholder_key,
             name=self.name,
-            icon=self.icon,
             description=self.description,
             property_sets=[ps.to_orm_model() for ps in self.property_sets],
             thing_nodes=[tn.to_orm_model() for tn in self.thing_nodes],
@@ -328,7 +321,6 @@ class ElementType(BaseModel):
                 external_id=orm_model.external_id,
                 stakeholder_key=orm_model.stakeholder_key,
                 name=orm_model.name,
-                icon=orm_model.icon,
                 description=orm_model.description,
             )
         except ValidationError as e:
