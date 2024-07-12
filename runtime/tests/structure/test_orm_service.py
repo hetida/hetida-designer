@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     SinkOrm,
@@ -16,7 +17,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     ThingNodeOrm,
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
-from hetdesrun.structure.db.external_types import ExternalType
 from hetdesrun.structure.db.orm_service import (
     add_et,
     add_et2ps,

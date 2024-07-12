@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     ElementTypeToPropertySetOrm,
@@ -14,7 +15,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     ThingNodeOrm,
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError
-from hetdesrun.structure.db.external_types import ExternalType
 
 
 class ThingNode(BaseModel):
