@@ -1098,6 +1098,7 @@ def update_structure(complete_structure: CompleteStructure) -> None:
         flush_items(session, complete_structure.sinks)
         flush_items(session, complete_structure.thing_nodes)
 
+        # TODO How to handle source and sink lists in ThingNode, maybe leave out?
         for thing_node in complete_structure.thing_nodes:
             orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
             if orm_thing_node is None:
