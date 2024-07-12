@@ -3,7 +3,6 @@
 Generate HTML / Styles / Javascript for the experimental dashboarding feature.
 """
 
-
 import datetime
 import json
 import os
@@ -53,10 +52,7 @@ AUTORELOAD_INTERVALS = [5, 15, 30, 60, 120, 300, 900, 3600]
 def item_positioning_dict(
     gridstack_item_positions: list[GridstackItemPositioning],
 ) -> dict[str, GridstackItemPositioning]:
-    return {
-        item_positioning.id: item_positioning
-        for item_positioning in gridstack_item_positions
-    }
+    return {item_positioning.id: item_positioning for item_positioning in gridstack_item_positions}
 
 
 def gs_div_attributes_from_item_positioning(

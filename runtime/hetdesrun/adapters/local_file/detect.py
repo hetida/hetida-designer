@@ -50,8 +50,7 @@ def parse_settings_file(
     if settings_file_path is None:
         if data_file_path is None:
             raise ValueError(
-                "Exactly one of 'data_file_path' or 'settings_file_path'"
-                " must be not None."
+                "Exactly one of 'data_file_path' or 'settings_file_path'" " must be not None."
             )
         settings_file_path = data_file_path + ".settings.json"
 
@@ -103,9 +102,7 @@ def local_file_from_path(
                 path=data_file_path,
                 dir_path=os.path.dirname(file_path),
                 settings_file_path=data_file_path + ".settings.json",
-                dir_path_from_root_path=os.path.relpath(
-                    os.path.dirname(file_path), top_dir
-                ),
+                dir_path_from_root_path=os.path.relpath(os.path.dirname(file_path), top_dir),
                 parsed_settings_file=parsed_settings_file,
             )
             return local_file
@@ -125,9 +122,7 @@ def local_file_from_path(
             path=file_path,
             dir_path=os.path.dirname(file_path),
             settings_file_path=file_path + ".settings.json",
-            dir_path_from_root_path=os.path.relpath(
-                os.path.dirname(file_path), top_dir
-            ),
+            dir_path_from_root_path=os.path.relpath(os.path.dirname(file_path), top_dir),
             parsed_settings_file=parsed_settings_file,
         )
         return local_file

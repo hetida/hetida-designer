@@ -73,9 +73,7 @@ async def test_end_to_end_send_only_dataframe_data():
             # more than one frame
             await send_data(
                 {
-                    "inp_1": FilteredSink(
-                        ref_id="sink_id_1", type="dataframe", filters={}
-                    ),
+                    "inp_1": FilteredSink(ref_id="sink_id_1", type="dataframe", filters={}),
                     "inp_2": FilteredSink(
                         ref_id="sink_id_2",
                         type=ExternalType.DATAFRAME,
@@ -110,11 +108,7 @@ async def test_end_to_end_send_only_dataframe_data():
             df_attrs = {"c": "test"}
             df.attrs = df_attrs
             await send_data(
-                {
-                    "inp_1": FilteredSink(
-                        ref_id="sink_id_1", type="dataframe", filters={}
-                    )
-                },
+                {"inp_1": FilteredSink(ref_id="sink_id_1", type="dataframe", filters={})},
                 {"inp_1": df},
                 adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
             )

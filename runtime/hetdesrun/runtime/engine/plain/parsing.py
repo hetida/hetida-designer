@@ -1,4 +1,5 @@
 """Parse workflow input into data structures of plain engine"""
+
 from collections.abc import Callable, Coroutine
 from typing import cast
 
@@ -44,9 +45,7 @@ class ConnectionInvalidError(WorkflowParsingException):
 
 def only_plot_outputs(outputs: list[ComponentOutput] | list[WorkflowOutput]) -> bool:
     # in case of an empty output list all will yield true
-    return len(outputs) > 0 and all(
-        output.type == DataType.PlotlyJson for output in outputs
-    )
+    return len(outputs) > 0 and all(output.type == DataType.PlotlyJson for output in outputs)
 
 
 def parse_workflow_input(
@@ -113,9 +112,7 @@ def parse_component_node(
 
     Includes importing and loading of component function
     """
-    component_node_name = (
-        component_node.name if component_node.name is not None else "UNKNOWN"
-    )
+    component_node_name = component_node.name if component_node.name is not None else "UNKNOWN"
     try:
         comp_rev = component_dict[component_node.component_uuid]
     except KeyError as e:
@@ -135,9 +132,7 @@ def parse_component_node(
         component_id=component_node.component_uuid,
         component_name=comp_rev.name if comp_rev.name is not None else "UNKNOWN",
         component_tag=comp_rev.tag,
-        operator_hierarchical_name=name_prefix
-        + component_node_name
-        + HIERARCHY_SEPARATOR
+        operator_hierarchical_name=name_prefix + component_node_name + HIERARCHY_SEPARATOR
         if name_prefix != ""
         else component_node_name,
         inputs=None,  # inputs are added later by the surrounding workflow
@@ -250,8 +245,7 @@ def obtain_mappings(
     }
 
     output_mappings = {
-        outp.name: (new_sub_nodes[outp.id_of_sub_node], outp.name_in_subnode)
-        for outp in outputs
+        outp.name: (new_sub_nodes[outp.id_of_sub_node], outp.name_in_subnode) for outp in outputs
     }
 
     return (

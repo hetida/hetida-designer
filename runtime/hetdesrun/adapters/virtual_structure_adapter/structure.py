@@ -19,16 +19,10 @@ logger = logging.getLogger(__name__)
 
 def get_level_from_struct_service(
     parent_id: UUID | None = None,
-) -> tuple[
-    list[StructureThingNode], list[StructureVirtualSource], list[StructureVirtualSink]
-]:
+) -> tuple[list[StructureThingNode], list[StructureVirtualSource], list[StructureVirtualSink]]:
     thing_nodes, sources, sinks = get_children(parent_id)
-    struct_thing_nodes = [
-        StructureThingNode.from_structure_service(node) for node in thing_nodes
-    ]
-    struct_sources = [
-        StructureVirtualSource.from_structure_service(source) for source in sources
-    ]
+    struct_thing_nodes = [StructureThingNode.from_structure_service(node) for node in thing_nodes]
+    struct_sources = [StructureVirtualSource.from_structure_service(source) for source in sources]
     struct_sinks = [StructureVirtualSink.from_structure_service(sink) for sink in sinks]
 
     return struct_thing_nodes, struct_sources, struct_sinks

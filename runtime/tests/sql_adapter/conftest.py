@@ -4,7 +4,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
 
 from hetdesrun.adapters.sql_adapter.config import (
@@ -41,9 +41,7 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
             "metric": ["a", "b", "a", "c"],
         }
     )
-    engine = create_engine(
-        "sqlite+pysqlite:///" + temporary_sqlite_file_path_ts_db, echo=True
-    )
+    engine = create_engine("sqlite+pysqlite:///" + temporary_sqlite_file_path_ts_db, echo=True)
 
     ts_df.to_sql(
         "ro_ts_table",  # ts table name
@@ -173,4 +171,4 @@ def async_test_client_with_sql_adapter(
     two_sqlite_dbs_configured,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
-    return AsyncClient(app=app_without_auth, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")

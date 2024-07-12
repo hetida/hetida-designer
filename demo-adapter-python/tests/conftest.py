@@ -1,9 +1,13 @@
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from demo_adapter_python.webservice import app
 
 
 @pytest.fixture
 def async_test_client() -> AsyncClient:
-    return AsyncClient(app=app, base_url="http://test")
+    return AsyncClient(
+        transport=ASGITransport(app=app),  # type: ignore
+        base_url="http://test",
+        timeout=15,
+    )

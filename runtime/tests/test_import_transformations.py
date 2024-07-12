@@ -161,9 +161,7 @@ def test_component_import_via_rest_api(caplog):
     response_mock.status_code = 200
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.utils.requests.put", return_value=response_mock
-        ) as patched_put:
+        with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
             import_transformations("./transformations/components")
             assert "Reduce data set by leaving out values" in caplog.text
@@ -176,9 +174,7 @@ def test_component_import_via_rest_api(caplog):
     response_mock.status_code = 400
 
     with caplog.at_level(logging.INFO):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.utils.requests.put", return_value=response_mock
-        ) as patched_put:
+        with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
             import_transformations("./transformations/components")
             assert "COULD NOT PUT COMPONENT" in caplog.text
@@ -188,18 +184,14 @@ def test_workflow_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
 
-    with mock.patch(
-        "hetdesrun.utils.requests.put", return_value=response_mock
-    ) as patched_put:
+    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
         import_transformations("./transformations/workflows")
 
     # at least tries to upload many workflows
     assert patched_put.call_count > 3
     # Test logging when posting does not work
     response_mock.status_code = 400
-    with mock.patch(
-        "hetdesrun.utils.requests.put", return_value=response_mock
-    ) as patched_put:
+    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
         caplog.clear()
         import_transformations("./transformations/workflows")
         assert "COULD NOT PUT WORKFLOW" in caplog.text
@@ -210,13 +202,9 @@ def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session)
     response_mock.status_code = 200
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.utils.requests.put", return_value=response_mock
-        ) as patched_put:
+        with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformations(
-                "./transformations/components", directly_into_db=True
-            )
+            import_transformations("./transformations/components", directly_into_db=True)
             assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
             # id of a component
 
@@ -235,9 +223,7 @@ def test_import_with_deprecate_older_versions():
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-            import_transformations(
-                "./transformations/components", deprecate_older_revisions=True
-            )
+            import_transformations("./transformations/components", deprecate_older_revisions=True)
 
     assert patched_deprecate_group.call_count > 10
 
@@ -269,9 +255,7 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
             assert len(list_of_json_paths) > 100  # we have more than 100 json files
-            assert all(
-                os.path.splitext(path)[1] == ".json" for path in list_of_json_paths
-            )
+            assert all(os.path.splitext(path)[1] == ".json" for path in list_of_json_paths)
 
 
 def test_generate_import_order_file_with_transform_py_to_json(tmp_path):

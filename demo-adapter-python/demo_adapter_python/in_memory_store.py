@@ -21,9 +21,7 @@ for plant in ("plantA", "plantB"):
                 isSink=True,
             )
 
-            store[
-                f"root.{plant}.{unit}.{position}.anomaly_score|Overshooting Allowed"
-            ] = Metadatum(
+            store[f"root.{plant}.{unit}.{position}.anomaly_score|Overshooting Allowed"] = Metadatum(
                 key="Overshooting Allowed",
                 value=False,
                 dataType="boolean",
@@ -42,9 +40,7 @@ for plant in ("plantA", "plantB"):
         isSink=True,
     )
     store[f"root.{plant}.alerts"] = pd.DataFrame()
-    store[f"root.{plant}.anomalies"] = pd.DataFrame(
-        [], columns=["timestamp", "metric", "value"]
-    )
+    store[f"root.{plant}.anomalies"] = pd.DataFrame([], columns=["timestamp", "metric", "value"])
 
 
 def get_store() -> MutableMapping[Any, Any]:

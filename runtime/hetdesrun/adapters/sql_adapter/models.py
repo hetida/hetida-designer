@@ -63,9 +63,7 @@ class WriteTable(BaseModel):
     @validator("db_key")
     def db_key_is_configured(cls, v: str) -> str:
         if v not in get_configured_dbs_by_key():
-            raise ValueError(
-                f"DB key {v} is not configured in sql adapter configuration"
-            )
+            raise ValueError(f"DB key {v} is not configured in sql adapter configuration")
         return v
 
     @classmethod
@@ -79,9 +77,7 @@ class WriteTable(BaseModel):
 
         params["db_key"] = id_split[0]
         if len(id_split) > 1:
-            write_mode_str: Literal[
-                "append_table", "replace_table", "appendable_ts_table"
-            ] = cast(
+            write_mode_str: Literal["append_table", "replace_table", "appendable_ts_table"] = cast(
                 Literal["append_table", "replace_table", "appendable_ts_table"],
                 id_split[1],
             )
@@ -94,13 +90,7 @@ class WriteTable(BaseModel):
 
     @property
     def sink_id(self) -> str:
-        return (
-            self.db_key
-            + "/"
-            + to_table_type_str(self.write_mode)
-            + "/"
-            + self.table_name
-        )
+        return self.db_key + "/" + to_table_type_str(self.write_mode) + "/" + self.table_name
 
     @property
     def db_config(self) -> SQLAdapterDBConfig:

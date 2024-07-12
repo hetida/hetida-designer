@@ -18,7 +18,6 @@ def replace_wirings(
     actual_output_wirings: dict[str, OutputWiring],
     workflow_wiring: WorkflowWiring,
 ) -> None:
-
     for idx, ref_id in input_ids:
         new_input_wiring = actual_input_wirings[ref_id]
         wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
@@ -44,12 +43,8 @@ def resolve_virtual_structure_wirings(
 ) -> None:
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
-    input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(
-        workflow_wiring.input_wirings
-    )
-    output_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(
-        workflow_wiring.output_wirings
-    )
+    input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.input_wirings)
+    output_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.output_wirings)
 
     if input_ref_ids or output_ref_ids:
         actual_input_wirings, actual_output_wirings = (

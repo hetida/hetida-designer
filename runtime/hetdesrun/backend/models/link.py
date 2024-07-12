@@ -36,27 +36,18 @@ class WorkflowLinkFrontendDto(BaseModel):
                 "'to_operators', 'from_operator' is missing!"
             ) from e
         if to_operator == from_operator:
-            raise ValueError(
-                "Start and end of a connection must differ from each other."
-            )
+            raise ValueError("Start and end of a connection must differ from each other.")
         return values
 
     @classmethod
     def from_link(cls, link: Link, workflow_id: UUID) -> "WorkflowLinkFrontendDto":
         return WorkflowLinkFrontendDto(
             id=link.id,
-            fromOperator=link.start.operator
-            if link.start.operator is not None
-            else workflow_id,
+            fromOperator=link.start.operator if link.start.operator is not None else workflow_id,
             fromConnector=link.start.connector.id,
-            toOperator=link.end.operator
-            if link.end.operator is not None
-            else workflow_id,
+            toOperator=link.end.operator if link.end.operator is not None else workflow_id,
             toConnector=link.end.connector.id,
-            path=[
-                PointFrontendDto(posX=position.x, posY=position.y)
-                for position in link.path
-            ],
+            path=[PointFrontendDto(posX=position.x, posY=position.y) for position in link.path],
         )
 
     def to_link(
@@ -68,9 +59,7 @@ class WorkflowLinkFrontendDto(BaseModel):
         return Link(
             id=self.id,
             start=Vertex(
-                operator=self.from_operator
-                if self.from_operator != workflow_id
-                else None,
+                operator=self.from_operator if self.from_operator != workflow_id else None,
                 connector=from_connector.to_connector(),
             ),
             end=Vertex(

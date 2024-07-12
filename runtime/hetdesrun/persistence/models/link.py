@@ -91,9 +91,7 @@ class Link(BaseModel):
                 "'start', 'end' is missing!"
             ) from error
         if start.operator == end.operator:
-            raise ValueError(
-                "Start and end of a connection must differ from each other."
-            )
+            raise ValueError("Start and end of a connection must differ from each other.")
         return values
 
     @root_validator()

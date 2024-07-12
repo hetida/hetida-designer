@@ -7,7 +7,6 @@ can be wired.
 Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugin of this adapter.
 """
 
-
 from fastapi import HTTPException, Query
 
 from hetdesrun.adapters.sql_adapter import VERSION
@@ -33,9 +32,7 @@ from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 # Note: As CORS middleware the router employs the main FastAPI app's one
-sql_adapter_router = HandleTrailingSlashAPIRouter(
-    prefix="/adapters/sql", tags=["sql adapter"]
-)
+sql_adapter_router = HandleTrailingSlashAPIRouter(prefix="/adapters/sql", tags=["sql adapter"])
 
 
 @sql_adapter_router.get(
@@ -62,7 +59,7 @@ async def get_structure_endpoint(parentId: str | None = None) -> StructureRespon
     dependencies=get_auth_deps(),
 )
 async def get_sources_endpoint(
-    filter_str: str | None = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter"),
 ) -> MultipleSourcesResponse:
     found_sources = get_sources(filter_str=filter_str)
     return MultipleSourcesResponse(
@@ -77,7 +74,7 @@ async def get_sources_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sinks_endpoint(
-    filter_str: str | None = Query(None, alias="filter")  # noqa: ARG001
+    filter_str: str | None = Query(None, alias="filter"),  # noqa: ARG001
 ) -> MultipleSinksResponse:
     found_sinks = get_sinks(filter_str=filter_str)
     return MultipleSinksResponse(
@@ -113,8 +110,7 @@ async def get_single_source(source_id: str) -> SQLAdapterStructureSource:
     if possible_source is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find loadable sql data "
-            + from_url_representation(source_id),
+            detail="Could not find loadable sql data " + from_url_representation(source_id),
         )
 
     return possible_source
@@ -145,8 +141,7 @@ async def get_single_sink(sink_id: str) -> SQLAdapterStructureSink:
     if possible_sink is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find writable sql table "
-            + from_url_representation(sink_id),
+            detail="Could not find writable sql table " + from_url_representation(sink_id),
         )
 
     return possible_sink
@@ -181,8 +176,7 @@ async def get_single_thingNode(
     if possible_thing_node is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find sql thing node at id path "
-            + from_url_representation(id),
+            detail="Could not find sql thing node at id path " + from_url_representation(id),
         )
 
     return possible_thing_node

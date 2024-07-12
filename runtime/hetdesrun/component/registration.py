@@ -25,7 +25,7 @@ def register(
     state: str | None = None,
     released_timestamp: str | None = None,
     disabled_timestamp: str | None = None,
-    is_pure_plot_component: bool | None = None  # noqa: ARG001
+    is_pure_plot_component: bool | None = None,  # noqa: ARG001
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 

@@ -33,7 +33,6 @@ def get_actual_sources_and_sinks_for_virtual_sources_and_sinks(
 def get_enumerated_ids_of_vst_sources_or_sinks(
     wirings: list[InputWiring] | list[OutputWiring],
 ) -> list[tuple[int, str]]:
-
     return [
         (i, wiring.ref_id)
         for i, wiring in enumerate(wirings)

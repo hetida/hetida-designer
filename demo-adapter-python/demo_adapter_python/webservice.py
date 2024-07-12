@@ -2,7 +2,8 @@ import base64
 import datetime
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
+from contextlib import asynccontextmanager
 from io import StringIO
 from typing import Any
 from urllib.parse import unquote
@@ -57,10 +58,29 @@ middleware = [
     )
 ]
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:  # noqa: ARG001
+    uv_logger = logging.getLogger("uvicorn.access")
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter(
+            "%(process)d - %(processName)s - %(asctime)s - %(levelname)s - %(message)s"
+        )
+    )
+    uv_logger.addHandler(handler)
+
+    logger.info("Initializing application ...")
+
+    yield
+    logger.info("Shutting down application...")
+
+
 app = FastAPI(
     title="Hetida Designer Python Demo Adapter API",
     description="Hetida Designer Python Demo Adapter Web Services API",
     version=VERSION,
+    lifespan=lifespan,
     root_path=demo_adapter_config.swagger_prefix,
     middleware=middleware,
 )
@@ -80,9 +100,7 @@ class AdditionalLoggingRoute(APIRoute):
                 json_data = await request.json()
             except json.decoder.JSONDecodeError:
                 body = await request.body()
-                logger.info(
-                    "RECEIVED BODY (could not parse as json):\n%s", body.decode()
-                )
+                logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
             else:
                 logger.info(
                     "RECEIVED JSON BODY: \n%s",
@@ -152,19 +170,13 @@ async def structure(parentId: str | None = None) -> StructureResponse:
 
 
 @demo_adapter_main_router.get("/sources", response_model=MultipleSourcesResponse)
-async def sources(
-    filter_str: str | None = Query(None, alias="filter")
-) -> MultipleSourcesResponse:
+async def sources(filter_str: str | None = Query(None, alias="filter")) -> MultipleSourcesResponse:
     return_sources = get_sources(filter_str=filter_str, include_sub_objects=True)
 
-    return MultipleSourcesResponse(
-        resultCount=len(return_sources), sources=return_sources
-    )
+    return MultipleSourcesResponse(resultCount=len(return_sources), sources=return_sources)
 
 
-@demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/", response_model=list[Metadatum]
-)
+@demo_adapter_main_router.get("/sources/{sourceId}/metadata/", response_model=list[Metadatum])
 async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
         return [
@@ -196,9 +208,7 @@ async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     return []
 
 
-@demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
-)
+@demo_adapter_main_router.get("/sources/{sourceId}/metadata/{key}", response_model=Metadatum)
 async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
     sourceId: str, key: str
 ) -> Metadatum:
@@ -223,9 +233,7 @@ async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
-    if sourceId.endswith("anomaly_score") and (
-        "plantA" in sourceId or "plantB" in sourceId
-    ):
+    if sourceId.endswith("anomaly_score") and ("plantA" in sourceId or "plantB" in sourceId):
         if key == "Max Value":
             return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
@@ -275,9 +283,7 @@ async def post_metadata_source_by_key(
     )
 
 
-@demo_adapter_main_router.get(
-    "/sources/{source_id:path}", response_model=StructureSource
-)
+@demo_adapter_main_router.get("/sources/{source_id:path}", response_model=StructureSource)
 async def source(source_id: str) -> StructureSource:
     """Get a single source by id"""
     requested_sources = [
@@ -296,17 +302,13 @@ async def source(source_id: str) -> StructureSource:
 
 
 @demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
-async def sinks(
-    filter_str: str | None = Query(None, alias="filter")
-) -> MultipleSinksResponse:
+async def sinks(filter_str: str | None = Query(None, alias="filter")) -> MultipleSinksResponse:
     return_sinks = get_sinks(filter_str=filter_str, include_sub_objects=True)
 
     return MultipleSinksResponse(resultCount=len(return_sinks), sinks=return_sinks)
 
 
-@demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/", response_model=list[Metadatum]
-)
+@demo_adapter_main_router.get("/sinks/{sinkId}/metadata/", response_model=list[Metadatum])
 async def get_all_metadata_sink(sinkId: str) -> list[Metadatum]:
     if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
         return [
@@ -323,9 +325,7 @@ async def get_all_metadata_sink(sinkId: str) -> list[Metadatum]:
     return []
 
 
-@demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/{key}", response_model=Metadatum
-)
+@demo_adapter_main_router.get("/sinks/{sinkId}/metadata/{key}", response_model=Metadatum)
 async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     key = unquote(key)
 
@@ -371,9 +371,7 @@ async def post_metadata_sink_by_key(
 @demo_adapter_main_router.get("/sinks/{sink_id}", response_model=StructureSink)
 async def sink(sink_id: str) -> StructureSink:
     """Get a single sink by id"""
-    requested_sinks = [
-        snk for snk in get_sinks(include_sub_objects=True) if snk["id"] == sink_id
-    ]
+    requested_sinks = [snk for snk in get_sinks(include_sub_objects=True) if snk["id"] == sink_id]
     if len(requested_sinks) > 1:
         msg = f"Error: Multiple sinks with same id {str(requested_sinks)}."
         logger.info(msg)
@@ -386,9 +384,7 @@ async def sink(sink_id: str) -> StructureSink:
     return StructureSink.parse_obj(requested_sinks[0])
 
 
-@demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum]
-)
+@demo_adapter_main_router.get("/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum])
 async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
@@ -421,14 +417,10 @@ async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
 
 def calculate_age(born: datetime.date) -> int:
     today = datetime.date.today()  # noqa: DTZ011
-    return (
-        today.year - born.year - int((today.month, today.day) < (born.month, born.day))
-    )
+    return today.year - born.year - int((today.month, today.day) < (born.month, born.day))
 
 
-@demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
-)
+@demo_adapter_main_router.get("/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum)
 async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
     thingNodeId: str, key: str, latex_mode: str = Query("", examples=["yes"])
 ) -> Metadatum:
@@ -437,9 +429,11 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
-                value="$^\\circ$F"
-                if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                else "F",
+                value=(
+                    "$^\\circ$F"
+                    if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
+                    else "F"
+                ),
                 dataType="string",
             )
         if key == "Pressure Unit":
@@ -461,10 +455,11 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
-                value="$^\\circ$C"
-                if latex_mode != ""
-                and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                else "C",
+                value=(
+                    "$^\\circ$C"
+                    if latex_mode != "" and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
+                    else "C"
+                ),
                 dataType="string",
             )
         if key == "Pressure Unit":
@@ -701,9 +696,7 @@ async def post_timeseries(
         )
         return {"message": "success"}
 
-    raise HTTPException(
-        status.HTTP_404_NOT_FOUND, f"No writable timeseries with id '{ts_id}'."
-    )
+    raise HTTPException(status.HTTP_404_NOT_FOUND, f"No writable timeseries with id '{ts_id}'.")
 
 
 def parse_string_to_list(input_string: str) -> tuple[list, str]:
@@ -744,9 +737,7 @@ async def dataframe(
         )
         df.attrs = {
             "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
-            "ref_interval_stop_timestamp": datetime.datetime.now(
-                tz=datetime.UTC
-            ).isoformat(),
+            "ref_interval_stop_timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
             "ref_interval_type": "closed",
             "ref_metrics": [
                 "component_id",
@@ -768,9 +759,7 @@ async def dataframe(
         )
         df.attrs = {
             "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
-            "ref_interval_stop_timestamp": datetime.datetime.now(
-                tz=datetime.UTC
-            ).isoformat(),
+            "ref_interval_stop_timestamp": datetime.datetime.now(tz=datetime.UTC).isoformat(),
             "ref_interval_type": "closed",
             "ref_metrics": [
                 "component_id",
@@ -882,9 +871,7 @@ async def post_dataframe(
         set_value_in_store(df_id, df)
         return {"message": "success"}
 
-    raise HTTPException(
-        status.HTTP_404_NOT_FOUND, f"No writable dataframe with id '{df_id}'."
-    )
+    raise HTTPException(status.HTTP_404_NOT_FOUND, f"No writable dataframe with id '{df_id}'.")
 
 
 @demo_adapter_main_router.get("/multitsframe", response_model=None)
@@ -900,7 +887,7 @@ async def multitsframe(
     upper_threshold: str = Query("", examples=["107.9"]),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="H", tz=datetime.timezone.utc
+        start=from_timestamp, end=to_timestamp, freq="h", tz=datetime.timezone.utc
     )
     mtsf = None
     if mtsf_id.endswith("temperatures"):
@@ -1048,21 +1035,7 @@ async def post_multitsframe(
         set_value_in_store(mtsf_id, mtsf)
         return {"message": "success"}
 
-    raise HTTPException(
-        status.HTTP_404_NOT_FOUND, f"No writable multitsframe with id '{mtsf_id}'."
-    )
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    uv_logger = logging.getLogger("uvicorn.access")
-    handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.Formatter(
-            "%(process)d - %(processName)s - %(asctime)s - %(levelname)s - %(message)s"
-        )
-    )
-    uv_logger.addHandler(handler)
+    raise HTTPException(status.HTTP_404_NOT_FOUND, f"No writable multitsframe with id '{mtsf_id}'.")
 
 
 app.include_router(demo_adapter_main_router, prefix="")

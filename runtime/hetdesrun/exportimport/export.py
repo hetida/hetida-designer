@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_from_java_backend(
-    id: UUID, type: Type, headers: dict[str, str]  # noqa: A002
+    id: UUID,  # noqa: A002
+    type: Type,  # noqa: A002
+    headers: dict[str, str],
 ) -> TransformationRevision:
     """Get transformation via REST API from old backend (old endpoints)
 
@@ -96,9 +98,7 @@ def get_transformation_from_java_backend(
             **revision_json,
         )
 
-    transformation_revision = frontend_dto.to_transformation_revision(
-        documentation=doc_text
-    )
+    transformation_revision = frontend_dto.to_transformation_revision(documentation=doc_text)
 
     return transformation_revision
 
@@ -149,17 +149,11 @@ def passes_all_filters(
     filter_type = criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
     filter_ids = selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
     filter_names = selection_list_empty_or_contains_value(names, trafo_json["name"])
-    filter_categories = selection_list_empty_or_contains_value(
-        categories, trafo_json["category"]
-    )
+    filter_categories = selection_list_empty_or_contains_value(categories, trafo_json["category"])
     filter_state = include_deprecated or trafo_json["state"] != State.DISABLED
 
     combined_filter = (
-        filter_type
-        and filter_ids
-        and filter_names
-        and filter_categories
-        and filter_state
+        filter_type and filter_ids and filter_names and filter_categories and filter_state
     )
 
     return combined_filter
@@ -264,9 +258,7 @@ def export_transformations(
 
         failed_exports: list[Any] = []
         for base_item_json in base_item_jsons:
-            if passes_all_filters(
-                base_item_json, type, categories, ids, names, include_deprecated
-            ):
+            if passes_all_filters(base_item_json, type, categories, ids, names, include_deprecated):
                 try:
                     transformation = get_transformation_from_java_backend(
                         UUID(base_item_json["id"]),

@@ -24,9 +24,7 @@ async def test_auth_external_forward_with_set_explicit_bearer_token(
     unset_request_auth_context,
     auth_bearer_token_for_outgoing_requests_is_set,
 ):
-    assert await get_auth_headers(external=True) == {
-        "Authorization": "Bearer some token string"
-    }
+    assert await get_auth_headers(external=True) == {"Authorization": "Bearer some token string"}
 
 
 @pytest.mark.asyncio
@@ -44,9 +42,7 @@ async def test_auth_external_forward_from_request(
     outgoing_auth_external_mode_forward_or_fixed,
     set_request_auth_context,
 ):
-    assert await get_auth_headers(external=True) == {
-        "Authorization": "Bearer token from request"
-    }
+    assert await get_auth_headers(external=True) == {"Authorization": "Bearer token from request"}
 
 
 @pytest.mark.asyncio
@@ -55,9 +51,7 @@ async def test_auth_internal_forward_with_set_explicit_bearer_token(
     unset_request_auth_context,
     auth_bearer_token_for_outgoing_requests_is_set,
 ):
-    assert await get_auth_headers(external=False) == {
-        "Authorization": "Bearer some token string"
-    }
+    assert await get_auth_headers(external=False) == {"Authorization": "Bearer some token string"}
 
 
 @pytest.mark.asyncio
@@ -75,9 +69,7 @@ async def test_auth_internal_forward_from_request(
     outgoing_auth_internal_mode_forward_or_fixed,
     set_request_auth_context,
 ):
-    assert await get_auth_headers(external=False) == {
-        "Authorization": "Bearer token from request"
-    }
+    assert await get_auth_headers(external=False) == {"Authorization": "Bearer token from request"}
 
 
 # CLIENT

@@ -29,8 +29,7 @@ def configure_logging(
     # sys.stderr will be propagated by mod_wsgi to Apache error log for webservice
 
     formatter = logging.Formatter(
-        "%(asctime)s %(process)d %(levelname)s: %(message)s "
-        "[in %(pathname)s:%(lineno)d]"
+        "%(asctime)s %(process)d %(levelname)s: %(message)s " "[in %(pathname)s:%(lineno)d]"
     )
     logging_handler.setFormatter(formatter)
     the_logger.addHandler(logging_handler)

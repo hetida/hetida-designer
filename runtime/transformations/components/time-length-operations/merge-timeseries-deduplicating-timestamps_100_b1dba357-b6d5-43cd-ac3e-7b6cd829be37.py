@@ -46,23 +46,15 @@ def dupl_count_at_duplicated_positions(orig, dupl_counts):
     Return a series where the total number of duplicates in a sequence is written at every duplicate
     position.
     """
-    last_duplicated_position = orig.duplicated() & (
-        ~orig.duplicated().shift(-1).fillna(False)
-    )
-    return dupl_counts.where(
-        last_duplicated_position | (dupl_counts == 0), np.nan
-    ).backfill()
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
+    return dupl_counts.where(last_duplicated_position | (dupl_counts == 0), np.nan).backfill()
 
 
 def dupl_delta_to_next(orig):
     """Delta to next different timestamp at every position"""
-    last_duplicated_position = orig.duplicated() & (
-        ~orig.duplicated().shift(-1).fillna(False)
-    )
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
     timestamps_after = (
-        (orig.shift(-1))
-        .where(last_duplicated_position, orig.where(~orig.duplicated()))
-        .bfill()
+        (orig.shift(-1)).where(last_duplicated_position, orig.where(~orig.duplicated())).bfill()
     )
     delta_to = (timestamps_after - orig).fillna(pd.Timedelta(0))
     return delta_to
@@ -138,9 +130,7 @@ def merge_with_deduplicated_timestamps(
         sorted_timeseries_df["timestamp"], max_distribution_delta
     )
 
-    return pd.Series(
-        sorted_timeseries_df["value"].values, index=new_timestamps, name=name
-    )
+    return pd.Series(sorted_timeseries_df["value"].values, index=new_timestamps, name=name)
 
 
 # ***** DO NOT EDIT LINES BELOW *****

@@ -54,9 +54,7 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
             " Not setting auth header"
         )
         return {}
-    logger.debug(
-        "Found stored auth token. Setting Authorization header with schema Bearer"
-    )
+    logger.debug("Found stored auth token. Setting Authorization header with schema Bearer")
     return {"Authorization": "Bearer " + token}
 
 
@@ -145,9 +143,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
 
     if credentials.scheme != "Bearer":  # type: ignore
         logger.info("Unauthorized: No Bearer Schema")
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
-        )
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method")
 
     token = credentials.credentials  # type: ignore
 
@@ -163,9 +159,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         ):
             # roles are expected in "groups" key in payload
             logger.info("Unauthorized: Roles not allowed")
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed"
-            )
+            raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed")
     except KeyError:
         logger.info("Unauthorized: No role information in token")
         raise HTTPException(

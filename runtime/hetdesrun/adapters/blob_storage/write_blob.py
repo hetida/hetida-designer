@@ -49,9 +49,7 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
     get_thing_node_by_id may occur.
     """
     try:
-        sink = get_sink_by_thing_node_id_and_metadata_key(
-            IdString(thing_node_id), metadata_key
-        )
+        sink = get_sink_by_thing_node_id_and_metadata_key(IdString(thing_node_id), metadata_key)
     except StructureObjectNotFound:
         try:
             thing_node = get_thing_node_by_id(IdString(thing_node_id))
@@ -189,23 +187,15 @@ async def write_blob_to_storage(
     try:
         import tensorflow as tf
     except ModuleNotFoundError:
-        logger.debug(
-            "To store a keras model, add tensorflow to the runtime dependencies."
-        )
+        logger.debug("To store a keras model, add tensorflow to the runtime dependencies.")
     else:
         logger.debug("Successfully imported tensorflow version %s", tf.__version__)
-        is_keras_model = isinstance(
-            data, tf.keras.models.Model | tf.keras.models.Sequential
-        )
+        is_keras_model = isinstance(data, tf.keras.models.Model | tf.keras.models.Sequential)
         if is_keras_model:
             logger.debug("Identified object as tensorflow keras model")
-        is_keras_model_with_custom_objects = isinstance(
-            data, WrappedModelWithCustomObjects
-        )
+        is_keras_model_with_custom_objects = isinstance(data, WrappedModelWithCustomObjects)
         if is_keras_model_with_custom_objects:
-            logger.debug(
-                "Identified object as tensorflow keras model with custom objects"
-            )
+            logger.debug("Identified object as tensorflow keras model with custom objects")
 
     (
         sink,
@@ -213,9 +203,7 @@ async def write_blob_to_storage(
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
-        metadata_key=apply_filters_to_metadata_key(
-            thing_node_id, metadata_key, filters
-        ),
+        metadata_key=apply_filters_to_metadata_key(thing_node_id, metadata_key, filters),
         file_extension=FileExtension.H5
         if is_keras_model or is_keras_model_with_custom_objects
         else FileExtension.Pickle,
@@ -256,9 +244,7 @@ async def write_blob_to_storage(
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)
 
-            logger.info(
-                "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
-            )
+            logger.info("Dumped data of size %i into BLOB", file_object.getbuffer().nbytes)
 
             try:
                 put_object(

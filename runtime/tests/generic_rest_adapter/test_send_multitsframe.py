@@ -15,12 +15,15 @@ from hetdesrun.models.data_selection import FilteredSink
 async def test_end_to_end_send_only_multitsframe_data() -> None:
     post_mock = mock.AsyncMock(return_value=mock.Mock(status_code=200))
 
-    with mock.patch(  # noqa: SIM117
-        "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
-        return_value="https://hetida.de",
-    ), mock.patch(
-        "hetdesrun.adapters.generic_rest.send_multitsframe.AsyncClient.post",
-        new=post_mock,
+    with (
+        mock.patch(  # noqa: SIM117
+            "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
+            return_value="https://hetida.de",
+        ),
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.send_multitsframe.AsyncClient.post",
+            new=post_mock,
+        ),
     ):
         mtsf_1 = pd.DataFrame(
             {
@@ -183,9 +186,7 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
         assert kwargs_3["json"] == []
 
         no_mtsf = pd.Series([1.0], index=pd.to_datetime(["2019-08-01T15:45:36Z"]))
-        with pytest.raises(
-            AdapterOutputDataError, match="Did not receive Pandas DataFrame"
-        ):
+        with pytest.raises(AdapterOutputDataError, match="Did not receive Pandas DataFrame"):
             await send_data(
                 {
                     "outp_4": FilteredSink(
@@ -234,12 +235,8 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
                 adapter_key="test_end_to_end_send_only_multitsframe_data",
             )
 
-        mtsf_8 = pd.DataFrame(
-            {"metric": ["a"], "timestamp": ["not a timestamp"], "value": [1.0]}
-        )
-        with pytest.raises(
-            AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"
-        ):
+        mtsf_8 = pd.DataFrame({"metric": ["a"], "timestamp": ["not a timestamp"], "value": [1.0]})
+        with pytest.raises(AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"):
             await send_data(
                 {"outp_8": FilteredSink(ref_id="sink_id_8", type="multitsframe")},
                 {"outp_8": mtsf_8},

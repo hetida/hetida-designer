@@ -51,9 +51,7 @@ class AdditionalLoggingRoute(APIRoute):
                 json_data = await request.json()
             except json.decoder.JSONDecodeError:
                 body = await request.body()
-                logger.info(
-                    "RECEIVED BODY (could not parse as json):\n%s", body.decode()
-                )
+                logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
             else:
                 logger.info(
                     "RECEIVED JSON BODY: \n%s",
@@ -145,6 +143,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.kafka.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
@@ -176,26 +179,15 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         logger.info("Request validation failed:\n%s", str(exc))
         return await request_validation_exception_handler(request, exc)
 
-    if (
-        get_config().is_runtime_service
-        and len(get_config().restrict_to_trafo_exec_service) == 0
-    ):
+    if get_config().is_runtime_service and len(get_config().restrict_to_trafo_exec_service) == 0:
         app.include_router(virtual_structure_adapter_router)
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
-        if (
-            get_kafka_adapter_config().active
-            and get_kafka_adapter_config().service_in_runtime
-        ):
+        if get_kafka_adapter_config().active and get_kafka_adapter_config().service_in_runtime:
             app.include_router(kafka_adapter_router)
-        if (
-            get_sql_adapter_config().active
-            and get_sql_adapter_config().service_in_runtime
-        ):
-            app.include_router(
-                sql_adapter_router
-            )  # auth dependency set individually per endpoint
+        if get_sql_adapter_config().active and get_sql_adapter_config().service_in_runtime:
+            app.include_router(sql_adapter_router)  # auth dependency set individually per endpoint
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
                 blob_storage_adapter_router
@@ -204,43 +196,22 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
 
-    if (
-        get_config().is_backend_service
-        and len(get_config().restrict_to_trafo_exec_service) == 0
-    ):
+    if get_config().is_backend_service and len(get_config().restrict_to_trafo_exec_service) == 0:
         app.include_router(virtual_structure_adapter_router)
-        if (
-            get_sql_adapter_config().active
-            and not get_sql_adapter_config().service_in_runtime
-        ):
-            app.include_router(
-                sql_adapter_router
-            )  # auth dependency set individually per endpoint
-        if (
-            get_kafka_adapter_config().active
-            and not get_kafka_adapter_config().service_in_runtime
-        ):
+        if get_sql_adapter_config().active and not get_sql_adapter_config().service_in_runtime:
+            app.include_router(sql_adapter_router)  # auth dependency set individually per endpoint
+        if get_kafka_adapter_config().active and not get_kafka_adapter_config().service_in_runtime:
             app.include_router(
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(
-            base_item_router, prefix="/api", dependencies=get_auth_deps()
-        )
-        app.include_router(
-            documentation_router, prefix="/api", dependencies=get_auth_deps()
-        )
-        app.include_router(
-            info_router, prefix="/api"
-        )  # reachable without authorization
-        app.include_router(
-            component_router, prefix="/api", dependencies=get_auth_deps()
-        )
+        app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
+        app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())
+        app.include_router(info_router, prefix="/api")  # reachable without authorization
+        app.include_router(component_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(workflow_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(wiring_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(
-            transformation_router, prefix="/api", dependencies=get_auth_deps()
-        )
+        app.include_router(transformation_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             dashboard_router,
             prefix="/api",  # individual auth dependency
@@ -250,13 +221,9 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             possible_maintenance_secret is not None
             and len(possible_maintenance_secret.get_secret_value()) > 0
         ):
-            app.include_router(
-                maintenance_router, prefix="/api", dependencies=get_auth_deps()
-            )
+            app.include_router(maintenance_router, prefix="/api", dependencies=get_auth_deps())
     if len(get_config().restrict_to_trafo_exec_service) != 0:
-        app.include_router(
-            info_router, prefix="/api"
-        )  # reachable without authorization
+        app.include_router(info_router, prefix="/api")  # reachable without authorization
         app.include_router(
             restricted_transformation_router,
             prefix="/api",

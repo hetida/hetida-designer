@@ -101,12 +101,8 @@ def main(*, gap_timestamps, replacement_value):
     `gap_timestamps` and values identical to the replacement_value.
     """
 
-    index_of_expected_dtype = pd.api.types.is_datetime64_any_dtype(
-        gap_timestamps.index.dtype
-    )
-    values_of_expected_dtype = pd.api.types.is_datetime64_any_dtype(
-        gap_timestamps.dtype
-    )
+    index_of_expected_dtype = pd.api.types.is_datetime64_any_dtype(gap_timestamps.index.dtype)
+    values_of_expected_dtype = pd.api.types.is_datetime64_any_dtype(gap_timestamps.dtype)
 
     if not index_of_expected_dtype and not values_of_expected_dtype:
         raise ComponentInputValidationException(
@@ -132,9 +128,7 @@ def main(*, gap_timestamps, replacement_value):
         return_series_index = gap_timestamps.index
 
     return {
-        "replacement_value_series": pd.Series(
-            data=replacement_value, index=return_series_index
-        )
+        "replacement_value_series": pd.Series(data=replacement_value, index=return_series_index)
     }
 
 

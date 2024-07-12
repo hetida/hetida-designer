@@ -50,9 +50,7 @@ async def load_ts_data_from_adapter(
     return df
 
 
-def extract_one_channel_series_from_loaded_data(
-    df: pd.DataFrame, ts_id: str
-) -> pd.Series:
+def extract_one_channel_series_from_loaded_data(df: pd.DataFrame, ts_id: str) -> pd.Series:
     try:
         extracted_df = df[df["timeseriesId"] == ts_id].copy()
         extracted_df.index = extracted_df["timestamp"]
@@ -98,12 +96,10 @@ async def load_grouped_timeseries_data_together(
     ] = defaultdict(dict)
 
     for filtered_source in data_to_load.values():
-        if (
-            not isinstance(filtered_source.filters.get("timestampFrom", None), str)
-        ) or (not isinstance(filtered_source.filters.get("timestampTo", None), str)):
-            raise AdapterClientWiringInvalidError(
-                "Timeseries data with no to/from filters."
-            )
+        if (not isinstance(filtered_source.filters.get("timestampFrom", None), str)) or (
+            not isinstance(filtered_source.filters.get("timestampTo", None), str)
+        ):
+            raise AdapterClientWiringInvalidError("Timeseries data with no to/from filters.")
 
     for key, filtered_source in data_to_load.items():
         filtered_source.filters["from"] = filtered_source.filters.pop("timestampFrom")

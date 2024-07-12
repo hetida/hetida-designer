@@ -41,14 +41,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     This function is used by the runtime endpoint
     """
 
-    runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "RUNTIME_SERVICE"
-    )
+    runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin("RUNTIME_SERVICE")
 
     execution_config.set(runtime_input.configuration)
-    execution_context_filter.bind_context(
-        currently_executed_job_id=runtime_input.job_id
-    )
+    execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
     job_id_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,
@@ -93,9 +89,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             currently_executed_process_stage.value
         )
         resolve_virtual_structure_wirings(runtime_input.workflow_wiring)
-        runtime_logger.debug(
-            "Resolved virtual structure wirings: ", runtime_input.workflow_wiring
-        )
+        runtime_logger.debug("Resolved virtual structure wirings: ", runtime_input.workflow_wiring)
 
         resolve_wirings_measured_step.stop()
     except AdapterHandlingException as exc:
@@ -116,9 +110,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             currently_executed_process_stage.value
         )
 
-        loaded_data = await resolve_and_load_data_from_wiring(
-            runtime_input.workflow_wiring
-        )
+        loaded_data = await resolve_and_load_data_from_wiring(runtime_input.workflow_wiring)
 
         load_data_measured_step.stop()
     except AdapterHandlingException as exc:
@@ -148,9 +140,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         # ComputationNode knows that the input values are to be obtained from this node.
         # Where applicable, the information from the previous addition of the node with the
         # id_suffix "workflow_default_values" is overwritten.
-        parsed_wf.add_constant_providing_node(
-            constant_providing_data, id_suffix="dynamic_data"
-        )
+        parsed_wf.add_constant_providing_node(constant_providing_data, id_suffix="dynamic_data")
     except WorkflowInputDataValidationError as exc:
         runtime_logger.info(
             "Input Data Validation Error during data provision",
@@ -213,10 +203,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     if runtime_input.configuration.return_individual_node_results:
         # prepare individual results
         all_results_str = "\n".join(
-            [
-                str(x.operator_hierarchical_id) + " " + str(await x.result)
-                for x in all_nodes
-            ]
+            [str(x.operator_hierarchical_id) + " " + str(await x.result) for x in all_nodes]
         )
 
         runtime_logger.info(
@@ -293,9 +280,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     runtime_service_measured_step.stop()
 
-    wf_exec_result.measured_steps.runtime_service_handling = (
-        runtime_service_measured_step
-    )
+    wf_exec_result.measured_steps.runtime_service_handling = runtime_service_measured_step
 
     # TODO: avoid double serialization
     return wf_exec_result

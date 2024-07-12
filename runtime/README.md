@@ -9,7 +9,7 @@ Both are written in Python and their code resides in the runtime subdirectory.
 > **Note**: All described command line commands in this file assume that the runtime subdirectory of the hetida designer repository is the current working directory.
 
 ## Development Setup
-Make sure Python 3.11 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. 
+Make sure Python 3.12 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. 
 
 We heavily recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython which corresponds to the targeted Docker image environment.
 

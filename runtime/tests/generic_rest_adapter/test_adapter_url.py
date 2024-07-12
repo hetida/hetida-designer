@@ -35,10 +35,7 @@ async def test_base_url_fetching_internally():
             "hetdesrun.webservice.config.runtime_config.is_backend_service",
             True,
         ):
-            assert (
-                await get_generic_rest_adapter_base_url("test_adapter_key")
-                == "http://hetida.de"
-            )
+            assert await get_generic_rest_adapter_base_url("test_adapter_key") == "http://hetida.de"
 
 
 @pytest.mark.asyncio
@@ -63,10 +60,7 @@ async def test_base_url_fetching_externally():
             "hetdesrun.webservice.config.runtime_config.is_backend_service",
             False,
         ):
-            assert (
-                await get_generic_rest_adapter_base_url("test_adapter_key")
-                == "http://hetida.de"
-            )
+            assert await get_generic_rest_adapter_base_url("test_adapter_key") == "http://hetida.de"
 
     response_mock.status_code = 400
     with mock.patch(  # noqa: SIM117

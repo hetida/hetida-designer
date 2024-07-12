@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def structure_ids_by_nesting_level(
-    transformation_dict: dict[UUID, TransformationRevision]
+    transformation_dict: dict[UUID, TransformationRevision],
 ) -> dict[int, list[UUID]]:
     """Get ensemble of transformation structured by nesting level
 
@@ -49,9 +49,7 @@ def structure_ids_by_nesting_level(
                     operator.transformation_id,
                     level,
                 )
-                nextlevel = max(
-                    nextlevel, nesting_level(operator.transformation_id, level=level)
-                )
+                nextlevel = max(nextlevel, nesting_level(operator.transformation_id, level=level))
 
         return nextlevel
 

@@ -19,27 +19,19 @@ def get_children(
     with get_session()() as session:
         if parent_id == None:
             root_nodes = (
-                session.query(ThingNodeOrm)
-                .filter(ThingNodeOrm.parent_node_id.is_(None))
-                .all()
+                session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id.is_(None)).all()
             )
             return ([ThingNode.from_orm_model(node) for node in root_nodes], [], [])
 
         child_nodes = (
-            session.query(ThingNodeOrm)
-            .filter(ThingNodeOrm.parent_node_id == parent_id)
-            .all()
+            session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == parent_id).all()
         )
 
-        sources = (
-            session.query(SourceOrm).filter(SourceOrm.thing_node_id == parent_id).all()
-        )
+        sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == parent_id).all()
         sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == parent_id).all()
 
         if not child_nodes and not sources and not sinks:
-            raise DBNotFoundError(
-                f"No children, sources, or sinks found for parent_id {parent_id}"
-            )
+            raise DBNotFoundError(f"No children, sources, or sinks found for parent_id {parent_id}")
 
         return (
             [ThingNode.from_orm_model(node) for node in child_nodes],
@@ -50,9 +42,7 @@ def get_children(
 
 def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
     with get_session()() as session:
-        thing_node = (
-            session.query(ThingNodeOrm).filter(ThingNodeOrm.id == tn_id).one_or_none()
-        )
+        thing_node = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == tn_id).one_or_none()
         if thing_node:
             return ThingNode.from_orm_model(thing_node)
 
@@ -111,9 +101,7 @@ def delete_structure() -> None:
 
 
 def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> None:
-    child_nodes = (
-        session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == node_id).all()
-    )
+    child_nodes = session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == node_id).all()
 
     for child_node in child_nodes:
         _delete_structure_recursive(session, child_node.id)
@@ -132,35 +120,25 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
     )
 
     for source in sources_to_delete:
-        session.query(ThingNodeSourceAssociation).filter_by(
-            source_id=source.id
-        ).delete()
+        session.query(ThingNodeSourceAssociation).filter_by(source_id=source.id).delete()
         session.delete(source)
     for sink in sinks_to_delete:
         session.query(ThingNodeSinkAssociation).filter_by(sink_id=sink.id).delete()
         session.delete(sink)
 
-    remaining_sources = (
-        session.query(SourceOrm).filter(SourceOrm.thing_node_id == node_id).all()
-    )
-    remaining_sinks = (
-        session.query(SinkOrm).filter(SinkOrm.thing_node_id == node_id).all()
-    )
+    remaining_sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == node_id).all()
+    remaining_sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == node_id).all()
 
     for source in remaining_sources:
         session.delete(source)
     for sink in remaining_sinks:
         session.delete(sink)
 
-    node_to_delete = (
-        session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node_id).one_or_none()
-    )
+    node_to_delete = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node_id).one_or_none()
     if node_to_delete:
         session.delete(node_to_delete)
 
-    orphaned_sources = (
-        session.query(SourceOrm).filter(SourceOrm.thing_node_id == None).all()
-    )
+    orphaned_sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == None).all()
     orphaned_sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == None).all()
 
     for source in orphaned_sources:

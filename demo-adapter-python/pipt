@@ -34,7 +34,7 @@ set -euo pipefail
 #                                                                             #
 ###############################################################################
 
-declare -r PIPT_VERSION="0.2.0"
+declare -r PIPT_VERSION="0.3.0"
 
 # Hash separator:
 declare -r HASH_SEP="b703d2e29001d23a7a3b153619c4a3cf0d75c0e5bc44cfe8991371344cd3cd1d"
@@ -54,18 +54,18 @@ set +u
 
 # Read in config file
 if [[ -z "$PIPT_CONFIG_FILE_PATH" ]]; then
-  if [[ -n "$PIPT_REQ_SOURCE_DIR" ]]; then
-    CONFIG_FILE_PATH="$PIPT_REQ_SOURCE_DIR/pipt_config.env"
-  else
-    CONFIG_FILE_PATH="./pipt_config.env"
-  fi
+    if [[ -n "$PIPT_REQ_SOURCE_DIR" ]]; then
+        CONFIG_FILE_PATH="$PIPT_REQ_SOURCE_DIR/pipt_config.env"
+    else
+        CONFIG_FILE_PATH="./pipt_config.env"
+    fi
 else
-  CONFIG_FILE_PATH="$PIPT_CONFIG_FILE_PATH"
+    CONFIG_FILE_PATH="$PIPT_CONFIG_FILE_PATH"
 fi
 
 if [[ -f "$CONFIG_FILE_PATH" ]]; then
-  # shellcheck disable=SC1090
-  source "$CONFIG_FILE_PATH"
+    # shellcheck disable=SC1090
+    source "$CONFIG_FILE_PATH"
 fi
 
 # load internal variables from config file.
@@ -73,6 +73,7 @@ fi
 EXPLICIT_VENV_TARGET_PATH="${PIPT_EXPLICIT_VENV_TARGET_PATH:-"${EXPLICIT_VENV_TARGET_PATH}"}"
 EXPLICIT_VENV_IN_HOME_NAME="${PIPT_EXPLICIT_VENV_IN_HOME_NAME:-"${EXPLICIT_VENV_IN_HOME_NAME}"}"
 PYTHON_INTERPRETER="${PIPT_PYTHON_INTERPRETER:-"${PYTHON_INTERPRETER}"}"
+
 NO_VENV="${PIPT_NO_VENV:-"${NO_VENV:-false}"}"
 SILENT="${PIPT_SILENT:-"${SILENT:-false}"}"
 SHELL_HOOK="${PIPT_SHELL_HOOK:-"${SHELL_HOOK:-""}"}"
@@ -102,6 +103,11 @@ declare -a PIP_COMPILE_ARGS="${PIPT_PIP_COMPILE_ARGS:-"${PIP_COMPILE_ARGS:-()}"}
 
 declare -ar offline_pip_install_args=("--no-index" "--no-cache-dir" "--find-links" "\"$OFFLINE_SYNC_DIR\"")
 declare -ar offline_pip_install_args_unquoted=("--no-index" "--no-cache-dir" "--find-links" "$OFFLINE_SYNC_DIR")
+
+declare -ar offline_pip_sync_args_unquoted=("--no-index" "--find-links" "$OFFLINE_SYNC_DIR")
+
+declare -ar offline_uv_pip_sync_args_unquoted=("--no-index" "--no-cache" "--find-links" "$OFFLINE_SYNC_DIR")
+
 ###############################################################################
 #                                                                             #
 #         Read non-dependency lock file / initialize lock variables           #
@@ -109,13 +115,15 @@ declare -ar offline_pip_install_args_unquoted=("--no-index" "--no-cache-dir" "--
 ###############################################################################
 
 PY_VERSION=""
+USE_UV="${PIPT_USE_UV:-"${USE_UV:-"true"}"}"
+
 DEPENDENCY_SPECIFICATIONS_ABORT_HASH=""
 DEPENDENCY_SPECIFICATIONS_FULL_HASH=""
 PYTHON_ENVIRONMENT_BASE_HASH=""
 
 if [[ -f "$REQ_SOURCE_DIR"/pipt_locks.env ]]; then
-  # shellcheck disable=SC1091
-  source "$REQ_SOURCE_DIR"/pipt_locks.env
+    # shellcheck disable=SC1091
+    source "$REQ_SOURCE_DIR"/pipt_locks.env
 fi
 
 USE_PROD_ENVIRONMENT=false
@@ -146,13 +154,13 @@ VENV_PYTHON=""
 #                                                                             #
 ###############################################################################
 _info() {
-  if [[ $SILENT = false ]]; then
-    echo "${@}" >&1
-  fi
+    if [[ $SILENT = false ]]; then
+        echo "${@}" >&1
+    fi
 }
 
 _log_error() {
-  echo "${@}" >&2
+    echo "${@}" >&2
 }
 
 ###############################################################################
@@ -162,63 +170,63 @@ _log_error() {
 ###############################################################################
 
 _trim_whitespace() {
-  local var="$*"
-  # remove leading whitespace characters
-  var="${var#"${var%%[![:space:]]*}"}"
-  # remove trailing whitespace characters
-  var="${var%"${var##*[![:space:]]}"}"
-  printf '%s' "$var"
+    local var="$*"
+    # remove leading whitespace characters
+    var="${var#"${var%%[![:space:]]*}"}"
+    # remove trailing whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"
+    printf '%s' "$var"
 }
 
 _trim_whitespace_from_input() {
-  local var
-  var="$(cat)"
-  # remove leading whitespace characters
-  var="${var#"${var%%[![:space:]]*}"}"
-  # remove trailing whitespace characters
-  var="${var%"${var##*[![:space:]]}"}"
-  printf '%s' "$var"
+    local var
+    var="$(cat)"
+    # remove leading whitespace characters
+    var="${var#"${var%%[![:space:]]*}"}"
+    # remove trailing whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"
+    printf '%s' "$var"
 }
 
 _load_file() {
-  # default to empty string on non-existent files
-  if [ -f "$1" ]; then
-    printf '%s' "$(cat "$1" 2>/dev/null)"
-  else
-    printf -- ""
-  fi
+    # default to empty string on non-existent files
+    if [ -f "$1" ]; then
+        printf '%s' "$(cat "$1" 2>/dev/null)"
+    else
+        printf -- ""
+    fi
 }
 
 _hash_multiple() {
-  # Compute sha256sum hash over multiple files and strings
-  #
-  # * Order matters.
-  # * Non-existent files will be silently handled as empty.
-  # * Whitespace will be trimmed before hashing.
+    # Compute sha256sum hash over multiple files and strings
+    #
+    # * Order matters.
+    # * Non-existent files will be silently handled as empty.
+    # * Whitespace will be trimmed before hashing.
 
-  concated_content=""
+    concated_content=""
 
-  while [[ "$#" -gt 0 ]]; do case $1 in
-    -s | --string)
-      concated_content+="$(_trim_whitespace "$2")"
-      concated_content+="$HASH_SEP_WITH_NEWLINES"
-      shift
-      shift
-      ;;
-    -f | --file)
-      concated_content+="$(_load_file "$2" | _trim_whitespace_from_input)"
-      concated_content+="$HASH_SEP_WITH_NEWLINES"
-      shift
-      shift
-      ;;
-    *)
-      concated_content+="$(_load_file "$1" | _trim_whitespace_from_input)"
-      concated_content+="$HASH_SEP_WITH_NEWLINES"
-      shift
-      ;; # defaulting to files.
-    esac done
+    while [[ "$#" -gt 0 ]]; do case $1 in
+        -s | --string)
+            concated_content+="$(_trim_whitespace "$2")"
+            concated_content+="$HASH_SEP_WITH_NEWLINES"
+            shift
+            shift
+            ;;
+        -f | --file)
+            concated_content+="$(_load_file "$2" | _trim_whitespace_from_input)"
+            concated_content+="$HASH_SEP_WITH_NEWLINES"
+            shift
+            shift
+            ;;
+        *)
+            concated_content+="$(_load_file "$1" | _trim_whitespace_from_input)"
+            concated_content+="$HASH_SEP_WITH_NEWLINES"
+            shift
+            ;; # defaulting to files.
+        esac done
 
-  printf '%s' "$concated_content" | sha256sum | cut -d " " -f 1
+    printf '%s' "$concated_content" | sha256sum | cut -d " " -f 1
 }
 
 ###############################################################################
@@ -228,433 +236,440 @@ _hash_multiple() {
 ###############################################################################
 
 usage() {
-  if [ -n "${1-}" ]; then
-    _log_error "--> ERROR: $1\n"
-  fi
+    if [ -n "${1-}" ]; then
+        _log_error "--> ERROR: $1\n"
+    fi
 
-  echo "USAGE: Run"
-  echo "  pipt SUBCOMMAND"
-  echo "with deactivated virtual environment. Available subcommands:"
-  echo ""
-  echo "  pipt shell [--prod]"
-  echo "        Drops you in a shell with activated, synced virtual environment."
-  echo "  pipt add [--dev] dependency_spec_1 dependency_spec_2 ..."
-  echo '        Add dependency specifications like "requests<3" and lock.'
-  echo "  pipt remove dependency_spec_1 dependency_spec_2 ..."
-  echo "        Remove dependency specifications from all requirements*.in files and lock."
-  echo "  pipt run [--prod] [--silent] -- COMMAND"
-  echo "        Run COMMAND in activated, synced virtual environment."
-  echo "  pipt sync [--prod]"
-  echo "        Sync virtual environment to locked dependencies."
-  echo "  pipt sync-system [--prod]"
-  echo "        Sync system Python site packages to locked dependencies (no venv)."
-  echo "  pipt download [--no-venv] TARGET_DIRECTORY"
-  echo "        Download all locked dependencies into a directory for offline access."
-  echo "  pipt lock"
-  echo "        Lock all dependencies trying not to upgrade already locked ones."
-  echo "  pipt upgrade"
-  echo "        Lock from scratch, i.e. all dependencies will be upgraded."
-  echo "  pipt venv"
-  echo "        Build up just the project virtual environment if it is not present."
-  echo "  pipt rmvenv"
-  echo "        Delete possibly existing project virtual environment"
-  echo "  pipt info [--venv] [--python] [--version]"
-  echo "        Show either all info or exactly one, if exactly one option is provided."
-  echo "  pipt help"
-  echo "        Show more detailed help with examples."
-  echo ""
-  echo "shell, run, sync, sync-system default to syncing dev dependencies. Use --prod"
-  echo "to sync runtime dependencies only. In contrast, the add command defaults to add"
-  echo "specs to runtime dependencies. Use --dev to add to dev dependencies instead."
-  echo
-  echo "Most subcommands will create requirements files, build up a virtual environment"
-  echo "and sync it if necessary. This means you can start from scratch by just"
-  echo "running \`pipt shell\` in an empty directory."
-  echo
-  echo "All files created by pipt (but not the venv) should go into version control."
+    echo "USAGE: Run"
+    echo "  pipt SUBCOMMAND"
+    echo "with deactivated virtual environment. Available subcommands:"
+    echo ""
+    echo "  pipt shell [--prod]"
+    echo "        Drops you in a shell with activated, synced virtual environment."
+    echo "  pipt add [--dev] dependency_spec_1 dependency_spec_2 ..."
+    echo '        Add dependency specifications like "requests<3" and lock.'
+    echo "  pipt remove dependency_spec_1 dependency_spec_2 ..."
+    echo "        Remove dependency specifications from all requirements*.in files and lock."
+    echo "  pipt run [--prod] [--silent] -- COMMAND"
+    echo "        Run COMMAND in activated, synced virtual environment."
+    echo "  pipt sync [--prod]"
+    echo "        Sync virtual environment to locked dependencies."
+    echo "  pipt sync-system [--prod]"
+    echo "        Sync system Python site packages to locked dependencies (no venv)."
+    echo "  pipt download [--no-venv] TARGET_DIRECTORY"
+    echo "        Download all locked dependencies (incl. dev) for offline access."
+    echo "  pipt lock"
+    echo "        Lock all dependencies trying not to upgrade already locked ones."
+    echo "  pipt upgrade"
+    echo "        Lock from scratch, i.e. all dependencies will be upgraded."
+    echo "  pipt venv"
+    echo "        Build up just the project virtual environment if it is not present."
+    echo "  pipt rmvenv"
+    echo "        Delete possibly existing project virtual environment"
+    echo "  pipt info [--venv] [--python] [--version]"
+    echo "        Show either all info or exactly one, if exactly one option is provided."
+    echo "  pipt help"
+    echo "        Show more detailed help with examples."
+    echo ""
+    echo "shell, run, sync, sync-system default to syncing dev dependencies. Use --prod"
+    echo "to sync runtime dependencies only. In contrast, the add command defaults to add"
+    echo "specs to runtime dependencies. Use --dev to add to dev dependencies instead."
+    echo
+    echo "Most subcommands will create requirements files, build up a virtual environment"
+    echo "and sync it if necessary. This means you can start from scratch by just"
+    echo "running \`pipt shell\` in an empty directory."
+    echo
+    echo "All files created by pipt (but not the venv) should go into version control."
 }
 
 help() {
-  echo "USAGE: Run"
-  echo "  pipt SUBCOMMAND"
-  echo "with deactivated virtual environment."
-  echo
-  echo "Most subcommands will create requirements files, build up a virtual environment"
-  echo "and sync it if necessary. This means you can start from scratch by just"
-  echo "running \`pipt shell\` in an empty directory."
-  echo
-  echo "All files created by pipt (but not the venv and its content) should be"
-  echo "added to version control."
-  echo
-  echo "Details on the available subcommands:"
-  echo
-  echo "    pipt shell [--prod]"
-  echo "        Drops you in a shell with activated, synced virtual environment."
-  echo "        Defaults to sync to the dev dependencies. Use --prod option to"
-  echo "        only sync runtime dependencies."
-  echo
-  echo "        Press Ctrl+d or run \`exit\` or \`deactivate\` to deactivate the virtual"
-  echo "        environment."
-  echo
-  echo "        Since the shell subcommand also initializes all files on first run,"
-  echo "        you can use it to set up your Python project from scratch."
-  echo
-  echo "        Because of this and because it syncs the venv automatically the"
-  echo "        shell subcommand is what you will use most of the time, together"
-  echo "        with the add subcommand."
-  echo
-  echo "    pipt add [--dev] dependency_spec_1 dependency_spec_2 ..."
-  echo "        Add dependency specifications to one of the requirements*.in files."
-  echo "        After that locks if necessary. By default this adds new dependency"
-  echo "        specifications to the runtime dependencies (i.e. requirements.in)."
-  echo "        Will add them to the dev dependencies (requirements-dev.in) if you"
-  echo "        supply the --dev option."
-  echo
-  echo '        See https://www.python.org/dev/peps/pep-0508/ for the dependency'
-  echo "        specification format. Example from there:"
-  echo '            requests [security,tests] >= 2.8.1, == 2.8.*'
-  echo "        Make sure to quote your specifications in order to avoid your shell"
-  echo "        to expand symbols like > or * when running pipt add. Example:"
-  echo "            pipt add "'"requests>=2,<3"'
-  echo
-  echo "        Since it locks automatically and because the shell subcommand syncs"
-  echo "        automatically, the add subcommand together with the shell subcomannd"
-  echo "        is what you will use most of the time."
-  echo
-  echo "    pipt remove dependency_spec_1 dependency_spec_2 ..."
-  echo "        Remove dependency specifications from the requirements*.in files."
-  echo "        After that locks if necessary. Removes them from both requirements.in"
-  echo "        and requirements-dev.in files. It is enough to use the dependency base"
-  echo "        name to remove it (i.e. requests will remove all requests dependency"
-  echo "        specs, no matter what version ranges / constraints they have)"
-  echo
-  echo "    pipt run [--prod] [--silent] -- COMMAND"
-  echo "        Run COMMAND in activated, synced virtual environment."
-  echo "        Defaults to sync to the dev dependencies. Use --prod option to"
-  echo "        only sync runtime dependencies. The --silent option will prevent"
-  echo "        pipt output to stdout."
-  echo
-  echo "        The run subcommand is typically used in scripts which need to run"
-  echo "        something using your virtual environment."
-  echo
-  echo "    pipt sync [--prod]"
-  echo "        Sync virtual environment to locked dependencies."
-  echo "        Defaults to sync to the dev dependencies. Use --prod option to"
-  echo "        only sync runtime dependencies."
-  echo
-  echo "        Typically you do not need to invoke the sync subcommand manually, since"
-  echo "        subcommands like shell or run do sync your venv automatically."
-  echo
-  echo "    pipt sync-system [--prod]"
-  echo "        Sync system Python site packages to locked dependencies (no venv)."
-  echo "        Defaults to sync to the dev dependencies. Use --prod option to"
-  echo "        only sync runtime dependencies."
-  echo
-  echo "        This is useful in scenarios where the overhead of a venv is not"
-  echo "        necessary / desired. For example people tend to install dependencies"
-  echo "        directly to the system inside Docker containers. The pipt"
-  echo "        github repository contains an example Dockefile:"
-  echo "            https://github.com/stewit/pipt/blob/main/Dockerfile"
-  echo
-  echo "        The sync-system subcommand is typically only used in CI / deployment"
-  echo "        scripts."
-  echo
-  echo "    pipt download [--no-venv] TARGET_DIRECTORY"
-  echo "        Downloads all locked dependencies into TARGET_DIRECTORY. This includes"
-  echo "        base, prod and dev dependencies. TARGET_DIRECTORY must exist. Additionally"
-  echo "        the lock files must exist and this command does not try to check whether"
-  echo "        they are valid."
-  echo
-  echo "        If --no-venv is set this will use the inferred python interpreter"
-  echo "        and a pre-installed pip module and avoids creation of the project virtual"
-  echo "        environment. While the later is reproducible since it uses a fixed pip"
-  echo "        version from requirements-base.txt, in some cases creation of a venv is"
-  echo "        not desirable for just downloading all dependencies."
-  echo
-  echo "        This command is useful for offline installations in combination with"
-  echo "        the OFFLINE_SYNC_DIR configuration option when syncing."
-  echo
-  echo "        Another use case is building a 'fixed-output-derivation' for the nix"
-  echo "        package manager in combination with the STORE_NIX_HASH_OF_DOWNLOADED_REQS"
-  echo "        configuration option."
-  echo
-  echo "    pipt lock"
-  echo "        Lock all dependencies trying not to upgrade already locked"
-  echo "        dependencies unnecessarily."
-  echo
-  echo "        Since the add or remove subcommands lock automatically, there"
-  echo "        typically is no need to run this command manually."
-  echo
-  echo "    pipt upgrade"
-  echo "        Lock from scratch, i.e. all dependencies will be upgraded to"
-  echo "        their newest versions compliant with the version constraints."
-  echo
-  echo "        Use this command from time to time to get relevant security upgrades"
-  echo "        and keep your project up-to-date."
-  echo
-  echo "    pipt venv"
-  echo "        Build up just the project virtual environment if it is not present."
-  echo
-  echo "        Since other commands in need of the environment will call this"
-  echo "        automatically, there is typically no need to run the venv command"
-  echo "        manually."
-  echo
-  echo "    pipt rmvenv"
-  echo "        Delete possibly existing project virtual environment. Useful"
-  echo "        to clean up."
-  echo
-  echo "    pipt info [--venv] [--python] [--version]"
-  echo "        Show some info. Without options all infos will be echoed."
-  echo "        Giving exactly one of the available options results in echoing"
-  echo "        exactly that bare information. This may be useful to get for"
-  echo "        example the venv path in scripts in order to run commands from there."
-  echo
-  echo "       --venv     : The path to the virtual environment."
-  echo "       --python   : The path to system python interpreter that pipt uses."
-  echo "       --version  : The version of pipt itself."
-  echo
-  echo "    pipt help"
-  echo "        Show this help message."
-  echo
-  echo "See the (https://github.com/stewit/pipt/blob/main/README.md) in the pipt github"
-  echo "repository for more details."
-  echo
-  echo "Special exit codes:"
-  echo '    7: Mismatch between Python minor version <-> locked dependencies.'
-  echo '       Locking necessary: Run `pipt lock` or `pipt upgrade`.'
-  echo "       This exit code can be caught in scripts in order to invoke locking automatically"
-  echo "       in this case."
-  echo
-  echo "    8: pipt detected itself running in a venv. Pipt must be called with no virtual"
-  echo "       environment active."
+    echo "USAGE: Run"
+    echo "  pipt SUBCOMMAND"
+    echo "with deactivated virtual environment."
+    echo
+    echo "Most subcommands will create requirements files, build up a virtual environment"
+    echo "and sync it if necessary. This means you can start from scratch by just"
+    echo "running \`pipt shell\` in an empty directory."
+    echo
+    echo "All files created by pipt (but not the venv and its content) should be"
+    echo "added to version control."
+    echo
+    echo "Details on the available subcommands:"
+    echo
+    echo "    pipt shell [--prod]"
+    echo "        Drops you in a shell with activated, synced virtual environment."
+    echo "        Defaults to sync to the dev dependencies. Use --prod option to"
+    echo "        only sync runtime dependencies."
+    echo
+    echo "        Press Ctrl+d or run \`exit\` or \`deactivate\` to deactivate the virtual"
+    echo "        environment."
+    echo
+    echo "        Since the shell subcommand also initializes all files on first run,"
+    echo "        you can use it to set up your Python project from scratch."
+    echo
+    echo "        Because of this and because it syncs the venv automatically the"
+    echo "        shell subcommand is what you will use most of the time, together"
+    echo "        with the add subcommand."
+    echo
+    echo "    pipt add [--dev] dependency_spec_1 dependency_spec_2 ..."
+    echo "        Add dependency specifications to one of the requirements*.in files."
+    echo "        After that locks if necessary. By default this adds new dependency"
+    echo "        specifications to the runtime dependencies (i.e. requirements.in)."
+    echo "        Will add them to the dev dependencies (requirements-dev.in) if you"
+    echo "        supply the --dev option."
+    echo
+    echo '        See https://www.python.org/dev/peps/pep-0508/ for the dependency'
+    echo "        specification format. Example from there:"
+    echo '            requests [security,tests] >= 2.8.1, == 2.8.*'
+    echo "        Make sure to quote your specifications in order to avoid your shell"
+    echo "        to expand symbols like > or * when running pipt add. Example:"
+    echo "            pipt add "'"requests>=2,<3"'
+    echo
+    echo "        Since it locks automatically and because the shell subcommand syncs"
+    echo "        automatically, the add subcommand together with the shell subcomannd"
+    echo "        is what you will use most of the time."
+    echo
+    echo "    pipt remove dependency_spec_1 dependency_spec_2 ..."
+    echo "        Remove dependency specifications from the requirements*.in files."
+    echo "        After that locks if necessary. Removes them from both requirements.in"
+    echo "        and requirements-dev.in files. It is enough to use the dependency base"
+    echo "        name to remove it (i.e. requests will remove all requests dependency"
+    echo "        specs, no matter what version ranges / constraints they have)"
+    echo
+    echo "    pipt run [--prod] [--silent] -- COMMAND"
+    echo "        Run COMMAND in activated, synced virtual environment."
+    echo "        Defaults to sync to the dev dependencies. Use --prod option to"
+    echo "        only sync runtime dependencies. The --silent option will prevent"
+    echo "        pipt output to stdout."
+    echo
+    echo "        The run subcommand is typically used in scripts which need to run"
+    echo "        something using your virtual environment."
+    echo
+    echo "    pipt sync [--prod]"
+    echo "        Sync virtual environment to locked dependencies."
+    echo "        Defaults to sync to the dev dependencies. Use --prod option to"
+    echo "        only sync runtime dependencies."
+    echo
+    echo "        Typically you do not need to invoke the sync subcommand manually, since"
+    echo "        subcommands like shell or run do sync your venv automatically."
+    echo
+    echo "    pipt sync-system [--prod]"
+    echo "        Sync system Python site packages to locked dependencies (no venv)."
+    echo "        Defaults to sync to the dev dependencies. Use --prod option to"
+    echo "        only sync runtime dependencies."
+    echo
+    echo "        This is useful in scenarios where the overhead of a venv is not"
+    echo "        necessary / desired. For example people tend to install dependencies"
+    echo "        directly to the system inside Docker containers. The pipt"
+    echo "        github repository contains an example Dockefile:"
+    echo "            https://github.com/stewit/pipt/blob/main/Dockerfile"
+    echo
+    echo "        The sync-system subcommand is typically only used in CI / deployment"
+    echo "        scripts."
+    echo
+    echo "    pipt download [--no-venv] TARGET_DIRECTORY"
+    echo "        Downloads all locked dependencies into TARGET_DIRECTORY. This includes"
+    echo "        base, prod and dev dependencies. TARGET_DIRECTORY must exist. Additionally"
+    echo "        the lock files must exist and this command does not try to check whether"
+    echo "        they are valid."
+    echo
+    echo "        If --no-venv is set this will use the inferred python interpreter"
+    echo "        and a pre-installed pip module and avoids creation of the project virtual"
+    echo "        environment. While the later is reproducible since it uses a fixed pip"
+    echo "        version from requirements-base.txt, in some cases creation of a venv is"
+    echo "        not desirable for just downloading all dependencies."
+    echo
+    echo "        This command is useful for offline installations in combination with"
+    echo "        the OFFLINE_SYNC_DIR configuration option when syncing."
+    echo
+    echo "        Another use case is building a 'fixed-output-derivation' for the nix"
+    echo "        package manager in combination with the STORE_NIX_HASH_OF_DOWNLOADED_REQS"
+    echo "        configuration option."
+    echo
+    echo "    pipt lock"
+    echo "        Lock all dependencies trying not to upgrade already locked"
+    echo "        dependencies unnecessarily."
+    echo
+    echo "        Since the add or remove subcommands lock automatically, there"
+    echo "        typically is no need to run this command manually."
+    echo
+    echo "    pipt upgrade"
+    echo "        Lock from scratch, i.e. all dependencies will be upgraded to"
+    echo "        their newest versions compliant with the version constraints."
+    echo
+    echo "        Use this command from time to time to get relevant security upgrades"
+    echo "        and keep your project up-to-date."
+    echo
+    echo "    pipt venv"
+    echo "        Build up just the project virtual environment if it is not present."
+    echo
+    echo "        Since other commands in need of the environment will call this"
+    echo "        automatically, there is typically no need to run the venv command"
+    echo "        manually."
+    echo
+    echo "    pipt rmvenv"
+    echo "        Delete possibly existing project virtual environment. Useful"
+    echo "        to clean up."
+    echo
+    echo "    pipt info [--venv] [--python] [--version]"
+    echo "        Show some info. Without options all infos will be echoed."
+    echo "        Giving exactly one of the available options results in echoing"
+    echo "        exactly that bare information. This may be useful to get for"
+    echo "        example the venv path in scripts in order to run commands from there."
+    echo
+    echo "       --venv     : The path to the virtual environment."
+    echo "       --python   : The path to system python interpreter that pipt uses."
+    echo "       --version  : The version of pipt itself."
+    echo
+    echo "    pipt help"
+    echo "        Show this help message."
+    echo
+    echo "See the (https://github.com/stewit/pipt/blob/main/README.md) in the pipt github"
+    echo "repository for more details."
+    echo
+    echo "Special exit codes:"
+    echo '    7: Mismatch between Python minor version <-> locked dependencies.'
+    # shellcheck disable=SC2016
+    echo '       Locking necessary: Run `pipt lock` or `pipt upgrade`.'
+    echo "       This exit code can be caught in scripts in order to invoke locking automatically"
+    echo "       in this case."
+    echo
+    echo "    8: pipt detected itself running in a venv. Pipt must be called with no virtual"
+    echo "       environment active."
 }
 
 _update_hashes_file() {
-  # Assumes that variables are initialized or loaded from existing file.
-  # Simply update (some of) the variables before calling this function.
-  # It will then recreate the whole file.
+    # Assumes that variables are initialized or loaded from existing file.
+    # Simply update (some of) the variables before calling this function.
+    # It will then recreate the whole file.
 
-  if [[ -z $PY_VERSION ]]; then
-    PY_VERSION=$(_py_minor_version)
-  fi
-  echo "PY_VERSION=$PY_VERSION" >"$REQ_SOURCE_DIR"/pipt_locks.env
-  # shellcheck disable=SC2129
-  echo "DEPENDENCY_SPECIFICATIONS_ABORT_HASH=$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
-  echo "DEPENDENCY_SPECIFICATIONS_FULL_HASH=$DEPENDENCY_SPECIFICATIONS_FULL_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
-  echo "PYTHON_ENVIRONMENT_BASE_HASH=$PYTHON_ENVIRONMENT_BASE_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
+    if [[ -z $PY_VERSION ]]; then
+        PY_VERSION=$(_py_minor_version)
+    fi
+    echo "PY_VERSION=$PY_VERSION" >"$REQ_SOURCE_DIR"/pipt_locks.env
+    # shellcheck disable=SC2129
+    echo "USE_UV=$USE_UV" >>"$REQ_SOURCE_DIR"/pipt_locks.env
+    echo "DEPENDENCY_SPECIFICATIONS_ABORT_HASH=$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
+    echo "DEPENDENCY_SPECIFICATIONS_FULL_HASH=$DEPENDENCY_SPECIFICATIONS_FULL_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
+    echo "PYTHON_ENVIRONMENT_BASE_HASH=$PYTHON_ENVIRONMENT_BASE_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
 
-  if [[ $STORE_NIX_HASH_OF_DOWNLOADED_REQS = true ]]; then
-    echo "NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH=$NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
-  fi
+    if [[ $STORE_NIX_HASH_OF_DOWNLOADED_REQS = true ]]; then
+        echo "NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH=$NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH" >>"$REQ_SOURCE_DIR"/pipt_locks.env
+    fi
 }
 
 _download_all_deps() {
-  # downloads all locked dependencies (inlcuding dev) to a directory
-  # provided as first argument.
+    # downloads all locked dependencies (inlcuding dev) to a directory
+    # provided as first argument.
 
-  # only first argument will be interpreted as target directory:
-  download_dir="${1:-"."}"
+    # only first argument will be interpreted as target directory:
+    download_dir="${1:-"."}"
 
-  if [[ "$SILENT" == true ]]; then
-    pip_download_args=("-qq")
-  else
-    pip_download_args=()
-  fi
+    if [[ "$SILENT" == true ]]; then
+        pip_download_args=("-qq")
+    else
+        pip_download_args=()
+    fi
 
-  local python_cmd_for_download
+    local python_cmd_for_download
 
-  if [[ $NO_VENV = false ]]; then
-    venv
-    python_cmd_for_download="$VENV_PYTHON"
-  else
-    _infer_python_interpreter
-    python_cmd_for_download="$INFERRED_PYTHON"
-  fi
+    if [[ $NO_VENV = false ]]; then
+        venv
+        python_cmd_for_download="$VENV_PYTHON"
+    else
+        _infer_python_interpreter
+        python_cmd_for_download="$INFERRED_PYTHON"
+    fi
 
-  "$python_cmd_for_download" -m pip download "${pip_download_args[@]}" $PIP_DOWNLOAD_ARG_STRING --no-deps --destination-directory "$download_dir" -r "$REQ_BASE_TXT" -r "$REQ_TXT" -r "$REQ_DEV_TXT"
+    # shellcheck disable=SC2086
+    "$python_cmd_for_download" -m pip download "${pip_download_args[@]}" $PIP_DOWNLOAD_ARG_STRING --no-deps --destination-directory "$download_dir" -r "$REQ_BASE_TXT" -r "$REQ_TXT" -r "$REQ_DEV_TXT"
 
 }
 
 _compute_nix_hash() {
-  if [[ $STORE_NIX_HASH_OF_DOWNLOADED_REQS = true ]]; then
-    _info "--> Computing nix hash of all downloaded locked deps"
+    if [[ $STORE_NIX_HASH_OF_DOWNLOADED_REQS = true ]]; then
+        _info "--> Computing nix hash of all downloaded locked deps"
 
-    local temporary_download_dir
-    temporary_download_dir="$(mktemp -d)"
+        local temporary_download_dir
+        temporary_download_dir="$(mktemp -d)"
 
-    _download_all_deps "$temporary_download_dir"
+        _download_all_deps "$temporary_download_dir"
 
-    local NEW_NIX_HASH
-    NEW_NIX_HASH="$(nix-store --dump "$temporary_download_dir" | sha256sum | cut -d " " -f 1)"
-    _info "--> Computed nix hash: $NEW_NIX_HASH"
+        local NEW_NIX_HASH
+        NEW_NIX_HASH="$(nix-store --dump "$temporary_download_dir" | sha256sum | cut -d " " -f 1)"
+        _info "--> Computed nix hash: $NEW_NIX_HASH"
 
-    rm -rf "$temporary_download_dir"
+        rm -rf "$temporary_download_dir"
 
-    if [[ "$NEW_NIX_HASH" != "$NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH" ]]; then
-      # only store if something changed
-      _info "--> Updating nix hash with $NEW_NIX_HASH in locks file (former: $NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH)"
-      NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH="$NEW_NIX_HASH"
-    else
-      _info "--> Existing and computed nix hash agree ($NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH)"
+        if [[ "$NEW_NIX_HASH" != "$NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH" ]]; then
+            # only store if something changed
+            _info "--> Updating nix hash with $NEW_NIX_HASH in locks file (former: $NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH)"
+            NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH="$NEW_NIX_HASH"
+        else
+            _info "--> Existing and computed nix hash agree ($NIX_DOWNLOADED_ALL_LOCKED_DEPS_HASH)"
+        fi
     fi
-  fi
 }
 
 _infer_venv_path() {
-  if [[ -n "$EXPLICIT_VENV_TARGET_PATH" ]]; then
-    # explicitely set by the user via config or environment var
-    VENV_PATH="$EXPLICIT_VENV_TARGET_PATH"
-  else
-    if [[ -n "$HOME" && -d "$HOME" ]]; then
-      mkdir -p "$HOME"/.pipt/venvs
-      if [[ ! $? ]]; then
-        # creating ~/.pipt/venvs did not work
-        VENV_BASE_PATH=.
-        VENV_NAME=venv
-      else
-        VENV_BASE_PATH=$HOME/.pipt/venvs
-        if [[ -n "$EXPLICIT_VENV_IN_HOME_NAME" ]]; then
-          VENV_NAME="$EXPLICIT_VENV_IN_HOME_NAME"
-        else
-          REQ_SOURCE_DIR_ABSOLUTE_PATH="$(readlink -f "$REQ_SOURCE_DIR" || realpath -L "$REQ_SOURCE_DIR")"
-          REQ_SOURCE_DIR_BASENAME="${REQ_SOURCE_DIR_ABSOLUTE_PATH##*/}"
-          REQ_SOURCE_DIR_HASH=$(_hash_multiple -s "$REQ_SOURCE_DIR_ABSOLUTE_PATH")
-          REQ_SOURCE_DIR_ABBREVIATED_HASH=${REQ_SOURCE_DIR_HASH::8}
-          VENV_NAME="$REQ_SOURCE_DIR_BASENAME"-$REQ_SOURCE_DIR_ABBREVIATED_HASH
+    if [[ -n "$EXPLICIT_VENV_TARGET_PATH" ]]; then
+        # explicitely set by the user via config or environment var
+        VENV_PATH="$EXPLICIT_VENV_TARGET_PATH"
+    else
+        if [[ -n "${HOME:-""}" && -d "$HOME" ]]; then
+            mkdir -p "$HOME"/.pipt/venvs
+            if [[ ! $? ]]; then
+                # creating ~/.pipt/venvs did not work
+                VENV_BASE_PATH=.
+                VENV_NAME=venv
+            else
+                VENV_BASE_PATH=$HOME/.pipt/venvs
+                if [[ -n "$EXPLICIT_VENV_IN_HOME_NAME" ]]; then
+                    VENV_NAME="$EXPLICIT_VENV_IN_HOME_NAME"
+                else
+                    REQ_SOURCE_DIR_ABSOLUTE_PATH="$(readlink -f "$REQ_SOURCE_DIR" || realpath -L "$REQ_SOURCE_DIR")"
+                    REQ_SOURCE_DIR_BASENAME="${REQ_SOURCE_DIR_ABSOLUTE_PATH##*/}"
+                    REQ_SOURCE_DIR_HASH=$(_hash_multiple -s "$REQ_SOURCE_DIR_ABSOLUTE_PATH")
+                    REQ_SOURCE_DIR_ABBREVIATED_HASH=${REQ_SOURCE_DIR_HASH::8}
+                    VENV_NAME="$REQ_SOURCE_DIR_BASENAME"-$REQ_SOURCE_DIR_ABBREVIATED_HASH
+                fi
+            fi
         fi
-      fi
+        VENV_PATH="$VENV_BASE_PATH"/"$VENV_NAME"
     fi
-    VENV_PATH="$VENV_BASE_PATH"/"$VENV_NAME"
-  fi
 
-  # set derived paths
-  VENV_PATH_BIN="$VENV_PATH"/bin
-  VENV_PYTHON="$VENV_PATH"/bin/python
+    # set derived paths
+    VENV_PATH_BIN="$VENV_PATH"/bin
+    VENV_PYTHON="$VENV_PATH"/bin/python
 
-  _info "--> Using venv path: $VENV_PATH"
+    _info "--> Using venv path: $VENV_PATH"
 }
 
 _check_not_in_venv() {
-  # We would prefer to deactivate any active virtual environment automatically.
-  # However, that seems not to be that simple: https://stackoverflow.com/a/37216784
-  #
-  # Therefore we only check for active virtual environment (see https://stackoverflow.com/a/1883251)
-  # and in that case ask the user to deactivate it manually.
-  if command -v python >/dev/null && python -c "import sys; sys.exit(1-int(sys.prefix != sys.base_prefix))"; then
-    _log_error "--> ERROR: An active virtual environment was detected."
-    _log_error "    Please deactivate it before running this script."
-    exit 8
-  fi
+    # We would prefer to deactivate any active virtual environment automatically.
+    # However, that seems not to be that simple: https://stackoverflow.com/a/37216784
+    #
+    # Therefore we only check for active virtual environment (see https://stackoverflow.com/a/1883251)
+    # and in that case ask the user to deactivate it manually.
+    if command -v python >/dev/null && python -c "import sys; sys.exit(1-int(sys.prefix != sys.base_prefix))"; then
+        _log_error "--> ERROR: An active virtual environment was detected."
+        _log_error "    Please deactivate it before running this script."
+        exit 8
+    fi
 }
 
 _py_minor_version() {
-  _check_not_in_venv
+    _check_not_in_venv
 
-  if [[ -n ${1-} ]]; then
-    PYTHON_TO_FIX=$1
-  else
-    PYTHON_TO_FIX=$INFERRED_PYTHON
-  fi
-  "$PYTHON_TO_FIX" -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor), end="")'
+    if [[ -n ${1-} ]]; then
+        PYTHON_TO_FIX=$1
+    else
+        PYTHON_TO_FIX=$INFERRED_PYTHON
+    fi
+    "$PYTHON_TO_FIX" -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor), end="")'
 }
 
 # shellcheck disable=SC2120
 _py_complete_version() {
-  _check_not_in_venv
+    _check_not_in_venv
 
-  if [[ -n ${1-} ]]; then
-    PYTHON_TO_FIX=$1
-  else
-    PYTHON_TO_FIX=$INFERRED_PYTHON
-  fi
-  "$PYTHON_TO_FIX" -c 'import sys; print(sys.version, sys.platform)'
+    if [[ -n ${1-} ]]; then
+        PYTHON_TO_FIX=$1
+    else
+        PYTHON_TO_FIX=$INFERRED_PYTHON
+    fi
+    "$PYTHON_TO_FIX" -c 'import sys; print(sys.version, sys.platform)'
 
 }
 
 # shellcheck disable=SC2120
 _fixed_py_version() {
-  USED_PYTHON_VERSION=$(_py_minor_version)
-  if [[ -z "$PY_VERSION" ]]; then
-    PY_VERSION="$USED_PYTHON_VERSION"
-    _update_hashes_file
-  fi
+    USED_PYTHON_VERSION=$(_py_minor_version)
+    if [[ -z "$PY_VERSION" ]]; then
+        PY_VERSION="$USED_PYTHON_VERSION"
+        _update_hashes_file
+    fi
 
-  if [[ ${1-} != "--silent" ]]; then
-    printf '%s' "$PY_VERSION"
-  fi
+    if [[ ${1-} != "--silent" ]]; then
+        printf '%s' "$PY_VERSION"
+    fi
 }
 
 _infer_python_interpreter() {
-  # shellcheck disable=SC2119
-  PYTHON_MAJOR_MINOR=$(_fixed_py_version)
+    # shellcheck disable=SC2119
+    PYTHON_MAJOR_MINOR=$(_fixed_py_version)
 
-  if [[ -n "$PYTHON_INTERPRETER" ]]; then # explicit Python interpreter set by user
-    if command -v "$PYTHON_INTERPRETER" >/dev/null; then
-      if [[ $(_py_minor_version "$PYTHON_INTERPRETER") == "$PYTHON_MAJOR_MINOR" ]]; then
-        _info "--> Use explicitly configured Python interpreter $(command -v "$PYTHON_INTERPRETER")"
-        INFERRED_PYTHON=$PYTHON_INTERPRETER
-      else # wrong version
-        _log_error "--> ERROR: Explicit set Python interpreter has wrong version."
-        _log_error "      required, fixed version: $PYTHON_MAJOR_MINOR"
-        _log_error "      found version: $(_py_minor_version "$PYTHON_INTERPRETER")"
-        _log_error "    The fixed version in py_version.txt and the actual version of the interpreter"
-        _log_error "    set via PIPT_PYTHON_INTERPRETER environment variable or via PYTHON_INTERPRETER"
-        _log_error "    in pipt_config.env must agree."
-        _log_error "    Aborting."
-        exit 1
-      fi
-    else # command not found!
-      _log_error "--> ERROR: Explicit set Python interpreter not found."
-      _log_error "    explicitly configured interpreter: $PYTHON_INTERPRETER"
-      _log_error "    Aborting."
-      exit 1
+    if [[ -n "$PYTHON_INTERPRETER" ]]; then # explicit Python interpreter set by user
+        if command -v "$PYTHON_INTERPRETER" >/dev/null; then
+            if [[ $(_py_minor_version "$PYTHON_INTERPRETER") == "$PYTHON_MAJOR_MINOR" ]]; then
+                _info "--> Use explicitly configured Python interpreter $(command -v "$PYTHON_INTERPRETER")"
+                INFERRED_PYTHON=$PYTHON_INTERPRETER
+            else # wrong version
+                _log_error "--> ERROR: Explicit set Python interpreter has wrong version."
+                _log_error "      required, fixed version: $PYTHON_MAJOR_MINOR"
+                _log_error "      found version: $(_py_minor_version "$PYTHON_INTERPRETER")"
+                _log_error "    The fixed version in py_version.txt and the actual version of the interpreter"
+                _log_error "    set via PIPT_PYTHON_INTERPRETER environment variable or via PYTHON_INTERPRETER"
+                _log_error "    in pipt_config.env must agree."
+                _log_error "    Aborting."
+                exit 1
+            fi
+        else # command not found!
+            _log_error "--> ERROR: Explicit set Python interpreter not found."
+            _log_error "    explicitly configured interpreter: $PYTHON_INTERPRETER"
+            _log_error "    Aborting."
+            exit 1
+        fi
+    else # no explicitly configured interpreter => try to infer it
+        POSSIBLE_PYTHON_INTERPRETER=python"$PYTHON_MAJOR_MINOR"
+        if command -v "$POSSIBLE_PYTHON_INTERPRETER" >/dev/null && [[ $(_py_minor_version "$POSSIBLE_PYTHON_INTERPRETER") == "$PYTHON_MAJOR_MINOR" ]]; then
+            _info "--> Inferred Python interpreter $(command -v "$POSSIBLE_PYTHON_INTERPRETER")"
+            INFERRED_PYTHON=$POSSIBLE_PYTHON_INTERPRETER
+        elif command -v "$PYTHON_TO_USE" >/dev/null && [[ $(_py_minor_version "$PYTHON_TO_USE") == "$PYTHON_MAJOR_MINOR" ]]; then
+            _info "--> Inferred Python interpreter $(command -v "$PYTHON_TO_USE")"
+            INFERRED_PYTHON=$PYTHON_TO_USE
+        else
+            _log_error "--> ERROR: Could not find Python Interpreter with major+minor version fitting"
+            _log_error "    the required version $PYTHON_MAJOR_MINOR from py_version.txt. Please provide"
+            _log_error "    a correct Python interpreter via the PIPT_PYTHON_TO_USE environment"
+            _log_error "    variable, or remove the Python version fix file py_version.txt."
+            _log_error "    Aborting."
+            exit 1
+        fi
     fi
-  else # no explicitly configured interpreter => try to infer it
-    POSSIBLE_PYTHON_INTERPRETER=python"$PYTHON_MAJOR_MINOR"
-    if command -v "$POSSIBLE_PYTHON_INTERPRETER" >/dev/null && [[ $(_py_minor_version "$POSSIBLE_PYTHON_INTERPRETER") == "$PYTHON_MAJOR_MINOR" ]]; then
-      _info "--> Inferred Python interpreter $(command -v "$POSSIBLE_PYTHON_INTERPRETER")"
-      INFERRED_PYTHON=$POSSIBLE_PYTHON_INTERPRETER
-    elif command -v "$PYTHON_TO_USE" >/dev/null && [[ $(_py_minor_version "$PYTHON_TO_USE") == "$PYTHON_MAJOR_MINOR" ]]; then
-      _info "--> Inferred Python interpreter $(command -v "$PYTHON_TO_USE")"
-      INFERRED_PYTHON=$PYTHON_TO_USE
-    else
-      _log_error "--> ERROR: Could not find Python Interpreter with major+minor version fitting"
-      _log_error "    the required version $PYTHON_MAJOR_MINOR from py_version.txt. Please provide"
-      _log_error "    a correct Python interpreter via the PIPT_PYTHON_TO_USE environment"
-      _log_error "    variable, or remove the Python version fix file py_version.txt."
-      _log_error "    Aborting."
-      exit 1
+    if [[ -z "$PY_VERSION" ]]; then
+        PY_VERSION=$(_py_minor_version)
     fi
-  fi
-  if [[ -z "$PY_VERSION" ]]; then
-    PY_VERSION=$(_py_minor_version)
-  fi
 
 }
 
 _init_base_in_file() {
-  if [[ ! -f "$REQ_BASE_IN" ]]; then
-    _info "--> Initiliazing requirements-base.in since it does not exist."
-    printf -- "pip\nwheel\npip-tools\n" >"$REQ_BASE_IN"
-  fi
+    if [[ ! -f "$REQ_BASE_IN" ]]; then
+        _info "--> Initiliazing requirements-base.in since it does not exist."
+        if [[ $USE_UV = false ]]; then
+            printf -- "packaging\npip>=24\npip-tools\nwheel\n" >"$REQ_BASE_IN"
+        else
+            printf -- "packaging\npip>=24\nuv\nwheel\n" >"$REQ_BASE_IN"
+        fi
+    fi
 }
 
 _init_in_files() {
-  _init_base_in_file
+    _init_base_in_file
 
-  if [[ ! -f "$REQ_IN" ]]; then
-    _info "--> Initiliazing requirements.in since it does not exist."
-    printf -- "-c requirements-base.txt\n" >"$REQ_IN"
-  fi
+    if [[ ! -f "$REQ_IN" ]]; then
+        _info "--> Initiliazing requirements.in since it does not exist."
+        printf -- "-c requirements-base.txt\n" >"$REQ_IN"
+    fi
 
-  if [[ ! -f "$REQ_DEV_IN" ]]; then
-    _info "--> Initiliazing requirements-dev.in since it does not exist."
-    printf -- "-c requirements.txt\n-c requirements-base.txt\n\npytest\n" >"$REQ_DEV_IN"
-  fi
+    if [[ ! -f "$REQ_DEV_IN" ]]; then
+        _info "--> Initiliazing requirements-dev.in since it does not exist."
+        printf -- "-c requirements.txt\n-c requirements-base.txt\n\npytest\n" >"$REQ_DEV_IN"
+    fi
 }
 
 CONFIG_FILE_TEMPLATE=$(
-  cat <<'END_HEREDOC'
+    cat <<'END_HEREDOC'
 ###############################################################################
 #                                                                             #
 #         pipt_config.env - control how pipt operates in your project         #
@@ -683,7 +698,7 @@ CONFIG_FILE_TEMPLATE=$(
 # EXPLICIT_VENV_TARGET_PATH="./venv"
 
 ## If no explicit venv target path is set, the venv will by default be created
-## as a subdir of $HOME/.pipt/venvs with a name consisting of the basename of
+## as a subdir of $HOME/.pipt/venvs with a name consisting of the basename of 
 ## the directory containing the requirements files and a hash of that directory's
 ## absolute path. With this setting you can provide an explicit name instead.
 #
@@ -692,7 +707,7 @@ CONFIG_FILE_TEMPLATE=$(
 ## Set the system Python interpreter for venv creation explicitely. Pipt will
 ## then not try to find a matching Python interpreter itself.
 #
-# PYTHON_INTERPRETER="/usr/bin/python3.11"
+# PYTHON_INTERPRETER="/usr/bin/python3.12"
 
 ## Supress pipt output, only error messages will be shown.
 ## This does not surpress pip-compile or pip-sync output.
@@ -719,11 +734,11 @@ CONFIG_FILE_TEMPLATE=$(
 # REQ_SOURCE_DIR="."
 
 ################### sync / pip install / download args ######################
-## Additional arguments for pip install commands can be provided as Bash
+## Additional arguments for pip install commands can be provided as Bash 
 ## array. This is passed to all direct calls of `pip install` by pipt,
 ## which happens when base requirements are installed.
 ##
-## IMPORTANT: These arguments are NOT passed through to invocations of pip
+## IMPORTANT: These arguments are NOT passed through to invocations of pip 
 ## by invocations of pip-compile or pip-sync. Both these commands
 ## have their own "--pip-args" option which in turn can be reached using
 ## the PIP_COMPILE_ARGS or PIP_SYNC_PIP_ARGS configuration described below.
@@ -733,7 +748,7 @@ CONFIG_FILE_TEMPLATE=$(
 ## Similarly the following is a direct argument string version.
 ## This will be passed to pip install commands without
 ## quotes to support passing multiple arguments! Make sure arguments in it are
-## quoted if necessary.
+## quoted if necessary. 
 #
 # PIP_INSTALL_ARG_STRING=""
 
@@ -753,427 +768,518 @@ CONFIG_FILE_TEMPLATE=$(
 # OFFLINE_SYNC_DIR=""
 
 ############################## PIP_COMPILE_ARGS ###########################
-## Additional arguments for pip-compile commands as Bash array.
-## This is passed to all calls to pip-compile by pipt.
+## Additional arguments for pip-compile / uv pip compile commands as Bash array.
+## This is passed to all calls to pip-compile or uv pip compile by pipt.
 #
 # PIP_COMPILE_ARGS=("-i" "https://my-company-package-index.org/simple")
 
 ################################ PIP_SYNC_ARGS ############################
-## Additional arguments for pip-sync commands as Bash array.
-## This is passed to all calls to pip-sync by pipt.
+## Additional arguments for pip-sync / uv pip sync commands as Bash array.
+## This is passed to all calls to pip-sync / uv pip sync by pipt.
 #
 # PIP_SYNC_ARGS=("-i" "https://my-company-package-index.org/simple")
 #
-## the --pip-args of pip-sync parameter can be set directly:
+## The --pip-args of pip-sync parameter can be set directly.
+## Note that uv oes not support this parameter at the moment:
 #
 # PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
 #
 ## Note that --no-deps is set here as default due to
-## https://github.com/pypa/pip/issues/9644 :
+## https://github.com/pypa/pip/issues/9644
 PIP_SYNC_PIP_ARGS="--no-deps"
 
 END_HEREDOC
 )
 
 _init_config_file() {
-  if [[ ! -f "$CONFIG_FILE_PATH" ]]; then
-    echo "$CONFIG_FILE_TEMPLATE" >"$CONFIG_FILE_PATH"
-  fi
+    if [[ ! -f "$CONFIG_FILE_PATH" ]]; then
+        echo "$CONFIG_FILE_TEMPLATE" >"$CONFIG_FILE_PATH"
+    fi
 }
 
 _wrap_venv_pip_install() {
-  if [[ "$SILENT" == true ]]; then
-    pip_install_args=("-qq")
-  else
-    pip_compile_args=()
-  fi
+    if [[ "$SILENT" == true ]]; then
+        pip_install_args=("-qq")
+    else
+        pip_compile_args=()
+    fi
 
-  pip_install_args+=("${PIP_INSTALL_ARGS[@]}")
+    pip_install_args+=("${PIP_INSTALL_ARGS[@]}")
 
-  if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
-    "$VENV_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${offline_pip_install_args_unquoted[@]}" "${@}"
-  else
-    "$VENV_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${@}"
-  fi
+    if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
+        # shellcheck disable=SC2086
+        "$VENV_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${offline_pip_install_args_unquoted[@]}" "${@}"
+    else
+        # shellcheck disable=SC2086
+        "$VENV_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${@}"
+    fi
 }
 
 _wrap_system_pip_install() {
-  if [[ "$SILENT" == true ]]; then
-    pip_install_args=("-qq")
-  else
-    pip_compile_args=()
-  fi
+    if [[ "$SILENT" == true ]]; then
+        pip_install_args=("-qq")
+    else
+        pip_compile_args=()
+    fi
 
-  pip_install_args+=("${PIP_INSTALL_ARGS[@]}")
+    pip_install_args+=("${PIP_INSTALL_ARGS[@]}")
 
-  if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
-    "$INFERRED_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${offline_pip_install_args_unquoted[@]}" "${@}"
-  else
-    "$INFERRED_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${@}"
-  fi
+    if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
+        # shellcheck disable=SC2086
+        "$INFERRED_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${offline_pip_install_args_unquoted[@]}" "${@}"
+    else
+        # shellcheck disable=SC2086
+        "$INFERRED_PYTHON" -m pip install "${pip_install_args[@]}" $PIP_INSTALL_ARG_STRING "${@}"
+    fi
 }
 
 _recreate_venv() {
-  rm -fR "$VENV_PATH"
-  if [[ -n "$VENV_BASE_PATH" ]]; then
-    mkdir -p "$VENV_BASE_PATH"
-  fi
-  $INFERRED_PYTHON -m venv "$VENV_PATH"
+    rm -fR "$VENV_PATH"
+    if [[ -n "$VENV_BASE_PATH" ]]; then
+        mkdir -p "$VENV_BASE_PATH"
+    fi
 
-  if [[ ! -f "$REQ_BASE_TXT" ]]; then
-    _init_base_in_file
-    _wrap_venv_pip_install -r "$REQ_BASE_IN" # with deps!
-  else
-    _wrap_venv_pip_install --no-deps -r "$REQ_BASE_TXT"
-  fi
+    $INFERRED_PYTHON -m venv "$VENV_PATH"
+
+    if [[ ! -f "$REQ_BASE_TXT" ]]; then
+        _init_base_in_file
+        _wrap_venv_pip_install -r "$REQ_BASE_IN" # with deps!
+    else
+        _wrap_venv_pip_install --no-deps -r "$REQ_BASE_TXT"
+    fi
 }
 
 _wrap_pip_compile() {
-  if [[ "$SILENT" == true ]]; then
-    pip_compile_args=("-q")
-  else
-    pip_compile_args=()
-  fi
+    if [[ "$SILENT" == true ]]; then
+        pip_compile_args=("-q")
+    else
+        pip_compile_args=()
+    fi
 
-  pip_compile_args+=("--allow-unsafe" "--generate-hashes")
-  pip_compile_args+=("${PIP_COMPILE_ARGS[@]}")
+    local compile_command="pip-compile"
+    if [[ $USE_UV = true ]]; then
+        compile_command="uv pip compile"
+        pip_compile_args+=("--python" "$VENV_PYTHON" --no-header)
 
-  # do compiling in the req source dir, since references of form
-  #     -c requirements.txt
-  # in the in-files are relative and would not be used otherwise.
+    fi
 
-  local current_dir
-  current_dir="$(pwd)"
-  cd "$REQ_SOURCE_DIR"
+    pip_compile_args+=("--allow-unsafe" "--generate-hashes")
+    pip_compile_args+=("${PIP_COMPILE_ARGS[@]}")
 
-  echo "$VENV_PATH_BIN"/pip-compile "${pip_compile_args[@]}" "${@}"
-  "$VENV_PATH_BIN"/pip-compile "${pip_compile_args[@]}" "${@}"
+    # do compiling in the req source dir, since references of form
+    #     -c requirements.txt
+    # in the in-files are relative and would not be used otherwise.
 
-  cd "$current_dir"
+    local current_dir
+    current_dir="$(pwd)"
+    cd "$REQ_SOURCE_DIR"
+
+    # shellcheck disable=SC2086
+    "$VENV_PATH_BIN"/$compile_command "${pip_compile_args[@]}" "${@}"
+
+    cd "$current_dir"
 }
 
 _compile_base_deps() {
-  _init_base_in_file
-  rm -f "$REQ_BASE_TXT"
-  _wrap_pip_compile "$REQ_BASE_IN"
+    _init_base_in_file
+    rm -f "$REQ_BASE_TXT"
+    _wrap_pip_compile "$REQ_BASE_IN"
 }
 
 rmvenv() {
-  _check_not_in_venv
-  _infer_venv_path
-  rm -fR "$VENV_PATH"
+    _check_not_in_venv
+    _infer_venv_path
+    rm -fR "$VENV_PATH"
+}
+
+_check_sync_command_available() {
+    if [[ $USE_UV = true ]]; then
+        if ! command -v "$VENV_PATH_BIN"/uv >/dev/null 2>&1; then
+            _info "--> Command uv not found."
+            return 1
+        else
+            _info "--> Command uv found."
+            return 0
+        fi
+    elif [[ $USE_UV = false ]]; then
+        if ! command -v "$VENV_PATH_BIN"/pip-sync >/dev/null 2>&1; then
+            _info "--> Command pip-sync not found."
+            return 1
+        else
+            _info "--> Command pip-sync found."
+            return 0
+        fi
+    else
+        _info "--> Unknown mode. Aborting"
+        exit 1
+    fi
 }
 
 venv() {
-  _check_not_in_venv
-  _infer_python_interpreter
-  _init_base_in_file
-  _init_config_file
-  _infer_venv_path
-  FIRST_PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
-  # shellcheck disable=SC2119
-  if [[ -d "$VENV_PATH" && "$FIRST_PYTHON_ENVIRONMENT_BASE_HASH" == "$PYTHON_ENVIRONMENT_BASE_HASH" && -f "$VENV_PATH"/full_py_version.txt && "$(_py_complete_version)" == "$(cat "$VENV_PATH"/full_py_version.txt)" ]]; then
-    _info "--> Existing virtual environment is still okay. Not recreating."
-    return
-  fi
-
-  if [[ -n "$PYTHON_ENVIRONMENT_BASE_HASH" && -f "$REQ_BASE_TXT" ]]; then
-    req_base_hash=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
-    if [[ "$PYTHON_ENVIRONMENT_BASE_HASH" != "$req_base_hash" ]]; then
-      _info "--> Base hash mismatch. Enforcing (re)locking of base requirements."
-      rm -f "$REQ_BASE_TXT"
+    _check_not_in_venv
+    _infer_python_interpreter
+    _init_base_in_file
+    _init_config_file
+    _infer_venv_path
+    FIRST_PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+    # shellcheck disable=SC2119
+    if [[ -d "$VENV_PATH" && "$FIRST_PYTHON_ENVIRONMENT_BASE_HASH" == "$PYTHON_ENVIRONMENT_BASE_HASH" && -f "$VENV_PATH"/full_py_version.txt && "$(_py_complete_version)" == "$(cat "$VENV_PATH"/full_py_version.txt)" ]]; then
+        if ! _check_sync_command_available; then
+            _info "--> Could not find sync command in venv. Recreating venv."
+        else
+            _info "--> Existing virtual environment is still okay. Not recreating."
+            return
+        fi
     fi
-  fi
 
-  _info "--> Creating virtual environment"
-  _recreate_venv
+    if [[ -n "$PYTHON_ENVIRONMENT_BASE_HASH" && -f "$REQ_BASE_TXT" ]]; then
+        req_base_hash=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+        if [[ "$PYTHON_ENVIRONMENT_BASE_HASH" != "$req_base_hash" ]]; then
+            _info "--> Base hash mismatch. Enforcing (re)locking of base requirements."
+            rm -f "$REQ_BASE_TXT"
+        fi
+    fi
 
-  if ! [[ -f "$REQ_BASE_TXT" ]]; then
-    _info "--> Locking base dependencies"
-    _compile_base_deps
-    _info "--> Recreating venv after locking of base dependencies"
+    _info "--> Creating virtual environment"
     _recreate_venv
-  fi
 
-  NEW_PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+    if ! _check_sync_command_available; then
+        _info "--> Fixing base dependencies for missing sync command."
+        _switch_base_tool
+        rm -f "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
+        _info "--> Recreating again from only requirements-base.in file."
+        _recreate_venv
+    fi
 
-  if [[ "$NEW_PYTHON_ENVIRONMENT_BASE_HASH" != "$PYTHON_ENVIRONMENT_BASE_HASH" ]]; then
-    _info "--> Storing python environment base hash"
-    PYTHON_ENVIRONMENT_BASE_HASH="$NEW_PYTHON_ENVIRONMENT_BASE_HASH"
-    _update_hashes_file
-  fi
+    if ! [[ -f "$REQ_BASE_TXT" ]]; then
+        _info "--> Locking base dependencies"
+        _compile_base_deps
+        _info "--> Recreating venv after locking of base dependencies"
+        _recreate_venv
+    fi
 
-  # shellcheck disable=SC2119
-  printf '%s' "$(_py_complete_version)" >"$VENV_PATH"/full_py_version.txt
+    NEW_PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+
+    if [[ "$NEW_PYTHON_ENVIRONMENT_BASE_HASH" != "$PYTHON_ENVIRONMENT_BASE_HASH" ]]; then
+        _info "--> Storing python environment base hash"
+        PYTHON_ENVIRONMENT_BASE_HASH="$NEW_PYTHON_ENVIRONMENT_BASE_HASH"
+        _update_hashes_file
+    fi
+
+    # shellcheck disable=SC2119
+    printf '%s' "$(_py_complete_version)" >"$VENV_PATH"/full_py_version.txt
+
 }
 
 _compile() {
-  if [[ ${1-} == "--delete" ]]; then
-    rm -f "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
-  fi
-  _wrap_pip_compile "$REQ_BASE_IN" && _wrap_pip_compile "$REQ_IN" && _wrap_pip_compile "$REQ_DEV_IN"
+    if [[ ${1-} == "--delete" ]]; then
+        rm -f "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
 
-  _info "--> Updating pipt_locks.env"
+        _switch_base_tool
+    fi
+    _wrap_pip_compile "$REQ_BASE_IN" -o "$REQ_BASE_TXT" && _wrap_pip_compile "$REQ_IN" -o "$REQ_TXT" && _wrap_pip_compile "$REQ_DEV_IN" -o "$REQ_DEV_TXT"
 
-  DEPENDENCY_SPECIFICATIONS_FULL_HASH="$(_deps_full_hash)"
-  DEPENDENCY_SPECIFICATIONS_ABORT_HASH="$(_deps_abort_hash)"
-  PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+    _info "--> Updating pipt_locks.env"
 
-  _compute_nix_hash
-  _update_hashes_file
+    DEPENDENCY_SPECIFICATIONS_FULL_HASH="$(_deps_full_hash)"
+    DEPENDENCY_SPECIFICATIONS_ABORT_HASH="$(_deps_abort_hash)"
+    PYTHON_ENVIRONMENT_BASE_HASH=$(_hash_multiple -s "$PY_VERSION" -f "$REQ_BASE_TXT")
+
+    _compute_nix_hash
+    _update_hashes_file
 }
 
 _compile_if_necessary() {
-  if [[ -n "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" ]]; then
-    if [[ "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" == "$(_deps_full_hash)" ]]; then
-      _info "--> Compile step not necessary. Not compiling again."
-      return
+    if [[ -n "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" ]]; then
+        if [[ "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" == "$(_deps_full_hash)" ]]; then
+            _info "--> Compile step not necessary. Not compiling again."
+            return
+        fi
     fi
-  fi
-  _info "--> Compiling."
-  _compile
+    _info "--> Compiling."
+    _compile
 }
 
 upgrade() {
-  # This compiles from scratch, i.e. it deletes all lock files and then
-  # compiles. This way all dependencies are upgraded w.r.t the version constraints
-  # from their specifications.
-  _init_in_files
-  venv
-  _compile --delete
+    # This compiles from scratch, i.e. it deletes all lock files and then
+    # compiles. This way all dependencies are upgraded w.r.t the version constraints
+    # from their specifications.
+    _init_in_files
+    venv
+    _compile --delete
 }
 
 lock() {
-  # keeps / does not upgrade already locked versions
-  # Use this if you want to only lock new dependencies and remove locked versions
-  # of dependencies which have been deleted from the *.in files.
-  _init_in_files
-  venv
-  _compile
+    # keeps / does not upgrade already locked versions
+    # Use this if you want to only lock new dependencies and remove locked versions
+    # of dependencies which have been deleted from the *.in files.
+    _init_in_files
+    venv
+    _compile
 }
 
 _deps_full_hash() {
-  printf '%s' "$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_IN" "$REQ_BASE_TXT" "$REQ_IN" "$REQ_TXT" "$REQ_DEV_IN" "$REQ_DEV_TXT")"
+    printf '%s' "$(_hash_multiple -s "$PY_VERSION" -s "$USE_UV" "$REQ_BASE_IN" "$REQ_BASE_TXT" "$REQ_IN" "$REQ_TXT" "$REQ_DEV_IN" "$REQ_DEV_TXT")"
 }
 
 _deps_abort_hash() {
-  printf '%s' "$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT")"
+    printf '%s' "$(_hash_multiple -s "$PY_VERSION" -s "$USE_UV" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT")"
 }
 
 _recommend_upgrade() {
-  if [[ -n "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" ]]; then
-    if [[ "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" != "$(_deps_full_hash)" ]]; then
-      _info "--> WARNING: Dependency specifications in requirements*.in files and"
-      _info "    locked dependencies in requirements*.txt files seem to disagree."
-      _info "    Maybe you added/deleted dependencies in one of the *in files?"
-      _info "    It is strongly recommended to lock/upgrade dependencies by calling pipt lock or pipt upgrade!"
+    if [[ -n "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" ]]; then
+        if [[ "$DEPENDENCY_SPECIFICATIONS_FULL_HASH" != "$(_deps_full_hash)" ]]; then
+            _info "--> WARNING: Dependency specifications in requirements*.in files and"
+            _info "    locked dependencies in requirements*.txt files seem to disagree."
+            _info "    Maybe you added/deleted dependencies in one of the *in files?"
+            _info "    It is strongly recommended to lock/upgrade dependencies by calling pipt lock or pipt upgrade!"
+        fi
+    else
+        _info "--> WARNING: Dependency specifications full hash empty."
+        _info "    You should run pipt lock or pipt upgrade once and add the"
+        _info "    generated file to your repository and commit it!"
     fi
-  else
-    _info "--> WARNING: Dependency specifications full hash empty."
-    _info "    You should run pipt lock or pipt upgrade once and add the"
-    _info "    generated file to your repository and commit it!"
-  fi
 }
 
 _abort_sync_if_locked_against_wrong_py_version() {
-  if [[ -n "$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" ]]; then
-    if [[ "$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" != "$(_deps_abort_hash)" ]]; then
-      _log_error "--> ERROR: The combination of Python minor version and locked dependencies"
-      _log_error "    in requirements*.txt files seem to disagree. This probably means that"
-      _log_error "    the locked dependencies where locked with a certain minor Python version"
-      _log_error "    and you are trying to sync them in a virtual environment with another"
-      _log_error "    Python version. It is strongly recommended to lock/upgrade dependencies"
-      _log_error "    by calling pipt lock or pipt upgrade! Aborting."
-      exit 7
+    if [[ -n "$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" ]]; then
+        if [[ "$DEPENDENCY_SPECIFICATIONS_ABORT_HASH" != "$(_deps_abort_hash)" ]]; then
+            _log_error "--> ERROR: The combination of Python minor version, used tool (pip-tools versus"
+            _log_error "    uv) and locked dependencies in requirements*.txt files seem to disagree."
+            _log_error "    This probably means that the locked dependencies where locked with a"
+            _log_error "    certain minor Python version and a dependency tool and you are trying to"
+            _log_error "    sync them in a virtual environment with another dependency tool or"
+            _log_error "    Python version. It is strongly recommended to lock/upgrade dependencies"
+            _log_error "    by calling pipt lock or pipt upgrade! Aborting."
+            exit 7
+        fi
+    else
+        _info "--> WARNING: Dependency specifications abort hash empty."
+        _info "    You should run pipt lock or pipt upgrade once and add the"
+        _info "    generated file to your repository!"
     fi
-  else
-    _info "--> WARNING: Dependency specifications abort hash empty."
-    _info "    You should run pipt lock or pipt upgrade once and add the"
-    _info "    generated file to your repository!"
-  fi
 }
 
 _offline_sync_pip_install_args() {
-  echo -n "--no-index --no-chache-dir --find-links "
+    echo -n "--no-index --no-chache-dir --find-links "
 }
 
 _pip_sync_wrapped() {
 
-  local pip_sync_args=()
-  if [[ $SILENT = true ]]; then
-    pip_sync_args=("-q")
-  fi
+    local pip_sync_args=()
+    if [[ $SILENT = true ]]; then
+        pip_sync_args=("-q")
+    fi
 
-  pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
+    local sync_command="pip-sync"
+    if [[ $USE_UV = true ]]; then
+        sync_command="uv pip sync"
+        pip_sync_args+=("--python" "$VENV_PYTHON")
+    fi
 
-  pip_args_str+="$PIP_SYNC_PIP_ARGS"
+    pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
 
-  if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
-    pip_args_str+=" ${offline_pip_install_args[*]}"
-  fi
+    pip_args_str+="$PIP_SYNC_PIP_ARGS"
 
-  if [[ -n "$pip_args_str" ]]; then
-    pip_sync_args+=("--pip-args" "$pip_args_str")
-  fi
+    if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
+        if [[ $USE_UV = false ]]; then
+            pip_sync_args+=("${offline_pip_sync_args_unquoted[@]}")
+            pip_args_str+=" ${offline_pip_install_args[*]}"
+        elif [[ $USE_UV = true ]]; then
+            pip_sync_args+=("${offline_uv_pip_sync_args_unquoted[@]}")
+        fi
+    fi
 
-  "$VENV_PATH_BIN"/pip-sync "${pip_sync_args[@]}" "${@}"
+    if [[ $USE_UV = false ]]; then # uv pip sync has no --pip-args
+        if [[ -n "$pip_args_str" ]]; then
+            pip_sync_args+=("--pip-args" "$pip_args_str")
+        fi
+    fi
+
+    # shellcheck disable=SC2086
+    "$VENV_PATH_BIN"/$sync_command "${pip_sync_args[@]}" "${@}"
 }
 
 _sync() {
-  venv
+    venv
 
-  if [[ ! -f "$REQ_BASE_TXT" || ! -f "$REQ_TXT" || ! -f "$REQ_DEV_TXT" ]]; then
-    _info "--> Compiling/Locking since locked dependency files are missing."
-    upgrade
-  fi
+    if [[ ! -f "$REQ_BASE_TXT" || ! -f "$REQ_TXT" || ! -f "$REQ_DEV_TXT" ]]; then
+        _info "--> Compiling/Locking since locked dependency files are missing."
+        upgrade
+    fi
 
-  _abort_sync_if_locked_against_wrong_py_version
-  _recommend_upgrade
+    _abort_sync_if_locked_against_wrong_py_version
+    _recommend_upgrade
 
-  if [[ $USE_PROD_ENVIRONMENT = true ]]; then
-    LOCKED_DEPS_HASH=$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_TXT" "$REQ_TXT")
-  else
-    LOCKED_DEPS_HASH=$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT")
-  fi
+    freeze_output="$("$VENV_PATH_BIN"/pip freeze)"
+    freeze_hash=$(_hash_multiple -s "$freeze_output")
 
-  if [[ -d "$VENV_PATH" && -f "$VENV_PATH"/installed_locked_deps_hash.txt && $LOCKED_DEPS_HASH == $(cat "$VENV_PATH"/installed_locked_deps_hash.txt) ]]; then
-    _info "--> Existing virtual environment is still in sync. Not syncing again."
-    return
-  fi
+    if [[ $USE_PROD_ENVIRONMENT = true ]]; then
+        LOCKED_DEPS_HASH=$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_TXT" "$REQ_TXT")
+    else
+        LOCKED_DEPS_HASH=$(_hash_multiple -s "$PY_VERSION" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT")
+    fi
 
-  if [[ $USE_PROD_ENVIRONMENT = true ]]; then
-    _info "--> Syncing virtual environment with locked prod dependencies"
-    _pip_sync_wrapped "$REQ_BASE_TXT" "$REQ_TXT"
-  else
-    _info "--> Syncing virtual environment with locked dev dependencies"
-    _pip_sync_wrapped "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
-  fi
-  printf '%s' "$LOCKED_DEPS_HASH" >"$VENV_PATH"/installed_locked_deps_hash.txt
+    if [[ -d "$VENV_PATH" && -f "$VENV_PATH"/installed_locked_deps_hash.txt && $LOCKED_DEPS_HASH == $(cat "$VENV_PATH"/installed_locked_deps_hash.txt) ]]; then
+        if [[ -f "$VENV_PATH"/frozen_hash.txt && $freeze_hash == $(cat "$VENV_PATH"/frozen_hash.txt) ]]; then
+            _info "--> Existing virtual environment is still in sync. Not syncing again."
+            return
+        fi
+    fi
+
+    if [[ $USE_PROD_ENVIRONMENT = true ]]; then
+        _info "--> Syncing virtual environment with locked prod dependencies"
+        _pip_sync_wrapped "$REQ_BASE_TXT" "$REQ_TXT"
+    else
+        _info "--> Syncing virtual environment with locked dev dependencies"
+        _pip_sync_wrapped "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
+    fi
+    printf '%s' "$LOCKED_DEPS_HASH" >"$VENV_PATH"/installed_locked_deps_hash.txt
+
+    freeze_output="$("$VENV_PATH_BIN"/pip freeze)"
+    freeze_hash=$(_hash_multiple -s "$freeze_output")
+
+    printf '%s' "$freeze_hash" >"$VENV_PATH"/frozen_hash.txt
 }
 
 _parse_global_options() {
 
-  REMAINING_ARGS=()
-  while [[ "$#" -gt 0 ]]; do case $1 in
-    -p | --prod)
-      USE_PROD_ENVIRONMENT=true
-      shift
-      ;;
-    -d | --dev)
-      USE_PROD_ENVIRONMENT=false
-      shift
-      ;;
-    -s | --silent)
-      SILENT=true
-      shift
-      ;;
-    -n | --no-venv)
-      # whether no venv should be used for the download command
-      if [[ "$COMMAND" == "download" ]]; then
-        NO_VENV=true
-      else
-        REMAINING_ARGS+=("$1")
-      fi
-      shift
-      ;;
-    --)
-      shift
-      break
-      ;;
-    *)
-      REMAINING_ARGS+=("$1")
-      shift
-      ;;
-      #Unknown parameter appended to REMAINING_ARGS for access by subcommands
-    esac done
-  REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}") # concat with remaining arguments
+    REMAINING_ARGS=()
+    while [[ "$#" -gt 0 ]]; do case $1 in
+        -p | --prod)
+            USE_PROD_ENVIRONMENT=true
+            shift
+            ;;
+        -d | --dev)
+            USE_PROD_ENVIRONMENT=false
+            shift
+            ;;
+        -s | --silent)
+            SILENT=true
+            shift
+            ;;
+        -n | --no-venv)
+            # whether no venv should be used for the download command
+            if [[ "$COMMAND" == "download" ]]; then
+                NO_VENV=true
+            else
+                REMAINING_ARGS+=("$1")
+            fi
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+            #Unknown parameter appended to REMAINING_ARGS for access by subcommands
+        esac done
+    REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}") # concat with remaining arguments
 }
 
 sync() {
-  _parse_global_options "${@}"
-  _sync
+    _parse_global_options "${@}"
+    _sync
 }
 
 sync-system() {
-  # system-wide syncing (no venv)
-  #
-  # This is useful in setups where a venv is not desired. E.g. in Docker containers
-  # people tend to install directly to the system.
-  #
-  # In contrast to sync, this only checks Python version
-  # from pipt_locks.env.txt if that file is present, but nothing else.
-  #
-  # In particular this needs only the requirements*.txt files not the *.in files.
-  #
-  # Supports --prod and --silent options.
-  _check_not_in_venv
-  _infer_python_interpreter
+    # system-wide syncing (no venv)
+    #
+    # This is useful in setups where a venv is not desired. E.g. in Docker containers
+    # people tend to install directly to the system.
+    #
+    # In contrast to sync, this only checks Python version
+    # from pipt_locks.env.txt if that file is present, but nothing else.
+    #
+    # In particular this needs only the requirements*.txt files not the *.in files.
+    #
+    # Supports --prod and --silent options.
+    _check_not_in_venv
+    _infer_python_interpreter
 
-  _parse_global_options "${@}"
+    _parse_global_options "${@}"
 
-  if [[ (! -f "$REQ_BASE_TXT") || (! -f "$REQ_TXT") ]] || [[ $USE_PROD_ENVIRONMENT = false && (! -f "$REQ_DEV_TXT") ]]; then
-    _error "--> sync-system could not find all the required requirements*.txt files. Aborting."
-    exit 1
-  fi
+    if [[ (! -f "$REQ_BASE_TXT") || (! -f "$REQ_TXT") ]] || [[ $USE_PROD_ENVIRONMENT = false && (! -f "$REQ_DEV_TXT") ]]; then
+        _error "--> sync-system could not find all the required requirements*.txt files. Aborting."
+        exit 1
+    fi
 
-  _info "--> install locked base requirements including piptools"
-  _wrap_system_pip_install --no-deps -r "$REQ_BASE_TXT"
+    _info "--> install locked base requirements including piptools"
+    _wrap_system_pip_install --no-deps -r "$REQ_BASE_TXT"
 
-  local pip_sync_args=()
-  if [[ $SILENT = true ]]; then
-    pip_sync_args+=("-q")
-  fi
+    local pip_sync_args=()
+    if [[ $SILENT = true ]]; then
+        pip_sync_args+=("-q")
+    fi
 
-  pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
+    local sync_command="piptools sync"
+    if [[ $USE_UV = true ]]; then
+        sync_command="uv pip sync"
+        pip_sync_args+=("--python" "$INFERRED_PYTHON")
+    fi
 
-  pip_args_str+="$PIP_SYNC_PIP_ARGS"
+    pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
 
-  if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
-    pip_args_str+=" ${offline_pip_install_args[*]}"
-  fi
+    pip_args_str+="$PIP_SYNC_PIP_ARGS"
 
-  if [[ -n "$pip_args_str" ]]; then
-    pip_sync_args+=("--pip-args" "$pip_args_str")
-  fi
+    if [[ -n "$OFFLINE_SYNC_DIR" ]]; then
+        if [[ $USE_UV = false ]]; then
+            pip_sync_args+=("${offline_pip_sync_args_unquoted[@]}")
+            pip_args_str+=" ${offline_pip_install_args[*]}"
+        elif [[ $USE_UV = true ]]; then
+            pip_sync_args+=("${offline_uv_pip_sync_args_unquoted[@]}")
+        fi
+    fi
 
-  pip_sync_args+=("${REMAINING_ARGS[@]}")
+    if [[ $USE_UV = false ]]; then # uv pip sync has no --pip-args
+        if [[ -n "$pip_args_str" ]]; then
+            pip_sync_args+=("--pip-args" "$pip_args_str")
+        fi
+    fi
 
-  if [[ $USE_PROD_ENVIRONMENT = false ]]; then
-    _info "--> install locked runtime and dev requirements"
-    "$INFERRED_PYTHON" -m piptools sync "${pip_sync_args[@]}" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
-  else
-    _info "--> install locked runtime requirements"
-    "$INFERRED_PYTHON" -m piptools sync "${pip_sync_args[@]}" "$REQ_BASE_TXT" "$REQ_TXT"
-  fi
+    pip_sync_args+=("${REMAINING_ARGS[@]}")
+
+    if [[ $USE_PROD_ENVIRONMENT = false ]]; then
+        _info "--> install locked runtime and dev requirements"
+        # shellcheck disable=SC2086
+        "$INFERRED_PYTHON" -m $sync_command "${pip_sync_args[@]}" "$REQ_BASE_TXT" "$REQ_TXT" "$REQ_DEV_TXT"
+    else
+        _info "--> install locked runtime requirements"
+        # shellcheck disable=SC2086
+        "$INFERRED_PYTHON" -m $sync_command "${pip_sync_args[@]}" "$REQ_BASE_TXT" "$REQ_TXT"
+    fi
 }
 
 shell() {
-  _parse_global_options "${@}"
+    _parse_global_options "${@}"
 
-  _sync
-  _info "--> Activating environment."
+    _sync
+    _info "--> Activating environment."
 
-  if [[ -f "$HOME/.bashrc" ]]; then
-    init_file_content=". \"$HOME/.bashrc\"; source \"$VENV_PATH_BIN\"/activate"
-  else
-    init_file_content="source \"$VENV_PATH_BIN\"/activate"
-  fi
+    if [[ -f "$HOME/.bashrc" ]]; then
+        init_file_content=". \"$HOME/.bashrc\"; source \"$VENV_PATH_BIN\"/activate"
+    else
+        init_file_content="source \"$VENV_PATH_BIN\"/activate"
+    fi
 
-  if [[ -n "$SHELL_HOOK" ]]; then
-    init_file_content+="; bash \"$SHELL_HOOK\""
-  fi
+    if [[ -n "$SHELL_HOOK" ]]; then
+        init_file_content+="; bash \"$SHELL_HOOK\""
+    fi
 
-  bash --init-file <(echo "$init_file_content")
+    bash --init-file <(echo "$init_file_content")
 }
 
 download() {
-  _parse_global_options "${@}"
+    _parse_global_options "${@}"
 
-  _download_all_deps "${REMAINING_ARGS[@]}"
+    _download_all_deps "${REMAINING_ARGS[@]}"
 }
 
 PYREQ_CONTENT=$(
-  cat <<'END_HEREDOC'
+    cat <<'END_HEREDOC'
 from typing import Dict, List, Optional
 import os
 import sys
@@ -1182,9 +1288,7 @@ import sys
 from pip._internal.network.session import PipSession
 from pip._internal.req import parse_requirements
 
-from pip._vendor.pkg_resources import (
-    Requirement,
-)
+from packaging.requirements import Requirement
 
 
 class WritableRequirement:
@@ -1206,7 +1310,7 @@ def parse_reqs_from_file(path) -> List[WritableRequirement]:
         return []
     return [
         WritableRequirement(
-            parsed_req.requirement, Requirement.parse(parsed_req.requirement)
+            parsed_req.requirement, Requirement(parsed_req.requirement)
         )
         for parsed_req in parse_requirements(path, PipSession())
     ]
@@ -1221,7 +1325,7 @@ def writable_req_from_line(line: str) -> WritableRequirement:
         comment = None
     return WritableRequirement(
         pure_req_line.replace(" ", "").strip(os.linesep),
-        Requirement.parse(pure_req_line),
+        Requirement(pure_req_line),
         comment
     )
 
@@ -1240,7 +1344,7 @@ def parse_reqs_from_lines_of_file(path):
     else:
         with open(path, "r") as f:
             lines = [line.strip("\n").strip() for line in f.readlines()]
-    return parse_reqs_from_list([line for line in lines if not
+    return parse_reqs_from_list([line for line in lines if not 
         ( line.startswith("-c ") or len(line)==0 or line.startswith("#") )
     ])
 
@@ -1263,9 +1367,9 @@ def update_reqs(
     if reqs_to_remove is None:
         reqs_to_remove = []
 
-    reqs_to_remove_keys = set((req.req_object.key for req in reqs_to_remove))
+    reqs_to_remove_keys = set((req.req_object.name for req in reqs_to_remove))
 
-    old_req_lookup_dict = {req.req_object.key: req for req in old_reqs}
+    old_req_lookup_dict = {req.req_object.name: req for req in old_reqs}
 
     if len(old_req_lookup_dict) != len(old_reqs):
         raise ValueError(
@@ -1280,9 +1384,9 @@ def update_reqs(
         if not key in reqs_to_remove_keys
     }
 
-    new_req_dict = {req.req_object.key: req for req in possible_new_reqs}
+    new_req_dict = {req.req_object.name: req for req in possible_new_reqs}
     old_reqs_without_reqs_to_remove.update(new_req_dict)
-    return old_reqs_without_reqs_to_remove
+    return dict(sorted(old_reqs_without_reqs_to_remove.items()))
 
 
 def write_new_reqs_to_file(
@@ -1335,6 +1439,8 @@ if __name__ == "__main__":
         constraint_files = ["requirements.txt", "requirements-base.txt"]
     elif in_file.endswith("requirements.in"):
         constraint_files = ["requirements-base.txt"]
+    elif in_file.endswith("requirements-base.in"):
+        constraint_files = []
     else:
         raise ValueError("in_file not expected")
 
@@ -1353,120 +1459,145 @@ if __name__ == "__main__":
             path=in_file,
             constraint_files=constraint_files,
         )
+    
+    elif command == "switch_base_file":
+        update_abstract_req_file(
+            to_remove_package_strings=["pip-tools", "uv"],
+            new_package_strings=req_specs,
+            path=in_file,
+            constraint_files=constraint_files,
+        )
 END_HEREDOC
 )
 
 PYREQ_TMP_FILE=""
 _pyreq_tmp() {
-  PYREQ_TMP_FILE=$(mktemp "${TMPDIR:-/tmp/}pyreqXXXXXXXXXXXX.py")
-  echo "$PYREQ_CONTENT" >"$PYREQ_TMP_FILE"
+    PYREQ_TMP_FILE=$(mktemp "${TMPDIR:-/tmp/}pyreqXXXXXXXXXXXX.py")
+    echo "$PYREQ_CONTENT" >"$PYREQ_TMP_FILE"
 }
 
 add() {
-  # Add dependency specifications
-  #
-  # It defaults to adding them to the runtime dependencies in the requirements.in
-  # file. Call with --dev to add them to requirements-dev.in file instead.
-  #
-  # Compiles if necessary, trying not to upgrade existing locked dependencies if it
-  # can avoid so.
+    # Add dependency specifications
+    #
+    # It defaults to adding them to the runtime dependencies in the requirements.in
+    # file. Call with --dev to add them to requirements-dev.in file instead.
+    #
+    # Compiles if necessary, trying not to upgrade existing locked dependencies if it
+    # can avoid so.
 
-  USE_PROD_ENVIRONMENT=true
+    USE_PROD_ENVIRONMENT=true
 
-  _parse_global_options "${@}"
-  _init_in_files
-  venv
-  _pyreq_tmp
-  if [[ $USE_PROD_ENVIRONMENT = true ]]; then
-    REQ_FILE="$REQ_SOURCE_DIR"/"requirements.in"
-  else
-    REQ_FILE="$REQ_SOURCE_DIR"/"requirements-dev.in"
-  fi
+    _parse_global_options "${@}"
+    _init_in_files
+    venv
+    _pyreq_tmp
+    if [[ $USE_PROD_ENVIRONMENT = true ]]; then
+        REQ_FILE="$REQ_SOURCE_DIR"/"requirements.in"
+    else
+        REQ_FILE="$REQ_SOURCE_DIR"/"requirements-dev.in"
+    fi
 
-  "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" install "$REQ_FILE" "${REMAINING_ARGS[@]}"
-  # shellcheck disable=SC2119
-  _compile_if_necessary
+    "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" install "$REQ_FILE" "${REMAINING_ARGS[@]}"
+    # shellcheck disable=SC2119
+    _compile_if_necessary
 
-  rm -f "$PYREQ_TMP_FILE"
+    rm -f "$PYREQ_TMP_FILE"
 }
 
 remove() {
-  # Removes dependency specifications.
-  #
-  #
-  # * Here you do not have to specify whether a dependency is a dev or prod dependency.
-  #   Pipt will try to remove it from both requirements.in and requirements-dev.in.
-  # * Just provide the dependency name ("requests"), no version constraints.
-  #
-  # Locks if necessary, i.e. tries not to upgrade existing locked dependencies if it
-  # can avoid so.
+    # Removes dependency specifications.
+    #
+    #
+    # * Here you do not have to specify whether a dependency is a dev or prod dependency.
+    #   Pipt will try to remove it from both requirements.in and requirements-dev.in.
+    # * Just provide the dependency name ("requests"), no version constraints.
+    #
+    # Locks if necessary, i.e. tries not to upgrade existing locked dependencies if it
+    # can avoid so.
 
-  _parse_global_options "${@}"
-  _init_in_files
-  venv
-  _pyreq_tmp
+    _parse_global_options "${@}"
+    _init_in_files
+    venv
+    _pyreq_tmp
 
-  "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" remove "$REQ_SOURCE_DIR"/"requirements.in" "${REMAINING_ARGS[@]}"
-  "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" remove "$REQ_SOURCE_DIR"/"requirements-dev.in" "${REMAINING_ARGS[@]}"
+    "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" remove "$REQ_SOURCE_DIR"/"requirements.in" "${REMAINING_ARGS[@]}"
+    "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" remove "$REQ_SOURCE_DIR"/"requirements-dev.in" "${REMAINING_ARGS[@]}"
 
-  # shellcheck disable=SC2119
-  _compile_if_necessary
+    # shellcheck disable=SC2119
+    _compile_if_necessary
 
-  rm -f "$PYREQ_TMP_FILE"
+    rm -f "$PYREQ_TMP_FILE"
+}
+
+_switch_base_tool() {
+    _pyreq_tmp
+
+    if [[ $USE_UV = true ]]; then
+        "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" switch_base_file "$REQ_SOURCE_DIR"/"requirements-base.in" "uv"
+    else
+        "$VENV_PATH_BIN"/python "$PYREQ_TMP_FILE" switch_base_file "$REQ_SOURCE_DIR"/"requirements-base.in" "pip-tools"
+    fi
+    rm -f "$PYREQ_TMP_FILE"
+
 }
 
 run() {
-  # Run an arbitrary command with activated virtual environment:
-  #     pipt run [--prod] [--silent] -- COMMAND
-  #
-  # Defaults to running in dev environment.
-  # (it is strongly recommended to place -- before the COMMAND!!!)
-  _parse_global_options "${@}"
-  _sync
-  # shellcheck disable=SC1091
-  source "$VENV_PATH_BIN"/activate
-  "${REMAINING_ARGS[@]}"
+    # Run an arbitrary command with activated virtual environment:
+    #     pipt run [--prod] [--silent] -- COMMAND
+    #
+    # Defaults to running in dev environment.
+    # (it is strongly recommended to place -- before the COMMAND!!!)
+    _parse_global_options "${@}"
+    _sync
+    # shellcheck disable=SC1091
+    source "$VENV_PATH_BIN"/activate
+    "${REMAINING_ARGS[@]}"
 }
 
 info() {
-  # get pipt's computed path infos to use them in other scripts.
-  SILENT=true
-  _check_not_in_venv
-  _infer_python_interpreter
-  _infer_venv_path
-  SILENT=false
+    # get pipt's computed path infos to use them in other scripts.
+    SILENT=true
+    _check_not_in_venv
+    _infer_python_interpreter
+    _infer_venv_path
+    SILENT=false
 
-  while [[ "$#" -gt 0 ]]; do case $1 in
-    --venv)
-      echo "$VENV_PATH"
-      shift
-      exit 0
-      ;;
-    --python)
-      command -v "$INFERRED_PYTHON"
-      shift
-      exit 0
-      ;;
-    --version)
-      echo "$PIPT_VERSION"
-      shift
-      exit 0
-      ;;
-    *)
-      usage "Unknown parameter passed to $COMMAND command: $1"
-      exit 1
-      ;;
-    esac done
+    while [[ "$#" -gt 0 ]]; do case $1 in
+        --venv)
+            echo "$VENV_PATH"
+            shift
+            exit 0
+            ;;
+        --python)
+            command -v "$INFERRED_PYTHON"
+            shift
+            exit 0
+            ;;
+        --version)
+            echo "$PIPT_VERSION"
+            shift
+            exit 0
+            ;;
+        *)
+            usage "Unknown parameter passed to $COMMAND command: $1"
+            exit 1
+            ;;
+        esac done
 
-  _info "--> Pipt version: $PIPT_VERSION"
-  _info "--> Using venv path: $VENV_PATH"
-  _info "--> Inferred system Python interpreter: $(command -v "$INFERRED_PYTHON")"
+    _info "--> Pipt version: $PIPT_VERSION"
+    _info "--> Using venv path: $VENV_PATH"
+    _info "--> Inferred system Python interpreter: $(command -v "$INFERRED_PYTHON")"
 }
 
-#----- Execution -----#
+###############################################################################
+#                                                                             #
+#                                  Execution                                  #
+#                                                                             #
+###############################################################################
+
 _fn_exists() {
-  # Checks whether there exists a variable of type function with the given name.
-  LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
+    # Checks whether there exists a variable of type function with the given name.
+    LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
 }
 
 COMMAND=${1:-usage}
@@ -1474,11 +1605,12 @@ shift || true
 ARGUMENTS=("${@}")
 
 if [[ "$COMMAND" == "--help" || "$COMMAND" == "-h" ]]; then
-  help
+    help
+    exit 0
 fi
 
 if _fn_exists "$COMMAND"; then
-  "$COMMAND" "${ARGUMENTS[@]}"
+    "$COMMAND" "${ARGUMENTS[@]}"
 else
-  usage "No subcommand $COMMAND"
+    usage "No subcommand $COMMAND"
 fi

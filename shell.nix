@@ -64,7 +64,7 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c
 
 let
   nixpkgs_for_nodejs14 = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") { };
-  pythonPackages = python311Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python312Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -321,7 +321,7 @@ pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python311Packages.python
+    python312Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib

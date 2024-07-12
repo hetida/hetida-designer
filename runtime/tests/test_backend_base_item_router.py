@@ -126,19 +126,13 @@ async def test_get_all_base_items_with_valid_db_entries(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_component_1
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_component_1).to_transformation_revision()
     )
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_workflow_1
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_workflow_1).to_transformation_revision()
     )
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_workflow_2
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_workflow_2).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -177,12 +171,8 @@ async def test_get_all_base_items_with_specified_state(
 
     async with async_test_client as ac:
         response_draft = await ac.get("/api/base-items/", params={"state": "DRAFT"})
-        response_released = await ac.get(
-            "/api/base-items/", params={"state": "RELEASED"}
-        )
-        response_disabled = await ac.get(
-            "/api/base-items/", params={"state": "DISABLED"}
-        )
+        response_released = await ac.get("/api/base-items/", params={"state": "RELEASED"})
+        response_disabled = await ac.get("/api/base-items/", params={"state": "DISABLED"})
         response_foo = await ac.get("/api/base-items/", params={"state": "FOO"})
 
     assert response_draft.status_code == 200
@@ -226,12 +216,8 @@ async def test_get_all_base_items_with_specified_type(
     )
 
     async with async_test_client as ac:
-        response_component = await ac.get(
-            "/api/base-items/", params={"type": "COMPONENT"}
-        )
-        response_workflow = await ac.get(
-            "/api/base-items/", params={"type": "WORKFLOW"}
-        )
+        response_component = await ac.get("/api/base-items/", params={"type": "COMPONENT"})
+        response_workflow = await ac.get("/api/base-items/", params={"type": "WORKFLOW"})
         response_foo = await ac.get("/api/base-items/", params={"type": "FOO"})
 
     assert response_component.status_code == 200
@@ -293,15 +279,11 @@ async def test_get_transformation_revision_by_id_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_component_1
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/base-items/" + str(get_uuid_from_seed("component 1"))
-        )
+        response = await ac.get("/api/base-items/" + str(get_uuid_from_seed("component 1")))
     assert response.status_code == 200
     assert response.json() == tr_dto_json_component_1
 
@@ -312,8 +294,7 @@ async def test_get_transformation_revision_by_id_with_inexistent_component(
 ):
     async with async_test_client as ac:
         response = await ac.get(
-            "/api/base-items/"
-            + str(get_uuid_from_seed("inexistent transformation revision"))
+            "/api/base-items/" + str(get_uuid_from_seed("inexistent transformation revision"))
         )
     assert response.status_code == 404
     assert "Found no" in response.json()["detail"]
@@ -324,15 +305,11 @@ async def test_get_transformation_revision_by_id_with_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_workflow_1
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_workflow_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/base-items/" + str(get_uuid_from_seed("workflow 1"))
-        )
+        response = await ac.get("/api/base-items/" + str(get_uuid_from_seed("workflow 1")))
     assert response.status_code == 200
     assert response.json() == tr_dto_json_workflow_1
 
@@ -342,9 +319,7 @@ async def test_get_transformation_revision_by_id_with_inexistent_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/base-items/" + str(get_uuid_from_seed("inexistent workflow"))
-        )
+        response = await ac.get("/api/base-items/" + str(get_uuid_from_seed("inexistent workflow")))
     assert response.status_code == 404
     assert "Found no" in response.json()["detail"]
 
@@ -365,9 +340,7 @@ async def test_update_transformation_revision_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_component_1
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -403,9 +376,7 @@ async def test_update_transformation_revision_from_released_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_component_2
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_component_2).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -422,9 +393,7 @@ async def test_deprecate_base_item_of_type_component(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        TransformationRevisionFrontendDto(
-            **tr_dto_json_component_2
-        ).to_transformation_revision()
+        TransformationRevisionFrontendDto(**tr_dto_json_component_2).to_transformation_revision()
     )
 
     async with async_test_client as ac:

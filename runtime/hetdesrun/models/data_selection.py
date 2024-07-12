@@ -1,4 +1,5 @@
 """Source and sink classes for adapter data selection"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field

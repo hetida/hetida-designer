@@ -31,9 +31,7 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_workflow_content_io(
-        self, operator_name: str, connector_name: str
-    ) -> WorkflowContentIO:
+    def to_workflow_content_io(self, operator_name: str, connector_name: str) -> WorkflowContentIO:
         return WorkflowContentIO(
             id=self.id,
             name=self.name,
@@ -45,9 +43,7 @@ class WorkflowIoFrontendDto(BaseModel):
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_constant(
-        self, operator_name: str, connector_name: str
-    ) -> WorkflowContentConstantInput:
+    def to_constant(self, operator_name: str, connector_name: str) -> WorkflowContentConstantInput:
         return WorkflowContentConstantInput(
             id=self.id,
             data_type=self.type,

@@ -174,9 +174,7 @@ register_sink_adapter(
 
 # Registering local file adapter
 
-register_source_adapter(
-    adapter_key="local-file-adapter", load_func=local_file_load_data
-)
+register_source_adapter(adapter_key="local-file-adapter", load_func=local_file_load_data)
 
 register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
 
@@ -233,15 +231,11 @@ async def load_data_from_adapter(
     except adapter["connection_error_classes"] as e:
         if isinstance(e, AdapterConnectionError):
             raise e
-        raise AdapterConnectionError(
-            f"Adapter Client specific connection error:\n{str(e)}"
-        ) from e
+        raise AdapterConnectionError(f"Adapter Client specific connection error:\n{str(e)}") from e
     except adapter["output_data_error_classes"] as e:
         if isinstance(e, AdapterOutputDataError):
             raise e
-        raise AdapterOutputDataError(
-            f"Adapter Client specific output data error:\n{str(e)}"
-        ) from e
+        raise AdapterOutputDataError(f"Adapter Client specific output data error:\n{str(e)}") from e
     except adapter["client_wiring_invalid_error_classes"] as e:
         if isinstance(e, AdapterClientWiringInvalidError):
             raise e
@@ -282,15 +276,11 @@ async def send_data_with_adapter(
     except adapter["connection_error_classes"] as e:
         if isinstance(e, AdapterConnectionError):
             raise e
-        raise AdapterConnectionError(
-            f"Adapter Client specific connection error:\n{str(e)}"
-        ) from e
+        raise AdapterConnectionError(f"Adapter Client specific connection error:\n{str(e)}") from e
     except adapter["output_data_error_classes"] as e:
         if isinstance(e, AdapterOutputDataError):
             raise e
-        raise AdapterOutputDataError(
-            f"Adapter Client specific output data error:\n{str(e)}"
-        ) from e
+        raise AdapterOutputDataError(f"Adapter Client specific output data error:\n{str(e)}") from e
     except adapter["client_wiring_invalid_error_classes"] as e:
         if isinstance(e, AdapterClientWiringInvalidError):
             raise e

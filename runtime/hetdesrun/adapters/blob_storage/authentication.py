@@ -38,9 +38,7 @@ def extract_namespace_from_root_tag(root_tag: str) -> str:
     return root_tag.split("}")[0].strip("{")
 
 
-def parse_credential_info_from_xml_string(
-    xml_string: str, utc_now: datetime
-) -> CredentialInfo:
+def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) -> CredentialInfo:
     logger.debug("Parsing XML response to obtain credential info")
     try:
         xml_response = ET.fromstring(xml_string)  # noqa: S314
@@ -77,10 +75,7 @@ def parse_credential_info_from_xml_string(
         session_token=xml_session_token.text,
     )
     try:
-        # TODO: After upgrade to python 3.11 directly parse timestamp string
-        expiration_time = datetime.fromisoformat(
-            str(xml_expiration.text).replace("Z", "+00:00")
-        )
+        expiration_time = datetime.fromisoformat(str(xml_expiration.text))
     except ValueError as error:
         msg = (
             f"Expiration '{xml_expiration.text}' from XML response cannot be parsed "
@@ -121,9 +116,7 @@ def parse_xml_error_response(xml_string: str) -> str:
                 error_code_text = str(error_code.text)
         except AttributeError:
             pass
-        return (
-            f":\nError Code: {error_code_text}\nError Message: {error_message_text}\n"
-        )
+        return f":\nError Code: {error_code_text}\nError Message: {error_message_text}\n"
     return f"and response text:\n{xml_string}\n"
 
 
@@ -165,18 +158,14 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
 def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
     now = datetime.now(timezone.utc)
 
-    time_since_issue_in_seconds = (
-        now - credential_info.issue_timestamp
-    ).total_seconds()
+    time_since_issue_in_seconds = (now - credential_info.issue_timestamp).total_seconds()
     logger.debug(
         "%ss since last credentials were issued. Credentials expire after %ss.",
         time_since_issue_in_seconds,
         credential_info.expiration_time_in_seconds,
     )
 
-    return (
-        time_since_issue_in_seconds <= credential_info.expiration_time_in_seconds * 0.9
-    )
+    return time_since_issue_in_seconds <= credential_info.expiration_time_in_seconds * 0.9
 
 
 async def obtain_or_refresh_credential_info(
@@ -207,9 +196,7 @@ class CredentialManager:
 
         A StorageAuthenticationError raised in obtain_credentail_info_from_rest_api may occur.
         """
-        credential_info = await obtain_or_refresh_credential_info(
-            self._current_credential_info
-        )
+        credential_info = await obtain_or_refresh_credential_info(self._current_credential_info)
         with self._credential_thread_lock:
             self._current_credential_info = credential_info
 

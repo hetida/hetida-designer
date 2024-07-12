@@ -90,9 +90,7 @@ class ComponentRevision(BaseModel):
         return names_unique(cls, inputs)
 
     @validator("outputs", each_item=False)
-    def output_names_unique(
-        cls, outputs: list[ComponentOutput]
-    ) -> list[ComponentOutput]:
+    def output_names_unique(cls, outputs: list[ComponentOutput]) -> list[ComponentOutput]:
         return names_unique(cls, outputs)
 
 

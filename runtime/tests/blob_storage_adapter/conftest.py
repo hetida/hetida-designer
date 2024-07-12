@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -27,7 +27,8 @@ def async_test_client_with_blob_storage_adapter(
     app_without_auth_with_blob_storage_adapter: FastAPI,
 ) -> AsyncClient:
     return AsyncClient(
-        app=app_without_auth_with_blob_storage_adapter, base_url="http://test"
+        transport=ASGITransport(app=app_without_auth_with_blob_storage_adapter),
+        base_url="http://test",
     )
 
 
@@ -113,21 +114,26 @@ def _mocked_source_and_structure(
     ) -> BlobStorageStructureSource:
         return mocked_blob_storage_sources_dict[id]
 
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
-        return_value=AdapterHierarchy.from_file(
-            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+    with (
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+            return_value=AdapterHierarchy.from_file(
+                "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+            ),
         ),
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
-        return_value=mocked_blob_storage_sources,
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id",
-        new=mocked_get_source_by_id,
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id",
-        new=mocked_get_source_by_parent_id,
-    ) as _fixture:
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.get_all_sources",
+            return_value=mocked_blob_storage_sources,
+        ),
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.get_source_by_id",
+            new=mocked_get_source_by_id,
+        ),
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id",
+            new=mocked_get_source_by_parent_id,
+        ) as _fixture,
+    ):
         yield
 
 
@@ -153,6 +159,8 @@ def async_test_client_with_blob_storage_adapter_with_mocked_structure(
     app_without_auth_with_blob_storage_adapter_with_mocked_structure: FastAPI,
 ) -> AsyncClient:
     return AsyncClient(
-        app=app_without_auth_with_blob_storage_adapter_with_mocked_structure,
+        transport=ASGITransport(
+            app=app_without_auth_with_blob_storage_adapter_with_mocked_structure
+        ),
         base_url="http://test",
     )

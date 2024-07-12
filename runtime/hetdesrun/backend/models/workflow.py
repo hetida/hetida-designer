@@ -76,9 +76,7 @@ def is_link_end(
 def is_connected_to_input(
     operator_id: UUID, connector_id: UUID, inputs: list[WorkflowIoFrontendDto]
 ) -> bool:
-    return any(
-        inp.operator == operator_id and inp.connector == connector_id for inp in inputs
-    )
+    return any(inp.operator == operator_id and inp.connector == connector_id for inp in inputs)
 
 
 def is_connected_to_output(
@@ -107,9 +105,7 @@ def get_or_create_input(
     if len(matching_inputs) > 0:
         return matching_inputs[0]
 
-    return WorkflowIoFrontendDto(
-        operator=operator_id, connector=connector_id, type=type
-    )
+    return WorkflowIoFrontendDto(operator=operator_id, connector=connector_id, type=type)
 
 
 def get_or_create_output(
@@ -128,9 +124,7 @@ def get_or_create_output(
     if len(matching_outputs) > 0:
         return matching_outputs[0]
 
-    return WorkflowIoFrontendDto(
-        operator=operator_id, connector=connector_id, type=type
-    )
+    return WorkflowIoFrontendDto(operator=operator_id, connector=connector_id, type=type)
 
 
 def get_link_start_type_from_operator(
@@ -361,9 +355,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     operator.id, connector.id, links, workflow_id
                 ) or is_connected_to_input(operator.id, connector.id, inputs):
                     updated_inputs.append(
-                        get_or_create_input(
-                            operator.id, connector.id, connector.type, inputs
-                        )
+                        get_or_create_input(operator.id, connector.id, connector.type, inputs)
                     )
 
         return updated_inputs
@@ -390,9 +382,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     operator.id, connector.id, links, workflow_id
                 ) or is_connected_to_output(operator.id, connector.id, outputs):
                     updated_outputs.append(
-                        get_or_create_output(
-                            operator.id, connector.id, connector.type, outputs
-                        )
+                        get_or_create_output(operator.id, connector.id, connector.type, outputs)
                     )
 
         return updated_outputs
@@ -421,13 +411,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             )
             raise ValueError(msg)
         if (io.name is None or io.name == "") and (
-            not io.constant
-            or io.constant_value is None
-            or io.constant_value["value"] == ""
+            not io.constant or io.constant_value is None or io.constant_value["value"] == ""
         ):
-            msg = (
-                "Either name or constant data must be provided for input/output {io.id}"
-            )
+            msg = "Either name or constant data must be provided for input/output {io.id}"
             raise ValueError(msg)
 
         return io
@@ -605,18 +591,14 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return WorkflowContent(
             inputs=[
                 inp.to_workflow_content_io(
-                    *get_operator_and_connector_name(
-                        inp.operator, inp.connector, self.operators
-                    )
+                    *get_operator_and_connector_name(inp.operator, inp.connector, self.operators)
                 )
                 for inp in self.inputs
                 if not inp.constant and inp.name is not None
             ],
             constants=[
                 inp.to_constant(
-                    *get_operator_and_connector_name(
-                        inp.operator, inp.connector, self.operators
-                    )
+                    *get_operator_and_connector_name(inp.operator, inp.connector, self.operators)
                 )
                 for inp in self.inputs
                 if inp.constant
@@ -666,9 +648,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                 outputs=[output.to_io() for output in self.outputs],
             ),
             content=self.to_workflow_content(),
-            test_wiring=self.wirings[0].to_wiring()
-            if len(self.wirings) > 0
-            else WorkflowWiring(),
+            test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),
         )
 
     @classmethod
@@ -682,14 +662,10 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         inputs: list[WorkflowIoFrontendDto] = []
 
         for dynamic_wf_input in transformation_revision.content.inputs:
-            inputs.append(
-                WorkflowIoFrontendDto.from_workflow_content_io(dynamic_wf_input)
-            )
+            inputs.append(WorkflowIoFrontendDto.from_workflow_content_io(dynamic_wf_input))
         for constant_wf_input in transformation_revision.content.constants:
             inputs.append(
-                WorkflowIoFrontendDto.from_workflow_content_constant_input(
-                    constant_wf_input
-                )
+                WorkflowIoFrontendDto.from_workflow_content_constant_input(constant_wf_input)
             )
 
         outputs: list[WorkflowIoFrontendDto] = []
@@ -715,10 +691,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                 WorkflowLinkFrontendDto.from_link(link, transformation_revision.id)
                 for link in transformation_revision.content.links
                 if link.start.connector.id
-                not in [
-                    constant.id
-                    for constant in transformation_revision.content.constants
-                ]
+                not in [constant.id for constant in transformation_revision.content.constants]
             ],
             wirings=[
                 WiringFrontendDto.from_wiring(

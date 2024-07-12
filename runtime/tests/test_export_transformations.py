@@ -83,9 +83,7 @@ def test_export_all_transformations_components_as_code(tmp_path):
         "hetdesrun.exportimport.export.requests.get",
         return_value=resp_mock,
     ) as mocked_get:
-        export_transformations(
-            tmp_path, components_as_code=True, expand_component_code=True
-        )
+        export_transformations(tmp_path, components_as_code=True, expand_component_code=True)
 
         assert mocked_get.call_count == 1
         _, args, _ = mocked_get.mock_calls[0]
@@ -103,10 +101,7 @@ def test_export_all_transformations_components_as_code(tmp_path):
         assert len(exported_paths) == len(json_files)
 
         for file_path in json_files[:-3]:
-            assert (
-                str(tmp_path.joinpath(file_path)).replace(".json", ".py")
-                in exported_paths
-            )
+            assert str(tmp_path.joinpath(file_path)).replace(".json", ".py") in exported_paths
         for file_path in json_files[-3:]:
             assert str(tmp_path.joinpath(file_path)) in exported_paths
 

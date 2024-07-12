@@ -33,9 +33,7 @@ class ThingNode(BaseModel):
     parent_external_node_id: str | None = Field(
         None, description="Externally provided unique identifier for the parent node"
     )
-    element_type_id: UUID = Field(
-        ..., description="Foreign key to the ElementType table"
-    )
+    element_type_id: UUID = Field(..., description="Foreign key to the ElementType table")
     element_type_external_id: str = Field(
         ..., description="Externally provided unique identifier for the element type"
     )
@@ -98,25 +96,19 @@ class Filter(BaseModel):
 
 
 class Source(BaseModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4, description="Unique identifier for the source"
-    )  # noqa: A003
+    id: UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the source")  # noqa: A003
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the Source")
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
-    preset_filters: dict[str, Any] | None = Field(
-        None, description="Preset filters for the source"
-    )
+    preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the source")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: UUID = Field(..., description="Referenced HD Source identifier")
-    meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Source"
-    )
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     thing_node_id: UUID | None = Field(
         None, description="Thing node UUID if this is associated with a thing node"
     )
@@ -170,25 +162,19 @@ class Source(BaseModel):
 
 
 class Sink(BaseModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4, description="Unique identifier for the sink"
-    )  # noqa: A003
+    id: UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the sink")  # noqa: A003
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the Sink")
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
-    preset_filters: dict[str, Any] | None = Field(
-        None, description="Preset filters for the sink"
-    )
+    preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the sink")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: UUID = Field(..., description="Referenced HD Sink identifier")
-    meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Sink"
-    )
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     thing_node_id: UUID | None = Field(
         None, description="Thing node UUID if this is associated with a thing node"
     )
@@ -242,15 +228,11 @@ class Sink(BaseModel):
 
 
 class PropertySet(BaseModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4, description="The primary key for the PropertySet"
-    )
+    id: UUID = Field(default_factory=uuid.uuid4, description="The primary key for the PropertySet")
     external_id: str = Field(..., description="Externally provided unique identifier")
     stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
     name: str = Field(..., description="The name of the PropertySet.")
-    description: str | None = Field(
-        None, description="A detailed description of the PropertySet."
-    )
+    description: str | None = Field(None, description="A detailed description of the PropertySet.")
     reference_table_name: str = Field(
         ..., description="The database table name associated with this PropertySet."
     )
@@ -295,9 +277,7 @@ class PropertySet(BaseModel):
     def check_type(cls, v: str) -> str:
         valid_types = ["INTERNAL", "EXTERNAL"]
         if v not in valid_types:
-            raise ValueError(
-                "property_set_type must be either 'INTERNAL' or 'EXTERNAL'"
-            )
+            raise ValueError("property_set_type must be either 'INTERNAL' or 'EXTERNAL'")
         return v
 
 
@@ -358,30 +338,22 @@ class PropertyMetadata(BaseModel):
         description="The primary key ID of the property metadata.",
     )
     external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(
-        ..., description="Stakeholder key for the PropertyMetadata"
-    )
+    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertyMetadata")
     property_set_id: UUID | None = Field(
         None, description="The foreign key ID linking to the Property Set."
     )
     property_set_external_id: str = Field(
         ..., description="Externally provided unique identifier for the Property Set"
     )
-    column_name: str = Field(
-        ..., description="The name of the column in the property set."
-    )
-    column_label: str = Field(
-        ..., description="The label of the column for display purposes."
-    )
+    column_name: str = Field(..., description="The name of the column in the property set.")
+    column_label: str = Field(..., description="The label of the column for display purposes.")
     column_type: Literal["STRING", "INT", "FLOAT", "BOOLEAN"] = Field(
         ..., description="The data type of the column (STRING, INT, FLOAT, BOOLEAN)."
     )
     field_length: int | None = Field(
         None, description="The length of the field, applicable for STRING type columns."
     )
-    nullable: bool = Field(
-        ..., description="Indicates if the column can accept NULL values."
-    )
+    nullable: bool = Field(..., description="Indicates if the column can accept NULL values.")
     order_no: int = Field(
         ..., description="The ordering number of the column within the property set."
     )
@@ -435,15 +407,11 @@ class PropertyMetadata(BaseModel):
 
 
 class ElementTypeToPropertySet(BaseModel):
-    element_type_id: UUID = Field(
-        ..., description="The foreign key ID linking to the ElementType."
-    )
+    element_type_id: UUID = Field(..., description="The foreign key ID linking to the ElementType.")
     element_type_external_id: str = Field(
         ..., description="Externally provided unique identifier for the ElementType"
     )
-    property_set_id: UUID = Field(
-        ..., description="The foreign key ID linking to the PropertySet."
-    )
+    property_set_id: UUID = Field(..., description="The foreign key ID linking to the PropertySet.")
     property_set_external_id: str = Field(
         ..., description="Externally provided unique identifier for the PropertySet"
     )
@@ -465,9 +433,7 @@ class ElementTypeToPropertySet(BaseModel):
         )
 
     @classmethod
-    def from_orm_model(
-        cls, orm_model: ElementTypeToPropertySetOrm
-    ) -> "ElementTypeToPropertySet":
+    def from_orm_model(cls, orm_model: ElementTypeToPropertySetOrm) -> "ElementTypeToPropertySet":
         return cls(
             element_type_id=orm_model.element_type_id,
             element_type_external_id=orm_model.element_type_external_id,
@@ -478,11 +444,7 @@ class ElementTypeToPropertySet(BaseModel):
 
 
 class CompleteStructure(BaseModel):
-    thing_nodes: list[ThingNode] = Field(
-        ..., description="All thingnodes of the structure"
-    )
+    thing_nodes: list[ThingNode] = Field(..., description="All thingnodes of the structure")
     sources: list[Source] = Field(..., description="All sources of the structure")
     sinks: list[Sink] = Field(..., description="All sinks of the structure")
-    element_types: list[ElementType] = Field(
-        ..., description="All element types of the structure"
-    )
+    element_types: list[ElementType] = Field(..., description="All element types of the structure")

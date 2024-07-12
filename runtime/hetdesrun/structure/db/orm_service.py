@@ -72,7 +72,9 @@ def store_single_source(source: Source) -> None:
 
 
 def fetch_source_by_id(
-    session: SQLAlchemySession, id: int, log_error: bool = True  # noqa: A002
+    session: SQLAlchemySession,
+    id: int,
+    log_error: bool = True,  # noqa: A002
 ) -> SourceOrm:
     result: SourceOrm | None = session.execute(
         select(SourceOrm).where(SourceOrm.id == id)
@@ -88,7 +90,9 @@ def fetch_source_by_id(
 
 
 def update_source(
-    id: int, source_update: Source, log_error: bool = True  # noqa: A002
+    id: int,
+    source_update: Source,
+    log_error: bool = True,  # noqa: A002
 ) -> Source | None:
     with get_session()() as session, session.begin():
         try:
@@ -160,7 +164,9 @@ def store_single_sink(sink: Sink) -> None:
 
 
 def fetch_sink_by_id(
-    session: SQLAlchemySession, id: int, log_error: bool = True  # noqa: A002
+    session: SQLAlchemySession,
+    id: int,
+    log_error: bool = True,  # noqa: A002
 ) -> SinkOrm:
     result: SinkOrm | None = session.execute(
         select(SinkOrm).where(SinkOrm.id == id)
@@ -176,7 +182,9 @@ def fetch_sink_by_id(
 
 
 def update_sink(
-    id: int, sink_update: Sink, log_error: bool = True  # noqa: A002
+    id: int,
+    sink_update: Sink,
+    log_error: bool = True,  # noqa: A002
 ) -> Sink | None:
     with get_session()() as session, session.begin():
         try:
@@ -289,9 +297,7 @@ def fetch_tn_child_ids_by_parent_id(
     session: SQLAlchemySession, parent_id: UUID | None, log_error: bool = True
 ) -> list[UUID]:
     results = (
-        session.execute(
-            select(ThingNodeOrm.id).where(ThingNodeOrm.parent_node_id == parent_id)
-        )
+        session.execute(select(ThingNodeOrm.id).where(ThingNodeOrm.parent_node_id == parent_id))
         .scalars()
         .all()
     )
@@ -327,19 +333,11 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
 
-            sources = (
-                session.query(SourceOrm)
-                .filter(SourceOrm.thing_node_id == thingnode.id)
-                .all()
-            )
+            sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == thingnode.id).all()
             for source in sources:
                 session.delete(source)
 
-            sinks = (
-                session.query(SinkOrm)
-                .filter(SinkOrm.thing_node_id == thingnode.id)
-                .all()
-            )
+            sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == thingnode.id).all()
             for sink in sinks:
                 session.delete(sink)
 
@@ -357,9 +355,7 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
         except Exception as e:
             session.rollback()
             if log_error:
-                msg = (
-                    f"Unexpected error while deleting ThingNode with id {id}: {str(e)}"
-                )
+                msg = f"Unexpected error while deleting ThingNode with id {id}: {str(e)}"
                 logger.error(msg)
             raise
 
@@ -396,15 +392,15 @@ def update_tn(
         except Exception as e:
             session.rollback()
             if log_error:
-                msg = (
-                    f"Unexpected error while updating ThingNode with id {id}: {str(e)}"
-                )
+                msg = f"Unexpected error while updating ThingNode with id {id}: {str(e)}"
                 logger.error(msg)
             raise
 
 
 def get_parent_tn_id(
-    session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
+    session: SQLAlchemySession,
+    id: UUID,
+    log_error: bool = True,  # noqa: A002
 ) -> UUIDType | None:
     try:
         thingnode = fetch_tn_by_id(session, id, log_error)
@@ -430,7 +426,9 @@ def get_children_tn_ids(id: UUID, log_error: bool = True) -> list[UUID]:  # noqa
 
 
 def get_ancestors_tn_ids(
-    id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
+    id: UUID,
+    depth: int = -1,
+    log_error: bool = True,  # noqa: A002
 ) -> list[UUID]:  # noqa: A002
     ancestors_ids = []
     current_depth = 0
@@ -454,7 +452,9 @@ def get_ancestors_tn_ids(
 
 
 def get_descendants_tn_ids(
-    id: UUID, depth: int = -1, log_error: bool = True  # noqa: A002
+    id: UUID,
+    depth: int = -1,
+    log_error: bool = True,  # noqa: A002
 ) -> list[UUID]:
     descendant_ids = []
     nodes_to_visit = [(id, 0)]
@@ -466,9 +466,7 @@ def get_descendants_tn_ids(
                 if current_id is None or (depth != -1 and current_depth >= depth):
                     continue
                 try:
-                    child_ids = fetch_tn_child_ids_by_parent_id(
-                        session, current_id, log_error
-                    )
+                    child_ids = fetch_tn_child_ids_by_parent_id(session, current_id, log_error)
                 except DBNotFoundError:
                     if current_depth == 0 and log_error:
                         msg = f"No children found for thingnode with parent_id {current_id}"
@@ -738,9 +736,7 @@ def update_ps(
 # Property Metadata Services
 
 
-def add_pm(
-    session: SQLAlchemySession, property_metadata_orm: PropertyMetadataOrm
-) -> None:
+def add_pm(session: SQLAlchemySession, property_metadata_orm: PropertyMetadataOrm) -> None:
     try:
         session.add(property_metadata_orm)
     except IntegrityError as e:
@@ -990,9 +986,7 @@ def topological_sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
         if node.parent_node_id:
             in_degree[node.id] += 1
 
-    queue = deque(
-        [node for node_id, node in nodes_by_id.items() if in_degree[node_id] == 0]
-    )
+    queue = deque([node for node_id, node in nodes_by_id.items() if in_degree[node_id] == 0])
 
     sorted_nodes = []
 
@@ -1044,9 +1038,7 @@ def fill_parent_uuids_of_thing_nodes(
 ) -> None:
     for node in node_list:
         if node.parent_external_node_id:
-            parent_uuid = id_mapping[
-                node.stakeholder_key + node.parent_external_node_id
-            ]
+            parent_uuid = id_mapping[node.stakeholder_key + node.parent_external_node_id]
             node.parent_node_id = parent_uuid
 
 
@@ -1060,9 +1052,7 @@ def fill_parent_uuids_of_sources_and_sinks(
 
 
 def fill_all_parent_uuids(complete_structure: CompleteStructure) -> None:
-    id_mapping = create_mapping_between_external_and_internal_ids(
-        complete_structure.thing_nodes
-    )
+    id_mapping = create_mapping_between_external_and_internal_ids(complete_structure.thing_nodes)
     fill_parent_uuids_of_thing_nodes(id_mapping, complete_structure.thing_nodes)
     fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sources)
     fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sinks)
@@ -1111,13 +1101,9 @@ def update_structure(complete_structure: CompleteStructure) -> None:
         for thing_node in complete_structure.thing_nodes:
             orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
             if orm_thing_node is None:
-                raise ValueError(
-                    f"ThingNode with ID {thing_node.id} not found in the database."
-                )
+                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
             orm_thing_node.sources = (
-                session.query(SourceOrm)
-                .filter(SourceOrm.id.in_(thing_node.sources))
-                .all()
+                session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
             )
             orm_thing_node.sinks = (
                 session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()

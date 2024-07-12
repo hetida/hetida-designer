@@ -23,8 +23,7 @@ class OutputWiring(BaseModel):
     ref_id: str | None = Field(
         None,
         description=(
-            "Id referencing the sink in external systems."
-            " Not necessary for direct provisioning."
+            "Id referencing the sink in external systems." " Not necessary for direct provisioning."
         ),
     )
     ref_id_type: RefIdType | None = Field(
@@ -80,9 +79,7 @@ class OutputWiring(BaseModel):
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
         if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
-            raise ValueError(
-                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
-            )
+            raise ValueError(f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!")
 
         return filters
 
@@ -169,9 +166,7 @@ class InputWiring(BaseModel):
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
         if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
-            raise ValueError(
-                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
-            )
+            raise ValueError(f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!")
 
         return filters
 
@@ -204,8 +199,7 @@ class GridstackItemPositioning(BaseModel):
     id: str = Field(  # noqa: A003
         ...,
         description=(
-            "gs-id of the .grid-stack-item which is extracted as id by "
-            "gridstacks save method"
+            "gs-id of the .grid-stack-item which is extracted as id by " "gridstacks save method"
         ),
     )
 
@@ -225,12 +219,8 @@ class WorkflowWiring(BaseModel):
         )
 
     @validator("output_wirings", each_item=False)
-    def output_names_unique(
-        cls, output_wirings: list[OutputWiring]
-    ) -> list[OutputWiring]:
-        if len({ow.workflow_output_name for ow in output_wirings}) == len(
-            output_wirings
-        ):
+    def output_names_unique(cls, output_wirings: list[OutputWiring]) -> list[OutputWiring]:
+        if len({ow.workflow_output_name for ow in output_wirings}) == len(output_wirings):
             return output_wirings
 
         raise ValueError(

@@ -373,10 +373,13 @@ async def test_end_to_end_load_ts_with_exception():
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
-        with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
-            return_value=mock.Mock(status_code=422, text="my adapter error"),
-        ), pytest.raises(AdapterConnectionError, match="my adapter error"):
+        with (
+            mock.patch(
+                "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+                return_value=mock.Mock(status_code=422, text="my adapter error"),
+            ),
+            pytest.raises(AdapterConnectionError, match="my adapter error"),
+        ):
             await load_data(
                 {
                     "inp_1": FilteredSource(
@@ -391,10 +394,13 @@ async def test_end_to_end_load_ts_with_exception():
                 adapter_key="end_to_end_only_ts_data",
             )
 
-        with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
-            side_effect=requests.HTTPError("my http error"),
-        ), pytest.raises(AdapterConnectionError, match="my http error"):
+        with (
+            mock.patch(
+                "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+                side_effect=requests.HTTPError("my http error"),
+            ),
+            pytest.raises(AdapterConnectionError, match="my http error"),
+        ):
             await load_data(
                 {
                     "inp_1": FilteredSource(

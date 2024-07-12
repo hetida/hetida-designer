@@ -16,12 +16,8 @@ class FileSupportHandler(BaseModel):
     )
 
     @validator("write_handler_func", always=True)
-    def at_least_one_handler_func(
-        cls, v: Any, values: dict[str, Any]
-    ) -> Callable | None:
-        if (values["read_handler_func"] is None) and (
-            values["write_handler_func"] is None
-        ):
+    def at_least_one_handler_func(cls, v: Any, values: dict[str, Any]) -> Callable | None:
+        if (values["read_handler_func"] is None) and (values["write_handler_func"] is None):
             raise ValueError(
                 "At least one of read_handler_func or write_handler_func must be provided."
             )
@@ -58,9 +54,7 @@ def register_file_support(
     """
 
     for extension in file_support_handler.associated_extensions:
-        if (not allow_overwrite) and (
-            handlers_by_extension.get(extension, None) is not None
-        ):
+        if (not allow_overwrite) and (handlers_by_extension.get(extension) is not None):
             raise KeyError(
                 f"Found existing registered extension {extension}."
                 " Cannot overwrite since allow_overwrite==False."

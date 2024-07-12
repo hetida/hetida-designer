@@ -66,9 +66,7 @@ def test_get_transformation_revisions(caplog):
     ) as mocked_get_from_db:
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.json = mock.Mock(
-            return_value=[json.loads(tr.json()) for tr in tr_list]
-        )
+        resp_mock.json = mock.Mock(return_value=[json.loads(tr.json()) for tr in tr_list])
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
@@ -100,15 +98,11 @@ def test_get_transformation_revisions(caplog):
             assert mocked_get_from_db.call_count == 1  # no second call
             assert mocked_get_from_backend.call_count == 1
             _, args, kwargs = mocked_get_from_backend.mock_calls[0]
-            assert args[0] == posix_urljoin(
-                get_config().hd_backend_api_url, "transformations"
-            )
+            assert args[0] == posix_urljoin(get_config().hd_backend_api_url, "transformations")
             assert kwargs["params"]["type"] == params.type.value
             assert kwargs["params"]["state"] == params.state.value
             assert kwargs["params"]["category"] == params.categories
-            assert kwargs["params"]["revision_group_id"] == str(
-                params.revision_group_id
-            )
+            assert kwargs["params"]["revision_group_id"] == str(params.revision_group_id)
             assert kwargs["params"]["id"] == [str(id_) for id_ in params.ids]
             assert kwargs["params"]["name"] == params.names
             assert kwargs["params"]["include_deprecated"] is True
@@ -258,9 +252,7 @@ def test_update_or_create_transformation_revision_happy_path():
             assert args[0] == tr_with_updated_tag
             assert kwargs["update_component_code"] is False
 
-            update_or_create_transformation_revision(
-                tr_with_updated_tag, directly_in_db=True
-            )
+            update_or_create_transformation_revision(tr_with_updated_tag, directly_in_db=True)
             assert mocked_update_in_db.call_count == 2
             assert mocked_update_in_backend.call_count == 0
             _, args, kwargs = mocked_update_in_db.mock_calls[1]
@@ -313,9 +305,7 @@ def test_update_or_create_transformation_revision_rest_api_error(caplog):
     with caplog.at_level(logging.ERROR):
         resp_mock = mock.Mock()
         resp_mock.status_code = 400
-        with mock.patch(
-            "hetdesrun.exportimport.utils.requests.put", return_value=resp_mock
-        ):
+        with mock.patch("hetdesrun.exportimport.utils.requests.put", return_value=resp_mock):
             caplog.clear()
             update_or_create_transformation_revision(example_tr_draft)
             assert "COULD NOT PUT" in caplog.text
@@ -325,9 +315,7 @@ def test_update_or_create_transformation_revision_rest_api_update_forbidden(capl
     with caplog.at_level(logging.INFO):
         resp_mock = mock.Mock()
         resp_mock.status_code = 409
-        with mock.patch(
-            "hetdesrun.exportimport.utils.requests.put", return_value=resp_mock
-        ):
+        with mock.patch("hetdesrun.exportimport.utils.requests.put", return_value=resp_mock):
             caplog.clear()
             update_or_create_transformation_revision(
                 example_tr_draft, allow_overwrite_released=False
@@ -342,9 +330,7 @@ def test_update_or_create_transformation_revision_db_not_found(caplog):
             side_effect=DBNotFoundError,
         ):
             caplog.clear()
-            update_or_create_transformation_revision(
-                example_tr_draft, directly_in_db=True
-            )
+            update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
             assert "Not found error in DB" in caplog.text
 
 
@@ -355,9 +341,7 @@ def test_update_or_create_transformation_revision_db_integrity_error(caplog):
             side_effect=DBIntegrityError,
         ):
             caplog.clear()
-            update_or_create_transformation_revision(
-                example_tr_draft, directly_in_db=True
-            )
+            update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
             assert "Integrity error in DB" in caplog.text
 
 
@@ -370,9 +354,7 @@ def test_update_or_create_transformation_revision_db_update_forbidden(caplog):
             caplog.clear()
 
             with pytest.raises(ModifyForbidden):
-                update_or_create_transformation_revision(
-                    example_tr_draft, directly_in_db=True
-                )
+                update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
             assert "Update forbidden for entry" in caplog.text
 
 
@@ -390,8 +372,7 @@ def test_deprecate_all_but_latest_in_group():
     stored_wf_json["id"] = str(uuid4())
     stored_wf_json["version_tag"] = "0.1.0"
     stored_wf_json["released_timestamp"] = datetime.isoformat(
-        datetime.fromisoformat(import_wf_json["released_timestamp"])
-        - timedelta(weeks=1)
+        datetime.fromisoformat(import_wf_json["released_timestamp"]) - timedelta(weeks=1)
     )
     stored_wf = TransformationRevision(**stored_wf_json)
     deprecated_version_of_stored_wf = deepcopy(stored_wf)
@@ -406,9 +387,7 @@ def test_deprecate_all_but_latest_in_group():
             "hetdesrun.exportimport.utils.update_or_create_transformation_revision",
             return_value=None,
         ) as patched_update:
-            deprecate_all_but_latest_in_group(
-                revision_group_id=import_wf.revision_group_id
-            )
+            deprecate_all_but_latest_in_group(revision_group_id=import_wf.revision_group_id)
 
             assert patched_get.call_count == 1
 
@@ -428,9 +407,7 @@ def test_deprecate_all_but_latest_in_group():
             "hetdesrun.exportimport.utils.update_or_create_transformation_revision",
             return_value=None,
         ) as patched_update:
-            deprecate_all_but_latest_in_group(
-                revision_group_id=stored_wf.revision_group_id
-            )
+            deprecate_all_but_latest_in_group(revision_group_id=stored_wf.revision_group_id)
 
             assert patched_get.call_count == 1
 

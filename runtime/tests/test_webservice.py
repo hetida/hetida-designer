@@ -651,9 +651,7 @@ async def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operato
         "run_pure_plot_operators": False,
     }
 
-    status_code, output = await run_workflow_with_client(
-        new_plot_workflow_json, async_test_client
-    )
+    status_code, output = await run_workflow_with_client(new_plot_workflow_json, async_test_client)
 
     assert status_code == 200
 

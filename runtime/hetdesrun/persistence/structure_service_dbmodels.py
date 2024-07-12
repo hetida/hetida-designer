@@ -37,9 +37,7 @@ class ElementTypeOrm(Base):
         back_populates="element_types",
         uselist=True,
     )
-    thing_nodes: list["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="element_type"
-    )
+    thing_nodes: list["ThingNodeOrm"] = relationship("ThingNodeOrm", back_populates="element_type")
 
     __table_args__ = (
         UniqueConstraint("name", name="_element_type_name_uc"),
@@ -197,15 +195,9 @@ class SourceOrm(Base):
     adapter_key: str = Column(String(255), nullable=False)
     source_id: UUIDType = Column(UUIDType(binary=False), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
-    thing_node_id: UUIDType | None = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.id")
-    )
-    thing_node_external_id = Column(
-        String(36), ForeignKey("thing_node.external_id"), nullable=True
-    )
-    thing_node: Optional["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="sources"
-    )
+    thing_node_id: UUIDType | None = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
+    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    thing_node: Optional["ThingNodeOrm"] = relationship("ThingNodeOrm", back_populates="sources")
     preset_filters: dict | None = Column(JSON, nullable=True)
     passthrough_filters: list[str] | None = Column(JSON, nullable=True)
     thing_nodes: list["ThingNodeOrm"] = relationship(
@@ -235,15 +227,9 @@ class SinkOrm(Base):
     adapter_key: str = Column(String(255), nullable=False)
     sink_id: UUIDType = Column(UUIDType(binary=False), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
-    thing_node_id: UUIDType | None = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.id")
-    )
-    thing_node_external_id = Column(
-        String(36), ForeignKey("thing_node.external_id"), nullable=True
-    )
-    thing_node: Optional["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="sinks"
-    )
+    thing_node_id: UUIDType | None = Column(UUIDType(binary=False), ForeignKey("thing_node.id"))
+    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    thing_node: Optional["ThingNodeOrm"] = relationship("ThingNodeOrm", back_populates="sinks")
     preset_filters: dict | None = Column(JSON, nullable=True)
     passthrough_filters: list[str] | None = Column(JSON, nullable=True)
     thing_nodes: list["ThingNodeOrm"] = relationship(
@@ -266,15 +252,9 @@ class ThingNodeSourceAssociation(Base):
     thing_node_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
     )
-    source_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("source.id"), primary_key=True
-    )
-    thing_node_external_id = Column(
-        String(36), ForeignKey("thing_node.external_id"), nullable=True
-    )
-    source_external_id = Column(
-        String(36), ForeignKey("source.external_id"), nullable=True
-    )
+    source_id: UUIDType = Column(UUIDType(binary=False), ForeignKey("source.id"), primary_key=True)
+    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
+    source_external_id = Column(String(36), ForeignKey("source.external_id"), nullable=True)
 
 
 class ThingNodeSinkAssociation(Base):
@@ -282,12 +262,8 @@ class ThingNodeSinkAssociation(Base):
     thing_node_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
     )
-    sink_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True
-    )
-    thing_node_external_id = Column(
-        String(36), ForeignKey("thing_node.external_id"), nullable=True
-    )
+    sink_id: UUIDType = Column(UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True)
+    thing_node_external_id = Column(String(36), ForeignKey("thing_node.external_id"), nullable=True)
     sink_external_id = Column(String(36), ForeignKey("sink.external_id"), nullable=True)
 
 

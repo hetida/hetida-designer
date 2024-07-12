@@ -71,9 +71,7 @@ def get_transformation_revisions(
 
     for tr in tr_list:
         logger.info(
-            (
-                "Found %s with id %s and revision group id %s in category '%s' with name '%s'"
-            ),
+            ("Found %s with id %s and revision group id %s in category '%s' with name '%s'"),
             tr.type.value,
             str(tr.id),
             str(tr.revision_group_id),
@@ -92,11 +90,7 @@ def update_or_create_transformation_revision(
 ) -> None:
     if directly_in_db:
         logger.info(
-            (
-                "Update or create DB entry"
-                " for %s with id %s\n"
-                "in category %s with name %s"
-            ),
+            ("Update or create DB entry" " for %s with id %s\n" "in category %s with name %s"),
             tr.type.value,
             str(tr.id),
             tr.category,
@@ -148,9 +142,7 @@ def update_or_create_transformation_revision(
             raise Exception(msg) from e
 
         response = requests.put(
-            posix_urljoin(
-                get_config().hd_backend_api_url, "transformations", str(tr.id)
-            ),
+            posix_urljoin(get_config().hd_backend_api_url, "transformations", str(tr.id)),
             params={
                 "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
@@ -188,7 +180,8 @@ def update_or_create_transformation_revision(
 
 
 def delete_transformation_revision(
-    id: UUID, directly_in_db: bool = False  # noqa: A002
+    id: UUID,  # noqa: A002
+    directly_in_db: bool = False,
 ) -> None:
     if directly_in_db:
         try:
@@ -276,9 +269,7 @@ def deprecate_all_but_latest_in_group(
     released_tr_by_release_timestamp_dict: dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
         assert released_tr.released_timestamp is not None  # noqa: S101  # hint for mypy
-        released_tr_by_release_timestamp_dict[
-            released_tr.released_timestamp
-        ] = released_tr
+        released_tr_by_release_timestamp_dict[released_tr.released_timestamp] = released_tr
 
     latest_timestamp = max(released_tr_by_release_timestamp_dict.keys())
     del released_tr_by_release_timestamp_dict[latest_timestamp]

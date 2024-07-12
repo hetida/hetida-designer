@@ -304,9 +304,7 @@ async def test_get_workflow_revision_without_content_by_id_with_valid_workflow(
     )
 
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/workflows/" + str(get_uuid_from_seed("workflow 1"))
-        )
+        response = await ac.get("/api/workflows/" + str(get_uuid_from_seed("workflow 1")))
     assert response.status_code == 200
     assert response.json() == dto_json_workflow_1
 
@@ -334,9 +332,7 @@ async def test_get_workflow_revision_by_id_with_inexistent_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/workflows/" + str(get_uuid_from_seed("inexistent workflow"))
-        )
+        response = await ac.get("/api/workflows/" + str(get_uuid_from_seed("inexistent workflow")))
     assert response.status_code == 404
     assert "Found no" in response.json()["detail"]
 
@@ -357,9 +353,7 @@ async def test_update_transformation_revision_from_workflow_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
     store_single_transformation_revision(
         WorkflowRevisionFrontendDto(**dto_json_workflow_2).to_transformation_revision()
@@ -382,9 +376,7 @@ async def test_update_transformation_revision_from_non_existing_workflow_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -468,14 +460,10 @@ async def test_publish_transformation_revision_from_workflow_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1_publish
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1_publish).to_transformation_revision()
     )
     store_single_transformation_revision(
-        WorkflowRevisionFrontendDto(
-            **dto_json_workflow_2_publishable
-        ).to_transformation_revision()
+        WorkflowRevisionFrontendDto(**dto_json_workflow_2_publishable).to_transformation_revision()
     )
 
     dto_json_workflow_2_publish = deepcopy(dto_json_workflow_2_publishable)
@@ -529,18 +517,12 @@ async def test_delete_transformation_revision_from_workflow_dto(
 
 
 @pytest.mark.asyncio
-async def test_set_test_wiring_to_workflow(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_set_test_wiring_to_workflow(async_test_client, mocked_clean_test_db_session):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
     store_single_transformation_revision(
-        WorkflowRevisionFrontendDto(
-            **dto_json_workflow_2_update
-        ).to_transformation_revision()
+        WorkflowRevisionFrontendDto(**dto_json_workflow_2_update).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -553,9 +535,7 @@ async def test_set_test_wiring_to_workflow(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_workflow_dto(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_execute_for_workflow_dto(async_test_client, mocked_clean_test_db_session):
     component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
     tr_component = component_dto.to_transformation_revision()
     tr_component.content = update_code(tr_component)
@@ -606,9 +586,7 @@ async def test_execute_for_workflow_dto(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_full_workflow_dto(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_execute_for_full_workflow_dto(async_test_client, mocked_clean_test_db_session):
     async with async_test_client as ac:
         json_files = [
             "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
@@ -719,8 +697,5 @@ async def test_execute_for_full_workflow_dto_with_nan(
             == 3  # split orient
         )
         assert (
-            output_results_by_output_name["series_from_last_step"]["__data__"]["data"][
-                1
-            ]
-            == None  # noqa: E711
+            output_results_by_output_name["series_from_last_step"]["__data__"]["data"][1] == None  # noqa: E711
         )
