@@ -62,7 +62,7 @@
             "element_type_external_id": "Hochbehaelter_Typ",
             "meta_data": {
                 "capacity": "5000",
-                "unit": "m³",
+                "capacity_unit": "m³",
                 "description": "Wasserspeicherungskapazität für Hochbehälter 1"
             }
         },
@@ -75,7 +75,7 @@
             "element_type_external_id": "Hochbehaelter_Typ",
             "meta_data": {
                 "capacity": "6000",
-                "unit": "m³",
+                "capacity_unit": "m³",
                 "description": "Wasserspeicherungskapazität für Hochbehälter 2"
             }
         },
@@ -88,7 +88,7 @@
             "element_type_external_id": "Hochbehaelter_Typ",
             "meta_data": {
                 "capacity": "5500",
-                "unit": "m³",
+                "capacity_unit": "m³",
                 "description": "Wasserspeicherungskapazität für Hochbehälter 1"
             }
         },
@@ -101,7 +101,7 @@
             "element_type_external_id": "Hochbehaelter_Typ",
             "meta_data": {
                 "capacity": "7000",
-                "unit": "m³",
+                "capacity_unit": "m³",
                 "description": "Wasserspeicherungskapazität für Hochbehälter 2"
             }
         }
@@ -116,11 +116,11 @@
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010001": {
-                    "unit": "kW/h",
+                    "energy_consumption_unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 },
                 "1010002": {
-                    "unit": "kW/h",
+                    "energy_consumption_unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 }
             },
@@ -145,7 +145,7 @@
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010003": {
-                    "unit": "kW/h",
+                    "energy_consumption_unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 }
             },
@@ -172,12 +172,12 @@
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010001": {
-                    "unit": "score",
+                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 },
                 "10010002": {
-                    "unit": "score",
+                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
@@ -203,7 +203,7 @@
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010003": {
-                    "unit": "score",
+                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
