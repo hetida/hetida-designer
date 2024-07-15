@@ -31,9 +31,7 @@ documentation_router = HandleTrailingSlashAPIRouter(
     response_model=DocumentationFrontendDto,
     summary="Returns the documentation with the given id.",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"description": "Successfully got the documentation"}
-    },
+    responses={status.HTTP_200_OK: {"description": "Successfully got the documentation"}},
     deprecated=True,
 )
 async def get_component_revision_by_id(
@@ -69,11 +67,7 @@ async def get_component_revision_by_id(
     response_model=DocumentationFrontendDto,
     summary="Updates a documentation.",
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_201_CREATED: {
-            "description": "Successfully updated the documentation"
-        }
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully updated the documentation"}},
     deprecated=True,
 )
 async def update_documentation(
@@ -90,8 +84,7 @@ async def update_documentation(
 
     if id != documentation_dto.id:
         msg = (
-            f"The id {id} does not match "
-            f"the id of the documentation DTO {documentation_dto.id}"
+            f"The id {id} does not match " f"the id of the documentation DTO {documentation_dto.id}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
@@ -104,8 +97,8 @@ async def update_documentation(
     transformation_revision.documentation = documentation_dto.document
 
     try:
-        persisted_transformation_revision = (
-            update_or_create_single_transformation_revision(transformation_revision)
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            transformation_revision
         )
         logger.info("updated documentation {id}")
     except DBIntegrityError as e:
@@ -126,9 +119,7 @@ async def update_documentation(
     summary="Deletes a documentation.",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        status.HTTP_204_NO_CONTENT: {
-            "description": "Successfully deleted the documentation"
-        },
+        status.HTTP_204_NO_CONTENT: {"description": "Successfully deleted the documentation"},
     },
     deprecated=True,
 )

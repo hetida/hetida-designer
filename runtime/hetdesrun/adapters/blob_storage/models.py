@@ -68,9 +68,7 @@ def get_structure_bucket_and_object_key_prefix_from_id(
             f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
         )
 
-    bucket_name_string, object_key_string = id.split(
-        OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-    )
+    bucket_name_string, object_key_string = id.split(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)
 
     try:
         bucket = StructureBucket(name=BucketName(bucket_name_string))
@@ -130,15 +128,12 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string "
-                "if the string is missing!"
+                "Cannot check if object key's time matches its string " "if the string is missing!"
             ) from error
 
         name_string = string.split(IDENTIFIER_SEPARATOR)[0]
         if name != name_string:
-            raise ValueError(
-                f"The object key's name '{name}' does not match its string {string}!"
-            )
+            raise ValueError(f"The object key's name '{name}' does not match its string {string}!")
         return name
 
     @validator("time")
@@ -147,8 +142,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string "
-                "if the string is missing!"
+                "Cannot check if object key's time matches its string " "if the string is missing!"
             ) from error
 
         time_string = string.split(IDENTIFIER_SEPARATOR)[1]
@@ -172,13 +166,10 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string "
-                "if the string is missing!"
+                "Cannot check if object key's time matches its string " "if the string is missing!"
             ) from error
 
-        job_id_string = string.split(FILE_EXTENSION_SEPARATOR)[0].split(
-            IDENTIFIER_SEPARATOR
-        )[2]
+        job_id_string = string.split(FILE_EXTENSION_SEPARATOR)[0].split(IDENTIFIER_SEPARATOR)[2]
         if str(job_id) != job_id_string:
             raise ValueError(
                 f"The object key's name '{str(job_id)}' does not match its string {string}!"
@@ -191,8 +182,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string "
-                "if the string is missing!"
+                "Cannot check if object key's time matches its string " "if the string is missing!"
             ) from error
 
         file_extension_string = string.split(FILE_EXTENSION_SEPARATOR)[1]
@@ -244,9 +234,7 @@ class ObjectKey(BaseModel):
     def from_string(cls, string: IdString) -> "ObjectKey":
         file_extension = ""
         try:
-            name, time_string, job_id_string = string.rsplit(
-                IDENTIFIER_SEPARATOR, maxsplit=2
-            )
+            name, time_string, job_id_string = string.rsplit(IDENTIFIER_SEPARATOR, maxsplit=2)
         except ValueError as e:
             raise ValueError(
                 f"String '{string}' not a valid ObjectKey string, "
@@ -257,9 +245,7 @@ class ObjectKey(BaseModel):
                 f"String '{string}' not a valid ObjectKey string, "
                 f"because it does not contain '{IDENTIFIER_SEPARATOR}'!"
             )
-        job_id_string, file_extension = job_id_string.split(
-            FILE_EXTENSION_SEPARATOR, maxsplit=1
-        )
+        job_id_string, file_extension = job_id_string.split(FILE_EXTENSION_SEPARATOR, maxsplit=1)
         return ObjectKey(
             string=string,
             name=name,
@@ -289,9 +275,7 @@ class ObjectKey(BaseModel):
                 f"Thing node id '{thing_node_id}' and metadata key '{metadata_key}' do not match."
             )
 
-        _, object_key_prefix = get_structure_bucket_and_object_key_prefix_from_id(
-            thing_node_id
-        )
+        _, object_key_prefix = get_structure_bucket_and_object_key_prefix_from_id(thing_node_id)
 
         file_extension_string = ""
         if " (" in job_id_string:
@@ -332,9 +316,7 @@ class StructureThingNode(BaseModel):
     description: str
 
     @validator("name")
-    def id_consists_of_parent_id_and_name(
-        cls, name: ThingNodeName, values: dict
-    ) -> ThingNodeName:
+    def id_consists_of_parent_id_and_name(cls, name: ThingNodeName, values: dict) -> ThingNodeName:
         try:
             id = values["id"]  # noqa: A001
             parent_id = values["parentId"]
@@ -385,8 +367,7 @@ class BlobStorageStructureSource(BaseModel):
         except ValueError as e:
             raise ValueError(
                 f"The second part '{object_key_string}' of the source id '{id}' after the first "
-                "'/' must correspond to an object key string!\nBut it does not:\n"
-                + str(e)
+                "'/' must correspond to an object key string!\nBut it does not:\n" + str(e)
             ) from e
         return id
 
@@ -424,9 +405,7 @@ class BlobStorageStructureSource(BaseModel):
                 f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice!"
             )
 
-        thing_node_name, source_time, job_id = name.split(
-            HIERARCHY_END_NODE_NAME_SEPARATOR
-        )
+        thing_node_name, source_time, job_id = name.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
         if thing_node_name != file_ok.name:
             raise ValueError(
                 f"The source name '{name}' must start with the name '{file_ok.name}' "
@@ -457,7 +436,7 @@ class BlobStorageStructureSource(BaseModel):
                 )
         if not str(file_ok.job_id) == job_id:
             raise ValueError(
-                f"The job id '{job_id}' of the source's name '{name}' "
+                f"The job_id={job_id} of the source's name '{name}' "
                 f"must match to the job id '{file_ok.job_id}' in its id '{id}'!"
             )
 
@@ -509,11 +488,7 @@ class BlobStorageStructureSource(BaseModel):
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
             + HIERARCHY_END_NODE_NAME_SEPARATOR
             + str(object_key.job_id)
-            + (
-                " (" + object_key.file_extension + ")"
-                if object_key.file_extension != ""
-                else ""
-            )
+            + (" (" + object_key.file_extension + ")" if object_key.file_extension != "" else "")
         )
         thing_node_id = object_key.to_thing_node_id(bucket)
         return BlobStorageStructureSource(
@@ -586,9 +561,7 @@ class BlobStorageStructureSink(BaseModel):
             ) from e
 
         file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
-        thing_node_name_from_id = file_string_from_id.split(
-            IDENTIFIER_SEPARATOR, maxsplit=1
-        )[0]
+        thing_node_name_from_id = file_string_from_id.split(IDENTIFIER_SEPARATOR, maxsplit=1)[0]
 
         if HIERARCHY_END_NODE_NAME_SEPARATOR not in name:
             raise ValueError(
@@ -602,9 +575,7 @@ class BlobStorageStructureSink(BaseModel):
                 "of the corresponding thing node!"
             )
         if sink_name_end != GENERIC_SINK_NAME_SUFFIX:
-            raise ValueError(
-                f"The sink name '{name}' must end with '{GENERIC_SINK_NAME_SUFFIX}'!"
-            )
+            raise ValueError(f"The sink name '{name}' must end with '{GENERIC_SINK_NAME_SUFFIX}'!")
 
         return name
 
@@ -645,15 +616,11 @@ class BlobStorageStructureSink(BaseModel):
         return metadataKey
 
     @classmethod
-    def from_thing_node(
-        cls, thing_node: StructureThingNode
-    ) -> "BlobStorageStructureSink":
+    def from_thing_node(cls, thing_node: StructureThingNode) -> "BlobStorageStructureSink":
         return BlobStorageStructureSink(
             id=thing_node.id + IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX,
             thingNodeId=thing_node.id,
-            name=thing_node.name
-            + HIERARCHY_END_NODE_NAME_SEPARATOR
-            + GENERIC_SINK_NAME_SUFFIX,
+            name=thing_node.name + HIERARCHY_END_NODE_NAME_SEPARATOR + GENERIC_SINK_NAME_SUFFIX,
             path=thing_node.id,
             metadataKey=thing_node.name
             + HIERARCHY_END_NODE_NAME_SEPARATOR
@@ -708,11 +675,7 @@ class HierarchyNode(BaseModel):
     ) -> StructureThingNode:
         return StructureThingNode(
             id=(parent_id + separator if parent_id is not None else "")
-            + (
-                self.name.lower()
-                if separator == BUCKET_NAME_DIR_SEPARATOR
-                else self.name
-            ),
+            + (self.name.lower() if separator == BUCKET_NAME_DIR_SEPARATOR else self.name),
             parentId=parent_id,
             name=self.name,
             description=self.description,
@@ -743,9 +706,8 @@ class HierarchyNode(BaseModel):
         )
         thing_nodes.append(thing_node)
 
-        below_structure_defines_object_key = (
-            self.below_structure_defines_object_key is True
-            or (part_of_bucket_name is True and self.get_depth() == 2)
+        below_structure_defines_object_key = self.below_structure_defines_object_key is True or (
+            part_of_bucket_name is True and self.get_depth() == 2
         )
         if below_structure_defines_object_key:
             if part_of_bucket_name is False:
@@ -793,10 +755,8 @@ def find_duplicates(item_list: list) -> list:
 
 @cache
 def create_blob_storage_adapter_structure_objects_from_hierarchy(
-    structure: tuple[HierarchyNode, ...]
-) -> tuple[
-    list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]
-]:
+    structure: tuple[HierarchyNode, ...],
+) -> tuple[list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]]:
     thing_nodes: list[StructureThingNode] = []
     bucket_names: list[StructureBucket] = []
     sinks: list[BlobStorageStructureSink] = []
@@ -833,18 +793,14 @@ class AdapterHierarchy(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        keep_untouched = (
-            cached_property,
-        )  # cached_property currently not supported by pydantic
+        keep_untouched = (cached_property,)  # cached_property currently not supported by pydantic
         # https://github.com/pydantic/pydantic/issues/1241
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
 
     @cached_property
     def create_structure(
         self,
-    ) -> tuple[
-        list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]
-    ]:
+    ) -> tuple[list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]]:
         return create_blob_storage_adapter_structure_objects_from_hierarchy(
             structure=self.structure
         )

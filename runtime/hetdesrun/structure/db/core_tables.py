@@ -23,6 +23,4 @@ prop_pumpenparam_columns: list[tuple[str, TypeEngine]] = [
     ("foerderleistung_max", Float()),
     ("foerderhoehe", Float()),
 ]
-prop_pumpenparam_table = create_property_table(
-    "prop_pumpenparam", prop_pumpenparam_columns
-)
+prop_pumpenparam_table = create_property_table("prop_pumpenparam", prop_pumpenparam_columns)

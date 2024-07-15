@@ -10,13 +10,11 @@ from hetdesrun.adapters.exceptions import (  # noqa: F401
 )
 
 ConnectionErrorTuple = (
-    tuple[type[AdapterConnectionError]]
-    | tuple[type[AdapterConnectionError], type[Exception]]
+    tuple[type[AdapterConnectionError]] | tuple[type[AdapterConnectionError], type[Exception]]
 )
 
 OutputDataErrorTuple = (
-    tuple[type[AdapterOutputDataError]]
-    | tuple[type[AdapterOutputDataError], type[Exception]]
+    tuple[type[AdapterOutputDataError]] | tuple[type[AdapterOutputDataError], type[Exception]]
 )
 
 ClientWiringInvalidErrorTuple = (

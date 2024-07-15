@@ -4,9 +4,37 @@ from typing import Any
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.adapters.virtual_structure_adapter.utils import (
     get_actual_sources_and_sinks_for_virtual_sources_and_sinks,
+    get_enumerated_ids_of_vst_sources_or_sinks,
 )
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
+
+
+# TODO Think about it, maybe make this a classmethod for WorkflowWiring or sth
+def replace_wirings(
+    input_ids: list[tuple[int, str]],
+    output_ids: list[tuple[int, str]],
+    actual_input_wirings: dict[str, InputWiring],
+    actual_output_wirings: dict[str, OutputWiring],
+    workflow_wiring: WorkflowWiring,
+) -> None:
+    for idx, ref_id in input_ids:
+        new_input_wiring = actual_input_wirings[ref_id]
+        wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
+        new_input_wiring.workflow_input_name = wf_input_name
+        new_input_wiring.filters = (
+            new_input_wiring.filters | workflow_wiring.input_wirings[idx].filters
+        )
+        workflow_wiring.input_wirings[idx] = new_input_wiring
+
+    for idx, ref_id in output_ids:
+        new_output_wiring = actual_output_wirings[ref_id]
+        wf_output_name = workflow_wiring.output_wirings[idx].workflow_output_name
+        new_output_wiring.workflow_output_name = wf_output_name
+        new_output_wiring.filters = (
+            new_output_wiring.filters | workflow_wiring.output_wirings[idx].filters
+        )
+        workflow_wiring.output_wirings[idx] = new_output_wiring
 
 
 # TODO Probably make it async later
@@ -15,33 +43,24 @@ def resolve_virtual_structure_wirings(
 ) -> None:
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
-    input_ref_ids = [
-        (i, wiring.ref_id)
-        for i, wiring in enumerate(workflow_wiring.input_wirings)
-        if wiring.adapter_id == "virtual-structure-adapter"
-    ]
-    output_ref_ids = [
-        (i, wiring.ref_id)
-        for i, wiring in enumerate(workflow_wiring.output_wirings)
-        if wiring.adapter_id == "virtual-structure-adapter"
-    ]
+    input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.input_wirings)
+    output_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.output_wirings)
 
-    if not input_ref_ids and not output_ref_ids:
-        return
-
-    # Combine input and output wirings to call the structure service
-    ref_ids = [id_tuple[1] for id_tuple in input_ref_ids + output_ref_ids]
-
-    actual_wirings = get_actual_sources_and_sinks_for_virtual_sources_and_sinks(ref_ids)
-
-    for idx, ref_id in input_ref_ids:
-        new_wiring = actual_wirings[ref_id]
-        wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
-        new_wiring.workflow_input_name = wf_input_name
-        new_wiring.filters = (
-            new_wiring.filters | workflow_wiring.input_wirings[idx].filters
+    if input_ref_ids or output_ref_ids:
+        actual_input_wirings, actual_output_wirings = (
+            get_actual_sources_and_sinks_for_virtual_sources_and_sinks(
+                [id_tuple[1] for id_tuple in input_ref_ids],
+                [id_tuple[1] for id_tuple in output_ref_ids],
+            )
         )
-        workflow_wiring.input_wirings[idx] = new_wiring
+
+        replace_wirings(
+            input_ref_ids,
+            output_ref_ids,
+            actual_input_wirings,
+            actual_output_wirings,
+            workflow_wiring,
+        )
 
 
 async def resolve_and_load_data_from_wiring(

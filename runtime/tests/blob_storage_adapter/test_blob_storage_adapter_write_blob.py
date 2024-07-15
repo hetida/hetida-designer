@@ -33,19 +33,16 @@ from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.models.data_selection import FilteredSink
 
 
-def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_key() -> (
-    None
-):
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
-        return_value=AdapterHierarchy.from_file(
-            "demodata/blob_storage_adapter_hierarchy.json"
+def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_key() -> None:
+    with (
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+            return_value=AdapterHierarchy.from_file("demodata/blob_storage_adapter_hierarchy.json"),
         ),
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-        return_value={
-            "currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"
-        },
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+            return_value={"currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"},
+        ),
     ):
         (
             sink,
@@ -90,9 +87,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
                 file_extension=FileExtension.H5,
             )
 
-        with pytest.raises(
-            AdapterClientWiringInvalidError, match="not possible to generate"
-        ):
+        with pytest.raises(AdapterClientWiringInvalidError, match="not possible to generate"):
             get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
                 thing_node_id="plantb/PicklingUnit/Outfeed/Anomalies",
                 metadata_key=(
@@ -139,16 +134,16 @@ async def test_blob_storage_custom_objects_to_storage_with_unexpected_error() ->
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.put_object",
-            side_effect=ClientError(
-                error_response={"Error": {"Code": 404}}, operation_name=""
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), pytest.raises(
-            AdapterConnectionError, match=r"Unexpected ClientError.*put_object"
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.put_object",
+                side_effect=ClientError(error_response={"Error": {"Code": 404}}, operation_name=""),
+            ),
+            pytest.raises(AdapterConnectionError, match=r"Unexpected ClientError.*put_object"),
         ):
             await write_custom_objects_to_storage(
                 s3_client=client_mock,
@@ -168,25 +163,27 @@ async def test_blob_storage_write_blob_to_storage_works() -> None:
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            return_value=BlobStorageStructureSink(
-                id="i-ii/E_generic_sink",
-                thingNodeId="i-ii/E",
-                name="E - Next Object",
-                path="i-ii/E",
-                metadataKey="E - Next Object",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                return_value=BlobStorageStructureSink(
+                    id="i-ii/E_generic_sink",
+                    thingNodeId="i-ii/E",
+                    name="E - Next Object",
+                    path="i-ii/E",
+                    metadataKey="E - Next Object",
+                ),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
         ):
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
@@ -210,32 +207,32 @@ async def test_blob_storage_write_blob_to_storage_with_unexpected_put_object_err
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            return_value=BlobStorageStructureSink(
-                id="i-ii/E_generic_sink",
-                thingNodeId="i-ii/E",
-                name="E - Next Object",
-                path="i-ii/E",
-                metadataKey="E - Next Object",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.put_object",
-            side_effect=ClientError(
-                error_response={"Error": {"Code": 404}}, operation_name=""
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                return_value=BlobStorageStructureSink(
+                    id="i-ii/E_generic_sink",
+                    thingNodeId="i-ii/E",
+                    name="E - Next Object",
+                    path="i-ii/E",
+                    metadataKey="E - Next Object",
+                ),
             ),
-        ), pytest.raises(
-            AdapterConnectionError, match=r"Unexpected ClientError.*put_object"
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.put_object",
+                side_effect=ClientError(error_response={"Error": {"Code": 404}}, operation_name=""),
+            ),
+            pytest.raises(AdapterConnectionError, match=r"Unexpected ClientError.*put_object"),
         ):
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
@@ -252,31 +249,30 @@ async def test_blob_storage_write_blob_to_storage_with_unexpected_head_object_er
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
         client_mock.head_object = mock.Mock(
-            side_effect=ClientError(
-                error_response={"Error": {"Code": 404}}, operation_name=""
-            )
+            side_effect=ClientError(error_response={"Error": {"Code": 404}}, operation_name="")
         )
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            return_value=BlobStorageStructureSink(
-                id="i-ii/E_generic_sink",
-                thingNodeId="i-ii/E",
-                name="E - Next Object",
-                path="i-ii/E",
-                metadataKey="E - Next Object",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
-        ), pytest.raises(
-            AdapterConnectionError, match=r"Unexpected ClientError.*head_object"
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                return_value=BlobStorageStructureSink(
+                    id="i-ii/E_generic_sink",
+                    thingNodeId="i-ii/E",
+                    name="E - Next Object",
+                    path="i-ii/E",
+                    metadataKey="E - Next Object",
+                ),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
+            pytest.raises(AdapterConnectionError, match=r"Unexpected ClientError.*head_object"),
         ):
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
@@ -292,32 +288,34 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            side_effect=StructureObjectNotFound("SinkNotFound message"),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
-            return_value=StructureThingNode(
-                id="i-ii/E",
-                parentId="i-ii",
-                name="E",
-                description="",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                side_effect=StructureObjectNotFound("SinkNotFound message"),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
+                return_value=StructureThingNode(
+                    id="i-ii/E",
+                    parentId="i-ii",
+                    name="E",
+                    description="",
+                ),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
         ):
             thing_node_id = "i-ii/E"
             metadata_key = (
-                "E - 2001-02-03 04:05:06+00:00 - "
-                "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+00:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             await write_blob_to_storage(
                 data=struct.pack(">i", 23),
@@ -333,16 +331,13 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 object_key_string
                 == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe.pkl"
             )
-            object_response = client_mock.get_object(
-                Bucket=bucket_name, Key=object_key_string
-            )
+            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key_string)
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
 
             non_utc_metadata_key = (
-                "E - 2001-02-03 04:05:06+02:00 - "
-                "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+02:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             with pytest.raises(AdapterClientWiringInvalidError):
                 await write_blob_to_storage(
@@ -357,30 +352,35 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
 async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            return_value=BlobStorageStructureSink(
-                id="i-ii/A_generic_sink",
-                thingNodeId="i-ii/A",
-                name="A - Next Object",
-                path="i-ii/A",
-                metadataKey="A - Next Object",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                return_value=BlobStorageStructureSink(
+                    id="i-ii/A_generic_sink",
+                    thingNodeId="i-ii/A",
+                    name="A - Next Object",
+                    path="i-ii/A",
+                    metadataKey="A - Next Object",
+                ),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
         ):
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.write_blob.ensure_bucket_exists",
-                side_effect=AdapterConnectionError,
-            ), pytest.raises(AdapterConnectionError):
+            with (
+                mock.patch(
+                    "hetdesrun.adapters.blob_storage.write_blob.ensure_bucket_exists",
+                    side_effect=AdapterConnectionError,
+                ),
+                pytest.raises(AdapterConnectionError),
+            ):
                 await write_blob_to_storage(
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
@@ -403,9 +403,7 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        object_key_string = (
-            "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
-        )
+        object_key_string = "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
         client_mock.put_object(
             Bucket=bucket_name,
             Key=object_key_string,
@@ -428,18 +426,18 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
                 StructureBucket(name=bucket_name),
                 ObjectKey.from_string(IdString(object_key_string)),
             )
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-                return_value=mocked_sink,
-            ), mock.patch(
-                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-                return_value={
-                    "currently_executed_job_id": UUID(
-                        "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                    )
-                },
-            ), pytest.raises(
-                AdapterConnectionError
+            with (
+                mock.patch(
+                    "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                    return_value=mocked_sink,
+                ),
+                mock.patch(
+                    "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                    return_value={
+                        "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                    },
+                ),
+                pytest.raises(AdapterConnectionError),
             ):
                 await write_blob_to_storage(
                     data=struct.pack(">i", 42),
@@ -455,27 +453,30 @@ async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter(
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            side_effect=StructureObjectNotFound,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
-            return_value=StructureThingNode(
-                id="i-ii/E",
-                parentId="i-ii",
-                name="E",
-                description="",
+        with (
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+                return_value=client_mock,
             ),
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
-            return_value={
-                "currently_executed_job_id": UUID(
-                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
-                )
-            },
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+                side_effect=StructureObjectNotFound,
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
+                return_value=StructureThingNode(
+                    id="i-ii/E",
+                    parentId="i-ii",
+                    name="E",
+                    description="",
+                ),
+            ),
+            mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID("8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4")
+                },
+            ),
         ):
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
@@ -492,8 +493,7 @@ async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter(
             assert object_summaries_response["KeyCount"] == 1
             object_key = object_summaries_response["Contents"][0]["Key"]
             assert (
-                object_key
-                == "E_1970-01-01T00:00:00+00:00_e411fabb-50fd-4262-855e-7a59e13bbfa3.pkl"
+                object_key == "E_1970-01-01T00:00:00+00:00_e411fabb-50fd-4262-855e-7a59e13bbfa3.pkl"
             )
             object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
             pickled_data_bytes = object_response["Body"].read()

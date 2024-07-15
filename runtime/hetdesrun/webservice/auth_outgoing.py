@@ -101,9 +101,7 @@ class TokenType(str, Enum):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str | None = (
-        None  # client credential grants don't provide refreh token
-    )
+    refresh_token: str | None = None  # client credential grants don't provide refreh token
     expires_in: int
     refresh_expires_in: int = 0
     token_type: TokenType
@@ -135,11 +133,7 @@ def json_parse_token_response(resp: Response) -> dict[str, Any]:
         msg = "Error trying to json-parse token response from auth provider"
         logger.error(msg)
         raise ServiceAuthenticationError(
-            msg
-            + " Json decode error was:\n"
-            + str(e)
-            + "\n\nResponse text was:\n"
-            + resp.text
+            msg + " Json decode error was:\n" + str(e) + "\n\nResponse text was:\n" + resp.text
         ) from e
 
 
@@ -149,7 +143,7 @@ async def post_to_auth_provider(
     async_client_kwargs: dict[str, Any],
     post_kwargs: dict[str, Any],
 ) -> Response:
-    async with AsyncClient(**(async_client_kwargs)) as client:
+    async with AsyncClient(**(async_client_kwargs)) as client:  # noqa: S113
         resp = await client.post(
             url=url,
             data=data,
@@ -303,9 +297,7 @@ async def obtain_or_refresh_token(
             assert (  # noqa: S101
                 existing_token_info.refresh_token is not None
             )  # for mypy
-            logger.debug(
-                "Refresh token fresh enough. Trying to update from refresh token"
-            )
+            logger.debug("Refresh token fresh enough. Trying to update from refresh token")
             try:
                 return await refresh_token_from_auth_provider(
                     existing_token_info.refresh_token, service_user_credentials
@@ -316,9 +308,7 @@ async def obtain_or_refresh_token(
                     str(e),
                 )
                 try:
-                    return await obtain_token_from_auth_provider(
-                        service_user_credentials
-                    )
+                    return await obtain_token_from_auth_provider(service_user_credentials)
                 except ServiceAuthenticationError as e2:
                     logger.error(
                         (

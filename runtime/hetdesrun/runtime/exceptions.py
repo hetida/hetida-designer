@@ -19,18 +19,10 @@ class RuntimeExecutionError(Exception):
     def set_context(
         self, context: ExecutionContext, job_id: str = "UNKNOWN"
     ) -> "RuntimeExecutionError":
-        self.currently_executed_transformation_id = (
-            context.currently_executed_transformation_id
-        )
-        self.currently_executed_transformation_name = (
-            context.currently_executed_transformation_name
-        )
-        self.currently_executed_transformation_tag = (
-            context.currently_executed_transformation_tag
-        )
-        self.currently_executed_transformation_type = (
-            context.currently_executed_transformation_type
-        )
+        self.currently_executed_transformation_id = context.currently_executed_transformation_id
+        self.currently_executed_transformation_name = context.currently_executed_transformation_name
+        self.currently_executed_transformation_tag = context.currently_executed_transformation_tag
+        self.currently_executed_transformation_type = context.currently_executed_transformation_type
         self.currently_executed_hierarchical_operator_id = (
             context.currently_executed_operator_hierarchical_id
         )
@@ -58,7 +50,7 @@ class ComponentException(RuntimeExecutionError):
         *args: Any,
         error_code: int | str = "",
         extra_information: dict | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         if not isinstance(error_code, int | str):
             raise ValueError("The ComponentException.error_code must be int or string!")
@@ -75,13 +67,13 @@ class ComponentInputValidationException(ComponentException):
         *args: Any,
         invalid_component_inputs: list[str],
         error_code: int | str = "",
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             *args,
             error_code=error_code,
             extra_information={"invalid_component_inputs": invalid_component_inputs},
-            **kwargs
+            **kwargs,
         )
 
 

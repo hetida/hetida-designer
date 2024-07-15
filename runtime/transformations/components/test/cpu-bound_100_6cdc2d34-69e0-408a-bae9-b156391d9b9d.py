@@ -93,9 +93,7 @@ def main(*, rounds, bind):
             "end": end.isoformat(),
         }
     raise ValueError(
-        'Unknown value of "bind" mode: '
-        + bind
-        + '. Allowed values are "single" and "multi".'
+        'Unknown value of "bind" mode: ' + bind + '. Allowed values are "single" and "multi".'
     )
 
 

@@ -107,9 +107,7 @@ def adjust_tr_outputs_to_not_matching_wf_outputs_and_remove_surplus_tr_outputs(
                 str(tr_output.id),
             )
             # TODO: Delete instead of adjust once the frontend has been updated
-            tr_outputs[
-                tr_outputs.index(tr_output)
-            ] = wf_output.to_transformation_output()
+            tr_outputs[tr_outputs.index(tr_output)] = wf_output.to_transformation_output()
         del wf_outputs_by_id[tr_output.id]
 
     for tr_output in remove_tr_outputs:
@@ -202,8 +200,7 @@ class TransformationRevision(BaseModel):
     content: str | WorkflowContent = Field(
         ...,
         description=(
-            "Code as string in case of type COMPONENT, "
-            "WorkflowContent in case of type WORKFLOW."
+            "Code as string in case of type COMPONENT, " "WorkflowContent in case of type WORKFLOW."
         ),
     )
 
@@ -282,9 +279,7 @@ class TransformationRevision(BaseModel):
         return v
 
     @validator("content")
-    def content_type_correct(
-        cls, v: str | WorkflowContent, values: dict
-    ) -> str | WorkflowContent:
+    def content_type_correct(cls, v: str | WorkflowContent, values: dict) -> str | WorkflowContent:
         try:
             type_ = values["type"]
         except KeyError as error:
@@ -349,9 +344,7 @@ class TransformationRevision(BaseModel):
         return io_interface
 
     @validator("io_interface")
-    def io_interface_no_names_empty(
-        cls, io_interface: IOInterface, values: dict
-    ) -> IOInterface:
+    def io_interface_no_names_empty(cls, io_interface: IOInterface, values: dict) -> IOInterface:
         try:
             state = values["state"]
         except KeyError as error:
@@ -431,9 +424,7 @@ class TransformationRevision(BaseModel):
             code_module_uuid=self.id,
             function_name="main",
             inputs=[inp.to_component_input() for inp in self.io_interface.inputs],
-            outputs=[
-                output.to_component_output() for output in self.io_interface.outputs
-            ],
+            outputs=[output.to_component_output() for output in self.io_interface.outputs],
         )
 
     def to_component_node(self, operator_id: UUID, operator_name: str) -> ComponentNode:
@@ -486,8 +477,7 @@ class TransformationRevision(BaseModel):
             version_tag=self.version_tag,
             transformation_id=self.id,
             inputs=[
-                OperatorInput.from_transformation_input(inp)
-                for inp in self.io_interface.inputs
+                OperatorInput.from_transformation_input(inp) for inp in self.io_interface.inputs
             ],
             outputs=[
                 OperatorOutput.from_transformation_output(output)
@@ -510,9 +500,7 @@ class TransformationRevision(BaseModel):
             workflow_content=cast(WorkflowContent, self.content).dict()
             if self.type is Type.WORKFLOW
             else None,
-            component_code=cast(str, self.content)
-            if self.type is Type.COMPONENT
-            else None,
+            component_code=cast(str, self.content) if self.type is Type.COMPONENT else None,
             io_interface=self.io_interface.dict(),
             test_wiring=self.test_wiring.dict(),
             released_timestamp=self.released_timestamp,
@@ -563,22 +551,16 @@ class TransformationRevision(BaseModel):
                 links=links,
             ),
             io_interface=IOInterface(
-                inputs=[
-                    input_connector.to_transformation_input()
-                    for input_connector in wf_inputs
-                ],
+                inputs=[input_connector.to_transformation_input() for input_connector in wf_inputs],
                 outputs=[
-                    output_connector.to_transformation_output()
-                    for output_connector in wf_outputs
+                    output_connector.to_transformation_output() for output_connector in wf_outputs
                 ],
             ),
             test_wiring=self.test_wiring,
         )
 
     @classmethod
-    def from_orm_model(
-        cls, orm_model: TransformationRevisionDBModel
-    ) -> "TransformationRevision":
+    def from_orm_model(cls, orm_model: TransformationRevisionDBModel) -> "TransformationRevision":
         try:
             return TransformationRevision(
                 id=orm_model.id,

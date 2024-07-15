@@ -76,8 +76,7 @@ def test_blob_storage_class_object_key() -> None:
     )
 
     assert (
-        object_key.string
-        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
+        object_key.string == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
     assert object_key.name == "A"
     assert object_key.time == datetime(
@@ -92,9 +91,7 @@ def test_blob_storage_class_object_key() -> None:
 
     object_key_from_name_and_time_and_job_id = ObjectKey.from_name_and_time_and_job_id(
         name=IdString("A"),
-        time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(
-            tzinfo=timezone.utc
-        ),
+        time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(tzinfo=timezone.utc),
         job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
         file_extension=FileExtension.Pickle,
     )
@@ -102,15 +99,11 @@ def test_blob_storage_class_object_key() -> None:
         "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
 
-    object_key_from_name_and_time_and_job_id_with_ext = (
-        ObjectKey.from_name_and_time_and_job_id(
-            name=IdString("A"),
-            time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(
-                tzinfo=timezone.utc
-            ),
-            job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
-            file_extension=FileExtension.H5,
-        )
+    object_key_from_name_and_time_and_job_id_with_ext = ObjectKey.from_name_and_time_and_job_id(
+        name=IdString("A"),
+        time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(tzinfo=timezone.utc),
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+        file_extension=FileExtension.H5,
     )
     assert object_key_from_name_and_time_and_job_id_with_ext.string == (
         "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
@@ -126,14 +119,10 @@ def test_blob_storage_class_object_key() -> None:
 
     with pytest.raises(ValueError, match="must have timezone UTC"):
         object_key_from_string_with_extension = ObjectKey.from_string(
-            IdString(
-                "A_2022-01-02T14:23:18+02:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
-            )
+            IdString("A_2022-01-02T14:23:18+02:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5")
         )
 
-    with pytest.raises(
-        ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
-    ):
+    with pytest.raises(ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"):
         ObjectKey.from_string(
             IdString("A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
         )
@@ -165,10 +154,8 @@ def test_blob_storage_class_object_key() -> None:
             ),
         )
 
-    thing_node_id_from_ok = (
-        object_key_from_thing_node_id_and_metadata_key.to_thing_node_id(
-            bucket=StructureBucket(name="i-ii")
-        )
+    thing_node_id_from_ok = object_key_from_thing_node_id_and_metadata_key.to_thing_node_id(
+        bucket=StructureBucket(name="i-ii")
     )
     assert thing_node_id_from_ok == IdString("i-ii/A")
 
@@ -201,9 +188,7 @@ def test_blob_storage_class_structure_thing_node() -> None:
             description="",
         )
 
-    with pytest.raises(
-        ValidationError, match=r"id.* must consist of.* parent id.* name"
-    ):
+    with pytest.raises(ValidationError, match=r"id.* must consist of.* parent id.* name"):
         # id does not consist of parentId and name combined with bucket name or object key separator
         StructureThingNode(id="i-ii/A", parentId="i-i", name="A", description="")
 
@@ -217,14 +202,10 @@ def test_blob_storage_class_structure_source_works() -> None:
         metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
     )
 
-    assert (
-        source.id
-        == "i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
-    )
+    assert source.id == "i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     assert source.thingNodeId == "i-ii/A"
     assert (
-        source.name
-        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+        source.name == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
     )
     assert source.path == "i-ii/A"
     assert (
@@ -239,19 +220,15 @@ def test_blob_storage_class_structure_source_works() -> None:
         src_bucket,
         src_object_key_string,
     ) = get_structure_bucket_and_object_key_prefix_from_id(source.id)
-    src_from_bkt_and_ok = (
-        BlobStorageStructureSource.from_structure_bucket_and_object_key(
-            bucket=src_bucket, object_key=ObjectKey.from_string(src_object_key_string)
-        )
+    src_from_bkt_and_ok = BlobStorageStructureSource.from_structure_bucket_and_object_key(
+        bucket=src_bucket, object_key=ObjectKey.from_string(src_object_key_string)
     )
     assert src_from_bkt_and_ok == source
 
     multi_level_ok_src = BlobStorageStructureSource.from_structure_bucket_and_object_key(
         bucket=StructureBucket(name="iii"),
         object_key=ObjectKey.from_string(
-            IdString(
-                "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
-            )
+            IdString("x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl")
         ),
     )
     assert (
@@ -272,9 +249,7 @@ def test_blob_storage_class_structure_source_works() -> None:
     src_with_ext_from_bkt_and_ok = BlobStorageStructureSource.from_structure_bucket_and_object_key(
         bucket=StructureBucket(name="iii"),
         object_key=ObjectKey.from_string(
-            IdString(
-                "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
-            )
+            IdString("x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5")
         ),
     )
     assert (
@@ -306,9 +281,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             ),
         )
 
-    with pytest.raises(
-        ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
-    ):
+    with pytest.raises(ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"):
         # invalid id due to bucket name part invalid
         BlobStorageStructureSource(
             id="I-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
@@ -320,9 +293,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             ),
         )
 
-    with pytest.raises(
-        ValidationError, match=r"second part.* of.* id.* correspond to.* object"
-    ):
+    with pytest.raises(ValidationError, match=r"second part.* of.* id.* correspond to.* object"):
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
             id="i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
@@ -358,9 +329,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             ),
         )
 
-    with pytest.raises(
-        ValidationError, match=r"source name.* start with.* name.* of.* thing node"
-    ):
+    with pytest.raises(ValidationError, match=r"source name.* start with.* name.* of.* thing node"):
         # name does not match id due to thing node name
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
@@ -372,9 +341,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             ),
         )
 
-    with pytest.raises(
-        ValidationError, match=r"time of.* name.* must match.* time in.* id"
-    ):
+    with pytest.raises(ValidationError, match=r"time of.* name.* must match.* time in.* id"):
         # name does not match id due to timestamp
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
@@ -457,9 +424,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    with pytest.raises(
-        ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
-    ):
+    with pytest.raises(ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"):
         # invalid id due to bucket name part invalid
         BlobStorageStructureSink(
             id="I-ii/A_generic_sink",
@@ -499,9 +464,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    with pytest.raises(
-        ValidationError, match=r"sink name.* start with.* name.* of.* thing node"
-    ):
+    with pytest.raises(ValidationError, match=r"sink name.* start with.* name.* of.* thing node"):
         # name does not match id due to thing node name
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -675,9 +638,7 @@ def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
                         name="ii",
                         description="Category",
                         below_structure_defines_object_key=True,
-                        substructure=[
-                            HierarchyNode(name="E", description="Subcategory")
-                        ],
+                        substructure=[HierarchyNode(name="E", description="Subcategory")],
                     ),
                     HierarchyNode(
                         name="iii",
@@ -697,9 +658,7 @@ def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
     assert adapter_hierarchy.structure[0].substructure is not None
     assert adapter_hierarchy.structure[0].substructure[0].get_depth() == 2
     assert adapter_hierarchy.structure[0].substructure[0].substructure is not None
-    assert (
-        adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
-    )
+    assert adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
 
     thing_nodes = adapter_hierarchy.thing_nodes
     bucket_names = adapter_hierarchy.structure_buckets
@@ -724,12 +683,8 @@ def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
         AdapterHierarchy.from_file("tests/data/blob_storage/not_there.json")
 
 
-def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path() -> (
-    None
-):
-    adapter_hierarchy = AdapterHierarchy(
-        structure=(HierarchyNode(name="I", description=""),)
-    )
+def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path() -> None:
+    adapter_hierarchy = AdapterHierarchy(structure=(HierarchyNode(name="I", description=""),))
     with pytest.raises(ValueError, match="Without an object key prefix"):
         adapter_hierarchy.thing_nodes  # noqa: B018
 
@@ -758,9 +713,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
         adapter_hierarchy.structure_buckets  # noqa: B018
 
 
-def test_blob_storage_adapter_hierarchy_identify_second_last_node_as_bucket_end() -> (
-    None
-):
+def test_blob_storage_adapter_hierarchy_identify_second_last_node_as_bucket_end() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=(
             HierarchyNode(

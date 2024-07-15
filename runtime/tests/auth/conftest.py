@@ -8,7 +8,7 @@ import pytest_asyncio
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from jose import constants, jwk, jwt
 
 from hetdesrun.webservice.application import init_app
@@ -153,7 +153,8 @@ def service_client_credentials():
     return ServiceCredentials(
         realm="my-realm",
         grant_credentials=ClientCredentialsGrantCredentials(
-            client_id="my-client", client_secret="my-client-secret"  # noqa: S106
+            client_id="my-client",
+            client_secret="my-client-secret",  # noqa: S106
         ),
         auth_url="https://test.com/auth",
         post_client_kwargs={"verify": False},
@@ -180,9 +181,7 @@ def set_internal_client_creds(service_client_credentials):
 
 @pytest.fixture(scope="package")
 def activate_auth():
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", True
-    ) as _fixture:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", True) as _fixture:
         yield _fixture
 
 
@@ -193,7 +192,7 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(app=app_with_auth, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=app_with_auth), base_url="http://test")
 
 
 @pytest_asyncio.fixture
@@ -401,7 +400,7 @@ def gen_jose_rs256_key_pair():
         # reduced keysize from 4096 for increasing test speed
         backend=crypto_default_backend(),
         public_exponent=65537,
-        key_size=1024,
+        key_size=1024,  # noqa: S505
     )
 
     private_key = key.private_bytes(

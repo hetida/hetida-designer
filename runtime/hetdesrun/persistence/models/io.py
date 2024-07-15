@@ -47,9 +47,7 @@ class InputTypeMixIn(BaseModel):
     value: Any | None = None
 
     @validator("value")
-    def value_set_only_for_optional_input(
-        cls, value: Any | None, values: dict
-    ) -> Any | None:
+    def value_set_only_for_optional_input(cls, value: Any | None, values: dict) -> Any | None:
         try:
             type = values["type"]  # noqa: A001
         except KeyError as error:
@@ -111,11 +109,7 @@ class Connector(IO):
         )
 
     def matches_io(self, other: IO) -> bool:
-        return (
-            self.id == other.id
-            and self.name == other.name
-            and self.data_type == other.data_type
-        )
+        return self.id == other.id and self.name == other.name and self.data_type == other.data_type
 
 
 class OperatorOutput(Connector):
@@ -145,8 +139,7 @@ class OperatorInput(InputTypeMixIn, Connector):
             type = values["type"]  # noqa: A001
         except KeyError as error:
             raise ValueError(
-                "Cannot set 'exposed' to true for required inputs "
-                "if the input type is missing!"
+                "Cannot set 'exposed' to true for required inputs " "if the input type is missing!"
             ) from error
         if type == InputType.REQUIRED:
             return True
@@ -155,7 +148,10 @@ class OperatorInput(InputTypeMixIn, Connector):
 
     @classmethod
     def from_transformation_input(
-        cls, input: TransformationInput, pos_x: int = 0, pos_y: int = 0  # noqa: A002
+        cls,
+        input: TransformationInput,  # noqa: A002
+        pos_x: int = 0,
+        pos_y: int = 0,
     ) -> "OperatorInput":
         """Transform transformation revision input into operator input.
 
@@ -201,9 +197,7 @@ class WorkflowContentIO(Connector):
             "Is displayed in the IO dialog."
         ),
     )
-    position: Position = Field(
-        Position(x=0, y=0), description="Position of this IOConnector"
-    )
+    position: Position = Field(Position(x=0, y=0), description="Position of this IOConnector")
 
     def matches_operator_io(self, other: Connector) -> bool:
         return self.connector_id == other.id and (
@@ -215,11 +209,7 @@ class WorkflowContentIO(Connector):
 
 class WorkflowContentOutput(WorkflowContentIO):
     def matches_trafo_output(self, other: TransformationOutput) -> bool:
-        return (
-            self.id == other.id
-            and self.name == other.name
-            and self.data_type == other.data_type
-        )
+        return self.id == other.id and self.name == other.name and self.data_type == other.data_type
 
     def to_transformation_output(self) -> TransformationOutput:
         """Transform workflow output into transformation revision output.

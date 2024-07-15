@@ -266,10 +266,13 @@ async def test_end_to_end_load_only_metadata():
 
 @pytest.mark.asyncio
 async def test_end_to_end_load_metadata_with_exception():
-    with mock.patch(
-        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_auth_headers",
-        side_effect=ServiceAuthenticationError("my service error"),
-    ), pytest.raises(AdapterHandlingException, match="my service error"):
+    with (
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_auth_headers",
+            side_effect=ServiceAuthenticationError("my service error"),
+        ),
+        pytest.raises(AdapterHandlingException, match="my service error"),
+    ):
         await load_data(
             {
                 "wf_inp_1": FilteredSource(
@@ -282,14 +285,16 @@ async def test_end_to_end_load_metadata_with_exception():
             adapter_key="end_to_end_only_dataframe_data",
         )
 
-    with mock.patch(
-        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
-        return_value="https://hetida.de",
-    ), mock.patch(
-        "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
-        side_effect=httpx.HTTPError("my http error"),
-    ), pytest.raises(
-        AdapterConnectionError, match="my http error"
+    with (
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
+            return_value="https://hetida.de",
+        ),
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
+            side_effect=httpx.HTTPError("my http error"),
+        ),
+        pytest.raises(AdapterConnectionError, match="my http error"),
     ):
         await load_data(
             {

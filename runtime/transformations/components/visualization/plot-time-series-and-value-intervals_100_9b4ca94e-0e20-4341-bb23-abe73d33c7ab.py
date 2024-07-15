@@ -156,9 +156,7 @@ def plot_series_and_ranges(
     fill_color: str,
 ) -> go.Figure:
     series_to_plot = series.sort_index()
-    fig = go.Figure(
-        [go.Scatter(x=series_to_plot.index, y=series_to_plot, mode="lines+markers")]
-    )
+    fig = go.Figure([go.Scatter(x=series_to_plot.index, y=series_to_plot, mode="lines+markers")])
 
     time_delta = series_to_plot.index.max() - series_to_plot.index.min()
     num_intervals = len(interval_dict)
@@ -172,21 +170,15 @@ def plot_series_and_ranges(
             x1=series_to_plot.index.max(),
             y1=interval_value.max_value,
             line={
-                "color": interval_value.line_color
-                or interval_value.fill_color
-                or line_color,
+                "color": interval_value.line_color or interval_value.fill_color or line_color,
                 "width": 1,
             },
             fillcolor=interval_value.fill_color or fill_color,
         )
 
     # adds a colored vertical line and a label for each value interval
-    for interval_index, (interval_key, interval_value) in enumerate(
-        interval_dict.items()
-    ):
-        x = series_to_plot.index.min() + (interval_index + 1) * time_delta / (
-            num_intervals * 12
-        )
+    for interval_index, (interval_key, interval_value) in enumerate(interval_dict.items()):
+        x = series_to_plot.index.min() + (interval_index + 1) * time_delta / (num_intervals * 12)
 
         fig.add_shape(
             type="line",
@@ -195,9 +187,7 @@ def plot_series_and_ranges(
             x1=x,
             y1=interval_value.max_value,
             line={
-                "color": interval_value.line_color
-                or interval_value.fill_color
-                or line_color,
+                "color": interval_value.line_color or interval_value.fill_color or line_color,
                 "width": 2,
             },
             label={

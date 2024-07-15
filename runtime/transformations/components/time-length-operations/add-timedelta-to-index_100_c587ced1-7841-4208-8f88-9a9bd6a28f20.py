@@ -1,4 +1,4 @@
-""" Module Docsting: Documentation for "Add Timedelta to Index"
+"""Module Docsting: Documentation for "Add Timedelta to Index"
 
 # Add Timedelta to Index
 
@@ -24,41 +24,41 @@ The json input of a typical call of this component, adding a timedelta of 2 days
 indices is
 ```
 {
-	"df_or_series": {
-		"2019-08-01T15:20:00": 1.0,
-		"2019-08-02T15:20:15": 7.0,
-		"2019-08-04T15:19:20": 5.0
-	},
-	"timedelta": "2days"
+        "df_or_series": {
+                "2019-08-01T15:20:00": 1.0,
+                "2019-08-02T15:20:15": 7.0,
+                "2019-08-04T15:19:20": 5.0
+        },
+        "timedelta": "2days"
 }
 ```
 The expected output is
 ```
-	"df_or_series": {
-		"2019-08-03T15:20:00": 1.0,
-		"2019-08-04T15:20:15": 7.0,
-		"2019-08-06T15:19:20": 5.0
-	}
+        "df_or_series": {
+                "2019-08-03T15:20:00": 1.0,
+                "2019-08-04T15:20:15": 7.0,
+                "2019-08-06T15:19:20": 5.0
+        }
 ```
 
 The json input of a call of this component with the same series, adding a timedelta of -1 minute
 ```
 {
-	"df_or_series": {
-		"2019-08-03T15:20:00": 1.0,
-		"2019-08-04T15:20:15": 7.0,
-		"2019-08-06T15:19:20": 5.0
-	},
-	"timedelta": "-1min"
+        "df_or_series": {
+                "2019-08-03T15:20:00": 1.0,
+                "2019-08-04T15:20:15": 7.0,
+                "2019-08-06T15:19:20": 5.0
+        },
+        "timedelta": "-1min"
 }
 ```
 The expected output is
 ```
-	"df_or_series": {
-		"2019-08-03T15:19:00": 1.0,
-		"2019-08-04T15:19:15": 7.0,
-		"2019-08-06T15:18:20": 5.0
-	}
+        "df_or_series": {
+                "2019-08-03T15:19:00": 1.0,
+                "2019-08-04T15:19:15": 7.0,
+                "2019-08-06T15:18:20": 5.0
+        }
 ```
 
 """

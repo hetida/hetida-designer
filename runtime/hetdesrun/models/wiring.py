@@ -6,6 +6,7 @@ from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
+from hetdesrun.structure.models import Sink, Source
 
 ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
 RESERVED_FILTER_KEYS = ["from", "to", "id"]
@@ -22,8 +23,7 @@ class OutputWiring(BaseModel):
     ref_id: str | None = Field(
         None,
         description=(
-            "Id referencing the sink in external systems."
-            " Not necessary for direct provisioning."
+            "Id referencing the sink in external systems." " Not necessary for direct provisioning."
         ),
     )
     ref_id_type: RefIdType | None = Field(
@@ -79,9 +79,7 @@ class OutputWiring(BaseModel):
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
         if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
-            raise ValueError(
-                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
-            )
+            raise ValueError(f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!")
 
         return filters
 
@@ -93,6 +91,18 @@ class OutputWiring(BaseModel):
             if value is None:
                 filters[key] = ""
         return filters
+
+    @classmethod
+    def from_structure_sink(cls, struct_sink: Sink) -> "OutputWiring":
+        # TODO Fill ref_key or leave out ref_id_type
+        return cls(
+            workflow_output_name="dummy",
+            adapter_id=struct_sink.adapter_key,
+            ref_id=str(struct_sink.source_id),
+            ref_id_type=RefIdType.SINK,
+            type=struct_sink.type,
+            filters=struct_sink.preset_filters,  # TODO Understand this attribute
+        )
 
 
 class InputWiring(BaseModel):
@@ -156,9 +166,7 @@ class InputWiring(BaseModel):
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
         if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
-            raise ValueError(
-                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
-            )
+            raise ValueError(f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!")
 
         return filters
 
@@ -171,6 +179,17 @@ class InputWiring(BaseModel):
                 filters[key] = ""
         return filters
 
+    @classmethod
+    def from_structure_source(cls, struct_source: Source) -> "InputWiring":
+        return cls(
+            workflow_input_name="dummy",
+            adapter_id=struct_source.adapter_key,
+            ref_id=str(struct_source.source_id),
+            ref_id_type=RefIdType.SOURCE,
+            type=struct_source.type,
+            filters=struct_source.preset_filters,  # TODO Understand this attribute
+        )
+
 
 class GridstackItemPositioning(BaseModel):
     x: int | None = Field(None, ge=0)
@@ -180,8 +199,7 @@ class GridstackItemPositioning(BaseModel):
     id: str = Field(  # noqa: A003
         ...,
         description=(
-            "gs-id of the .grid-stack-item which is extracted as id by "
-            "gridstacks save method"
+            "gs-id of the .grid-stack-item which is extracted as id by " "gridstacks save method"
         ),
     )
 
@@ -201,12 +219,8 @@ class WorkflowWiring(BaseModel):
         )
 
     @validator("output_wirings", each_item=False)
-    def output_names_unique(
-        cls, output_wirings: list[OutputWiring]
-    ) -> list[OutputWiring]:
-        if len({ow.workflow_output_name for ow in output_wirings}) == len(
-            output_wirings
-        ):
+    def output_names_unique(cls, output_wirings: list[OutputWiring]) -> list[OutputWiring]:
+        if len({ow.workflow_output_name for ow in output_wirings}) == len(output_wirings):
             return output_wirings
 
         raise ValueError(

@@ -9,9 +9,7 @@ async def run_workflow_with_client(workflow_json, open_async_test_client):
 @pytest.mark.asyncio
 async def test_wiring_basics(input_json_with_wiring, async_test_client):
     async with async_test_client as client:
-        status_code, output = await run_workflow_with_client(
-            input_json_with_wiring, client
-        )
+        status_code, output = await run_workflow_with_client(input_json_with_wiring, client)
 
         assert status_code == 200
 
@@ -34,16 +32,12 @@ async def test_wiring_basics(input_json_with_wiring, async_test_client):
                 "filters": {"value": "42"},
             }
         ]
-        status_code, output = await run_workflow_with_client(
-            input_json_with_wiring, client
-        )
+        status_code, output = await run_workflow_with_client(input_json_with_wiring, client)
         assert status_code == 422
 
         # but for all workflow inputs / outputs there must be a wiring!
         input_json_with_wiring["workflow_wiring"]["output_wirings"] = []
-        status_code, output = await run_workflow_with_client(
-            input_json_with_wiring, client
-        )
+        status_code, output = await run_workflow_with_client(input_json_with_wiring, client)
 
         assert status_code == 422  # incomplete wiring
 

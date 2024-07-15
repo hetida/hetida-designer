@@ -66,11 +66,7 @@ async def test_load_single_multitsframe_from_adapter_end_to_end() -> None:
 
             with pytest.raises(AdapterClientWiringInvalidError):
                 mtsf = await load_data(
-                    {
-                        "inp_1": FilteredSource(
-                            ref_id="id_1", type=ExternalType.MULTITSFRAME
-                        )
-                    },
+                    {"inp_1": FilteredSource(ref_id="id_1", type=ExternalType.MULTITSFRAME)},
                     adapter_key="end_to_end_load_multitsframe",
                 )
 

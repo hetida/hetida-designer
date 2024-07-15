@@ -36,9 +36,7 @@ class ElementTypeOrm(Base):
         back_populates="element_types",
         uselist=True,
     )
-    thing_nodes: list["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm", back_populates="element_type"
-    )
+    thing_nodes: list["ThingNodeOrm"] = relationship("ThingNodeOrm", back_populates="element_type")
 
     __table_args__ = (
         UniqueConstraint("name", name="_element_type_name_uc"),
@@ -129,6 +127,7 @@ class SourceOrm(Base):
 
 class SinkOrm(Base):
     __tablename__ = "sink"
+
     id: UUIDType = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
     external_id = Column(String(255), nullable=False)
     stakeholder_key = Column(String(36), nullable=False)

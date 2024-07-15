@@ -47,9 +47,7 @@ workflow_router = HandleTrailingSlashAPIRouter(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Creates a new workflow.",
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_201_CREATED: {"description": "Successfully created the workflow"}
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully created the workflow"}},
     deprecated=True,
 )
 async def create_workflow_revision(
@@ -105,9 +103,7 @@ async def create_workflow_revision(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns a list of all workflows",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"description": "Successfully got list of workflows"}
-    },
+    responses={status.HTTP_200_OK: {"description": "Successfully got list of workflows"}},
     deprecated=True,
 )
 async def get_all_workflow_revisions() -> list[WorkflowRevisionFrontendDto]:
@@ -168,9 +164,7 @@ async def get_workflow_revision_by_id(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg)
 
-    workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
-        transformation_revision
-    )
+    workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(transformation_revision)
     logger.debug(workflow_dto.json())
 
     return workflow_dto
@@ -183,9 +177,7 @@ async def get_workflow_revision_by_id(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Updates a workflow.",
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_201_CREATED: {"description": "Successfully updated the workflow"}
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully updated the workflow"}},
     deprecated=True,
 )
 async def update_workflow_revision(
@@ -214,9 +206,7 @@ async def update_workflow_revision(
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
-        updated_transformation_revision = (
-            updated_workflow_dto.to_transformation_revision()
-        )
+        updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
     except ValidationError as e:
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
@@ -224,9 +214,7 @@ async def update_workflow_revision(
     existing_transformation_revision: TransformationRevision | None = None
 
     try:
-        existing_transformation_revision = read_single_transformation_revision(
-            id, log_error=False
-        )
+        existing_transformation_revision = read_single_transformation_revision(id, log_error=False)
         logger.info("found transformation revision %s", id)
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
@@ -237,18 +225,14 @@ async def update_workflow_revision(
         updated_transformation_revision.documentation = (
             existing_transformation_revision.documentation
         )
-        updated_transformation_revision.test_wiring = (
-            existing_transformation_revision.test_wiring
-        )
+        updated_transformation_revision.test_wiring = existing_transformation_revision.test_wiring
         updated_transformation_revision.released_timestamp = (
             existing_transformation_revision.released_timestamp
         )
 
     try:
-        persisted_transformation_revision = (
-            update_or_create_single_transformation_revision(
-                updated_transformation_revision
-            )
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            updated_transformation_revision
         )
         logger.info("updated workflow %s", id)
     except DBIntegrityError as e:
@@ -271,9 +255,7 @@ async def update_workflow_revision(
     summary="Deletes a workflow.",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        status.HTTP_204_NO_CONTENT: {
-            "description": "Successfully deleted the workflow"
-        },
+        status.HTTP_204_NO_CONTENT: {"description": "Successfully deleted the workflow"},
         status.HTTP_409_CONFLICT: {"description": "Workflow is already released"},
     },
     deprecated=True,
@@ -307,9 +289,7 @@ async def delete_workflow_revision(
     response_model=ExecutionResponseFrontendDto,
     summary="Executes a new workflow.",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"description": "Successfully executed the workflow"}
-    },
+    responses={status.HTTP_200_OK: {"description": "Successfully executed the workflow"}},
     deprecated=True,
 )
 async def execute_workflow_revision(
@@ -381,8 +361,8 @@ async def bind_wiring_to_workflow_revision(
     transformation_revision.test_wiring = wiring
 
     try:
-        persisted_transformation_revision = (
-            update_or_create_single_transformation_revision(transformation_revision)
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            transformation_revision
         )
         logger.info("bound wiring to workflow %s", id)
     except DBIntegrityError as e:

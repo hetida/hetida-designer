@@ -19,7 +19,7 @@ The component generates a simple table of the provided data using Plotly.
 The json input of a typical call of this component is
 ```
 {
-	"data": {
+        "data": {
         "col_1": ["a", "a", "a", "b", "c", "d", "b"],
         "col_2": [2, 3, 2, 4, 4, 4, 4]
     }

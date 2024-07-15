@@ -17,9 +17,7 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
     class Config:
         arbitrary_types_allowed = True
 
-    def to_transformation_revision(
-        self, documentation: str = ""
-    ) -> TransformationRevision:
+    def to_transformation_revision(self, documentation: str = "") -> TransformationRevision:
         return TransformationRevision(
             id=self.id,
             revision_group_id=self.group_id,
@@ -41,9 +39,7 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
                 outputs=[output.to_io() for output in self.outputs],
             ),
             content=self.code,
-            test_wiring=self.wirings[0].to_wiring()
-            if len(self.wirings) > 0
-            else WorkflowWiring(),
+            test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),
         )
 
     @classmethod

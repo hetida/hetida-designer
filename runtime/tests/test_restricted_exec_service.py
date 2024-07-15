@@ -3,7 +3,7 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.backend.execution import ExecByIdInput
 from hetdesrun.persistence.dbservice.revision import (
@@ -23,15 +23,13 @@ def restricted_webservice_mode_pass_through_string_component():
 
 
 @pytest.fixture()
-def single_allowed_app(
-    deactivate_auth, restricted_webservice_mode_pass_through_string_component
-):
+def single_allowed_app(deactivate_auth, restricted_webservice_mode_pass_through_string_component):
     return init_app()
 
 
 @pytest.fixture()
 def single_allowed_client(single_allowed_app):
-    return AsyncClient(app=single_allowed_app, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=single_allowed_app), base_url="http://test")
 
 
 @pytest.fixture()
@@ -45,7 +43,8 @@ def _db_with_string_pass_through_component(mocked_clean_test_db_session):
 
 @pytest.mark.asyncio
 async def test_restricted_single_allowed(
-    single_allowed_client, _db_with_string_pass_through_component  # noqa: PT019
+    single_allowed_client,
+    _db_with_string_pass_through_component,  # noqa: PT019
 ):
     exec_by_id_input = ExecByIdInput(
         id="2b1b474f-ddf5-1f4d-fec4-17ef9122112b",

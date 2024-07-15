@@ -1,11 +1,10 @@
 -c requirements.txt
 -c requirements-base.txt
-pytest
 coverage
-pytest-cov
-black
+mypy
+pytest
 pytest-asyncio
+pytest-cov
 requests
 rope
-mypy
 ruff

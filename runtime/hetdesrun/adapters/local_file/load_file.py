@@ -44,9 +44,7 @@ def load_file_from_id(source_id: str) -> Any:
 
     # Actual loading
     try:
-        loaded_df = file_support_handler.read_handler_func(
-            possible_local_file.path, **read_kwargs
-        )
+        loaded_df = file_support_handler.read_handler_func(possible_local_file.path, **read_kwargs)
     except Exception as e:  # noqa: BLE001
         msg = (
             f"Failed to retrieve local file \n{str(possible_local_file)}\n with "

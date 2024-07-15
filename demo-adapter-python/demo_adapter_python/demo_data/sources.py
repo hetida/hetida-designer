@@ -10,9 +10,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {
-            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
-        },
+        "filters": {"latex_mode": {"name": "Latex", "type": "free_text", "required": False}},
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_pressure_unit",
@@ -29,9 +27,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant B",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {
-            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
-        },
+        "filters": {"latex_mode": {"name": "Latex", "type": "free_text", "required": False}},
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantB.plant_pressure_unit",
@@ -61,9 +57,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {
-            "column_names": {"name": "columns", "type": "free_text", "required": False}
-        },
+        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantB.alerts",
@@ -132,9 +126,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {
-            "frequency": {"name": "frequency", "type": "free_text", "required": False}
-        },
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantA.picklingUnit.influx.press",
@@ -318,9 +310,7 @@ def get_sources(
             and len(src["id"]) != len(parent_id)  # only true subnodes!
         ]
     else:
-        selected_sources = [
-            src for src in sources_json_objects if src["thingNodeId"] == parent_id
-        ]
+        selected_sources = [src for src in sources_json_objects if src["thingNodeId"] == parent_id]
 
     if filter_str is not None:
         selected_sources = [

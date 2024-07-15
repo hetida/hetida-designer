@@ -3,6 +3,7 @@
 Common utilities for loading data that is frame-like (tabular), i.e. dataframes as well as
 timeseries (where the later can be understood as special dataframe/table)
 """
+
 import base64
 import datetime
 import json
@@ -27,9 +28,7 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def create_empty_ts_df(
-    data_type: ExternalType, attrs: Any | None = None
-) -> pd.DataFrame:
+def create_empty_ts_df(data_type: ExternalType, attrs: Any | None = None) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: dict[str, type | str] = {
         "timeseriesId": str,
@@ -62,9 +61,7 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
     if len(filtered_sources) == 0:
         return False, "Requested fetching 0 sources"
 
-    if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(
-        filtered_sources
-    ) > 1:
+    if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(filtered_sources) > 1:
         return False, "Cannot request more than one dataframe together"
     return True, ""
 
@@ -120,8 +117,7 @@ async def load_framelike_data(  # noqa: PLR0915
             resp = session.get(
                 url,
                 params=[
-                    ("id", (str(filtered_source.ref_id)))
-                    for filtered_source in filtered_sources
+                    ("id", (str(filtered_source.ref_id))) for filtered_source in filtered_sources
                 ]
                 + additional_params,
                 stream=True,

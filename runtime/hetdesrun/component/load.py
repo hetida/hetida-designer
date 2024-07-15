@@ -1,4 +1,5 @@
 """Loading code and importing functions"""
+
 import hashlib
 import importlib
 import logging
@@ -58,10 +59,7 @@ def import_func_from_code(
         if raise_if_not_found:
             raise e
         logger.info(
-            (
-                "Function %s from code not yet imported once. "
-                "Importing it from provided code."
-            ),
+            ("Function %s from code not yet imported once. " "Importing it from provided code."),
             func_name,
         )
 
@@ -90,9 +88,7 @@ def import_func_from_code(
             ) from exec_exception
 
         if register_module:
-            sys.modules[
-                module_path
-            ] = mod  # now reachable under the constructed module_path
+            sys.modules[module_path] = mod  # now reachable under the constructed module_path
 
         func = getattr(mod, func_name)
         return func

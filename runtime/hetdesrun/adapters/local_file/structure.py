@@ -68,8 +68,7 @@ def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
 def local_file_loadable(local_file: LocalFile) -> bool:
     return (
         local_file.parsed_settings_file is None  # loadable by default config
-        or local_file.parsed_settings_file.loadable
-        is None  # loadable null is interpreted as True
+        or local_file.parsed_settings_file.loadable is None  # loadable null is interpreted as True
         or local_file.parsed_settings_file.loadable
     ) and (  # cannot load if extension is not registered
         local_file.file_support_handler() is not None
@@ -245,18 +244,12 @@ def get_filtered_local_files(
     for local_root_dir in local_root_dirs:
         local_files, _ = get_local_files_and_dirs(local_root_dir, walk_sub_dirs=True)
         gathered_local_files.extend(
-            [
-                local_file
-                for local_file in local_files
-                if selection_criterion_func(local_file)
-            ]
+            [local_file for local_file in local_files if selection_criterion_func(local_file)]
         )
 
     if filter_str is not None:
         gathered_local_files = [
-            local_file
-            for local_file in gathered_local_files
-            if filter_str in local_file.path
+            local_file for local_file in gathered_local_files if filter_str in local_file.path
         ]
 
     return gathered_local_files
@@ -296,7 +289,8 @@ def get_valid_top_dir(path: str) -> str | None:
 
 
 def get_local_file_by_id(
-    id: str, verify_existence: bool = True  # noqa: A002
+    id: str,  # noqa: A002
+    verify_existence: bool = True,
 ) -> LocalFile | None:
     """Get a specific file by id
 
@@ -315,8 +309,7 @@ def get_local_file_by_id(
         return None
 
     if verify_existence and not (
-        os.path.exists(local_file.path)
-        or os.path.exists(local_file.path + ".settings.json")
+        os.path.exists(local_file.path) or os.path.exists(local_file.path + ".settings.json")
     ):
         return None
 
@@ -349,15 +342,9 @@ def get_thing_node_by_id(
     return StructureThingNode(
         id=id,
         name=os.path.basename(dir_path),
-        parentId=to_url_representation(os.path.dirname(dir_path))
-        if not is_top_dir
-        else None,
+        parentId=to_url_representation(os.path.dirname(dir_path)) if not is_top_dir else None,
         description=(
-            (
-                "Local file directory at "
-                if not is_top_dir
-                else "Root local file directory at "
-            )
+            ("Local file directory at " if not is_top_dir else "Root local file directory at ")
             + os.path.abspath(os.path.realpath(dir_path))
         ),
     )

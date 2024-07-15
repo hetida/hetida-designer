@@ -33,9 +33,7 @@ from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
 def validate_type_and_ref_id(
-    wf_in_out_name_to_filtered_source_or_sink_mapping: Mapping[
-        str, FilteredSource | FilteredSink
-    ]
+    wf_in_out_name_to_filtered_source_or_sink_mapping: Mapping[str, FilteredSource | FilteredSink],
 ) -> tuple[list[str], list[str], list[ExternalType]]:
     """Validate generic rest adapter specific requirements of wirings
 
@@ -55,9 +53,7 @@ def validate_type_and_ref_id(
         filtered_source.ref_id  # type: ignore
         for wf_input_name in wf_in_out_names
         if (
-            filtered_source := wf_in_out_name_to_filtered_source_or_sink_mapping[
-                wf_input_name
-            ]
+            filtered_source := wf_in_out_name_to_filtered_source_or_sink_mapping[wf_input_name]
         ).ref_id
         is not None
     ]
@@ -71,9 +67,7 @@ def validate_type_and_ref_id(
         corresponding_types: list[ExternalType] = [
             ExternalType(fs.type)
             for wf_input_name in wf_in_out_names
-            if (
-                fs := wf_in_out_name_to_filtered_source_or_sink_mapping[wf_input_name]
-            ).type
+            if (fs := wf_in_out_name_to_filtered_source_or_sink_mapping[wf_input_name]).type
             is not None
         ]
     except ValueError as e:
@@ -81,20 +75,14 @@ def validate_type_and_ref_id(
             "Unknown type in a wiring using generic rest adapter."
         ) from e
 
-    if len(corresponding_types) < len(
-        wf_in_out_name_to_filtered_source_or_sink_mapping
-    ):
-        raise AdapterClientWiringInvalidError(
-            "Unset type in a wiring using generic rest adapter."
-        )
+    if len(corresponding_types) < len(wf_in_out_name_to_filtered_source_or_sink_mapping):
+        raise AdapterClientWiringInvalidError("Unset type in a wiring using generic rest adapter.")
 
     if not all(
         isinstance(rest_adapter_data_type, ExternalType)
         for rest_adapter_data_type in corresponding_types
     ):
-        raise AdapterClientWiringInvalidError(
-            "Got unknown type in wiring for generic rest adapter"
-        )
+        raise AdapterClientWiringInvalidError("Got unknown type in wiring for generic rest adapter")
 
     return wf_in_out_names, ref_ids, corresponding_types
 
@@ -129,16 +117,12 @@ async def load_data(
     dataframe_data_to_load: dict[str, FilteredSource] = {}
     multitsframe_data_to_load: dict[str, FilteredSource] = {}
 
-    for wf_input_name, parsed_source_type in zip(
-        wf_input_names, parsed_source_types, strict=True
-    ):
+    for wf_input_name, parsed_source_type in zip(wf_input_names, parsed_source_types, strict=True):
         entry = wf_input_name_to_filtered_source_mapping_dict[wf_input_name]
         entry.type = parsed_source_type
 
         if entry.type.general_type == GeneralType.METADATA:
-            metadata_data_to_load[
-                wf_input_name
-            ] = validate_metadatum_filtered_source_sink(entry)
+            metadata_data_to_load[wf_input_name] = validate_metadatum_filtered_source_sink(entry)
         elif entry.type.general_type == GeneralType.TIMESERIES:
             timeseries_data_to_load[wf_input_name] = entry
         elif entry.type.general_type == GeneralType.SERIES:
@@ -154,13 +138,9 @@ async def load_data(
         loaded_multitsframes,
         loaded_metadata,
     ) = await asyncio.gather(
-        load_grouped_timeseries_data_together(
-            timeseries_data_to_load, adapter_key=adapter_key
-        ),
+        load_grouped_timeseries_data_together(timeseries_data_to_load, adapter_key=adapter_key),
         load_dataframes_from_adapter(dataframe_data_to_load, adapter_key=adapter_key),
-        load_multitsframes_from_adapter(
-            multitsframe_data_to_load, adapter_key=adapter_key
-        ),
+        load_multitsframes_from_adapter(multitsframe_data_to_load, adapter_key=adapter_key),
         load_multiple_metadata(metadata_data_to_load, adapter_key=adapter_key),
     )
 
@@ -195,17 +175,13 @@ async def send_data(
     multitsframe_data_to_send: dict[str, pd.DataFrame] = {}
     multitsframe_filtered_sinks: dict[str, FilteredSink] = {}
 
-    for wf_output_name, parsed_sink_type in zip(
-        wf_output_names, parsed_sink_types, strict=True
-    ):
+    for wf_output_name, parsed_sink_type in zip(wf_output_names, parsed_sink_types, strict=True):
         entry = wf_output_name_to_filtered_sink_mapping_dict[wf_output_name]
         entry.type = parsed_sink_type
         value = wf_output_name_to_value_mapping_dict[wf_output_name]
 
         if entry.type.general_type == GeneralType.METADATA:
-            metadata_filtered_sinks[
-                wf_output_name
-            ] = validate_metadatum_filtered_source_sink(entry)
+            metadata_filtered_sinks[wf_output_name] = validate_metadatum_filtered_source_sink(entry)
             metadata_data_to_send[wf_output_name] = value
         elif entry.type.general_type == GeneralType.TIMESERIES:
             timeseries_filtered_sinks[wf_output_name] = entry

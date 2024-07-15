@@ -87,6 +87,4 @@ async def send_dataframes_to_adapter(
     sink_filters: list[dict[str, str]] = [filtered_sinks[key].filters for key in keys]
     dfs = [data_to_send[key] for key in keys]
 
-    await post_dataframes(
-        dfs, ref_ids=ref_ids, sink_filters=sink_filters, adapter_key=adapter_key
-    )
+    await post_dataframes(dfs, ref_ids=ref_ids, sink_filters=sink_filters, adapter_key=adapter_key)

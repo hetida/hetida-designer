@@ -266,9 +266,7 @@ async def test_null_values_pass_any_pass_through(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == (
-            '{"a": 1.5, "b": None}'
-        )
+        assert exec_result.output_results_by_output_name["output"] == ('{"a": 1.5, "b": None}')
 
 
 @pytest.mark.asyncio
@@ -339,10 +337,7 @@ def division_component_wf_exc_inp_replace(
     function_header: str | None = None,
 ) -> WorkflowExecutionInput:
     division_component_wf_exc_inp = gen_execution_input_from_single_component(
-        (
-            "tests/data/components/"
-            "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"
-        ),
+        ("tests/data/components/" "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"),
         {"dividend": 1, "divisor": 0},
     )
 
@@ -403,9 +398,7 @@ class TestSctructuredErrors:
             with pytest.raises(HTTPException) as exc_info:
                 await execute_workflow_execution_input(wf_exc_input, client)
 
-        assert "Wiring does not match: There is no workflow input" in str(
-            exc_info.value.detail
-        )
+        assert "Wiring does not match: There is no workflow input" in str(exc_info.value.detail)
         assert exc_info.value.status_code == 422
 
     async def test_raise_default_exception(
@@ -423,16 +416,17 @@ class TestSctructuredErrors:
         assert result.error.process_stage == ProcessStage.PARSING_WORKFLOW
         assert result.error.type == "NodeFunctionLoadingError"  # cause: NameError
         assert result.error.error_code is None
-        assert result.error.message == (  # cause: "name 'asdf' is not defined"
-            "Could not load node function "
-            "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
-            "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
+        assert (
+            result.error.message
+            == (  # cause: "name 'asdf' is not defined"
+                "Could not load node function "
+                "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
+                "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
+            )
         )
         assert result.error.extra_information is None
         assert result.error.location is not None
-        assert result.error.location.file.endswith(
-            "/hetdesrun/runtime/engine/plain/parsing.py"
-        )
+        assert result.error.location.file.endswith("/hetdesrun/runtime/engine/plain/parsing.py")
         assert result.error.location.function_name == "load_func"
 
     async def test_raise_wf_input_validation_exception(
@@ -463,9 +457,7 @@ class TestSctructuredErrors:
         )
         assert result.error.extra_information is None
         assert result.error.location is not None
-        assert result.error.location.file.endswith(
-            "/hetdesrun/runtime/engine/plain/parsing.py"
-        )
+        assert result.error.location.file.endswith("/hetdesrun/runtime/engine/plain/parsing.py")
         assert result.error.location.function_name == "recursively_parse_workflow_node"
 
     async def test_raise_imported_component_exception_with_error_code(
@@ -549,9 +541,7 @@ class TestSctructuredErrors:
         async_test_client: AsyncClient,
     ) -> None:
         wf_exc_input = division_component_wf_exc_inp_replace(
-            imports_and_definitions=(
-                "from hdutils import ComponentInputValidationException"
-            ),
+            imports_and_definitions=("from hdutils import ComponentInputValidationException"),
             function_code=(
                 """if divisor == 0:
                     raise ComponentInputValidationException(
@@ -571,9 +561,7 @@ class TestSctructuredErrors:
         assert result.error is not None
         assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
         assert result.error.message == "The divisor must not equal zero!"
-        assert result.error.extra_information == {
-            "invalid_component_inputs": ["divisor"]
-        }
+        assert result.error.extra_information == {"invalid_component_inputs": ["divisor"]}
         assert result.error.error_code == 404
         assert result.error.type == "ComponentInputValidationException"
         assert result.error.operator_info is not None
@@ -656,9 +644,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
 
-        assert result.error.location.file.endswith(
-            "/hetdesrun/runtime/engine/plain/workflow.py"
-        )
+        assert result.error.location.file.endswith("/hetdesrun/runtime/engine/plain/workflow.py")
         assert result.error.location.function_name == "_run_comp_func"
 
     async def test_raise_missing_outputs_exception(
@@ -675,15 +661,12 @@ class TestSctructuredErrors:
         assert result.error.type == "MissingOutputException"
         assert result.error.error_code is None
         assert (
-            result.error.message
-            == "Declared output 'result' not contained in returned dictionary."
+            result.error.message == "Declared output 'result' not contained in returned dictionary."
         )
         assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
-        assert result.error.location.file.endswith(
-            "/hetdesrun/runtime/engine/plain/workflow.py"
-        )
+        assert result.error.location.file.endswith("/hetdesrun/runtime/engine/plain/workflow.py")
         assert result.error.location.function_name == "result"
 
     async def test_raise_parsing_metadata_output_exception(
@@ -812,9 +795,7 @@ async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
 async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         with open(
-            os.path.join(
-                "tests", "data", "timeseries_dataframe_wf_execution_input.json"
-            ),
+            os.path.join("tests", "data", "timeseries_dataframe_wf_execution_input.json"),
             encoding="utf8",
         ) as f:
             loaded_workflow_exe_input = json.load(f)
@@ -824,9 +805,7 @@ async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None
 
         assert response_status_code == 200
         assert response_json["result"] == "ok"
-        assert response_json["output_results_by_output_name"]["multitsframe"][
-            "__data__"
-        ] == {
+        assert response_json["output_results_by_output_name"]["multitsframe"]["__data__"] == {
             "value": {
                 "0": 1,
                 "1": 1.2,
@@ -880,14 +859,9 @@ async def test_nested_optional_inputs_wf_execution(
 
     assert response_status_code == 200
     assert response_json["result"] == "ok"
-    assert (
-        response_json["output_results_by_output_name"]["intercept"]
-        == 2.8778442676301292
-    )
+    assert response_json["output_results_by_output_name"]["intercept"] == 2.8778442676301292
     assert (
         response_json["output_results_by_output_name"]["limit_violation_timestamp"]
         == "2020-06-25T16:33:23.934348+00:00"
     )
-    assert response_json["output_results_by_output_name"]["slope"] == [
-        -3.700034733861136e-7
-    ]
+    assert response_json["output_results_by_output_name"]["slope"] == [-3.700034733861136e-7]

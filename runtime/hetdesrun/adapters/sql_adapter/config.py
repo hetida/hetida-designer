@@ -68,9 +68,7 @@ class SQLAdapterDBConfig(BaseModel):
 
     """
 
-    connection_url: str = Field(
-        ..., description="a valid and complete sql connection uri"
-    )
+    connection_url: str = Field(..., description="a valid and complete sql connection uri")
     name: str
     key: str
     append_tables: list[str] = Field(
@@ -146,9 +144,7 @@ class SQLAdapterConfig(BaseSettings):
     def db_keys_valid_python_identifiers(
         cls, v: list[SQLAdapterDBConfig]
     ) -> list[SQLAdapterDBConfig]:
-        if not all(
-            valid_python_identifier(cls, configured_db.key) for configured_db in v
-        ):
+        if not all(valid_python_identifier(cls, configured_db.key) for configured_db in v):
             raise ValueError(
                 "Some configured db key of the generic sql adapter contains invalid characters."
             )

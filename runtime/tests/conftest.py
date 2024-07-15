@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_db_engine, sessionmaker
@@ -42,9 +42,7 @@ def mocked_clean_test_db_session(clean_test_db_engine):
 
 @pytest.fixture(scope="session")
 def deactivate_auth() -> Generator:
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", new=False
-    ) as _fixture:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", new=False) as _fixture:
         yield _fixture
 
 
@@ -69,7 +67,7 @@ def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
 
 @pytest.fixture
 def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
-    return AsyncClient(app=app_without_auth, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
 
 
 @pytest.fixture
@@ -209,13 +207,11 @@ def input_json_with_wiring() -> dict:
 def input_json_with_wiring_with_input() -> Any:
     json_with_wiring = deepcopy(base_workflow_json)
 
-    json_with_wiring["code_modules"][1][
-        "code"
-    ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'  # noqa: E501
-
-    json_with_wiring["code_modules"][1]["uuid"] = str(
-        get_uuid_from_seed("value_giver_module")
+    json_with_wiring["code_modules"][1]["code"] = (
+        'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'  # noqa: E501
     )
+
+    json_with_wiring["code_modules"][1]["uuid"] = str(get_uuid_from_seed("value_giver_module"))
 
     json_with_wiring["components"][1]["inputs"] = [
         {

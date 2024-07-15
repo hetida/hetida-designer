@@ -62,9 +62,7 @@ class StructureVirtualSink(BaseModel):
             name=struct_sink.name,
             type=struct_sink.type,
             path="",  # TODO Fill appropriately
-            metadataKey=struct_sink.meta_data.get("metadataKey")
-            if struct_sink.meta_data
-            else None,
+            metadataKey=struct_sink.meta_data.get("metadataKey") if struct_sink.meta_data else None,
             filters=struct_sink.preset_filters,
         )
 

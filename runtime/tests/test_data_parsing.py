@@ -63,9 +63,7 @@ def test_dataframe_parsing():
     assert len(df1) == 3
     assert df1.isna()["a"].iloc[1] == False  # noqa: E712
     assert df1.isna()["a"].iloc[2] == True  # noqa: E712
-    df2 = MyDfModel(
-        df={"a": {"0": 1.0, "1": 2.0, "2": None}, "b": {"0": 1, "1": 2, "2": 3}}
-    ).df
+    df2 = MyDfModel(df={"a": {"0": 1.0, "1": 2.0, "2": None}, "b": {"0": 1, "1": 2, "2": 3}}).df
 
     assert len(df2) == 3
     # nan != nan so df1 == df2 is False once:
@@ -80,9 +78,7 @@ def test_multitsframe_parsing():
 
     assert len(empty_df_mtsf) == 0
 
-    empty_mtsf = MyMultiTsFrameModel(
-        mtsf=('{"value":[],"metric":[],"timestamp":[]}')
-    ).mtsf
+    empty_mtsf = MyMultiTsFrameModel(mtsf=('{"value":[],"metric":[],"timestamp":[]}')).mtsf
 
     assert len(empty_mtsf) == 0
 

@@ -116,9 +116,7 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
 async def test_write_ts_table(three_sqlite_dbs_configured):
     dataframe = pd.DataFrame(
         {
-            "timestamp": pd.to_datetime(
-                ["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]
-            ),
+            "timestamp": pd.to_datetime(["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]),
             "metric": ["test_write", "test_write"],
             "value": [42.8, 49.2],
         }
@@ -187,18 +185,14 @@ async def test_column_mapping(three_sqlite_dbs_configured):
     assert len(received_data["inp"]) == 2
     assert {"timestamp", "metric", "value"} == set(received_data["inp"].columns)
 
-    table_content = pd.read_sql(
-        "table3", get_sql_adapter_config().sql_databases[-1].connection_url
-    )
+    table_content = pd.read_sql("table3", get_sql_adapter_config().sql_databases[-1].connection_url)
 
     assert {"datetime", "tsid", "measurement_val"} == set(table_content.columns)
     assert len(table_content) == 4
 
     dataframe = pd.DataFrame(
         {
-            "timestamp": pd.to_datetime(
-                ["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]
-            ),
+            "timestamp": pd.to_datetime(["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]),
             "metric": ["map_test", "map_test"],
             "value": [42.8, 49.2],
         }
@@ -215,9 +209,7 @@ async def test_column_mapping(three_sqlite_dbs_configured):
         adapter_key="sql-adapter",
     )
 
-    table_content = pd.read_sql(
-        "table3", get_sql_adapter_config().sql_databases[-1].connection_url
-    )
+    table_content = pd.read_sql("table3", get_sql_adapter_config().sql_databases[-1].connection_url)
 
     assert {"datetime", "tsid", "measurement_val"} == set(table_content.columns)
     assert len(table_content) == 6

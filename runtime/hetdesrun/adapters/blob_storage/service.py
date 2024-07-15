@@ -101,7 +101,5 @@ async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdSt
     if s3_response["KeyCount"] == 0:
         return []
 
-    object_key_strings = [
-        IdString(obj_summary["Key"]) for obj_summary in s3_response["Contents"]
-    ]
+    object_key_strings = [IdString(obj_summary["Key"]) for obj_summary in s3_response["Contents"]]
     return object_key_strings

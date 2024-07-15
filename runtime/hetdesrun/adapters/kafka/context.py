@@ -6,7 +6,6 @@ adapter is required to obtain the message from memory instead of receiving a new
 This module handles intermediate storingof such message.
 """
 
-
 from contextvars import ContextVar
 
 from hetdesrun.adapters.kafka.models import (
@@ -14,9 +13,9 @@ from hetdesrun.adapters.kafka.models import (
     KafkaSingleValueMessage,
 )
 
-kafka_messages: ContextVar[
-    dict[str, None | KafkaSingleValueMessage | KafkaMultiValueMessage]
-] = ContextVar("kafka_messages")
+kafka_messages: ContextVar[dict[str, None | KafkaSingleValueMessage | KafkaMultiValueMessage]] = (
+    ContextVar("kafka_messages")
+)
 
 
 def _get_kafka_messages_context() -> (
@@ -30,9 +29,7 @@ def _get_kafka_messages_context() -> (
 
 
 def bind_kafka_messages(
-    message_by_kafka_config_key: dict[
-        str, KafkaSingleValueMessage | KafkaMultiValueMessage
-    ],
+    message_by_kafka_config_key: dict[str, KafkaSingleValueMessage | KafkaMultiValueMessage],
 ) -> None:
     _get_kafka_messages_context().update(**message_by_kafka_config_key)
 

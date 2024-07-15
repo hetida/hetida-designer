@@ -28,6 +28,7 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
+      - HETIDA_DESIGNER_ADAPTERS=virtual-structure-adapter|Virtual Structure Adapter|http://localhost:8090/adapters/vst|http://localhost:8090/adapters/vst,demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://localhost:8090/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8090/adapters/sql|http://localhost:8090/adapters/sql,kafka|Kafka Adapter|http://localhost:8090/adapters/kafka|http://localhost:8090/adapters/kafka
 
     depends_on:
       hetida-designer-db:

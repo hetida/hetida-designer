@@ -168,7 +168,6 @@ async def get_single_thingNode(
     if possible_thing_node is None:
         raise HTTPException(
             status_code=404,
-            detail="Adapter does not provide thing node with id "
-            + from_url_representation(id),
+            detail="Adapter does not provide thing node with id " + from_url_representation(id),
         )
     return possible_thing_node

@@ -935,21 +935,17 @@ def test_parent_validator_tag_not_latest_identifies_tag_latest():
 def test_workflow_validators_accept_valid_workflow():
     workflow_dto = WorkflowRevisionFrontendDto(**valid_workflow_example_iso_forest)
 
-    assert len(workflow_dto.operators) == len(
-        valid_workflow_example_iso_forest["operators"]
-    )
+    assert len(workflow_dto.operators) == len(valid_workflow_example_iso_forest["operators"])
     assert len(workflow_dto.links) == len(valid_workflow_example_iso_forest["links"])
     assert len(workflow_dto.inputs) == len(valid_workflow_example_iso_forest["inputs"])
-    assert len(workflow_dto.outputs) == len(
-        valid_workflow_example_iso_forest["outputs"]
-    )
+    assert len(workflow_dto.outputs) == len(valid_workflow_example_iso_forest["outputs"])
 
 
 def test_workflow_validator_input_names_none_or_unique_identifies_double_name():
     workflow_with_double_input_name = deepcopy(valid_workflow_example_iso_forest)
-    workflow_with_double_input_name["inputs"][1][
-        "name"
-    ] = workflow_with_double_input_name["inputs"][0]["name"]
+    workflow_with_double_input_name["inputs"][1]["name"] = workflow_with_double_input_name[
+        "inputs"
+    ][0]["name"]
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_double_input_name)
@@ -959,15 +955,11 @@ def test_workflow_validator_input_names_none_or_unique_identifies_double_name():
 
 def test_workflow_validator_determine_outputs_from_operators_and_links_removes_unlinked_output():
     workflow_with_unlinked_output = deepcopy(valid_workflow_example_iso_forest)
-    workflow_with_unlinked_output["outputs"].append(
-        workflow_with_unlinked_output["outputs"][0]
-    )
+    workflow_with_unlinked_output["outputs"].append(workflow_with_unlinked_output["outputs"][0])
 
     workflow_dto = WorkflowRevisionFrontendDto(**workflow_with_unlinked_output)
 
-    assert len(workflow_dto.outputs) == len(
-        valid_workflow_example_iso_forest["outputs"]
-    )
+    assert len(workflow_dto.outputs) == len(valid_workflow_example_iso_forest["outputs"])
 
 
 def test_workflow_validator_name_or_constant_data_provided_identifies_io_without_name_and_constant_value():  # noqa: E501
@@ -981,9 +973,7 @@ def test_workflow_validator_name_or_constant_data_provided_identifies_io_without
 
 
 def test_workflow_validator_name_or_constant_data_provided_identifies_io_with_name_and_constant_true():  # noqa: E501
-    workflow_with_input_with_name_and_constant_true = deepcopy(
-        valid_workflow_example_iso_forest
-    )
+    workflow_with_input_with_name_and_constant_true = deepcopy(valid_workflow_example_iso_forest)
     workflow_with_input_with_name_and_constant_true["inputs"][0]["constant"] = True
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
@@ -1003,12 +993,12 @@ def test_workflow_validator_links_acyclic_directed_graph_identifies_cyclic_links
     # to link into operator "Combine as named column into DataFrame"
     # with id "2ae1a251-3d86-4323-ae64-0702cfb5a4cf" and
     # input connector "series" with id "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab"
-    workflow_with_cyclic_links["links"][11][
-        "toOperator"
-    ] = valid_workflow_example_iso_forest["links"][1]["toOperator"]
-    workflow_with_cyclic_links["links"][11][
-        "toConnector"
-    ] = valid_workflow_example_iso_forest["links"][1]["toConnector"]
+    workflow_with_cyclic_links["links"][11]["toOperator"] = valid_workflow_example_iso_forest[
+        "links"
+    ][1]["toOperator"]
+    workflow_with_cyclic_links["links"][11]["toConnector"] = valid_workflow_example_iso_forest[
+        "links"
+    ][1]["toConnector"]
 
     # Change link #1 with id "e9fa0523-dfc8-4c47-ab9b-7ac64eff87ea"
     # from operator #0 "Name Series (2)" with id "1ecddb98-6ae1-48b0-b125-20d3b4e3118c" and
@@ -1018,12 +1008,12 @@ def test_workflow_validator_links_acyclic_directed_graph_identifies_cyclic_links
     # input connector "series" with id "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab"
     # to link into operator "Contour Plot" with id "e362967a-fa2d-4d7c-8ef9-e58eceb45e2b" and
     # input connector "z" with id "455f7a00-c731-b2ba-ee84-8d8b567bd50e"
-    workflow_with_cyclic_links["links"][1][
-        "toOperator"
-    ] = valid_workflow_example_iso_forest["links"][11]["toOperator"]
-    workflow_with_cyclic_links["links"][1][
-        "toConnector"
-    ] = valid_workflow_example_iso_forest["links"][11]["toConnector"]
+    workflow_with_cyclic_links["links"][1]["toOperator"] = valid_workflow_example_iso_forest[
+        "links"
+    ][11]["toOperator"]
+    workflow_with_cyclic_links["links"][1]["toConnector"] = valid_workflow_example_iso_forest[
+        "links"
+    ][11]["toConnector"]
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_cyclic_links)
@@ -1163,9 +1153,7 @@ def test_io_to_io_connector_for_input():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(
-        **valid_input_with_name
-    ).to_workflow_content_io(
+    io_connector = WorkflowIoFrontendDto(**valid_input_with_name).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_input_with_name["operator"]),
             UUID(valid_input_with_name["connector"]),
@@ -1189,9 +1177,7 @@ def test_io_to_io_connector_for_output():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(
-        **valid_output_with_name
-    ).to_workflow_content_io(
+    io_connector = WorkflowIoFrontendDto(**valid_output_with_name).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_output_with_name["operator"]),
             UUID(valid_output_with_name["connector"]),
@@ -1249,8 +1235,8 @@ def test_from_workflow_content_constant_input():
             operators,
         )
     )
-    io_dto: WorkflowIoFrontendDto = (
-        WorkflowIoFrontendDto.from_workflow_content_constant_input(constant)
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_workflow_content_constant_input(
+        constant
     )
 
     assert str(io_dto.id) == valid_input_without_name["id"]
@@ -1276,9 +1262,7 @@ def test_from_input_wiring():
     input_wiring = InputWiringFrontendDto(**valid_input_wiring).to_input_wiring()
     input_wiring_dto = InputWiringFrontendDto.from_input_wiring(input_wiring)
 
-    assert (
-        input_wiring_dto.workflow_input_name == valid_input_wiring["workflowInputName"]
-    )
+    assert input_wiring_dto.workflow_input_name == valid_input_wiring["workflowInputName"]
     assert input_wiring_dto.adapter_id == valid_input_wiring["adapterId"]
     assert input_wiring_dto.filters == valid_input_wiring["filters"]
 
@@ -1292,9 +1276,7 @@ def test_to_wiring():
 
 def test_from_wiring():
     wiring = WiringFrontendDto(**valid_wiring).to_wiring()
-    wiring_dto = WiringFrontendDto.from_wiring(
-        wiring, valid_workflow_example_iso_forest["id"]
-    )
+    wiring_dto = WiringFrontendDto.from_wiring(wiring, valid_workflow_example_iso_forest["id"])
 
     assert len(wiring_dto.input_wirings) == len(valid_wiring["inputWirings"])
     assert len(wiring_dto.output_wirings) == len(valid_wiring["outputWirings"])
@@ -1311,12 +1293,8 @@ def test_to_workflow_content():
     assert len(workflow_content.inputs) + len(workflow_content.constants) == len(
         valid_workflow_example_iso_forest["inputs"]
     )
-    assert len(workflow_content.outputs) == len(
-        valid_workflow_example_iso_forest["outputs"]
-    )
-    assert len(workflow_content.operators) == len(
-        valid_workflow_example_iso_forest["operators"]
-    )
+    assert len(workflow_content.outputs) == len(valid_workflow_example_iso_forest["outputs"])
+    assert len(workflow_content.operators) == len(valid_workflow_example_iso_forest["operators"])
 
 
 def test_io_from_workflow_content_io():
@@ -1331,9 +1309,7 @@ def test_io_from_workflow_content_io():
             operators,
         )
     )
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_workflow_content_io(
-        wf_input
-    )
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_workflow_content_io(wf_input)
 
     assert str(io_dto.id) == valid_input_with_name["id"]
     assert io_dto.name == valid_input_with_name["name"]
@@ -1356,17 +1332,9 @@ def test_workflow_dto_to_transformation_revision():
         == valid_workflow_example_iso_forest["groupId"]
     )
     assert transformation_revision.name == valid_workflow_example_iso_forest["name"]
-    assert (
-        transformation_revision.description
-        == valid_workflow_example_iso_forest["description"]
-    )
-    assert (
-        transformation_revision.category
-        == valid_workflow_example_iso_forest["category"]
-    )
-    assert (
-        transformation_revision.version_tag == valid_workflow_example_iso_forest["tag"]
-    )
+    assert transformation_revision.description == valid_workflow_example_iso_forest["description"]
+    assert transformation_revision.category == valid_workflow_example_iso_forest["category"]
+    assert transformation_revision.version_tag == valid_workflow_example_iso_forest["tag"]
     assert transformation_revision.released_timestamp is not None
     assert transformation_revision.disabled_timestamp is None
     assert transformation_revision.state == valid_workflow_example_iso_forest["state"]
@@ -1374,8 +1342,7 @@ def test_workflow_dto_to_transformation_revision():
     assert transformation_revision.documentation == ""
     assert (
         len(transformation_revision.io_interface.inputs)
-        == len(valid_workflow_example_iso_forest["inputs"])
-        - 3  # only non-constant inputs in TR
+        == len(valid_workflow_example_iso_forest["inputs"]) - 3  # only non-constant inputs in TR
     )
     assert len(transformation_revision.io_interface.outputs) == len(
         valid_workflow_example_iso_forest["outputs"]
@@ -1392,9 +1359,7 @@ def test_workflow_dto_from_transformation_revision():
     transformation_revision = WorkflowRevisionFrontendDto(
         **valid_workflow_example_iso_forest
     ).to_transformation_revision()
-    workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
-        transformation_revision
-    )
+    workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(transformation_revision)
 
     assert str(workflow_dto.id) == valid_workflow_example_iso_forest["id"]
     assert str(workflow_dto.group_id) == valid_workflow_example_iso_forest["groupId"]
@@ -1405,9 +1370,7 @@ def test_workflow_dto_from_transformation_revision():
     assert workflow_dto.state == valid_workflow_example_iso_forest["state"]
     assert workflow_dto.type == valid_workflow_example_iso_forest["type"]
     assert len(workflow_dto.inputs) == len(valid_workflow_example_iso_forest["inputs"])
-    assert len(workflow_dto.outputs) == len(
-        valid_workflow_example_iso_forest["outputs"]
-    )
+    assert len(workflow_dto.outputs) == len(valid_workflow_example_iso_forest["outputs"])
     assert len(workflow_dto.wirings[0].input_wirings) == len(
         valid_workflow_example_iso_forest["wirings"][0]["inputWirings"]
     )
@@ -1430,21 +1393,13 @@ def test_workflow_dto_to_transformation_revision_and_back_matches():
     for i in range(len(workflow_dto.inputs)):
         assert workflow_dto.inputs[i].id == returned_workflow_dto.inputs[i].id
         assert workflow_dto.inputs[i].type == returned_workflow_dto.inputs[i].type
-        assert (
-            workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
-        )
-        assert (
-            workflow_dto.inputs[i].connector
-            == returned_workflow_dto.inputs[i].connector
-        )
+        assert workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
+        assert workflow_dto.inputs[i].connector == returned_workflow_dto.inputs[i].connector
         assert workflow_dto.inputs[i].pos_x == returned_workflow_dto.inputs[i].pos_x
         assert workflow_dto.inputs[i].pos_y == returned_workflow_dto.inputs[i].pos_y
+        assert workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
         assert (
-            workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
-        )
-        assert (
-            workflow_dto.inputs[i].constant_value
-            == returned_workflow_dto.inputs[i].constant_value
+            workflow_dto.inputs[i].constant_value == returned_workflow_dto.inputs[i].constant_value
         )
         if not workflow_dto.inputs[i].constant:
             assert workflow_dto.inputs[i].name == returned_workflow_dto.inputs[i].name
@@ -1454,30 +1409,17 @@ def test_workflow_dto_to_transformation_revision_and_back_matches():
     assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
     for i in range(len(workflow_dto.operators)):
         assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
-        assert (
-            workflow_dto.operators[i].group_id
-            == returned_workflow_dto.operators[i].group_id
-        )
+        assert workflow_dto.operators[i].group_id == returned_workflow_dto.operators[i].group_id
         assert (
             workflow_dto.operators[i].transformation_id
             == returned_workflow_dto.operators[i].transformation_id
         )
         assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
         assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
-        assert (
-            workflow_dto.operators[i].inputs
-            == returned_workflow_dto.operators[i].inputs
-        )
-        assert (
-            workflow_dto.operators[i].outputs
-            == returned_workflow_dto.operators[i].outputs
-        )
-        assert (
-            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
-        )
-        assert (
-            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
-        )
+        assert workflow_dto.operators[i].inputs == returned_workflow_dto.operators[i].inputs
+        assert workflow_dto.operators[i].outputs == returned_workflow_dto.operators[i].outputs
+        assert workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        assert workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
 
 
 def test_workflow_dto_from_transformation_revision_and_back_matches():
@@ -1574,18 +1516,11 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
     assert len(workflow_dto.inputs) == len(returned_workflow_dto.inputs)
     for i in range(len(workflow_dto.inputs)):
         assert workflow_dto.inputs[i].type == returned_workflow_dto.inputs[i].type
-        assert (
-            workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
-        )
-        assert (
-            workflow_dto.inputs[i].connector
-            == returned_workflow_dto.inputs[i].connector
-        )
+        assert workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
+        assert workflow_dto.inputs[i].connector == returned_workflow_dto.inputs[i].connector
         assert workflow_dto.inputs[i].pos_x == returned_workflow_dto.inputs[i].pos_x
         assert workflow_dto.inputs[i].pos_y == returned_workflow_dto.inputs[i].pos_y
-        assert (
-            workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
-        )
+        assert workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
         if workflow_dto.inputs[i].constant is True:
             assert (
                 workflow_dto.inputs[i].constant_value
@@ -1596,49 +1531,27 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
     assert len(workflow_dto.outputs) == len(returned_workflow_dto.outputs)
     for i in range(len(workflow_dto.outputs)):
         assert workflow_dto.outputs[i].type == returned_workflow_dto.outputs[i].type
-        assert (
-            workflow_dto.outputs[i].operator
-            == returned_workflow_dto.outputs[i].operator
-        )
-        assert (
-            workflow_dto.outputs[i].connector
-            == returned_workflow_dto.outputs[i].connector
-        )
+        assert workflow_dto.outputs[i].operator == returned_workflow_dto.outputs[i].operator
+        assert workflow_dto.outputs[i].connector == returned_workflow_dto.outputs[i].connector
         assert workflow_dto.outputs[i].pos_x == returned_workflow_dto.outputs[i].pos_x
         assert workflow_dto.outputs[i].pos_y == returned_workflow_dto.outputs[i].pos_y
-        assert (
-            workflow_dto.outputs[i].constant
-            == returned_workflow_dto.outputs[i].constant
-        )
+        assert workflow_dto.outputs[i].constant == returned_workflow_dto.outputs[i].constant
         if not workflow_dto.outputs[i].constant:
             assert workflow_dto.outputs[i].name == returned_workflow_dto.outputs[i].name
     assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
     for i in range(len(workflow_dto.operators)):
         assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
-        assert (
-            workflow_dto.operators[i].group_id
-            == returned_workflow_dto.operators[i].group_id
-        )
+        assert workflow_dto.operators[i].group_id == returned_workflow_dto.operators[i].group_id
         assert (
             workflow_dto.operators[i].transformation_id
             == returned_workflow_dto.operators[i].transformation_id
         )
         assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
         assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
-        assert (
-            workflow_dto.operators[i].inputs
-            == returned_workflow_dto.operators[i].inputs
-        )
-        assert (
-            workflow_dto.operators[i].outputs
-            == returned_workflow_dto.operators[i].outputs
-        )
-        assert (
-            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
-        )
-        assert (
-            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
-        )
+        assert workflow_dto.operators[i].inputs == returned_workflow_dto.operators[i].inputs
+        assert workflow_dto.operators[i].outputs == returned_workflow_dto.operators[i].outputs
+        assert workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        assert workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
 
 
 def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguous_open_ends():

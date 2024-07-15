@@ -88,9 +88,7 @@ async def send_single_metadatum_to_adapter(
         )
         logger.info(msg)
         raise AdapterConnectionError(msg)
-    logger.debug(
-        "Received Response for metadata posting from url %s:\n%s", url, str(resp.text)
-    )
+    logger.debug("Received Response for metadata posting from url %s:\n%s", url, str(resp.text))
 
 
 async def send_multiple_metadata_to_adapter(

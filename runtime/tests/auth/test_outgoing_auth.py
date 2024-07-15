@@ -37,9 +37,7 @@ def http_error_token_request():
 @pytest.fixture()
 def json_parsing_error_token_request():
     mocked_resp = mock.Mock
-    mocked_resp.json = mock.Mock(
-        side_effect=JSONDecodeError("json parsing error", pos=0, doc="?")
-    )
+    mocked_resp.json = mock.Mock(side_effect=JSONDecodeError("json parsing error", pos=0, doc="?"))
     mocked_resp.text = "not a json doc"
 
     async def mocked_post_to_auth_provider(*args, **kwargs):
@@ -85,8 +83,7 @@ async def test_outgoing_auth_token_fetching_with_password_grant(mocked_token_req
     )
 
     assert token_response == TokenResponse(
-        issue_timestamp=token_response.issue_timestamp,
-        **(mocked_token_request.token_response_dict)
+        issue_timestamp=token_response.issue_timestamp, **(mocked_token_request.token_response_dict)
     )
 
     assert mocked_token_request.last_called_kwargs == {
@@ -173,8 +170,7 @@ async def test_outgoing_auth_token_fetching_with_client_credentials_grant(
     )
 
     assert token_response == TokenResponse(
-        issue_timestamp=token_response.issue_timestamp,
-        **(mocked_token_request.token_response_dict)
+        issue_timestamp=token_response.issue_timestamp, **(mocked_token_request.token_response_dict)
     )
 
     assert mocked_token_request.last_called_kwargs == {
@@ -210,8 +206,7 @@ async def test_outgoing_auth_token_refreshing(
     )
 
     assert token_response == TokenResponse(
-        issue_timestamp=token_response.issue_timestamp,
-        **(mocked_token_request.token_response_dict)
+        issue_timestamp=token_response.issue_timestamp, **(mocked_token_request.token_response_dict)
     )
 
     assert mocked_token_request.last_called_kwargs == {
@@ -520,19 +515,13 @@ async def test_obtain_refresh_logic_refresh_raises_obtain_works(
     assert obtain_token_works.last_called_args[0] == service_credentials
 
 
-def test_get_access_token_manager(
-    service_credentials, obtain_token_works, result_token_info
-):
+def test_get_access_token_manager(service_credentials, obtain_token_works, result_token_info):
     test_uuid_key = "test_" + str(uuid4())
-    token_mgr = create_or_get_named_access_token_manager(
-        test_uuid_key, service_credentials
-    )
+    token_mgr = create_or_get_named_access_token_manager(test_uuid_key, service_credentials)
 
     access_token_str = token_mgr.sync_get_access_token()
 
     assert access_token_str == "result_access_token"  # noqa: S105
 
     # load cached works
-    token_mgr = create_or_get_named_access_token_manager(
-        test_uuid_key, service_credentials
-    )
+    token_mgr = create_or_get_named_access_token_manager(test_uuid_key, service_credentials)

@@ -2,7 +2,7 @@ import json
 from unittest import mock
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
@@ -22,9 +22,7 @@ def _db_with_multits_viz_component(mocked_clean_test_db_session):
 
 @pytest.fixture()
 def activate_auth():
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", True
-    ) as _fixture:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", True) as _fixture:
         yield _fixture
 
 
@@ -35,12 +33,13 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(app=app_with_auth, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=app_with_auth), base_url="http://test")
 
 
 @pytest.mark.asyncio
 async def test_unauthorized_dashboard_endpoint(
-    _db_with_multits_viz_component, async_test_client  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
 ):
     async with async_test_client as client:
         response = await client.get(
@@ -49,14 +48,13 @@ async def test_unauthorized_dashboard_endpoint(
 
         assert response.status_code == 200
         assert "<html" in response.text
-        assert (
-            "gridstack" in response.text
-        )  # actually a dashboard and not the login stub
+        assert "gridstack" in response.text  # actually a dashboard and not the login stub
 
 
 @pytest.mark.asyncio
 async def test_unauthorized_dashboard_positioning(
-    _db_with_multits_viz_component, async_test_client  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
 ):
     async with async_test_client as client:
         response = await client.put(
@@ -68,7 +66,8 @@ async def test_unauthorized_dashboard_positioning(
 
 @pytest.mark.asyncio
 async def test_authorized_dashboard_endpoint(
-    _db_with_multits_viz_component, async_test_client_with_auth  # noqa: PT019
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client_with_auth,
 ):
     async with async_test_client_with_auth as client:
         response = await client.get(
@@ -76,6 +75,4 @@ async def test_authorized_dashboard_endpoint(
         )
         assert response.status_code == 200
         assert "<html" in response.text
-        assert (
-            "gridstack" not in response.text
-        )  # actually a dashboard and not the login stub
+        assert "gridstack" not in response.text  # actually a dashboard and not the login stub
