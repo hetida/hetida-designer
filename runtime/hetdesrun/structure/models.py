@@ -108,9 +108,7 @@ class Source(BaseModel):
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: str = Field(..., description="Referenced HD Source identifier")
-    meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Source"
-    )
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
@@ -172,9 +170,7 @@ class Sink(BaseModel):
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: str = Field(..., description="Referenced HD Sink identifier")
-    meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the Sink"
-    )
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
