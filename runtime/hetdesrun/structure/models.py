@@ -33,15 +33,15 @@ class ThingNode(BaseModel):
     parent_external_node_id: str | None = Field(
         None, description="Externally provided unique identifier for the parent node"
     )
-    element_type_id: UUID = Field(..., description="Foreign key to the ElementType table")
+    # This ID is filled with a dummy-value to enable object creation from a json-file for CompleteStructure
+    # It is necessary because at the time of json-creation the real UUID corresponding to the element types external ID is unknown
+    element_type_id: UUID = Field(default_factory=uuid.uuid4, description="Foreign key to the ElementType table")
     element_type_external_id: str = Field(
         ..., description="Externally provided unique identifier for the element type"
     )
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
     )
-    sources: list[UUID] = Field(default_factory=list, description="List of source IDs")
-    sinks: list[UUID] = Field(default_factory=list, description="List of sink IDs")
 
     class Config:
         orm_mode = True
@@ -74,8 +74,6 @@ class ThingNode(BaseModel):
                 element_type_id=orm_model.element_type_id,
                 element_type_external_id=orm_model.element_type_external_id,
                 meta_data=orm_model.meta_data,
-                sources=[source.id for source in orm_model.sources],
-                sinks=[sink.id for sink in orm_model.sinks],
             )
         except ValidationError as e:
             msg = (
