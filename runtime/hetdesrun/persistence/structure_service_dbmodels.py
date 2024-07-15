@@ -70,14 +70,6 @@ class ThingNodeOrm(Base):
     element_type: Mapped["ElementTypeOrm"] = relationship(
         "ElementTypeOrm", back_populates="thing_nodes", uselist=False
     )
-    sources: list["SourceOrm"] = relationship(
-        "SourceOrm",
-        secondary="thingnode_source_association",
-        back_populates="thing_nodes",
-    )
-    sinks: list["SinkOrm"] = relationship(
-        "SinkOrm", secondary="thingnode_sink_association", back_populates="thing_nodes"
-    )
 
     __table_args__ = (
         UniqueConstraint("name", name="_thing_node_name_uc"),
@@ -113,8 +105,7 @@ class SourceOrm(Base):
 
     thing_nodes: list["ThingNodeOrm"] = relationship(
         "ThingNodeOrm",
-        secondary="thingnode_source_association",
-        back_populates="sources",
+        secondary="thingnode_source_association"
     )
 
     __table_args__ = (
@@ -144,8 +135,7 @@ class SinkOrm(Base):
 
     thing_nodes: list["ThingNodeOrm"] = relationship(
         "ThingNodeOrm",
-        secondary="thingnode_sink_association",
-        back_populates="sinks",
+        secondary="thingnode_sink_association"
     )
 
     __table_args__ = (
