@@ -60,7 +60,7 @@ class ThingNodeOrm(Base):
     parent_node_id: UUIDType = Column(
         UUIDType(binary=False), ForeignKey("thing_node.id"), nullable=True
     )
-    parent_external_node_id = Column(String(36), nullable=True)
+    parent_external_node_id = Column(String(255), nullable=True)
     element_type_id: UUIDType = Column(
         UUIDType(binary=False),
         ForeignKey("element_type.id"),
