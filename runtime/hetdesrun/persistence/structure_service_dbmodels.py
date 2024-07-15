@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Table,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, declarative_base, relationship, validates
@@ -156,24 +157,19 @@ class SinkOrm(Base):
     )
 
 
-class ThingNodeSourceAssociation(Base):
-    __tablename__ = "thingnode_source_association"
-    thing_node_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
-    )
-    source_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("source.id"), primary_key=True
-    )
+thingnode_source_association = Table(
+    "thingnode_source_association",
+    Base.metadata,
+    Column("thing_node_id", UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True),
+    Column("source_id", UUIDType(binary=False), ForeignKey("source.id"), primary_key=True),
+)
 
-
-class ThingNodeSinkAssociation(Base):
-    __tablename__ = "thingnode_sink_association"
-    thing_node_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True
-    )
-    sink_id: UUIDType = Column(
-        UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True
-    )
+thingnode_sink_association = Table(
+    "thingnode_sink_association",
+    Base.metadata,
+    Column("thing_node_id", UUIDType(binary=False), ForeignKey("thing_node.id"), primary_key=True),
+    Column("sink_id", UUIDType(binary=False), ForeignKey("sink.id"), primary_key=True),
+)
 
 
 class ElementTypeToPropertySetOrm(Base):
