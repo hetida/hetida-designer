@@ -23,7 +23,7 @@
         {
             "external_id": "Wasserwerk1",
             "stakeholder_key": "GW",
-            "name": "Wasserwerk",
+            "name": "Wasserwerk 1",
             "description": "Root Node für das Wasserwerk 1",
             "parent_external_node_id": null,
             "element_type_external_id": "Wasserwerk_Typ",
