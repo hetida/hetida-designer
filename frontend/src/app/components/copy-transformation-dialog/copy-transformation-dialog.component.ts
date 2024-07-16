@@ -12,6 +12,7 @@ import { selectAllTransformations } from '../../store/transformation/transformat
 import { Transformation } from '../../model/transformation';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag-validator';
+import { ConfigService } from '../../service/configuration/config.service';
 
 @Component({
   selector: 'hd-copy-transformation-dialog',
@@ -19,12 +20,19 @@ import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag
   styleUrls: ['./copy-transformation-dialog.component.scss']
 })
 export class CopyTransformationDialogComponent implements OnInit {
+  private apiEndpoint: string;
+
   constructor(
     public dialogRef: MatDialogRef<CopyTransformationDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     public data: Omit<TransformationDialogData, 'content'>,
-    private readonly transformationStore: Store<TransformationState>
-  ) {}
+    private readonly transformationStore: Store<TransformationState>,
+    private readonly config: ConfigService
+  ) {
+    this.config.getConfig().subscribe(runtimeConfig => {
+      this.apiEndpoint = runtimeConfig.apiEndpoint;
+    });
+  }
 
   /**
    * Form Group for editing of basic workflow/component infos and validation
@@ -79,6 +87,10 @@ export class CopyTransformationDialogComponent implements OnInit {
     return Object.entries(this.infoForm.controls).every(
       ([_, control]) => control.disabled
     );
+  }
+
+  public getDashboardUrl(): string {
+    return `${this.apiEndpoint}/transformations/${this.data.transformation.id}/dashboard`;
   }
 
   /**

@@ -76,9 +76,8 @@
       [routerLink]="[]"
       [queryParams]="{ id: data.transformation.id }"
       target="_blank"
-    >
-      {{ data.transformation.id }}
-    </a>
+      >{{ data.transformation.id }}</a
+    >&nbsp;(<a [href]="getDashboardUrl()" target="_blank">dashboard</a>)
   </small>
   <small class="block__small-info"
     >{{ data.transformation.type | titlecase }} revision group ID:
