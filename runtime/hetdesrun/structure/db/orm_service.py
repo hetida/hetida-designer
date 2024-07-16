@@ -3,7 +3,7 @@ import logging
 from collections import deque
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
@@ -17,6 +17,8 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
+    thingnode_source_association,
+    thingnode_sink_association
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.models import (
@@ -977,34 +979,6 @@ def update_et2ps(
 # Structure Services
 
 
-def topological_sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
-    nodes_by_id = {node.id: node for node in nodes}
-
-    in_degree = {node_id: 0 for node_id in nodes_by_id}
-
-    for node in nodes_by_id.values():
-        if node.parent_node_id:
-            in_degree[node.id] += 1
-
-    queue = deque([node for node_id, node in nodes_by_id.items() if in_degree[node_id] == 0])
-
-    sorted_nodes = []
-
-    while queue:
-        node = queue.popleft()
-        sorted_nodes.append(node)
-        for child_node in nodes_by_id.values():
-            if child_node.parent_node_id == node.id:
-                in_degree[child_node.id] -= 1
-                if in_degree[child_node.id] == 0:
-                    queue.append(child_node)
-
-    if len(sorted_nodes) != len(nodes_by_id):
-        raise ValueError("cycle detected in ThingNodes")
-
-    return sorted_nodes
-
-
 def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
     root_nodes = []
@@ -1032,7 +1006,6 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
 def create_mapping_between_external_and_internal_ids(tn_list: list[ThingNode]):
     return {tn.stakeholder_key + tn.external_id: tn.id for tn in tn_list}
 
-
 def fill_parent_uuids_of_thing_nodes(
     id_mapping: dict[str, UUID], node_list: list[ThingNode]
 ) -> None:
@@ -1041,22 +1014,21 @@ def fill_parent_uuids_of_thing_nodes(
             parent_uuid = id_mapping[node.stakeholder_key + node.parent_external_node_id]
             node.parent_node_id = parent_uuid
 
-
-def fill_parent_uuids_of_sources_and_sinks(
-    id_mapping: dict[str, UUID], node_list: list[Source] | list[Sink]
+def fill_element_type_ids_of_thing_nodes(
+    element_type_mapping: dict[str, UUID], node_list: list[ThingNode]
 ) -> None:
     for node in node_list:
-        if node.thing_node_external_id:
-            parent_uuid = id_mapping[node.stakeholder_key + node.thing_node_external_id]
-            node.thing_node_id = parent_uuid
+        if node.element_type_external_id:
+            element_type_uuid = element_type_mapping[node.stakeholder_key + node.element_type_external_id]
+            node.element_type_id = element_type_uuid
 
-
-def fill_all_parent_uuids(complete_structure: CompleteStructure) -> None:
+def fill_all_parent_uuids(complete_structure: CompleteStructure, session: SQLAlchemySession) -> None:
     id_mapping = create_mapping_between_external_and_internal_ids(complete_structure.thing_nodes)
     fill_parent_uuids_of_thing_nodes(id_mapping, complete_structure.thing_nodes)
-    fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sources)
-    fill_parent_uuids_of_sources_and_sinks(id_mapping, complete_structure.sinks)
 
+def fill_all_element_type_ids(complete_structure: CompleteStructure, session: SQLAlchemySession) -> None:
+    element_type_mapping = {et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types}
+    fill_element_type_ids_of_thing_nodes(element_type_mapping, complete_structure.thing_nodes)
 
 def load_structure_from_json_file(
     file_path: str,
@@ -1064,9 +1036,7 @@ def load_structure_from_json_file(
     with open(file_path) as file:
         structure_json = json.load(file)
     complete_structure = CompleteStructure(**structure_json)
-
     return complete_structure
-
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
     for item in items:
@@ -1082,32 +1052,50 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
             logger.error(msg)
             raise DBIntegrityError(msg) from e
 
-
 def update_structure_from_file(file_path: str) -> None:
     complete_structure = load_structure_from_json_file(file_path)
     update_structure(complete_structure)
 
-
 def update_structure(complete_structure: CompleteStructure) -> None:
-    fill_all_parent_uuids(complete_structure)
-    complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
-
     with get_session()() as session, session.begin():
+        fill_all_element_type_ids(complete_structure, session)
+        fill_all_parent_uuids(complete_structure, session)
+        complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
+
         flush_items(session, complete_structure.element_types)
+        flush_items(session, complete_structure.thing_nodes)
         flush_items(session, complete_structure.sources)
         flush_items(session, complete_structure.sinks)
-        flush_items(session, complete_structure.thing_nodes)
 
-        # TODO How to handle source and sink lists in ThingNode, maybe leave out?
+        # Handling the many-to-many relationships
         for thing_node in complete_structure.thing_nodes:
             orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
             if orm_thing_node is None:
                 raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
-            orm_thing_node.sources = (
-                session.query(SourceOrm).filter(SourceOrm.id.in_(thing_node.sources)).all()
+
+            # Handling Source relationships
+            source_ids = (
+                session.query(thingnode_source_association.c.source_id)
+                .filter(thingnode_source_association.c.thing_node_id == orm_thing_node.id)
+                .all()
             )
-            orm_thing_node.sinks = (
-                session.query(SinkOrm).filter(SinkOrm.id.in_(thing_node.sinks)).all()
+            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_([id for id, in source_ids])).all()
+
+            # Handling Sink relationships
+            sink_ids = (
+                session.query(thingnode_sink_association.c.sink_id)
+                .filter(thingnode_sink_association.c.thing_node_id == orm_thing_node.id)
+                .all()
             )
+            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_([id for id, in sink_ids])).all()
+
             session.add(orm_thing_node)
         session.flush()
+
+
+
+
+
+
+
+
