@@ -48,6 +48,15 @@ class ElementTypeOrm(Base):
         ),
     )
 
+    def __repr__(self) -> str:
+        return (
+            f"<ElementTypeOrm(id={self.id}, external_id={self.external_id}, stakeholder_key={self.stakeholder_key}, "
+            f"name={self.name}, description={self.description}, "
+            f"property_sets={[property_set.id for property_set in self.property_sets]}, "
+            f"thing_nodes={[thing_node.id for thing_node in self.thing_nodes]})>"
+        )
+
+
 
 class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
@@ -82,10 +91,12 @@ class ThingNodeOrm(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<ThingNodeOrm(id={self.id}, parent_node_id={self.parent_node_id}, "
+            f"<ThingNodeOrm(id={self.id}, external_id={self.external_id}, stakeholder_key={self.stakeholder_key}, "
+            f"name={self.name}, description={self.description}, parent_node_id={self.parent_node_id}, "
+            f"parent_external_node_id={self.parent_external_node_id}, element_type_id={self.element_type_id}, "
+            f"element_type_external_id={self.element_type_external_id}, meta_data={self.meta_data}, "
             f"sources={[source.id for source in self.sources]}, "
-            f"sinks={[sink.id for sink in self.sinks]})>"
-        )
+            f"sinks={[sink.id for sink in self.sinks]})>")
 
 
 class SourceOrm(Base):
@@ -116,6 +127,16 @@ class SourceOrm(Base):
         ),
     )
 
+    def __repr__(self) -> str:
+        return (
+            f"<SourceOrm(id={self.id}, external_id={self.external_id}, stakeholder_key={self.stakeholder_key}, "
+            f"name={self.name}, type={self.type}, visible={self.visible}, adapter_key={self.adapter_key}, "
+            f"source_id={self.source_id}, meta_data={self.meta_data}, preset_filters={self.preset_filters}, "
+            f"passthrough_filters={self.passthrough_filters}, "
+            f"thing_nodes={[thing_node.id for thing_node in self.thing_nodes]})>"
+        )
+
+
 
 class SinkOrm(Base):
     __tablename__ = "sink"
@@ -145,6 +166,16 @@ class SinkOrm(Base):
             name="_sink_external_id_stakeholder_key_uc",
         ),
     )
+
+    def __repr__(self) -> str:
+        return (
+            f"<SinkOrm(id={self.id}, external_id={self.external_id}, stakeholder_key={self.stakeholder_key}, "
+            f"name={self.name}, type={self.type}, visible={self.visible}, adapter_key={self.adapter_key}, "
+            f"sink_id={self.sink_id}, meta_data={self.meta_data}, preset_filters={self.preset_filters}, "
+            f"passthrough_filters={self.passthrough_filters}, "
+            f"thing_nodes={[thing_node.id for thing_node in self.thing_nodes]})>"
+        )
+
 
 
 thingnode_source_association = Table(
