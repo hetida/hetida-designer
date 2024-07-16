@@ -431,7 +431,8 @@ class ElementTypeToPropertySet(BaseModel):
 
 
 class CompleteStructure(BaseModel):
+    element_types: list[ElementType] = Field(..., description="All element types of the structure")
     thing_nodes: list[ThingNode] = Field(..., description="All thingnodes of the structure")
     sources: list[Source] = Field(..., description="All sources of the structure")
     sinks: list[Sink] = Field(..., description="All sinks of the structure")
-    element_types: list[ElementType] = Field(..., description="All element types of the structure")
+    
