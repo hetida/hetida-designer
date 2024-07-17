@@ -239,7 +239,7 @@ def upgrade():
     op.create_table(
         "element_type_to_property_set",
         sa.Column(
-            "id",
+            "element_type_id",
             UUIDType(binary=False),
             sa.ForeignKey("element_type.id", ondelete="CASCADE"),
             primary_key=True,
