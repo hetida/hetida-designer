@@ -14,7 +14,7 @@ def test_object_creation_from_json():
 
     thing_node_names = [tn.name for tn in complete_structure.thing_nodes]
     expected_names = [
-            "Wasserwerk",
+            "Wasserwerk 1",
             "Anlage 1",
             "Anlage 2",
             "Hochbehälter 1 Anlage 1",

@@ -18,6 +18,105 @@ from hetdesrun.persistence.structure_service_dbmodels import (
 from hetdesrun.structure.db.exceptions import DBIntegrityError
 
 
+class PropertySet(BaseModel):
+    id: UUID = Field(default_factory=uuid.uuid4, description="The primary key for the PropertySet")
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
+    name: str = Field(..., description="The name of the PropertySet.")
+    description: str | None = Field(None, description="A detailed description of the PropertySet.")
+    reference_table_name: str = Field(
+        ..., description="The database table name associated with this PropertySet."
+    )
+    property_set_type: str = Field(
+        ..., description="The type of PropertySet, either 'INTERNAL' or 'EXTERNAL'."
+    )
+
+    class Config:
+        orm_mode = True
+
+    def to_orm_model(self) -> PropertySetOrm:
+        return PropertySetOrm(
+            id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
+            name=self.name,
+            description=self.description,
+            reference_table_name=self.reference_table_name,
+            property_set_type=self.property_set_type,
+        )
+
+    @classmethod
+    def from_orm_model(cls, orm_model: PropertySetOrm) -> "PropertySet":
+        try:
+            return PropertySet(
+                id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
+                name=orm_model.name,
+                description=orm_model.description,
+                reference_table_name=orm_model.reference_table_name,
+                property_set_type=orm_model.property_set_type,
+            )
+        except ValidationError as e:
+            msg = (
+                f"Could not validate db entry for id {orm_model.id}. "
+                f"Validation error was:\n{str(e)}"
+            )
+            raise DBIntegrityError(msg) from e
+
+    @validator("property_set_type")
+    def check_type(cls, v: str) -> str:
+        valid_types = ["INTERNAL", "EXTERNAL"]
+        if v not in valid_types:
+            raise ValueError("property_set_type must be either 'INTERNAL' or 'EXTERNAL'")
+        return v
+class ElementType(BaseModel):
+    id: UUID = Field(
+        default_factory=uuid.uuid4,
+        description="The primary key for the ElementType table",
+    )
+    external_id: str = Field(..., description="Externally provided unique identifier")
+    stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
+    name: str = Field(..., description="Unique name of the ElementType")
+    description: str | None = Field(None, description="Description of the ElementType")
+    property_sets: list[PropertySet] = Field(
+        default_factory=list, description="List of associated PropertySets"
+    )
+    thing_nodes: list["ThingNode"] = Field(
+        default_factory=list, description="List of associated ThingNodes"
+    )
+
+    class Config:
+        orm_mode = True
+
+    def to_orm_model(self) -> ElementTypeOrm:
+        return ElementTypeOrm(
+            id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
+            name=self.name,
+            description=self.description,
+            property_sets=[ps.to_orm_model() for ps in self.property_sets],
+            thing_nodes=[tn.to_orm_model() for tn in self.thing_nodes],
+        )
+
+    @classmethod
+    def from_orm_model(cls, orm_model: ElementTypeOrm) -> "ElementType":
+        try:
+            return cls(
+                id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
+                name=orm_model.name,
+                description=orm_model.description,
+            )
+        except ValidationError as e:
+            msg = (
+                f"Could not validate db entry for id {orm_model.id}. "
+                f"Validation error was:\n{str(e)}"
+            )
+            raise DBIntegrityError(msg) from e
+
 class ThingNode(BaseModel):
     id: UUID = Field(
         default_factory=uuid.uuid4,
@@ -216,107 +315,6 @@ class Sink(BaseModel):
             return {}
         return v
 
-
-class PropertySet(BaseModel):
-    id: UUID = Field(default_factory=uuid.uuid4, description="The primary key for the PropertySet")
-    external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
-    name: str = Field(..., description="The name of the PropertySet.")
-    description: str | None = Field(None, description="A detailed description of the PropertySet.")
-    reference_table_name: str = Field(
-        ..., description="The database table name associated with this PropertySet."
-    )
-    property_set_type: str = Field(
-        ..., description="The type of PropertySet, either 'INTERNAL' or 'EXTERNAL'."
-    )
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> PropertySetOrm:
-        return PropertySetOrm(
-            id=self.id,
-            external_id=self.external_id,
-            stakeholder_key=self.stakeholder_key,
-            name=self.name,
-            description=self.description,
-            reference_table_name=self.reference_table_name,
-            property_set_type=self.property_set_type,
-        )
-
-    @classmethod
-    def from_orm_model(cls, orm_model: PropertySetOrm) -> "PropertySet":
-        try:
-            return PropertySet(
-                id=orm_model.id,
-                external_id=orm_model.external_id,
-                stakeholder_key=orm_model.stakeholder_key,
-                name=orm_model.name,
-                description=orm_model.description,
-                reference_table_name=orm_model.reference_table_name,
-                property_set_type=orm_model.property_set_type,
-            )
-        except ValidationError as e:
-            msg = (
-                f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
-            )
-            raise DBIntegrityError(msg) from e
-
-    @validator("property_set_type")
-    def check_type(cls, v: str) -> str:
-        valid_types = ["INTERNAL", "EXTERNAL"]
-        if v not in valid_types:
-            raise ValueError("property_set_type must be either 'INTERNAL' or 'EXTERNAL'")
-        return v
-
-
-class ElementType(BaseModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4,
-        description="The primary key for the ElementType table",
-    )
-    external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
-    name: str = Field(..., description="Unique name of the ElementType")
-    description: str | None = Field(None, description="Description of the ElementType")
-    property_sets: list[PropertySet] = Field(
-        default_factory=list, description="List of associated PropertySets"
-    )
-    thing_nodes: list["ThingNode"] = Field(
-        default_factory=list, description="List of associated ThingNodes"
-    )
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> ElementTypeOrm:
-        return ElementTypeOrm(
-            id=self.id,
-            external_id=self.external_id,
-            stakeholder_key=self.stakeholder_key,
-            name=self.name,
-            description=self.description,
-            property_sets=[ps.to_orm_model() for ps in self.property_sets],
-            thing_nodes=[tn.to_orm_model() for tn in self.thing_nodes],
-        )
-
-    @classmethod
-    def from_orm_model(cls, orm_model: ElementTypeOrm) -> "ElementType":
-        try:
-            return cls(
-                id=orm_model.id,
-                external_id=orm_model.external_id,
-                stakeholder_key=orm_model.stakeholder_key,
-                name=orm_model.name,
-                description=orm_model.description,
-            )
-        except ValidationError as e:
-            msg = (
-                f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
-            )
-            raise DBIntegrityError(msg) from e
 
 
 class PropertyMetadata(BaseModel):
