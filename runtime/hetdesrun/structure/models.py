@@ -199,13 +199,13 @@ class Source(BaseModel):
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
+    source_id: str = Field(..., description="Referenced HD Source identifier")
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the source")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
-    adapter_key: str = Field(..., description="Adapter key or identifier")
-    source_id: str = Field(..., description="Referenced HD Source identifier")
-    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
@@ -261,13 +261,13 @@ class Sink(BaseModel):
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
+    adapter_key: str = Field(..., description="Adapter key or identifier")
+    sink_id: str = Field(..., description="Referenced HD Sink identifier")
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the sink")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )
-    adapter_key: str = Field(..., description="Adapter key or identifier")
-    sink_id: str = Field(..., description="Referenced HD Sink identifier")
-    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
