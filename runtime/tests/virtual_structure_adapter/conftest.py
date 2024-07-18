@@ -7,7 +7,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.structure_service_dbmodels import Base
 from hetdesrun.structure.db.orm_service import update_structure_from_file
 
 
