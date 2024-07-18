@@ -41,15 +41,17 @@ We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose
 ...
 
   hetida-designer-keycloak:
-    image: jboss/keycloak
+    image: quay.io/keycloak/keycloak:25.0.1
     ports:
       - 8081:8080
     environment:
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=admin
-      - KEYCLOAK_IMPORT=/tmp/hetida-designer-realm.json
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
     volumes:
-      - ./hetida-designer-realm.json:/tmp/hetida-designer-realm.json    
+      - ./hetida-designer-realm.json:/opt/keycloak/data/import/hetida-designer-realm.json
+    command:
+      - start-dev
+      - --import-realm
 
 ...
 
@@ -61,9 +63,10 @@ In order to enable OpenID Connect in the frontend, we create a `hetida_designer_
 
 {
   "apiEndpoint": "/hdapi",
+  "userInfoText": "",
   "authEnabled": true,
   "authConfig": {
-    "authority": "http://localhost:8081/auth/realms/hetida-designer",
+    "authority": "http://localhost:8081/realms/hetida-designer",
     "clientId": "hetida-designer",
     "userNameAttribute": "preferred_username"
   }
@@ -111,7 +114,7 @@ You can configure how these internal requests are equipped with valid bearer acc
 * `FORWARD_OR_FIXED` (default): If the outgoing request is made during handling of a web request which came with a bearer token, this token will be forwarded. Make sure that token duration is long enough in particular when running long lasting workflow executions! If there is no request context then this mode will fall back to sending the 'fixed' access token provided via the `HD_BEARER_TOKEN_FOR_OUTGOING_REQUESTS` environment variable. If that isn't present, no Authorization header will be send.
 * `CLIENT` : The service handles access token management by authenticating itself via a client credential grant against the auth provider. The relevant connection and credential information is expected in the `HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` environment variable. It must contain a json-encoded string specifying a ServiceCredentials object, for example:
 ```
-{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account", "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",  "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false}, "post_kwargs": {}}
+{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account", "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",  "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false}, "post_kwargs": {}}
 ```
 See the config.py file or the auth_outgoing.py file in this repository for further details.
 
@@ -123,7 +126,7 @@ You can configure how these external requests are equipped with valid access tok
 * `FORWARD_OR_FIXED` (default): If the outgoing request is made during handling of a web request which came with a bearer token, it will forward this bearer token. Make sure that token duration is long enough in particular when reading/writing a lot of data from adapters! If there is no request context, e.g. when using the backend or runtime for exporting/importing (i.e. scripting), then this mode will fall back to sending the access token provided via the `HD_BEARER_TOKEN_FOR_OUTGOING_REQUESTS` environment variable. If that isn't present, no Authorization header will be send.
 * `CLIENT` : The service handles access token management by authenticating itself via a client credential grant against the auth provider. The relevant connection and credential information is expected in the `HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` environment variable. It must contain a json-encoded string specifying a ServiceCredentials object, for example:
 ```
-{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account", "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",  "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false}, "post_kwargs": {}}
+{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account", "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",  "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false}, "post_kwargs": {}}
 ```
 See the config.py file or the auth_outgoing.py file in this repository for further details.
 
