@@ -70,6 +70,8 @@ class PropertySet(BaseModel):
         if v not in valid_types:
             raise ValueError("property_set_type must be either 'INTERNAL' or 'EXTERNAL'")
         return v
+
+
 class ElementType(BaseModel):
     id: UUID = Field(
         default_factory=uuid.uuid4,
@@ -117,6 +119,7 @@ class ElementType(BaseModel):
             )
             raise DBIntegrityError(msg) from e
 
+
 class ThingNode(BaseModel):
     id: UUID = Field(
         default_factory=uuid.uuid4,
@@ -134,7 +137,9 @@ class ThingNode(BaseModel):
     )
     # This ID is filled with a dummy-value to enable object creation from a json-file for CompleteStructure
     # It is necessary because at the time of json-creation the real UUID corresponding to the element types external ID is unknown
-    element_type_id: UUID = Field(default_factory=uuid.uuid4, description="Foreign key to the ElementType table")
+    element_type_id: UUID = Field(
+        default_factory=uuid.uuid4, description="Foreign key to the ElementType table"
+    )
     element_type_external_id: str = Field(
         ..., description="Externally provided unique identifier for the element type"
     )
@@ -316,7 +321,6 @@ class Sink(BaseModel):
         return v
 
 
-
 class PropertyMetadata(BaseModel):
     id: UUID = Field(
         default_factory=uuid.uuid4,
@@ -433,4 +437,3 @@ class CompleteStructure(BaseModel):
     thing_nodes: list[ThingNode] = Field(..., description="All thingnodes of the structure")
     sources: list[Source] = Field(..., description="All sources of the structure")
     sinks: list[Sink] = Field(..., description="All sinks of the structure")
-    

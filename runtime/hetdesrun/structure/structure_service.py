@@ -1,19 +1,18 @@
 from uuid import UUID
 
+from sqlalchemy import delete
+
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
-    thingnode_source_association,
     thingnode_sink_association,
-
+    thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.models import Sink, Source, ThingNode
-
-from sqlalchemy import delete
 
 
 def get_children(
@@ -102,6 +101,7 @@ def delete_structure() -> None:
             session.rollback()
             raise e
 
+
 def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> None:
     child_nodes = session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == node_id).all()
 
@@ -110,7 +110,9 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
 
     sources_to_delete = (
         session.query(SourceOrm)
-        .join(thingnode_source_association, SourceOrm.id == thingnode_source_association.c.source_id)
+        .join(
+            thingnode_source_association, SourceOrm.id == thingnode_source_association.c.source_id
+        )
         .filter(thingnode_source_association.c.thing_node_id == node_id)
         .all()
     )
@@ -122,10 +124,18 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
     )
 
     for source in sources_to_delete:
-        session.execute(delete(thingnode_source_association).where(thingnode_source_association.c.source_id == source.id))
+        session.execute(
+            delete(thingnode_source_association).where(
+                thingnode_source_association.c.source_id == source.id
+            )
+        )
         session.delete(source)
     for sink in sinks_to_delete:
-        session.execute(delete(thingnode_sink_association).where(thingnode_sink_association.c.sink_id == sink.id))
+        session.execute(
+            delete(thingnode_sink_association).where(
+                thingnode_sink_association.c.sink_id == sink.id
+            )
+        )
         session.delete(sink)
 
     node_to_delete = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node_id).one_or_none()
@@ -134,13 +144,21 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
 
     orphaned_sources = (
         session.query(SourceOrm)
-        .join(thingnode_source_association, SourceOrm.id == thingnode_source_association.c.source_id, isouter=True)
+        .join(
+            thingnode_source_association,
+            SourceOrm.id == thingnode_source_association.c.source_id,
+            isouter=True,
+        )
         .filter(thingnode_source_association.c.source_id == None)
         .all()
     )
     orphaned_sinks = (
         session.query(SinkOrm)
-        .join(thingnode_sink_association, SinkOrm.id == thingnode_sink_association.c.sink_id, isouter=True)
+        .join(
+            thingnode_sink_association,
+            SinkOrm.id == thingnode_sink_association.c.sink_id,
+            isouter=True,
+        )
         .filter(thingnode_sink_association.c.sink_id == None)
         .all()
     )
@@ -149,4 +167,3 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
         session.delete(source)
     for sink in orphaned_sinks:
         session.delete(sink)
-

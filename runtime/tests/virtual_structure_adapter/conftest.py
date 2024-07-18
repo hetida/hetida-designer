@@ -2,10 +2,13 @@ from typing import Any
 from unittest import mock
 
 import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.structure.db.orm_service import update_structure_from_file
 
 
 @pytest.fixture(scope="session")
@@ -37,3 +40,17 @@ def mocked_clean_test_db_session(clean_test_db_engine):
 @pytest.fixture(scope="session")
 def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("use_in_memory_db")
+
+
+@pytest.fixture()
+def _fill_db(mocked_clean_test_db_session):
+    file_path = "tests/virtual_structure_adapter/data/simple_end_to_end_test.json"
+    update_structure_from_file(file_path)
+
+
+@pytest.fixture()
+def async_test_client_with_vst_adapter(
+    _fill_db,
+    app_without_auth: FastAPI,
+) -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")

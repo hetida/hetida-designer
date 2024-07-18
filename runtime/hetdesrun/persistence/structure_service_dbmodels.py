@@ -57,7 +57,6 @@ class ElementTypeOrm(Base):
         )
 
 
-
 class ThingNodeOrm(Base):
     __tablename__ = "thing_node"
     id: UUIDType = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
@@ -96,7 +95,8 @@ class ThingNodeOrm(Base):
             f"parent_external_node_id={self.parent_external_node_id}, element_type_id={self.element_type_id}, "
             f"element_type_external_id={self.element_type_external_id}, meta_data={self.meta_data}, "
             f"sources={[source.id for source in self.sources]}, "
-            f"sinks={[sink.id for sink in self.sinks]})>")
+            f"sinks={[sink.id for sink in self.sinks]})>"
+        )
 
 
 class SourceOrm(Base):
@@ -115,8 +115,7 @@ class SourceOrm(Base):
     thing_node_external_ids: list[str] = Column(JSON, nullable=True)
 
     thing_nodes: list["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm",
-        secondary="thingnode_source_association"
+        "ThingNodeOrm", secondary="thingnode_source_association"
     )
 
     __table_args__ = (
@@ -137,7 +136,6 @@ class SourceOrm(Base):
         )
 
 
-
 class SinkOrm(Base):
     __tablename__ = "sink"
 
@@ -155,8 +153,7 @@ class SinkOrm(Base):
     thing_node_external_ids: list[str] = Column(JSON, nullable=True)
 
     thing_nodes: list["ThingNodeOrm"] = relationship(
-        "ThingNodeOrm",
-        secondary="thingnode_sink_association"
+        "ThingNodeOrm", secondary="thingnode_sink_association"
     )
 
     __table_args__ = (
@@ -175,7 +172,6 @@ class SinkOrm(Base):
             f"passthrough_filters={self.passthrough_filters}, "
             f"thing_nodes={[thing_node.id for thing_node in self.thing_nodes]})>"
         )
-
 
 
 thingnode_source_association = Table(

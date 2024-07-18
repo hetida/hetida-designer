@@ -1,4 +1,5 @@
 import json
+
 from hetdesrun.structure.models import CompleteStructure
 
 
@@ -14,14 +15,14 @@ def test_object_creation_from_json():
 
     thing_node_names = [tn.name for tn in complete_structure.thing_nodes]
     expected_names = [
-            "Wasserwerk 1",
-            "Anlage 1",
-            "Anlage 2",
-            "Hochbehälter 1 Anlage 1",
-            "Hochbehälter 2 Anlage 1",
-            "Hochbehälter 1 Anlage 2",
-            "Hochbehälter 2 Anlage 2",
-        ]
+        "Wasserwerk 1",
+        "Anlage 1",
+        "Anlage 2",
+        "Hochbehälter 1 Anlage 1",
+        "Hochbehälter 2 Anlage 1",
+        "Hochbehälter 1 Anlage 2",
+        "Hochbehälter 2 Anlage 2",
+    ]
 
     for name in expected_names:
         assert name in thing_node_names
