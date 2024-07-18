@@ -654,6 +654,7 @@ def create_mapping_between_external_and_internal_ids(
     return tn_mapping, src_mapping, snk_mapping
 
 
+
 def fill_parent_uuids_of_thing_nodes(
     tn_mapping: dict[str, UUID], node_list: list[ThingNode]
 ) -> None:

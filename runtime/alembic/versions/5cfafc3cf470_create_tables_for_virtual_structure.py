@@ -19,28 +19,6 @@ depends_on = None
 
 
 def upgrade():
-    # Create table element_type
-    op.create_table(
-        "element_type",
-        sa.Column(
-            "id",
-            UUIDType(binary=False),
-            primary_key=True,
-            nullable=False,
-            default=sa.text("uuid_generate_v4()"),
-        ),
-        sa.Column("external_id", sa.String(length=255), nullable=False),
-        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("icon", sa.String(length=255), nullable=True),
-        sa.Column("description", sa.String(length=1024), nullable=True),
-        sa.UniqueConstraint("name", name="_element_type_name_uc"),
-        sa.UniqueConstraint(
-            "external_id",
-            "stakeholder_key",
-            name="_element_type_external_id_stakeholder_key_uc",
-        ),
-    )
 
     # Create table property_set
     op.create_table(
@@ -67,6 +45,158 @@ def upgrade():
             name="_property_set_external_id_stakeholder_key_uc",
         ),
     )
+
+    # Create table element_type
+    op.create_table(
+        "element_type",
+        sa.Column(
+            "id",
+            UUIDType(binary=False),
+            primary_key=True,
+            nullable=False,
+            default=sa.text("uuid_generate_v4()"),
+        ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("description", sa.String(length=1024), nullable=True),
+        sa.UniqueConstraint("name", name="_element_type_name_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_element_type_external_id_stakeholder_key_uc",
+        ),
+    )
+
+    # Create table thing_node
+    op.create_table(
+        "thing_node",
+        sa.Column(
+            "id",
+            UUIDType(binary=False),
+            primary_key=True,
+            nullable=False,
+            default=sa.text("uuid_generate_v4()"),
+        ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("description", sa.String(length=1024), nullable=True),
+        sa.Column("parent_external_node_id", sa.String(length=255), nullable=True),
+        sa.Column("element_type_external_id", sa.String(length=255), nullable=False),
+        sa.Column(
+            "parent_node_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("thing_node.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "element_type_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("element_type.id"),
+            nullable=False,
+        ),
+        sa.Column("meta_data", sa.JSON(), nullable=True),
+        sa.UniqueConstraint("name", name="_thing_node_name_uc"),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_thing_node_external_id_stakeholder_key_uc",
+        ),
+    )
+
+    # Create table source
+    op.create_table(
+        "source",
+        sa.Column(
+            "id",
+            UUIDType(binary=False),
+            primary_key=True,
+            nullable=False,
+            default=sa.text("uuid_generate_v4()"),
+        ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("type", sa.String(length=255), nullable=False),
+        sa.Column("visible", sa.Boolean(), default=True),
+        sa.Column("adapter_key", sa.String(length=255), nullable=False),
+        sa.Column("source_id", sa.String(length=255), nullable=False),
+        sa.Column("meta_data", sa.JSON(), nullable=True),
+        sa.Column("preset_filters", sa.JSON(), nullable=True),
+        sa.Column("passthrough_filters", sa.JSON(), nullable=True),
+        sa.Column('thing_node_external_ids', sa.JSON(), nullable=True),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_source_external_id_stakeholder_key_uc",
+        ),
+    )
+
+    # Create table sink
+    op.create_table(
+        "sink",
+        sa.Column(
+            "id",
+            UUIDType(binary=False),
+            primary_key=True,
+            nullable=False,
+            default=sa.text("uuid_generate_v4()"),
+        ),
+        sa.Column("external_id", sa.String(length=255), nullable=False),
+        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("type", sa.String(length=255), nullable=False),
+        sa.Column("visible", sa.Boolean(), default=True),
+        sa.Column("adapter_key", sa.String(length=255), nullable=False),
+        sa.Column("sink_id", sa.String(length=255), nullable=False),
+        sa.Column("meta_data", sa.JSON(), nullable=True),
+        sa.Column("preset_filters", sa.JSON(), nullable=True),
+        sa.Column("passthrough_filters", sa.JSON(), nullable=True),
+        sa.Column('thing_node_external_ids', sa.JSON(), nullable=True),
+        sa.UniqueConstraint(
+            "external_id",
+            "stakeholder_key",
+            name="_sink_external_id_stakeholder_key_uc",
+        ),
+    )
+
+    op.create_table(
+        "thingnode_source_association",
+        sa.Column(
+            "thing_node_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("thing_node.id"),
+            primary_key=True,
+            nullable=False,
+        ),
+        sa.Column(
+            "source_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("source.id"),
+            primary_key=True,
+            nullable=False,
+        ),
+    )
+
+    op.create_table(
+        "thingnode_sink_association",
+        sa.Column(
+            "thing_node_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("thing_node.id"),
+            primary_key=True,
+            nullable=False,
+        ),
+        sa.Column(
+            "sink_id",
+            UUIDType(binary=False),
+            sa.ForeignKey("sink.id"),
+            primary_key=True,
+            nullable=False,
+        ),
+    )
+
 
     # Create table property_metadata
     op.create_table(
@@ -105,112 +235,11 @@ def upgrade():
         ),
     )
 
-    # Create table thing_node
-    op.create_table(
-        "thing_node",
-        sa.Column(
-            "id",
-            UUIDType(binary=False),
-            primary_key=True,
-            nullable=False,
-            default=sa.text("uuid_generate_v4()"),
-        ),
-        sa.Column("external_id", sa.String(length=255), nullable=False),
-        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("description", sa.String(length=1024), nullable=True),
-        sa.Column(
-            "parent_node_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("thing_node.id"),
-            nullable=True,
-        ),
-        sa.Column(
-            "element_type_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("element_type.id"),
-            nullable=False,
-        ),
-        sa.Column("meta_data", sa.JSON(), nullable=True),
-        sa.UniqueConstraint("name", name="_thing_node_name_uc"),
-        sa.UniqueConstraint(
-            "external_id",
-            "stakeholder_key",
-            name="_thing_node_external_id_stakeholder_key_uc",
-        ),
-    )
-
-    # Create table source
-    op.create_table(
-        "source",
-        sa.Column(
-            "id",
-            UUIDType(binary=False),
-            primary_key=True,
-            nullable=False,
-            default=sa.text("uuid_generate_v4()"),
-        ),
-        sa.Column("external_id", sa.String(length=255), nullable=False),
-        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("type", sa.String(length=255), nullable=False),
-        sa.Column("visible", sa.Boolean(), default=True),
-        sa.Column("adapter_key", sa.String(length=255), nullable=False),
-        sa.Column("source_id", UUIDType(binary=False), nullable=False),
-        sa.Column("meta_data", sa.JSON(), nullable=True),
-        sa.Column(
-            "thing_node_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("thing_node.id"),
-            nullable=True,
-        ),
-        sa.Column("preset_filters", sa.JSON(), nullable=True),
-        sa.Column("passthrough_filters", sa.JSON(), nullable=True),
-        sa.UniqueConstraint(
-            "external_id",
-            "stakeholder_key",
-            name="_source_external_id_stakeholder_key_uc",
-        ),
-    )
-
-    # Create table sink
-    op.create_table(
-        "sink",
-        sa.Column(
-            "id",
-            UUIDType(binary=False),
-            primary_key=True,
-            nullable=False,
-            default=sa.text("uuid_generate_v4()"),
-        ),
-        sa.Column("external_id", sa.String(length=255), nullable=False),
-        sa.Column("stakeholder_key", sa.String(length=255), nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("type", sa.String(length=255), nullable=False),
-        sa.Column("visible", sa.Boolean(), default=True),
-        sa.Column("adapter_key", sa.String(length=255), nullable=False),
-        sa.Column("sink_id", UUIDType(binary=False), nullable=False),
-        sa.Column("meta_data", sa.JSON(), nullable=True),
-        sa.Column(
-            "thing_node_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("thing_node.id"),
-            nullable=True,
-        ),
-        sa.Column("preset_filters", sa.JSON(), nullable=True),
-        sa.Column("passthrough_filters", sa.JSON(), nullable=True),
-        sa.UniqueConstraint(
-            "external_id",
-            "stakeholder_key",
-            name="_sink_external_id_stakeholder_key_uc",
-        ),
-    )
-
     # Create table element_type_to_property_set
     op.create_table(
         "element_type_to_property_set",
         sa.Column(
-            "id",
+            "element_type_id",
             UUIDType(binary=False),
             sa.ForeignKey("element_type.id", ondelete="CASCADE"),
             primary_key=True,
@@ -224,42 +253,6 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("order_no", sa.Integer(), nullable=False),
-    )
-
-    op.create_table(
-        "thingnode_source_association",
-        sa.Column(
-            "thing_node_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("thing_node.id"),
-            primary_key=True,
-            nullable=True,
-        ),
-        sa.Column(
-            "source_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("source.id"),
-            primary_key=True,
-            nullable=True,
-        ),
-    )
-
-    op.create_table(
-        "thingnode_sink_association",
-        sa.Column(
-            "thing_node_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("thing_node.id"),
-            primary_key=True,
-            nullable=True,
-        ),
-        sa.Column(
-            "sink_id",
-            UUIDType(binary=False),
-            sa.ForeignKey("sink.id"),
-            primary_key=True,
-            nullable=True,
-        ),
     )
 
 
