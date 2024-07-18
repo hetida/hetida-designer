@@ -19,7 +19,7 @@ def get_children(
     parent_id: UUID | None,
 ) -> tuple[list[ThingNode], list[Source], list[Sink]]:
     with get_session()() as session:
-        if parent_id == None:
+        if parent_id is None:
             root_nodes = (
                 session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id.is_(None)).all()
             )
@@ -29,8 +29,22 @@ def get_children(
             session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == parent_id).all()
         )
 
-        sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == parent_id).all()
-        sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == parent_id).all()
+        sources = (
+            session.query(SourceOrm)
+            .join(
+                thingnode_source_association,
+                thingnode_source_association.c.source_id == SourceOrm.id,
+            )
+            .filter(thingnode_source_association.c.thing_node_id == parent_id)
+            .all()
+        )
+
+        sinks = (
+            session.query(SinkOrm)
+            .join(thingnode_sink_association, thingnode_sink_association.c.sink_id == SinkOrm.id)
+            .filter(thingnode_sink_association.c.thing_node_id == parent_id)
+            .all()
+        )
 
         if not child_nodes and not sources and not sinks:
             raise DBNotFoundError(f"No children, sources, or sinks found for parent_id {parent_id}")
@@ -86,11 +100,14 @@ def delete_structure() -> None:
         try:
             root_node = (
                 session.query(ThingNodeOrm)
-                .filter(ThingNodeOrm.parent_node_id == None)
+                .filter(ThingNodeOrm.parent_node_id.is_(None))
                 .one_or_none()
             )
             if root_node:
                 _delete_structure_recursive(session, root_node.id)
+
+            session.execute(delete(thingnode_source_association))
+            session.execute(delete(thingnode_sink_association))
 
             element_types = session.query(ElementTypeOrm).all()
             for element_type in element_types:
@@ -144,22 +161,20 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
 
     orphaned_sources = (
         session.query(SourceOrm)
-        .join(
+        .outerjoin(
             thingnode_source_association,
             SourceOrm.id == thingnode_source_association.c.source_id,
-            isouter=True,
         )
-        .filter(thingnode_source_association.c.source_id == None)
+        .filter(thingnode_source_association.c.thing_node_id.is_(None))
         .all()
     )
     orphaned_sinks = (
         session.query(SinkOrm)
-        .join(
+        .outerjoin(
             thingnode_sink_association,
             SinkOrm.id == thingnode_sink_association.c.sink_id,
-            isouter=True,
         )
-        .filter(thingnode_sink_association.c.sink_id == None)
+        .filter(thingnode_sink_association.c.thing_node_id.is_(None))
         .all()
     )
 

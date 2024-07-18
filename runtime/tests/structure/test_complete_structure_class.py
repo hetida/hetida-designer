@@ -14,6 +14,7 @@ def test_object_creation_from_json():
     assert len(complete_structure.sinks) == 2
 
     thing_node_names = [tn.name for tn in complete_structure.thing_nodes]
+
     expected_names = [
         "Wasserwerk 1",
         "Anlage 1",

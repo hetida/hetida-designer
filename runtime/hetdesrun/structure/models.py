@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError, validator
@@ -8,68 +8,11 @@ from pydantic import BaseModel, Field, ValidationError, validator
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
-    ElementTypeToPropertySetOrm,
-    PropertyMetadataOrm,
-    PropertySetOrm,
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError
-
-
-class PropertySet(BaseModel):
-    id: UUID = Field(default_factory=uuid.uuid4, description="The primary key for the PropertySet")
-    external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertySet")
-    name: str = Field(..., description="The name of the PropertySet.")
-    description: str | None = Field(None, description="A detailed description of the PropertySet.")
-    reference_table_name: str = Field(
-        ..., description="The database table name associated with this PropertySet."
-    )
-    property_set_type: str = Field(
-        ..., description="The type of PropertySet, either 'INTERNAL' or 'EXTERNAL'."
-    )
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> PropertySetOrm:
-        return PropertySetOrm(
-            id=self.id,
-            external_id=self.external_id,
-            stakeholder_key=self.stakeholder_key,
-            name=self.name,
-            description=self.description,
-            reference_table_name=self.reference_table_name,
-            property_set_type=self.property_set_type,
-        )
-
-    @classmethod
-    def from_orm_model(cls, orm_model: PropertySetOrm) -> "PropertySet":
-        try:
-            return PropertySet(
-                id=orm_model.id,
-                external_id=orm_model.external_id,
-                stakeholder_key=orm_model.stakeholder_key,
-                name=orm_model.name,
-                description=orm_model.description,
-                reference_table_name=orm_model.reference_table_name,
-                property_set_type=orm_model.property_set_type,
-            )
-        except ValidationError as e:
-            msg = (
-                f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
-            )
-            raise DBIntegrityError(msg) from e
-
-    @validator("property_set_type")
-    def check_type(cls, v: str) -> str:
-        valid_types = ["INTERNAL", "EXTERNAL"]
-        if v not in valid_types:
-            raise ValueError("property_set_type must be either 'INTERNAL' or 'EXTERNAL'")
-        return v
 
 
 class ElementType(BaseModel):
@@ -81,9 +24,6 @@ class ElementType(BaseModel):
     stakeholder_key: str = Field(..., description="Stakeholder key for the ElementType")
     name: str = Field(..., description="Unique name of the ElementType")
     description: str | None = Field(None, description="Description of the ElementType")
-    property_sets: list[PropertySet] = Field(
-        default_factory=list, description="List of associated PropertySets"
-    )
     thing_nodes: list["ThingNode"] = Field(
         default_factory=list, description="List of associated ThingNodes"
     )
@@ -98,7 +38,6 @@ class ElementType(BaseModel):
             stakeholder_key=self.stakeholder_key,
             name=self.name,
             description=self.description,
-            property_sets=[ps.to_orm_model() for ps in self.property_sets],
             thing_nodes=[tn.to_orm_model() for tn in self.thing_nodes],
         )
 
@@ -135,8 +74,10 @@ class ThingNode(BaseModel):
     parent_external_node_id: str | None = Field(
         None, description="Externally provided unique identifier for the parent node"
     )
-    # This ID is filled with a dummy-value to enable object creation from a json-file for CompleteStructure
-    # It is necessary because at the time of json-creation the real UUID corresponding to the element types external ID is unknown
+    # This ID is filled with a dummy-value to enable object creation
+    # from a json-file for CompleteStructure
+    # It is necessary because at the time of json-creation the real UUID
+    # corresponding to the element types external ID is unknown
     element_type_id: UUID = Field(
         default_factory=uuid.uuid4, description="Foreign key to the ElementType table"
     )
@@ -204,13 +145,13 @@ class Source(BaseModel):
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
-    adapter_key: str = Field(..., description="Adapter key or identifier")
-    source_id: str = Field(..., description="Referenced HD Source identifier")
-    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the source")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
+    adapter_key: str = Field(..., description="Adapter key or identifier")
+    source_id: str = Field(..., description="Referenced HD Source identifier")
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
@@ -232,7 +173,9 @@ class Source(BaseModel):
             adapter_key=self.adapter_key,
             source_id=self.source_id,
             meta_data=self.meta_data,
-            thing_node_external_ids=self.thing_node_external_ids,
+            thing_node_external_ids=self.thing_node_external_ids
+            if self.thing_node_external_ids is not None
+            else [],
         )
 
     @classmethod
@@ -266,13 +209,13 @@ class Sink(BaseModel):
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
-    adapter_key: str = Field(..., description="Adapter key or identifier")
-    sink_id: str = Field(..., description="Referenced HD Sink identifier")
-    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the sink")
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )
+    adapter_key: str = Field(..., description="Adapter key or identifier")
+    sink_id: str = Field(..., description="Referenced HD Sink identifier")
+    meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     thing_node_external_ids: list[str] | None = Field(
         None,
         description="List of externally provided unique identifiers for the thing nodes",
@@ -294,7 +237,9 @@ class Sink(BaseModel):
             adapter_key=self.adapter_key,
             sink_id=self.sink_id,
             meta_data=self.meta_data,
-            thing_node_external_ids=self.thing_node_external_ids,
+            thing_node_external_ids=self.thing_node_external_ids
+            if self.thing_node_external_ids is not None
+            else [],
         )
 
     @classmethod
@@ -319,117 +264,6 @@ class Sink(BaseModel):
         if not v:
             return {}
         return v
-
-
-class PropertyMetadata(BaseModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4,
-        description="The primary key ID of the property metadata.",
-    )
-    external_id: str = Field(..., description="Externally provided unique identifier")
-    stakeholder_key: str = Field(..., description="Stakeholder key for the PropertyMetadata")
-    property_set_id: UUID | None = Field(
-        None, description="The foreign key ID linking to the Property Set."
-    )
-    property_set_external_id: str = Field(
-        ..., description="Externally provided unique identifier for the Property Set"
-    )
-    column_name: str = Field(..., description="The name of the column in the property set.")
-    column_label: str = Field(..., description="The label of the column for display purposes.")
-    column_type: Literal["STRING", "INT", "FLOAT", "BOOLEAN"] = Field(
-        ..., description="The data type of the column (STRING, INT, FLOAT, BOOLEAN)."
-    )
-    field_length: int | None = Field(
-        None, description="The length of the field, applicable for STRING type columns."
-    )
-    nullable: bool = Field(..., description="Indicates if the column can accept NULL values.")
-    order_no: int = Field(
-        ..., description="The ordering number of the column within the property set."
-    )
-
-    @validator("field_length")
-    def field_length_must_be_positive(cls, v: int | None) -> int | None:
-        if v is not None and v <= 0:
-            raise ValueError("field_length must be positive if specified")
-        return v
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> PropertyMetadataOrm:
-        return PropertyMetadataOrm(
-            id=self.id,
-            external_id=self.external_id,
-            stakeholder_key=self.stakeholder_key,
-            property_set_id=self.property_set_id,
-            property_set_external_id=self.property_set_external_id,
-            column_name=self.column_name,
-            column_label=self.column_label,
-            column_type=self.column_type,
-            field_length=self.field_length,
-            nullable=self.nullable,
-            order_no=self.order_no,
-        )
-
-    @classmethod
-    def from_orm_model(cls, orm_model: PropertyMetadataOrm) -> "PropertyMetadata":
-        try:
-            return cls(
-                id=orm_model.id,
-                external_id=orm_model.external_id,
-                stakeholder_key=orm_model.stakeholder_key,
-                property_set_id=orm_model.property_set_id,
-                property_set_external_id=orm_model.property_set_external_id,
-                column_name=orm_model.column_name,
-                column_label=orm_model.column_label,
-                column_type=orm_model.column_type,
-                field_length=orm_model.field_length,
-                nullable=orm_model.nullable,
-                order_no=orm_model.order_no,
-            )
-        except ValidationError as e:
-            msg = (
-                f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
-            )
-            raise DBIntegrityError(msg) from e
-
-
-class ElementTypeToPropertySet(BaseModel):
-    element_type_id: UUID = Field(..., description="The foreign key ID linking to the ElementType.")
-    element_type_external_id: str = Field(
-        ..., description="Externally provided unique identifier for the ElementType"
-    )
-    property_set_id: UUID = Field(..., description="The foreign key ID linking to the PropertySet.")
-    property_set_external_id: str = Field(
-        ..., description="Externally provided unique identifier for the PropertySet"
-    )
-    order_no: int = Field(
-        ...,
-        description="The order number for the property set in relation to the element type",
-    )
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> ElementTypeToPropertySetOrm:
-        return ElementTypeToPropertySetOrm(
-            element_type_id=self.element_type_id,
-            element_type_external_id=self.element_type_external_id,
-            property_set_id=self.property_set_id,
-            property_set_external_id=self.property_set_external_id,
-            order_no=self.order_no,
-        )
-
-    @classmethod
-    def from_orm_model(cls, orm_model: ElementTypeToPropertySetOrm) -> "ElementTypeToPropertySet":
-        return cls(
-            element_type_id=orm_model.element_type_id,
-            element_type_external_id=orm_model.element_type_external_id,
-            property_set_id=orm_model.property_set_id,
-            property_set_external_id=orm_model.property_set_external_id,
-            order_no=orm_model.order_no,
-        )
 
 
 class CompleteStructure(BaseModel):

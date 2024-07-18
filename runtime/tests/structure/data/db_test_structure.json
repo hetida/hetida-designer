@@ -116,11 +116,11 @@
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010001": {
-                    "energy_consumption_unit": "kW/h",
+                    "unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 },
                 "1010002": {
-                    "energy_consumption_unit": "kW/h",
+                    "unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 }
             },
@@ -145,7 +145,7 @@
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010003": {
-                    "energy_consumption_unit": "kW/h",
+                    "unit": "kW/h",
                     "description": "Energieverbrauchsdaten für eine Einzelpumpe"
                 }
             },
@@ -172,12 +172,10 @@
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010001": {
-                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 },
                 "10010002": {
-                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
@@ -203,7 +201,6 @@
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010003": {
-                    "score_unit": "score",
                     "description": "Anomaly Score für eine Einzelpumpe",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
