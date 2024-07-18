@@ -1,9 +1,9 @@
 import json
 import logging
-from collections import deque
+from collections import defaultdict, deque
 from uuid import UUID
 
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
@@ -11,22 +11,16 @@ from sqlalchemy_utils import UUIDType
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
-    ElementTypeToPropertySetOrm,
-    PropertyMetadataOrm,
-    PropertySetOrm,
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
+    thingnode_sink_association,
     thingnode_source_association,
-    thingnode_sink_association
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.models import (
     CompleteStructure,
     ElementType,
-    ElementTypeToPropertySet,
-    PropertyMetadata,
-    PropertySet,
     Sink,
     Source,
     ThingNode,
@@ -75,8 +69,8 @@ def store_single_source(source: Source) -> None:
 
 def fetch_source_by_id(
     session: SQLAlchemySession,
-    id: int,
-    log_error: bool = True,  # noqa: A002
+    id: int,  # noqa: A002
+    log_error: bool = True,
 ) -> SourceOrm:
     result: SourceOrm | None = session.execute(
         select(SourceOrm).where(SourceOrm.id == id)
@@ -92,9 +86,9 @@ def fetch_source_by_id(
 
 
 def update_source(
-    id: int,
+    id: int,  # noqa: A002
     source_update: Source,
-    log_error: bool = True,  # noqa: A002
+    log_error: bool = True,
 ) -> Source | None:
     with get_session()() as session, session.begin():
         try:
@@ -167,8 +161,8 @@ def store_single_sink(sink: Sink) -> None:
 
 def fetch_sink_by_id(
     session: SQLAlchemySession,
-    id: int,
-    log_error: bool = True,  # noqa: A002
+    id: int,  # noqa: A002
+    log_error: bool = True,
 ) -> SinkOrm:
     result: SinkOrm | None = session.execute(
         select(SinkOrm).where(SinkOrm.id == id)
@@ -184,9 +178,9 @@ def fetch_sink_by_id(
 
 
 def update_sink(
-    id: int,
+    id: int,  # noqa: A002
     sink_update: Sink,
-    log_error: bool = True,  # noqa: A002
+    log_error: bool = True,
 ) -> Sink | None:
     with get_session()() as session, session.begin():
         try:
@@ -335,13 +329,15 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
 
-            sources = session.query(SourceOrm).filter(SourceOrm.thing_node_id == thingnode.id).all()
+            sources = (
+                session.query(SourceOrm).filter(SourceOrm.thing_nodes.any(id=thingnode.id)).all()
+            )
             for source in sources:
-                session.delete(source)
+                source.thing_nodes.remove(thingnode)
 
-            sinks = session.query(SinkOrm).filter(SinkOrm.thing_node_id == thingnode.id).all()
+            sinks = session.query(SinkOrm).filter(SinkOrm.thing_nodes.any(id=thingnode.id)).all()
             for sink in sinks:
-                session.delete(sink)
+                sink.thing_nodes.remove(thingnode)
 
             children = (
                 session.query(ThingNodeOrm)
@@ -401,8 +397,8 @@ def update_tn(
 
 def get_parent_tn_id(
     session: SQLAlchemySession,
-    id: UUID,
-    log_error: bool = True,  # noqa: A002
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
 ) -> UUIDType | None:
     try:
         thingnode = fetch_tn_by_id(session, id, log_error)
@@ -428,10 +424,10 @@ def get_children_tn_ids(id: UUID, log_error: bool = True) -> list[UUID]:  # noqa
 
 
 def get_ancestors_tn_ids(
-    id: UUID,
+    id: UUID,  # noqa: A002
     depth: int = -1,
-    log_error: bool = True,  # noqa: A002
-) -> list[UUID]:  # noqa: A002
+    log_error: bool = True,
+) -> list[UUID]:
     ancestors_ids = []
     current_depth = 0
     current_id = id
@@ -454,9 +450,9 @@ def get_ancestors_tn_ids(
 
 
 def get_descendants_tn_ids(
-    id: UUID,
+    id: UUID,  # noqa: A002
     depth: int = -1,
-    log_error: bool = True,  # noqa: A002
+    log_error: bool = True,
 ) -> list[UUID]:
     descendant_ids = []
     nodes_to_visit = [(id, 0)]
@@ -596,390 +592,30 @@ def update_et(
     id: UUID,  # noqa: A002
     et_update: ElementType,
     log_error: bool = True,
-) -> ElementType | None:
+) -> ElementTypeOrm | None:
     with get_session()() as session, session.begin():
         try:
             element_type = fetch_et_by_id(session, id, log_error)
             if element_type:
                 element_type.name = et_update.name
-                element_type.icon = et_update.icon
                 element_type.description = et_update.description
-                element_type.property_sets = et_update.property_sets
-                element_type.thing_nodes = et_update.thing_nodes
-            return ElementType.from_orm_model(element_type)
-        except DBNotFoundError as e:
-            session.rollback()
-            if log_error:
-                msg = f"No ElementType found with id {id}."
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
+                element_type.external_id = et_update.external_id
+                element_type.stakeholder_key = et_update.stakeholder_key
+                session.commit()
+                return element_type
         except Exception as e:
             session.rollback()
             if log_error:
                 msg = f"Unexpected error while updating ElementType with id {id}: {str(e)}"
                 logger.error(msg)
             raise
-
-
-# Property Set Services
-
-
-def add_ps(session: SQLAlchemySession, property_set_orm: PropertySetOrm) -> None:
-    try:
-        session.add(property_set_orm)
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store PropertySet "
-            f"with id {property_set_orm.id}. Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise DBIntegrityError(msg) from e
-
-
-def store_single_property_set(
-    property_set: PropertySet,
-) -> None:
-    with get_session()() as session, session.begin():
-        orm_ps = property_set.to_orm_model()
-        add_ps(session, orm_ps)
-
-
-def fetch_ps_by_id(
-    session: SQLAlchemySession,
-    id: int,  # noqa: A002
-    log_error: bool = True,
-) -> PropertySetOrm:
-    result: PropertySetOrm | None = session.execute(
-        select(PropertySetOrm).where(PropertySetOrm.id == id)
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = f"Found no property set in database with id {id}"
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
-
-
-def read_single_property_set(
-    id: int,  # noqa: A002
-    log_error: bool = True,
-) -> PropertySet:
-    with get_session()() as session, session.begin():
-        orm_ps = fetch_ps_by_id(session, id, log_error)
-        return PropertySet.from_orm_model(orm_ps)
-
-
-def delete_ps(id: int, log_error: bool = True) -> None:  # noqa: A002
-    with get_session()() as session, session.begin():
-        try:
-            property_set = fetch_ps_by_id(session, id, log_error)
-            if property_set.element_types:
-                session.rollback()
-                if log_error:
-                    msg = (
-                        f"Cannot delete PropertySet with id {id} "
-                        "as it has associated ElementTypes."
-                    )
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-            if property_set.properties_metadata:
-                session.rollback()
-                if log_error:
-                    msg = (
-                        f"Cannot delete PropertySet with id {id} as "
-                        "it has associated PropertyMetadata."
-                    )
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-
-            session.delete(property_set)
-            session.commit()
-        except NoResultFound as e:
-            session.rollback()
-            if log_error:
-                msg = f"No PropertySet found with id {id}."
-                logger.error(msg)
-            raise DBNotFoundError(msg) from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = f"Database integrity error while deleting PropertySet with id {id}: {str(e)}"
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-
-
-def update_ps(
-    id: int,  # noqa: A002
-    updated_data: dict,
-    log_error: bool = True,
-) -> PropertySet:
-    with get_session()() as session, session.begin():
-        try:
-            property_set = fetch_ps_by_id(session, id, log_error)
-            for key, value in updated_data.items():
-                setattr(property_set, key, value)
-            return PropertySet.from_orm_model(property_set)
-        except DBNotFoundError as e:
-            session.rollback()
-            if log_error:
-                msg = f"No PropertySet found with id {id}."
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = f"Unexpected error while updating PropertySet with id {id}: {str(e)}"
-                logger.error(msg)
-            raise
-
-
-# Property Metadata Services
-
-
-def add_pm(session: SQLAlchemySession, property_metadata_orm: PropertyMetadataOrm) -> None:
-    try:
-        session.add(property_metadata_orm)
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store PropertyMetadataOrm "
-            f"with id {property_metadata_orm.id}. Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise DBIntegrityError(msg) from e
-
-
-def store_single_property_metadata(
-    property_metadata: PropertyMetadata,
-) -> None:
-    with get_session()() as session, session.begin():
-        orm_pm = property_metadata.to_orm_model()
-        add_pm(session, orm_pm)
-
-
-def fetch_pm_by_id(
-    session: SQLAlchemySession,
-    id: int,  # noqa: A002
-    log_error: bool = True,
-) -> PropertyMetadataOrm:
-    result: PropertyMetadataOrm | None = session.execute(
-        select(PropertyMetadataOrm).where(PropertyMetadataOrm.id == id)
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = f"Found no property metadata in database with id {id}"
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
-
-
-def read_single_property_metadata(
-    id: int,  # noqa: A002
-    log_error: bool = True,
-) -> PropertyMetadata:
-    with get_session()() as session, session.begin():
-        orm_pm = fetch_pm_by_id(session, id, log_error)
-        return PropertyMetadata.from_orm_model(orm_pm)
-
-
-def delete_pm(id: int, log_error: bool = True) -> None:  # noqa: A002
-    with get_session()() as session, session.begin():
-        try:
-            property_metadata = fetch_pm_by_id(session, id, log_error)
-            if property_metadata.property_set:
-                session.rollback()
-                if log_error:
-                    msg = (
-                        f"Cannot delete PropertyMetadata with id {id} as "
-                        "it has an associated PropertySet."
-                    )
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-
-            session.delete(property_metadata)
-            session.commit()
-        except NoResultFound as e:
-            session.rollback()
-            if log_error:
-                msg = f"No PropertyMetadata found with id {id}."
-                logger.error(msg)
-            raise DBNotFoundError(msg) from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = (
-                    "Database integrity error while deleting "
-                    f"PropertyMetadata with id {id}: {str(e)}"
-                )
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-
-
-def update_pm(
-    id: int,  # noqa: A002
-    updated_data: dict,
-    log_error: bool = True,
-) -> PropertyMetadata:
-    with get_session()() as session, session.begin():
-        try:
-            property_metadata = fetch_pm_by_id(session, id, log_error)
-            for key, value in updated_data.items():
-                setattr(property_metadata, key, value)
-            return PropertyMetadata.from_orm_model(property_metadata)
-        except DBNotFoundError as e:
-            session.rollback()
-            if log_error:
-                msg = f"No PropertyMetadata found with id {id}."
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = f"Unexpected error while updating PropertyMetadata with id {id}: {str(e)}"
-                logger.error(msg)
-            raise
-
-
-# Element Type To Property Set Services
-
-
-def add_et2ps(
-    session: SQLAlchemySession,
-    element_type_to_property_set_orm: ElementTypeToPropertySetOrm,
-) -> None:
-    try:
-        session.add(element_type_to_property_set_orm)
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store ElementTypeToPropertySetOrm "
-            f"with element_type_id {element_type_to_property_set_orm.element_type_id} "
-            f"and property_set_id {element_type_to_property_set_orm.property_set_id}. "
-            f"Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise DBIntegrityError(msg) from e
-
-
-def store_single_et2ps(
-    element_type_to_property_set: ElementTypeToPropertySet,
-) -> None:
-    with get_session()() as session, session.begin():
-        orm_et2ps = element_type_to_property_set.to_orm_model()
-        add_et2ps(session, orm_et2ps)
-
-
-def fetch_et2ps_by_id(
-    session: SQLAlchemySession,
-    element_type_id: int,
-    property_set_id: int,
-    log_error: bool = True,
-) -> ElementTypeToPropertySetOrm:
-    result: ElementTypeToPropertySetOrm | None = session.execute(
-        select(ElementTypeToPropertySetOrm).where(
-            ElementTypeToPropertySetOrm.element_type_id
-            == element_type_id & ElementTypeToPropertySetOrm.property_set_id
-            == property_set_id
-        )
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = (
-            f"Found no element type to property set table in database "
-            f"with element_type_id {element_type_id} and property_set_id {property_set_id}"
-        )
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
-
-
-def read_single_et2ps(
-    id: int,  # noqa: A002
-    log_error: bool = True,
-) -> ElementTypeToPropertySet:
-    with get_session()() as session, session.begin():
-        orm_et2ps = fetch_et2ps_by_id(session, id, log_error)
-        return ElementTypeToPropertySet.from_orm_model(orm_et2ps)
-
-
-def delete_et2ps(id: int, log_error: bool = True) -> None:  # noqa: A002
-    with get_session()() as session, session.begin():
-        try:
-            element_type_to_property_set = fetch_et2ps_by_id(session, id, log_error)
-            if element_type_to_property_set.element_type_id:
-                session.rollback()
-                if log_error:
-                    msg = (
-                        f"Cannot delete ElementTypeToPropertySet with id {id} as "
-                        "it has an associated ElementType."
-                    )
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-            if element_type_to_property_set.property_set_id:
-                session.rollback()
-                if log_error:
-                    msg = (
-                        f"Cannot delete ElementTypeToPropertySet with id {id} as "
-                        "it has an associated PropertySet."
-                    )
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-
-            session.delete(element_type_to_property_set)
-            session.commit()
-        except NoResultFound as e:
-            session.rollback()
-            if log_error:
-                msg = f"No ElementTypeToPropertySet found with id {id}."
-                logger.error(msg)
-            raise DBNotFoundError(msg) from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = (
-                    "Database integrity error while deleting ElementTypeToPropertySet "
-                    f"with id {id}: {str(e)}"
-                )
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-
-
-def update_et2ps(
-    id: int,  # noqa: A002
-    updated_data: dict,
-    log_error: bool = True,
-) -> ElementTypeToPropertySet:
-    with get_session()() as session, session.begin():
-        try:
-            element_type_to_property_set = fetch_et2ps_by_id(session, id, log_error)
-            for key, value in updated_data.items():
-                setattr(element_type_to_property_set, key, value)
-            return ElementTypeToPropertySet.from_orm_model(element_type_to_property_set)
-        except DBNotFoundError as e:
-            session.rollback()
-            if log_error:
-                msg = f"No ElementTypeToPropertySet found with id {id}."
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = (
-                    "Unexpected error while updating ElementTypeToPropertySet "
-                    f"with id {id}: {str(e)}"
-                )
-                logger.error(msg)
-            raise
+    return None
 
 
 # Structure Services
 
 
-def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
+def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
     root_nodes = []
 
@@ -991,44 +627,92 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> list[ThingNode]:
         else:
             root_nodes.append(node)
 
-    sorted_nodes = []
+    sorted_nodes_by_level = defaultdict(list)
+    queue = deque([(root_nodes, 0)])
 
-    def append_children(nodes: list[ThingNode]) -> None:
-        for node in nodes:
-            sorted_nodes.append(node)
-            append_children(children_by_node_id[node.id])
+    while queue:
+        current_level_nodes, level = queue.popleft()
+        next_level_nodes = []
 
-    append_children(root_nodes)
+        for node in current_level_nodes:
+            sorted_nodes_by_level[level].append(node)
+            children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+            next_level_nodes.extend(children_by_node_id[node.id])
 
-    return sorted_nodes
+        if next_level_nodes:
+            queue.append((next_level_nodes, level + 1))
+
+    return sorted_nodes_by_level
 
 
-def create_mapping_between_external_and_internal_ids(tn_list: list[ThingNode]):
-    return {tn.stakeholder_key + tn.external_id: tn.id for tn in tn_list}
+def create_mapping_between_external_and_internal_ids(
+    tn_list: list[ThingNode], src_list: list[Source], snk_list: list[Sink]
+) -> tuple[dict[str, UUID], dict[str, UUID], dict[str, UUID]]:
+    tn_mapping = {tn.stakeholder_key + tn.external_id: tn.id for tn in tn_list}
+    src_mapping = {src.stakeholder_key + src.external_id: src.id for src in src_list}
+    snk_mapping = {snk.stakeholder_key + snk.external_id: snk.id for snk in snk_list}
+    return tn_mapping, src_mapping, snk_mapping
+
 
 def fill_parent_uuids_of_thing_nodes(
-    id_mapping: dict[str, UUID], node_list: list[ThingNode]
+    tn_mapping: dict[str, UUID], node_list: list[ThingNode]
 ) -> None:
     for node in node_list:
         if node.parent_external_node_id:
-            parent_uuid = id_mapping[node.stakeholder_key + node.parent_external_node_id]
+            parent_uuid = tn_mapping[node.stakeholder_key + node.parent_external_node_id]
             node.parent_node_id = parent_uuid
+
 
 def fill_element_type_ids_of_thing_nodes(
     element_type_mapping: dict[str, UUID], node_list: list[ThingNode]
 ) -> None:
     for node in node_list:
         if node.element_type_external_id:
-            element_type_uuid = element_type_mapping[node.stakeholder_key + node.element_type_external_id]
+            element_type_uuid = element_type_mapping[
+                node.stakeholder_key + node.element_type_external_id
+            ]
             node.element_type_id = element_type_uuid
 
-def fill_all_parent_uuids(complete_structure: CompleteStructure, session: SQLAlchemySession) -> None:
-    id_mapping = create_mapping_between_external_and_internal_ids(complete_structure.thing_nodes)
-    fill_parent_uuids_of_thing_nodes(id_mapping, complete_structure.thing_nodes)
 
-def fill_all_element_type_ids(complete_structure: CompleteStructure, session: SQLAlchemySession) -> None:
-    element_type_mapping = {et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types}
+def fill_all_parent_uuids(complete_structure: CompleteStructure) -> None:
+    tn_mapping, _, _ = create_mapping_between_external_and_internal_ids(
+        complete_structure.thing_nodes, [], []
+    )
+    fill_parent_uuids_of_thing_nodes(tn_mapping, complete_structure.thing_nodes)
+
+
+def fill_all_element_type_ids(complete_structure: CompleteStructure) -> None:
+    element_type_mapping = {
+        et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types
+    }
     fill_element_type_ids_of_thing_nodes(element_type_mapping, complete_structure.thing_nodes)
+
+
+def fill_source_sink_associations(
+    complete_structure: CompleteStructure, session: SQLAlchemySession
+) -> None:
+    tn_mapping, src_mapping, snk_mapping = create_mapping_between_external_and_internal_ids(
+        complete_structure.thing_nodes, complete_structure.sources, complete_structure.sinks
+    )
+
+    for source in complete_structure.sources:
+        if source.thing_node_external_ids:
+            for tn_external_id in source.thing_node_external_ids:
+                association = {
+                    "thing_node_id": tn_mapping[source.stakeholder_key + tn_external_id],
+                    "source_id": src_mapping[source.stakeholder_key + source.external_id],
+                }
+                session.execute(thingnode_source_association.insert().values(association))
+
+    for sink in complete_structure.sinks:
+        if sink.thing_node_external_ids:
+            for tn_external_id in sink.thing_node_external_ids:
+                association = {
+                    "thing_node_id": tn_mapping[sink.stakeholder_key + tn_external_id],
+                    "sink_id": snk_mapping[sink.stakeholder_key + sink.external_id],
+                }
+                session.execute(thingnode_sink_association.insert().values(association))
+
 
 def load_structure_from_json_file(
     file_path: str,
@@ -1037,6 +721,7 @@ def load_structure_from_json_file(
         structure_json = json.load(file)
     complete_structure = CompleteStructure(**structure_json)
     return complete_structure
+
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
     for item in items:
@@ -1052,50 +737,25 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
             logger.error(msg)
             raise DBIntegrityError(msg) from e
 
+
 def update_structure_from_file(file_path: str) -> None:
     complete_structure = load_structure_from_json_file(file_path)
     update_structure(complete_structure)
 
+
 def update_structure(complete_structure: CompleteStructure) -> None:
     with get_session()() as session, session.begin():
-        fill_all_element_type_ids(complete_structure, session)
-        fill_all_parent_uuids(complete_structure, session)
-        complete_structure.thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
+        fill_all_element_type_ids(complete_structure)
+        fill_all_parent_uuids(complete_structure)
+
+        sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
+        sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
 
         flush_items(session, complete_structure.element_types)
-        flush_items(session, complete_structure.thing_nodes)
+        flush_items(session, sorted_thing_nodes)
         flush_items(session, complete_structure.sources)
         flush_items(session, complete_structure.sinks)
 
-        # Handling the many-to-many relationships
-        for thing_node in complete_structure.thing_nodes:
-            orm_thing_node = session.query(ThingNodeOrm).get(thing_node.id)
-            if orm_thing_node is None:
-                raise ValueError(f"ThingNode with ID {thing_node.id} not found in the database.")
+        fill_source_sink_associations(complete_structure, session)
 
-            # Handling Source relationships
-            source_ids = (
-                session.query(thingnode_source_association.c.source_id)
-                .filter(thingnode_source_association.c.thing_node_id == orm_thing_node.id)
-                .all()
-            )
-            orm_thing_node.sources = session.query(SourceOrm).filter(SourceOrm.id.in_([id for id, in source_ids])).all()
-
-            # Handling Sink relationships
-            sink_ids = (
-                session.query(thingnode_sink_association.c.sink_id)
-                .filter(thingnode_sink_association.c.thing_node_id == orm_thing_node.id)
-                .all()
-            )
-            orm_thing_node.sinks = session.query(SinkOrm).filter(SinkOrm.id.in_([id for id, in sink_ids])).all()
-
-            session.add(orm_thing_node)
         session.flush()
-
-
-
-
-
-
-
-
