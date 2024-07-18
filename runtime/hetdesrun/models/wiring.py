@@ -98,7 +98,7 @@ class OutputWiring(BaseModel):
         return cls(
             workflow_output_name="dummy",
             adapter_id=struct_sink.adapter_key,
-            ref_id=str(struct_sink.source_id),
+            ref_id=str(struct_sink.sink_id),
             ref_id_type=RefIdType.SINK,
             type=struct_sink.type,
             filters=struct_sink.preset_filters,  # TODO Understand this attribute
