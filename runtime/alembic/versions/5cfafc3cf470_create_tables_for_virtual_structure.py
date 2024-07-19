@@ -123,7 +123,7 @@ def upgrade():
         sa.Column("adapter_key", sa.String(length=255), nullable=False),
         sa.Column("source_id", sa.String(length=255), nullable=False),
         sa.Column("meta_data", sa.JSON(), nullable=True),
-        sa.Column("preset_filters", sa.JSON(), nullable=True),
+        sa.Column("preset_filters", sa.JSON(), nullable=False),
         sa.Column("passthrough_filters", sa.JSON(), nullable=True),
         sa.Column('thing_node_external_ids', sa.JSON(), nullable=True),
         sa.UniqueConstraint(
@@ -151,7 +151,7 @@ def upgrade():
         sa.Column("adapter_key", sa.String(length=255), nullable=False),
         sa.Column("sink_id", sa.String(length=255), nullable=False),
         sa.Column("meta_data", sa.JSON(), nullable=True),
-        sa.Column("preset_filters", sa.JSON(), nullable=True),
+        sa.Column("preset_filters", sa.JSON(), nullable=False),
         sa.Column("passthrough_filters", sa.JSON(), nullable=True),
         sa.Column('thing_node_external_ids', sa.JSON(), nullable=True),
         sa.UniqueConstraint(

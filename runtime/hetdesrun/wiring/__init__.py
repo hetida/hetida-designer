@@ -24,7 +24,8 @@ def replace_wirings(
         # Replace the dummy wf_input_name used for creation of target InputWiring
         wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
         new_input_wiring.workflow_input_name = wf_input_name
-        # Merge the preset filters from the target InputWiring with the passthrough filters of the original
+        # Merge the preset filters from the target InputWiring
+        # with the passthrough filters of the original
         new_input_wiring.filters = (
             new_input_wiring.filters | workflow_wiring.input_wirings[idx].filters
         )

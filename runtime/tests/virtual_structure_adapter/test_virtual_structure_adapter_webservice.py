@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.mark.skip(reason="Wait till structure service is ready")
+@pytest.mark.skip(reason="Why is the UUID an unprocessable entity?")
 @pytest.mark.asyncio
 async def test_vst_adapter_get_structure_with_none_from_webservice(
     async_test_client_with_vst_adapter,
@@ -25,7 +25,6 @@ async def test_vst_adapter_get_structure_with_none_from_webservice(
     assert response.json() == first_thing_node
 
 
-@pytest.mark.skip(reason="Wait till structure service is ready")
 @pytest.mark.asyncio
 async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_vst_adapter):
     # Make multiple calls to the structure endpoint to unravel the hierarchy
@@ -40,7 +39,7 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
     first_thing_node_id = resp_obj["thingNodes"][0]["id"]
 
     response = await async_test_client_with_vst_adapter.get(
-        f"/adapters/vst/structure?{first_thing_node_id}"
+        f"/adapters/vst/structure?parentId={first_thing_node_id}"
     )
 
     assert response.status_code == 200
@@ -49,10 +48,21 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
 
     assert len(resp_obj["thingNodes"]) == 2
 
-    first_thing_node_id = resp_obj["thingNodes"][0]["id"]  # TODO maybe adjust
+    first_thing_node_id = resp_obj["thingNodes"][0]["id"]
+
+    # Get down the hierarchy far enough to arrive at a source
+    response = await async_test_client_with_vst_adapter.get(
+        f"/adapters/vst/structure?parentId={first_thing_node_id}"
+    )
+
+    assert response.status_code == 200
+
+    resp_obj = response.json()
+
+    first_thing_node_id = resp_obj["thingNodes"][0]["id"]
 
     response = await async_test_client_with_vst_adapter.get(
-        f"/adapters/vst/structure?{first_thing_node_id}"
+        f"/adapters/vst/structure?parentId={first_thing_node_id}"
     )
 
     assert response.status_code == 200

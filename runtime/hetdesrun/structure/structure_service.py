@@ -78,6 +78,12 @@ def get_single_source_from_db(src_id: UUID) -> Source:
     raise DBNotFoundError(f"No Source found for ID {src_id}")
 
 
+def get_all_sources_from_db() -> list[Source]:
+    with get_session()() as session:
+        sources = session.query(SourceOrm).all()
+    return [Source.from_orm_model(source) for source in sources]
+
+
 def get_collection_of_sources_from_db(src_ids: list[UUID]) -> dict[UUID, Source]:
     return {src_id: get_single_source_from_db(src_id) for src_id in src_ids}
 
@@ -89,6 +95,12 @@ def get_single_sink_from_db(sink_id: UUID) -> Sink:
             return Sink.from_orm_model(sink)
 
     raise DBNotFoundError(f"No Sink found for ID {sink_id}")
+
+
+def get_all_sinks_from_db() -> list[Sink]:
+    with get_session()() as session:
+        sinks = session.query(SinkOrm).all()
+    return [Sink.from_orm_model(sink) for sink in sinks]
 
 
 def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:

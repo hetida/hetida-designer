@@ -145,7 +145,9 @@ class Source(BaseModel):
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
-    preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the source")
+    preset_filters: dict[str, Any] = Field(
+        default_factory=dict, description="Preset filters for the source"
+    )
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the source"
     )
@@ -209,7 +211,9 @@ class Sink(BaseModel):
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
-    preset_filters: dict[str, Any] | None = Field(None, description="Preset filters for the sink")
+    preset_filters: dict[str, Any] = Field(
+        default_factory=dict, description="Preset filters for the sink"
+    )
     passthrough_filters: list[str] | None = Field(
         None, description="Passthrough filters for the sink"
     )

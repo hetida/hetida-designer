@@ -9,8 +9,6 @@ from hetdesrun.adapters.virtual_structure_adapter.structure import (
 )
 
 
-
-# @pytest.mark.skip(reason="Wait for get_children to work")
 @pytest.mark.usefixtures("_fill_db")
 def test_get_structure_with_none():
     structure = get_structure(None)
@@ -21,12 +19,12 @@ def test_get_structure_with_none():
     assert structure.thingNodes[0].name == "Wasserwerk 1"
 
 
-# @pytest.mark.skip(reason="Wait for get_children to work")
 @pytest.mark.usefixtures("_fill_db")
 def test_get_level_with_existing_uuid():
     structure = get_structure(None)
     structure = get_structure(structure.thingNodes[0].id)
-    structure = get_structure(structure.thingNodes[0].id)  # Might need to adjust
+    structure = get_structure(structure.thingNodes[0].id)
+    structure = get_structure(structure.thingNodes[0].id)
 
     # Check ThingNodes
     assert structure.thingNodes == []
