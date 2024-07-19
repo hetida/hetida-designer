@@ -94,14 +94,13 @@ class OutputWiring(BaseModel):
 
     @classmethod
     def from_structure_sink(cls, struct_sink: Sink) -> "OutputWiring":
-        # TODO Fill ref_key or leave out ref_id_type
         return cls(
             workflow_output_name="dummy",
             adapter_id=struct_sink.adapter_key,
             ref_id=str(struct_sink.sink_id),
             ref_id_type=RefIdType.SINK,
             type=struct_sink.type,
-            filters=struct_sink.preset_filters,  # TODO Understand this attribute
+            filters=struct_sink.preset_filters,
         )
 
 
@@ -187,7 +186,7 @@ class InputWiring(BaseModel):
             ref_id=str(struct_source.source_id),
             ref_id_type=RefIdType.SOURCE,
             type=struct_source.type,
-            filters=struct_source.preset_filters,  # TODO Understand this attribute
+            filters=struct_source.preset_filters,
         )
 
 

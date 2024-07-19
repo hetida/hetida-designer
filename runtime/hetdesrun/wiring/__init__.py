@@ -18,15 +18,20 @@ def replace_wirings(
     actual_output_wirings: dict[str, OutputWiring],
     workflow_wiring: WorkflowWiring,
 ) -> None:
+    # Fill input wirings
     for idx, ref_id in input_ids:
         new_input_wiring = actual_input_wirings[ref_id]
+        # Replace the dummy wf_input_name used for creation of target InputWiring
         wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
         new_input_wiring.workflow_input_name = wf_input_name
+        # Merge the preset filters from the target InputWiring with the passthrough filters of the original
         new_input_wiring.filters = (
             new_input_wiring.filters | workflow_wiring.input_wirings[idx].filters
         )
+        # Replace the original input wiring
         workflow_wiring.input_wirings[idx] = new_input_wiring
 
+    # Fill output wirings
     for idx, ref_id in output_ids:
         new_output_wiring = actual_output_wirings[ref_id]
         wf_output_name = workflow_wiring.output_wirings[idx].workflow_output_name
