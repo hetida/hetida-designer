@@ -72,8 +72,8 @@
             "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
             "stakeholder_key": "GW",
             "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
-            "type": "series(float)",
-            "adapter_key": "python-demo-adapter",
+            "type": "timeseries(float)",
+            "adapter_key": "demo-adapter-python",
             "source_id": "root.plantA.picklingUnit.influx.temp",
             "meta_data": {
                 "Influx": {"nf": 23}
@@ -82,6 +82,7 @@
                 "timestampFrom",
                 "timestampTo"
             ],
+            "preset_filters": {"frequency": "1d"},
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1"
             ]

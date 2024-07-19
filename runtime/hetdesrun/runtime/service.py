@@ -89,6 +89,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             currently_executed_process_stage.value
         )
         resolve_virtual_structure_wirings(runtime_input.workflow_wiring)
+        # TODO fix string conversion for logging workflow wiring
         runtime_logger.debug("Resolved virtual structure wirings: ", runtime_input.workflow_wiring)
 
         resolve_wirings_measured_step.stop()

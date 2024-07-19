@@ -34,7 +34,6 @@ async def get_structure_endpoint(parentId: UUID | None = None) -> StructureRespo
     return get_structure(parent_id=parentId)
 
 
-
 @virtual_structure_adapter_router.get(
     "/thingNodes/{id}",
     response_model=StructureThingNode,

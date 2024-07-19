@@ -27,9 +27,9 @@ def test_virtual_wiring_resolution_with_one_source():
     resolve_virtual_structure_wirings(wf_wiring)
     # Check if the wiring was correctly replaced
     assert (
-        wf_wiring.input_wirings[0].adapter_id == "python-demo-adapter"
+        wf_wiring.input_wirings[0].adapter_id == "demo-adapter-python"
     )  # Should replace virtual-structure-adapter
     assert wf_wiring.input_wirings[0].workflow_input_name == "nf"  # Should keep the original name
     assert (
-        wf_wiring.input_wirings[0].filters == example_filters
-    )  # Should remain the same as there are no preset filters
+        wf_wiring.input_wirings[0].filters == sources[0].preset_filters | example_filters
+    )  # Should be a combination of preset and passthrough filters

@@ -14,7 +14,6 @@ from hetdesrun.structure.structure_service import (
     get_single_thingnode_from_db,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +30,6 @@ def get_level_from_struct_service(
 
 def get_structure(parent_id: UUID | None = None) -> StructureResponse:
     nodes, sources, sinks = get_level_from_struct_service(parent_id)
-
 
     return StructureResponse(
         id="vst-adapter",

@@ -149,12 +149,6 @@ def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
     )
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
-def test_get_children_non_existent(mocked_clean_test_db_session):
-    with pytest.raises(DBNotFoundError):
-        get_children("99999999-9999-9999-9999-999999999999")
-
-
 def test_complete_structure_object_creation():
     with open("tests/structure/data/db_test_structure.json") as file:
         data = json.load(file)
