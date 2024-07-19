@@ -42,7 +42,7 @@ class StructureVirtualSource(BaseModel):
             metadataKey=struct_source.meta_data.get("metadataKey")
             if struct_source.meta_data
             else None,
-            filters={},  # TODO Determine role of this attribute, probably use passthrough filters here in some form
+            filters={},  # TODO Fill when passthrough filters are properly defined
         )
 
 
@@ -63,7 +63,7 @@ class StructureVirtualSink(BaseModel):
             type=struct_sink.type,
             path="",  # TODO Fill appropriately
             metadataKey=struct_sink.meta_data.get("metadataKey") if struct_sink.meta_data else None,
-            filters={},  # TODO Same as with sources
+            filters={},  # TODO Fill when passthrough filters are properly defined
         )
 
 

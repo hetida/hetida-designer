@@ -72,8 +72,8 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     fi
 
     # echo "STARTING PREPOPULATION OF VIRTUAL STRUCTURE"
-    # python -c 'from hetdesrun.structure.structure_service import delete_structure; delete_structure();'
-    # python -c 'from hetdesrun.webservice.config import get_config; from hetdesrun.structure.db.orm_service import update_structure; complete_structure = get_config().structure_to_prepopulate_virtual_structure_adapter; update_structure(complete_structure);'
+    python -c 'from hetdesrun.structure.structure_service import delete_structure; delete_structure();'
+    python -c 'from hetdesrun.webservice.config import get_config; from hetdesrun.structure.db.orm_service import update_structure; complete_structure = get_config().structure_to_prepopulate_virtual_structure_adapter; update_structure(complete_structure);'
 
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"

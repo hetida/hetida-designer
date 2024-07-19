@@ -46,9 +46,6 @@ def get_children(
             .all()
         )
 
-        if not child_nodes and not sources and not sinks:
-            raise DBNotFoundError(f"No children, sources, or sinks found for parent_id {parent_id}")
-
         return (
             [ThingNode.from_orm_model(node) for node in child_nodes],
             [Source.from_orm_model(source) for source in sources],

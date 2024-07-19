@@ -31,14 +31,8 @@ virtual_structure_adapter_router = HandleTrailingSlashAPIRouter(
 )
 async def get_structure_endpoint(parentId: UUID | None = None) -> StructureResponse:
     """Returns one level of the thingnode hierarchy for lazy-loading in the frontend"""
-    try:
-        structure = get_structure(parent_id=parentId)
-    except DBNotFoundError as exc:  # TODO Should this even be raised?
-        logger.info("The provided UUID (%s) has no children", parentId)
-        raise HTTPException(
-            status_code=404, detail=f"The provided UUID ({parentId}) has no children"
-        ) from exc
-    return structure
+    return get_structure(parent_id=parentId)
+
 
 
 @virtual_structure_adapter_router.get(
