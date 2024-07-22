@@ -2,6 +2,7 @@ import pytest
 
 from hetdesrun.adapters.virtual_structure_adapter.models import (
     StructureThingNode,
+    StructureVirtualSink,
     StructureVirtualSource,
 )
 from hetdesrun.adapters.virtual_structure_adapter.structure import (
@@ -28,9 +29,13 @@ def test_get_level_with_existing_uuid():
 
     # Check ThingNodes
     assert structure.thingNodes == []
-    assert structure.sinks == []
 
     # Check Sources
     assert len(structure.sources) == 1
     assert isinstance(structure.sources[0], StructureVirtualSource)
     assert structure.sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+
+    # Check Sinks
+    assert len(structure.sinks) == 1
+    assert isinstance(structure.sinks[0], StructureVirtualSink)
+    assert structure.sinks[0].name == "Anomaliescore des Pumpensystems in Hochbehälter"

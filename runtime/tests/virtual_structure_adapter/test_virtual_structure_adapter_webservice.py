@@ -70,9 +70,11 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
     resp_obj = response.json()
 
     assert len(resp_obj["thingNodes"]) == 0
-    assert len(resp_obj["sinks"]) == 0
+    assert len(resp_obj["sinks"]) == 1
     assert len(resp_obj["sources"]) == 1
 
     source_name = resp_obj["sources"][0]["name"]
+    sink_name = resp_obj["sinks"][0]["name"]
 
     assert source_name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+    assert sink_name == "Anomaliescore des Pumpensystems in Hochbehälter"

@@ -88,5 +88,25 @@
             ]
         }
     ],
-    "sinks": []
+    "sinks": [
+        {
+            "external_id": "Anomalie_Pumpensystem_Hochbehaelter",
+            "stakeholder_key": "GW",
+            "name": "Anomaliescore des Pumpensystems in Hochbehälter",
+            "type": "timeseries(float)",
+            "adapter_key": "demo-adapter-python",
+            "sink_id": "root.plantA.picklingUnit.influx.anomaly_score",
+            "meta_data": {
+                "Influx": {"nf": 42}
+            },
+            "passthrough_filters": [
+                "timestampFrom",
+                "timestampTo"
+            ],
+            "preset_filters": {"frequency": "1d"},
+            "thing_node_external_ids": [
+                "Wasserwerk1_Anlage1_Hochbehaelter1"
+            ]
+        }
+    ]
 }
