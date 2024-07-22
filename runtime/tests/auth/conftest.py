@@ -181,9 +181,7 @@ def set_internal_client_creds(service_client_credentials):
 
 @pytest.fixture(scope="package")
 def activate_auth():
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", True
-    ) as _fixture:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", True) as _fixture:
         yield _fixture
 
 
@@ -194,9 +192,7 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(
-        transport=ASGITransport(app=app_with_auth), base_url="http://test"
-    )
+    return AsyncClient(transport=ASGITransport(app=app_with_auth), base_url="http://test")
 
 
 @pytest_asyncio.fixture
@@ -404,7 +400,7 @@ def gen_jose_rs256_key_pair():
         # reduced keysize from 4096 for increasing test speed
         backend=crypto_default_backend(),
         public_exponent=65537,
-        key_size=1024,
+        key_size=1024,  # noqa: S505
     )
 
     private_key = key.private_bytes(

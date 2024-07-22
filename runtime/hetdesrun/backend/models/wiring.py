@@ -75,9 +75,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
         )
 
     @classmethod
-    def from_output_wiring(
-        cls, output_wiring: OutputWiring
-    ) -> "OutputWiringFrontendDto":
+    def from_output_wiring(cls, output_wiring: OutputWiring) -> "OutputWiringFrontendDto":
         return OutputWiringFrontendDto(
             refId=output_wiring.ref_id,
             refIdType=output_wiring.ref_id_type,
@@ -159,9 +157,7 @@ class WiringFrontendDto(BaseModel):
     def output_names_unique(
         cls, output_wirings: list[OutputWiringFrontendDto]
     ) -> list[OutputWiringFrontendDto]:
-        if len({ow.workflow_output_name for ow in output_wirings}) == len(
-            output_wirings
-        ):
+        if len({ow.workflow_output_name for ow in output_wirings}) == len(output_wirings):
             return output_wirings
 
         raise ValueError(
@@ -175,18 +171,14 @@ class WiringFrontendDto(BaseModel):
         )
 
     @classmethod
-    def from_wiring(
-        cls, wiring: WorkflowWiring, transformation_id: UUID
-    ) -> "WiringFrontendDto":
+    def from_wiring(cls, wiring: WorkflowWiring, transformation_id: UUID) -> "WiringFrontendDto":
         return WiringFrontendDto(
             id=transformation_id,
             inputWirings=[
-                InputWiringFrontendDto.from_input_wiring(iw)
-                for iw in wiring.input_wirings
+                InputWiringFrontendDto.from_input_wiring(iw) for iw in wiring.input_wirings
             ],
             outputWirings=[
-                OutputWiringFrontendDto.from_output_wiring(ow)
-                for ow in wiring.output_wirings
+                OutputWiringFrontendDto.from_output_wiring(ow) for ow in wiring.output_wirings
             ],
         )
 

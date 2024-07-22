@@ -23,17 +23,13 @@ def restricted_webservice_mode_pass_through_string_component():
 
 
 @pytest.fixture()
-def single_allowed_app(
-    deactivate_auth, restricted_webservice_mode_pass_through_string_component
-):
+def single_allowed_app(deactivate_auth, restricted_webservice_mode_pass_through_string_component):
     return init_app()
 
 
 @pytest.fixture()
 def single_allowed_client(single_allowed_app):
-    return AsyncClient(
-        transport=ASGITransport(app=single_allowed_app), base_url="http://test"
-    )
+    return AsyncClient(transport=ASGITransport(app=single_allowed_app), base_url="http://test")
 
 
 @pytest.fixture()

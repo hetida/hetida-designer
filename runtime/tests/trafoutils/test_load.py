@@ -17,18 +17,13 @@ def test_get_import_sources():
     import_sources = list(get_import_sources("./tests/data/import_sources_directory"))
     assert len(import_sources) == 4
 
-    assert (
-        len([imp_src for imp_src in import_sources if imp_src.config_file is not None])
-        == 2
-    )
+    assert len([imp_src for imp_src in import_sources if imp_src.config_file is not None]) == 2
 
     assert len([imp_src for imp_src in import_sources if imp_src.is_dir]) == 2
 
 
 def test_load_import_sources_from_directory():
-    importables = load_import_sources_from_directory(
-        "./tests/data/import_sources_examples"
-    )
+    importables = load_import_sources_from_directory("./tests/data/import_sources_examples")
     assert len(importables) == 2
 
     assert (

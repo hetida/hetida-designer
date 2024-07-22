@@ -29,9 +29,7 @@ adapter_router = HandleTrailingSlashAPIRouter(
     response_model=list[AdapterFrontendDto],
     summary="Returns all adapters",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"description": "Successfully got list of adapters"}
-    },
+    responses={status.HTTP_200_OK: {"description": "Successfully got list of adapters"}},
 )
 async def get_all_adapters() -> list[AdapterFrontendDto]:
     """Get all adapters."""

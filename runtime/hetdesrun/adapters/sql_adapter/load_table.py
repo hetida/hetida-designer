@@ -37,10 +37,10 @@ def split_metric_ids(metric_ids_string: str | None) -> list[str]:
 
 
 def extract_time_range(
-    source_filters: dict[str, str]
+    source_filters: dict[str, str],
 ) -> tuple[datetime.datetime, datetime.datetime]:
-    from_timestamp = source_filters.get("timestampFrom", None)
-    to_timestamp = source_filters.get("timestampTo", None)
+    from_timestamp = source_filters.get("timestampFrom")
+    to_timestamp = source_filters.get("timestampTo")
 
     if from_timestamp is None or to_timestamp is None:
         msg = "Missing timestamp filters for multitsframe timeseries table source"
@@ -82,10 +82,7 @@ def prepare_sql_statement(
             ts_table_config.timestamp_col_name,
         ),
         column(ts_table_config.metric_col_name),
-        *(
-            column(val_col_name)
-            for val_col_name in ts_table_config.fetchable_value_cols
-        ),
+        *(column(val_col_name) for val_col_name in ts_table_config.fetchable_value_cols),
     )
 
     clauses = (
@@ -148,9 +145,7 @@ def prepare_validate_loaded_raw_multitsframe(
     return validated_multi_ts_frame
 
 
-def load_table_from_provided_source_id(
-    source_id: str, source_filters: dict
-) -> pd.DataFrame:
+def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> pd.DataFrame:
     configured_dbs_by_key = get_configured_dbs_by_key()
 
     id_split = source_id.split("/", 2)
@@ -164,7 +159,7 @@ def load_table_from_provided_source_id(
     db_config = configured_dbs_by_key[db_key]
 
     if id_split[1] == "query" and len(id_split) == 2:
-        query = source_filters.get("sql_query", None)
+        query = source_filters.get("sql_query")
         if query is None:  # pragma: no cover
             msg = (
                 "Source of type query from sql adapter but no sql_query filter!\n"
@@ -216,10 +211,7 @@ def load_table_from_provided_source_id(
 
         return validated_multi_ts_frame
 
-    msg = (
-        "Invalid source id structure. Cannot find or identify source."
-        f"source id: {source_id}"
-    )
+    msg = "Invalid source id structure. Cannot find or identify source." f"source id: {source_id}"
     logger.info(msg)
     raise AdapterHandlingException(msg)
 

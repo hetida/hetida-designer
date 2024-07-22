@@ -20,9 +20,7 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-def create_local_file_path_for_generic_any_sink(
-    sink_id: str, filters: dict[str, str]
-) -> str:
+def create_local_file_path_for_generic_any_sink(sink_id: str, filters: dict[str, str]) -> str:
     parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
     current_job_id = _get_job_id_context()["currently_executed_job_id"]
     try:
@@ -51,9 +49,7 @@ def create_local_file_path_for_generic_any_sink(
         return from_url_representation(parent_id) + os.sep + file_name
 
 
-def create_local_file_path_for_generic_dataframe_sink(
-    sink_id: str, filters: dict[str, str]
-) -> str:
+def create_local_file_path_for_generic_dataframe_sink(sink_id: str, filters: dict[str, str]) -> str:
     parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
     current_job_id = _get_job_id_context()["currently_executed_job_id"]
     try:
@@ -82,18 +78,12 @@ def create_local_file_path_for_generic_dataframe_sink(
         return from_url_representation(parent_id) + os.sep + file_name
 
 
-def obtain_possible_local_sink_file(
-    sink_id: str, filters: dict[str, str]
-) -> LocalFile | None:
+def obtain_possible_local_sink_file(sink_id: str, filters: dict[str, str]) -> LocalFile | None:
     if sink_id.startswith("GENERIC_"):
         if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
-            local_file_path = create_local_file_path_for_generic_any_sink(
-                sink_id, filters
-            )
+            local_file_path = create_local_file_path_for_generic_any_sink(sink_id, filters)
         if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
-            local_file_path = create_local_file_path_for_generic_dataframe_sink(
-                sink_id, filters
-            )
+            local_file_path = create_local_file_path_for_generic_dataframe_sink(sink_id, filters)
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
         )
@@ -141,9 +131,7 @@ def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
         )
 
     try:
-        file_support_handler.write_handler_func(
-            data_obj, possible_local_file.path, **write_kwargs
-        )
+        file_support_handler.write_handler_func(data_obj, possible_local_file.path, **write_kwargs)
     except Exception as e:  # noqa: BLE001
         msg = (
             f"Failed to write local file \n{str(possible_local_file)}\n with "
@@ -151,12 +139,11 @@ def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
         )
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
+
     logger.info(
         "Finished writing local file \n%s\n with file_support_handler \n%s",
         str(possible_local_file),
         str(file_support_handler),
     )
     if isinstance(data_obj, pd.DataFrame):
-        logger.info(
-            "Written DataFrame of shape %s:\n%s", str(data_obj.shape), str(data_obj)
-        )
+        logger.info("Written DataFrame of shape %s:\n%s", str(data_obj.shape), str(data_obj))

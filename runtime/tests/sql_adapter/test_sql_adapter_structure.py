@@ -30,9 +30,7 @@ def test_sql_adapter_structure(two_sqlite_dbs_configured):
     # writabel sqlite db
     structure_results = get_structure("test_writable_temp_sqlite_db")
     assert len(structure_results.thingNodes) == 0
-    assert (
-        len(structure_results.sources) == 1
-    )  # since nothing is written yet, only query source
+    assert len(structure_results.sources) == 1  # since nothing is written yet, only query source
 
     for src in structure_results.sources:
         assert src == get_source_by_id(src.id)

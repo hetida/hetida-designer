@@ -30,17 +30,13 @@ def gather_messages(
 
     For single value messages there is only one key "None" in the message dictionary.
     """
-    by_kafka_config_by_message: dict[
-        str, dict[str, dict[str | None, KafkaMessageValue]]
-    ] = {}
+    by_kafka_config_by_message: dict[str, dict[str, dict[str | None, KafkaMessageValue]]] = {}
     for (
         output_name,
         filtered_sink,
     ) in wf_output_name_to_filtered_sink_mapping_dict.items():
         id_to_use = (
-            filtered_sink.ref_key
-            if filtered_sink.ref_key is not None
-            else filtered_sink.ref_id
+            filtered_sink.ref_key if filtered_sink.ref_key is not None else filtered_sink.ref_id
         )
         assert id_to_use is not None  # noqa: S101 # for mypy
         try:
@@ -63,14 +59,14 @@ def gather_messages(
         if message_value_key == "":
             message_value_key = None
 
-        kafka_key_message_dict = by_kafka_config_by_message.get(kafka_config_key, None)
+        kafka_key_message_dict = by_kafka_config_by_message.get(kafka_config_key)
         if kafka_key_message_dict is None:
             kafka_key_message_dict = {}
             by_kafka_config_by_message[kafka_config_key] = kafka_key_message_dict
 
-        message_value_dict: dict[
-            str | None, KafkaMessageValue
-        ] | None = kafka_key_message_dict.get(message_identifier, None)
+        message_value_dict: dict[str | None, KafkaMessageValue] | None = kafka_key_message_dict.get(
+            message_identifier, None
+        )
         if message_value_dict is None:
             message_value_dict = {}
             kafka_key_message_dict[message_identifier] = message_value_dict
@@ -125,10 +121,7 @@ async def send_data(
     )
 
     await asyncio.gather(
-        *[
-            send_kafka_message(by_value_key_dict)
-            for by_value_key_dict in by_value_key_dicts
-        ]
+        *[send_kafka_message(by_value_key_dict) for by_value_key_dict in by_value_key_dicts]
     )
 
     return {}
@@ -147,9 +140,7 @@ def gather_receive_recipes(
 
     For single value messages there is only one key "None" in the message dictionary.
     """
-    by_kafka_config_by_message: dict[
-        str, dict[str, dict[str | None, KafkaReceiveValue]]
-    ] = {}
+    by_kafka_config_by_message: dict[str, dict[str, dict[str | None, KafkaReceiveValue]]] = {}
     for (
         input_name,
         filtered_source,
@@ -180,14 +171,14 @@ def gather_receive_recipes(
         if message_value_key == "":
             message_value_key = None
 
-        kafka_key_message_dict = by_kafka_config_by_message.get(kafka_config_key, None)
+        kafka_key_message_dict = by_kafka_config_by_message.get(kafka_config_key)
         if kafka_key_message_dict is None:
             kafka_key_message_dict = {}
             by_kafka_config_by_message[kafka_config_key] = kafka_key_message_dict
 
-        message_value_dict: dict[
-            str | None, KafkaReceiveValue
-        ] | None = kafka_key_message_dict.get(message_identifier, None)
+        message_value_dict: dict[str | None, KafkaReceiveValue] | None = kafka_key_message_dict.get(
+            message_identifier, None
+        )
         if message_value_dict is None:
             message_value_dict = {}
             kafka_key_message_dict[message_identifier] = message_value_dict
@@ -234,29 +225,20 @@ async def load_data(
     wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
-    by_value_key_dicts = gather_receive_recipes(
-        wf_input_name_to_filtered_source_mapping_dict
-    )
+    by_value_key_dicts = gather_receive_recipes(wf_input_name_to_filtered_source_mapping_dict)
     result_dicts: list[dict[str | None, Any]] = await asyncio.gather(
-        *[
-            receive_kafka_message(by_value_key_dict)
-            for by_value_key_dict in by_value_key_dicts
-        ]
+        *[receive_kafka_message(by_value_key_dict) for by_value_key_dict in by_value_key_dicts]
     )
 
     wf_input_name_to_value_dict: dict[str, Any] = {}
-    for result_dict, receive_message_dict in zip(
-        result_dicts, by_value_key_dicts, strict=True
-    ):
+    for result_dict, receive_message_dict in zip(result_dicts, by_value_key_dicts, strict=True):
         for key in result_dict:
             input_name = receive_message_dict[key].input_name
 
             filtered_source = wf_input_name_to_filtered_source_mapping_dict[input_name]
 
             # Validate type
-            if not receive_message_dict[key].external_type is ExternalType(
-                filtered_source.type
-            ):
+            if not receive_message_dict[key].external_type is ExternalType(filtered_source.type):
                 msg = (
                     f"Received wrong external type {str(receive_message_dict[key].external_type)} "
                     f"for input {input_name} from Kafka Adapter config with kafka_config_key "

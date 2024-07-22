@@ -47,9 +47,7 @@ async def test_get_documentation(async_test_client, mocked_clean_test_db_session
     store_single_transformation_revision(component_tr_1)
 
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/documentations/" + str(get_uuid_from_seed("component 1"))
-        )
+        response = await ac.get("/api/documentations/" + str(get_uuid_from_seed("component 1")))
     assert response.status_code == 200
     assert response.json()["document"] == "documentation"
 

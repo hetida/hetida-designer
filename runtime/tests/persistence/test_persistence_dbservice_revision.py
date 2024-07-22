@@ -254,10 +254,7 @@ def test_strip_wirings_and_keep_only_wirings(mocked_clean_test_db_session):
         strip_wirings_with_adapter_ids={"blubb", "blah"},
     )
     assert len(received_tr_object.test_wiring.input_wirings) == 1
-    assert (
-        received_tr_object.test_wiring.input_wirings[0].adapter_id
-        == "direct_provisioning"
-    )
+    assert received_tr_object.test_wiring.input_wirings[0].adapter_id == "direct_provisioning"
 
     # Test keep_only_wirings_with_adapter_ids
 
@@ -461,9 +458,7 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
     assert len(results) == 0
 
     results = get_multiple_transformation_revisions(
-        FilterParams(
-            ids=[tr_uuid_3, tr_uuid_2], names=["Test"], include_dependencies=False
-        )
+        FilterParams(ids=[tr_uuid_3, tr_uuid_2], names=["Test"], include_dependencies=False)
     )
     assert len(results) == 1
 
@@ -514,12 +509,8 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
     tr_component_contained_not_only_in_deprecated.revision_group_id = uuid4()
 
     update_or_create_single_transformation_revision(tr_component_not_contained)
-    update_or_create_single_transformation_revision(
-        tr_component_contained_only_in_deprecated
-    )
-    update_or_create_single_transformation_revision(
-        tr_component_contained_not_only_in_deprecated
-    )
+    update_or_create_single_transformation_revision(tr_component_contained_only_in_deprecated)
+    update_or_create_single_transformation_revision(tr_component_contained_not_only_in_deprecated)
 
     operator_in_deprecated = tr_component_contained_only_in_deprecated.to_operator()
     assert isinstance(operator_in_deprecated.id, UUID)
@@ -559,9 +550,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
         test_wiring=WorkflowWiring(),
     )
 
-    operator_in_not_deprecated = (
-        tr_component_contained_not_only_in_deprecated.to_operator()
-    )
+    operator_in_not_deprecated = tr_component_contained_not_only_in_deprecated.to_operator()
     output_connector_not_deprecated = WorkflowContentOutput(
         id=uuid4(),
         name=operator_in_not_deprecated.outputs[0].name,
@@ -590,9 +579,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
                         operator=operator_in_not_deprecated.id,
                         connector=operator_in_not_deprecated.outputs[0],
                     ),
-                    end=Vertex(
-                        operator=None, connector=output_connector_not_deprecated
-                    ),
+                    end=Vertex(operator=None, connector=output_connector_not_deprecated),
                 )
             ],
         ),

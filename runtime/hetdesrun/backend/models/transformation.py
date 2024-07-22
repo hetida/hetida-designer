@@ -28,9 +28,7 @@ class TransformationRevisionFrontendDto(BasicInformation):
 
         return ios
 
-    def to_transformation_revision(
-        self, documentation: str = ""
-    ) -> TransformationRevision:
+    def to_transformation_revision(self, documentation: str = "") -> TransformationRevision:
         return TransformationRevision(
             id=self.id,
             revision_group_id=self.group_id,
@@ -52,9 +50,7 @@ class TransformationRevisionFrontendDto(BasicInformation):
                 outputs=[output.to_io() for output in self.outputs],
             ),
             content="" if self.type == Type.COMPONENT else WorkflowContent(),
-            test_wiring=self.wirings[0].to_wiring()
-            if len(self.wirings) > 0
-            else WorkflowWiring(),
+            test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),
         )
 
     @classmethod

@@ -272,9 +272,9 @@ def test_workflow_content_validator_operator_names_unique(
     workflow_content_dict: dict,
 ) -> None:
     workflow_content_double_operator_name_dict = deepcopy(workflow_content_dict)
-    workflow_content_double_operator_name_dict["operators"][1][
-        "name"
-    ] = workflow_content_double_operator_name_dict["operators"][0]["name"]
+    workflow_content_double_operator_name_dict["operators"][1]["name"] = (
+        workflow_content_double_operator_name_dict["operators"][0]["name"]
+    )
     workflow_content_double_operator_name = WorkflowContent(
         **workflow_content_double_operator_name_dict
     )
@@ -292,19 +292,14 @@ def test_workflow_content_validator_operator_names_unique(
         **workflow_content_single_operator_with_suffix_dict
     )
     assert len(workflow_content_single_operator_with_suffix.operators) == 1
-    assert (
-        workflow_content_single_operator_with_suffix.operators[0].name.endswith("(2)")
-        is False
-    )
+    assert workflow_content_single_operator_with_suffix.operators[0].name.endswith("(2)") is False
 
 
 def test_workflow_content_validator_link_connectors_match_operator_ios(
     caplog: pytest.LogCaptureFixture, workflow_content_dict: dict
 ) -> None:
     with caplog.at_level(logging.WARNING):
-        workflow_content_with_inner_link_to_wrong_operator_id_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_inner_link_to_wrong_operator_id_dict = deepcopy(workflow_content_dict)
         workflow_content_with_inner_link_to_wrong_operator_id_dict["links"][0]["start"][
             "operator"
         ] = str(get_uuid_from_seed("wrong id"))
@@ -319,9 +314,9 @@ def test_workflow_content_validator_link_connectors_match_operator_ios(
         workflow_content_with_output_link_to_wrong_operator_id_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_output_link_to_wrong_operator_id_dict["links"][4][
-            "start"
-        ]["operator"] = str(get_uuid_from_seed("wrong id"))
+        workflow_content_with_output_link_to_wrong_operator_id_dict["links"][4]["start"][
+            "operator"
+        ] = str(get_uuid_from_seed("wrong id"))
         caplog.clear()
         workflow_content_with_output_link_to_wrong_operator_id = WorkflowContent(
             **workflow_content_with_output_link_to_wrong_operator_id_dict
@@ -333,19 +328,16 @@ def test_workflow_content_validator_link_connectors_match_operator_ios(
         workflow_content_with_inner_link_non_matching_start_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_inner_link_non_matching_start_connector_dict["links"][0][
-            "start"
-        ]["connector"]["name"] = "wrong_name"
+        workflow_content_with_inner_link_non_matching_start_connector_dict["links"][0]["start"][
+            "connector"
+        ]["name"] = "wrong_name"
         caplog.clear()
         workflow_content_with_inner_link_non_matching_start_connector = WorkflowContent(
             **workflow_content_with_inner_link_non_matching_start_connector_dict
         )
         assert "link start connector" in caplog.text
         assert "do not match" in caplog.text
-        assert (
-            len(workflow_content_with_inner_link_non_matching_start_connector.links)
-            == 4
-        )
+        assert len(workflow_content_with_inner_link_non_matching_start_connector.links) == 4
 
         workflow_content_with_inner_link_from_wrong_operator_id_dict = deepcopy(
             workflow_content_dict
@@ -361,9 +353,7 @@ def test_workflow_content_validator_link_connectors_match_operator_ios(
         assert "not found" in caplog.text
         assert len(workflow_content_with_inner_link_from_wrong_operator_id.links) == 4
 
-        workflow_content_with_input_link_to_wrong_operator_id_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_input_link_to_wrong_operator_id_dict = deepcopy(workflow_content_dict)
         workflow_content_with_input_link_to_wrong_operator_id_dict["links"][1]["end"][
             "operator"
         ] = str(get_uuid_from_seed("wrong id"))
@@ -378,39 +368,32 @@ def test_workflow_content_validator_link_connectors_match_operator_ios(
         workflow_content_with_inner_link_non_matching_end_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_inner_link_non_matching_end_connector_dict["links"][0][
-            "end"
-        ]["connector"]["name"] = "wrong_name"
+        workflow_content_with_inner_link_non_matching_end_connector_dict["links"][0]["end"][
+            "connector"
+        ]["name"] = "wrong_name"
         caplog.clear()
         workflow_content_with_inner_link_non_matching_end_connector = WorkflowContent(
             **workflow_content_with_inner_link_non_matching_end_connector_dict
         )
         assert "link end connector" in caplog.text
         assert "do not match" in caplog.text
-        assert (
-            len(workflow_content_with_inner_link_non_matching_end_connector.links) == 4
-        )
+        assert len(workflow_content_with_inner_link_non_matching_end_connector.links) == 4
 
         workflow_content_with_inner_link_to_not_exposed_operator_input_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_inner_link_to_not_exposed_operator_input_dict[
-            "operators"
-        ][1]["inputs"][1]["type"] = "OPTIONAL"
-        workflow_content_with_inner_link_to_not_exposed_operator_input_dict[
-            "operators"
-        ][1]["inputs"][1]["exposed"] = False
+        workflow_content_with_inner_link_to_not_exposed_operator_input_dict["operators"][1][
+            "inputs"
+        ][1]["type"] = "OPTIONAL"
+        workflow_content_with_inner_link_to_not_exposed_operator_input_dict["operators"][1][
+            "inputs"
+        ][1]["exposed"] = False
         caplog.clear()
-        workflow_content_with_inner_link_to_not_exposed_operator_input = (
-            WorkflowContent(
-                **workflow_content_with_inner_link_to_not_exposed_operator_input_dict
-            )
+        workflow_content_with_inner_link_to_not_exposed_operator_input = WorkflowContent(
+            **workflow_content_with_inner_link_to_not_exposed_operator_input_dict
         )
         assert "not exposed operator input" in caplog.text
-        assert (
-            len(workflow_content_with_inner_link_to_not_exposed_operator_input.links)
-            == 4
-        )
+        assert len(workflow_content_with_inner_link_to_not_exposed_operator_input.links) == 4
 
 
 def test_validator_links_acyclic_directed_graph() -> None:
@@ -424,9 +407,9 @@ def test_validator_clean_up_workflow_content_inputs(
         workflow_content_with_input_referencing_wrong_operator_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_input_referencing_wrong_operator_dict["inputs"][0][
-            "operator_id"
-        ] = str(get_uuid_from_seed("wrong id"))
+        workflow_content_with_input_referencing_wrong_operator_dict["inputs"][0]["operator_id"] = (
+            str(get_uuid_from_seed("wrong id"))
+        )
         caplog.clear()
         WorkflowContent(**workflow_content_with_input_referencing_wrong_operator_dict)
         assert "Operator input" in caplog.text
@@ -439,31 +422,25 @@ def test_validator_clean_up_workflow_content_inputs(
             "data_type"
         ] = "STRING"
         caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_input_not_matching_referenced_operator_dict
-        )
+        WorkflowContent(**workflow_content_with_input_not_matching_referenced_operator_dict)
         assert "Operator input" in caplog.text
         assert "does not match" in caplog.text
 
-        workflow_content_with_input_referencing_not_exposed_operator_input_dict = (
-            deepcopy(workflow_content_dict)
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict = deepcopy(
+            workflow_content_dict
         )
         caplog.clear()
-        workflow_content_with_input_referencing_not_exposed_operator_input_dict[
-            "operators"
-        ][0]["inputs"][0]["type"] = "OPTIONAL"
-        workflow_content_with_input_referencing_not_exposed_operator_input_dict[
-            "operators"
-        ][0]["inputs"][0]["exposed"] = False
-        WorkflowContent(
-            **workflow_content_with_input_referencing_not_exposed_operator_input_dict
-        )
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict["operators"][0][
+            "inputs"
+        ][0]["type"] = "OPTIONAL"
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict["operators"][0][
+            "inputs"
+        ][0]["exposed"] = False
+        WorkflowContent(**workflow_content_with_input_referencing_not_exposed_operator_input_dict)
         assert "Operator input" in caplog.text
         assert "is not exposed" in caplog.text
 
-        workflow_content_with_unlinked_named_input_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_unlinked_named_input_dict = deepcopy(workflow_content_dict)
         workflow_content_with_unlinked_named_input_dict["inputs"][0]["id"] = str(
             get_uuid_from_seed("wrong id")
         )
@@ -476,19 +453,15 @@ def test_validator_clean_up_workflow_content_inputs(
         workflow_content_with_input_not_matching_link_start_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_input_not_matching_link_start_connector_dict["inputs"][0][
-            "name"
-        ] = "wrong_name"
-        caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_input_not_matching_link_start_connector_dict
+        workflow_content_with_input_not_matching_link_start_connector_dict["inputs"][0]["name"] = (
+            "wrong_name"
         )
+        caplog.clear()
+        WorkflowContent(**workflow_content_with_input_not_matching_link_start_connector_dict)
         assert "Link start connector" in caplog.text
         assert "does not match" in caplog.text
 
-        workflow_content_with_changed_input_position_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_changed_input_position_dict = deepcopy(workflow_content_dict)
         workflow_content_with_changed_input_position_dict["inputs"][0]["position"] = {
             "x": 20,
             "y": 30,
@@ -513,9 +486,7 @@ def test_validator_clean_up_workflow_content_inputs(
         ] = "15637612-6dc7-4f55-7b5b-83c9fdac8579"
         del workflow_content_with_input_linked_to_wrong_operator_input_dict["links"][3]
         caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_input_linked_to_wrong_operator_input_dict
-        )
+        WorkflowContent(**workflow_content_with_input_linked_to_wrong_operator_input_dict)
         assert "Link" in caplog.text
         assert "referencing different operator input" in caplog.text
 
@@ -538,19 +509,15 @@ def test_validator_clean_up_workflow_content_outputs(
         workflow_content_with_output_not_matching_referenced_operator_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_output_not_matching_referenced_operator_dict["outputs"][
-            0
-        ]["data_type"] = "STRING"
+        workflow_content_with_output_not_matching_referenced_operator_dict["outputs"][0][
+            "data_type"
+        ] = "STRING"
         caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_output_not_matching_referenced_operator_dict
-        )
+        WorkflowContent(**workflow_content_with_output_not_matching_referenced_operator_dict)
         assert "Operator output" in caplog.text
         assert "does not match" in caplog.text
 
-        workflow_content_with_unlinked_named_output_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_unlinked_named_output_dict = deepcopy(workflow_content_dict)
         workflow_content_with_unlinked_named_output_dict["outputs"][0]["id"] = str(
             get_uuid_from_seed("wrong id")
         )
@@ -563,19 +530,15 @@ def test_validator_clean_up_workflow_content_outputs(
         workflow_content_with_output_not_matching_link_end_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_output_not_matching_link_end_connector_dict["outputs"][0][
-            "name"
-        ] = "wrong_name"
-        caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_output_not_matching_link_end_connector_dict
+        workflow_content_with_output_not_matching_link_end_connector_dict["outputs"][0]["name"] = (
+            "wrong_name"
         )
+        caplog.clear()
+        WorkflowContent(**workflow_content_with_output_not_matching_link_end_connector_dict)
         assert "Link end connector" in caplog.text
         assert "does not match" in caplog.text
 
-        workflow_content_with_changed_output_position_dict = deepcopy(
-            workflow_content_dict
-        )
+        workflow_content_with_changed_output_position_dict = deepcopy(workflow_content_dict)
         workflow_content_with_changed_output_position_dict["outputs"][0]["position"] = {
             "x": 20,
             "y": 30,
@@ -598,13 +561,9 @@ def test_validator_clean_up_workflow_content_outputs(
         workflow_content_with_output_linked_to_wrong_operator_output_dict["outputs"][0][
             "connector_id"
         ] = "cbf856b7-faf7-3079-d8e8-3b666d6f9d84"
-        del workflow_content_with_output_linked_to_wrong_operator_output_dict["links"][
-            0
-        ]
+        del workflow_content_with_output_linked_to_wrong_operator_output_dict["links"][0]
         caplog.clear()
-        WorkflowContent(
-            **workflow_content_with_output_linked_to_wrong_operator_output_dict
-        )
+        WorkflowContent(**workflow_content_with_output_linked_to_wrong_operator_output_dict)
         assert "Link" in caplog.text
         assert "referencing different operator output" in caplog.text
 
@@ -612,17 +571,15 @@ def test_validator_clean_up_workflow_content_outputs(
 def test_validator_add_workflow_content_inputs_for_unlinked_operator_inputs(
     caplog: pytest.LogCaptureFixture, workflow_content_dict: dict
 ) -> None:
-    workflow_content_with_unlinked_not_exposed_operator_input_dict = deepcopy(
-        workflow_content_dict
-    )
+    workflow_content_with_unlinked_not_exposed_operator_input_dict = deepcopy(workflow_content_dict)
     del workflow_content_with_unlinked_not_exposed_operator_input_dict["constants"][0]
     del workflow_content_with_unlinked_not_exposed_operator_input_dict["links"][3]
-    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1][
-        "inputs"
-    ][0]["type"] = "OPTIONAL"
-    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1][
-        "inputs"
-    ][0]["exposed"] = False
+    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1]["inputs"][0][
+        "type"
+    ] = "OPTIONAL"
+    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1]["inputs"][0][
+        "exposed"
+    ] = False
     caplog.clear()
     workflow_content_with_unlinked_not_exposed_operator_input = WorkflowContent(
         **workflow_content_with_unlinked_not_exposed_operator_input_dict
@@ -631,15 +588,11 @@ def test_validator_add_workflow_content_inputs_for_unlinked_operator_inputs(
     assert len(workflow_content_with_unlinked_not_exposed_operator_input.inputs) == len(
         workflow_content_with_unlinked_not_exposed_operator_input_dict["inputs"]
     )
-    assert len(
-        workflow_content_with_unlinked_not_exposed_operator_input.constants
-    ) == len(
+    assert len(workflow_content_with_unlinked_not_exposed_operator_input.constants) == len(
         workflow_content_with_unlinked_not_exposed_operator_input_dict["constants"]
     )
 
-    workflow_content_with_unlinked_op_input_without_wf_input_dict = deepcopy(
-        workflow_content_dict
-    )
+    workflow_content_with_unlinked_op_input_without_wf_input_dict = deepcopy(workflow_content_dict)
     del workflow_content_with_unlinked_op_input_without_wf_input_dict["constants"][0]
     del workflow_content_with_unlinked_op_input_without_wf_input_dict["links"][3]
     caplog.clear()
@@ -648,20 +601,12 @@ def test_validator_add_workflow_content_inputs_for_unlinked_operator_inputs(
     )
     assert "Found no workflow" in caplog.text
     assert "input and no link" in caplog.text
-    assert (
-        len(workflow_content_with_unlinked_op_input_without_wf_input_dict["inputs"])
-        == 2
-    )
-    assert (
-        len(workflow_content_with_unlinked_op_input_without_wf_input_dict["constants"])
-        == 0
-    )
+    assert len(workflow_content_with_unlinked_op_input_without_wf_input_dict["inputs"]) == 2
+    assert len(workflow_content_with_unlinked_op_input_without_wf_input_dict["constants"]) == 0
     assert len(workflow_content_with_unlinked_operator_input.inputs) == 3
     assert len(workflow_content_with_unlinked_operator_input.constants) == 0
 
-    workflow_content_with_linked_op_input_without_wf_input_dict = deepcopy(
-        workflow_content_dict
-    )
+    workflow_content_with_linked_op_input_without_wf_input_dict = deepcopy(workflow_content_dict)
     del workflow_content_with_linked_op_input_without_wf_input_dict["inputs"][1]
     caplog.clear()
     workflow_content_with_linked_op_input_without_wf_input = WorkflowContent(
@@ -669,13 +614,8 @@ def test_validator_add_workflow_content_inputs_for_unlinked_operator_inputs(
     )
     assert "Found no workflow" in caplog.text
     assert "input but a link" in caplog.text
-    assert (
-        len(workflow_content_with_linked_op_input_without_wf_input_dict["inputs"]) == 1
-    )
-    assert (
-        len(workflow_content_with_linked_op_input_without_wf_input_dict["constants"])
-        == 1
-    )
+    assert len(workflow_content_with_linked_op_input_without_wf_input_dict["inputs"]) == 1
+    assert len(workflow_content_with_linked_op_input_without_wf_input_dict["constants"]) == 1
     assert len(workflow_content_with_linked_op_input_without_wf_input.inputs) == 2
     assert len(workflow_content_with_linked_op_input_without_wf_input.constants) == 1
 
@@ -694,15 +634,10 @@ def test_validator_add_workflow_content_outputs_for_unlinked_operator_outputs(
     )
     assert "Found no workflow" in caplog.text
     assert "output and no link" in caplog.text
-    assert (
-        len(workflow_content_with_unlinked_op_output_without_wf_output_dict["outputs"])
-        == 0
-    )
+    assert len(workflow_content_with_unlinked_op_output_without_wf_output_dict["outputs"]) == 0
     assert len(workflow_content_with_unlinked_operator_output.outputs) == 1
 
-    workflow_content_with_linked_op_output_without_wf_output_dict = deepcopy(
-        workflow_content_dict
-    )
+    workflow_content_with_linked_op_output_without_wf_output_dict = deepcopy(workflow_content_dict)
     del workflow_content_with_linked_op_output_without_wf_output_dict["outputs"][0]
     caplog.clear()
     workflow_content_with_linked_op_output_without_wf_output = WorkflowContent(
@@ -710,10 +645,7 @@ def test_validator_add_workflow_content_outputs_for_unlinked_operator_outputs(
     )
     assert "Found no workflow" in caplog.text
     assert "output but a link" in caplog.text
-    assert (
-        len(workflow_content_with_linked_op_output_without_wf_output_dict["outputs"])
-        == 0
-    )
+    assert len(workflow_content_with_linked_op_output_without_wf_output_dict["outputs"]) == 0
     assert len(workflow_content_with_linked_op_output_without_wf_output.outputs) == 1
 
 
@@ -721,9 +653,9 @@ def test_validator_clean_up_outer_links(
     caplog: pytest.LogCaptureFixture, workflow_content_dict: dict
 ) -> None:
     workflow_content_with_link_without_wf_input_dict = deepcopy(workflow_content_dict)
-    workflow_content_with_link_without_wf_input_dict["inputs"][0][
-        "id"
-    ] = get_uuid_from_seed("wrong id")
+    workflow_content_with_link_without_wf_input_dict["inputs"][0]["id"] = get_uuid_from_seed(
+        "wrong id"
+    )
     caplog.clear()
     workflow_content_with_link_without_wf_input = WorkflowContent(
         **workflow_content_with_link_without_wf_input_dict
@@ -733,9 +665,7 @@ def test_validator_clean_up_outer_links(
     assert len(workflow_content_with_link_without_wf_input_dict["links"]) == 5
     assert len(workflow_content_with_link_without_wf_input.links) == 4
 
-    workflow_content_with_link_with_wf_input_without_name_dict = deepcopy(
-        workflow_content_dict
-    )
+    workflow_content_with_link_with_wf_input_without_name_dict = deepcopy(workflow_content_dict)
     del workflow_content_with_link_with_wf_input_without_name_dict["inputs"][0]["name"]
     caplog.clear()
     workflow_content_with_link_with_wf_input_without_name = WorkflowContent(
@@ -747,9 +677,9 @@ def test_validator_clean_up_outer_links(
     assert len(workflow_content_with_link_with_wf_input_without_name.links) == 4
 
     workflow_content_with_link_without_wf_output_dict = deepcopy(workflow_content_dict)
-    workflow_content_with_link_without_wf_output_dict["outputs"][0][
-        "id"
-    ] = get_uuid_from_seed("wrong id")
+    workflow_content_with_link_without_wf_output_dict["outputs"][0]["id"] = get_uuid_from_seed(
+        "wrong id"
+    )
     caplog.clear()
     workflow_content_with_link_without_wf_output = WorkflowContent(
         **workflow_content_with_link_without_wf_output_dict
@@ -759,21 +689,15 @@ def test_validator_clean_up_outer_links(
     assert len(workflow_content_with_link_without_wf_output_dict["links"]) == 5
     assert len(workflow_content_with_link_without_wf_output.links) == 4
 
-    workflow_content_with_link_with_wf_output_without_name_dict = deepcopy(
-        workflow_content_dict
-    )
-    del workflow_content_with_link_with_wf_output_without_name_dict["outputs"][0][
-        "name"
-    ]
+    workflow_content_with_link_with_wf_output_without_name_dict = deepcopy(workflow_content_dict)
+    del workflow_content_with_link_with_wf_output_without_name_dict["outputs"][0]["name"]
     caplog.clear()
     workflow_content_with_link_with_wf_output_without_name = WorkflowContent(
         **workflow_content_with_link_with_wf_output_without_name_dict
     )
     assert "Workflow output" in caplog.text
     assert "has no name" in caplog.text
-    assert (
-        len(workflow_content_with_link_with_wf_output_without_name_dict["links"]) == 5
-    )
+    assert len(workflow_content_with_link_with_wf_output_without_name_dict["links"]) == 5
     assert len(workflow_content_with_link_with_wf_output_without_name.links) == 4
 
 
@@ -791,18 +715,12 @@ def test_workflow_content_validation_for_delete_operator_linked_to_dynamic_workf
     ) as f:
         workflow_content = json.load(f)["content"]
 
-    workflow_content_deleted_operator_linked_with_workflow_inputs_dict = deepcopy(
-        workflow_content
-    )
-    deleted_operator_id = (
-        workflow_content_deleted_operator_linked_with_workflow_inputs_dict["operators"][
-            1
-        ]["id"]
-    )
+    workflow_content_deleted_operator_linked_with_workflow_inputs_dict = deepcopy(workflow_content)
+    deleted_operator_id = workflow_content_deleted_operator_linked_with_workflow_inputs_dict[
+        "operators"
+    ][1]["id"]
     # operator f2e
-    del workflow_content_deleted_operator_linked_with_workflow_inputs_dict["operators"][
-        1
-    ]
+    del workflow_content_deleted_operator_linked_with_workflow_inputs_dict["operators"][1]
     # link from workflow input d36 to operator #1 f2e input 3e6
     del workflow_content_deleted_operator_linked_with_workflow_inputs_dict["links"][2]
     # link from workflow input 9f4 to operator #1 f2e input 156
@@ -820,10 +738,7 @@ def test_workflow_content_validation_for_delete_operator_linked_to_dynamic_workf
     # workflow input #2
     assert "not found! The input will be removed." in caplog.text
     # Removed link #0 between the deleted operator #1 f2e output and another operator #0 ea5 input
-    assert (
-        "Found no workflow content input and no link end connector for operator"
-        in caplog.text
-    )
+    assert "Found no workflow content input and no link end connector for operator" in caplog.text
     assert "Add unnamed workflow content input." in caplog.text
 
     assert (
@@ -850,22 +765,16 @@ def test_workflow_content_validation_for_change_dynamic_input_to_constant() -> N
     ) as f:
         workflow_content = json.load(f)["content"]
 
-    workflow_content_with_changed_dynamic_input_to_constant_dict = deepcopy(
-        workflow_content
-    )
+    workflow_content_with_changed_dynamic_input_to_constant_dict = deepcopy(workflow_content)
     workflow_content_with_changed_dynamic_input_to_constant_dict["constants"] = [
         workflow_content_with_changed_dynamic_input_to_constant_dict["inputs"][0]
     ]
     del workflow_content_with_changed_dynamic_input_to_constant_dict["inputs"][0]
-    del workflow_content_with_changed_dynamic_input_to_constant_dict["constants"][0][
-        "name"
-    ]
-    workflow_content_with_changed_dynamic_input_to_constant_dict["constants"][0][
-        "value"
-    ] = ""
-    del workflow_content_with_changed_dynamic_input_to_constant_dict["links"][3][
-        "start"
-    ]["connector"]["name"]
+    del workflow_content_with_changed_dynamic_input_to_constant_dict["constants"][0]["name"]
+    workflow_content_with_changed_dynamic_input_to_constant_dict["constants"][0]["value"] = ""
+    del workflow_content_with_changed_dynamic_input_to_constant_dict["links"][3]["start"][
+        "connector"
+    ]["name"]
     resulting_workflow_content = WorkflowContent(
         **workflow_content_with_changed_dynamic_input_to_constant_dict
     )

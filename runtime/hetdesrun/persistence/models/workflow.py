@@ -91,9 +91,7 @@ def named_wf_input_unnecessary(
         * a link with an end not referencing the operator input referenced by the input itself.
     """
     try:
-        links_starting_at_workflow_input = links_by_start_id_tuple_dict[
-            (None, wf_input.id)
-        ]
+        links_starting_at_workflow_input = links_by_start_id_tuple_dict[(None, wf_input.id)]
     except KeyError:
         logger.warning(
             "Link with start connector referencing dynamic workflow content input '%s' "
@@ -182,10 +180,7 @@ def wf_output_unnecessary(
     except KeyError:
         pass
     else:
-        if any(
-            wf_output.id != link.end.connector.id
-            for link in links_starting_at_operator_output
-        ):
+        if any(wf_output.id != link.end.connector.id for link in links_starting_at_operator_output):
             logger.warning(
                 "Operator output referenced by workflow output '%s' has a link with an"
                 "end id not matching the output id! The output will be removed.",
@@ -304,9 +299,7 @@ def link_invalid_due_to_operator_input(
             f"end at an operator input, i.e. link '{link.id}' end operator may not be None."
         )
     try:
-        operator_input = operator_input_by_id_tuple_dict[
-            (link.end.operator, link.end.connector.id)
-        ]
+        operator_input = operator_input_by_id_tuple_dict[(link.end.operator, link.end.connector.id)]
     except KeyError:
         logger.warning(
             "Operator input referenced by link '%s' end connector '%s' "
@@ -345,9 +338,7 @@ def outer_link_invalid_due_to_workflow_input(
         * the referenced dynamic/constant workflow content input has no name.
     """
     try:
-        workflow_content_input = workflow_content_input_by_id_dict[
-            link.start.connector.id
-        ]
+        workflow_content_input = workflow_content_input_by_id_dict[link.start.connector.id]
     except KeyError:
         logger.warning(
             "Workflow input referenced by link '%s' start connector '%s' "
@@ -383,9 +374,7 @@ def outer_link_invalid_due_to_workflow_output(
         * the referenced workflow content output has no name.
     """
     try:
-        workflow_content_output = workflow_content_output_by_id_dict[
-            link.end.connector.id
-        ]
+        workflow_content_output = workflow_content_output_by_id_dict[link.end.connector.id]
     except KeyError:
         logger.warning(
             "Workflow output referenced by link '%s' end connector '%s' "
@@ -541,9 +530,7 @@ class WorkflowContent(BaseModel):
         return operator_input_by_id_tuple_dict
 
     @validator("links", each_item=False)
-    def link_connectors_match_operator_ios(
-        cls, links: list[Link], values: dict
-    ) -> list[Link]:
+    def link_connectors_match_operator_ios(cls, links: list[Link], values: dict) -> list[Link]:
         """Delete links with missing or not matching operator inputs or outputs.
 
         Delete links for which
@@ -554,12 +541,12 @@ class WorkflowContent(BaseModel):
         * the found operator input is not exposed.
         """
         try:
-            operator_input_by_id_tuple_dict: dict[
-                tuple[UUID, UUID], OperatorInput
-            ] = values["operator_input_by_id_tuple_dict"]
-            operator_output_by_id_tuple_dict: dict[
-                tuple[UUID, UUID], OperatorOutput
-            ] = values["operator_output_by_id_tuple_dict"]
+            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = values[
+                "operator_input_by_id_tuple_dict"
+            ]
+            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = values[
+                "operator_output_by_id_tuple_dict"
+            ]
         except KeyError as error:
             raise ValueError(
                 "Cannot reduce to valid links if attribute 'operators' is missing!"
@@ -662,12 +649,10 @@ class WorkflowContent(BaseModel):
                 link.start.operator,
                 link.start.connector.id,
             ) not in links_by_start_id_tuple_dict:
-                links_by_start_id_tuple_dict[
-                    (link.start.operator, link.start.connector.id)
-                ] = []
-            links_by_start_id_tuple_dict[
-                (link.start.operator, link.start.connector.id)
-            ].append(link)
+                links_by_start_id_tuple_dict[(link.start.operator, link.start.connector.id)] = []
+            links_by_start_id_tuple_dict[(link.start.operator, link.start.connector.id)].append(
+                link
+            )
         return links_by_start_id_tuple_dict
 
     @validator("link_by_end_id_tuple_dict", always=True)
@@ -699,12 +684,12 @@ class WorkflowContent(BaseModel):
         Delete unnecessary named dynamic workflow content inputs based on the link starting at them.
         """
         try:
-            operator_input_by_id_tuple_dict: dict[
-                tuple[UUID, UUID], OperatorInput
-            ] = values["operator_input_by_id_tuple_dict"]
-            links_by_start_id_tuple_dict: dict[
-                tuple[UUID | None, UUID], list[Link]
-            ] = values["links_by_start_id_tuple_dict"]
+            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = values[
+                "operator_input_by_id_tuple_dict"
+            ]
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+                "links_by_start_id_tuple_dict"
+            ]
             link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
                 "link_by_end_id_tuple_dict"
             ]
@@ -727,8 +712,7 @@ class WorkflowContent(BaseModel):
             if (
                 wf_input.name is not None
                 and wf_input.name != ""
-                and named_wf_input_unnecessary(wf_input, links_by_start_id_tuple_dict)
-                is True
+                and named_wf_input_unnecessary(wf_input, links_by_start_id_tuple_dict) is True
             ):
                 remove_wf_inputs.append(wf_input)
 
@@ -758,17 +742,11 @@ class WorkflowContent(BaseModel):
                 "if any of the attributes 'operators', 'links' is missing!"
             ) from error
 
-        wf_input_by_operator_and_connector_id_dict: dict[
-            tuple[UUID, UUID], WorkflowContentIO
-        ] = {
-            (wf_input.operator_id, wf_input.connector_id): wf_input
-            for wf_input in inputs
+        wf_input_by_operator_and_connector_id_dict: dict[tuple[UUID, UUID], WorkflowContentIO] = {
+            (wf_input.operator_id, wf_input.connector_id): wf_input for wf_input in inputs
         }
         wf_input_by_operator_and_connector_id_dict.update(
-            {
-                (wf_input.operator_id, wf_input.connector_id): wf_input
-                for wf_input in constants
-            }
+            {(wf_input.operator_id, wf_input.connector_id): wf_input for wf_input in constants}
         )
 
         for operator in operators:
@@ -784,9 +762,7 @@ class WorkflowContent(BaseModel):
                     ]
                 except KeyError:
                     try:
-                        link = link_by_end_id_tuple_dict[
-                            (operator.id, operator_input.id)
-                        ]
+                        link = link_by_end_id_tuple_dict[(operator.id, operator_input.id)]
                     except KeyError:
                         logger.warning(
                             "Found no workflow content input and no link end connector for "
@@ -833,15 +809,15 @@ class WorkflowContent(BaseModel):
         Delete unnecessary named workflow content outputs based on the link ending at them.
         """
         try:
-            links_by_start_id_tuple_dict: dict[
-                tuple[UUID | None, UUID], list[Link]
-            ] = values["links_by_start_id_tuple_dict"]
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+                "links_by_start_id_tuple_dict"
+            ]
             link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
                 "link_by_end_id_tuple_dict"
             ]
-            operator_output_by_id_tuple_dict: dict[
-                tuple[UUID, UUID], OperatorOutput
-            ] = values["operator_output_by_id_tuple_dict"]
+            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = values[
+                "operator_output_by_id_tuple_dict"
+            ]
         except KeyError as error:
             raise ValueError(
                 "Cannot clean up unlinked inputs "
@@ -863,8 +839,7 @@ class WorkflowContent(BaseModel):
             if (
                 wf_output.name is not None
                 and wf_output.name != ""
-                and named_wf_output_unnecessary(wf_output, link_by_end_id_tuple_dict)
-                is True
+                and named_wf_output_unnecessary(wf_output, link_by_end_id_tuple_dict) is True
             ):
                 remove_wf_outputs.append(wf_output)
 
@@ -884,9 +859,9 @@ class WorkflowContent(BaseModel):
         """
         try:
             operators: list[Operator] = values["operators"]
-            links_by_start_id_tuple_dict: dict[
-                tuple[UUID | None, UUID], list[Link]
-            ] = values["links_by_start_id_tuple_dict"]
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+                "links_by_start_id_tuple_dict"
+            ]
         except KeyError as error:
             raise ValueError(
                 "Cannot add workflow content outputs for unlinked operator outputs "
@@ -894,23 +869,18 @@ class WorkflowContent(BaseModel):
             ) from error
 
         wf_output_by_operator_and_connector_id_dict = {
-            (wf_output.operator_id, wf_output.connector_id): wf_output
-            for wf_output in outputs
+            (wf_output.operator_id, wf_output.connector_id): wf_output for wf_output in outputs
         }
 
         for operator in operators:
             for operator_output in operator.outputs:
                 try:
-                    wf_output_by_operator_and_connector_id_dict[
-                        (operator.id, operator_output.id)
-                    ]
+                    wf_output_by_operator_and_connector_id_dict[(operator.id, operator_output.id)]
                 except KeyError:
                     try:
-                        links_starting_at_operator_output = (
-                            links_by_start_id_tuple_dict[
-                                (operator.id, operator_output.id)
-                            ]
-                        )
+                        links_starting_at_operator_output = links_by_start_id_tuple_dict[
+                            (operator.id, operator_output.id)
+                        ]
                     except KeyError:
                         logger.warning(
                             "Found no workflow content output and no link start connector for "
@@ -928,9 +898,7 @@ class WorkflowContent(BaseModel):
                         outputs.append(wf_output)
                         continue
                     # If operator output is linked to operator input nothing needs to be done
-                    if None in (
-                        link.end.operator for link in links_starting_at_operator_output
-                    ):
+                    if None in (link.end.operator for link in links_starting_at_operator_output):
                         logger.warning(
                             "Found no workflow content output but a link with start connector "
                             "referencing a workflow content output for operator '%s' output '%s'! "
@@ -991,9 +959,7 @@ class WorkflowContent(BaseModel):
         workflow_content_input_by_id_dict: dict[UUID, WorkflowContentIO] = {
             wf_input.id: wf_input for wf_input in inputs
         }
-        workflow_content_input_by_id_dict.update(
-            {wf_input.id: wf_input for wf_input in constants}
-        )
+        workflow_content_input_by_id_dict.update({wf_input.id: wf_input for wf_input in constants})
         workflow_content_output_by_id_dict: dict[UUID, WorkflowContentOutput] = {
             wf_output.id: wf_output for wf_output in outputs
         }
@@ -1001,8 +967,7 @@ class WorkflowContent(BaseModel):
         remove_links = []
         for link in links:
             if (
-                link.start.operator
-                is None  # the link is from a worklfo input to an operator input
+                link.start.operator is None  # the link is from a worklfo input to an operator input
                 and outer_link_invalid_due_to_workflow_input(
                     link, workflow_content_input_by_id_dict
                 )

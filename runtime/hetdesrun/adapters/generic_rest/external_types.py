@@ -3,7 +3,6 @@
 The generic rest adapter "types" differ from the types used in the designer.
 """
 
-
 import json
 import logging
 from enum import Enum

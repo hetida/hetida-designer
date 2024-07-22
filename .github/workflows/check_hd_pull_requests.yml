@@ -26,10 +26,10 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Setup Python
-        uses: actions/setup-python@v4.0.0
+        uses: actions/setup-python@v5.0.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
-          python-version: "3.11"
+          python-version: "3.12"
           # Used to specify a package manager for caching in the default directory. Supported values: pip, pipenv, poetry.
           cache: pip
 
@@ -41,7 +41,7 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"/runtime
-          export PIPT_PYTHON_INTERPRETER="python3.11"
+          export PIPT_PYTHON_INTERPRETER="python3.12"
           echo "Syncinc dependencies"
           ./pipt sync
           echo "Running checks..."

@@ -44,9 +44,7 @@ async def send_data(
         # to be attached to
 
         id_to_use = (
-            filtered_sink.ref_key
-            if filtered_sink.ref_key is not None
-            else filtered_sink.ref_id
+            filtered_sink.ref_key if filtered_sink.ref_key is not None else filtered_sink.ref_id
         )
 
         write_table_to_provided_sink_id(data, str(id_to_use))

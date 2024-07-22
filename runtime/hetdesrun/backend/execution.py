@@ -91,22 +91,16 @@ def nested_nodes(
         for operator in workflow.operators:
             if operator.type == Type.COMPONENT:
                 sub_nodes.append(
-                    tr_operators[operator.id].to_component_node(
-                        operator.id, operator.name
-                    )
+                    tr_operators[operator.id].to_component_node(operator.id, operator.name)
                 )
             if operator.type == Type.WORKFLOW:
                 tr_workflow = tr_operators[operator.id]
                 assert isinstance(  # noqa: S101
                     tr_workflow.content, WorkflowContent
                 )  # hint for mypy
-                operator_ids = [
-                    operator.id for operator in tr_workflow.content.operators
-                ]
+                operator_ids = [operator.id for operator in tr_workflow.content.operators]
                 tr_children = {
-                    id_: all_nested_tr[id_]
-                    for id_ in operator_ids
-                    if id_ in all_nested_tr
+                    id_: all_nested_tr[id_] for id_ in operator_ids if id_ in all_nested_tr
                 }
                 sub_nodes.append(
                     tr_workflow.content.to_workflow_node(
@@ -145,12 +139,8 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
                 str(exec_by_id_input.id),
             )
         else:
-            transformation_revision = read_single_transformation_revision(
-                exec_by_id_input.id
-            )
-            logger.info(
-                "found transformation revision with id %s", str(exec_by_id_input.id)
-            )
+            transformation_revision = read_single_transformation_revision(exec_by_id_input.id)
+            logger.info("found transformation revision with id %s", str(exec_by_id_input.id))
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 
@@ -159,9 +149,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         assert isinstance(  # noqa: S101
             tr_workflow.content, WorkflowContent
         )  # hint for mypy
-        nested_transformations = {
-            tr_workflow.content.operators[0].id: transformation_revision
-        }
+        nested_transformations = {tr_workflow.content.operators[0].id: transformation_revision}
     else:
         tr_workflow = transformation_revision
         nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
@@ -177,12 +165,10 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     try:
         execution_input = WorkflowExecutionInput(
             code_modules=[
-                tr_component.to_code_module()
-                for tr_component in nested_components.values()
+                tr_component.to_code_module() for tr_component in nested_components.values()
             ],
             components=[
-                component.to_component_revision()
-                for component in nested_components.values()
+                component.to_component_revision() for component in nested_components.values()
             ],
             workflow=workflow_node,
             configuration=ConfigurationInput(
@@ -218,9 +204,7 @@ async def run_execution_input(
         "run_execution_input"
     )
 
-    output_types = {
-        output.name: output.type for output in execution_input.workflow.outputs
-    }
+    output_types = {output.name: output.type for output in execution_input.workflow.outputs}
 
     execution_result: WorkflowExecutionResult
 
@@ -246,9 +230,7 @@ async def run_execution_input(
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(
-                        execution_input.json()
-                    ),  # TODO: avoid double serialization.
+                    json=json.loads(execution_input.json()),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                     timeout=None,
@@ -277,9 +259,7 @@ async def run_execution_input(
 
     run_execution_input_measured_step.stop()
 
-    execution_response.measured_steps.run_execution_input = (
-        run_execution_input_measured_step
-    )
+    execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
     return execution_response
 
 
@@ -311,9 +291,7 @@ async def execute_transformation_revision(
     prep_exec_input_measured_step.stop()
 
     exec_resp_frontend_dto = await run_execution_input(execution_input)
-    exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
-        prep_exec_input_measured_step
-    )
+    exec_resp_frontend_dto.measured_steps.prepare_execution_input = prep_exec_input_measured_step
 
     return exec_resp_frontend_dto
 
@@ -325,9 +303,7 @@ async def perf_measured_execute_trafo_rev(
 
     Propagates all exceptions (expected: TrafoExecutionError and subclasses).
     """
-    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "internal_full"
-    )
+    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin("internal_full")
 
     # following line may raise exceptions (TrafoExecutionError and subclasses):
     exec_response = await execute_transformation_revision(exec_by_id)

@@ -89,9 +89,7 @@ class BlobStorageAdapterConfig(BaseSettings):
     )
 
     @validator("allow_bucket_creation")
-    def no_anonymous_bucket_creation(
-        cls, allow_bucket_creation: bool, values: dict
-    ) -> bool:
+    def no_anonymous_bucket_creation(cls, allow_bucket_creation: bool, values: dict) -> bool:
         anonymous = values["anonymous"]
         if anonymous is True:
             allow_bucket_creation = False  # noqa: F841

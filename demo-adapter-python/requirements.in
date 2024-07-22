@@ -1,11 +1,11 @@
 -c requirements-base.txt
 fastapi>=0.65.2
-uvicorn>=0.17.2
-uvloop
 gunicorn
 httptools
-pandas
-numpy
 httpx
+numpy
+pandas
 pydantic[dotenv]>=1.8.2,<2
 python-jose[cryptography]
+uvicorn>=0.17.2
+uvloop

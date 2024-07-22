@@ -50,9 +50,7 @@ def prepare_validate_multitsframe(
         ts_table_config.timestamp_col_name,
     ] + ts_table_config.writable_value_cols
 
-    if not set(expected_columns).issubset(
-        set(data_to_send.columns)
-    ):  # pragma: no cover
+    if not set(expected_columns).issubset(set(data_to_send.columns)):  # pragma: no cover
         msg = (
             f"Could not find expected columns {expected_columns}"
             f" in the provided dataframe columns {data_to_send.columns}."

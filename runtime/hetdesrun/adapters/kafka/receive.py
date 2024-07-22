@@ -45,13 +45,10 @@ async def receive_kafka_message(
     topic = kafka_config.topic
 
     multi: bool = not (
-        len(receive_message_dict) == 1
-        and next(iter(receive_message_dict.keys())) is None
+        len(receive_message_dict) == 1 and next(iter(receive_message_dict.keys())) is None
     )
 
-    if (
-        msg_object := _get_kafka_messages_context().get(kafka_config_key, None)
-    ) is not None:
+    if (msg_object := _get_kafka_messages_context().get(kafka_config_key, None)) is not None:
         if multi and isinstance(msg_object, KafkaSingleValueMessage):
             msg = (
                 f"Found kafka message stored in context for kafka_config_key {kafka_config_key}, "

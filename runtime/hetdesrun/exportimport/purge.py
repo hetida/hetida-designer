@@ -25,9 +25,7 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
         revision_group_ids.add(tr.revision_group_id)
 
     for revision_group_id in revision_group_ids:
-        deprecate_all_but_latest_in_group(
-            revision_group_id, directly_in_db=directly_in_db
-        )
+        deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=directly_in_db)
 
 
 def delete_drafts(directly_in_db: bool = False) -> None:
@@ -41,9 +39,7 @@ def delete_drafts(directly_in_db: bool = False) -> None:
 
 def delete_unused_deprecated(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params=FilterParams(
-            state=State.DISABLED, include_dependencies=False, unused=True
-        ),
+        params=FilterParams(state=State.DISABLED, include_dependencies=False, unused=True),
         directly_from_db=directly_in_db,
     )
 

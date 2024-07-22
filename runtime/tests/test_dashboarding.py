@@ -22,9 +22,7 @@ def _db_with_multits_viz_component(mocked_clean_test_db_session):
 
 @pytest.fixture()
 def activate_auth():
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", True
-    ) as _fixture:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", True) as _fixture:
         yield _fixture
 
 
@@ -35,9 +33,7 @@ def app_with_auth(activate_auth):
 
 @pytest.fixture
 def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(
-        transport=ASGITransport(app=app_with_auth), base_url="http://test"
-    )
+    return AsyncClient(transport=ASGITransport(app=app_with_auth), base_url="http://test")
 
 
 @pytest.mark.asyncio
@@ -52,9 +48,7 @@ async def test_unauthorized_dashboard_endpoint(
 
         assert response.status_code == 200
         assert "<html" in response.text
-        assert (
-            "gridstack" in response.text
-        )  # actually a dashboard and not the login stub
+        assert "gridstack" in response.text  # actually a dashboard and not the login stub
 
 
 @pytest.mark.asyncio
@@ -81,6 +75,4 @@ async def test_authorized_dashboard_endpoint(
         )
         assert response.status_code == 200
         assert "<html" in response.text
-        assert (
-            "gridstack" not in response.text
-        )  # actually a dashboard and not the login stub
+        assert "gridstack" not in response.text  # actually a dashboard and not the login stub

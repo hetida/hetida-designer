@@ -10,16 +10,20 @@ Notes:
 * The dashboard here is provided as pure html with inline styles containing pure javascript while loading additional js libraries and CSS from external CDNs. In a real use case you would of course use a modern frontend framework with plotly wrapper components and accompanying build system and so on.
 
 ## Basics
-The dashboard is currently not reachable from the frontend directly. Instead you have to manually enter the url:
+The dashboard is currently backend-generated and reachable via the url:
 
 ```
 URL_TO_BACKEND-API/transformations/<id>/dashboard
 ```
 The id is the corresponding transformation revision id which you can find in the "Edit Details" dialog of a component / workflow. E.g. http://localhost/hdapi/transformations/28120522-a6a5-418f-a658-ab19d5beefe2/dashboard is the url of the multitsframe plot component's dashboard when working with the default docker-compose setup.
 
+This link to the dashboard can always be found in the details dialog of your transformation in the frontend:
+
+<img src="./assets/dashboarding_link_in_details_dialog.png" width=400 data-align="center">
+
 ## Usage
 * The dashboard is tied to the current test wiring which you set in the hd frontend's execution dialog. 
-    * In particular you need to execute your component / workflow there at least one time in order for the test wiring to be stored. Before that, the dashboard cannot work. 
+    * In particular you need to execute your component / workflow there at least one time in order for the test wiring to be stored. Before that, the dashboard cannot work.
     * When you change the component/workflow you should do so again to ensure that the dashboard will have a fitting/correct wiring.
 * The dashboard shows all plotly outputs of the component / workflow. It (currently) ignores all other outputs!
 * You can rearrange the plots by dragging them around using their titlebar or resize them using the resize handles in the bottom corners. The arrangement is saved automatically as part of the test wiring.

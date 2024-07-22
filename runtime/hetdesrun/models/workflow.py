@@ -41,12 +41,13 @@ class WorkflowInput(UnnamedInput):
 
     @validator("constant", always=True)
     def name_or_constant_data_provided(  # type: ignore
-        cls, v, values, **kwargs  # noqa: ARG002
+        cls,
+        v,
+        values,
+        **kwargs,  # noqa: ARG002
     ):
         if values["name"] is None and ((not v) or values["constantValue"] is None):
-            raise ValueError(
-                "Either name or constant data must be provided for Workflow input."
-            )
+            raise ValueError("Either name or constant data must be provided for Workflow input.")
 
         if values["name"] is not None and v:
             raise ValueError("If name is specified constant must be false.")

@@ -21,9 +21,7 @@ async def test_access_sql_adapter_info(
 async def test_sql_adapter_get_structure_from_webservice(
     open_async_test_client_with_sql_adapter,
 ):
-    response = await open_async_test_client_with_sql_adapter.get(
-        "/adapters/sql/structure"
-    )
+    response = await open_async_test_client_with_sql_adapter.get("/adapters/sql/structure")
 
     assert response.status_code == 200
 
@@ -53,9 +51,7 @@ async def test_sql_adapter_get_structure_from_webservice(
 async def test_sql_adapter_sources(
     open_async_test_client_with_sql_adapter,
 ):
-    response = await open_async_test_client_with_sql_adapter.get(
-        "/adapters/sql/sources"
-    )
+    response = await open_async_test_client_with_sql_adapter.get("/adapters/sql/sources")
 
     assert response.status_code == 200
 

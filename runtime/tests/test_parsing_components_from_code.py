@@ -9,9 +9,7 @@ from hetdesrun.trafoutils.io.load import transformation_revision_from_python_cod
 
 
 @pytest.mark.asyncio
-async def test_default_values_with_metadata(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_default_values_with_metadata(async_test_client, mocked_clean_test_db_session):
     py_path = os.path.join(
         "tests",
         "data",
@@ -84,11 +82,7 @@ async def put_trafo_via_multiple_put_endpoint(
     response = await open_async_client.put(
         "/api/transformations",
         params={"overwrite_released": True, "update_code": update_code},
-        json=[
-            json.loads(trafo.json())
-            if isinstance(trafo, TransformationRevision)
-            else trafo
-        ],
+        json=[json.loads(trafo.json()) if isinstance(trafo, TransformationRevision) else trafo],
     )
     assert response.status_code == 207
     assert response.json()[str(trafo_id)]["status"] == "SUCCESS"
@@ -156,9 +150,7 @@ async def get_check_trafo_via_multiple_get_endpoint(
 
 
 @pytest.mark.asyncio
-async def test_component_trafo_code_equivalence(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_component_trafo_code_equivalence(async_test_client, mocked_clean_test_db_session):
     example_py_path = os.path.join(
         "tests",
         "data",
@@ -180,20 +172,14 @@ async def test_component_trafo_code_equivalence(
             await put_trafo_via_multiple_put_endpoint(tr_from_py, ac)
             await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
             await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
-            await get_check_trafo_via_multiple_get_endpoint(
-                tr_from_py, ac, components_as_code=True
-            )
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac, components_as_code=True)
 
             await put_trafo_via_multiple_put_endpoint(code, ac, trafo_id=tr_from_py.id)
             await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
             await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
-            await get_check_trafo_via_multiple_get_endpoint(
-                tr_from_py, ac, components_as_code=True
-            )
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac, components_as_code=True)
 
             await put_trafo_via_single_put_endpoint(tr_from_py, ac)
             await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
             await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
-            await get_check_trafo_via_multiple_get_endpoint(
-                tr_from_py, ac, components_as_code=True
-            )
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac, components_as_code=True)

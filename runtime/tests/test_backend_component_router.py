@@ -214,15 +214,11 @@ async def test_get_component_revision_by_id_with_valid_component(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
-        response = await ac.get(
-            "/api/components/" + str(get_uuid_from_seed("component 1"))
-        )
+        response = await ac.get("/api/components/" + str(get_uuid_from_seed("component 1")))
     assert response.status_code == 200
     assert response.json() == dto_json_component_1
 
@@ -255,9 +251,7 @@ async def test_update_transformation_revision_from_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -297,9 +291,7 @@ async def test_update_transformation_revision_from_released_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_2
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_2).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -316,9 +308,7 @@ async def test_publish_transformation_revision_from_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -352,9 +342,7 @@ async def test_deprecate_transformation_revision_from_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_2
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_2).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -378,9 +366,7 @@ async def test_delete_transformation_revision_from_component_dto(
     async_test_client, mocked_clean_test_db_session
 ):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -392,13 +378,9 @@ async def test_delete_transformation_revision_from_component_dto(
 
 
 @pytest.mark.asyncio
-async def test_set_test_wiring_for_component_dto(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_set_test_wiring_for_component_dto(async_test_client, mocked_clean_test_db_session):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1_update
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1_update).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -411,13 +393,9 @@ async def test_set_test_wiring_for_component_dto(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_component_dto(
-    async_test_client, mocked_clean_test_db_session
-):
+async def test_execute_for_component_dto(async_test_client, mocked_clean_test_db_session):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **valid_component_dto_dict
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**valid_component_dto_dict).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -545,9 +523,7 @@ async def test_execute_for_component_with_nan_and_nat_input(
 
         assert response_nan.status_code == 200
         assert "output_results_by_output_name" in response_nan.json()
-        output_results_by_output_name = response_nan.json()[
-            "output_results_by_output_name"
-        ]
+        output_results_by_output_name = response_nan.json()["output_results_by_output_name"]
         assert "output" in output_results_by_output_name
         assert len(output_results_by_output_name["output"]) == 3
         assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
@@ -559,14 +535,9 @@ async def test_execute_for_component_with_nan_and_nat_input(
 
         assert response_nat.status_code == 200
         assert "output_results_by_output_name" in response_nat.json()
-        output_results_by_output_name = response_nat.json()[
-            "output_results_by_output_name"
-        ]
+        output_results_by_output_name = response_nat.json()["output_results_by_output_name"]
         assert "output" in output_results_by_output_name
+        assert len(output_results_by_output_name["output"]["__data__"]) == 3  # split orient output
         assert (
-            len(output_results_by_output_name["output"]["__data__"]) == 3
-        )  # split orient output
-        assert (
-            output_results_by_output_name["output"]["__data__"]["data"][1]
-            == None  # noqa: E711
+            output_results_by_output_name["output"]["__data__"]["data"][1] == None  # noqa: E711
         )

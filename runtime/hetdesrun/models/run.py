@@ -58,9 +58,7 @@ class PerformanceMeasuredStep(BaseModel):
 
     def stop(self) -> None:
         if self.start is None:
-            raise ValueError(
-                f"Cannot stop measurement {self.name} if it was not started before!"
-            )
+            raise ValueError(f"Cannot stop measurement {self.name} if it was not started before!")
 
         self.end = datetime.datetime.now(datetime.timezone.utc)
         self.duration = self.end - self.start
@@ -82,8 +80,7 @@ class ConfigurationInput(BaseModel):
     name: str | None = None
     engine: ExecutionEngine = Field(
         ExecutionEngine.Plain,
-        description="one of "
-        + ", ".join(['"' + x.value + '"' for x in list(ExecutionEngine)]),
+        description="one of " + ", ".join(['"' + x.value + '"' for x in list(ExecutionEngine)]),
         example=ExecutionEngine.Plain,
     )
     run_pure_plot_operators: bool = Field(
@@ -131,9 +128,7 @@ class WorkflowExecutionInput(BaseModel):
     )
 
     @validator("components")
-    def components_unique(
-        cls, components: list[ComponentRevision]
-    ) -> list[ComponentRevision]:
+    def components_unique(cls, components: list[ComponentRevision]) -> list[ComponentRevision]:
         if len({c.uuid for c in components}) != len(components):
             raise ValueError("Components not unique!")
         return components
@@ -163,13 +158,9 @@ class WorkflowExecutionInput(BaseModel):
             ) from e
 
         # Check that every Workflow Input is wired:
-        wired_input_names = {
-            inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
-        }
+        wired_input_names = {inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings}
         dynamic_required_wf_input_names = [
-            wfi.name
-            for wfi in workflow.inputs
-            if wfi.constant is False and wfi.default is False
+            wfi.name for wfi in workflow.inputs if wfi.constant is False and wfi.default is False
         ]
         for wf_input_name in dynamic_required_wf_input_names:
             if not wf_input_name in wired_input_names:
@@ -178,9 +169,7 @@ class WorkflowExecutionInput(BaseModel):
                 )
 
         dynamic_optional_wf_input_names = [
-            wfi.name
-            for wfi in workflow.inputs
-            if wfi.constant is False and wfi.default is True
+            wfi.name for wfi in workflow.inputs if wfi.constant is False and wfi.default is True
         ]
         for wired_input_name in wired_input_names:
             if (
@@ -245,9 +234,7 @@ class HierarchyInWorkflow(BaseModel):
             by_name=hierarchical_name_string.split(HIERARCHY_SEPARATOR)[1:-1],
             by_id=[
                 UUID(operator_id)
-                for operator_id in hierarchical_id_string.split(HIERARCHY_SEPARATOR)[
-                    1:-1
-                ]
+                for operator_id in hierarchical_id_string.split(HIERARCHY_SEPARATOR)[1:-1]
             ],
         )
 
@@ -257,9 +244,7 @@ class OperatorInfo(BaseModel):
     hierarchy_in_workflow: HierarchyInWorkflow
 
     @classmethod
-    def from_runtime_execution_error(
-        cls, error: RuntimeExecutionError
-    ) -> "OperatorInfo":
+    def from_runtime_execution_error(cls, error: RuntimeExecutionError) -> "OperatorInfo":
         return OperatorInfo(
             transformation_info=TransformationInfo(
                 id=error.currently_executed_transformation_id,
@@ -304,11 +289,7 @@ class WorkflowExecutionError(BaseModel):
 def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
     last_trace = tb.extract_tb(exception.__traceback__)[-1]
     return ErrorLocation(
-        file=(
-            last_trace.filename
-            if last_trace.filename != "<string>"
-            else "COMPONENT CODE"
-        ),
+        file=(last_trace.filename if last_trace.filename != "<string>" else "COMPONENT CODE"),
         function_name=last_trace.name,
         line_number=last_trace.lineno,
     )
@@ -335,9 +316,7 @@ class WorkflowExecutionInfo(BaseModel):
     ) -> "WorkflowExecutionInfo":
         return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
-                type=(
-                    type(exception).__name__ if cause is None else type(cause).__name__
-                ),
+                type=(type(exception).__name__ if cause is None else type(cause).__name__),
                 message=str(exception) if cause is None else str(cause),
                 extra_information=(
                     exception.extra_information
@@ -345,9 +324,7 @@ class WorkflowExecutionInfo(BaseModel):
                     else None
                 ),
                 error_code=(
-                    exception.error_code
-                    if isinstance(exception, ComponentException)
-                    else None
+                    exception.error_code if isinstance(exception, ComponentException) else None
                 ),
                 process_stage=process_stage,
                 operator_info=(

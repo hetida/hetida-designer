@@ -12,9 +12,7 @@ async def run_workflow_with_client(workflow_json, open_async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_wiring_with_generic_rest_input(
-    input_json_with_wiring_with_input, async_test_client
-):
+async def test_wiring_with_generic_rest_input(input_json_with_wiring_with_input, async_test_client):
     async with async_test_client as client:
         json_with_wiring = deepcopy(input_json_with_wiring_with_input)
         json_with_wiring["workflow_wiring"]["input_wirings"] = [
@@ -33,9 +31,7 @@ async def test_wiring_with_generic_rest_input(
 
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.json = mock.Mock(
-            return_value={"key": "number", "value": 32, "dataType": "float"}
-        )
+        resp_mock.json = mock.Mock(return_value={"key": "number", "value": 32, "dataType": "float"})
         with mock.patch(  # noqa: SIM117
             "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
             return_value="https://hetida.de",
@@ -44,9 +40,7 @@ async def test_wiring_with_generic_rest_input(
                 "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
                 return_value=resp_mock,
             ) as _mocked_async_client_get:
-                status_code, output = await run_workflow_with_client(
-                    json_with_wiring, client
-                )
+                status_code, output = await run_workflow_with_client(json_with_wiring, client)
 
                 assert status_code == 200
 

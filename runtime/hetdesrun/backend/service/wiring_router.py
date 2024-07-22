@@ -32,9 +32,7 @@ wiring_router = HandleTrailingSlashAPIRouter(
     response_model_exclude_none=True,
     summary="Updates a wiring.",
     status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_201_CREATED: {"description": "Successfully updated the wiring"}
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully updated the wiring"}},
     deprecated=True,
 )
 async def update_wiring(
@@ -62,8 +60,8 @@ async def update_wiring(
     transformation_revision.test_wiring = updated_wiring_dto.to_wiring()
 
     try:
-        persisted_transformation_revision = (
-            update_or_create_single_transformation_revision(transformation_revision)
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            transformation_revision
         )
         logger.info("updated wiring for item with id %s", id)
     except DBIntegrityError as e:

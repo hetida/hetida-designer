@@ -98,15 +98,12 @@ async def test_consumption_mode(
 
     # Output that is not wired in consumption mode is just logged.
     # We therefore check that the passed through input occurs in the log
-    assert (
-        string_without_whitespace(
-            r"""
+    assert string_without_whitespace(
+        r"""
             "output_results_by_output_name": {
                 "output": {
                     "something": "test"
                 }
             }
         """
-        )
-        in string_without_whitespace(caplog.text)
-    )
+    ) in string_without_whitespace(caplog.text)

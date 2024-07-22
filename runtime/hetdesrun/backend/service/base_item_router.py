@@ -50,8 +50,7 @@ async def get_all_transformation_revisions(
         None,
         description="Set to get only transformation revisions in the specified type",
     ),
-    state: State
-    | None = Query(
+    state: State | None = Query(
         None,
         description="Set to get only transformation revisions in the specified state",
     ),
@@ -111,10 +110,8 @@ async def get_transformation_revision_by_id(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
-    transformation_revision_dto = (
-        TransformationRevisionFrontendDto.from_transformation_revision(
-            transformation_revision
-        )
+    transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
     )
     logger.debug(transformation_revision_dto.json())
 
@@ -128,9 +125,7 @@ async def get_transformation_revision_by_id(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Creates a new item.",
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_201_CREATED: {"description": "Successfully created the item"}
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully created the item"}},
     deprecated=True,
 )
 async def create_transformation_revision(
@@ -173,10 +168,8 @@ async def create_transformation_revision(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
-    persisted_transformation_dto = (
-        TransformationRevisionFrontendDto.from_transformation_revision(
-            persisted_transformation_revision
-        )
+    persisted_transformation_dto = TransformationRevisionFrontendDto.from_transformation_revision(
+        persisted_transformation_revision
     )
     logger.debug(persisted_transformation_dto.json())
 
@@ -190,9 +183,7 @@ async def create_transformation_revision(
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Updates basic attributes of a component or workflow.",
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_201_CREATED: {"description": "Successfully updated the item"}
-    },
+    responses={status.HTTP_201_CREATED: {"description": "Successfully updated the item"}},
     deprecated=True,
 )
 async def update_transformation_revision(
@@ -231,9 +222,7 @@ async def update_transformation_revision(
     existing_transformation_revision: TransformationRevision | None = None
 
     try:
-        existing_transformation_revision = read_single_transformation_revision(
-            id, log_error=False
-        )
+        existing_transformation_revision = read_single_transformation_revision(id, log_error=False)
         logger.info("found transformation revision %s", id)
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
@@ -244,21 +233,15 @@ async def update_transformation_revision(
         updated_transformation_revision.documentation = (
             existing_transformation_revision.documentation
         )
-        updated_transformation_revision.test_wiring = (
-            existing_transformation_revision.test_wiring
-        )
+        updated_transformation_revision.test_wiring = existing_transformation_revision.test_wiring
         updated_transformation_revision.released_timestamp = (
             existing_transformation_revision.released_timestamp
         )
-        updated_transformation_revision.content = (
-            existing_transformation_revision.content
-        )
+        updated_transformation_revision.content = existing_transformation_revision.content
 
     try:
-        persisted_transformation_revision = (
-            update_or_create_single_transformation_revision(
-                updated_transformation_revision
-            )
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            updated_transformation_revision
         )
         logger.info("updated base item %s", id)
     except DBIntegrityError as e:
@@ -268,10 +251,8 @@ async def update_transformation_revision(
     except ModelConstraintViolation as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
-    persisted_transformation_dto = (
-        TransformationRevisionFrontendDto.from_transformation_revision(
-            persisted_transformation_revision
-        )
+    persisted_transformation_dto = TransformationRevisionFrontendDto.from_transformation_revision(
+        persisted_transformation_revision
     )
     logger.debug(persisted_transformation_dto.json())
 

@@ -208,11 +208,9 @@ Dependencies: Node 14.21.3 and npm 6.14.x (other versions are not tested).
 3. Run `npm run start` to run the frontend on port 4200.
 
 The frontend subdirectory also contains end-to-end tests via playwright documented [here](./frontend/end2end_tests.md).
+
 #### Runtime and Backend
-
-> **Note**: The backend was rewritten in Python for version 0.7. It is now developed together with the runtime.
-
-Dependencies: Python 3.11 (other versions are not
+Dependencies: Python 3.12 (other versions are not
 tested, but higher versions will probably work as well). 
 
 You may need additional packages like a C compiler (e.g. gcc) depending on your

@@ -71,12 +71,8 @@ def find_all_nestings(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug(
-        "delete nestings of transformation revision %s if existing", str(workflow_id)
-    )
-    session.execute(
-        delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
-    )
+    logger.debug("delete nestings of transformation revision %s if existing", str(workflow_id))
+    session.execute(delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id))
 
 
 def delete_single_nesting(
@@ -117,9 +113,7 @@ def update_nesting(
         )
 
         if child.type == Type.WORKFLOW:
-            descendants = find_all_nested_transformation_revisions(
-                session, child.transformation_id
-            )
+            descendants = find_all_nested_transformation_revisions(session, child.transformation_id)
             for descendant in descendants:
                 add_single_nesting(
                     session,
@@ -141,6 +135,4 @@ def update_or_create_nesting(transformation_revision: TransformationRevision) ->
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
 
-            update_nesting(
-                session, transformation_revision.id, transformation_revision.content
-            )
+            update_nesting(session, transformation_revision.id, transformation_revision.content)

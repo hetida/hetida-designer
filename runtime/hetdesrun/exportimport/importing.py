@@ -66,9 +66,7 @@ def import_importable(
         raise_on_missing_dependency=raise_on_missing_dependency,
     )
 
-    trafos_to_process_dict = {
-        trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process
-    }
+    trafos_to_process_dict = {trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process}
 
     success_per_trafo: dict[UUID | str, TrafoUpdateProcessSummary] = {
         trafo.id: (
@@ -139,8 +137,7 @@ def import_importable(
 
     if multi_import_config.deprecate_older_revisions:
         revision_group_ids = {
-            transformation.revision_group_id
-            for _, transformation in trafos_to_process_dict.items()
+            transformation.revision_group_id for _, transformation in trafos_to_process_dict.items()
         }
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
@@ -212,14 +209,11 @@ def import_transformations(
 
     if deprecate_older_revisions:
         revision_group_ids = {
-            transformation.revision_group_id
-            for _, transformation in transformation_dict.items()
+            transformation.revision_group_id for _, transformation in transformation_dict.items()
         }
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest_in_group(
-                revision_group_id, directly_in_db=directly_into_db
-            )
+            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=directly_into_db)
 
 
 def generate_import_order_file(

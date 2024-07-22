@@ -141,14 +141,10 @@ dto_json_wiring = {
 @pytest.mark.asyncio
 async def test_update_wiring(async_test_client, mocked_clean_test_db_session):
     store_single_transformation_revision(
-        ComponentRevisionFrontendDto(
-            **dto_json_component_1
-        ).to_transformation_revision()
+        ComponentRevisionFrontendDto(**dto_json_component_1).to_transformation_revision()
     )
     store_single_transformation_revision(
-        WorkflowRevisionFrontendDto(
-            **dto_json_workflow_2_update
-        ).to_transformation_revision()
+        WorkflowRevisionFrontendDto(**dto_json_workflow_2_update).to_transformation_revision()
     )
 
     async with async_test_client as ac:
@@ -159,6 +155,4 @@ async def test_update_wiring(async_test_client, mocked_clean_test_db_session):
 
     assert response.status_code == 200
     assert len(response.json()["inputWirings"]) == len(dto_json_wiring["inputWirings"])
-    assert len(response.json()["outputWirings"]) == len(
-        dto_json_wiring["outputWirings"]
-    )
+    assert len(response.json()["outputWirings"]) == len(dto_json_wiring["outputWirings"])
