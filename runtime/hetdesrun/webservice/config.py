@@ -343,7 +343,10 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/sql,"
         "kafka|Kafka Adapter"
         "|http://localhost:8090/adapters/kafka"
-        "|http://localhost:8090/adapters/kafka",
+        "|http://localhost:8090/adapters/kafka,"
+        "virtual-structure-adapter|Virtual Structure Adapter"
+        "|http://localhost:8090/adapters/vst"
+        "|http://localhost:8090/adapters/vst",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
