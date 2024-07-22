@@ -52,6 +52,19 @@ async def get_single_thingnode_endpoint(node_id: UUID) -> StructureThingNode:
 
 
 @virtual_structure_adapter_router.get(
+    "/thingNodes/{node_id}/metadata/",
+    response_model=list,
+    dependencies=[],
+)
+async def get_thingnode_metadata_endpoint(node_id: UUID) -> list:  # noqa: ARG001
+    """Get metadata attached to thing nodes
+
+    This adapter does not implement metadata yet.
+    """
+    return []
+
+
+@virtual_structure_adapter_router.get(
     "/sources/{source_id:path}",
     response_model=StructureVirtualSource,
     dependencies=[],
@@ -69,6 +82,19 @@ async def get_single_source_endpoint(source_id: UUID) -> StructureVirtualSource:
 
 
 @virtual_structure_adapter_router.get(
+    "/sources/{source_id:path}/metadata/",
+    response_model=list,
+    dependencies=[],
+)
+async def get_source_metadata_endpoint(source_id: UUID) -> list:  # noqa: ARG001
+    """Get metadata attached to sources
+
+    This adapter does not implement metadata yet.
+    """
+    return []
+
+
+@virtual_structure_adapter_router.get(
     "/sinks/{sink_id:path}",
     response_model=StructureVirtualSink,
     dependencies=[],
@@ -83,3 +109,16 @@ async def get_single_sink_endpoint(sink_id: UUID) -> StructureVirtualSink:
         ) from exc
 
     return sink
+
+
+@virtual_structure_adapter_router.get(
+    "/sinks/{sink_id:path}/metadata/",
+    response_model=list,
+    dependencies=[],
+)
+async def get_sink_metadata_endpoint(sink_id: UUID) -> list:  # noqa: ARG001
+    """Get metadata attached to sinks
+
+    This adapter does not implement metadata yet.
+    """
+    return []
