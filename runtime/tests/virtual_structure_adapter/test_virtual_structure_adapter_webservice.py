@@ -1,7 +1,6 @@
 import pytest
 
 
-@pytest.mark.skip(reason="Why is the UUID an unprocessable entity?")
 @pytest.mark.asyncio
 async def test_vst_adapter_get_structure_with_none_from_webservice(
     async_test_client_with_vst_adapter,
