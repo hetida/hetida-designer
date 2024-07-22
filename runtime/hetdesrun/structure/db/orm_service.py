@@ -69,7 +69,7 @@ def store_single_source(source: Source) -> None:
 
 def fetch_source_by_id(
     session: SQLAlchemySession,
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> SourceOrm:
     result: SourceOrm | None = session.execute(
@@ -86,7 +86,7 @@ def fetch_source_by_id(
 
 
 def update_source(
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     source_update: Source,
     log_error: bool = True,
 ) -> Source | None:
@@ -123,7 +123,7 @@ def update_source(
             raise
 
 
-def delete_source(id: int, log_error: bool = True) -> None:  # noqa: A002
+def delete_source(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             source = fetch_source_by_id(session, id, log_error)
@@ -161,7 +161,7 @@ def store_single_sink(sink: Sink) -> None:
 
 def fetch_sink_by_id(
     session: SQLAlchemySession,
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> SinkOrm:
     result: SinkOrm | None = session.execute(
@@ -178,7 +178,7 @@ def fetch_sink_by_id(
 
 
 def update_sink(
-    id: int,  # noqa: A002
+    id: UUID,  # noqa: A002
     sink_update: Sink,
     log_error: bool = True,
 ) -> Sink | None:
@@ -215,7 +215,7 @@ def update_sink(
             raise
 
 
-def delete_sink(id: int, log_error: bool = True) -> None:  # noqa: A002
+def delete_sink(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
             sink = fetch_sink_by_id(session, id, log_error)
