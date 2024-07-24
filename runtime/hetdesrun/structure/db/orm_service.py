@@ -29,6 +29,9 @@ from hetdesrun.structure.models import (
 logger = logging.getLogger(__name__)
 
 
+# Fetch Functions
+
+
 def fetch_all_element_types(session: SQLAlchemySession) -> list[ElementTypeOrm]:
     return session.query(ElementTypeOrm).all()
 
@@ -45,26 +48,91 @@ def fetch_all_sinks(session: SQLAlchemySession) -> list[SinkOrm]:
     return session.query(SinkOrm).all()
 
 
-# Source Services
+def fetch_et_by_id(
+    session: SQLAlchemySession,
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> ElementTypeOrm:
+    result: ElementTypeOrm | None = (
+        session.query(ElementTypeOrm).filter(ElementTypeOrm.id == id).one_or_none()
+    )
+
+    if result is None:
+        msg = f"Found no element type in database with id {id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
 
 
-def add_source(session: SQLAlchemySession, source_orm: SourceOrm) -> None:
-    try:
-        session.add(source_orm)
-        session.flush()
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store source "
-            f"with id {source_orm.id}. Error was:\n{str(e)}"
-        )
+def fetch_et_by_external_id(
+    session: SQLAlchemySession,
+    external_id: str,
+    log_error: bool = True,
+) -> ElementTypeOrm:
+    result: ElementTypeOrm | None = (
+        session.query(ElementTypeOrm)
+        .filter(ElementTypeOrm.external_id == external_id)
+        .one_or_none()
+    )
+
+    if result is None:
+        msg = f"Found no element type in database with external_id {external_id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
+
+
+def fetch_tn_by_id(
+    session: SQLAlchemySession,
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> ThingNodeOrm:
+    result: ThingNodeOrm | None = (
+        session.query(ThingNodeOrm).filter(ThingNodeOrm.id == id).one_or_none()
+    )
+
+    if result is None:
+        msg = f"Found no thing node in database with id {id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
+
+
+def fetch_tn_by_external_id(
+    session: SQLAlchemySession,
+    external_id: str,
+    log_error: bool = True,
+) -> ThingNodeOrm:
+    result: ThingNodeOrm | None = (
+        session.query(ThingNodeOrm).filter(ThingNodeOrm.external_id == external_id).one_or_none()
+    )
+
+    if result is None:
+        msg = f"Found no thing node in database with external_id {external_id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
+
+
+def fetch_tn_child_ids_by_parent_id(
+    session: SQLAlchemySession, parent_id: UUID | None, log_error: bool = True
+) -> list[UUID]:
+    results = session.query(ThingNodeOrm.id).filter(ThingNodeOrm.parent_node_id == parent_id).all()
+
+    if not results and log_error:
+        msg = f"No children found for thingnode with parent_id {parent_id}"
         logger.error(msg)
-        raise DBIntegrityError(msg) from e
+        raise DBNotFoundError(msg)
 
-
-def store_single_source(source: Source) -> None:
-    with get_session()() as session, session.begin():
-        orm_source = source.to_orm_model()
-        add_source(session, orm_source)
+    return [result[0] for result in results]
 
 
 def fetch_source_by_id(
@@ -72,9 +140,7 @@ def fetch_source_by_id(
     id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> SourceOrm:
-    result: SourceOrm | None = session.execute(
-        select(SourceOrm).where(SourceOrm.id == id)
-    ).scalar_one_or_none()
+    result: SourceOrm | None = session.query(SourceOrm).filter(SourceOrm.id == id).one_or_none()
 
     if result is None:
         msg = f"Found no source in database with id {id}"
@@ -85,78 +151,22 @@ def fetch_source_by_id(
     return result
 
 
-def update_source(
-    id: UUID,  # noqa: A002
-    source_update: Source,
+def fetch_source_by_external_id(
+    session: SQLAlchemySession,
+    external_id: str,
     log_error: bool = True,
-) -> Source | None:
-    with get_session()() as session, session.begin():
-        try:
-            source = session.query(SourceOrm).filter(SourceOrm.id == id).one()
-            if source:
-                source.name = source_update.name
-                source.type = source_update.type
-                source.visible = source_update.visible
-                source.preset_filters = source_update.preset_filters
-                source.passthrough_filters = source_update.passthrough_filters
-                source.adapter_key = source_update.adapter_key
-                source.source_id = source_update.source_id
-                return Source.from_orm_model(source)
-            return None
-        except NoResultFound as e:
-            session.rollback()
-            if log_error:
-                msg = f"No Source found with {id}."
-                logger.error(msg)
-            raise DBNotFoundError(f"No Source with id {id}") from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = f"Database integrity error while updating Source with id {id}: {str(e)}"
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = f"Unexpected error while updating Source with id {id}: {str(e)}"
-                logger.error(msg)
-            raise
+) -> SourceOrm:
+    result: SourceOrm | None = (
+        session.query(SourceOrm).filter(SourceOrm.external_id == external_id).one_or_none()
+    )
 
+    if result is None:
+        msg = f"Found no source in database with external_id {external_id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
 
-def delete_source(id: UUID, log_error: bool = True) -> None:  # noqa: A002
-    with get_session()() as session, session.begin():
-        try:
-            source = fetch_source_by_id(session, id, log_error)
-            session.delete(source)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = f"Unexpected error while deleteing Source with id {id}: {str(e)}"
-                logger.error(msg)
-            raise
-
-
-# Sink Service
-
-
-def add_sink(session: SQLAlchemySession, sink_orm: SinkOrm) -> None:
-    try:
-        session.add(sink_orm)
-        session.flush()
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store sink "
-            f"with id {sink_orm.id}. Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise DBIntegrityError(msg) from e
-
-
-def store_single_sink(sink: Sink) -> None:
-    with get_session()() as session, session.begin():
-        orm_sink = sink.to_orm_model()
-        add_sink(session, orm_sink)
+    return result
 
 
 def fetch_sink_by_id(
@@ -164,9 +174,7 @@ def fetch_sink_by_id(
     id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> SinkOrm:
-    result: SinkOrm | None = session.execute(
-        select(SinkOrm).where(SinkOrm.id == id)
-    ).scalar_one_or_none()
+    result: SinkOrm | None = session.query(SinkOrm).filter(SinkOrm.id == id).one_or_none()
 
     if result is None:
         msg = f"Found no sink in database with id {id}"
@@ -177,56 +185,138 @@ def fetch_sink_by_id(
     return result
 
 
-def update_sink(
-    id: UUID,  # noqa: A002
-    sink_update: Sink,
+def fetch_sink_by_external_id(
+    session: SQLAlchemySession,
+    external_id: str,
     log_error: bool = True,
-) -> Sink | None:
+) -> SinkOrm:
+    result: SinkOrm | None = (
+        session.query(SinkOrm).filter(SinkOrm.external_id == external_id).one_or_none()
+    )
+
+    if result is None:
+        msg = f"Found no source in database with external_id {external_id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return result
+
+
+# Element Type Services
+
+
+def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None:
+    try:
+        session.add(element_type_orm)
+        session.flush()
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to store ElementType "
+            f"with id {element_type_orm.id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def store_single_element_type(
+    element_type: ElementType,
+) -> None:
+    with get_session()() as session, session.begin():
+        orm_et = element_type.to_orm_model()
+        add_et(session, orm_et)
+
+
+def read_single_element_type(
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> ElementType:
+    with get_session()() as session, session.begin():
+        orm_et = fetch_et_by_id(session, id, log_error)
+        return ElementType.from_orm_model(orm_et)
+
+
+def read_single_element_type_by_external_id(
+    external_id: str,  # noqa: A002
+    log_error: bool = True,
+) -> ElementType:
+    with get_session()() as session, session.begin():
+        orm_et = fetch_et_by_external_id(session, external_id, log_error)
+        return ElementType.from_orm_model(orm_et)
+
+
+def delete_et(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
-            sink = session.query(SinkOrm).filter(SinkOrm.id == id).one()
-            if sink:
-                sink.name = sink_update.name
-                sink.type = sink_update.type
-                sink.visible = sink_update.visible
-                sink.preset_filters = sink_update.preset_filters
-                sink.passthrough_filters = sink_update.passthrough_filters
-                sink.adapter_key = sink_update.adapter_key
-                sink.sink_id = sink_update.sink_id
-                return Sink.from_orm_model(sink)
-            return None
+            element_type = fetch_et_by_id(session, id, log_error)
+            if element_type.thing_nodes:
+                session.rollback()
+                if log_error:
+                    msg = f"Cannot delete ElementType with id {id} as it has associated ThingNodes."
+                    logger.error(msg)
+                raise DBIntegrityError(msg)
+
+            session.delete(element_type)
+            session.commit()
         except NoResultFound as e:
             session.rollback()
             if log_error:
-                msg = f"No Sink found with {id}."
+                msg = f"No ElementType found with id {id}."
                 logger.error(msg)
-            raise DBNotFoundError(f"No Sink with id {id}") from e
+            raise DBNotFoundError(msg) from e
         except IntegrityError as e:
             session.rollback()
             if log_error:
-                msg = f"Database integrity error while updating Sink with id {id}: {str(e)}"
+                msg = f"Database integrity error while deleting Elementtype with id {id}: {str(e)}"
+                logger.error(msg)
+            raise DBIntegrityError(msg) from e
+
+
+def delete_et_cascade(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+    with get_session()() as session, session.begin():
+        try:
+            element_type = fetch_et_by_id(session, id, log_error)
+            for thing_node in element_type.thing_nodes:
+                session.delete(thing_node)
+            session.delete(element_type)
+            session.commit()
+        except NoResultFound as e:
+            session.rollback()
+            if log_error:
+                msg = f"No ElementType found with id {id}."
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
+        except IntegrityError as e:
+            session.rollback()
+            if log_error:
+                msg = f"Database integrity error while deleting ElementType with id {id}: {str(e)}"
                 logger.error(msg)
             raise DBIntegrityError(msg) from e
         except Exception as e:
             session.rollback()
             if log_error:
-                msg = f"Unexpected error while updating Sink with id {id}: {str(e)}"
+                msg = f"Unexpected error while deleting ElementType with id {id}: {str(e)}"
                 logger.error(msg)
             raise
 
 
-def delete_sink(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+def update_et(
+    id: UUID,  # noqa: A002
+    et_update: ElementType,
+    log_error: bool = True,
+) -> None:
     with get_session()() as session, session.begin():
         try:
-            sink = fetch_sink_by_id(session, id, log_error)
-            session.delete(sink)
-            session.commit()
-        except Exception as e:
+            element_type = fetch_et_by_id(session, id, log_error)
+            if element_type:
+                for attr, value in et_update.dict(exclude_unset=True).items():
+                    setattr(element_type, attr, value)
+        except NoResultFound as e:
             session.rollback()
+            msg = f"No ElementType found with id {id}."
             if log_error:
-                msg = f"Unexpected error while deleting Sink with id {id}: {str(e)}"
                 logger.error(msg)
-            raise
+            raise DBNotFoundError(msg) from e
 
 
 # Thing Node Services
@@ -251,59 +341,6 @@ def store_single_thingnode(
     with get_session()() as session, session.begin():
         orm_tn = thingnode.to_orm_model()
         add_tn(session, orm_tn)
-
-
-def fetch_tn_by_id(
-    session: SQLAlchemySession,
-    id: UUID,  # noqa: A002
-    log_error: bool = True,
-) -> ThingNodeOrm:
-    result: ThingNodeOrm | None = session.execute(
-        select(ThingNodeOrm).where(ThingNodeOrm.id == id)
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = f"Found no thing node in database with id {id}"
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
-
-
-def fetch_tn_by_external_id(
-    session: SQLAlchemySession,
-    external_id: str,  # noqa: A002
-    log_error: bool = True,
-) -> ThingNodeOrm:
-    result: ThingNodeOrm | None = session.execute(
-        select(ThingNodeOrm).where(ThingNodeOrm.external_id == external_id)
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = f"Found no thing node in database with external_id {external_id}"
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
-
-
-def fetch_tn_child_ids_by_parent_id(
-    session: SQLAlchemySession, parent_id: UUID | None, log_error: bool = True
-) -> list[UUID]:
-    results = (
-        session.execute(select(ThingNodeOrm.id).where(ThingNodeOrm.parent_node_id == parent_id))
-        .scalars()
-        .all()
-    )
-
-    if not results and log_error:
-        msg = f"No children found for thingnode with parent_id {parent_id}"
-        logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return list(results)
 
 
 def read_single_thingnode(
@@ -362,37 +399,21 @@ def update_tn(
     id: UUID,  # noqa: A002
     tn_update: ThingNode,
     log_error: bool = True,
-) -> ThingNode | None:
+) -> ThingNode:
     with get_session()() as session, session.begin():
         try:
             thingnode = fetch_tn_by_id(session, id, log_error)
             if thingnode:
-                thingnode.name = tn_update.name
-                thingnode.description = tn_update.description
-                thingnode.parent_node_id = tn_update.parent_node_id
-                thingnode.element_type_id = tn_update.element_type_id
-                thingnode.external_id = tn_update.external_id
-                thingnode.meta_data = tn_update.meta_data
-                return ThingNode.from_orm_model(thingnode)
-            return None
-        except DBNotFoundError as e:
+                for attr, value in tn_update.dict(exclude_unset=True).items():
+                    setattr(thingnode, attr, value)
+            session.flush()
+            return ThingNode.from_orm_model(thingnode)
+        except NoResultFound as e:
             session.rollback()
+            msg = f"No ThingNode found with {id}."
             if log_error:
-                msg = f"No ThingNode found with {id}."
                 logger.error(msg)
-            raise DBNotFoundError(f"No ThingNode with id {id}") from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = f"Database integrity error while updating ThingNode with id {id}: {str(e)}"
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-        except Exception as e:
-            session.rollback()
-            if log_error:
-                msg = f"Unexpected error while updating ThingNode with id {id}: {str(e)}"
-                logger.error(msg)
-            raise
+            raise DBNotFoundError(msg) from e
 
 
 def get_parent_tn_id(
@@ -482,134 +503,152 @@ def get_descendants_tn_ids(
     return descendant_ids
 
 
-# Element Type Services
+# Source Services
 
 
-def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None:
+def add_source(session: SQLAlchemySession, source_orm: SourceOrm) -> None:
     try:
-        session.add(element_type_orm)
+        session.add(source_orm)
         session.flush()
     except IntegrityError as e:
         msg = (
-            f"Integrity Error while trying to store ElementType "
-            f"with id {element_type_orm.id}. Error was:\n{str(e)}"
+            f"Integrity Error while trying to store source "
+            f"with id {source_orm.id}. Error was:\n{str(e)}"
         )
         logger.error(msg)
         raise DBIntegrityError(msg) from e
 
 
-def store_single_element_type(
-    element_type: ElementType,
-) -> None:
+def store_single_source(source: Source) -> None:
     with get_session()() as session, session.begin():
-        orm_et = element_type.to_orm_model()
-        add_et(session, orm_et)
+        orm_source = source.to_orm_model()
+        add_source(session, orm_source)
 
 
-def fetch_et_by_id(
-    session: SQLAlchemySession,
+def read_single_source(
     id: UUID,  # noqa: A002
     log_error: bool = True,
-) -> ElementTypeOrm:
-    result: ElementTypeOrm | None = session.execute(
-        select(ElementTypeOrm).where(ElementTypeOrm.id == id)
-    ).scalar_one_or_none()
-
-    if result is None:
-        msg = f"Found no element type in database with id {id}"
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg)
-
-    return result
+) -> Source:
+    with get_session()() as session, session.begin():
+        orm_source = fetch_source_by_id(session, id, log_error)
+        return Source.from_orm_model(orm_source)
 
 
-def read_single_element_type(
-    id: UUID,  # noqa: A002
+def read_single_source_by_external_id(
+    external_id: str,
     log_error: bool = True,
-) -> ElementType:
+) -> Source:
     with get_session()() as session, session.begin():
-        orm_et = fetch_et_by_id(session, id, log_error)
-        return ElementType.from_orm_model(orm_et)
+        orm_source = fetch_source_by_external_id(session, external_id, log_error)
+        return Source.from_orm_model(orm_source)
 
 
-def delete_et(id: UUID, log_error: bool = True) -> None:  # noqa: A002
-    with get_session()() as session, session.begin():
-        try:
-            element_type = fetch_et_by_id(session, id, log_error)
-            if element_type.thing_nodes:
-                session.rollback()
-                if log_error:
-                    msg = f"Cannot delete ElementType with id {id} as it has associated ThingNodes."
-                    logger.error(msg)
-                raise DBIntegrityError(msg)
-
-            session.delete(element_type)
-            session.commit()
-        except NoResultFound as e:
-            session.rollback()
-            if log_error:
-                msg = f"No ElementType found with id {id}."
-                logger.error(msg)
-            raise DBNotFoundError(msg) from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = f"Database integrity error while deleting Elementtype with id {id}: {str(e)}"
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
-
-
-def delete_et_cascade(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+def update_source(
+    id: UUID,  # noqa: A002
+    source_update: Source,
+    log_error: bool = True,
+) -> Source:
     with get_session()() as session, session.begin():
         try:
-            element_type = fetch_et_by_id(session, id, log_error)
-            for thing_node in element_type.thing_nodes:
-                session.delete(thing_node)
-            session.delete(element_type)
-            session.commit()
+            source = session.query(SourceOrm).filter(SourceOrm.id == id).one()
+            for attr, value in source_update.dict(exclude_unset=True).items():
+                setattr(source, attr, value)
+            session.flush()
+            return Source.from_orm_model(source)
         except NoResultFound as e:
             session.rollback()
+            msg = f"No Source found with id {id}."
             if log_error:
-                msg = f"No ElementType found with id {id}."
                 logger.error(msg)
             raise DBNotFoundError(msg) from e
-        except IntegrityError as e:
-            session.rollback()
-            if log_error:
-                msg = f"Database integrity error while deleting ElementType with id {id}: {str(e)}"
-                logger.error(msg)
-            raise DBIntegrityError(msg) from e
+
+
+def delete_source(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+    with get_session()() as session, session.begin():
+        try:
+            source = fetch_source_by_id(session, id, log_error)
+            session.delete(source)
+            session.commit()
         except Exception as e:
             session.rollback()
             if log_error:
-                msg = f"Unexpected error while deleting ElementType with id {id}: {str(e)}"
+                msg = f"Unexpected error while deleteing Source with id {id}: {str(e)}"
                 logger.error(msg)
             raise
 
 
-def update_et(
+# Sink Services
+
+
+def add_sink(session: SQLAlchemySession, sink_orm: SinkOrm) -> None:
+    try:
+        session.add(sink_orm)
+        session.flush()
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to store sink "
+            f"with id {sink_orm.id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def store_single_sink(sink: Sink) -> None:
+    with get_session()() as session, session.begin():
+        orm_sink = sink.to_orm_model()
+        add_sink(session, orm_sink)
+
+
+def read_single_sink(
     id: UUID,  # noqa: A002
-    et_update: ElementType,
     log_error: bool = True,
-) -> ElementTypeOrm | None:
+) -> Sink:
+    with get_session()() as session, session.begin():
+        orm_sink = fetch_sink_by_id(session, id, log_error)
+        return Sink.from_orm_model(orm_sink)
+
+
+def read_single_sink_by_external_id(
+    external_id: str,
+    log_error: bool = True,
+) -> Sink:
+    with get_session()() as session, session.begin():
+        orm_sink = fetch_sink_by_external_id(session, external_id, log_error)
+        return Sink.from_orm_model(orm_sink)
+
+
+def update_sink(
+    id: UUID,  # noqa: A002
+    sink_update: Sink,
+    log_error: bool = True,
+) -> Sink:
     with get_session()() as session, session.begin():
         try:
-            element_type = fetch_et_by_id(session, id, log_error)
-            if element_type:
-                element_type.name = et_update.name
-                element_type.description = et_update.description
-                element_type.external_id = et_update.external_id
-                element_type.stakeholder_key = et_update.stakeholder_key
-                session.commit()
-                return element_type
+            sink = session.query(SinkOrm).filter(SinkOrm.id == id).one()
+            for attr, value in sink_update.dict(exclude_unset=True).items():
+                setattr(sink, attr, value)
+            session.flush()
+            return Sink.from_orm_model(sink)
+        except NoResultFound as e:
+            session.rollback()
+            msg = f"No Sink found with id {id}."
+            if log_error:
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
+
+
+def delete_sink(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+    with get_session()() as session, session.begin():
+        try:
+            sink = fetch_sink_by_id(session, id, log_error)
+            session.delete(sink)
+            session.commit()
         except Exception as e:
             session.rollback()
             if log_error:
-                msg = f"Unexpected error while updating ElementType with id {id}: {str(e)}"
+                msg = f"Unexpected error while deleting Sink with id {id}: {str(e)}"
                 logger.error(msg)
             raise
-    return None
 
 
 # Structure Services
@@ -759,3 +798,12 @@ def update_structure(complete_structure: CompleteStructure) -> None:
         fill_source_sink_associations(complete_structure, session)
 
         session.flush()
+
+
+def is_database_empty(session: SQLAlchemySession) -> bool:
+    element_types = fetch_all_element_types(session)
+    thing_nodes = fetch_all_thing_nodes(session)
+    sources = fetch_all_sources(session)
+    sinks = fetch_all_sinks(session)
+
+    return not (element_types or thing_nodes or sources or sinks)
