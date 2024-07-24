@@ -9,7 +9,7 @@ import { AuthService } from './auth/auth.service';
 import { BasicTestModule } from './basic-test.module';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
-import { HomeComponent } from './components/home/home.component';
+import { HomeTabComponent } from './components/home-tab/home-tab.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
@@ -47,7 +47,7 @@ describe('AppComponent', () => {
       ],
       declarations: [
         AppComponent,
-        HomeComponent,
+        HomeTabComponent,
         ToolbarComponent,
         NavigationContainerComponent,
         NavigationCategoryComponent,

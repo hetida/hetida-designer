@@ -1,0 +1,74 @@
+<header class="home-header">
+  <img class="home-header__logo" src="assets/svg/logo.svg" />
+  <h1>Welcome to hetida designer</h1>
+  <h3>{{ version }}</h3>
+  <p *ngIf="_userInfoText !== ''" class="user-info-text">{{ _userInfoText }}</p>
+</header>
+<nav class="home-content">
+  <ul class="home-content__item-list">
+    <li class="home-content__item noninteractive draft">
+      <mat-icon></mat-icon>
+      <span class="mat-body-strong"> Workflows </span>
+    </li>
+    <li class="home-content__item" (click)="newWorkflow()">
+      <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
+      new workflow...
+    </li>
+    <li
+      class="home-content__item"
+      *ngFor="let item of lastOpenedWorkflows | async"
+      (contextmenu)="
+        $event.preventDefault(); openTransformationContextMenu(item, $event)
+      "
+      (click)="select(item)"
+    >
+      <mat-icon
+        svgIcon="icon-workflow"
+        class="mat-icon-svg"
+        [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
+      >
+      </mat-icon>
+
+      <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
+    </li>
+  </ul>
+
+  <ul class="home-content__item-list">
+    <li class="home-content__item draft noninteractive">
+      <mat-icon></mat-icon>
+      <span class="mat-body-strong"> Components </span>
+    </li>
+    <li class="home-content__item" (click)="newComponent()">
+      <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
+      new component...
+    </li>
+    <li
+      class="home-content__item"
+      *ngFor="let item of lastOpenedComponents | async"
+      (click)="select(item)"
+      (contextmenu)="
+        $event.preventDefault(); openTransformationContextMenu(item, $event)
+      "
+    >
+      <mat-icon
+        svgIcon="icon-component"
+        class="mat-icon-svg"
+        [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
+      >
+      </mat-icon>
+
+      <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
+    </li>
+  </ul>
+
+  <ul class="home-content__item-list">
+    <li class="home-content__item noninteractive">
+      <span class="mat-body-strong"> Documentation </span>
+    </li>
+    <li class="home-content__item">
+      <a href="https://github.com/hetida/hetida-designer" target="_blank"
+        >hetida designer website</a
+      >
+    </li>
+  </ul>
+</nav>

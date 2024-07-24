@@ -13,7 +13,6 @@ import {
   ANIMATION_MODULE_TYPE,
   BrowserAnimationsModule
 } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { OwlMomentDateTimeModule } from '@danielmoncada/angular-datetime-picker-moment-adapter';
 import { StoreModule } from '@ngrx/store';
@@ -33,8 +32,9 @@ import {
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { environment } from '../environments/environment';
+// import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { AuthGuard } from './auth/auth.guard';
+import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { TransformationContextMenuComponent } from './components/transformation-context-menu/transformation-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
@@ -44,6 +44,7 @@ import { ContentViewComponent } from './components/content-view/content-view.com
 import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
+import { HomeTabComponent } from './components/home-tab/home-tab.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
@@ -66,17 +67,22 @@ import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 import { from, map } from 'rxjs';
+import { RouterModule } from '@angular/router';
+import { AuthGuard } from './auth/auth.guard';
+// import { RouterModule } from '@angular/router';
+// import { AuthGuard } from './auth/auth.guard';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
     map(config => {
       return {
+        postLoginRoute: '/home',
         authority: config.authConfig?.authority,
-        redirectUrl: window.location.origin,
+        redirectUrl: `${window.location.origin}/authcallback`,
+        postLogoutRedirectUri: window.location.origin,
         clientId: config.authConfig?.clientId,
         responseType: 'code',
         scope: 'openid',
-        postLogoutRedirectUri: window.location.origin,
         silentRenew: true,
         silentRenewUrl: `${window.location.origin}/silent-renew.html`,
         ...config.authConfig
@@ -90,12 +96,14 @@ const httpLoaderFactory = (configService: ConfigService) => {
 @NgModule({
   declarations: [
     AppComponent,
+    AuthCallbackComponent,
     NavigationCategoryComponent,
     NavigationContainerComponent,
     ConfirmDialogComponent,
     ComponentIODialogComponent,
     WorkflowIODialogComponent,
     HomeComponent,
+    HomeTabComponent,
     WorkflowEditorComponent,
     ComponentEditorComponent,
     ContentViewComponent,
@@ -112,6 +120,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OptionalFieldsDialogComponent
   ],
   imports: [
+    // AppRoutingModule,
     PlotlyViaWindowModule,
     BrowserModule,
     BrowserAnimationsModule,
@@ -144,11 +153,22 @@ const httpLoaderFactory = (configService: ConfigService) => {
     }),
     RouterModule.forRoot([
       {
-        path: '**',
-        component: AppComponent,
+        path: 'home',
+        component: HomeComponent,
         canActivate: [AuthGuard]
-      }
+      },
+      { path: 'authcallback', component: AuthCallbackComponent }
     ])
+    // const appRoutes: Routes = [
+    //   // { path: '', pathMatch: 'full', redirectTo: 'home' },
+    //   {
+    //     path: 'home',
+    //     component: HomeComponent,
+    //     canActivate: [AuthGuard]
+    //   },
+    //   { path: 'authcallback', component: AuthCallbackComponent }
+    //   // { path: '**', component: AppComponent, canActivate: [AuthGuard] }
+    // ];
   ],
   providers: [
     NotificationService,

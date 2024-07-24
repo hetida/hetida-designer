@@ -16,7 +16,7 @@ import {
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientModule } from '@angular/common/http';
 
-@Component({ selector: 'hd-home', template: '' })
+@Component({ selector: 'hd-home-tab', template: '' })
 class HomeStubComponent {}
 
 describe('ContentViewComponent', () => {
