@@ -15,6 +15,7 @@ from starlette.responses import JSONResponse, Response
 from hetdesrun import VERSION
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
+from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
@@ -180,7 +181,6 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         return await request_validation_exception_handler(request, exc)
 
     if get_config().is_runtime_service and len(get_config().restrict_to_trafo_exec_service) == 0:
-        app.include_router(virtual_structure_adapter_router)
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
@@ -192,6 +192,8 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 blob_storage_adapter_router
             )  # auth dependency set individually per endpoint
+        if get_vst_adapter_config().active and get_vst_adapter_config().service_in_runtime:
+            app.include_router(virtual_structure_adapter_router)
         app.include_router(
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
@@ -204,6 +206,8 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
+        if get_vst_adapter_config().active and not get_vst_adapter_config().service_in_runtime:
+            app.include_router(virtual_structure_adapter_router)
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())

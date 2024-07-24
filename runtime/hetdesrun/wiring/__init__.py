@@ -10,7 +10,6 @@ from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
 
-# TODO Think about it, maybe make this a classmethod for WorkflowWiring or sth
 def replace_wirings(
     input_ids: list[tuple[int, str]],
     output_ids: list[tuple[int, str]],
@@ -18,6 +17,16 @@ def replace_wirings(
     actual_output_wirings: dict[str, OutputWiring],
     workflow_wiring: WorkflowWiring,
 ) -> None:
+    """Replaces all vst adapter sources and sinks of a WorkflowWiring
+    with their referenced sources and sinks in place.
+
+    Args:
+        input_ids: Indices of sources to be replaced in workflow_wiring.input_wirings
+        output_ids: Same for sinks
+        actual_input_wirings: Source IDs matched to their InputWiring objects
+        actual_output_wirings: Same for sinks
+        workflow_wiring: The Wiring to be modified
+    """
     # Fill input wirings
     for idx, ref_id in input_ids:
         new_input_wiring = actual_input_wirings[ref_id]
@@ -43,10 +52,14 @@ def replace_wirings(
         workflow_wiring.output_wirings[idx] = new_output_wiring
 
 
-# TODO Probably make it async later
+# TODO Make it async?
 def resolve_virtual_structure_wirings(
     workflow_wiring: WorkflowWiring,
 ) -> None:
+    """Takes a WorkflowWiring and finds all vst sources and sinks to be replaced,
+    retrieves their referenced sources and sinks to be inserted
+    and calls the function to actually replace the input and output wirings."""
+
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
     input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.input_wirings)
