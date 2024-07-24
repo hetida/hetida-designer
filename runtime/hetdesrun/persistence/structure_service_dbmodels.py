@@ -103,7 +103,7 @@ class SourceOrm(Base):
     source_id: str = Column(String(255), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
     preset_filters: dict = Column(JSON, nullable=False)
-    passthrough_filters: list[str] | None = Column(JSON, nullable=True)
+    passthrough_filters: list[dict] | None = Column(JSON, nullable=True)
     thing_node_external_ids: list[str] = Column(JSON, nullable=True)
 
     thing_nodes: list["ThingNodeOrm"] = relationship(
@@ -144,7 +144,7 @@ class SinkOrm(Base):
     sink_id: str = Column(String(255), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
     preset_filters: dict = Column(JSON, nullable=False)
-    passthrough_filters: list[str] | None = Column(JSON, nullable=True)
+    passthrough_filters: list[dict] | None = Column(JSON, nullable=True)
     thing_node_external_ids: list[str] = Column(JSON, nullable=True)
 
     thing_nodes: list["ThingNodeOrm"] = relationship(

@@ -71,7 +71,22 @@
         {
             "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
             "stakeholder_key": "GW",
-            "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+            "name": "Energieverbräuche mit preset filter",
+            "type": "timeseries(float)",
+            "adapter_key": "demo-adapter-python",
+            "source_id": "root.plantA.picklingUnit.influx.temp",
+            "meta_data": {
+                "Influx": {"nf": 23}
+            },
+            "preset_filters": {"frequency": "1d"},
+            "thing_node_external_ids": [
+                "Wasserwerk1_Anlage1_Hochbehaelter1"
+            ]
+        },
+        {
+            "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter_2",
+            "stakeholder_key": "GW",
+            "name": "Energieverbräuche mit passthrough filters",
             "type": "timeseries(float)",
             "adapter_key": "demo-adapter-python",
             "source_id": "root.plantA.picklingUnit.influx.temp",
@@ -79,10 +94,9 @@
                 "Influx": {"nf": 23}
             },
             "passthrough_filters": [
-                "timestampFrom",
-                "timestampTo"
+                {"name": "frequency", "type": "free_text", "required": false}
             ],
-            "preset_filters": {"frequency": "1d"},
+            "preset_filters": {},
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1"
             ]
@@ -99,10 +113,6 @@
             "meta_data": {
                 "Influx": {"nf": 42}
             },
-            "passthrough_filters": [
-                "timestampFrom",
-                "timestampTo"
-            ],
             "preset_filters": {"frequency": "1d"},
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1"

@@ -147,8 +147,8 @@ class Source(BaseModel):
     visible: bool = Field(True, description="Visibility of the source")
     preset_filters: dict[str, Any] = Field(
         default_factory=dict, description="Preset filters for the source"
-    )
-    passthrough_filters: list[str] | None = Field(
+    )  # TODO Why cant they be None?
+    passthrough_filters: list[Filter] | None = Field(
         None, description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
@@ -171,7 +171,9 @@ class Source(BaseModel):
             type=self.type,
             visible=self.visible,
             preset_filters=self.preset_filters,
-            passthrough_filters=self.passthrough_filters,
+            passthrough_filters=[f.dict() for f in self.passthrough_filters]
+            if self.passthrough_filters
+            else None,
             adapter_key=self.adapter_key,
             source_id=self.source_id,
             meta_data=self.meta_data,
@@ -214,7 +216,7 @@ class Sink(BaseModel):
     preset_filters: dict[str, Any] = Field(
         default_factory=dict, description="Preset filters for the sink"
     )
-    passthrough_filters: list[str] | None = Field(
+    passthrough_filters: list[Filter] | None = Field(
         None, description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
@@ -237,7 +239,9 @@ class Sink(BaseModel):
             type=self.type,
             visible=self.visible,
             preset_filters=self.preset_filters,
-            passthrough_filters=self.passthrough_filters,
+            passthrough_filters=[f.dict() for f in self.passthrough_filters]
+            if self.passthrough_filters
+            else None,
             adapter_key=self.adapter_key,
             sink_id=self.sink_id,
             meta_data=self.meta_data,
