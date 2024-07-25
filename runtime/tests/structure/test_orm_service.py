@@ -4,10 +4,10 @@ import uuid
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
-from pydantic import ValidationError
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     SinkOrm,
@@ -17,52 +17,81 @@ from hetdesrun.persistence.structure_service_dbmodels import (
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.db.orm_service import (
     add_et,
+    add_sink,
+    add_source,
     add_tn,
+    create_mapping_between_external_and_internal_ids,
     delete_et,
     delete_et_cascade,
+    delete_sink,
+    delete_source,
     delete_tn,
     fetch_all_element_types,
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
+    fetch_et_by_external_id,
     fetch_et_by_id,
+    fetch_sink_by_external_id,
+    fetch_sink_by_id,
+    fetch_source_by_external_id,
+    fetch_source_by_id,
+    fetch_tn_by_external_id,
     fetch_tn_by_id,
     fetch_tn_child_ids_by_parent_id,
+    fill_all_element_type_ids,
+    fill_all_parent_uuids,
+    fill_element_type_ids_of_thing_nodes,
+    fill_parent_uuids_of_thing_nodes,
+    fill_source_sink_associations,
+    flush_items,
     get_ancestors_tn_ids,
     get_children_tn_ids,
+    get_descendants_tn_ids,
+    get_parent_tn_id,
+    is_database_empty,
+    load_structure_from_json_file,
+    purge_structure,
     read_single_element_type,
+    read_single_element_type_by_external_id,
+    read_single_sink,
+    read_single_sink_by_external_id,
+    read_single_source,
+    read_single_source_by_external_id,
     read_single_thingnode,
+    read_single_thingnode_by_external_id,
     sort_thing_nodes,
     store_single_element_type,
+    store_single_sink,
+    store_single_source,
     store_single_thingnode,
+    thingnode_sink_association,
+    thingnode_source_association,
     update_et,
+    update_sink,
+    update_source,
+    update_structure,
     update_structure_from_file,
     update_tn,
 )
-from hetdesrun.structure.models import (
-    ElementType,
-    ThingNode,
-)
+from hetdesrun.structure.models import CompleteStructure, ElementType, Sink, Source, ThingNode
 
+ElementType.update_forward_refs()
 ThingNode.update_forward_refs()
+Source.update_forward_refs()
+Sink.update_forward_refs()
+CompleteStructure.update_forward_refs()
 
 # Fixture definitions
 
 
 @pytest.fixture()
-def _db_test_thing_node_hierarchy(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/" "db_test_structure.json"
-    update_structure_from_file(file_path)
+def db_test_structure_file_path():
+    return "tests/structure/data/db_test_structure.json"
 
 
 @pytest.fixture()
-def _db_comprehensive_cascade_deletion(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/" "db_test_structure.json"
-    update_structure_from_file(file_path)
-
-
-@pytest.fixture()
-def _db_test_thing_node_many_children(mocked_clean_test_db_session):
+def _db_test_structure(mocked_clean_test_db_session):
     file_path = "tests/structure/data/" "db_test_structure.json"
     update_structure_from_file(file_path)
 
@@ -70,6 +99,12 @@ def _db_test_thing_node_many_children(mocked_clean_test_db_session):
 @pytest.fixture()
 def _db_test_unordered_structure(mocked_clean_test_db_session):
     file_path = "tests/structure/data/" "db_test_unordered_structure.json"
+    update_structure_from_file(file_path)
+
+
+@pytest.fixture()
+def _db_empty_database(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_empty_structure.json"
     update_structure_from_file(file_path)
 
 
@@ -83,7 +118,7 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
     cursor.close()
 
 
-# ORM Model Validation Tests
+# CRUD Operations for ThingNode
 
 
 def test_invalid_thing_node_orm_creation(mocked_clean_test_db_session):
@@ -96,48 +131,6 @@ def test_invalid_thing_node_orm_creation(mocked_clean_test_db_session):
 
     with pytest.raises(DBIntegrityError):
         add_tn(session, tn_orm_object)
-
-
-# Pydantic Model Validation Tests
-
-
-def test_invalid_thing_node_creation():
-    with pytest.raises(ValidationError):
-        ThingNode(id="invalid", name=123, element_type_id="invalid")
-
-
-def test_valid_thing_node_creation():
-    try:
-        ThingNode(
-            id=uuid.uuid4(),
-            name="valid_name",
-            element_type_id=uuid.uuid4(),
-            element_type_external_id="et-ext-valid",
-            external_id="38-1-ext-valid",
-            stakeholder_key="shk_test",
-        )
-    except ValidationError:
-        pytest.fail("Valid ThingNode creation raised ValidationError unexpectedly.")
-
-
-def test_invalid_element_type_creation():
-    with pytest.raises(ValidationError):
-        ElementType(id="invalid", name=123)
-
-
-def test_valid_element_type_creation():
-    try:
-        ElementType(
-            id=uuid.uuid4(),
-            name="valid_name",
-            external_id="external_test_id",
-            stakeholder_key="shk_test",
-        )
-    except ValidationError:
-        pytest.fail("Valid ElementType creation raised ValidationError unexpectedly.")
-
-
-# CRUD ORM Operation Tests
 
 
 def test_add_et_tn(mocked_clean_test_db_session):
@@ -166,55 +159,20 @@ def test_add_et_tn(mocked_clean_test_db_session):
 
 def test_add_et_tn_integrity_error(mocked_clean_test_db_session):
     session = mocked_clean_test_db_session()
-    et_orm_object = ElementTypeOrm(
-        id=uuid.uuid4(),
-        name="TypeOrm1",
-        external_id="element_type_external_id",
-        stakeholder_key="stakeholder_key_value",
-    )
-    add_et(session, et_orm_object)
+    id_of_non_existing_et = uuid.uuid4()
     tn_orm_object = ThingNodeOrm(
         id=uuid.uuid4(),
-        element_type_id=et_orm_object.id,
-        external_id="2-ext-valid",
+        external_id="thingnode_external_id",
+        name="thing_node_name",
+        element_type_id=id_of_non_existing_et,
+        element_type_external_id="element_type_external_id",
         stakeholder_key="stakeholder_key_value",
     )
-
     with pytest.raises(DBIntegrityError):
         add_tn(session, tn_orm_object)
 
 
-# CRUD Operations for ThingNode
-
-
-def test_store_single_thingnode(mocked_clean_test_db_session):
-    et_object = ElementType(
-        id=uuid.uuid4(),
-        name="Type1",
-        external_id="element_type_external_id",
-        stakeholder_key="stakeholder_key_value",
-    )
-    store_single_element_type(et_object)
-    tn_object = ThingNode(
-        id=uuid.uuid4(),
-        name="Node1",
-        element_type_id=et_object.id,
-        element_type_external_id="element_type_external_id",
-        external_id="3-ext-valid",
-        stakeholder_key="stakeholder_key_value",
-    )
-    store_single_thingnode(tn_object)
-    retrieved_tn = read_single_thingnode(tn_object.id)
-    assert tn_object == retrieved_tn
-
-
-def test_read_single_thingnode(mocked_clean_test_db_session):
-    tn_id = uuid.uuid4()
-    with pytest.raises(DBNotFoundError):
-        read_single_thingnode(tn_id)
-
-
-def test_storing_and_receiving(mocked_clean_test_db_session):
+def test_storing_and_receiving_single_thingnode(mocked_clean_test_db_session):
     et_object = ElementType(
         id=uuid.uuid4(),
         name="Type1",
@@ -255,25 +213,27 @@ def test_updating_existing_tn(mocked_clean_test_db_session):
         id=tn_id,
         external_id="5-ext-valid",
         name="Node1",
+        description="Initial description",
         element_type_id=et_object.id,
         element_type_external_id="element_type_external_id",
         stakeholder_key="stakeholder_key_value",
     )
     store_single_thingnode(tn_object)
 
+    # Only include required fields for the update
     updated_data = ThingNode(
         id=tn_id,
-        external_id="6-updt ext-valid",
+        external_id="6-updt-ext-valid",
         name="UpdatedNode1",
-        element_type_id=et_object.id,
-        element_type_external_id="element_type_external_id",
         stakeholder_key="stakeholder_key_value",
+        element_type_external_id="element_type_external_id",
     )
     update_tn(tn_id, updated_data)
 
     fetched_tn_object = read_single_thingnode(tn_id)
     assert fetched_tn_object.name == updated_data.name
-    assert fetched_tn_object.description == updated_data.description
+    assert fetched_tn_object.external_id == updated_data.external_id
+    assert fetched_tn_object.description == tn_object.description  # Unverändertes Feld
 
 
 def test_updating_nonexisting_tn(mocked_clean_test_db_session):
@@ -316,10 +276,16 @@ def test_update_thingnode_valid_data(mocked_clean_test_db_session):
         stakeholder_key="stakeholder_key_value",
     )
     updated_tn = update_tn(tn_object.id, updated_data)
+
     assert updated_tn.name == "UpdatedNode1"
 
+    # Fetch the updated thingnode from the database
+    with get_session()() as session, session.begin():
+        updated_tn_db = fetch_tn_by_id(session, tn_object.id)
+        assert updated_tn_db.name == "UpdatedNode1"
 
-@pytest.mark.usefixtures("_db_comprehensive_cascade_deletion")
+
+@pytest.mark.usefixtures("_db_test_structure")
 def test_delete_thingnode_valid_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         root_node = (
@@ -361,7 +327,7 @@ def test_delete_thingnode_invalid_id(mocked_clean_test_db_session):
         delete_tn(uuid.uuid4())
 
 
-def test_delete_thingnode_integrity_error(mocked_clean_test_db_session):
+def test_delete_tn_with_children(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         et_object = ElementType(
             id=uuid.uuid4(),
@@ -509,6 +475,426 @@ def test_delete_cascade_element_type(mocked_clean_test_db_session):
         read_single_element_type(et_object.id)
 
 
+### CRUD Operations for Source
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_storing_and_receiving_single_source(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        source_object = Source(
+            id=uuid.uuid4(),
+            external_id="source1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Source1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for single pump",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_source(source_object)
+
+        retrieved_source = read_single_source(source_object.id)
+
+        assert source_object == retrieved_source
+
+        wrong_source_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            read_single_source(wrong_source_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_update_source_valid_data(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        source_object = Source(
+            id=uuid.uuid4(),
+            external_id="source1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Source1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for single pump",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_source(source_object)
+
+        updated_data = Source(
+            id=source_object.id,
+            external_id="source1-updated-ext-id",
+            stakeholder_key="stakeholder1",
+            name="UpdatedSource1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for single pump",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        updated_source = update_source(source_object.id, updated_data)
+
+        assert updated_source.name == "UpdatedSource1"
+
+        updated_source_db = fetch_source_by_id(session, source_object.id)
+        assert updated_source_db.name == "UpdatedSource1"
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_delete_source_valid_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        source_object = Source(
+            id=uuid.uuid4(),
+            external_id="source1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Source1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for single pump",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_source(source_object)
+
+        source_id = source_object.id
+
+        delete_source(source_id)
+
+        with pytest.raises(DBNotFoundError):
+            fetch_source_by_id(session, source_id)
+
+
+def test_delete_source_invalid_id(mocked_clean_test_db_session):
+    with pytest.raises(DBNotFoundError):
+        delete_source(uuid.uuid4())
+
+
+def test_add_source(mocked_clean_test_db_session):
+    session = mocked_clean_test_db_session()
+    source_orm_object = SourceOrm(
+        id=uuid.uuid4(),
+        name="SourceOrm1",
+        external_id="source_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        source_id="source_id_value",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+    add_source(session, source_orm_object)
+    retrieved_source_orm = (
+        session.query(SourceOrm).filter(SourceOrm.id == source_orm_object.id).one_or_none()
+    )
+    assert source_orm_object == retrieved_source_orm
+
+
+def test_add_source_integrity_error(mocked_clean_test_db_session):
+    session = mocked_clean_test_db_session()
+
+    source_orm_object_1 = SourceOrm(
+        id=uuid.uuid4(),
+        name="SourceOrm1",
+        external_id="source_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        source_id="source_id_value",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+    add_source(session, source_orm_object_1)
+
+    source_orm_object_2 = SourceOrm(
+        id=uuid.uuid4(),
+        name="SourceOrm2",
+        external_id="source_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        source_id="source_id_value_2",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+
+    with pytest.raises(DBIntegrityError):
+        add_source(session, source_orm_object_2)
+
+
+### CRUD Operations for Sink
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_storing_and_receiving_single_sink(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        sink_object = Sink(
+            id=uuid.uuid4(),
+            external_id="sink1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Sink1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            sink_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "description": "Anomaly score for single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_sink(sink_object)
+
+        retrieved_sink = read_single_sink(sink_object.id)
+
+        assert sink_object == retrieved_sink
+
+        wrong_sink_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            read_single_sink(wrong_sink_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_update_sink_valid_data(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        sink_object = Sink(
+            id=uuid.uuid4(),
+            external_id="sink1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Sink1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            sink_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "description": "Anomaly Score for single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_sink(sink_object)
+
+        updated_data = Sink(
+            id=sink_object.id,
+            external_id="sink1-updated-ext-id",
+            stakeholder_key="stakeholder1",
+            name="UpdatedSink1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            sink_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "description": "Anomaly Score for single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        updated_sink = update_sink(sink_object.id, updated_data)
+
+        assert updated_sink.name == "UpdatedSink1"
+
+        updated_sink_db = fetch_sink_by_id(session, sink_object.id)
+        assert updated_sink_db.name == "UpdatedSink1"
+
+        wrong_sink_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            fetch_sink_by_id(session, wrong_sink_id)
+
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_delete_sink_valid_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        thing_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == thing_node_external_id)
+            .one_or_none()
+        )
+        assert thing_node is not None, "Expected ThingNode not found in the database"
+
+        sink_object = Sink(
+            id=uuid.uuid4(),
+            external_id="sink1-ext-id",
+            stakeholder_key="stakeholder1",
+            name="Sink1",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            sink_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={
+                "metric1": {
+                    "description": "Anomaly Score data for single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center",
+                }
+            },
+            preset_filters={"metrics": "metric1"},
+            passthrough_filters=["timestampFrom", "timestampTo"],
+            thing_node_external_ids=[thing_node_external_id],
+        )
+
+        store_single_sink(sink_object)
+
+        sink_id = sink_object.id
+
+        delete_sink(sink_id)
+
+        with pytest.raises(DBNotFoundError):
+            fetch_sink_by_id(session, sink_id)
+
+
+def test_delete_sink_invalid_id(mocked_clean_test_db_session):
+    with pytest.raises(DBNotFoundError):
+        delete_sink(uuid.uuid4())
+
+
+def test_add_sink(mocked_clean_test_db_session):
+    session = mocked_clean_test_db_session()
+    sink_orm_object = SinkOrm(
+        id=uuid.uuid4(),
+        name="SinkOrm1",
+        external_id="sink_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        sink_id="sink_id_value",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+    add_sink(session, sink_orm_object)
+    retrieved_sink_orm = (
+        session.query(SinkOrm).filter(SinkOrm.id == sink_orm_object.id).one_or_none()
+    )
+    assert sink_orm_object == retrieved_sink_orm
+
+
+def test_add_sink_integrity_error(mocked_clean_test_db_session):
+    session = mocked_clean_test_db_session()
+
+    sink_orm_object_1 = SinkOrm(
+        id=uuid.uuid4(),
+        name="SinkOrm1",
+        external_id="sink_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        sink_id="sink_id_value",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+    add_sink(session, sink_orm_object_1)
+
+    sink_orm_object_2 = SinkOrm(
+        id=uuid.uuid4(),
+        name="SinkOrm2",
+        external_id="sink_external_id",
+        stakeholder_key="stakeholder_key_value",
+        type="type_value",
+        visible=True,
+        adapter_key="adapter_key_value",
+        sink_id="sink_id_value_2",
+        preset_filters={},
+        passthrough_filters=[],
+        thing_node_external_ids=[],
+    )
+
+    with pytest.raises(DBIntegrityError):
+        add_sink(session, sink_orm_object_2)
+
+
+### Fetch ThingNode by ID
+
+
 def test_fetch_tn_by_valid_id(mocked_clean_test_db_session):
     et_object = ElementType(
         id=uuid.uuid4(),
@@ -539,7 +925,10 @@ def test_fetch_tn_by_invalid_id(mocked_clean_test_db_session):
         fetch_tn_by_id(mocked_clean_test_db_session(), uuid.uuid4())
 
 
-@pytest.mark.usefixtures("_db_test_thing_node_many_children")
+### Fetch ThingNode Children by Parent ID
+
+
+@pytest.mark.usefixtures("_db_test_structure")
 def test_fetch_tn_child_ids_by_parent_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         parent_node = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1").one_or_none()
@@ -555,7 +944,7 @@ def test_fetch_tn_child_ids_by_parent_id(mocked_clean_test_db_session):
         )  # Ensure all elements are UUIDs
 
 
-@pytest.mark.usefixtures("_db_test_thing_node_many_children")
+@pytest.mark.usefixtures("_db_test_structure")
 def test_fetch_tn_child_ids_by_parent_id_dbnotfound(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         non_existent_uuid = uuid.uuid4()
@@ -565,7 +954,9 @@ def test_fetch_tn_child_ids_by_parent_id_dbnotfound(mocked_clean_test_db_session
 
 
 # Tests for Hierarchy and Relationships
-@pytest.mark.usefixtures("_db_test_thing_node_hierarchy")
+
+
+@pytest.mark.usefixtures("_db_test_structure")
 def test_thing_node_hierarchy(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Fetch all elements from the database
@@ -625,118 +1016,39 @@ def test_get_children_tn_ids_valid_id(mocked_clean_test_db_session):
         assert children_ids == [child_tn_object.id]
 
 
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_ancestors_tn_ids_valid_id(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session():
-        et_object = ElementType(
-            id=uuid.uuid4(),
-            external_id="type1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Type1",
-            description="Description of Type1",
+    with mocked_clean_test_db_session() as session:
+        root_node = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1").one_or_none()
+        child_node1 = (
+            session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Anlage1").one_or_none()
         )
-        store_single_element_type(et_object)
-
-        tn_object1 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="17-ext-valid",
-            name="RootNode",
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object2 = ThingNode(
-            id=uuid.uuid4(),
-            name="ChildNode1",
-            external_id="18-ext-valid",
-            parent_node_id=tn_object1.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object3 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="19-ext-valid",
-            name="ChildNode2",
-            parent_node_id=tn_object2.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object4 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="20-ext-valid",
-            name="GrandChildNode",
-            parent_node_id=tn_object3.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
+        grandchild_node = (
+            session.query(ThingNodeOrm)
+            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+            .one_or_none()
         )
 
-        store_single_thingnode(tn_object1)
-        store_single_thingnode(tn_object2)
-        store_single_thingnode(tn_object3)
-        store_single_thingnode(tn_object4)
+        ancestors_ids = get_ancestors_tn_ids(grandchild_node.id)
 
-        ancestors_ids = get_ancestors_tn_ids(tn_object4.id)
-
-        assert ancestors_ids == [tn_object4.id, tn_object3.id, tn_object2.id, tn_object1.id]
+        assert ancestors_ids == [grandchild_node.id, child_node1.id, root_node.id]
 
 
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_ancestors_tn_ids_valid_depth_valid_id(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session():
-        et_object = ElementType(
-            id=uuid.uuid4(),
-            external_id="type1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Type1",
-            description="Description of Type1",
+    with mocked_clean_test_db_session() as session:
+        child_node1 = (
+            session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Anlage1").one_or_none()
         )
-        store_single_element_type(et_object)
-
-        tn_object1 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="21-ext-valid",
-            name="RootNode",
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object2 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="22-ext-valid",
-            name="ChildNode1",
-            parent_node_id=tn_object1.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object3 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="23-ext-valid",
-            name="ChildNode2",
-            parent_node_id=tn_object2.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object4 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="24-ext-valid",
-            name="GrandChildNode",
-            parent_node_id=tn_object3.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
+        grandchild_node = (
+            session.query(ThingNodeOrm)
+            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+            .one_or_none()
         )
 
-        store_single_thingnode(tn_object1)
-        store_single_thingnode(tn_object2)
-        store_single_thingnode(tn_object3)
-        store_single_thingnode(tn_object4)
+        ancestors_ids = get_ancestors_tn_ids(grandchild_node.id, 2)
 
-        ancestors_ids = get_ancestors_tn_ids(tn_object4.id, 2)
-
-        assert ancestors_ids == [tn_object4.id, tn_object3.id]
+        assert ancestors_ids == [grandchild_node.id, child_node1.id]
 
 
 def test_get_ancestors_tn_ids_invalid_id(mocked_clean_test_db_session):
@@ -744,98 +1056,46 @@ def test_get_ancestors_tn_ids_invalid_id(mocked_clean_test_db_session):
         get_ancestors_tn_ids(uuid.uuid4())
 
 
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_ancestors_tn_ids_invalid_depth_valid_id(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session():
-        et_object = ElementType(
-            id=uuid.uuid4(),
-            external_id="type1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Type1",
-            description="Description of Type1",
+    with mocked_clean_test_db_session() as session:
+        root_node = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1").one_or_none()
+        child_node1 = (
+            session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Anlage1").one_or_none()
         )
-        store_single_element_type(et_object)
-
-        tn_object1 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="25-ext-valid",
-            name="RootNode",
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object2 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="26-ext-valid",
-            name="ChildNode1",
-            parent_node_id=tn_object1.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object3 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="27-ext-valid",
-            name="ChildNode2",
-            parent_node_id=tn_object2.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        tn_object4 = ThingNode(
-            id=uuid.uuid4(),
-            external_id="28-ext-valid",
-            name="GrandChildNode",
-            parent_node_id=tn_object3.id,
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
+        grandchild_node = (
+            session.query(ThingNodeOrm)
+            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+            .one_or_none()
         )
 
-        store_single_thingnode(tn_object1)
-        store_single_thingnode(tn_object2)
-        store_single_thingnode(tn_object3)
-        store_single_thingnode(tn_object4)
-
-        ancestors_ids = get_ancestors_tn_ids(tn_object4.id, 2)
+        ancestors_ids = get_ancestors_tn_ids(grandchild_node.id, 2)
 
         with pytest.raises(AssertionError):
-            assert ancestors_ids == [tn_object4.id, tn_object3.id, tn_object2.id]
+            assert ancestors_ids == [grandchild_node.id, child_node1.id, root_node.id]
 
 
 # Exception Handling and Data Integrity Tests
 
 
+@pytest.mark.usefixtures("_db_test_structure")
 def test_uniqueness_thingnode(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session():
-        et_object = ElementType(
-            id=uuid.uuid4(),
-            external_id="type1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Type1",
-            description="Description of Type1",
+    with mocked_clean_test_db_session() as session:
+        existing_tn = (
+            session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Anlage1").one_or_none()
         )
-        store_single_element_type(et_object)
-
-        tn_object = ThingNode(
-            id=uuid.uuid4(),
-            external_id="29-ext-valid",
-            name="Node1",
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
-        )
-        store_single_thingnode(tn_object)
+        assert existing_tn is not None, "Expected ThingNode not found in the database"
 
         updated_data = ThingNode(
-            id=tn_object.id,
-            external_id="30-ext-valid",
-            name="UpdatedNode1",
-            stakeholder_key="stakeholder1",
-            element_type_id=et_object.id,
-            element_type_external_id="type1-ext-id",
+            id=existing_tn.id,
+            external_id="new-ext-valid",
+            name="UpdatedNodeName",
+            stakeholder_key=existing_tn.stakeholder_key,
+            element_type_id=existing_tn.element_type_id,
+            element_type_external_id=existing_tn.element_type_external_id,
         )
-
-        updated_tn = update_tn(tn_object.id, updated_data)
+        updated_tn = update_tn(existing_tn.id, updated_data)
+        assert updated_tn.name == "UpdatedNodeName"
 
         with pytest.raises(DBIntegrityError):
             store_single_thingnode(updated_tn)
@@ -1054,3 +1314,592 @@ def test_sort_thing_nodes_from_json(mocked_clean_test_db_session):
             expected_names
         ), f"Level {level} does not contain the expected nodes. "
         f"Found: {sorted_names}, Expected: {expected_names}"
+
+
+### Fetch Functions
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_all_element_types(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        element_types = fetch_all_element_types(session)
+        assert len(element_types) == 3, "Expected 3 Element Types in the database"
+
+        expected_element_types = [
+            {"external_id": "Wasserwerk_Typ", "name": "Wasserwerk"},
+            {"external_id": "Anlage_Typ", "name": "Anlage"},
+            {"external_id": "Hochbehaelter_Typ", "name": "Hochbehälter"},
+        ]
+
+        for expected_et in expected_element_types:
+            found = any(
+                et.external_id == expected_et["external_id"] and et.name == expected_et["name"]
+                for et in element_types
+            )
+            assert found, (
+                f"Expected Element Type with external_id {expected_et['external_id']} "
+                f"and name {expected_et['name']} not found"
+            )
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_all_thing_nodes(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = fetch_all_thing_nodes(session)
+        assert len(thing_nodes) == 7, "Expected 7 Thing Nodes in the database"
+
+        expected_thing_nodes = [
+            {"external_id": "Wasserwerk1", "name": "Wasserwerk 1"},
+            {"external_id": "Wasserwerk1_Anlage1", "name": "Anlage 1"},
+            {"external_id": "Wasserwerk1_Anlage2", "name": "Anlage 2"},
+            {
+                "external_id": "Wasserwerk1_Anlage1_Hochbehaelter1",
+                "name": "Hochbehälter 1 Anlage 1",
+            },
+            {
+                "external_id": "Wasserwerk1_Anlage1_Hochbehaelter2",
+                "name": "Hochbehälter 2 Anlage 1",
+            },
+            {
+                "external_id": "Wasserwerk1_Anlage2_Hochbehaelter1",
+                "name": "Hochbehälter 1 Anlage 2",
+            },
+            {
+                "external_id": "Wasserwerk1_Anlage2_Hochbehaelter2",
+                "name": "Hochbehälter 2 Anlage 2",
+            },
+        ]
+
+        for expected_tn in expected_thing_nodes:
+            found = any(
+                tn.external_id == expected_tn["external_id"] and tn.name == expected_tn["name"]
+                for tn in thing_nodes
+            )
+            assert found, (
+                f"Expected Thing Node with external_id {expected_tn['external_id']} "
+                f"and name {expected_tn['name']} not found"
+            )
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_all_sources(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        sources = fetch_all_sources(session)
+        assert len(sources) == 2, "Expected 2 Sources in the database"
+
+        expected_sources = [
+            {
+                "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
+                "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+            },
+            {
+                "external_id": "Energieverbrauch_Einzelpumpe_Hochbehaelter",
+                "name": "Energieverbrauch einer Einzelpumpe in Hochbehälter",
+            },
+        ]
+
+        for expected_source in expected_sources:
+            found = any(
+                source.external_id == expected_source["external_id"]
+                and source.name == expected_source["name"]
+                for source in sources
+            )
+            assert found, (
+                    f"Expected Source with external_id {expected_source['external_id']} "
+                    f"and name {expected_source['name']} not found"
+                )
+
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_all_sinks(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        sinks = fetch_all_sinks(session)
+        assert len(sinks) == 2, "Expected 2 Sinks in the database"
+
+        expected_sinks = [
+            {
+                "external_id": "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+                "name": "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter",
+            },
+            {
+                "external_id": "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
+                "name": "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter",
+            },
+        ]
+
+        for expected_sink in expected_sinks:
+            found = any(
+                sink.external_id == expected_sink["external_id"]
+                and sink.name == expected_sink["name"]
+                for sink in sinks
+            )
+            assert found, (
+                    f"Expected Sink with external_id {expected_sink['external_id']} "
+                    f"and name {expected_sink['name']} not found"
+                )
+
+
+### Utility Functions
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_tn_by_external_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_node_external_id = "Wasserwerk1_Anlage1"
+        thing_node = fetch_tn_by_external_id(session, thing_node_external_id)
+        assert thing_node is not None
+        assert thing_node.external_id == thing_node_external_id
+
+        wrong_external_id = "NonExistentExternalID"
+        with pytest.raises(DBNotFoundError):
+            fetch_tn_by_external_id(session, wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_read_single_thingnode_by_external_id(mocked_clean_test_db_session):
+    thing_node_external_id = "Wasserwerk1_Anlage1"
+    thing_node = read_single_thingnode_by_external_id(thing_node_external_id)
+    assert thing_node is not None
+    assert thing_node.external_id == thing_node_external_id
+
+    wrong_external_id = "NonExistentExternalID"
+    with pytest.raises(DBNotFoundError):
+        read_single_thingnode_by_external_id(wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_parent_tn_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        child_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
+        child_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == child_node_external_id)
+            .one_or_none()
+        )
+        parent_id = get_parent_tn_id(session, child_node.id)
+        assert parent_id is not None
+
+        wrong_tn_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            get_parent_tn_id(session, wrong_tn_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_descendants_tn_ids(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        root_node_external_id = "Wasserwerk1"
+        root_node = (
+            session.query(ThingNodeOrm)
+            .filter(ThingNodeOrm.external_id == root_node_external_id)
+            .one_or_none()
+        )
+        descendant_ids = get_descendants_tn_ids(root_node.id)
+        assert len(descendant_ids) > 0
+
+        wrong_tn_id = uuid.uuid4()
+        descendants_wrong = get_descendants_tn_ids(wrong_tn_id)
+        assert descendants_wrong == []
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_et_by_external_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        external_id = "Wasserwerk_Typ"
+        element_type = fetch_et_by_external_id(session, external_id)
+        assert element_type is not None
+        assert element_type.external_id == external_id
+
+        wrong_external_id = "NonExistentExternalID"
+        with pytest.raises(DBNotFoundError):
+            fetch_et_by_external_id(session, wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_read_single_element_type_by_external_id(mocked_clean_test_db_session):
+    external_id = "Wasserwerk_Typ"
+    element_type = read_single_element_type_by_external_id(external_id)
+    assert element_type is not None
+    assert element_type.external_id == external_id
+
+    wrong_external_id = "NonExistentExternalID"
+    with pytest.raises(DBNotFoundError):
+        read_single_element_type_by_external_id(wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_source_by_external_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        external_id = "Energieverbraeuche_Pumpensystem_Hochbehaelter"
+        source = fetch_source_by_external_id(session, external_id)
+        assert source is not None
+        assert source.external_id == external_id
+
+        wrong_external_id = "NonExistentExternalID"
+        with pytest.raises(DBNotFoundError):
+            fetch_source_by_external_id(session, wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_sink_by_external_id(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        external_id = "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter"
+        sink = fetch_sink_by_external_id(session, external_id)
+        assert sink is not None
+        assert sink.external_id == external_id
+
+        wrong_external_id = "NonExistentExternalID"
+        with pytest.raises(DBNotFoundError):
+            fetch_sink_by_external_id(session, wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_read_single_source_by_external_id(mocked_clean_test_db_session):
+    external_id = "Energieverbraeuche_Pumpensystem_Hochbehaelter"
+    source = read_single_source_by_external_id(external_id)
+    assert source is not None
+    assert source.external_id == external_id
+
+    wrong_external_id = "NonExistentExternalID"
+    with pytest.raises(DBNotFoundError):
+        read_single_source_by_external_id(wrong_external_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_read_single_sink_by_external_id(mocked_clean_test_db_session):
+    external_id = "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter"
+    sink = read_single_sink_by_external_id(external_id)
+    assert sink is not None
+    assert sink.external_id == external_id
+
+    wrong_external_id = "NonExistentExternalID"
+    with pytest.raises(DBNotFoundError):
+        read_single_sink_by_external_id(wrong_external_id)
+
+
+### Structure Helper Functions
+
+
+ElementType.update_forward_refs()
+ThingNode.update_forward_refs()
+Source.update_forward_refs()
+Sink.update_forward_refs()
+CompleteStructure.update_forward_refs()
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_create_mapping_between_external_and_internal_ids(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        assert thing_nodes is not None
+
+        element_types = session.query(ElementTypeOrm).all()
+        assert element_types is not None
+
+        sources = session.query(SourceOrm).all()
+        assert sources is not None
+
+        sinks = session.query(SinkOrm).all()
+        assert sinks is not None
+
+        thing_node_list = [ThingNode.from_orm(tn) for tn in thing_nodes]
+        source_list = [Source.from_orm(src) for src in sources]
+        sink_list = [Sink.from_orm(snk) for snk in sinks]
+
+        tn_mapping, src_mapping, snk_mapping = create_mapping_between_external_and_internal_ids(
+            thing_node_list, source_list, sink_list
+        )
+
+        for thing_node in thing_nodes:
+            assert thing_node.stakeholder_key + thing_node.external_id in tn_mapping
+            assert tn_mapping[thing_node.stakeholder_key + thing_node.external_id] == thing_node.id
+
+        for source in sources:
+            assert source.stakeholder_key + source.external_id in src_mapping
+            assert src_mapping[source.stakeholder_key + source.external_id] == source.id
+
+        for sink in sinks:
+            assert sink.stakeholder_key + sink.external_id in snk_mapping
+            assert snk_mapping[sink.stakeholder_key + sink.external_id] == sink.id
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_parent_uuids_of_thing_nodes(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        assert thing_nodes is not None
+
+        thing_node_list = [ThingNode.from_orm_model(tn) for tn in thing_nodes]
+
+        tn_mapping = {tn.stakeholder_key + tn.external_id: tn.id for tn in thing_node_list}
+
+        original_parent_node_ids = {node.id: node.parent_node_id for node in thing_node_list}
+
+        fill_parent_uuids_of_thing_nodes(tn_mapping, thing_node_list)
+
+        for node in thing_node_list:
+            if node.parent_external_node_id:
+                parent_uuid = tn_mapping[node.stakeholder_key + node.parent_external_node_id]
+                assert node.parent_node_id == parent_uuid
+            else:
+                assert node.parent_node_id == original_parent_node_ids[node.id]
+
+        for node in thing_node_list:
+            if node.parent_external_node_id:
+                assert (
+                    node.parent_node_id is not None
+                ), f"Parent node ID for {node.external_id} is None"
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_parent_uuids_of_thing_nodes_invalid_parent(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        assert thing_nodes is not None
+
+        thing_node_list = [ThingNode.from_orm_model(tn) for tn in thing_nodes]
+
+        tn_mapping = {tn.stakeholder_key + tn.external_id: tn.id for tn in thing_node_list}
+
+        invalid_external_id = "invalid_parent_id"
+        thing_node_list[0].parent_external_node_id = invalid_external_id
+
+        with pytest.raises(KeyError):
+            fill_parent_uuids_of_thing_nodes(tn_mapping, thing_node_list)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_element_type_ids_of_thing_nodes(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        element_types = session.query(ElementTypeOrm).all()
+        assert thing_nodes is not None
+        assert element_types is not None
+
+        thing_node_list = [ThingNode.from_orm_model(tn) for tn in thing_nodes]
+
+        element_type_mapping = {et.stakeholder_key + et.external_id: et.id for et in element_types}
+
+        original_element_type_ids = {node.id: node.element_type_id for node in thing_node_list}
+
+        fill_element_type_ids_of_thing_nodes(element_type_mapping, thing_node_list)
+
+        for node in thing_node_list:
+            if node.element_type_external_id:
+                element_type_uuid = element_type_mapping[
+                    node.stakeholder_key + node.element_type_external_id
+                ]
+                assert node.element_type_id == element_type_uuid
+            else:
+                assert node.element_type_id == original_element_type_ids[node.id]
+
+        for node in thing_node_list:
+            if node.element_type_external_id:
+                assert (
+                    node.element_type_id is not None
+                ), f"Element type ID for {node.external_id} is None"
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_element_type_ids_of_thing_nodes_invalid_element_type(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        element_types = session.query(ElementTypeOrm).all()
+        assert thing_nodes is not None
+        assert element_types is not None
+
+        thing_node_list = [ThingNode.from_orm_model(tn) for tn in thing_nodes]
+
+        element_type_mapping = {et.stakeholder_key + et.external_id: et.id for et in element_types}
+
+        invalid_external_id = "invalid_element_type_id"
+        thing_node_list[0].element_type_external_id = invalid_external_id
+
+        with pytest.raises(KeyError):
+            fill_element_type_ids_of_thing_nodes(element_type_mapping, thing_node_list)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_all_parent_uuids_invalid_parent(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        thing_nodes_orm = fetch_all_thing_nodes(session)
+        assert thing_nodes_orm is not None
+
+        thing_nodes = [ThingNode.from_orm_model(tn) for tn in thing_nodes_orm]
+
+        element_types = fetch_all_element_types(session)
+        sources = fetch_all_sources(session)
+        sinks = fetch_all_sinks(session)
+
+        complete_structure = CompleteStructure(
+            element_types=element_types, thing_nodes=thing_nodes, sources=sources, sinks=sinks
+        )
+
+        thing_nodes[0].parent_external_node_id = "invalid_parent_id"
+
+        with pytest.raises(KeyError, match="invalid_parent_id"):
+            fill_all_parent_uuids(complete_structure)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_all_element_type_ids(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        complete_structure = CompleteStructure(
+            element_types=fetch_all_element_types(session),
+            thing_nodes=fetch_all_thing_nodes(session),
+            sources=fetch_all_sources(session),
+            sinks=fetch_all_sinks(session),
+        )
+
+        for node in complete_structure.thing_nodes:
+            assert node.element_type_id is not None, "ThingNode should have a dummy element_type_id"
+
+        fill_all_element_type_ids(complete_structure)
+
+        element_type_mapping = {
+            et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types
+        }
+
+        for node in complete_structure.thing_nodes:
+            expected_element_type_id = element_type_mapping[
+                node.stakeholder_key + node.element_type_external_id
+            ]
+            assert (
+                node.element_type_id == expected_element_type_id
+            ), f"ThingNode with external_id {node.external_id} has an incorrect element_type_id."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fill_source_sink_associations(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Load the complete structure from the test fixture
+        complete_structure = CompleteStructure(
+            element_types=fetch_all_element_types(session),
+            thing_nodes=fetch_all_thing_nodes(session),
+            sources=fetch_all_sources(session),
+            sinks=fetch_all_sinks(session),
+        )
+
+        # Ensure the initial state of associations is empty
+        session.execute(thingnode_source_association.delete())
+        session.execute(thingnode_sink_association.delete())
+        session.commit()
+        initial_source_associations = session.query(thingnode_source_association).all()
+        initial_sink_associations = session.query(thingnode_sink_association).all()
+        assert len(initial_source_associations) == 0, "Source associations table should be empty"
+        assert len(initial_sink_associations) == 0, "Sink associations table should be empty"
+
+        # Call the function to fill source-sink associations
+        fill_source_sink_associations(complete_structure, session)
+        session.commit()
+
+        # Fetch the updated associations
+        updated_source_associations = session.query(thingnode_source_association).all()
+        updated_sink_associations = session.query(thingnode_sink_association).all()
+
+        # Verify that the associations are correctly set
+        for source in complete_structure.sources:
+            if source.thing_node_external_ids:
+                for tn_external_id in source.thing_node_external_ids:
+                    thing_node_id = (
+                        session.query(ThingNodeOrm).filter_by(external_id=tn_external_id).one().id
+                    )
+                    source_id = (
+                        session.query(SourceOrm).filter_by(external_id=source.external_id).one().id
+                    )
+                    association = (thing_node_id, source_id)
+                    assert (
+                        association in updated_source_associations
+                    ), (
+                        f"Association for source {source.external_id} "
+                        f"and thing node {tn_external_id} is missing"
+                    )
+
+        for sink in complete_structure.sinks:
+            if sink.thing_node_external_ids:
+                for tn_external_id in sink.thing_node_external_ids:
+                    thing_node_id = (
+                        session.query(ThingNodeOrm).filter_by(external_id=tn_external_id).one().id
+                    )
+                    sink_id = (
+                        session.query(SinkOrm).filter_by(external_id=sink.external_id).one().id
+                    )
+                    association = (thing_node_id, sink_id)
+                    assert (
+                        association in updated_sink_associations
+                    ), (
+                        f"Association for sink {sink.external_id} "
+                        f"and thing node {tn_external_id} is missing"
+                    )
+
+
+def test_load_structure_from_json_file(db_test_structure_file_path):
+    complete_structure = load_structure_from_json_file(db_test_structure_file_path)
+
+    # Check if the complete_structure is an instance of CompleteStructure
+    assert isinstance(
+        complete_structure, CompleteStructure
+    ), "Loaded structure is not an instance of CompleteStructure"
+
+    # Load the expected structure directly from the JSON file for comparison
+    with open(db_test_structure_file_path) as file:
+        expected_structure_json = json.load(file)
+
+    expected_structure = CompleteStructure(**expected_structure_json)
+
+    # Set all UUID fields to the same value pairwise
+    for complete_list, expected_list in [
+        (complete_structure.element_types, expected_structure.element_types),
+        (complete_structure.thing_nodes, expected_structure.thing_nodes),
+        (complete_structure.sources, expected_structure.sources),
+        (complete_structure.sinks, expected_structure.sinks),
+    ]:
+        for complete, expected in zip(complete_list, expected_list, strict=False):
+            uniform_id = uuid.uuid4()
+            complete.id = uniform_id
+            expected.id = uniform_id
+
+    for complete, expected in zip(
+        complete_structure.thing_nodes, expected_structure.thing_nodes, strict=False
+    ):
+        uniform_id = uuid.uuid4()
+        complete.element_type_id = uniform_id
+        expected.element_type_id = uniform_id
+
+    assert (
+        complete_structure == expected_structure
+    ), "Loaded structure does not match the expected structure"
+
+
+@pytest.mark.usefixtures("_db_empty_database")
+def test_is_database_empty_when_empty(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        assert is_database_empty(session), "Database should be empty but is not."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        assert not is_database_empty(session), "Database should not be empty but it is."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_purge_structure(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Verify that the database is initially populated
+        assert session.query(ElementTypeOrm).count() > 0
+        assert session.query(ThingNodeOrm).count() > 0
+        assert session.query(SourceOrm).count() > 0
+        assert session.query(SinkOrm).count() > 0
+        assert session.query(thingnode_source_association).count() > 0
+        assert session.query(thingnode_sink_association).count() > 0
+
+        purge_structure()
+
+        # Verify that all tables are empty after purging
+        assert session.query(ElementTypeOrm).count() == 0
+        assert session.query(ThingNodeOrm).count() == 0
+        assert session.query(SourceOrm).count() == 0
+        assert session.query(SinkOrm).count() == 0
+        assert session.query(thingnode_source_association).count() == 0
+        assert session.query(thingnode_sink_association).count() == 0
