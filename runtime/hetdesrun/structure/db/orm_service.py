@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict, deque
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
@@ -807,3 +807,32 @@ def is_database_empty(session: SQLAlchemySession) -> bool:
     sinks = fetch_all_sinks(session)
 
     return not (element_types or thing_nodes or sources or sinks)
+
+
+def purge_structure() -> None:
+    with get_session()() as session:
+        try:
+            # Deactivate foreign key checks
+            session.connection().execute(text("PRAGMA foreign_keys = OFF"))
+
+            # List of all ORM classes to delete
+            tables = [
+                thingnode_source_association,
+                thingnode_sink_association,
+                ThingNodeOrm,
+                SourceOrm,
+                SinkOrm,
+                ElementTypeOrm,
+            ]
+
+            # Delete all records in each table
+            for table in tables:
+                session.execute(delete(table))
+
+            # Reactivate foreign key checks
+            session.connection().execute(text("PRAGMA foreign_keys = ON"))
+
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
