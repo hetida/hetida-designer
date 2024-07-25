@@ -33,16 +33,18 @@ class StructureVirtualSource(BaseModel):
     filters: dict[str, dict] | None = {}
 
     @classmethod
-    def from_structure_service(cls, struct_source: Source) -> "StructureVirtualSource":
+    def from_structure_service(cls, source: Source) -> "StructureVirtualSource":
         return cls(
-            id=struct_source.id,
-            name=struct_source.name,
-            type=struct_source.type,
+            id=source.id,
+            name=source.name,
+            type=source.type,
             path="",  # TODO Fill appropriately
-            metadataKey=struct_source.meta_data.get("metadataKey")
-            if struct_source.meta_data
+            metadataKey=source.meta_data.get("metadataKey")  # TODO why get(metadataKey)?
+            if source.meta_data
             else None,
-            filters={},  # TODO Fill when passthrough filters are properly defined
+            filters={f.name: f for f in source.passthrough_filters}
+            if source.passthrough_filters
+            else {},
         )
 
 
@@ -56,14 +58,18 @@ class StructureVirtualSink(BaseModel):
     filters: dict[str, dict] | None = {}
 
     @classmethod
-    def from_structure_service(cls, struct_sink: Sink) -> "StructureVirtualSink":
+    def from_structure_service(cls, sink: Sink) -> "StructureVirtualSink":
         return cls(
-            id=struct_sink.id,
-            name=struct_sink.name,
-            type=struct_sink.type,
+            id=sink.id,
+            name=sink.name,
+            type=sink.type,
             path="",  # TODO Fill appropriately
-            metadataKey=struct_sink.meta_data.get("metadataKey") if struct_sink.meta_data else None,
-            filters={},  # TODO Fill when passthrough filters are properly defined
+            metadataKey=sink.meta_data.get("metadataKey")
+            if sink.meta_data
+            else None,  # TODO why get(metadataKey)?
+            filters={f.name: f for f in sink.passthrough_filters}
+            if sink.passthrough_filters
+            else {},
         )
 
 

@@ -31,9 +31,14 @@ def test_get_level_with_existing_uuid():
     assert structure.thingNodes == []
 
     # Check Sources
-    assert len(structure.sources) == 1
+    assert len(structure.sources) == 2
     assert isinstance(structure.sources[0], StructureVirtualSource)
-    assert structure.sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+    expected_source_names = [
+        "Energieverbräuche mit preset filter",
+        "Energieverbräuche mit passthrough filters",
+    ]
+    for source in structure.sources:
+        assert source.name in expected_source_names
 
     # Check Sinks
     assert len(structure.sinks) == 1
