@@ -87,14 +87,23 @@
             "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter_2",
             "stakeholder_key": "GW",
             "name": "Energieverbräuche mit passthrough filters",
-            "type": "timeseries(float)",
+            "type": "multitsframe",
             "adapter_key": "demo-adapter-python",
-            "source_id": "root.plantA.picklingUnit.influx.temp",
+            "source_id": "root.plantA.temperatures",
             "meta_data": {
                 "Influx": {"nf": 23}
             },
             "passthrough_filters": [
-                {"name": "frequency", "type": "free_text", "required": false}
+                {
+                    "name": "lower threshold",
+                    "type": "free_text",
+                    "required": false
+                },
+                {
+                    "name": "upper threshold",
+                    "type": "free_text",
+                    "required": false
+                }               
             ],
             "preset_filters": {},
             "thing_node_external_ids": [
