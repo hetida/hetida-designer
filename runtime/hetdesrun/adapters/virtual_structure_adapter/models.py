@@ -34,7 +34,7 @@ class StructureVirtualSource(BaseModel):
 
     @classmethod
     def from_structure_service(cls, source: Source) -> "StructureVirtualSource":
-        def replace_whitespace(filter_name):
+        def replace_whitespace(filter_name: str) -> str:
             filter_name = filter_name.strip()
             return filter_name.replace(" ", "_")
 
@@ -60,7 +60,7 @@ class StructureVirtualSink(BaseModel):
 
     @classmethod
     def from_structure_service(cls, sink: Sink) -> "StructureVirtualSink":
-        def replace_whitespace(filter_name):
+        def replace_whitespace(filter_name: str) -> str:
             filter_name = filter_name.strip()
             return filter_name.replace(" ", "_")
 
