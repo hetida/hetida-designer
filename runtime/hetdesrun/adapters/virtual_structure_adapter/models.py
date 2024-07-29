@@ -42,7 +42,7 @@ class StructureVirtualSource(BaseModel):
             id=source.id,
             name=source.name,
             type=source.type,
-            path="",  # TODO Fill appropriately
+            path=source.path,
             filters={replace_whitespace(f.name): f for f in source.passthrough_filters}
             if source.passthrough_filters
             else {},
@@ -68,7 +68,7 @@ class StructureVirtualSink(BaseModel):
             id=sink.id,
             name=sink.name,
             type=sink.type,
-            path="",  # TODO Fill appropriately
+            path=sink.path,
             filters={replace_whitespace(f.name): f for f in sink.passthrough_filters}
             if sink.passthrough_filters
             else {},
