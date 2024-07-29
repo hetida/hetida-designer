@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-// import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Component({
   selector: 'hd-root',
@@ -7,11 +7,9 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  // constructor(private readonly oidcSecurityService: OidcSecurityService) {}
+  constructor(private readonly oidcSecurityService: OidcSecurityService) {}
 
   ngOnInit() {
-    // this.oidcSecurityService.checkAuth().subscribe(({ isAuthenticated }) => {
-    //   console.log('callback authenticated', isAuthenticated);
-    // });
+    this.oidcSecurityService.checkAuth().subscribe(({}) => {});
   }
 }

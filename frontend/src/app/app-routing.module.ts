@@ -1,19 +1,23 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from './auth/auth.guard';
 import { HomeComponent } from './components/home/home.component';
 import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
-// import { AppComponent } from './app.component';
+import { AuthGuard } from './auth/auth.guard';
+import { AppComponent } from './app.component';
 
 const appRoutes: Routes = [
-  // { path: '', pathMatch: 'full', redirectTo: 'home' },
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
   {
     path: 'home',
     component: HomeComponent,
     canActivate: [AuthGuard]
   },
-  { path: 'authcallback', component: AuthCallbackComponent }
-  // { path: '**', component: AppComponent, canActivate: [AuthGuard] }
+  { path: 'authcallback', component: AuthCallbackComponent },
+  {
+    path: '**',
+    component: AppComponent,
+    canActivate: [AuthGuard]
+  }
 ];
 
 @NgModule({

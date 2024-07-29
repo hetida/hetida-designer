@@ -1,4 +1,3 @@
-import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -32,7 +31,7 @@ import {
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { environment } from '../environments/environment';
-// import { AppRoutingModule } from './app-routing.module';
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
@@ -67,10 +66,6 @@ import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 import { from, map } from 'rxjs';
-import { RouterModule } from '@angular/router';
-import { AuthGuard } from './auth/auth.guard';
-// import { RouterModule } from '@angular/router';
-// import { AuthGuard } from './auth/auth.guard';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
@@ -120,7 +115,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OptionalFieldsDialogComponent
   ],
   imports: [
-    // AppRoutingModule,
+    AppRoutingModule,
     PlotlyViaWindowModule,
     BrowserModule,
     BrowserAnimationsModule,
@@ -150,25 +145,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
         useFactory: httpLoaderFactory,
         deps: [ConfigService]
       }
-    }),
-    RouterModule.forRoot([
-      {
-        path: 'home',
-        component: HomeComponent,
-        canActivate: [AuthGuard]
-      },
-      { path: 'authcallback', component: AuthCallbackComponent }
-    ])
-    // const appRoutes: Routes = [
-    //   // { path: '', pathMatch: 'full', redirectTo: 'home' },
-    //   {
-    //     path: 'home',
-    //     component: HomeComponent,
-    //     canActivate: [AuthGuard]
-    //   },
-    //   { path: 'authcallback', component: AuthCallbackComponent }
-    //   // { path: '**', component: AppComponent, canActivate: [AuthGuard] }
-    // ];
+    })
   ],
   providers: [
     NotificationService,
@@ -201,10 +178,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
       },
       multi: true,
       deps: [ConfigService]
-    },
-    {
-      provide: APP_BASE_HREF,
-      useValue: window.location.pathname
     },
     {
       provide: HD_WIRING_CONFIG,
