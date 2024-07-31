@@ -145,7 +145,7 @@ class Source(BaseModel):
     name: str = Field(..., description="Name of the source")
     type: ExternalType = Field(..., description="Type of the source")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the source")
-    path: str = Field(
+    display_path: str = Field(
         "", description="Displays all parent nodes in sequence in the designer frontend"
     )
     preset_filters: dict[str, Any] = Field(
@@ -173,7 +173,7 @@ class Source(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
-            path=self.path,
+            display_path=self.display_path,
             preset_filters=self.preset_filters,
             passthrough_filters=[f.dict() for f in self.passthrough_filters]
             if self.passthrough_filters
@@ -195,7 +195,7 @@ class Source(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
-            path=orm_model.path,
+            display_path=orm_model.display_path,
             preset_filters=orm_model.preset_filters,
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,
@@ -218,7 +218,7 @@ class Sink(BaseModel):
     name: str = Field(..., description="Name of the sink")
     type: ExternalType = Field(..., description="Type of the sink")  # noqa: A003
     visible: bool = Field(True, description="Visibility of the sink")
-    path: str = Field(
+    display_path: str = Field(
         "", description="Displays all parent nodes in sequence in the designer frontend"
     )
     preset_filters: dict[str, Any] = Field(
@@ -246,7 +246,7 @@ class Sink(BaseModel):
             name=self.name,
             type=self.type,
             visible=self.visible,
-            path=self.path,
+            display_path=self.display_path,
             preset_filters=self.preset_filters,
             passthrough_filters=[f.dict() for f in self.passthrough_filters]
             if self.passthrough_filters
@@ -268,7 +268,7 @@ class Sink(BaseModel):
             name=orm_model.name,
             type=orm_model.type,
             visible=orm_model.visible,
-            path=orm_model.path,
+            display_path=orm_model.display_path,
             preset_filters=orm_model.preset_filters,
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,

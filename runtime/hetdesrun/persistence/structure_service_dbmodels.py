@@ -99,7 +99,7 @@ class SourceOrm(Base):
     name: str = Column(String(255), nullable=False, unique=True)
     type: str = Column(String(255), nullable=False)
     visible: bool = Column(Boolean, default=True)
-    path: str = Column(String(255), nullable=False)
+    display_path: str = Column(String(255), nullable=False)
     adapter_key: str = Column(String(255), nullable=False)
     source_id: str = Column(String(255), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
@@ -124,7 +124,7 @@ class SourceOrm(Base):
             f"<SourceOrm(id={self.id}, external_id={self.external_id}, "
             f"stakeholder_key={self.stakeholder_key}, "
             f"name={self.name}, type={self.type}, visible={self.visible}, "
-            f"path={self.path}, "
+            f"display_path={self.display_path}, "
             f"adapter_key={self.adapter_key}, "
             f"source_id={self.source_id}, meta_data={self.meta_data}, "
             f"preset_filters={self.preset_filters}, "
@@ -142,7 +142,7 @@ class SinkOrm(Base):
     name: str = Column(String(255), nullable=False, unique=True)
     type: str = Column(String(255), nullable=False)
     visible: bool = Column(Boolean, default=True)
-    path: str = Column(String(255), nullable=False)
+    display_path: str = Column(String(255), nullable=False)
     adapter_key: str = Column(String(255), nullable=False)
     sink_id: str = Column(String(255), nullable=False)
     meta_data: dict | None = Column(JSON, nullable=True)
@@ -167,7 +167,7 @@ class SinkOrm(Base):
             f"<SinkOrm(id={self.id}, external_id={self.external_id}, "
             f"stakeholder_key={self.stakeholder_key}, "
             f"name={self.name}, type={self.type}, visible={self.visible}, "
-            f"path={self.path}, "
+            f"display_path={self.display_path}, "
             f"adapter_key={self.adapter_key}, "
             f"sink_id={self.sink_id}, meta_data={self.meta_data}, "
             f"preset_filters={self.preset_filters}, "
