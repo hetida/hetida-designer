@@ -127,6 +127,18 @@
             "preset_filters": {
                 "metrics": "1010001, 1010002"
             },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1",
                 "Wasserwerk1_Anlage2_Hochbehaelter2"
@@ -148,6 +160,18 @@
             "preset_filters": {
                 "metrics": "1010003"
             },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter2",
                 "Wasserwerk1_Anlage2_Hochbehaelter1"
@@ -175,6 +199,18 @@
             "preset_filters": {
                 "metrics": "10010001, 10010002"
             },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1",
                 "Wasserwerk1_Anlage1_Hochbehaelter2"
@@ -196,6 +232,18 @@
             "preset_filters": {
                 "metrics": "10010003"
             },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage2_Hochbehaelter2",
                 "Wasserwerk1_Anlage2_Hochbehaelter1"
