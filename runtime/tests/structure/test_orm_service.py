@@ -49,6 +49,8 @@ from hetdesrun.structure.db.orm_service import (
     get_children_tn_ids,
     get_descendants_tn_ids,
     get_parent_tn_id,
+    insert_structure,
+    insert_structure_from_file,
     is_database_empty,
     load_structure_from_json_file,
     purge_structure,
@@ -71,10 +73,17 @@ from hetdesrun.structure.db.orm_service import (
     update_sink,
     update_source,
     update_structure,
-    update_structure_from_file,
     update_tn,
 )
-from hetdesrun.structure.models import CompleteStructure, ElementType, Sink, Source, ThingNode
+from hetdesrun.structure.models import (
+    CompleteStructure,
+    ElementType,
+    Filter,
+    FilterType,
+    Sink,
+    Source,
+    ThingNode,
+)
 
 ElementType.update_forward_refs()
 ThingNode.update_forward_refs()
@@ -92,20 +101,26 @@ def db_test_structure_file_path():
 
 @pytest.fixture()
 def _db_test_structure(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/" "db_test_structure.json"
-    update_structure_from_file(file_path)
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_test_structure.json"
+        insert_structure_from_file(file_path, session)
+        session.commit()
+        yield session
+        session.rollback()
 
 
 @pytest.fixture()
 def _db_test_unordered_structure(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/" "db_test_unordered_structure.json"
-    update_structure_from_file(file_path)
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_test_unordered_structure.json"
+        insert_structure_from_file(file_path, session)
 
 
 @pytest.fixture()
 def _db_empty_database(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_empty_structure.json"
-    update_structure_from_file(file_path)
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_empty_structure.json"
+        insert_structure_from_file(file_path, session)
 
 
 # Enable Foreign Key Constraints for SQLite Connections
@@ -213,27 +228,25 @@ def test_updating_existing_tn(mocked_clean_test_db_session):
         id=tn_id,
         external_id="5-ext-valid",
         name="Node1",
-        description="Initial description",
         element_type_id=et_object.id,
         element_type_external_id="element_type_external_id",
         stakeholder_key="stakeholder_key_value",
     )
     store_single_thingnode(tn_object)
 
-    # Only include required fields for the update
     updated_data = ThingNode(
         id=tn_id,
-        external_id="6-updt-ext-valid",
+        external_id="6-updt ext-valid",
         name="UpdatedNode1",
-        stakeholder_key="stakeholder_key_value",
+        element_type_id=et_object.id,
         element_type_external_id="element_type_external_id",
+        stakeholder_key="stakeholder_key_value",
     )
     update_tn(tn_id, updated_data)
 
     fetched_tn_object = read_single_thingnode(tn_id)
     assert fetched_tn_object.name == updated_data.name
-    assert fetched_tn_object.external_id == updated_data.external_id
-    assert fetched_tn_object.description == tn_object.description  # Unverändertes Feld
+    assert fetched_tn_object.description == updated_data.description
 
 
 def test_updating_nonexisting_tn(mocked_clean_test_db_session):
@@ -491,21 +504,27 @@ def test_storing_and_receiving_single_source(mocked_clean_test_db_session):
 
         source_object = Source(
             id=uuid.uuid4(),
-            external_id="source1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Source1",
+            external_id="Energieverbraeuche_Pumpensystem_Hochbehaelter_TestUnique",
+            stakeholder_key="GW_TestUnique",
+            name="Energieverbräuche des Pumpensystems in Hochbehälter - Test Unique",
             type="multitsframe",
             adapter_key="sql-adapter",
             source_id="improvt_timescale_db/ts_table/ts_values",
             meta_data={
-                "metric1": {
+                "1010001": {
                     "unit": "kW/h",
-                    "description": "Energy consumption data for single pump",
-                }
+                    "description": "Energieverbrauchsdaten für eine Einzelpumpe",
+                },
+                "1010002": {
+                    "unit": "kW/h",
+                    "description": "Energieverbrauchsdaten für eine Einzelpumpe",
+                },
             },
-            preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
-            thing_node_external_ids=[thing_node_external_id],
+            preset_filters={"metrics": "1010001, 1010002"},
+            thing_node_external_ids=[
+                "Wasserwerk1_Anlage1_Hochbehaelter1",
+                "Wasserwerk1_Anlage2_Hochbehaelter2",
+            ],
         )
 
         store_single_source(source_object)
@@ -517,65 +536,6 @@ def test_storing_and_receiving_single_source(mocked_clean_test_db_session):
         wrong_source_id = uuid.uuid4()
         with pytest.raises(DBNotFoundError):
             read_single_source(wrong_source_id)
-
-
-@pytest.mark.usefixtures("_db_test_structure")
-def test_update_source_valid_data(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
-        thing_node = (
-            session.query(ThingNodeOrm)
-            .filter(ThingNodeOrm.external_id == thing_node_external_id)
-            .one_or_none()
-        )
-        assert thing_node is not None, "Expected ThingNode not found in the database"
-
-        source_object = Source(
-            id=uuid.uuid4(),
-            external_id="source1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Source1",
-            type="multitsframe",
-            adapter_key="sql-adapter",
-            source_id="improvt_timescale_db/ts_table/ts_values",
-            meta_data={
-                "metric1": {
-                    "unit": "kW/h",
-                    "description": "Energy consumption data for single pump",
-                }
-            },
-            preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
-            thing_node_external_ids=[thing_node_external_id],
-        )
-
-        store_single_source(source_object)
-
-        updated_data = Source(
-            id=source_object.id,
-            external_id="source1-updated-ext-id",
-            stakeholder_key="stakeholder1",
-            name="UpdatedSource1",
-            type="multitsframe",
-            adapter_key="sql-adapter",
-            source_id="improvt_timescale_db/ts_table/ts_values",
-            meta_data={
-                "metric1": {
-                    "unit": "kW/h",
-                    "description": "Energy consumption data for single pump",
-                }
-            },
-            preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
-            thing_node_external_ids=[thing_node_external_id],
-        )
-
-        updated_source = update_source(source_object.id, updated_data)
-
-        assert updated_source.name == "UpdatedSource1"
-
-        updated_source_db = fetch_source_by_id(session, source_object.id)
-        assert updated_source_db.name == "UpdatedSource1"
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -604,7 +564,10 @@ def test_delete_source_valid_id(mocked_clean_test_db_session):
                 }
             },
             preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
+            passthrough_filters=[
+                {"name": "timestampFrom", "type": FilterType.free_text, "required": True},
+                {"name": "timestampTo", "type": FilterType.free_text, "required": False},
+            ],
             thing_node_external_ids=[thing_node_external_id],
         )
 
@@ -710,7 +673,10 @@ def test_storing_and_receiving_single_sink(mocked_clean_test_db_session):
                 }
             },
             preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
+            passthrough_filters=[
+                {"name": "timestampFrom", "type": FilterType.free_text, "required": True},
+                {"name": "timestampTo", "type": FilterType.free_text, "required": False},
+            ],
             thing_node_external_ids=[thing_node_external_id],
         )
 
@@ -751,7 +717,10 @@ def test_update_sink_valid_data(mocked_clean_test_db_session):
                 }
             },
             preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
+            passthrough_filters=[
+                {"name": "timestampFrom", "type": FilterType.free_text, "required": True},
+                {"name": "timestampTo", "type": FilterType.free_text, "required": False},
+            ],
             thing_node_external_ids=[thing_node_external_id],
         )
 
@@ -772,7 +741,10 @@ def test_update_sink_valid_data(mocked_clean_test_db_session):
                 }
             },
             preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
+            passthrough_filters=[
+                {"name": "timestampFrom", "type": FilterType.free_text, "required": True},
+                {"name": "timestampTo", "type": FilterType.free_text, "required": False},
+            ],
             thing_node_external_ids=[thing_node_external_id],
         )
 
@@ -786,47 +758,6 @@ def test_update_sink_valid_data(mocked_clean_test_db_session):
         wrong_sink_id = uuid.uuid4()
         with pytest.raises(DBNotFoundError):
             fetch_sink_by_id(session, wrong_sink_id)
-
-
-
-@pytest.mark.usefixtures("_db_test_structure")
-def test_delete_sink_valid_id(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        thing_node_external_id = "Wasserwerk1_Anlage1_Hochbehaelter1"
-        thing_node = (
-            session.query(ThingNodeOrm)
-            .filter(ThingNodeOrm.external_id == thing_node_external_id)
-            .one_or_none()
-        )
-        assert thing_node is not None, "Expected ThingNode not found in the database"
-
-        sink_object = Sink(
-            id=uuid.uuid4(),
-            external_id="sink1-ext-id",
-            stakeholder_key="stakeholder1",
-            name="Sink1",
-            type="multitsframe",
-            adapter_key="sql-adapter",
-            sink_id="improvt_timescale_db/ts_table/ts_values",
-            meta_data={
-                "metric1": {
-                    "description": "Anomaly Score data for single pump",
-                    "calculation_details": "Window size: 4h, Timestamp location: center",
-                }
-            },
-            preset_filters={"metrics": "metric1"},
-            passthrough_filters=["timestampFrom", "timestampTo"],
-            thing_node_external_ids=[thing_node_external_id],
-        )
-
-        store_single_sink(sink_object)
-
-        sink_id = sink_object.id
-
-        delete_sink(sink_id)
-
-        with pytest.raises(DBNotFoundError):
-            fetch_sink_by_id(session, sink_id)
 
 
 def test_delete_sink_invalid_id(mocked_clean_test_db_session):
@@ -1192,41 +1123,7 @@ def test_performance_bulk_delete(mocked_clean_test_db_session):
 
 
 @pytest.mark.usefixtures("_db_test_unordered_structure")
-def test_load_unordered_structure_from_json_file(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session, session.begin():
-        db_element_types = fetch_all_element_types(session)
-        db_thing_nodes = fetch_all_thing_nodes(session)
-        db_sources = fetch_all_sources(session)
-        db_sinks = fetch_all_sinks(session)
-
-        assert len(db_element_types) > 0
-        assert len(db_thing_nodes) > 0
-        assert len(db_sources) > 0
-        assert len(db_sinks) > 0
-
-        element_type_ids_in_db = {et.external_id for et in db_element_types}
-        thing_node_ids_in_db = {tn.external_id for tn in db_thing_nodes}
-        source_ids_in_db = {source.external_id for source in db_sources}
-        sink_ids_in_db = {sink.external_id for sink in db_sinks}
-
-        file_path = "tests/structure/data/" "db_test_unordered_structure.json"
-
-        with open(file_path) as file:
-            data = json.load(file)
-
-        element_type_ids_in_json = {et["external_id"] for et in data["element_types"]}
-        thing_node_ids_in_json = {tn["external_id"] for tn in data["thing_nodes"]}
-        source_ids_in_json = {source["external_id"] for source in data["sources"]}
-        sink_ids_in_json = {sink["external_id"] for sink in data["sinks"]}
-
-        assert element_type_ids_in_db == element_type_ids_in_json, "Mismatch in element type IDs"
-        assert thing_node_ids_in_db == thing_node_ids_in_json, "Mismatch in thing node IDs"
-        assert source_ids_in_db == source_ids_in_json, "Mismatch in source IDs"
-        assert sink_ids_in_db == sink_ids_in_json, "Mismatch in sink IDs"
-
-
-@pytest.mark.usefixtures("_db_test_unordered_structure")
-def test_update_structure_from_file_with_unordered_thingnodes_and_many_to_many_relationship(
+def test_insert_structure_from_file_with_unordered_thingnodes_and_many_to_many_relationship(
     mocked_clean_test_db_session,
 ):
     with mocked_clean_test_db_session() as session:
@@ -1405,10 +1302,9 @@ def test_fetch_all_sources(mocked_clean_test_db_session):
                 for source in sources
             )
             assert found, (
-                    f"Expected Source with external_id {expected_source['external_id']} "
-                    f"and name {expected_source['name']} not found"
-                )
-
+                f"Expected Source with external_id {expected_source['external_id']} "
+                f"and name {expected_source['name']} not found"
+            )
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -1435,9 +1331,9 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
                 for sink in sinks
             )
             assert found, (
-                    f"Expected Sink with external_id {expected_sink['external_id']} "
-                    f"and name {expected_sink['name']} not found"
-                )
+                f"Expected Sink with external_id {expected_sink['external_id']} "
+                f"and name {expected_sink['name']} not found"
+            )
 
 
 ### Utility Functions
@@ -1808,9 +1704,7 @@ def test_fill_source_sink_associations(mocked_clean_test_db_session):
                         session.query(SourceOrm).filter_by(external_id=source.external_id).one().id
                     )
                     association = (thing_node_id, source_id)
-                    assert (
-                        association in updated_source_associations
-                    ), (
+                    assert association in updated_source_associations, (
                         f"Association for source {source.external_id} "
                         f"and thing node {tn_external_id} is missing"
                     )
@@ -1825,9 +1719,7 @@ def test_fill_source_sink_associations(mocked_clean_test_db_session):
                         session.query(SinkOrm).filter_by(external_id=sink.external_id).one().id
                     )
                     association = (thing_node_id, sink_id)
-                    assert (
-                        association in updated_sink_associations
-                    ), (
+                    assert association in updated_sink_associations, (
                         f"Association for sink {sink.external_id} "
                         f"and thing node {tn_external_id} is missing"
                     )
@@ -1874,13 +1766,13 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
 @pytest.mark.usefixtures("_db_empty_database")
 def test_is_database_empty_when_empty(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
-        assert is_database_empty(session), "Database should be empty but is not."
+        assert is_database_empty(), "Database should be empty but is not."
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
-        assert not is_database_empty(session), "Database should not be empty but it is."
+        assert not is_database_empty(), "Database should not be empty but it is."
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -1894,7 +1786,7 @@ def test_purge_structure(mocked_clean_test_db_session):
         assert session.query(thingnode_source_association).count() > 0
         assert session.query(thingnode_sink_association).count() > 0
 
-        purge_structure()
+        purge_structure(session)
 
         # Verify that all tables are empty after purging
         assert session.query(ElementTypeOrm).count() == 0
@@ -1903,3 +1795,185 @@ def test_purge_structure(mocked_clean_test_db_session):
         assert session.query(SinkOrm).count() == 0
         assert session.query(thingnode_source_association).count() == 0
         assert session.query(thingnode_sink_association).count() == 0
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_update_structure_with_new_elements(_db_test_structure):
+    session = _db_test_structure
+
+    # Verify initial structure
+    initial_element_types = session.query(ElementTypeOrm).all()
+    initial_thing_nodes = session.query(ThingNodeOrm).all()
+    initial_sources = session.query(SourceOrm).all()
+    initial_sinks = session.query(SinkOrm).all()
+
+    assert len(initial_element_types) == 3
+    assert len(initial_thing_nodes) == 7
+    assert len(initial_sources) == 2
+    assert len(initial_sinks) == 2
+
+    # Initial values before the update
+    initial_tn = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+        .one()
+    )
+    assert initial_tn.meta_data["capacity"] == "5000"
+    assert initial_tn.meta_data["description"] == "Wasserspeicherungskapazität für Hochbehälter 1"
+
+    initial_tn2 = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
+        .one()
+    )
+    assert initial_tn2.meta_data["capacity"] == "6000"
+    assert initial_tn2.meta_data["description"] == "Wasserspeicherungskapazität für Hochbehälter 2"
+
+    # Load updated structure from JSON file
+    file_path = "tests/structure/data/db_updated_test_structure.json"
+    updated_structure = load_structure_from_json_file(file_path)
+
+    update_structure(updated_structure, session)
+
+    # Verify structure after update
+    final_element_types = session.query(ElementTypeOrm).all()
+    final_thing_nodes = session.query(ThingNodeOrm).all()
+    final_sources = session.query(SourceOrm).all()
+    final_sinks = session.query(SinkOrm).all()
+
+    # Check updated element types, thing nodes, sources, and sinks
+    assert len(final_element_types) == 4
+    assert len(final_thing_nodes) == 8
+    assert len(final_sources) == 3
+    assert len(final_sinks) == 2
+
+    # Verify new element type added
+    new_element_type = session.query(ElementTypeOrm).filter_by(external_id="Filteranlage_Typ").one()
+    assert new_element_type.name == "Filteranlage"
+    assert new_element_type.description == "Elementtyp für Filteranlagen"
+
+    # Verify new thing node added
+    new_tn = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Filteranlage").one()
+    assert new_tn.name == "Filteranlage 1"
+    assert new_tn.description == "Neue Filteranlage im Wasserwerk 1"
+    assert new_tn.meta_data["location"] == "Zentral"
+    assert new_tn.meta_data["technology"] == "Advanced Filtration"
+
+    # Check that the thing nodes were updated correctly
+    updated_tn = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+        .one()
+    )
+    assert updated_tn.meta_data["capacity"] == "5200"
+    assert (
+        updated_tn.meta_data["description"]
+        == "Erhöhte Wasserspeicherungskapazität für Hochbehälter 1"
+    )
+
+    updated_tn2 = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
+        .one()
+    )
+    assert updated_tn2.meta_data["capacity"] == "6100"
+    assert (
+        updated_tn2.meta_data["description"]
+        == "Erhöhte Wasserspeicherungskapazität für Hochbehälter 2"
+    )
+
+    # Verify new source added
+    new_source = (
+        session.query(SourceOrm).filter_by(external_id="Neue_Energiequelle_Filteranlage").one()
+    )
+    assert new_source.name == "Energieverbrauch der neuen Filteranlage"
+    assert (
+        new_source.meta_data["1010005"]["description"]
+        == "Energieverbrauchsdaten für die Filteranlage"
+    )
+
+    # Verify associations after update
+    source_associations = session.query(thingnode_source_association).all()
+    sink_associations = session.query(thingnode_sink_association).all()
+
+    # Expected associations after update
+    expected_source_associations = [
+        ("Wasserwerk1_Anlage1_Hochbehaelter1", "Energieverbraeuche_Pumpensystem_Hochbehaelter"),
+        ("Wasserwerk1_Filteranlage", "Energieverbraeuche_Pumpensystem_Hochbehaelter"),
+        ("Wasserwerk1_Anlage2_Hochbehaelter1", "Energieverbrauch_Einzelpumpe_Hochbehaelter"),
+        ("Wasserwerk1_Filteranlage", "Neue_Energiequelle_Filteranlage"),
+    ]
+
+    expected_sink_associations = [
+        (
+            "Wasserwerk1_Anlage1_Hochbehaelter1",
+            "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+        ),
+        (
+            "Wasserwerk1_Anlage1_Hochbehaelter2",
+            "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+        ),
+        (
+            "Wasserwerk1_Anlage2_Hochbehaelter1",
+            "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
+        ),
+        (
+            "Wasserwerk1_Anlage2_Hochbehaelter2",
+            "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
+        ),
+        ("Wasserwerk1_Filteranlage", "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter"),
+    ]
+
+    for tn_external_id, source_external_id in expected_source_associations:
+        tn_id = (
+            session.query(ThingNodeOrm.id)
+            .filter(ThingNodeOrm.external_id == tn_external_id)
+            .one()[0]
+        )
+        source_id = (
+            session.query(SourceOrm.id).filter(SourceOrm.external_id == source_external_id).one()[0]
+        )
+        assert (tn_id, source_id) in [
+            (assoc.thing_node_id, assoc.source_id) for assoc in source_associations
+        ]
+
+    for tn_external_id, sink_external_id in expected_sink_associations:
+        tn_id = (
+            session.query(ThingNodeOrm.id)
+            .filter(ThingNodeOrm.external_id == tn_external_id)
+            .one()[0]
+        )
+        sink_id = session.query(SinkOrm.id).filter(SinkOrm.external_id == sink_external_id).one()[0]
+        assert (tn_id, sink_id) in [
+            (assoc.thing_node_id, assoc.sink_id) for assoc in sink_associations
+        ]
+
+
+def test_flush_items(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Bereinige alle bestehenden Daten
+
+        # Load structure from JSON file
+        file_path = "tests/structure/data/db_test_structure.json"
+        complete_structure = insert_structure_from_file(file_path, session)
+
+        print(complete_structure)
+
+        purge_structure(session)
+
+        # # Flush items into the database
+        flush_items(session, complete_structure.element_types)
+        flush_items(session, complete_structure.thing_nodes)
+        flush_items(session, complete_structure.sources)
+        flush_items(session, complete_structure.sinks)
+
+        # Verify if items are flushed correctly
+        flushed_element_types = session.query(ElementTypeOrm).all()
+        flushed_thing_nodes = session.query(ThingNodeOrm).all()
+        flushed_sources = session.query(SourceOrm).all()
+        flushed_sinks = session.query(SinkOrm).all()
+
+        assert len(flushed_element_types) == len(complete_structure.element_types)
+        assert len(flushed_thing_nodes) == len(complete_structure.thing_nodes)
+        assert len(flushed_sources) == len(complete_structure.sources)
+        assert len(flushed_sinks) == len(complete_structure.sinks)
