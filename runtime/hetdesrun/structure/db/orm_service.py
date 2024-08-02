@@ -655,6 +655,18 @@ def delete_sink(id: UUID, log_error: bool = True) -> None:  # noqa: A002
 # Structure Services
 
 
+def load_structure_from_json_file(
+    file_path: str,
+) -> CompleteStructure:
+    with open(file_path) as file:
+        structure_json = json.load(file)
+    complete_structure = CompleteStructure(**structure_json)
+    return complete_structure
+
+
+# Structure Services: Insert function
+
+
 def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
     root_nodes = []
@@ -771,77 +783,6 @@ def fill_source_sink_associations(
                     session.execute(thingnode_sink_association.insert().values(association))
 
 
-def fill_source_sink_associations_db(
-    complete_structure: CompleteStructure, session: SQLAlchemySession
-) -> None:
-    existing_thing_nodes = {
-        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
-    }
-    existing_sources = {
-        src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
-    }
-    existing_sinks = {
-        snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
-    }
-
-    for source in complete_structure.sources:
-        if source.thing_node_external_ids:
-            for tn_external_id in source.thing_node_external_ids:
-                tn_key = source.stakeholder_key + tn_external_id
-                thing_node = existing_thing_nodes.get(tn_key)
-                if thing_node:
-                    thing_node_id = thing_node.id
-                    src_key = source.stakeholder_key + source.external_id
-                    db_source = existing_sources.get(src_key)
-                    if db_source:
-                        source_id = db_source.id
-                        association_exists = (
-                            session.query(thingnode_source_association)
-                            .filter_by(thing_node_id=thing_node_id, source_id=source_id)
-                            .first()
-                        )
-                        if not association_exists:
-                            association = {
-                                "thing_node_id": thing_node_id,
-                                "source_id": source_id,
-                            }
-                            session.execute(
-                                thingnode_source_association.insert().values(association)
-                            )
-
-    for sink in complete_structure.sinks:
-        if sink.thing_node_external_ids:
-            for tn_external_id in sink.thing_node_external_ids:
-                tn_key = sink.stakeholder_key + tn_external_id
-                thing_node = existing_thing_nodes.get(tn_key)
-                if thing_node:
-                    thing_node_id = thing_node.id
-                    snk_key = sink.stakeholder_key + sink.external_id
-                    db_sink = existing_sinks.get(snk_key)
-                    if db_sink:
-                        sink_id = db_sink.id
-                        association_exists = (
-                            session.query(thingnode_sink_association)
-                            .filter_by(thing_node_id=thing_node_id, sink_id=sink_id)
-                            .first()
-                        )
-                        if not association_exists:
-                            association = {
-                                "thing_node_id": thing_node_id,
-                                "sink_id": sink_id,
-                            }
-                            session.execute(thingnode_sink_association.insert().values(association))
-
-
-def load_structure_from_json_file(
-    file_path: str,
-) -> CompleteStructure:
-    with open(file_path) as file:
-        structure_json = json.load(file)
-    complete_structure = CompleteStructure(**structure_json)
-    return complete_structure
-
-
 def flush_items(session: SQLAlchemySession, items: list) -> None:
     try:
         for item in items:
@@ -885,6 +826,9 @@ def insert_structure(
     session.commit()
 
     return complete_structure
+
+
+# Structure Services: Update function
 
 
 def sort_thing_nodes_from_db(
@@ -953,6 +897,80 @@ def fill_all_parent_uuids_from_db(
             db_parent_tn = existing_thing_nodes.get(key)
             if db_parent_tn:
                 node.parent_node_id = db_parent_tn.id
+            else:
+                parent_node = next(
+                    (
+                        n
+                        for n in thing_nodes
+                        if n.external_id == node.parent_external_node_id
+                        and n.stakeholder_key == node.stakeholder_key
+                    ),
+                    None,
+                )
+                if parent_node:
+                    node.parent_node_id = parent_node.id
+
+
+def fill_source_sink_associations_db(
+    complete_structure: CompleteStructure, session: SQLAlchemySession
+) -> None:
+    existing_thing_nodes = {
+        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
+    }
+    existing_sources = {
+        src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
+    }
+    existing_sinks = {
+        snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
+    }
+
+    for source in complete_structure.sources:
+        if source.thing_node_external_ids:
+            for tn_external_id in source.thing_node_external_ids:
+                tn_key = source.stakeholder_key + tn_external_id
+                thing_node = existing_thing_nodes.get(tn_key)
+                if thing_node:
+                    thing_node_id = thing_node.id
+                    src_key = source.stakeholder_key + source.external_id
+                    db_source = existing_sources.get(src_key)
+                    if db_source:
+                        source_id = db_source.id
+                        association_exists = (
+                            session.query(thingnode_source_association)
+                            .filter_by(thing_node_id=thing_node_id, source_id=source_id)
+                            .first()
+                        )
+                        if not association_exists:
+                            association = {
+                                "thing_node_id": thing_node_id,
+                                "source_id": source_id,
+                            }
+                            session.execute(
+                                thingnode_source_association.insert().values(association)
+                            )
+
+    for sink in complete_structure.sinks:
+        if sink.thing_node_external_ids:
+            for tn_external_id in sink.thing_node_external_ids:
+                tn_key = sink.stakeholder_key + tn_external_id
+                thing_node = existing_thing_nodes.get(tn_key)
+                if thing_node:
+                    thing_node_id = thing_node.id
+                    snk_key = sink.stakeholder_key + sink.external_id
+                    db_sink = existing_sinks.get(snk_key)
+                    if db_sink:
+                        sink_id = db_sink.id
+                        association_exists = (
+                            session.query(thingnode_sink_association)
+                            .filter_by(thing_node_id=thing_node_id, sink_id=sink_id)
+                            .first()
+                        )
+                        if not association_exists:
+                            association = {
+                                "thing_node_id": thing_node_id,
+                                "sink_id": sink_id,
+                            }
+                            session.execute(thingnode_sink_association.insert().values(association))
 
 
 def update_structure_from_file(file_path: str) -> CompleteStructure:
@@ -977,6 +995,7 @@ def update_structure(complete_structure: CompleteStructure) -> CompleteStructure
             fill_all_element_type_ids_from_db(
                 complete_structure.thing_nodes, existing_element_types
             )
+
             fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
 
             sorted_thing_nodes = sort_and_flatten_thing_nodes(
