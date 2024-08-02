@@ -100,23 +100,20 @@ def db_test_structure_file_path():
 
 @pytest.fixture()
 def _db_test_structure(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_test_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_test_structure.json"
+    update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_test_unordered_structure(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_test_unordered_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_test_unordered_structure.json"
+    update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_empty_database(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_empty_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_empty_structure.json"
+    update_structure_from_file(file_path)
 
 
 # Enable Foreign Key Constraints for SQLite Connections
@@ -650,6 +647,7 @@ def test_add_source(mocked_clean_test_db_session):
         stakeholder_key="stakeholder_key_value",
         type="type_value",
         visible=True,
+        display_path="",
         adapter_key="adapter_key_value",
         source_id="source_id_value",
         preset_filters={},
@@ -673,6 +671,7 @@ def test_add_source_integrity_error(mocked_clean_test_db_session):
         stakeholder_key="stakeholder_key_value",
         type="type_value",
         visible=True,
+        display_path="",
         adapter_key="adapter_key_value",
         source_id="source_id_value",
         preset_filters={},
@@ -829,6 +828,7 @@ def test_add_sink(mocked_clean_test_db_session):
         stakeholder_key="stakeholder_key_value",
         type="type_value",
         visible=True,
+        display_path="",
         adapter_key="adapter_key_value",
         sink_id="sink_id_value",
         preset_filters={},
@@ -852,6 +852,7 @@ def test_add_sink_integrity_error(mocked_clean_test_db_session):
         stakeholder_key="stakeholder_key_value",
         type="type_value",
         visible=True,
+        display_path="",
         adapter_key="adapter_key_value",
         sink_id="sink_id_value",
         preset_filters={},
@@ -1842,85 +1843,99 @@ def test_purge_structure(mocked_clean_test_db_session):
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_update_structure_with_new_elements():
-    verify_initial_structure()
-    update_db_structure()
-    verify_updated_structure()
-
-
-def verify_initial_structure():
     with get_session()() as session, session.begin():
-        assert len(session.query(ElementTypeOrm).all()) == 3
-        assert len(session.query(ThingNodeOrm).all()) == 7
-        assert len(session.query(SourceOrm).all()) == 2
-        assert len(session.query(SinkOrm).all()) == 2
+        # Verify initial structure
+        verify_initial_structure(session)
 
-        initial_tn = (
-            session.query(ThingNodeOrm)
-            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
-            .one()
-        )
-        assert initial_tn.meta_data["capacity"] == "5000"
-        assert initial_tn.meta_data["description"] == (
-            "Wasserspeicherungskapazität für Hochbehälter 1"
-        )
+        # Load updated structure from JSON file
+        file_path = "tests/structure/data/db_updated_test_structure.json"
+        updated_structure = load_structure_from_json_file(file_path)
 
-        initial_tn2 = (
-            session.query(ThingNodeOrm)
-            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
-            .one()
-        )
-        assert initial_tn2.meta_data["capacity"] == "6000"
-        assert initial_tn2.meta_data["description"] == (
-            "Wasserspeicherungskapazität für Hochbehälter 2"
-        )
-
-
-def update_db_structure():
-    file_path = "tests/structure/data/db_updated_test_structure.json"
-    updated_structure = load_structure_from_json_file(file_path)
+    # Update the structure in the database
     update_structure(updated_structure)
 
-
-def verify_updated_structure():
+    # Verify structure after update
     with get_session()() as session, session.begin():
-        assert len(session.query(ElementTypeOrm).all()) == 4
-        assert len(session.query(ThingNodeOrm).all()) == 8
-        assert len(session.query(SourceOrm).all()) == 3
-        assert len(session.query(SinkOrm).all()) == 2
+        verify_updated_structure(session)
 
-        new_element_type = (
-            session.query(ElementTypeOrm).filter_by(external_id="Filteranlage_Typ").one()
-        )
-        assert new_element_type.name == "Filteranlage"
-        assert new_element_type.description == "Elementtyp für Filteranlagen"
 
-        new_tn = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1_Filteranlage").one()
-        assert new_tn.name == "Filteranlage 1"
-        assert new_tn.description == "Neue Filteranlage im Wasserwerk 1"
-        assert new_tn.meta_data["location"] == "Zentral"
-        assert new_tn.meta_data["technology"] == "Advanced Filtration"
+def verify_initial_structure(session):
+    initial_element_types = session.query(ElementTypeOrm).all()
+    initial_thing_nodes = session.query(ThingNodeOrm).all()
+    initial_sources = session.query(SourceOrm).all()
+    initial_sinks = session.query(SinkOrm).all()
 
-        updated_tn = (
-            session.query(ThingNodeOrm)
-            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
-            .one()
-        )
-        assert updated_tn.meta_data["capacity"] == "5200"
-        assert updated_tn.meta_data["description"] == (
-            "Erhöhte Wasserspeicherungskapazität für Hochbehälter 1"
-        )
+    assert len(initial_element_types) == 3
+    assert len(initial_thing_nodes) == 7
+    assert len(initial_sources) == 2
+    assert len(initial_sinks) == 2
 
-        updated_tn2 = (
-            session.query(ThingNodeOrm)
-            .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
-            .one()
-        )
-        assert updated_tn2.meta_data["capacity"] == "6100"
-        assert updated_tn2.meta_data["description"] == (
-            "Erhöhte Wasserspeicherungskapazität für Hochbehälter 2"
-        )
+    # Initial values before the update
+    initial_tn = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
+        .one()
+    )
+    assert initial_tn.meta_data["capacity"] == "5000"
+    assert initial_tn.meta_data["description"] == ("Wasserspeicherungskapazität für Hochbehälter 1")
 
-        verify_associations(session)
+    initial_tn2 = (
+        session.query(ThingNodeOrm)
+        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
+        .one()
+    )
+    assert initial_tn2.meta_data["capacity"] == "6000"
+    assert initial_tn2.meta_data["description"] == (
+        "Wasserspeicherungskapazität für Hochbehälter 2"
+    )
+
+
+def verify_updated_structure(session):
+    final_element_types = session.query(ElementTypeOrm).all()
+    final_thing_nodes = session.query(ThingNodeOrm).all()
+    final_sources = session.query(SourceOrm).all()
+    final_sinks = session.query(SinkOrm).all()
+
+    assert len(final_element_types) == 4
+    assert len(final_thing_nodes) == 8
+    assert len(final_sources) == 3
+    assert len(final_sinks) == 2
+
+    verify_new_elements_and_nodes(session, final_element_types, final_thing_nodes)
+    verify_associations(session)
+
+
+def verify_new_elements_and_nodes(session, final_element_types, final_thing_nodes):
+    # Verify new element type added
+    new_element_type = next(
+        et for et in final_element_types if et.external_id == "Filteranlage_Typ"
+    )
+    assert new_element_type.name == "Filteranlage"
+    assert new_element_type.description == "Elementtyp für Filteranlagen"
+
+    # Verify new thing node added
+    new_tn = next(tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Filteranlage")
+    assert new_tn.name == "Filteranlage 1"
+    assert new_tn.description == "Neue Filteranlage im Wasserwerk 1"
+    assert new_tn.meta_data["location"] == "Zentral"
+    assert new_tn.meta_data["technology"] == "Advanced Filtration"
+
+    # Check that the thing nodes were updated correctly
+    updated_tn1 = next(
+        tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Anlage1_Hochbehaelter1"
+    )
+    assert updated_tn1.meta_data["capacity"] == "5200"
+    assert updated_tn1.meta_data["description"] == (
+        "Erhöhte Wasserspeicherungskapazität für Hochbehälter 1"
+    )
+
+    updated_tn2 = next(
+        tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Anlage1_Hochbehaelter2"
+    )
+    assert updated_tn2.meta_data["capacity"] == "6100"
+    assert updated_tn2.meta_data["description"] == (
+        "Erhöhte Wasserspeicherungskapazität für Hochbehälter 2"
+    )
 
 
 def verify_associations(session):
