@@ -118,8 +118,8 @@ class RuntimeConfig(BaseSettings):
         False,
         env="HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC",
         description=(
-            "Cache transformation revisions for execution if their state is not DRAFT."
-            "Instead of always loading them from the database."
+            "Cache transformation revisions for execution if their state is not DRAFT. "
+            "Instead of always loading them from the database. "
             "The caching mechanism is NOT thread-safe."
         ),
     )
@@ -323,11 +323,31 @@ class RuntimeConfig(BaseSettings):
         env="HD_BACKEND_AUTOIMPORT_DIRECTORY",
     )
 
-    # TODO More detailed description is probably necessary
+    prepopulate_virtual_structure_adapter_at_designer_startup: bool = Field(
+        False,
+        description="Set this flag to True, if you wish to provide a structure "
+        "for the virtual structure adapter "
+        "via the environment variable STRUCTURE_TO_PREPOPULATE_VST_ADAPTER.",
+        env="PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP",
+    )
+
+    completely_overwrite_an_existing_virtual_structure_at_hd_startup: bool = Field(
+        True,
+        description="Determines whether a potentially existent virtual structure in the database "
+        "is overwritten (if set to True) or updated (if set to False) at hetida designer startup.",
+        env="COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP",
+    )
+
     structure_to_prepopulate_virtual_structure_adapter: CompleteStructure | None = Field(
         None,
-        description="A structure in JSON-format."
-        "Containing all thingnodes, sources, sinks and element types of the users data",
+        description="A JSON, used to provide a structure for the virtual structure adapter "
+        "at hetida designer startup. "
+        "This built-in adapter enables the user to create "
+        "a flexible, abstract hierarchical structure for their data. "
+        "In this JSON the user can provide names, descriptions and metadata "
+        "for each element of the hierarchy. "
+        "The JSON should contain definitions for all thingnodes, sources, sinks and element types "
+        "representing the users data.",
         env="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
     )
 

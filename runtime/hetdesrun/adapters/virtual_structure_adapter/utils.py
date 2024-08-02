@@ -34,7 +34,7 @@ def get_enumerated_ids_of_vst_sources_or_sinks(
     wirings: list[InputWiring] | list[OutputWiring],
 ) -> list[tuple[int, str]]:
     return [
-        (i, wiring.ref_id)
+        (i, wiring.ref_id)  # type: ignore[attr-defined]
         for i, wiring in enumerate(wirings)
-        if wiring.adapter_id == "virtual-structure-adapter"
+        if wiring.adapter_id == "virtual-structure-adapter"  # type: ignore[attr-defined]
     ]

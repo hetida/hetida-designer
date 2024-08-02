@@ -81,3 +81,34 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
     for source in resp_obj["sources"]:
         assert source["name"] in expected_source_names
     assert sink_name == "Anomaliescore des Pumpensystems in Hochbehälter"
+
+
+@pytest.mark.asyncio
+async def test_vst_adapter_get_metadata_from_webservice(async_test_client_with_vst_adapter):
+    # Currently no metadata is returned, every metadata endpoint should return an empty list
+    # regardless of the UUID provided
+    example_uuid = "7cfc4470-65d8-416b-a8c3-c392eaf92b91"  # Non-existent UUID
+
+    # Test thingnode metadata
+    response = await async_test_client_with_vst_adapter.get(
+        f"/adapters/vst/thingNodes/{example_uuid}/metadata/"
+    )
+    assert response.status_code == 200
+    resp_obj = response.json()
+    assert resp_obj == []
+
+    # Test source metadata
+    response = await async_test_client_with_vst_adapter.get(
+        f"/adapters/vst/sources/{example_uuid}/metadata/"
+    )
+    assert response.status_code == 200
+    resp_obj = response.json()
+    assert resp_obj == []
+
+    # Test sink metadata
+    response = await async_test_client_with_vst_adapter.get(
+        f"/adapters/vst/sinks/{example_uuid}/metadata/"
+    )
+    assert response.status_code == 200
+    resp_obj = response.json()
+    assert resp_obj == []

@@ -62,6 +62,7 @@ def resolve_virtual_structure_wirings(
 
     # Retrieve IDs of wirings referencing vst-adapter
     # and keep track of the indices for easier replacement later on
+    # TODO Use different name? ref_id is also used in InputWiring
     input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.input_wirings)
     output_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.output_wirings)
 

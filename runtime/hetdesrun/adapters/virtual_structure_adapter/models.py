@@ -34,15 +34,16 @@ class StructureVirtualSource(BaseModel):
 
     @classmethod
     def from_structure_service(cls, source: Source) -> "StructureVirtualSource":
+        def replace_whitespace(filter_name: str) -> str:
+            filter_name = filter_name.strip()
+            return filter_name.replace(" ", "_")
+
         return cls(
             id=source.id,
             name=source.name,
             type=source.type,
-            path="",  # TODO Fill appropriately
-            metadataKey=source.meta_data.get("metadataKey")  # TODO why get(metadataKey)?
-            if source.meta_data
-            else None,
-            filters={f.name: f for f in source.passthrough_filters}
+            path=source.display_path,
+            filters={replace_whitespace(f.name): f for f in source.passthrough_filters}
             if source.passthrough_filters
             else {},
         )
@@ -59,15 +60,16 @@ class StructureVirtualSink(BaseModel):
 
     @classmethod
     def from_structure_service(cls, sink: Sink) -> "StructureVirtualSink":
+        def replace_whitespace(filter_name: str) -> str:
+            filter_name = filter_name.strip()
+            return filter_name.replace(" ", "_")
+
         return cls(
             id=sink.id,
             name=sink.name,
             type=sink.type,
-            path="",  # TODO Fill appropriately
-            metadataKey=sink.meta_data.get("metadataKey")
-            if sink.meta_data
-            else None,  # TODO why get(metadataKey)?
-            filters={f.name: f for f in sink.passthrough_filters}
+            path=sink.display_path,
+            filters={replace_whitespace(f.name): f for f in sink.passthrough_filters}
             if sink.passthrough_filters
             else {},
         )

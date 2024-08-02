@@ -149,6 +149,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.virtual_structure_adapter.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,

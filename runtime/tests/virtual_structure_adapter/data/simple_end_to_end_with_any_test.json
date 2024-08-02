@@ -109,6 +109,20 @@
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage1_Hochbehaelter1"
             ]
+        },
+        {
+            "external_id": "Any_Irgendwas",
+            "stakeholder_key": "GW",
+            "name": "Testquelle fuer metadata(any)",
+            "type": "metadata(any)",
+            "adapter_key": "demo-adapter-python",
+            "source_id": "root.plantA.plant_additional_info",
+            "meta_data": {
+                "Influx": {"nf": 23}
+            },
+            "thing_node_external_ids": [
+                "Wasserwerk1_Anlage1_Hochbehaelter1"
+            ]
         }
     ],
     "sinks": [
