@@ -12,6 +12,12 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
+from hetdesrun.structure.db.orm_service import (
+    fetch_all_element_types,
+    fetch_all_sinks,
+    fetch_all_sources,
+    fetch_all_thing_nodes,
+)
 from hetdesrun.structure.models import Sink, Source, ThingNode
 
 
@@ -191,3 +197,14 @@ def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> No
         session.delete(source)
     for sink in orphaned_sinks:
         session.delete(sink)
+
+
+def is_database_empty() -> bool:
+    with get_session()() as session:
+        element_types = fetch_all_element_types(session)
+        thing_nodes = fetch_all_thing_nodes(session)
+        sources = fetch_all_sources(session)
+        sinks = fetch_all_sinks(session)
+        # TODO: Shorten function by only checking for ElementTypes?
+
+    return not (element_types or thing_nodes or sources or sinks)
