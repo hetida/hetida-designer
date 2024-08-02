@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Transformation } from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
-import { Utils } from 'src/app/utils/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -22,16 +21,8 @@ export class TransformationHttpService {
     });
   }
 
-  public async fetchTransformations(): Promise<Observable<Transformation[]>> {
-    let url = '';
-
-    if (Utils.isDefined(this.apiEndpoint)) {
-      url = `${this.apiEndpoint}/transformations`;
-    } else {
-      const runtimeConfig = await firstValueFrom(this.config.getConfig());
-      url = `${runtimeConfig.apiEndpoint}/transformations`;
-    }
-
+  public fetchTransformations(): Observable<Array<Transformation>> {
+    const url = `${this.apiEndpoint}/transformations`;
     return this.httpClient.get<Array<Transformation>>(url);
   }
 

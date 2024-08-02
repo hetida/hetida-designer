@@ -6,13 +6,13 @@ import { AuthGuard } from './auth/auth.guard';
 import { AppComponent } from './app.component';
 
 const appRoutes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'home' },
   {
     path: 'home',
     component: HomeComponent,
     canActivate: [AuthGuard]
   },
   { path: 'authcallback', component: AuthCallbackComponent },
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
   {
     path: '**',
     component: AppComponent,

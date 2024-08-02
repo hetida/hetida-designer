@@ -31,7 +31,7 @@ export class AuthService {
         first(authenticated => authenticated === true)
       );
     }
-    return of(false);
+    return of(true);
   }
 
   public userName$(): Observable<string> {

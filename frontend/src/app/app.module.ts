@@ -71,7 +71,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
     map(config => {
       return {
-        postLoginRoute: '/home',
         authority: config.authConfig?.authority,
         redirectUrl: `${window.location.origin}/authcallback`,
         postLogoutRedirectUri: window.location.origin,

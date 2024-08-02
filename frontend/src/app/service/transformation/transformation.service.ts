@@ -112,12 +112,12 @@ export class TransformationService {
     };
   }
 
-  async fetchAllTransformations(): Promise<void> {
-    (await this.transformationHttpService.fetchTransformations()).subscribe(
-      transformations => {
+  fetchAllTransformations(): void {
+    this.transformationHttpService
+      .fetchTransformations()
+      .subscribe(transformations => {
         this.store.dispatch(setAllTransformations(transformations));
-      }
-    );
+      });
   }
 
   deleteTransformation(id: string): Observable<void> {

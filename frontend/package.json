@@ -51,7 +51,7 @@
     "angular-plotly.js": "^5.2.2",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",
-    "hd-wiring": "0.7.0",
+    "hd-wiring": "0.7.1",
     "hetida-flowchart": "0.7.0",
     "js-sha256": "^0.9.0",
     "katex": "^0.16.11",
