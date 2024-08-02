@@ -1,8 +1,6 @@
 import json
 import logging
-import uuid
 from collections import defaultdict, deque
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import delete, text
@@ -222,11 +220,11 @@ def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None
 
 
 def store_single_element_type(
-    session: SQLAlchemySession,
     element_type: ElementType,
 ) -> None:
-    orm_et = element_type.to_orm_model()
-    add_et(session, orm_et)
+    with get_session()() as session, session.begin():
+        orm_et = element_type.to_orm_model()
+        add_et(session, orm_et)
 
 
 def read_single_element_type(
@@ -303,22 +301,22 @@ def delete_et_cascade(id: UUID, log_error: bool = True) -> None:  # noqa: A002
 
 
 def update_et(
-    session: SQLAlchemySession,
     id: UUID,  # noqa: A002
     et_update: ElementType,
     log_error: bool = True,
 ) -> None:
-    try:
-        element_type = session.query(ElementTypeOrm).filter(ElementTypeOrm.id == id).one()
-        for attr, value in et_update.dict(exclude_unset=True).items():
-            setattr(element_type, attr, value)
-        session.flush()
-    except NoResultFound as e:
-        session.rollback()
-        msg = f"No ElementType found with id {id}."
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg) from e
+    with get_session()() as session, session.begin():
+        try:
+            element_type = fetch_et_by_id(session, id, log_error)
+            if element_type:
+                for attr, value in et_update.dict(exclude_unset=True).items():
+                    setattr(element_type, attr, value)
+        except NoResultFound as e:
+            session.rollback()
+            msg = f"No ElementType found with id {id}."
+            if log_error:
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
 
 
 # Thing Node Services
@@ -338,11 +336,11 @@ def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
 
 
 def store_single_thingnode(
-    session: SQLAlchemySession,
     thingnode: ThingNode,
 ) -> None:
-    orm_tn = thingnode.to_orm_model()
-    add_tn(session, orm_tn)
+    with get_session()() as session, session.begin():
+        orm_tn = thingnode.to_orm_model()
+        add_tn(session, orm_tn)
 
 
 def read_single_thingnode(
@@ -398,27 +396,24 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
 
 
 def update_tn(
-    session: SQLAlchemySession,
     id: UUID,  # noqa: A002
     tn_update: ThingNode,
     log_error: bool = True,
 ) -> ThingNode:
-    try:
-        thingnode = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == id).one()
-        if tn_update.element_type_id:
-            session.query(ElementTypeOrm).filter(
-                ElementTypeOrm.id == tn_update.element_type_id
-            ).one()
-        for attr, value in tn_update.dict(exclude_unset=True).items():
-            setattr(thingnode, attr, value)
-        session.flush()
-        return ThingNode.from_orm_model(thingnode)
-    except NoResultFound as e:
-        session.rollback()
-        msg = f"No ThingNode found with id {id}."
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg) from e
+    with get_session()() as session, session.begin():
+        try:
+            thingnode = fetch_tn_by_id(session, id, log_error)
+            if thingnode:
+                for attr, value in tn_update.dict(exclude_unset=True).items():
+                    setattr(thingnode, attr, value)
+            session.flush()
+            return ThingNode.from_orm_model(thingnode)
+        except NoResultFound as e:
+            session.rollback()
+            msg = f"No ThingNode found with {id}."
+            if log_error:
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
 
 
 def get_parent_tn_id(
@@ -549,23 +544,23 @@ def read_single_source_by_external_id(
 
 
 def update_source(
-    session: SQLAlchemySession,
     id: UUID,  # noqa: A002
     source_update: Source,
     log_error: bool = True,
 ) -> Source:
-    try:
-        source = session.query(SourceOrm).filter(SourceOrm.id == id).one()
-        for attr, value in source_update.dict(exclude_unset=True).items():
-            setattr(source, attr, value)
-        session.flush()
-        return Source.from_orm_model(source)
-    except NoResultFound as e:
-        session.rollback()
-        msg = f"No Source found with id {id}."
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg) from e
+    with get_session()() as session, session.begin():
+        try:
+            source = session.query(SourceOrm).filter(SourceOrm.id == id).one()
+            for attr, value in source_update.dict(exclude_unset=True).items():
+                setattr(source, attr, value)
+            session.flush()
+            return Source.from_orm_model(source)
+        except NoResultFound as e:
+            session.rollback()
+            msg = f"No Source found with id {id}."
+            if log_error:
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
 
 
 def delete_source(id: UUID, log_error: bool = True) -> None:  # noqa: A002
@@ -623,23 +618,23 @@ def read_single_sink_by_external_id(
 
 
 def update_sink(
-    session: SQLAlchemySession,
     id: UUID,  # noqa: A002
     sink_update: Sink,
     log_error: bool = True,
 ) -> Sink:
-    try:
-        sink = session.query(SinkOrm).filter(SinkOrm.id == id).one()
-        for attr, value in sink_update.dict(exclude_unset=True).items():
-            setattr(sink, attr, value)
-        session.flush()
-        return Sink.from_orm_model(sink)
-    except NoResultFound as e:
-        session.rollback()
-        msg = f"No Sink found with id {id}."
-        if log_error:
-            logger.error(msg)
-        raise DBNotFoundError(msg) from e
+    with get_session()() as session, session.begin():
+        try:
+            sink = session.query(SinkOrm).filter(SinkOrm.id == id).one()
+            for attr, value in sink_update.dict(exclude_unset=True).items():
+                setattr(sink, attr, value)
+            session.flush()
+            return Sink.from_orm_model(sink)
+        except NoResultFound as e:
+            session.rollback()
+            msg = f"No Sink found with id {id}."
+            if log_error:
+                logger.error(msg)
+            raise DBNotFoundError(msg) from e
 
 
 def delete_sink(id: UUID, log_error: bool = True) -> None:  # noqa: A002
@@ -664,6 +659,58 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
     root_nodes = []
 
     for node in nodes:
+        if node.parent_node_id:
+            if node.parent_node_id not in children_by_node_id:
+                children_by_node_id[node.parent_node_id] = []
+            children_by_node_id[node.parent_node_id].append(node)
+        else:
+            root_nodes.append(node)
+
+    sorted_nodes_by_level = defaultdict(list)
+    queue = deque([(root_nodes, 0)])
+
+    while queue:
+        current_level_nodes, level = queue.popleft()
+        next_level_nodes = []
+
+        for node in current_level_nodes:
+            sorted_nodes_by_level[level].append(node)
+            if node.id in children_by_node_id:
+                children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+                next_level_nodes.extend(children_by_node_id[node.id])
+            else:
+                msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
+                logger.warning(msg)
+
+        if next_level_nodes:
+            queue.append((next_level_nodes, level + 1))
+
+    return sorted_nodes_by_level
+
+
+def sort_thing_nodes_from_db(
+    thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
+) -> dict[int, list[ThingNode]]:
+    # Map existing ThingNodes from the database to a dictionary using a unique key
+    existing_node_map = {
+        (node.stakeholder_key or "") + (node.external_id or ""): node
+        for node in existing_thing_nodes.values()
+    }
+
+    # Assign existing IDs to new nodes if they match by stakeholder_key + external_id
+    for node in thing_nodes:
+        key = node.stakeholder_key + node.external_id
+        existing_node = existing_node_map.get(key)
+        if existing_node:
+            node.id = existing_node.id
+        else:
+            msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
+            logger.warning(msg)
+
+    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
+    root_nodes = []
+
+    for node in thing_nodes:
         if node.parent_node_id:
             if node.parent_node_id not in children_by_node_id:
                 children_by_node_id[node.parent_node_id] = []
@@ -777,9 +824,6 @@ def fill_source_sink_associations(
 def fill_source_sink_associations_db(
     complete_structure: CompleteStructure, session: SQLAlchemySession
 ) -> None:
-    existing_element_types = {
-        et.stakeholder_key + et.external_id: et for et in session.query(ElementTypeOrm).all()
-    }
     existing_thing_nodes = {
         tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
     }
@@ -811,7 +855,9 @@ def fill_source_sink_associations_db(
                                 "thing_node_id": thing_node_id,
                                 "source_id": source_id,
                             }
-                            session.execute(thingnode_source_association.insert().values(association))
+                            session.execute(
+                                thingnode_source_association.insert().values(association)
+                            )
 
     for sink in complete_structure.sinks:
         if sink.thing_node_external_ids:
@@ -835,7 +881,6 @@ def fill_source_sink_associations_db(
                                 "sink_id": sink_id,
                             }
                             session.execute(thingnode_sink_association.insert().values(association))
-
 
 
 def load_structure_from_json_file(
@@ -877,7 +922,6 @@ def insert_structure(
 ) -> CompleteStructure:
     fill_all_element_type_ids(complete_structure)
     fill_all_parent_uuids(complete_structure)
-    sorted_thing_nodes = sort_thing_nodes(complete_structure.thing_nodes)
 
     sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
     sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
@@ -891,6 +935,54 @@ def insert_structure(
     session.commit()
 
     return complete_structure
+
+
+def sort_thing_nodes_from_db(
+    thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
+) -> dict[int, list[ThingNode]]:
+    # Map existing ThingNodes from the database to a dictionary using a unique key
+    existing_node_map = {
+        (node.stakeholder_key or "") + (node.external_id or ""): node
+        for node in existing_thing_nodes.values()
+    }
+
+    # Assign existing IDs to new nodes if they match by stakeholder_key + external_id
+    for node in thing_nodes:
+        key = node.stakeholder_key + node.external_id
+        existing_node = existing_node_map.get(key)
+        if existing_node:
+            node.id = existing_node.id
+        else:
+            msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
+            logger.warning(msg)
+
+    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
+    root_nodes = []
+
+    for node in thing_nodes:
+        if node.parent_node_id:
+            if node.parent_node_id not in children_by_node_id:
+                children_by_node_id[node.parent_node_id] = []
+            children_by_node_id[node.parent_node_id].append(node)
+        else:
+            root_nodes.append(node)
+
+    sorted_nodes_by_level = defaultdict(list)
+    queue = deque([(root_nodes, 0)])
+
+    while queue:
+        current_level_nodes, level = queue.popleft()
+        next_level_nodes = []
+
+        for node in current_level_nodes:
+            sorted_nodes_by_level[level].append(node)
+            children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+            next_level_nodes.extend(children_by_node_id[node.id])
+
+        if next_level_nodes:
+            queue.append((next_level_nodes, level + 1))
+
+    return sorted_nodes_by_level
 
 
 def fill_all_element_type_ids_from_db(
@@ -923,351 +1015,123 @@ def update_structure_from_file(file_path: str, session: SQLAlchemySession) -> Co
 def update_structure(
     complete_structure: CompleteStructure, session: SQLAlchemySession
 ) -> CompleteStructure:
-    existing_element_types = {
-        et.stakeholder_key + et.external_id: et for et in session.query(ElementTypeOrm).all()
-    }
-    existing_thing_nodes = {
-        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
-    }
-    existing_sources = {
-        src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
-    }
-    existing_sinks = {
-        snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
-    }
-
-    print("Existing ElementTypes:", {key: et.id for key, et in existing_element_types.items()})
-    print("Existing ThingNodes:", {key: tn.id for key, tn in existing_thing_nodes.items()})
-    print("Existing Sources:", {key: src.id for key, src in existing_sources.items()})
-    print("Existing Sinks:", {key: snk.id for key, snk in existing_sinks.items()})
-
-    # Fill IDs from existing elements in the database
-    fill_all_element_type_ids_from_db(complete_structure.thing_nodes, existing_element_types)
-    fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
-
-    sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
-    sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
+    existing_element_types = fetch_existing_records(session, ElementTypeOrm)
+    existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
+    existing_sources = fetch_existing_records(session, SourceOrm)
+    existing_sinks = fetch_existing_records(session, SinkOrm)
 
     with session.no_autoflush:
-        for et in complete_structure.element_types:
-            key = et.stakeholder_key + et.external_id
-            db_et = existing_element_types.get(key)
-            if db_et:
-                print(f"Updating ElementType: {et.external_id} (old ID: {db_et.id})")
-                et.id = db_et.id  # Set the existing ID
-                print(f"New ElementType ID set to: {et.id}")
-                db_et.name = et.name
-                db_et.description = et.description
-                db_et.stakeholder_key = et.stakeholder_key
-            else:
-                new_et = et.to_orm_model()
-                print(f"Adding new ElementType: {et.external_id}")
-                session.add(new_et)
-
-        # Ensure all ElementTypes are flushed before processing ThingNodes
+        update_or_create_elements(complete_structure.element_types, existing_element_types, session)
         session.flush()
-        print("ElementTypes flushed.")
+        update_existing_elements(session, ElementTypeOrm, existing_element_types)
 
-        for tn in sorted_thing_nodes:
-            key = tn.stakeholder_key + tn.external_id
-            db_tn = existing_thing_nodes.get(key)
-            if db_tn:
-                print(f"Updating ThingNode: {tn.external_id} (old ID: {db_tn.id})")
-                tn.id = db_tn.id  # Set the existing ID
-                print(f"New ThingNode ID set to: {tn.id}")
-                tn.element_type_id = db_tn.element_type_id  # Keep existing element type ID
-                print(
-                    f"Setting parent_node_id: {tn.parent_node_id} for ThingNode: {tn.external_id}"
-                )
-                db_tn.parent_node_id = (
-                    tn.parent_node_id if tn.parent_node_id else db_tn.parent_node_id
-                )
-                print(f"New parent_node_id: {db_tn.parent_node_id} for ThingNode: {db_tn.id}")
-                db_tn.meta_data = tn.meta_data
-            else:
-                new_tn = tn.to_orm_model()
-                print(f"Adding new ThingNode: {tn.external_id}")
-                session.add(new_tn)
+        fill_all_element_type_ids_from_db(complete_structure.thing_nodes, existing_element_types)
+        fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
 
-        # Ensure all ThingNodes are flushed before processing Sources and Sinks
+        sorted_thing_nodes = sort_and_flatten_thing_nodes(
+            complete_structure.thing_nodes, existing_thing_nodes
+        )
+
+        update_or_create_thing_nodes(sorted_thing_nodes, existing_thing_nodes, session)
         session.flush()
-        print("ThingNodes flushed.")
 
-        for src in complete_structure.sources:
-            key = src.stakeholder_key + src.external_id
-            db_src = existing_sources.get(key)
-            if db_src:
-                print(f"Updating Source: {src.external_id} (old ID: {db_src.id})")
-                src.id = db_src.id  # Set the existing ID
-                print(f"New Source ID set to: {src.id}")
-                db_src.name = src.name
-                db_src.type = src.type
-                db_src.visible = src.visible
-                db_src.adapter_key = src.adapter_key
-                db_src.source_id = src.source_id
-                db_src.meta_data = src.meta_data
-                db_src.preset_filters = src.preset_filters
-                db_src.passthrough_filters = src.passthrough_filters
-                db_src.thing_node_external_ids = src.thing_node_external_ids
-            else:
-                new_src = src.to_orm_model()
-                print(f"Adding new Source: {src.external_id}")
-                session.add(new_src)
-
-        for snk in complete_structure.sinks:
-            key = snk.stakeholder_key + snk.external_id
-            db_snk = existing_sinks.get(key)
-            if db_snk:
-                print(f"Updating Sink: {snk.external_id} (old ID: {db_snk.id})")
-                snk.id = db_snk.id  # Set the existing ID
-                print(f"New Sink ID set to: {snk.id}")
-                db_snk.name = snk.name
-                db_snk.type = snk.type
-                db_snk.visible = snk.visible
-                db_snk.adapter_key = snk.adapter_key
-                db_snk.sink_id = snk.sink_id
-                db_snk.meta_data = snk.meta_data
-                db_snk.preset_filters = snk.preset_filters
-                db_snk.passthrough_filters = snk.passthrough_filters
-                db_snk.thing_node_external_ids = snk.thing_node_external_ids
-            else:
-                new_snk = snk.to_orm_model()
-                print(f"Adding new Sink: {snk.external_id}")
-                session.add(new_snk)
-
-        # Flush all changes before filling associations
+        update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
         session.flush()
-        print("Sources and Sinks flushed.")
+
+        update_or_create_sources_or_sinks(
+            complete_structure.sources, existing_sources, session, SourceOrm
+        )
+        session.flush()
+
+        update_or_create_sources_or_sinks(
+            complete_structure.sinks, existing_sinks, session, SinkOrm
+        )
+        session.flush()
 
         fill_source_sink_associations_db(complete_structure, session)
         session.commit()
-        print("Associations filled and committed.")
 
     return complete_structure
 
 
-def fill_all_element_type_ids_from_json(thing_nodes: list, element_types: list) -> None:
-    element_type_mapping = {et.stakeholder_key + et.external_id: et.id for et in element_types}
+def fetch_existing_records(session, model_class):
+    return {rec.stakeholder_key + rec.external_id: rec for rec in session.query(model_class).all()}
+
+
+def update_or_create_elements(elements, existing_elements, session):
+    for element in elements:
+        key = element.stakeholder_key + element.external_id
+        db_element = existing_elements.get(key)
+        if db_element:
+            element.id = db_element.id  # Set the existing ID
+            db_element.name = element.name
+            db_element.description = element.description
+            db_element.stakeholder_key = element.stakeholder_key
+        else:
+            new_element = element.to_orm_model()
+            session.add(new_element)
+
+
+def update_existing_elements(session, model_class, existing_elements):
+    existing_elements.update(
+        {el.stakeholder_key + el.external_id: el for el in session.query(model_class).all()}
+    )
+
+
+def sort_and_flatten_thing_nodes(thing_nodes, existing_thing_nodes):
+    sorted_nodes_by_level = sort_thing_nodes_from_db(thing_nodes, existing_thing_nodes)
+    return [node for nodes in sorted_nodes_by_level.values() for node in nodes]
+
+
+def update_or_create_thing_nodes(thing_nodes, existing_thing_nodes, session):
     for node in thing_nodes:
-        if node.element_type_external_id:
-            key = node.stakeholder_key + node.element_type_external_id
-            node.element_type_id = element_type_mapping.get(key)
-
-
-def fill_all_parent_uuids_from_json(
-    thing_nodes: list, element_types: list, sources: list, sinks: list
-) -> None:
-    tn_mapping = {tn.stakeholder_key + tn.external_id: tn.id for tn in thing_nodes}
-
-    for node in thing_nodes:
-        if node.parent_external_node_id:
-            parent_key = node.stakeholder_key + node.parent_external_node_id
-            node.parent_node_id = tn_mapping.get(parent_key)
-
-
-def fill_source_sink_associations_from_json(
-    json_data: dict[str, Any], session: SQLAlchemySession
-) -> None:
-    sources_data = json_data.get("sources", [])
-    sinks_data = json_data.get("sinks", [])
-
-    # Mapping from external ID to ORM instance
-    existing_thing_nodes = {
-        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
-    }
-
-    # Update the associations for sources
-    for src_data in sources_data:
-        db_src = (
-            session.query(SourceOrm)
-            .filter_by(
-                stakeholder_key=src_data["stakeholder_key"], external_id=src_data["external_id"]
+        key = node.stakeholder_key + node.external_id
+        db_node = existing_thing_nodes.get(key)
+        if db_node:
+            node.id = db_node.id  # Set the existing ID
+            db_node.name = node.name
+            db_node.description = node.description
+            db_node.element_type_id = node.element_type_id
+            db_node.meta_data = node.meta_data
+            db_node.parent_node_id = (
+                node.parent_node_id if node.parent_node_id else db_node.parent_node_id
             )
-            .one_or_none()
-        )
-
-        if db_src:
-            db_src.thing_nodes.clear()
-            for tn_external_id in src_data.get("thing_node_external_ids", []):
-                tn_key = src_data["stakeholder_key"] + tn_external_id
-                db_tn = existing_thing_nodes.get(tn_key)
-                if db_tn:
-                    db_src.thing_nodes.append(db_tn)
-            session.add(db_src)
-
-    # Update the associations for sinks
-    for snk_data in sinks_data:
-        db_snk = (
-            session.query(SinkOrm)
-            .filter_by(
-                stakeholder_key=snk_data["stakeholder_key"], external_id=snk_data["external_id"]
-            )
-            .one_or_none()
-        )
-
-        if db_snk:
-            db_snk.thing_nodes.clear()
-            for tn_external_id in snk_data.get("thing_node_external_ids", []):
-                tn_key = snk_data["stakeholder_key"] + tn_external_id
-                db_tn = existing_thing_nodes.get(tn_key)
-                if db_tn:
-                    db_snk.thing_nodes.append(db_tn)
-            session.add(db_snk)
-
-    session.flush()
-    print("Source and Sink associations updated.")
+        else:
+            new_node = node.to_orm_model()
+            session.add(new_node)
 
 
-def update_structure_from_json(json_data: dict[str, Any], session: SQLAlchemySession) -> None:
-    # Extract the relevant structures from the JSON data
-    element_types_data = json_data.get("element_types", [])
-    thing_nodes_data = json_data.get("thing_nodes", [])
-    sources_data = json_data.get("sources", [])
-    sinks_data = json_data.get("sinks", [])
-
-    existing_element_types = {
-        et.stakeholder_key + et.external_id: et for et in session.query(ElementTypeOrm).all()
-    }
-    existing_thing_nodes = {
-        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
-    }
-    existing_sources = {
-        src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
-    }
-    existing_sinks = {
-        snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
-    }
-
-    print("Existing ElementTypes:", {key: et.id for key, et in existing_element_types.items()})
-    print("Existing ThingNodes:", {key: tn.id for key, tn in existing_thing_nodes.items()})
-    print("Existing Sources:", {key: src.id for key, src in existing_sources.items()})
-    print("Existing Sinks:", {key: snk.id for key, snk in existing_sinks.items()})
-
-    # Ensure 'id' is present in element_types_data
-    for et_data in element_types_data:
-        if "id" not in et_data:
-            et_data["id"] = str(uuid.uuid4())  # Generating a new UUID if id is missing
-
-    # Ensure 'id' is present in thing_nodes_data
-    for tn_data in thing_nodes_data:
-        if "id" not in tn_data:
-            tn_data["id"] = str(uuid.uuid4())  # Generating a new UUID if id is missing
-
-    # Ensure 'id' is present in sources_data
-    for src_data in sources_data:
-        if "id" not in src_data:
-            src_data["id"] = str(uuid.uuid4())  # Generating a new UUID if id is missing
-
-    # Ensure 'id' is present in sinks_data
-    for snk_data in sinks_data:
-        if "id" not in snk_data:
-            snk_data["id"] = str(uuid.uuid4())  # Generating a new UUID if id is missing
-
-    # Map data from JSON to ORM models
-    element_types = [ElementType(**et_data) for et_data in element_types_data]
-    thing_nodes = [ThingNode(**tn_data) for tn_data in thing_nodes_data]
-    sources = [Source(**src_data) for src_data in sources_data]
-    sinks = [Sink(**snk_data) for snk_data in sinks_data]
-
-    fill_all_element_type_ids_from_json(thing_nodes, element_types)
-    fill_all_parent_uuids_from_json(thing_nodes, element_types, sources, sinks)
-
-    sorted_nodes_by_level = sort_thing_nodes(thing_nodes)
-    sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
-
-    with session.no_autoflush:
-        for et_data in element_types_data:
-            key = et_data["stakeholder_key"] + et_data["external_id"]
-            db_et = existing_element_types.get(key)
-            if db_et:
-                print(f"Updating ElementType: {et_data['external_id']} (old ID: {db_et.id})")
-                db_et.name = et_data["name"]
-                db_et.description = et_data["description"]
-                db_et.stakeholder_key = et_data["stakeholder_key"]
-                session.add(db_et)  # update the existing record
-            else:
-                new_et = ElementTypeOrm(**et_data)  # Use the dictionary data directly
-                print(f"Adding new ElementType: {et_data['external_id']}")
-                session.add(new_et)
-
-        # Ensure all ElementTypes are flushed before processing ThingNodes
-        session.flush()
-        print("ElementTypes flushed.")
-
-        for tn_data in sorted_thing_nodes:
-            key = tn_data.stakeholder_key + tn_data.external_id
-            db_tn = existing_thing_nodes.get(key)
-            if db_tn:
-                print(f"Updating ThingNode: {tn_data.external_id} (old ID: {db_tn.id})")
-                db_tn.name = tn_data.name
-                db_tn.description = tn_data.description
-                db_tn.parent_node_id = tn_data.parent_node_id
-                db_tn.meta_data = tn_data.meta_data
-                session.add(db_tn)  # update the existing record
-            else:
-                new_tn = ThingNodeOrm(**tn_data.__dict__)  # Convert the ThingNode to a dictionary
-                print(f"Adding new ThingNode: {tn_data.external_id}")
-                session.add(new_tn)
-
-        # Ensure all ThingNodes are flushed before processing Sources and Sinks
-        session.flush()
-        print("ThingNodes flushed.")
-
-        for src_data in sources_data:
-            key = src_data["stakeholder_key"] + src_data["external_id"]
-            db_src = existing_sources.get(key)
-            if db_src:
-                print(f"Updating Source: {src_data['external_id']} (old ID: {db_src.id})")
-                db_src.name = src_data["name"]
-                db_src.type = src_data["type"]
-                db_src.visible = src_data["visible"]
-                db_src.adapter_key = src_data["adapter_key"]
-                db_src.source_id = src_data["source_id"]
-                db_src.meta_data = src_data["meta_data"]
-                db_src.preset_filters = src_data["preset_filters"]
-                db_src.passthrough_filters = src_data["passthrough_filters"]
-                db_src.thing_node_external_ids = src_data["thing_node_external_ids"]
-                session.add(db_src)  # update the existing record
-            else:
-                new_src = SourceOrm(**src_data)
-                print(f"Adding new Source: {src_data['external_id']}")
-                session.add(new_src)
-
-        for snk_data in sinks_data:
-            key = snk_data["stakeholder_key"] + snk_data["external_id"]
-            db_snk = existing_sinks.get(key)
-            if db_snk:
-                print(f"Updating Sink: {snk_data['external_id']} (old ID: {db_snk.id})")
-                db_snk.name = snk_data["name"]
-                db_snk.type = snk_data["type"]
-                db_snk.visible = snk_data["visible"]
-                db_snk.adapter_key = snk_data["adapter_key"]
-                db_snk.sink_id = snk_data["sink_id"]
-                db_snk.meta_data = snk_data["meta_data"]
-                db_snk.preset_filters = snk_data["preset_filters"]
-                db_snk.passthrough_filters = snk_data["passthrough_filters"]
-                db_snk.thing_node_external_ids = snk_data["thing_node_external_ids"]
-                session.add(db_snk)  # update the existing record
-            else:
-                new_snk = SinkOrm(**snk_data)
-                print(f"Adding new Sink: {snk_data['external_id']}")
-                session.add(new_snk)
-
-        # Flush all changes before filling associations
-        session.flush()
-        print("Sources and Sinks flushed.")
-
-        fill_source_sink_associations_from_json(json_data, session)
-        session.commit()
-        print("Associations filled and committed.")
+def update_or_create_sources_or_sinks(sources_or_sinks, existing_items, session, model_class):
+    for item in sources_or_sinks:
+        key = item.stakeholder_key + item.external_id
+        db_item = existing_items.get(key)
+        if db_item:
+            item.id = db_item.id  # Set the existing ID
+            db_item.name = item.name
+            db_item.type = item.type
+            db_item.visible = item.visible
+            db_item.adapter_key = item.adapter_key
+            if model_class == SourceOrm:
+                db_item.source_id = item.source_id
+            elif model_class == SinkOrm:
+                db_item.sink_id = item.sink_id
+            db_item.meta_data = item.meta_data
+            db_item.preset_filters = item.preset_filters
+            db_item.passthrough_filters = item.passthrough_filters
+            db_item.thing_node_external_ids = item.thing_node_external_ids
+        else:
+            new_item = item.to_orm_model()
+            session.add(new_item)
 
 
-def is_database_empty(session: SQLAlchemySession) -> bool:
+
+def is_database_empty() -> bool:
     with get_session()() as session:
         element_types = fetch_all_element_types(session)
         thing_nodes = fetch_all_thing_nodes(session)
         sources = fetch_all_sources(session)
         sinks = fetch_all_sinks(session)
+        # TODO: Shorten function by only checking for ElementTypes?
 
     return not (element_types or thing_nodes or sources or sinks)
 
