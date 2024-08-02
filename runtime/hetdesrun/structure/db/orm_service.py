@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict, deque
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import delete, text
@@ -678,57 +679,6 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
             if node.id in children_by_node_id:
                 children_by_node_id[node.id].sort(key=lambda x: x.external_id)
                 next_level_nodes.extend(children_by_node_id[node.id])
-            else:
-                msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
-                logger.warning(msg)
-
-        if next_level_nodes:
-            queue.append((next_level_nodes, level + 1))
-
-    return sorted_nodes_by_level
-
-
-def sort_thing_nodes_from_db(
-    thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
-) -> dict[int, list[ThingNode]]:
-    # Map existing ThingNodes from the database to a dictionary using a unique key
-    existing_node_map = {
-        (node.stakeholder_key or "") + (node.external_id or ""): node
-        for node in existing_thing_nodes.values()
-    }
-
-    # Assign existing IDs to new nodes if they match by stakeholder_key + external_id
-    for node in thing_nodes:
-        key = node.stakeholder_key + node.external_id
-        existing_node = existing_node_map.get(key)
-        if existing_node:
-            node.id = existing_node.id
-        else:
-            msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
-            logger.warning(msg)
-
-    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
-    root_nodes = []
-
-    for node in thing_nodes:
-        if node.parent_node_id:
-            if node.parent_node_id not in children_by_node_id:
-                children_by_node_id[node.parent_node_id] = []
-            children_by_node_id[node.parent_node_id].append(node)
-        else:
-            root_nodes.append(node)
-
-    sorted_nodes_by_level = defaultdict(list)
-    queue = deque([(root_nodes, 0)])
-
-    while queue:
-        current_level_nodes, level = queue.popleft()
-        next_level_nodes = []
-
-        for node in current_level_nodes:
-            sorted_nodes_by_level[level].append(node)
-            children_by_node_id[node.id].sort(key=lambda x: x.external_id)
-            next_level_nodes.extend(children_by_node_id[node.id])
 
         if next_level_nodes:
             queue.append((next_level_nodes, level + 1))
@@ -952,9 +902,6 @@ def sort_thing_nodes_from_db(
         existing_node = existing_node_map.get(key)
         if existing_node:
             node.id = existing_node.id
-        else:
-            msg = f"[sort_thing_nodes] Warning: Node ID {node.id} has no children."
-            logger.warning(msg)
 
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
     root_nodes = []
@@ -976,8 +923,9 @@ def sort_thing_nodes_from_db(
 
         for node in current_level_nodes:
             sorted_nodes_by_level[level].append(node)
-            children_by_node_id[node.id].sort(key=lambda x: x.external_id)
-            next_level_nodes.extend(children_by_node_id[node.id])
+            if node.id in children_by_node_id:
+                children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+                next_level_nodes.extend(children_by_node_id[node.id])
 
         if next_level_nodes:
             queue.append((next_level_nodes, level + 1))
@@ -1007,58 +955,64 @@ def fill_all_parent_uuids_from_db(
                 node.parent_node_id = db_parent_tn.id
 
 
-def update_structure_from_file(file_path: str, session: SQLAlchemySession) -> CompleteStructure:
+def update_structure_from_file(file_path: str) -> CompleteStructure:
     complete_structure = load_structure_from_json_file(file_path)
-    return update_structure(complete_structure, session)
+    return update_structure(complete_structure)
 
 
-def update_structure(
-    complete_structure: CompleteStructure, session: SQLAlchemySession
-) -> CompleteStructure:
-    existing_element_types = fetch_existing_records(session, ElementTypeOrm)
-    existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
-    existing_sources = fetch_existing_records(session, SourceOrm)
-    existing_sinks = fetch_existing_records(session, SinkOrm)
+def update_structure(complete_structure: CompleteStructure) -> CompleteStructure:
+    with get_session()() as session, session.begin():
+        existing_element_types = fetch_existing_records(session, ElementTypeOrm)
+        existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
+        existing_sources = fetch_existing_records(session, SourceOrm)
+        existing_sinks = fetch_existing_records(session, SinkOrm)
 
-    with session.no_autoflush:
-        update_or_create_elements(complete_structure.element_types, existing_element_types, session)
-        session.flush()
-        update_existing_elements(session, ElementTypeOrm, existing_element_types)
+        with session.no_autoflush:
+            update_or_create_elements(
+                complete_structure.element_types, existing_element_types, session
+            )
+            session.flush()
+            update_existing_elements(session, ElementTypeOrm, existing_element_types)
 
-        fill_all_element_type_ids_from_db(complete_structure.thing_nodes, existing_element_types)
-        fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
+            fill_all_element_type_ids_from_db(
+                complete_structure.thing_nodes, existing_element_types
+            )
+            fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
 
-        sorted_thing_nodes = sort_and_flatten_thing_nodes(
-            complete_structure.thing_nodes, existing_thing_nodes
-        )
+            sorted_thing_nodes = sort_and_flatten_thing_nodes(
+                complete_structure.thing_nodes, existing_thing_nodes
+            )
 
-        update_or_create_thing_nodes(sorted_thing_nodes, existing_thing_nodes, session)
-        session.flush()
+            update_or_create_thing_nodes(sorted_thing_nodes, existing_thing_nodes, session)
+            session.flush()
 
-        update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
-        session.flush()
+            update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
+            session.flush()
 
-        update_or_create_sources_or_sinks(
-            complete_structure.sources, existing_sources, session, SourceOrm
-        )
-        session.flush()
+            update_or_create_sources_or_sinks(
+                complete_structure.sources, existing_sources, session, SourceOrm
+            )
+            session.flush()
 
-        update_or_create_sources_or_sinks(
-            complete_structure.sinks, existing_sinks, session, SinkOrm
-        )
-        session.flush()
+            update_or_create_sources_or_sinks(
+                complete_structure.sinks, existing_sinks, session, SinkOrm
+            )
+            session.flush()
 
-        fill_source_sink_associations_db(complete_structure, session)
-        session.commit()
+            fill_source_sink_associations_db(complete_structure, session)
 
     return complete_structure
 
 
-def fetch_existing_records(session, model_class):
+def fetch_existing_records(session: SQLAlchemySession, model_class: Any) -> dict[str, Any]:
     return {rec.stakeholder_key + rec.external_id: rec for rec in session.query(model_class).all()}
 
 
-def update_or_create_elements(elements, existing_elements, session):
+def update_or_create_elements(
+    elements: list[ElementType],
+    existing_elements: dict[str, ElementTypeOrm],
+    session: SQLAlchemySession,
+) -> None:
     for element in elements:
         key = element.stakeholder_key + element.external_id
         db_element = existing_elements.get(key)
@@ -1072,18 +1026,26 @@ def update_or_create_elements(elements, existing_elements, session):
             session.add(new_element)
 
 
-def update_existing_elements(session, model_class, existing_elements):
+def update_existing_elements(
+    session: SQLAlchemySession, model_class: Any, existing_elements: dict[str, Any]
+) -> None:
     existing_elements.update(
         {el.stakeholder_key + el.external_id: el for el in session.query(model_class).all()}
     )
 
 
-def sort_and_flatten_thing_nodes(thing_nodes, existing_thing_nodes):
+def sort_and_flatten_thing_nodes(
+    thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
+) -> list[ThingNode]:
     sorted_nodes_by_level = sort_thing_nodes_from_db(thing_nodes, existing_thing_nodes)
     return [node for nodes in sorted_nodes_by_level.values() for node in nodes]
 
 
-def update_or_create_thing_nodes(thing_nodes, existing_thing_nodes, session):
+def update_or_create_thing_nodes(
+    thing_nodes: list[ThingNode],
+    existing_thing_nodes: dict[str, ThingNode],
+    session: SQLAlchemySession,
+) -> None:
     for node in thing_nodes:
         key = node.stakeholder_key + node.external_id
         db_node = existing_thing_nodes.get(key)
@@ -1101,7 +1063,12 @@ def update_or_create_thing_nodes(thing_nodes, existing_thing_nodes, session):
             session.add(new_node)
 
 
-def update_or_create_sources_or_sinks(sources_or_sinks, existing_items, session, model_class):
+def update_or_create_sources_or_sinks(
+    sources_or_sinks: list[Any],
+    existing_items: dict[str, Any],
+    session: SQLAlchemySession,
+    model_class: Any,
+) -> None:
     for item in sources_or_sinks:
         key = item.stakeholder_key + item.external_id
         db_item = existing_items.get(key)
@@ -1122,18 +1089,6 @@ def update_or_create_sources_or_sinks(sources_or_sinks, existing_items, session,
         else:
             new_item = item.to_orm_model()
             session.add(new_item)
-
-
-
-def is_database_empty() -> bool:
-    with get_session()() as session:
-        element_types = fetch_all_element_types(session)
-        thing_nodes = fetch_all_thing_nodes(session)
-        sources = fetch_all_sources(session)
-        sinks = fetch_all_sinks(session)
-        # TODO: Shorten function by only checking for ElementTypes?
-
-    return not (element_types or thing_nodes or sources or sinks)
 
 
 def purge_structure(session: SQLAlchemySession) -> None:
