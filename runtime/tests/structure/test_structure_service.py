@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_sink_association,
     thingnode_source_association,
@@ -14,16 +15,31 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
-    update_structure_from_file,
+    insert_structure_from_file,
 )
 from hetdesrun.structure.models import CompleteStructure
-from hetdesrun.structure.structure_service import delete_structure, get_children
+from hetdesrun.structure.structure_service import delete_structure, get_children, is_database_empty
 
 
 @pytest.fixture()
 def _db_test_get_children(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_structure.json"
-    update_structure_from_file(file_path)
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_test_structure.json"
+        insert_structure_from_file(file_path, session)
+
+
+@pytest.fixture()
+def _db_empty_database(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_empty_structure.json"
+        insert_structure_from_file(file_path, session)
+
+
+@pytest.fixture()
+def _db_test_structure(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        file_path = "tests/structure/data/db_test_structure.json"
+        insert_structure_from_file(file_path, session)
 
 
 @event.listens_for(Engine, "connect")
@@ -49,8 +65,8 @@ def test_get_children_root(mocked_clean_test_db_session):
 
 
 @pytest.mark.usefixtures("_db_test_get_children")
-def test_get_children_level1(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
+def test_get_children_level1():
+    with get_session()() as session, session.begin():
         all_nodes = fetch_all_thing_nodes(session)
         root_node = next((node for node in all_nodes if node.name == "Wasserwerk 1"), None)
         assert root_node is not None, "Expected root node 'Wasserwerk 1' not found"
@@ -179,3 +195,13 @@ def test_delete_structure_root(mocked_clean_test_db_session):
 
         remaining_element_types = fetch_all_element_types(session)
         assert len(remaining_element_types) == 0
+
+
+@pytest.mark.usefixtures("_db_empty_database")
+def test_is_database_empty_when_empty(mocked_clean_test_db_session):
+    assert is_database_empty(), "Database should be empty but is not."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
+    assert not is_database_empty(), "Database should not be empty but it is."
