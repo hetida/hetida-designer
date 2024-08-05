@@ -1062,7 +1062,7 @@ def sort_and_flatten_thing_nodes(
 
 def update_or_create_thing_nodes(
     thing_nodes: list[ThingNode],
-    existing_thing_nodes: dict[str, ThingNode],
+    existing_thing_nodes: dict[str, ThingNodeOrm],
     session: SQLAlchemySession,
 ) -> None:
     for node in thing_nodes:
@@ -1083,7 +1083,7 @@ def update_or_create_thing_nodes(
 
 
 def update_or_create_sources_or_sinks(
-    sources_or_sinks: list[Any],
+    sources_or_sinks: list[Any],  # TODO Should Any be used here?
     existing_items: dict[str, Any],
     session: SQLAlchemySession,
     model_class: Any,
