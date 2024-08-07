@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 
@@ -11,7 +13,9 @@ async def test_vst_adapter_get_structure_with_none_from_webservice(
 
     resp_obj = response.json()
 
+    # Verify that only the root node is returned
     assert len(resp_obj["thingNodes"]) == 1
+    assert resp_obj["thingNodes"][0]["parentId"] is None
 
     first_thing_node = resp_obj["thingNodes"][0]
     first_thing_node_id = resp_obj["thingNodes"][0]["id"]
@@ -20,6 +24,8 @@ async def test_vst_adapter_get_structure_with_none_from_webservice(
         f"/adapters/vst/thingNodes/{first_thing_node_id}"
     )
 
+    # Verify that the thingNodes endpoint returns the same node
+    # given its ID
     assert response.status_code == 200
     assert response.json() == first_thing_node
 
@@ -87,7 +93,7 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
 async def test_vst_adapter_get_metadata_from_webservice(async_test_client_with_vst_adapter):
     # Currently no metadata is returned, every metadata endpoint should return an empty list
     # regardless of the UUID provided
-    example_uuid = "7cfc4470-65d8-416b-a8c3-c392eaf92b91"  # Non-existent UUID
+    example_uuid = uuid.uuid4()  # Non-existent UUID
 
     # Test thingnode metadata
     response = await async_test_client_with_vst_adapter.get(

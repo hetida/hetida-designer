@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 from hetdesrun.adapters.virtual_structure_adapter.models import (
@@ -14,14 +16,27 @@ from hetdesrun.adapters.virtual_structure_adapter.structure import (
 def test_get_structure_with_none():
     structure = get_structure(None)
 
+    # Verify that the root node of the structure is returned
     assert structure.sources == structure.sinks == []
     assert len(structure.thingNodes) == 1
     assert isinstance(structure.thingNodes[0], StructureThingNode)
+    assert structure.thingNodes[0].parentId is None
     assert structure.thingNodes[0].name == "Wasserwerk 1"
 
 
 @pytest.mark.usefixtures("_fill_db")
-def test_get_level_with_existing_uuid():
+def test_get_structure_with_non_existent_uuid():
+    structure = get_structure(uuid.uuid4())
+
+    # Verify that an empty structure response object is returned
+    assert structure.thingNodes == []
+    assert structure.sources == []
+    assert structure.sinks == []
+
+
+@pytest.mark.usefixtures("_fill_db")
+def test_get_structure_with_existing_uuid():
+    # Make multiple calls to get structure, as the IDs are not known
     structure = get_structure(None)
     structure = get_structure(structure.thingNodes[0].id)
     structure = get_structure(structure.thingNodes[0].id)
