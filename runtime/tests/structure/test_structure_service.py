@@ -23,23 +23,20 @@ from hetdesrun.structure.structure_service import delete_structure, get_children
 
 @pytest.fixture()
 def _db_test_get_children(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_test_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_test_structure.json"
+    insert_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_empty_database(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_empty_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_empty_structure.json"
+    insert_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_test_structure(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        file_path = "tests/structure/data/db_test_structure.json"
-        insert_structure_from_file(file_path, session)
+    file_path = "tests/structure/data/db_test_structure.json"
+    insert_structure_from_file(file_path)
 
 
 @event.listens_for(Engine, "connect")

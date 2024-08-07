@@ -2007,8 +2007,7 @@ def test_insert_structure_from_file():
         assert session.query(SinkOrm).count() == 0
 
     # Load structure from the file and insert it into the database
-    with get_session()() as session:
-        insert_structure_from_file(file_path, session)
+    insert_structure_from_file(file_path)
 
     # Verify that the structure was correctly inserted
     with get_session()() as session:
@@ -2061,8 +2060,7 @@ def test_insert_structure_with_insert_structure():
     new_structure = load_structure_from_json_file(file_path)
 
     # Insert the new structure into the database using insert_structure
-    with get_session()() as session:
-        insert_structure(new_structure, session)
+    insert_structure(new_structure)
 
     # Verify the structure was correctly inserted
     with get_session()() as session:
@@ -2187,12 +2185,10 @@ def test_insert_structure_with_update_structure():
 
 
 def test_flush_items(mocked_clean_test_db_session):
+    file_path = "tests/structure/data/db_test_structure.json"
+    complete_structure = insert_structure_from_file(file_path)
     with mocked_clean_test_db_session() as session:
         # Bereinige alle bestehenden Daten
-
-        # Load structure from JSON file
-        file_path = "tests/structure/data/db_test_structure.json"
-        complete_structure = insert_structure_from_file(file_path, session)
 
         print(complete_structure)
 

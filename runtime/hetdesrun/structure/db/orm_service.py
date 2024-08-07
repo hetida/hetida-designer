@@ -803,29 +803,28 @@ def flush_items(session: SQLAlchemySession, items: list) -> None:
         raise DBIntegrityError(msg) from e
 
 
-def insert_structure_from_file(file_path: str, session: SQLAlchemySession) -> CompleteStructure:
+def insert_structure_from_file(file_path: str) -> CompleteStructure:
     complete_structure = load_structure_from_json_file(file_path)
-    return insert_structure(complete_structure, session)
+    return insert_structure(complete_structure)
 
 
-def insert_structure(
-    complete_structure: CompleteStructure, session: SQLAlchemySession
-) -> CompleteStructure:
-    fill_all_element_type_ids(complete_structure)
-    fill_all_parent_uuids(complete_structure)
+def insert_structure(complete_structure: CompleteStructure) -> CompleteStructure:
+    with get_session()() as session:
+        fill_all_element_type_ids(complete_structure)
+        fill_all_parent_uuids(complete_structure)
 
-    sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
-    sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
+        sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
+        sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
 
-    flush_items(session, complete_structure.element_types)
-    flush_items(session, sorted_thing_nodes)
-    flush_items(session, complete_structure.sources)
-    flush_items(session, complete_structure.sinks)
+        flush_items(session, complete_structure.element_types)
+        flush_items(session, sorted_thing_nodes)
+        flush_items(session, complete_structure.sources)
+        flush_items(session, complete_structure.sinks)
 
-    fill_source_sink_associations(complete_structure, session)
-    session.commit()
+        fill_source_sink_associations(complete_structure, session)
+        session.commit()
 
-    return complete_structure
+        return complete_structure
 
 
 # Structure Services: Update function
