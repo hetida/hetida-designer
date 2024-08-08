@@ -94,11 +94,19 @@ class OutputWiring(BaseModel):
 
     @classmethod
     def from_structure_sink(cls, struct_sink: Sink) -> "OutputWiring":
+        if struct_sink.type != "metadata(any)":
+            ref_id = struct_sink.sink_id
+            ref_id_type = RefIdType.SINK
+        else:
+            ref_id = struct_sink.ref_id
+            ref_id_type = RefIdType.THINGNODE
+
         return cls(
             workflow_output_name="dummy",
             adapter_id=struct_sink.adapter_key,
-            ref_id=str(struct_sink.sink_id),
-            ref_id_type=RefIdType.SINK,
+            ref_id=ref_id,
+            ref_id_type=ref_id_type,
+            ref_key=struct_sink.ref_key,
             type=struct_sink.type,
             filters=struct_sink.preset_filters,
         )
@@ -180,11 +188,19 @@ class InputWiring(BaseModel):
 
     @classmethod
     def from_structure_source(cls, struct_source: Source) -> "InputWiring":
+        if struct_source.type != "metadata(any)":
+            ref_id = struct_source.source_id
+            ref_id_type = RefIdType.SOURCE
+        else:
+            ref_id = struct_source.ref_id
+            ref_id_type = RefIdType.THINGNODE
+
         return cls(
             workflow_input_name="dummy",
             adapter_id=struct_source.adapter_key,
-            ref_id=str(struct_source.source_id),
-            ref_id_type=RefIdType.SOURCE,
+            ref_id=ref_id,
+            ref_id_type=ref_id_type,
+            ref_key=struct_source.ref_key,
             type=struct_source.type,
             filters=struct_source.preset_filters,
         )

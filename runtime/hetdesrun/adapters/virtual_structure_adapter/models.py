@@ -25,11 +25,13 @@ class StructureThingNode(BaseModel):
 
 class StructureVirtualSource(BaseModel):
     id: UUID  # noqa: A003
+    # Needed for metadata(any) sources to fill ref_id in InputWiring for Frontend execution
+    thingNodeId: UUID
     name: str
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: str | None = None
+    metadataKey: str | None
     filters: dict[str, dict] | None = {}
 
     @classmethod
@@ -40,9 +42,11 @@ class StructureVirtualSource(BaseModel):
 
         return cls(
             id=source.id,
+            thingNodeId=source.id,
             name=source.name,
             type=source.type,
             path=source.display_path,
+            metadataKey=source.ref_key,
             filters={replace_whitespace(f.name): f for f in source.passthrough_filters}
             if source.passthrough_filters
             else {},
@@ -51,11 +55,14 @@ class StructureVirtualSource(BaseModel):
 
 class StructureVirtualSink(BaseModel):
     id: UUID  # noqa: A003
+    thingNodeId: (
+        UUID  # Needed for metadata(any) sinks to fill ref_id in InputWiring for Frontend execution
+    )
     name: str
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: str | None = None
+    metadataKey: str | None
     filters: dict[str, dict] | None = {}
 
     @classmethod
@@ -66,9 +73,11 @@ class StructureVirtualSink(BaseModel):
 
         return cls(
             id=sink.id,
+            thingNodeId=sink.id,
             name=sink.name,
             type=sink.type,
             path=sink.display_path,
+            metadataKey=sink.ref_key,
             filters={replace_whitespace(f.name): f for f in sink.passthrough_filters}
             if sink.passthrough_filters
             else {},

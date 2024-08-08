@@ -156,6 +156,15 @@ class Source(BaseModel):
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: str = Field(..., description="Referenced HD Source identifier")
+    ref_key: str | None = Field(
+        None,
+        description="Key of the referenced metadatum, only used for sources of type metadata(any)",
+    )
+    ref_id: str = Field(
+        "",
+        description="ID of the thingnode in the mapped adapter hierarchy,"
+        " which the mapped source references if source has type metadata(any)",
+    )
     meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Source")
     thing_node_external_ids: list[str] | None = Field(
         None,
@@ -180,6 +189,8 @@ class Source(BaseModel):
             else None,
             adapter_key=self.adapter_key,
             source_id=self.source_id,
+            ref_key=self.ref_key,
+            ref_id=self.ref_id,
             meta_data=self.meta_data,
             thing_node_external_ids=self.thing_node_external_ids
             if self.thing_node_external_ids is not None
@@ -200,6 +211,8 @@ class Source(BaseModel):
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,
             source_id=orm_model.source_id,
+            ref_key=orm_model.ref_key,
+            ref_id=orm_model.ref_id,
             meta_data=orm_model.meta_data,
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
@@ -229,6 +242,15 @@ class Sink(BaseModel):
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: str = Field(..., description="Referenced HD Sink identifier")
+    ref_key: str | None = Field(
+        None,
+        description="Key of the referenced metadatum, only used for sinks of type metadata(any)",
+    )
+    ref_id: str = Field(
+        "",
+        description="ID of the thingnode in the mapped adapter hierarchy,"
+        " which the mapped source references if sink has type metadata(any)",
+    )
     meta_data: dict[str, Any] | None = Field(None, description="Optional metadata for the Sink")
     thing_node_external_ids: list[str] | None = Field(
         None,
@@ -253,6 +275,8 @@ class Sink(BaseModel):
             else None,
             adapter_key=self.adapter_key,
             sink_id=self.sink_id,
+            ref_key=self.ref_key,
+            ref_id=self.ref_id,
             meta_data=self.meta_data,
             thing_node_external_ids=self.thing_node_external_ids
             if self.thing_node_external_ids is not None
@@ -273,6 +297,8 @@ class Sink(BaseModel):
             passthrough_filters=orm_model.passthrough_filters,
             adapter_key=orm_model.adapter_key,
             sink_id=orm_model.sink_id,
+            ref_key=orm_model.ref_key,
+            ref_id=orm_model.ref_id,
             meta_data=orm_model.meta_data,
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
