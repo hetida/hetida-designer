@@ -35,13 +35,18 @@ Below is a template for the JSON file:
             "type": "string", // Representing the hetida designer datatype e.g. "timeseries(float)"
             "adapter_key": "string", // Key of the adapter that actually handles data in- and egestion, e.g. "demo-adapter-python"
             "source_id": "string",  // ID of the source in the target adapter
+            "ref_key": "string",  // Optional key of the referenced metadatum, only used for sources of type metadata(any)
+            "ref_id": "string",  // Optional ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if source has type metadata(any)
             "meta_data": {
                 "key": "value"
             },
-            "passthrough_filters": [ // TODO will probably be changed
-                "timestampFrom",
-                "timestampTo"
-            ],
+            "passthrough_filters": [  // Values for filters that should be modifyable be the user
+                {
+                    "name": "string",
+                    "type": "string",  // Which type the filter has, the designer defines specific types
+                    "required": bool  // Whether this filter is required for the source to work properly
+                },...
+            ]
             "preset_filters": {"key": "value"},  // Values for filters that should not be modifyable be the user
             "thing_node_external_ids": [  // Parent IDs of this source
                 "string1", "string2",...
@@ -56,13 +61,18 @@ Below is a template for the JSON file:
             "type": "string",
             "adapter_key": "string",
             "sink_id": "string",
+            "ref_key": "string",
+            "ref_id": "string",
             "meta_data": {
                 "key": "value"
             },
             "passthrough_filters": [
-                "timestampFrom",
-                "timestampTo"
-            ],
+                {
+                    "name": "string",
+                    "type": "string",
+                    "required": bool
+                },...
+            ]
             "preset_filters": {"key": "value"},
             "thing_node_external_ids": [
                 "string1", "string2",...
@@ -73,3 +83,10 @@ Below is a template for the JSON file:
 ```
 
 ## Configuration
+
+There are several environment variables which can be used to configure the use of the virtual structure adapter.  
+* `VST_ADAPTER_ACTIVE` (default `True`): Whether the adapter is active (registered in the designer application)
+* `VST_ADAPTER_SERVICE_IN_RUNTIME` (default `True`): Whether the adapter is part of the backend or the runtime
+* `PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP` (default `False`): Set to `True` if you wish to provide a structure for the adapter at designer startup
+* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Whether an existing structure is completely deleted and inserted or just updated in the database
+* `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a JSON defining a structure to this variable
