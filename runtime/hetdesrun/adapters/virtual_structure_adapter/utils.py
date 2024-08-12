@@ -68,7 +68,7 @@ def prepopulate_structure() -> None:
             insert_structure(complete_structure)
         else:
             update_structure(complete_structure)
-            logging.info(
+            logger.info(
                 "%s and the update_structure function was executed.",
                 "An existing structure was found in the database"
                 if is_db_empty
