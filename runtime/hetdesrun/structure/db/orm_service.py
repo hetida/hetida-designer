@@ -4,7 +4,7 @@ from collections import defaultdict, deque
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, text
+from sqlalchemy import Table, delete, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
@@ -748,39 +748,38 @@ def fill_source_sink_associations(
         complete_structure.thing_nodes, complete_structure.sources, complete_structure.sinks
     )
 
-    for source in complete_structure.sources:
-        if source.thing_node_external_ids:
-            for tn_external_id in source.thing_node_external_ids:
-                thing_node_id = tn_mapping[source.stakeholder_key + tn_external_id]
-                source_id = src_mapping[source.stakeholder_key + source.external_id]
-                association_exists = (
-                    session.query(thingnode_source_association)
-                    .filter_by(thing_node_id=thing_node_id, source_id=source_id)
-                    .first()
-                )
-                if not association_exists:
-                    association = {
-                        "thing_node_id": thing_node_id,
-                        "source_id": source_id,
-                    }
-                    session.execute(thingnode_source_association.insert().values(association))
+    def process_associations(
+        entities: list[Source | Sink], mapping: dict[str, UUID], assoc_table: Table, entity_key: str
+    ) -> None:
+        for entity in entities:
+            if entity.thing_node_external_ids:
+                for tn_external_id in entity.thing_node_external_ids:
+                    thing_node_id = tn_mapping[entity.stakeholder_key + tn_external_id]
+                    entity_id = mapping[entity.stakeholder_key + entity.external_id]
+                    association_exists = (
+                        session.query(assoc_table)
+                        .filter_by(thing_node_id=thing_node_id, **{entity_key: entity_id})
+                        .first()
+                    )
+                    if not association_exists:
+                        association = {
+                            "thing_node_id": thing_node_id,
+                            entity_key: entity_id,
+                        }
+                        session.execute(assoc_table.insert().values(association))
 
-    for sink in complete_structure.sinks:
-        if sink.thing_node_external_ids:
-            for tn_external_id in sink.thing_node_external_ids:
-                thing_node_id = tn_mapping[sink.stakeholder_key + tn_external_id]
-                sink_id = snk_mapping[sink.stakeholder_key + sink.external_id]
-                association_exists = (
-                    session.query(thingnode_sink_association)
-                    .filter_by(thing_node_id=thing_node_id, sink_id=sink_id)
-                    .first()
-                )
-                if not association_exists:
-                    association = {
-                        "thing_node_id": thing_node_id,
-                        "sink_id": sink_id,
-                    }
-                    session.execute(thingnode_sink_association.insert().values(association))
+    process_associations(
+        complete_structure.sources,  # type: ignore
+        src_mapping,
+        thingnode_source_association,
+        "source_id",
+    )
+    process_associations(
+        complete_structure.sinks,  # type: ignore
+        snk_mapping,
+        thingnode_sink_association,
+        "sink_id",
+    )
 
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
@@ -923,57 +922,50 @@ def fill_source_sink_associations_db(
         snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
     }
 
-    for source in complete_structure.sources:
-        if not source.thing_node_external_ids:
-            continue
-        for tn_external_id in source.thing_node_external_ids:
-            tn_key = source.stakeholder_key + tn_external_id
-            thing_node = existing_thing_nodes.get(tn_key)
-            if not thing_node:
+    def process_db_associations(
+        entities: list[Source | Sink],
+        existing_entities: dict[str, Source | Sink],
+        assoc_table: Table,
+        entity_key: str,
+    ) -> None:
+        for entity in entities:
+            if not entity.thing_node_external_ids:
                 continue
-            thing_node_id = thing_node.id
-            src_key = source.stakeholder_key + source.external_id
-            db_source = existing_sources.get(src_key)
-            if not db_source:
-                continue
-            source_id = db_source.id
-            association_exists = (
-                session.query(thingnode_source_association)
-                .filter_by(thing_node_id=thing_node_id, source_id=source_id)
-                .first()
-            )
-            if not association_exists:
-                association = {
-                    "thing_node_id": thing_node_id,
-                    "source_id": source_id,
-                }
-                session.execute(thingnode_source_association.insert().values(association))
+            for tn_external_id in entity.thing_node_external_ids:
+                tn_key = entity.stakeholder_key + tn_external_id
+                thing_node = existing_thing_nodes.get(tn_key)
+                if not thing_node:
+                    continue
+                thing_node_id = thing_node.id
+                entity_key_full = entity.stakeholder_key + entity.external_id
+                db_entity = existing_entities.get(entity_key_full)
+                if not db_entity:
+                    continue
+                entity_id = db_entity.id
+                association_exists = (
+                    session.query(assoc_table)
+                    .filter_by(thing_node_id=thing_node_id, **{entity_key: entity_id})
+                    .first()
+                )
+                if not association_exists:
+                    association = {
+                        "thing_node_id": thing_node_id,
+                        entity_key: entity_id,
+                    }
+                    session.execute(assoc_table.insert().values(association))
 
-    for sink in complete_structure.sinks:
-        if not sink.thing_node_external_ids:
-            continue
-        for tn_external_id in sink.thing_node_external_ids:
-            tn_key = sink.stakeholder_key + tn_external_id
-            thing_node = existing_thing_nodes.get(tn_key)
-            if not thing_node:
-                continue
-            thing_node_id = thing_node.id
-            snk_key = sink.stakeholder_key + sink.external_id
-            db_sink = existing_sinks.get(snk_key)
-            if not db_sink:
-                continue
-            sink_id = db_sink.id
-            association_exists = (
-                session.query(thingnode_sink_association)
-                .filter_by(thing_node_id=thing_node_id, sink_id=sink_id)
-                .first()
-            )
-            if not association_exists:
-                association = {
-                    "thing_node_id": thing_node_id,
-                    "sink_id": sink_id,
-                }
-                session.execute(thingnode_sink_association.insert().values(association))
+    process_db_associations(
+        complete_structure.sources,  # type: ignore
+        existing_sources,
+        thingnode_source_association,
+        "source_id",
+    )
+    process_db_associations(
+        complete_structure.sinks,  # type: ignore
+        existing_sinks,
+        thingnode_sink_association,
+        "sink_id",
+    )
 
 
 def update_structure_from_file(file_path: str) -> CompleteStructure:
