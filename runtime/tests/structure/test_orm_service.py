@@ -1521,7 +1521,6 @@ def test_fetch_sink_by_external_id(mocked_clean_test_db_session):
             fetch_sink_by_external_id(session, wrong_external_id, stakeholder_key)
 
 
-
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_source_by_external_id(mocked_clean_test_db_session):
     external_id = "Energieverbraeuche_Pumpensystem_Hochbehaelter"
@@ -1536,7 +1535,6 @@ def test_read_single_source_by_external_id(mocked_clean_test_db_session):
         read_single_source_by_external_id(wrong_external_id, stakeholder_key)
 
 
-
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_sink_by_external_id(mocked_clean_test_db_session):
     external_id = "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter"
@@ -1549,7 +1547,6 @@ def test_read_single_sink_by_external_id(mocked_clean_test_db_session):
     wrong_external_id = "NonExistentExternalID"
     with pytest.raises(DBNotFoundError):
         read_single_sink_by_external_id(wrong_external_id, stakeholder_key)
-
 
 
 ### Structure Helper Functions

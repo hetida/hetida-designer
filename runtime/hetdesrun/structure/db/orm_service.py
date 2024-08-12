@@ -77,13 +77,17 @@ def fetch_et_by_external_id(
         session.query(ElementTypeOrm)
         .filter(
             ElementTypeOrm.external_id == external_id,
-            ElementTypeOrm.stakeholder_key == stakeholder_key
+            ElementTypeOrm.stakeholder_key == stakeholder_key,
         )
         .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no element type in database with external_id {external_id} and stakeholder_key {stakeholder_key}"
+        msg = (
+            f"Found no element type in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -118,14 +122,17 @@ def fetch_tn_by_external_id(
     result: ThingNodeOrm | None = (
         session.query(ThingNodeOrm)
         .filter(
-            ThingNodeOrm.external_id == external_id,
-            ThingNodeOrm.stakeholder_key == stakeholder_key
+            ThingNodeOrm.external_id == external_id, ThingNodeOrm.stakeholder_key == stakeholder_key
         )
         .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no thing node in database with external_id {external_id} and stakeholder_key {stakeholder_key}"
+        msg = (
+            f"Found no thing node in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -175,13 +182,16 @@ def fetch_source_by_external_id(
     )
 
     if result is None:
-        msg = f"Found no source in database with external_id {external_id} and stakeholder_key {stakeholder_key}"
+        msg = (
+            f"Found no source in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
 
     return result
-
 
 
 def fetch_sink_by_id(
@@ -213,13 +223,16 @@ def fetch_sink_by_external_id(
     )
 
     if result is None:
-        msg = f"Found no sink in database with external_id {external_id} and stakeholder_key {stakeholder_key}"
+        msg = (
+            f"Found no sink in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
 
     return result
-
 
 
 # Element Type Services
