@@ -16,6 +16,8 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_sources,
     fetch_all_thing_nodes,
     insert_structure_from_file,
+    delete_structure,
+    update_structure,
 )
 from hetdesrun.structure.models import CompleteStructure
 from hetdesrun.structure.structure_service import delete_structure, get_children, is_database_empty
@@ -202,3 +204,65 @@ def test_is_database_empty_when_empty(mocked_clean_test_db_session):
 @pytest.mark.usefixtures("_db_test_structure")
 def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
     assert not is_database_empty(), "Database should not be empty but it is."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_delete_structure(mocked_clean_test_db_session):
+    # Ensure the structure exists before deletion
+    with mocked_clean_test_db_session() as session:
+        initial_thing_nodes = fetch_all_thing_nodes(session)
+        initial_sources = fetch_all_sources(session)
+        initial_sinks = fetch_all_sinks(session)
+        initial_element_types = fetch_all_element_types(session)
+
+        assert len(initial_thing_nodes) > 0, "Expected some thing nodes before deletion"
+        assert len(initial_sources) > 0, "Expected some sources before deletion"
+        assert len(initial_sinks) > 0, "Expected some sinks before deletion"
+        assert len(initial_element_types) > 0, "Expected some element types before deletion"
+
+        # Perform the deletion
+        delete_structure()
+
+        # Verify everything is deleted
+        remaining_thing_nodes = fetch_all_thing_nodes(session)
+        remaining_sources = fetch_all_sources(session)
+        remaining_sinks = fetch_all_sinks(session)
+        remaining_element_types = fetch_all_element_types(session)
+
+        assert len(remaining_thing_nodes) == 0, "Expected no thing nodes after deletion"
+        assert len(remaining_sources) == 0, "Expected no sources after deletion"
+        assert len(remaining_sinks) == 0, "Expected no sinks after deletion"
+        assert len(remaining_element_types) == 0, "Expected no element types after deletion"
+
+
+@pytest.mark.usefixtures("_db_empty_database")
+def test_update_structure(mocked_clean_test_db_session):
+    # Load test data
+    with open("tests/structure/data/db_test_structure.json") as file:
+        data = json.load(file)
+    complete_structure = CompleteStructure(**data)
+
+    # Perform the update
+    updated_structure = update_structure(complete_structure)
+
+    with mocked_clean_test_db_session() as session:
+        # Verify the structure was inserted/updated correctly
+        thing_nodes = fetch_all_thing_nodes(session)
+        sources = fetch_all_sources(session)
+        sinks = fetch_all_sinks(session)
+        element_types = fetch_all_element_types(session)
+
+        assert len(thing_nodes) == len(complete_structure.thing_nodes), "Mismatch in number of thing nodes"
+        assert len(sources) == len(complete_structure.sources), "Mismatch in number of sources"
+        assert len(sinks) == len(complete_structure.sinks), "Mismatch in number of sinks"
+        assert len(element_types) == len(complete_structure.element_types), "Mismatch in number of element types"
+
+        # Validate that specific nodes and associations exist
+        wasserwerk_node = next((tn for tn in thing_nodes if tn.name == "Wasserwerk 1"), None)
+        assert wasserwerk_node is not None, "Expected 'Wasserwerk 1' node not found"
+
+        source = next((s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"), None)
+        assert source is not None, "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
+
+        sink = next((s for s in sinks if s.name == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"), None)
+        assert sink is not None, "Expected sink 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' not found"
