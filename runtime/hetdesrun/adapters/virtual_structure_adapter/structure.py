@@ -17,9 +17,12 @@ from hetdesrun.structure.structure_service import (
 logger = logging.getLogger(__name__)
 
 
-def get_level_from_struct_service(
+def get_children_from_structure_service(
     parent_id: UUID | None = None,
 ) -> tuple[list[StructureThingNode], list[StructureVirtualSource], list[StructureVirtualSink]]:
+    """Retrieves all children of the node with the given parent_id.
+    And returns their respective structure-representation (for the frontend).
+    """
     thing_nodes, sources, sinks = get_children(parent_id)
     struct_thing_nodes = [StructureThingNode.from_structure_service(node) for node in thing_nodes]
     struct_sources = [StructureVirtualSource.from_structure_service(source) for source in sources]
@@ -29,7 +32,7 @@ def get_level_from_struct_service(
 
 
 def get_structure(parent_id: UUID | None = None) -> StructureResponse:
-    nodes, sources, sinks = get_level_from_struct_service(parent_id)
+    nodes, sources, sinks = get_children_from_structure_service(parent_id)
 
     return StructureResponse(
         id="vst-adapter",

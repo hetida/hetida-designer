@@ -1,5 +1,5 @@
 # Virtual Structure Adapter
-The built-in virtual structure adapter enables the user to create a flexible, abstract hierarchical structures for their data.  
+The built-in virtual structure adapter enables the user to create flexible, abstract hierarchical structures for their data.  
 This allows the user to provide names, descriptions and metadata for each element of the hierarchy as seen fit.  
 The adapter does not handle the in- and egestion of data itself. The sources and sinks of each defined structure map onto other adapters that actually handle the data in- and egestion.  
 The structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`.  
@@ -14,7 +14,7 @@ Below is a template for the JSON file:
             "description": "string"  // Arbitrary description
         },...
     ],
-    "thing_nodes": [ // Contains thing nodes for your data
+    "thing_nodes": [ // Contains thingnodes for your data
         {
             "external_id": "string",
             "stakeholder_key": "string",
@@ -47,7 +47,7 @@ Below is a template for the JSON file:
                     "required": bool  // Whether this filter is required for the source to work properly
                 },...
             ]
-            "preset_filters": {"key": "value"},  // Values for filters that should not be modifyable be the user
+            "preset_filters": {"key": "value"},  // Values for filters that should not be modifyable by the user
             "thing_node_external_ids": [  // Parent IDs of this source
                 "string1", "string2",...
             ]
