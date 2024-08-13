@@ -70,16 +70,24 @@ def fetch_et_by_id(
 def fetch_et_by_external_id(
     session: SQLAlchemySession,
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> ElementTypeOrm:
     result: ElementTypeOrm | None = (
         session.query(ElementTypeOrm)
-        .filter(ElementTypeOrm.external_id == external_id)
+        .filter(
+            ElementTypeOrm.external_id == external_id,
+            ElementTypeOrm.stakeholder_key == stakeholder_key,
+        )
         .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no element type in database with external_id {external_id}"
+        msg = (
+            f"Found no element type in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -108,14 +116,23 @@ def fetch_tn_by_id(
 def fetch_tn_by_external_id(
     session: SQLAlchemySession,
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> ThingNodeOrm:
     result: ThingNodeOrm | None = (
-        session.query(ThingNodeOrm).filter(ThingNodeOrm.external_id == external_id).one_or_none()
+        session.query(ThingNodeOrm)
+        .filter(
+            ThingNodeOrm.external_id == external_id, ThingNodeOrm.stakeholder_key == stakeholder_key
+        )
+        .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no thing node in database with external_id {external_id}"
+        msg = (
+            f"Found no thing node in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -155,14 +172,21 @@ def fetch_source_by_id(
 def fetch_source_by_external_id(
     session: SQLAlchemySession,
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> SourceOrm:
     result: SourceOrm | None = (
-        session.query(SourceOrm).filter(SourceOrm.external_id == external_id).one_or_none()
+        session.query(SourceOrm)
+        .filter(SourceOrm.external_id == external_id, SourceOrm.stakeholder_key == stakeholder_key)
+        .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no source in database with external_id {external_id}"
+        msg = (
+            f"Found no source in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -189,14 +213,21 @@ def fetch_sink_by_id(
 def fetch_sink_by_external_id(
     session: SQLAlchemySession,
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> SinkOrm:
     result: SinkOrm | None = (
-        session.query(SinkOrm).filter(SinkOrm.external_id == external_id).one_or_none()
+        session.query(SinkOrm)
+        .filter(SinkOrm.external_id == external_id, SinkOrm.stakeholder_key == stakeholder_key)
+        .one_or_none()
     )
 
     if result is None:
-        msg = f"Found no source in database with external_id {external_id}"
+        msg = (
+            f"Found no sink in database with external_id {external_id} "
+            f"and stakeholder_key {stakeholder_key}"
+        )
+
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -238,11 +269,12 @@ def read_single_element_type(
 
 
 def read_single_element_type_by_external_id(
-    external_id: str,  # noqa: A002
+    external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> ElementType:
     with get_session()() as session, session.begin():
-        orm_et = fetch_et_by_external_id(session, external_id, log_error)
+        orm_et = fetch_et_by_external_id(session, external_id, stakeholder_key, log_error)
         return ElementType.from_orm_model(orm_et)
 
 
@@ -354,11 +386,12 @@ def read_single_thingnode(
 
 
 def read_single_thingnode_by_external_id(
-    external_id: str,  # noqa: A002
+    external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> ThingNode:
     with get_session()() as session, session.begin():
-        orm_tn = fetch_tn_by_external_id(session, external_id, log_error)
+        orm_tn = fetch_tn_by_external_id(session, external_id, stakeholder_key, log_error)
         return ThingNode.from_orm_model(orm_tn)
 
 
@@ -537,10 +570,11 @@ def read_single_source(
 
 def read_single_source_by_external_id(
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> Source:
     with get_session()() as session, session.begin():
-        orm_source = fetch_source_by_external_id(session, external_id, log_error)
+        orm_source = fetch_source_by_external_id(session, external_id, stakeholder_key, log_error)
         return Source.from_orm_model(orm_source)
 
 
@@ -611,10 +645,11 @@ def read_single_sink(
 
 def read_single_sink_by_external_id(
     external_id: str,
+    stakeholder_key: str,
     log_error: bool = True,
 ) -> Sink:
     with get_session()() as session, session.begin():
-        orm_sink = fetch_sink_by_external_id(session, external_id, log_error)
+        orm_sink = fetch_sink_by_external_id(session, external_id, stakeholder_key, log_error)
         return Sink.from_orm_model(orm_sink)
 
 

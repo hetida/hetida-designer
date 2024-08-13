@@ -1403,25 +1403,29 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
 def test_fetch_tn_by_external_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         thing_node_external_id = "Wasserwerk1_Anlage1"
-        thing_node = fetch_tn_by_external_id(session, thing_node_external_id)
+        stakeholder_key = "GW"
+        thing_node = fetch_tn_by_external_id(session, thing_node_external_id, stakeholder_key)
         assert thing_node is not None
         assert thing_node.external_id == thing_node_external_id
+        assert thing_node.stakeholder_key == stakeholder_key
 
         wrong_external_id = "NonExistentExternalID"
         with pytest.raises(DBNotFoundError):
-            fetch_tn_by_external_id(session, wrong_external_id)
+            fetch_tn_by_external_id(session, wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_thingnode_by_external_id(mocked_clean_test_db_session):
     thing_node_external_id = "Wasserwerk1_Anlage1"
-    thing_node = read_single_thingnode_by_external_id(thing_node_external_id)
+    stakeholder_key = "GW"
+    thing_node = read_single_thingnode_by_external_id(thing_node_external_id, stakeholder_key)
     assert thing_node is not None
     assert thing_node.external_id == thing_node_external_id
+    assert thing_node.stakeholder_key == stakeholder_key
 
     wrong_external_id = "NonExistentExternalID"
     with pytest.raises(DBNotFoundError):
-        read_single_thingnode_by_external_id(wrong_external_id)
+        read_single_thingnode_by_external_id(wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -1462,75 +1466,87 @@ def test_get_descendants_tn_ids(mocked_clean_test_db_session):
 def test_fetch_et_by_external_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         external_id = "Wasserwerk_Typ"
-        element_type = fetch_et_by_external_id(session, external_id)
+        stakeholder_key = "GW"
+        element_type = fetch_et_by_external_id(session, external_id, stakeholder_key)
         assert element_type is not None
         assert element_type.external_id == external_id
+        assert element_type.stakeholder_key == stakeholder_key
 
         wrong_external_id = "NonExistentExternalID"
         with pytest.raises(DBNotFoundError):
-            fetch_et_by_external_id(session, wrong_external_id)
+            fetch_et_by_external_id(session, wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_element_type_by_external_id(mocked_clean_test_db_session):
     external_id = "Wasserwerk_Typ"
-    element_type = read_single_element_type_by_external_id(external_id)
+    stakeholder_key = "GW"
+    element_type = read_single_element_type_by_external_id(external_id, stakeholder_key)
     assert element_type is not None
     assert element_type.external_id == external_id
+    assert element_type.stakeholder_key == stakeholder_key
 
     wrong_external_id = "NonExistentExternalID"
     with pytest.raises(DBNotFoundError):
-        read_single_element_type_by_external_id(wrong_external_id)
+        read_single_element_type_by_external_id(wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_fetch_source_by_external_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         external_id = "Energieverbraeuche_Pumpensystem_Hochbehaelter"
-        source = fetch_source_by_external_id(session, external_id)
+        stakeholder_key = "GW"
+        source = fetch_source_by_external_id(session, external_id, stakeholder_key)
         assert source is not None
         assert source.external_id == external_id
+        assert source.stakeholder_key == stakeholder_key
 
         wrong_external_id = "NonExistentExternalID"
         with pytest.raises(DBNotFoundError):
-            fetch_source_by_external_id(session, wrong_external_id)
+            fetch_source_by_external_id(session, wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_fetch_sink_by_external_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         external_id = "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter"
-        sink = fetch_sink_by_external_id(session, external_id)
+        stakeholder_key = "GW"
+        sink = fetch_sink_by_external_id(session, external_id, stakeholder_key)
         assert sink is not None
         assert sink.external_id == external_id
+        assert sink.stakeholder_key == stakeholder_key
 
         wrong_external_id = "NonExistentExternalID"
         with pytest.raises(DBNotFoundError):
-            fetch_sink_by_external_id(session, wrong_external_id)
+            fetch_sink_by_external_id(session, wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_source_by_external_id(mocked_clean_test_db_session):
     external_id = "Energieverbraeuche_Pumpensystem_Hochbehaelter"
-    source = read_single_source_by_external_id(external_id)
+    stakeholder_key = "GW"
+    source = read_single_source_by_external_id(external_id, stakeholder_key)
     assert source is not None
     assert source.external_id == external_id
+    assert source.stakeholder_key == stakeholder_key
 
     wrong_external_id = "NonExistentExternalID"
     with pytest.raises(DBNotFoundError):
-        read_single_source_by_external_id(wrong_external_id)
+        read_single_source_by_external_id(wrong_external_id, stakeholder_key)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_read_single_sink_by_external_id(mocked_clean_test_db_session):
     external_id = "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter"
-    sink = read_single_sink_by_external_id(external_id)
+    stakeholder_key = "GW"
+    sink = read_single_sink_by_external_id(external_id, stakeholder_key)
     assert sink is not None
     assert sink.external_id == external_id
+    assert sink.stakeholder_key == stakeholder_key
 
     wrong_external_id = "NonExistentExternalID"
     with pytest.raises(DBNotFoundError):
-        read_single_sink_by_external_id(wrong_external_id)
+        read_single_sink_by_external_id(wrong_external_id, stakeholder_key)
 
 
 ### Structure Helper Functions
