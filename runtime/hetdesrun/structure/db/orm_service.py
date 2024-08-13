@@ -1,7 +1,7 @@
 import json
 import logging
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, Type
 from uuid import UUID
 
 from sqlalchemy import delete, text
@@ -149,7 +149,7 @@ def fetch_tn_child_ids_by_parent_id(
         msg = f"No children found for thingnode with parent_id {parent_id}"
         logger.error(msg)
         raise DBNotFoundError(msg)
-
+    # Extracts the UUIDs from the list of tuples returned by the query and returns them as a flat list.
     return [result[0] for result in results]
 
 
@@ -239,6 +239,8 @@ def fetch_sink_by_external_id(
 
 
 def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None:
+    # This function is intended to be used as a helper within session-managed operations
+    # and should not be called directly without proper session handling.
     try:
         session.add(element_type_orm)
         session.flush()
@@ -306,6 +308,9 @@ def delete_et(id: UUID, log_error: bool = True) -> None:  # noqa: A002
 
 
 def delete_et_cascade(id: UUID, log_error: bool = True) -> None:  # noqa: A002
+    # The delete_et_cascade function differs from delete_et in that it also deletes all
+    # associated ThingNode records before deleting the ElementType,
+    # performing a cascading delete operation.
     with get_session()() as session, session.begin():
         try:
             element_type = fetch_et_by_id(session, id, log_error)
@@ -356,6 +361,8 @@ def update_et(
 
 
 def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
+    # This function is intended to be used as a helper within session-managed operations
+    # and should not be called directly without proper session handling.
     try:
         session.add(thingnode_orm)
         session.flush()
@@ -398,18 +405,22 @@ def read_single_thingnode_by_external_id(
 def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         try:
+            # Fetch the ThingNode to be deleted
             thingnode = fetch_tn_by_id(session, id, log_error)
 
+            # Remove associations with sources
             sources = (
                 session.query(SourceOrm).filter(SourceOrm.thing_nodes.any(id=thingnode.id)).all()
             )
             for source in sources:
                 source.thing_nodes.remove(thingnode)
 
+            # Remove associations with sinks
             sinks = session.query(SinkOrm).filter(SinkOrm.thing_nodes.any(id=thingnode.id)).all()
             for sink in sinks:
                 sink.thing_nodes.remove(thingnode)
 
+            # Recursively delete child ThingNodes
             children = (
                 session.query(ThingNodeOrm)
                 .filter(ThingNodeOrm.parent_node_id == thingnode.id)
@@ -418,6 +429,7 @@ def delete_tn(id: UUID, log_error: bool = True) -> None:  # noqa: A002
             for child in children:
                 delete_tn(child.id, log_error)
 
+            # Delete the ThingNode itself
             session.delete(thingnode)
             session.commit()
 
@@ -483,14 +495,26 @@ def get_ancestors_tn_ids(
     depth: int = -1,
     log_error: bool = True,
 ) -> list[UUID]:
+    """
+    Retrieves the IDs of all ancestor ThingNodes up to a specified depth.
+
+    Args:
+        id (UUID): The ID of the starting ThingNode.
+        depth (int): The maximum depth to search. If -1, search until the root node is reached.
+        log_error (bool): Whether to log errors if a ThingNode is not found.
+
+    Returns:
+        list[UUID]: A list of UUIDs representing the ancestor ThingNodes.
+    """
     ancestors_ids = []
     current_depth = 0
     current_id = id
     with get_session()() as session, session.begin():
         try:
+            # Traverse up the hierarchy, stopping if the root is reached or the specified depth is exceeded
             while current_id and (depth == -1 or current_depth < depth):
                 ancestors_ids.append(current_id)
-                thingnode = fetch_tn_by_id(session, current_id, log_error)
+                thingnode = fetch_tn_by_id(session, current_id, log_error)  # Fetch the current node
                 if thingnode.parent_node_id is None:
                     break
                 current_id = thingnode.parent_node_id  # noqa: A001
@@ -509,22 +533,35 @@ def get_descendants_tn_ids(
     depth: int = -1,
     log_error: bool = True,
 ) -> list[UUID]:
+    """
+    Retrieves the IDs of all descendant ThingNodes up to a specified depth.
+
+    Args:
+        id (UUID): The ID of the starting ThingNode.
+        depth (int): The maximum depth to search. If -1, search through all descendants.
+        log_error (bool): Whether to log errors if no descendants are found.
+
+    Returns:
+        list[UUID]: A list of UUIDs representing the descendant ThingNodes.
+    """
     descendant_ids = []
-    nodes_to_visit = [(id, 0)]
+    nodes_to_visit = [(id, 0)]  # Stack to keep track of nodes to visit, starting with the root node
 
     with get_session()() as session, session.begin():
         try:
             while nodes_to_visit:
-                current_id, current_depth = nodes_to_visit.pop()
+                current_id, current_depth = nodes_to_visit.pop()  # Get the next node to visit
                 if current_id is None or (depth != -1 and current_depth >= depth):
                     continue
                 try:
+                    # Fetch the child nodes of the current node
                     child_ids = fetch_tn_child_ids_by_parent_id(session, current_id, log_error)
                 except DBNotFoundError:
                     if current_depth == 0 and log_error:
                         msg = f"No children found for thingnode with parent_id {current_id}"
                         logger.error(msg)
                     continue
+                # Add each child node's ID to the list of descendants and queue them for further exploration
                 for child_id in child_ids:
                     descendant_ids.append(child_id)
                     nodes_to_visit.append((child_id, current_depth + 1))
@@ -541,6 +578,8 @@ def get_descendants_tn_ids(
 
 
 def add_source(session: SQLAlchemySession, source_orm: SourceOrm) -> None:
+    # This function is intended to be used as a helper within session-managed operations
+    # and should not be called directly without proper session handling.
     try:
         session.add(source_orm)
         session.flush()
@@ -616,6 +655,8 @@ def delete_source(id: UUID, log_error: bool = True) -> None:  # noqa: A002
 
 
 def add_sink(session: SQLAlchemySession, sink_orm: SinkOrm) -> None:
+    # This function is intended to be used as a helper within session-managed operations
+    # and should not be called directly without proper session handling.
     try:
         session.add(sink_orm)
         session.flush()
@@ -703,31 +744,53 @@ def load_structure_from_json_file(
 
 
 def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
-    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
-    root_nodes = []
+    """
+    Sorts a list of ThingNodes into hierarchical levels.
 
+    Args:
+        nodes (list[ThingNode]): The list of ThingNodes to be sorted.
+
+    Returns:
+        dict[int, list[ThingNode]]: A dictionary mapping each hierarchical level (int) to a list of
+        ThingNodes at that level.
+    """
+
+    # Initialize a dictionary to hold the children of each node, and an empty list for root nodes
+    children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in nodes}
+    root_nodes = []  # List to hold root nodes (nodes with no parent)
+
+    # Iterate through each node to populate the children list or identify root nodes
     for node in nodes:
         if node.parent_node_id:
+            # If the node has a parent, add it to the parent's children list
             if node.parent_node_id not in children_by_node_id:
                 children_by_node_id[node.parent_node_id] = []
             children_by_node_id[node.parent_node_id].append(node)
         else:
+            # If no parent, it's a root node
             root_nodes.append(node)
 
+    # Dictionary to hold nodes sorted by their hierarchical levels
     sorted_nodes_by_level = defaultdict(list)
+    # Queue for breadth-first traversal, starting with root nodes
     queue = deque([(root_nodes, 0)])
 
+    # Perform breadth-first traversal to sort nodes by levels
     while queue:
         current_level_nodes, level = queue.popleft()
         next_level_nodes = []
 
         for node in current_level_nodes:
+            # Add the current node to its respective level in the sorted dictionary
             sorted_nodes_by_level[level].append(node)
             if node.id in children_by_node_id:
+                # Sort the children nodes by their external_id
                 children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+                # Prepare the nodes for the next level of traversal
                 next_level_nodes.extend(children_by_node_id[node.id])
 
         if next_level_nodes:
+            # Queue the next level nodes for processing
             queue.append((next_level_nodes, level + 1))
 
     return sorted_nodes_by_level
@@ -736,6 +799,13 @@ def sort_thing_nodes(nodes: list[ThingNode]) -> dict[int, list[ThingNode]]:
 def create_mapping_between_external_and_internal_ids(
     tn_list: list[ThingNode], src_list: list[Source], snk_list: list[Sink]
 ) -> tuple[dict[str, UUID], dict[str, UUID], dict[str, UUID]]:
+    """
+    Creates mappings between external identifiers (combined with stakeholder keys) and their corresponding internal UUIDs.
+
+    This mapping is necessary to look up internal UUIDs during processing,
+    ensuring that external references can be resolved to their associated internal IDs,
+    which are used within the system's database operations.
+    """
     tn_mapping = {tn.stakeholder_key + tn.external_id: tn.id for tn in tn_list}
     src_mapping = {src.stakeholder_key + src.external_id: src.id for src in src_list}
     snk_mapping = {snk.stakeholder_key + snk.external_id: snk.id for snk in snk_list}
@@ -762,14 +832,14 @@ def fill_element_type_ids_of_thing_nodes(
             node.element_type_id = element_type_uuid
 
 
-def fill_all_parent_uuids(complete_structure: CompleteStructure) -> None:
+def fill_all_thingnode_parent_uuids(complete_structure: CompleteStructure) -> None:
     tn_mapping, _, _ = create_mapping_between_external_and_internal_ids(
         complete_structure.thing_nodes, [], []
     )
     fill_parent_uuids_of_thing_nodes(tn_mapping, complete_structure.thing_nodes)
 
 
-def fill_all_element_type_ids(complete_structure: CompleteStructure) -> None:
+def fill_all_thingnode_element_type_ids(complete_structure: CompleteStructure) -> None:
     element_type_mapping = {
         et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types
     }
@@ -779,6 +849,18 @@ def fill_all_element_type_ids(complete_structure: CompleteStructure) -> None:
 def fill_source_sink_associations(
     complete_structure: CompleteStructure, session: SQLAlchemySession
 ) -> None:
+    """
+    Establishes associations between ThingNodes and their corresponding Sources and Sinks.
+
+    This function creates mappings between the external IDs and internal UUIDs for ThingNodes,
+    Sources, and Sinks within the given CompleteStructure. It then uses these mappings to
+    associate each Source and Sink with the appropriate ThingNodes in the database, ensuring
+    that the relationships are correctly represented.
+
+    For each Source and Sink in the CompleteStructure, the function checks if an association
+    with a ThingNode already exists in the database. If not, it inserts the association into
+    the database to maintain the integrity of the structure.
+    """
     tn_mapping, src_mapping, snk_mapping = create_mapping_between_external_and_internal_ids(
         complete_structure.thing_nodes, complete_structure.sources, complete_structure.sinks
     )
@@ -819,6 +901,18 @@ def fill_source_sink_associations(
 
 
 def flush_items(session: SQLAlchemySession, items: list) -> None:
+    """
+    Flushes a list of items to the database in a single transaction.
+
+    This function iterates over a list of items, converts each to its ORM model, and adds it
+    to the session. Once all items are added, the transaction is committed, ensuring all changes
+    are persisted to the database simultaneously.
+
+    If an IntegrityError occurs (e.g., due to constraint violations), the transaction is rolled
+    back to maintain database integrity, and a custom DBIntegrityError is raised. Any other
+    exceptions that occur are also caught, leading to a rollback and the raising of a
+    DBIntegrityError to signal an unexpected issue.
+    """
     try:
         for item in items:
             orm_item = item.to_orm_model()
@@ -845,8 +939,8 @@ def insert_structure_from_file(file_path: str) -> CompleteStructure:
 
 def insert_structure(complete_structure: CompleteStructure) -> CompleteStructure:
     with get_session()() as session:
-        fill_all_element_type_ids(complete_structure)
-        fill_all_parent_uuids(complete_structure)
+        fill_all_thingnode_element_type_ids(complete_structure)
+        fill_all_thingnode_parent_uuids(complete_structure)
 
         sorted_nodes_by_level = sort_thing_nodes(complete_structure.thing_nodes)
         sorted_thing_nodes = [node for nodes in sorted_nodes_by_level.values() for node in nodes]
@@ -868,6 +962,13 @@ def insert_structure(complete_structure: CompleteStructure) -> CompleteStructure
 def sort_thing_nodes_from_db(
     thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
 ) -> dict[int, list[ThingNode]]:
+    """
+    This function sorts a list of ThingNodes into hierarchical levels using existing ThingNode data
+    fetched from the database. It ensures that the existing database IDs are retained for each node.
+    The function does not directly access the database but relies on the provided existing_thing_nodes.
+
+    """
+
     # Map existing ThingNodes from the database to a dictionary using a unique key
     existing_node_map = {
         (node.stakeholder_key or "") + (node.external_id or ""): node
@@ -879,11 +980,13 @@ def sort_thing_nodes_from_db(
         key = node.stakeholder_key + node.external_id
         existing_node = existing_node_map.get(key)
         if existing_node:
-            node.id = existing_node.id
+            node.id = existing_node.id  # Retain the existing ID for the node
 
+    # Initialize a dictionary to hold the children of each node, and an empty list for root nodes
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
     root_nodes = []
 
+    # Iterate through each node to populate the children list or identify root nodes
     for node in thing_nodes:
         if node.parent_node_id:
             if node.parent_node_id not in children_by_node_id:
@@ -892,28 +995,40 @@ def sort_thing_nodes_from_db(
         else:
             root_nodes.append(node)
 
+    # Dictionary to hold nodes sorted by their hierarchical levels
     sorted_nodes_by_level = defaultdict(list)
+    # Queue for breadth-first traversal, starting with root nodes
     queue = deque([(root_nodes, 0)])
 
+    # Perform breadth-first traversal to sort nodes by levels
     while queue:
         current_level_nodes, level = queue.popleft()
         next_level_nodes = []
 
         for node in current_level_nodes:
+            # Add the current node to its respective level in the sorted dictionary
             sorted_nodes_by_level[level].append(node)
             if node.id in children_by_node_id:
+                # Sort the children nodes by their external_id
                 children_by_node_id[node.id].sort(key=lambda x: x.external_id)
+                # Prepare the nodes for the next level of traversal
                 next_level_nodes.extend(children_by_node_id[node.id])
 
         if next_level_nodes:
+            # Queue the next level nodes for processing
             queue.append((next_level_nodes, level + 1))
 
     return sorted_nodes_by_level
 
 
-def fill_all_element_type_ids_from_db(
+def fill_all_thingnode_element_type_ids_from_db(
     thing_nodes: list[ThingNode], existing_element_types: dict[str, ElementTypeOrm]
 ) -> None:
+    """
+    This function fills the element_type_id for each ThingNode using element types
+    that have already been fetched from the database. The function itself does not
+    query the database but relies on the provided existing_element_types.
+    """
     for node in thing_nodes:
         if node.element_type_external_id:
             key = node.stakeholder_key + node.element_type_external_id
@@ -922,9 +1037,14 @@ def fill_all_element_type_ids_from_db(
                 node.element_type_id = db_et.id
 
 
-def fill_all_parent_uuids_from_db(
+def fill_all_thingnode_parent_uuids_from_db(
     thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
 ) -> None:
+    """
+    This function assigns parent_node_id for each ThingNode using parent nodes
+    that have already been fetched from the database. It does not perform any direct
+    database operations but works with the provided existing_thing_nodes.
+    """
     for node in thing_nodes:
         if node.parent_external_node_id:
             key = node.stakeholder_key + node.parent_external_node_id
@@ -932,6 +1052,10 @@ def fill_all_parent_uuids_from_db(
             if db_parent_tn:
                 node.parent_node_id = db_parent_tn.id
             else:
+                # If the parent node is not found in the existing_thing_nodes,
+                # use a generator expression to search through thing_nodes.
+                # The generator searches for the first node that matches
+                # both the parent_external_node_id and stakeholder_key.
                 parent_node = next(
                     (
                         n
@@ -948,6 +1072,18 @@ def fill_all_parent_uuids_from_db(
 def fill_source_sink_associations_db(
     complete_structure: CompleteStructure, session: SQLAlchemySession
 ) -> None:
+    """
+    Establishes associations between ThingNodes and their corresponding Sources and Sinks
+    based on existing records in the database.
+
+    This function ensures that all sources and sinks within the provided CompleteStructure
+    are correctly associated with their respective ThingNodes in the database. It first
+    retrieves existing ThingNodes, Sources, and Sinks from the database and maps them using
+    their stakeholder keys and external IDs. Then, for each Source and Sink in the
+    CompleteStructure, it checks whether an association with a ThingNode already exists in
+    the database. If not, the function creates the necessary association.
+    """
+
     existing_thing_nodes = {
         tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
     }
@@ -1017,12 +1153,17 @@ def update_structure_from_file(file_path: str) -> CompleteStructure:
 
 
 def update_structure(complete_structure: CompleteStructure) -> CompleteStructure:
+    """
+    This function updates or inserts the given complete structure into the database.
+    """
+
     with get_session()() as session, session.begin():
         existing_element_types = fetch_existing_records(session, ElementTypeOrm)
         existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
         existing_sources = fetch_existing_records(session, SourceOrm)
         existing_sinks = fetch_existing_records(session, SinkOrm)
 
+        # Update or create element types
         with session.no_autoflush:
             update_or_create_elements(
                 complete_structure.element_types, existing_element_types, session
@@ -1030,12 +1171,17 @@ def update_structure(complete_structure: CompleteStructure) -> CompleteStructure
             session.flush()
             update_existing_elements(session, ElementTypeOrm, existing_element_types)
 
-            fill_all_element_type_ids_from_db(
+            # Fill in element type IDs for thing nodes
+            fill_all_thingnode_element_type_ids_from_db(
                 complete_structure.thing_nodes, existing_element_types
             )
 
-            fill_all_parent_uuids_from_db(complete_structure.thing_nodes, existing_thing_nodes)
+            # Fill in parent node IDs for thing nodes
+            fill_all_thingnode_parent_uuids_from_db(
+                complete_structure.thing_nodes, existing_thing_nodes
+            )
 
+            # Sort and flatten the thing nodes hierarchy for easier processing
             sorted_thing_nodes = sort_and_flatten_thing_nodes(
                 complete_structure.thing_nodes, existing_thing_nodes
             )
@@ -1056,13 +1202,27 @@ def update_structure(complete_structure: CompleteStructure) -> CompleteStructure
             )
             session.flush()
 
+            # Establish associations between thing nodes, sources, and sinks
             fill_source_sink_associations_db(complete_structure, session)
 
     return complete_structure
 
 
 def fetch_existing_records(session: SQLAlchemySession, model_class: Any) -> dict[str, Any]:
-    return {rec.stakeholder_key + rec.external_id: rec for rec in session.query(model_class).all()}
+    """
+    Fetches all records of the specified model class from the database and returns them as a
+    dictionary with keys composed of stakeholder_key and external_id.
+    """
+    try:
+        # Fetch all records of the given model class from the database
+        records = session.query(model_class).all()
+        # Create a dictionary mapping stakeholder_key + external_id to the record
+        return {rec.stakeholder_key + rec.external_id: rec for rec in records}
+    except Exception as e:
+        # Log the error and re-raise the exception if something goes wrong
+        msg = f"Error fetching records for model class {model_class.__name__}: {str(e)}"
+        logger.error(msg)
+        raise
 
 
 def update_or_create_elements(
@@ -1086,15 +1246,29 @@ def update_or_create_elements(
 def update_existing_elements(
     session: SQLAlchemySession, model_class: Any, existing_elements: dict[str, Any]
 ) -> None:
-    existing_elements.update(
-        {el.stakeholder_key + el.external_id: el for el in session.query(model_class).all()}
-    )
+    """
+    Updates the existing_elements dictionary with records from the database for the specified model class.
+    """
+    try:
+        # Query the database for all records of the specified model class
+        new_elements = {
+            el.stakeholder_key + el.external_id: el for el in session.query(model_class).all()
+        }
+        # Update the existing_elements dictionary with the new elements from the database
+        existing_elements.update(new_elements)
+    except Exception as e:
+        # Log the error and re-raise the exception if something goes wrong
+        msg = f"Error updating existing elements for model class {model_class.__name__}: {str(e)}"
+        logger.error(msg)
+        raise
 
 
 def sort_and_flatten_thing_nodes(
     thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
 ) -> list[ThingNode]:
     sorted_nodes_by_level = sort_thing_nodes_from_db(thing_nodes, existing_thing_nodes)
+    # Flattening the list of nodes is necessary to convert the hierarchical structure
+    # into a single, ordered list.
     return [node for nodes in sorted_nodes_by_level.values() for node in nodes]
 
 
@@ -1121,11 +1295,14 @@ def update_or_create_thing_nodes(
 
 
 def update_or_create_sources_or_sinks(
-    sources_or_sinks: list[Any],  # TODO Should Any be used here?
-    existing_items: dict[str, Any],
+    sources_or_sinks: list[Source | Sink],
+    existing_items: dict[str, SourceOrm | SinkOrm],
     session: SQLAlchemySession,
-    model_class: Any,
+    model_class: Type[SourceOrm | SinkOrm],
 ) -> None:
+    """
+    Updates existing source or sink items, or creates new ones if they do not exist.
+    """
     for item in sources_or_sinks:
         key = item.stakeholder_key + item.external_id
         db_item = existing_items.get(key)
@@ -1148,7 +1325,7 @@ def update_or_create_sources_or_sinks(
             session.add(new_item)
 
 
-def purge_structure(session: SQLAlchemySession) -> None:
+def delete_structure(session: SQLAlchemySession) -> None:
     try:
         # Deactivate foreign key checks
         session.connection().execute(text("PRAGMA foreign_keys = OFF"))
