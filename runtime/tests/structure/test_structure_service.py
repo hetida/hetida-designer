@@ -16,11 +16,9 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_sources,
     fetch_all_thing_nodes,
     insert_structure_from_file,
-    delete_structure,
-    update_structure,
 )
 from hetdesrun.structure.models import CompleteStructure
-from hetdesrun.structure.structure_service import delete_structure, get_children, is_database_empty
+from hetdesrun.structure.structure_service import delete_structure, get_children, is_database_empty, update_structure
 
 
 @pytest.fixture()
