@@ -12,18 +12,25 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
+from hetdesrun.structure.db.orm_service import delete_structure as orm_delete_structure
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
 )
-from hetdesrun.structure.models import Sink, Source, ThingNode
+from hetdesrun.structure.db.orm_service import update_structure as orm_update_structure
+from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
 
 
 def get_children(
     parent_id: UUID | None,
 ) -> tuple[list[ThingNode], list[Source], list[Sink]]:
+    """Retrieves the child nodes, sources, and sinks associated with a given parent node from the database.
+
+    If `parent_id` is None, it returns the root nodes (nodes without a parent). Otherwise, it fetches the direct
+    child nodes, sources, and sinks associated with the specified parent node.
+    """
     with get_session()() as session:
         if parent_id is None:
             root_nodes = (
@@ -110,95 +117,6 @@ def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
     return {sink_id: get_single_sink_from_db(sink_id) for sink_id in sink_ids}
 
 
-def delete_structure() -> None:
-    with get_session()() as session:
-        try:
-            root_node = (
-                session.query(ThingNodeOrm)
-                .filter(ThingNodeOrm.parent_node_id.is_(None))
-                .one_or_none()
-            )
-            if root_node:
-                _delete_structure_recursive(session, root_node.id)
-
-            session.execute(delete(thingnode_source_association))
-            session.execute(delete(thingnode_sink_association))
-
-            element_types = session.query(ElementTypeOrm).all()
-            for element_type in element_types:
-                session.delete(element_type)
-
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            raise e
-
-
-def _delete_structure_recursive(session: SQLAlchemySession, node_id: UUID) -> None:
-    child_nodes = session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == node_id).all()
-
-    for child_node in child_nodes:
-        _delete_structure_recursive(session, child_node.id)
-
-    sources_to_delete = (
-        session.query(SourceOrm)
-        .join(
-            thingnode_source_association, SourceOrm.id == thingnode_source_association.c.source_id
-        )
-        .filter(thingnode_source_association.c.thing_node_id == node_id)
-        .all()
-    )
-    sinks_to_delete = (
-        session.query(SinkOrm)
-        .join(thingnode_sink_association, SinkOrm.id == thingnode_sink_association.c.sink_id)
-        .filter(thingnode_sink_association.c.thing_node_id == node_id)
-        .all()
-    )
-
-    for source in sources_to_delete:
-        session.execute(
-            delete(thingnode_source_association).where(
-                thingnode_source_association.c.source_id == source.id
-            )
-        )
-        session.delete(source)
-    for sink in sinks_to_delete:
-        session.execute(
-            delete(thingnode_sink_association).where(
-                thingnode_sink_association.c.sink_id == sink.id
-            )
-        )
-        session.delete(sink)
-
-    node_to_delete = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == node_id).one_or_none()
-    if node_to_delete:
-        session.delete(node_to_delete)
-
-    orphaned_sources = (
-        session.query(SourceOrm)
-        .outerjoin(
-            thingnode_source_association,
-            SourceOrm.id == thingnode_source_association.c.source_id,
-        )
-        .filter(thingnode_source_association.c.thing_node_id.is_(None))
-        .all()
-    )
-    orphaned_sinks = (
-        session.query(SinkOrm)
-        .outerjoin(
-            thingnode_sink_association,
-            SinkOrm.id == thingnode_sink_association.c.sink_id,
-        )
-        .filter(thingnode_sink_association.c.thing_node_id.is_(None))
-        .all()
-    )
-
-    for source in orphaned_sources:
-        session.delete(source)
-    for sink in orphaned_sinks:
-        session.delete(sink)
-
-
 def is_database_empty() -> bool:
     with get_session()() as session:
         element_types = fetch_all_element_types(session)
@@ -208,3 +126,20 @@ def is_database_empty() -> bool:
         # TODO: Shorten function by only checking for ElementTypes?
 
     return not (element_types or thing_nodes or sources or sinks)
+
+
+def delete_structure() -> None:
+    """Wrapper function to delete the entire structure in the database."""
+    with get_session()() as session:
+        orm_delete_structure(session)
+
+
+def update_structure(
+    complete_structure: CompleteStructure,
+) -> CompleteStructure:
+    """
+    Wrapper function to update or insert the given complete structure into the database.
+    """
+    updated_structure = orm_update_structure(complete_structure)
+
+    return updated_structure
