@@ -3,25 +3,25 @@ from typing import Any
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.adapters.virtual_structure_adapter.utils import (
-    get_actual_sources_and_sinks_for_virtual_sources_and_sinks,
+    create_new_wirings_based_on_referenced_sources_and_sinks,
     get_enumerated_ids_of_vst_sources_or_sinks,
 )
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
 
-def replace_wirings(
+def replace_vst_wirings(
     input_ids: list[tuple[int, str]],
     output_ids: list[tuple[int, str]],
     actual_input_wirings: dict[str, InputWiring],
     actual_output_wirings: dict[str, OutputWiring],
     workflow_wiring: WorkflowWiring,
 ) -> None:
-    """Replaces all vst adapter sources and sinks of a WorkflowWiring
+    """Replaces all virtual structure adapter sources and sinks of a WorkflowWiring
     with their referenced sources and sinks in place.
 
     Args:
-        input_ids: Indices of sources to be replaced in workflow_wiring.input_wirings
+        input_ids: Indices and IDs of sources to be replaced in workflow_wiring.input_wirings
         output_ids: Same for sinks
         actual_input_wirings: Source IDs matched to their InputWiring objects
         actual_output_wirings: Same for sinks
@@ -67,13 +67,13 @@ def resolve_virtual_structure_wirings(
 
     if input_ref_ids or output_ref_ids:
         actual_input_wirings, actual_output_wirings = (
-            get_actual_sources_and_sinks_for_virtual_sources_and_sinks(
+            create_new_wirings_based_on_referenced_sources_and_sinks(
                 [id_tuple[1] for id_tuple in input_ref_ids],
                 [id_tuple[1] for id_tuple in output_ref_ids],
             )
         )
 
-        replace_wirings(
+        replace_vst_wirings(
             input_ref_ids,
             output_ref_ids,
             actual_input_wirings,
