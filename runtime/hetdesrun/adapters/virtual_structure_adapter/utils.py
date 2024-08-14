@@ -2,13 +2,13 @@ import logging
 from uuid import UUID
 
 from hetdesrun.models.wiring import InputWiring, OutputWiring
-from hetdesrun.structure.db.orm_service import insert_structure, update_structure
 from hetdesrun.structure.models import Sink, Source
 from hetdesrun.structure.structure_service import (
     delete_structure,
     get_collection_of_sinks_from_db,
     get_collection_of_sources_from_db,
     is_database_empty,
+    update_structure,
 )
 from hetdesrun.webservice.config import get_config
 
@@ -81,7 +81,7 @@ def prepopulate_structure() -> None:
                     "An existing structure was found in the database and deleted,"
                     "during the prepopulation process of the virtual structure adapter"
                 )
-            insert_structure(complete_structure)
+            update_structure(complete_structure)
         else:
             update_structure(complete_structure)
             logger.info(
