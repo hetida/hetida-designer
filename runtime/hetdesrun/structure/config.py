@@ -18,6 +18,9 @@ class LogLevel(str, Enum):
 
 
 class ThingNodeDynPropConfig(BaseSettings):
+    """Configuration class for ThingNode dynamic properties, extending Pydantic's BaseSettings"""
+
+    # Define the log level for the application, defaulting to INFO
     log_level: LogLevel = Field(
         LogLevel.INFO,
         description="Python logging level as string, i.e. one of "
@@ -25,12 +28,15 @@ class ThingNodeDynPropConfig(BaseSettings):
     )
 
 
+# Determine the environment file to use for loading the configuration, if any
 environment_file = os.environ.get("TNDP_ENVIRONMENT_FILE", None)
 
+# Instantiate the configuration with the environment file, if specified
 tndp_config = ThingNodeDynPropConfig(
     _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
 )
 
 
 def get_config() -> ThingNodeDynPropConfig:
+    """Returns the global configuration instance"""
     return tndp_config

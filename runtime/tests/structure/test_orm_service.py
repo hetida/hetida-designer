@@ -7,6 +7,7 @@ import pytest
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
@@ -25,6 +26,7 @@ from hetdesrun.structure.db.orm_service import (
     delete_et_cascade,
     delete_sink,
     delete_source,
+    delete_structure,
     delete_tn,
     fetch_all_element_types,
     fetch_all_sinks,
@@ -39,8 +41,8 @@ from hetdesrun.structure.db.orm_service import (
     fetch_tn_by_external_id,
     fetch_tn_by_id,
     fetch_tn_child_ids_by_parent_id,
-    fill_all_element_type_ids,
-    fill_all_parent_uuids,
+    fill_all_thingnode_element_type_ids,
+    fill_all_thingnode_parent_uuids,
     fill_element_type_ids_of_thing_nodes,
     fill_parent_uuids_of_thing_nodes,
     fill_source_sink_associations,
@@ -52,7 +54,6 @@ from hetdesrun.structure.db.orm_service import (
     insert_structure,
     insert_structure_from_file,
     load_structure_from_json_file,
-    purge_structure,
     read_single_element_type,
     read_single_element_type_by_external_id,
     read_single_sink,
@@ -1710,7 +1711,7 @@ def test_fill_all_parent_uuids_invalid_parent(mocked_clean_test_db_session):
         thing_nodes[0].parent_external_node_id = "invalid_parent_id"
 
         with pytest.raises(KeyError, match="invalid_parent_id"):
-            fill_all_parent_uuids(complete_structure)
+            fill_all_thingnode_parent_uuids(complete_structure)
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -1726,7 +1727,7 @@ def test_fill_all_element_type_ids(mocked_clean_test_db_session):
         for node in complete_structure.thing_nodes:
             assert node.element_type_id is not None, "ThingNode should have a dummy element_type_id"
 
-        fill_all_element_type_ids(complete_structure)
+        fill_all_thingnode_element_type_ids(complete_structure)
 
         element_type_mapping = {
             et.stakeholder_key + et.external_id: et.id for et in complete_structure.element_types
@@ -1840,7 +1841,7 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
 
 
 @pytest.mark.usefixtures("_db_test_structure")
-def test_purge_structure(mocked_clean_test_db_session):
+def test_delete_structure(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Verify that the database is initially populated
         assert session.query(ElementTypeOrm).count() > 0
@@ -1850,7 +1851,7 @@ def test_purge_structure(mocked_clean_test_db_session):
         assert session.query(thingnode_source_association).count() > 0
         assert session.query(thingnode_sink_association).count() > 0
 
-        purge_structure(session)
+        delete_structure(session)
 
         # Verify that all tables are empty after purging
         assert session.query(ElementTypeOrm).count() == 0
@@ -2212,7 +2213,7 @@ def test_flush_items(mocked_clean_test_db_session):
 
         print(complete_structure)
 
-        purge_structure(session)
+        delete_structure(session)
 
         # # Flush items into the database
         flush_items(session, complete_structure.element_types)
@@ -2230,3 +2231,75 @@ def test_flush_items(mocked_clean_test_db_session):
         assert len(flushed_thing_nodes) == len(complete_structure.thing_nodes)
         assert len(flushed_sources) == len(complete_structure.sources)
         assert len(flushed_sinks) == len(complete_structure.sinks)
+
+
+@pytest.mark.usefixtures("_db_empty_database")
+def test_performance_insert_vs_update(mocked_clean_test_db_session):
+    num_records = 100000
+
+    element_type = ElementType(
+        id=uuid.uuid4(),
+        external_id="type1-ext-id",
+        stakeholder_key="stakeholder1",
+        name="Type1",
+        description="Description of Type1",
+    )
+
+    thing_nodes = [
+        ThingNode(
+            id=uuid.uuid4(),
+            external_id=f"node-ext-id-{i}",
+            name=f"Node{i+1}",
+            stakeholder_key="stakeholder1",
+            element_type_id=element_type.id,
+            element_type_external_id=element_type.external_id,
+        )
+        for i in range(num_records)
+    ]
+
+    sources = [
+        Source(
+            id=uuid.uuid4(),
+            external_id=f"source-ext-id-{i}",
+            name=f"Source{i+1}",
+            stakeholder_key="stakeholder1",
+            type=ExternalType.MULTITSFRAME,
+            adapter_key="example-adapter-key",
+            source_id=f"source-id-{i}",
+        )
+        for i in range(num_records // 2)
+    ]
+
+    sinks = [
+        Sink(
+            id=uuid.uuid4(),
+            external_id=f"sink-ext-id-{i}",
+            name=f"Sink{i+1}",
+            stakeholder_key="stakeholder1",
+            type=ExternalType.MULTITSFRAME,
+            adapter_key="example-adapter-key",
+            sink_id=f"sink-id-{i}",
+        )
+        for i in range(num_records // 2)
+    ]
+
+    test_structure = CompleteStructure(
+        element_types=[element_type], thing_nodes=thing_nodes, sources=sources, sinks=sinks
+    )
+
+    start_time = time.time()
+    insert_structure(test_structure)
+    duration_insert = time.time() - start_time
+    print(
+        f"Inserting {num_records} records with insert_structure took {duration_insert:.2f} seconds"
+    )
+
+    with mocked_clean_test_db_session() as session:
+        delete_structure(session)
+
+    start_time = time.time()
+    update_structure(test_structure)
+    duration_update = time.time() - start_time
+    print(
+        f"Inserting {num_records} records with update_structure took {duration_update:.2f} seconds"
+    )
