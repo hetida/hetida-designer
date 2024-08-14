@@ -17,10 +17,11 @@ def test_with_prepopulation_disabled(mocked_clean_test_db_session):
     # Verify that no changes have been made to the database
     assert is_database_empty()
 
-@pytest.mark.skip("Check if delete structure works as expected")
+
+@pytest.mark.skip("Skip until correct mocking is figured out")
 @pytest.mark.usefixtures("_fill_db")
 def test_if_existing_structure_is_overwritten_if_specified():
-    with mock.patch.multiple(
+    with mock.patch.multiple(  # noqa: SIM117
         "hetdesrun.webservice.config.runtime_config",
         prepopulate_virtual_structure_adapter_at_designer_startup=True,
         completely_overwrite_an_existing_virtual_structure_at_hd_startup=True,
@@ -28,6 +29,8 @@ def test_if_existing_structure_is_overwritten_if_specified():
             "tests/virtual_structure_adapter/data/simple_end_to_end_test.json"
         ),
     ):
-        with mock.patch("hetdesrun.adapters.virtual_structure_adapter.utils.delete_structure") as mocked_delete:
+        with mock.patch(
+            "hetdesrun.adapters.virtual_structure_adapter.utils.delete_structure"
+        ) as mocked_delete:
             prepopulate_structure()
             mocked_delete.assert_called_once()

@@ -18,7 +18,12 @@ from hetdesrun.structure.db.orm_service import (
     insert_structure_from_file,
 )
 from hetdesrun.structure.models import CompleteStructure
-from hetdesrun.structure.structure_service import delete_structure, get_children, is_database_empty, update_structure
+from hetdesrun.structure.structure_service import (
+    delete_structure,
+    get_children,
+    is_database_empty,
+    update_structure,
+)
 
 
 @pytest.fixture()
@@ -250,17 +255,36 @@ def test_update_structure(mocked_clean_test_db_session):
         sinks = fetch_all_sinks(session)
         element_types = fetch_all_element_types(session)
 
-        assert len(thing_nodes) == len(complete_structure.thing_nodes), "Mismatch in number of thing nodes"
+        assert len(thing_nodes) == len(
+            complete_structure.thing_nodes
+        ), "Mismatch in number of thing nodes"
         assert len(sources) == len(complete_structure.sources), "Mismatch in number of sources"
         assert len(sinks) == len(complete_structure.sinks), "Mismatch in number of sinks"
-        assert len(element_types) == len(complete_structure.element_types), "Mismatch in number of element types"
+        assert len(element_types) == len(
+            complete_structure.element_types
+        ), "Mismatch in number of element types"
 
         # Validate that specific nodes and associations exist
         wasserwerk_node = next((tn for tn in thing_nodes if tn.name == "Wasserwerk 1"), None)
         assert wasserwerk_node is not None, "Expected 'Wasserwerk 1' node not found"
 
-        source = next((s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"), None)
-        assert source is not None, "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
+        source = next(
+            (s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"),
+            None,
+        )
+        assert (
+            source is not None
+        ), "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
 
-        sink = next((s for s in sinks if s.name == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"), None)
-        assert sink is not None, "Expected sink 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' not found"
+        sink = next(
+            (
+                s
+                for s in sinks
+                if s.name
+                == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
+            ),
+            None,
+        )
+        assert (
+            sink is not None
+        ), "Expected sink 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' not found"
