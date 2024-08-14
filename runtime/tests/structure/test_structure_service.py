@@ -15,7 +15,7 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
-    insert_structure_from_file,
+    update_structure_from_file,
 )
 from hetdesrun.structure.models import CompleteStructure
 from hetdesrun.structure.structure_service import (
@@ -29,19 +29,19 @@ from hetdesrun.structure.structure_service import (
 @pytest.fixture()
 def _db_test_get_children(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_test_structure.json"
-    insert_structure_from_file(file_path)
+    update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_empty_database(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_empty_structure.json"
-    insert_structure_from_file(file_path)
+    update_structure_from_file(file_path)
 
 
 @pytest.fixture()
 def _db_test_structure(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_test_structure.json"
-    insert_structure_from_file(file_path)
+    update_structure_from_file(file_path)
 
 
 @event.listens_for(Engine, "connect")

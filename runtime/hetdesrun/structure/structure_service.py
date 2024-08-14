@@ -19,6 +19,7 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_sources,
     fetch_all_thing_nodes,
 )
+from hetdesrun.structure.db.orm_service import is_database_empty as orm_is_database_empty
 from hetdesrun.structure.db.orm_service import update_structure as orm_update_structure
 from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
 
@@ -118,14 +119,8 @@ def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
 
 
 def is_database_empty() -> bool:
-    with get_session()() as session:
-        element_types = fetch_all_element_types(session)
-        thing_nodes = fetch_all_thing_nodes(session)
-        sources = fetch_all_sources(session)
-        sinks = fetch_all_sinks(session)
-        # TODO: Shorten function by only checking for ElementTypes?
-
-    return not (element_types or thing_nodes or sources or sinks)
+    """Wrapper function to check if the database is empty."""
+    return orm_is_database_empty()
 
 
 def delete_structure() -> None:
@@ -137,9 +132,7 @@ def delete_structure() -> None:
 def update_structure(
     complete_structure: CompleteStructure,
 ) -> CompleteStructure:
-    """
-    Wrapper function to update or insert the given complete structure into the database.
-    """
+    """Wrapper function to update or insert the given complete structure into the database."""
     updated_structure = orm_update_structure(complete_structure)
 
     return updated_structure
