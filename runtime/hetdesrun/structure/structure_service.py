@@ -1,10 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import delete
-
-from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
+from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
-    ElementTypeOrm,
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
@@ -13,12 +10,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import delete_structure as orm_delete_structure
-from hetdesrun.structure.db.orm_service import (
-    fetch_all_element_types,
-    fetch_all_sinks,
-    fetch_all_sources,
-    fetch_all_thing_nodes,
-)
 from hetdesrun.structure.db.orm_service import is_database_empty as orm_is_database_empty
 from hetdesrun.structure.db.orm_service import update_structure as orm_update_structure
 from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
@@ -27,10 +18,13 @@ from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNod
 def get_children(
     parent_id: UUID | None,
 ) -> tuple[list[ThingNode], list[Source], list[Sink]]:
-    """Retrieves the child nodes, sources, and sinks associated with a given parent node from the database.
+    """
+    Retrieves the child nodes, sources, and sinks associated  with a given parent
+    node from the database.
 
-    If `parent_id` is None, it returns the root nodes (nodes without a parent). Otherwise, it fetches the direct
-    child nodes, sources, and sinks associated with the specified parent node.
+    If `parent_id` is None, it returns the root nodes (nodes without a parent).
+    Otherwise, it fetches the direct child nodes, sources, and sinks associated
+    with the specified parent node.
     """
     with get_session()() as session:
         if parent_id is None:

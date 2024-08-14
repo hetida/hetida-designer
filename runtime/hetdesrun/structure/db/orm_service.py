@@ -1,10 +1,11 @@
 import json
 import logging
 from collections import defaultdict, deque
-from typing import Any, Type
+from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Table, delete, text
+from sqlalchemy import Table, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy_utils import UUIDType
@@ -35,25 +36,29 @@ logger = logging.getLogger(__name__)
 
 def fetch_all_element_types(session: SQLAlchemySession) -> list[ElementTypeOrm]:
     element_types = session.query(ElementTypeOrm).all()
-    logger.debug(f"Fetched {len(element_types)} element types from the database.")
+    msg = f"Fetched {len(element_types)} element types from the database."
+    logger.debug(msg)
     return element_types
 
 
 def fetch_all_thing_nodes(session: SQLAlchemySession) -> list[ThingNodeOrm]:
     thing_nodes = session.query(ThingNodeOrm).all()
-    logger.debug(f"Fetched {len(thing_nodes)} thing nodes from the database")
+    msg = f"Fetched {len(thing_nodes)} thing nodes from the database"
+    logger.debug(msg)
     return thing_nodes
 
 
 def fetch_all_sources(session: SQLAlchemySession) -> list[SourceOrm]:
     sources = session.query(SourceOrm).all()
-    logger.debug(f"Fetched {len(sources)} sources from the database.")
+    msg = f"Fetched {len(sources)} sources from the database."
+    logger.debug(msg)
     return sources
 
 
 def fetch_all_sinks(session: SQLAlchemySession) -> list[SinkOrm]:
     sinks = session.query(SinkOrm).all()
-    logger.debug(f"Fetched {len(sinks)} sinks from the database.")
+    msg = f"Fetched {len(sinks)} sinks from the database."
+    logger.debug(msg)
     return sinks
 
 
@@ -61,7 +66,8 @@ def fetch_et_by_id(
     session: SQLAlchemySession,
     id: UUID,  # noqa: A002
 ) -> ElementTypeOrm:
-    logger.debug(f"Fetching element type by ID {id}.")
+    msg = f"Fetching element type by ID {id}."
+    logger.debug(msg)
     result: ElementTypeOrm | None = (
         session.query(ElementTypeOrm).filter(ElementTypeOrm.id == id).one_or_none()
     )
@@ -76,9 +82,10 @@ def fetch_et_by_id(
 def fetch_et_by_external_id(
     session: SQLAlchemySession, external_id: str, stakeholder_key: str
 ) -> ElementTypeOrm:
-    logger.debug(
+    msg = (
         f"Fetching element type by external ID {external_id} and stakeholder key {stakeholder_key}."
     )
+    logger.debug(msg)
     result: ElementTypeOrm | None = (
         session.query(ElementTypeOrm)
         .filter(
@@ -103,7 +110,8 @@ def fetch_tn_by_id(
     session: SQLAlchemySession,
     id: UUID,  # noqa: A002
 ) -> ThingNodeOrm:
-    logger.debug(f"Fetching thing nodes by ID {id}.")
+    msg = f"Fetching thing nodes by ID {id}."
+    logger.debug(msg)
     result: ThingNodeOrm | None = (
         session.query(ThingNodeOrm).filter(ThingNodeOrm.id == id).one_or_none()
     )
@@ -119,9 +127,10 @@ def fetch_tn_by_id(
 def fetch_tn_by_external_id(
     session: SQLAlchemySession, external_id: str, stakeholder_key: str
 ) -> ThingNodeOrm:
-    logger.debug(
+    msg = (
         f"Fetching thing nodes by external ID {external_id} and stakeholder key {stakeholder_key}."
     )
+    logger.debug(msg)
     result: ThingNodeOrm | None = (
         session.query(ThingNodeOrm)
         .filter(
@@ -144,14 +153,16 @@ def fetch_tn_by_external_id(
 def fetch_tn_child_ids_by_parent_id(
     session: SQLAlchemySession, parent_id: UUID | None
 ) -> list[UUID]:
-    logger.debug(f"Fetching child IDs for parent node ID {parent_id}.")
+    msg = f"Fetching child IDs for parent node ID {parent_id}."
+    logger.debug(msg)
     results = session.query(ThingNodeOrm.id).filter(ThingNodeOrm.parent_node_id == parent_id).all()
 
     if not results:
         msg = f"No children found for thingnode with parent_id {parent_id}"
         logger.error(msg)
         raise DBNotFoundError(msg)
-    # Extracts the UUIDs from the list of tuples returned by the query and returns them as a flat list.
+    # Extracts the UUIDs from the list of tuples
+    # returned by the query and returns them as a flat list.
     return [result[0] for result in results]
 
 
@@ -159,7 +170,8 @@ def fetch_source_by_id(
     session: SQLAlchemySession,
     id: UUID,  # noqa: A002
 ) -> SourceOrm:
-    logger.debug(f"Fetching source by ID {id}")
+    msg = f"Fetching source by ID {id}"
+    logger.debug(msg)
     result: SourceOrm | None = session.query(SourceOrm).filter(SourceOrm.id == id).one_or_none()
 
     if result is None:
@@ -178,9 +190,8 @@ def fetch_source_by_external_id(
         .filter(SourceOrm.external_id == external_id, SourceOrm.stakeholder_key == stakeholder_key)
         .one_or_none()
     )
-    logger.debug(
-        f"Fetching source by external ID {external_id} and stakeholder key {stakeholder_key}."
-    )
+    msg = f"Fetching source by external ID {external_id} and stakeholder key {stakeholder_key}."
+    logger.debug(msg)
     if result is None:
         msg = (
             f"Found no source in database with external_id {external_id} "
@@ -196,7 +207,8 @@ def fetch_sink_by_id(
     session: SQLAlchemySession,
     id: UUID,  # noqa: A002
 ) -> SinkOrm:
-    logger.debug(f"Fetching sink by ID: {id}")
+    msg = f"Fetching sink by ID: {id}"
+    logger.debug(msg)
     result: SinkOrm | None = session.query(SinkOrm).filter(SinkOrm.id == id).one_or_none()
 
     if result is None:
@@ -210,9 +222,8 @@ def fetch_sink_by_id(
 def fetch_sink_by_external_id(
     session: SQLAlchemySession, external_id: str, stakeholder_key: str
 ) -> SinkOrm:
-    logger.debug(
-        f"Fetching sink by external ID {external_id} and stakeholder key {stakeholder_key}."
-    )
+    msg = f"Fetching sink by external ID {external_id} and stakeholder key {stakeholder_key}."
+    logger.debug(msg)
     result: SinkOrm | None = (
         session.query(SinkOrm)
         .filter(SinkOrm.external_id == external_id, SinkOrm.stakeholder_key == stakeholder_key)
@@ -236,11 +247,13 @@ def fetch_sink_by_external_id(
 def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None:
     # This function is intended to be used as a helper within session-managed operations
     # and should not be called directly without proper session handling.
-    logger.debug(f"Adding ElementType with ID {element_type_orm.id}.")
+    msg = f"Adding ElementType with ID {element_type_orm.id}."
+    logger.debug(msg)
     try:
         session.add(element_type_orm)
         session.flush()
-        logger.debug(f"ElementType with id {element_type_orm.id} added successfully.")
+        msg = f"ElementType with id {element_type_orm.id} added successfully."
+        logger.debug(msg)
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store ElementType "
@@ -253,7 +266,8 @@ def add_et(session: SQLAlchemySession, element_type_orm: ElementTypeOrm) -> None
 def store_single_element_type(
     element_type: ElementType,
 ) -> None:
-    logger.debug(f"Storing ElementType with id {element_type.id}.")
+    msg = f"Storing ElementType with id {element_type.id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_et = element_type.to_orm_model()
         add_et(session, orm_et)
@@ -262,26 +276,30 @@ def store_single_element_type(
 def read_single_element_type(
     id: UUID,  # noqa: A002
 ) -> ElementType:
-    logger.debug(f"Fetching ElementType by id: {id}")
+    msg = f"Fetching ElementType by id: {id}"
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_et = fetch_et_by_id(session, id)
         return ElementType.from_orm_model(orm_et)
 
 
 def read_single_element_type_by_external_id(external_id: str, stakeholder_key: str) -> ElementType:
-    logger.debug(
+    msg = (
         f"Fetching ElementType by external ID: {external_id} and stakeholder key: {stakeholder_key}"
     )
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_et = fetch_et_by_external_id(session, external_id, stakeholder_key)
         return ElementType.from_orm_model(orm_et)
 
 
 def delete_et(id: UUID) -> None:  # noqa: A002
-    logger.debug(f"Attempting to delete ElementType with id {id}.")
+    msg = f"Attempting to delete ElementType with id {id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         try:
-            logger.debug(f"Fetching ElementType with id {id} from the database.")
+            msg = f"Fetching ElementType with id {id} from the database."
+            logger.debug(msg)
             element_type = fetch_et_by_id(session, id)
             if element_type.thing_nodes:
                 session.rollback()
@@ -289,10 +307,12 @@ def delete_et(id: UUID) -> None:  # noqa: A002
                 logger.error(msg)
                 raise DBIntegrityError(msg)
 
-            logger.debug(f"Deleting ElementType with id {id}.")
+            msg = f"Deleting ElementType with id {id}."
+            logger.debug(msg)
             session.delete(element_type)
             session.commit()
-            logger.debug(f"Successfully deleted ElementType with id {id}.")
+            msg = f"Successfully deleted ElementType with id {id}."
+            logger.debug(msg)
 
         except NoResultFound as e:
             session.rollback()
@@ -312,20 +332,25 @@ def delete_et_cascade(id: UUID) -> None:  # noqa: A002
     # associated ThingNode records before deleting the ElementType,
     # performing a cascading delete operation.
     with get_session()() as session, session.begin():
-        logger.debug(f"Attempting to perform cascading delete for ElementType with id {id}.")
+        msg = f"Attempting to perform cascading delete for ElementType with id {id}."
+        logger.debug(msg)
 
         try:
-            logger.debug(f"Fetching ElementType with id {id} from the database.")
+            msg = f"Fetching ElementType with id {id} from the database."
+            logger.debug(msg)
             element_type = fetch_et_by_id(session, id)
 
-            logger.debug(f"Deleting associated ThingNodes for ElementType with id {id}.")
+            msg = f"Deleting associated ThingNodes for ElementType with id {id}."
+            logger.debug(msg)
             for thing_node in element_type.thing_nodes:
                 session.delete(thing_node)
 
-            logger.debug(f"Deleting ElementType with id {id}.")
+            msg = f"Deleting ElementType with id {id}."
+            logger.debug(msg)
             session.delete(element_type)
             session.commit()
-            logger.debug(f"Successfully performed cascading delete for ElementType with id {id}.")
+            msg = f"Successfully performed cascading delete for ElementType with id {id}."
+            logger.debug(msg)
 
         except NoResultFound as e:
             session.rollback()
@@ -348,20 +373,23 @@ def update_et(
     id: UUID,  # noqa: A002
     et_update: ElementType,
 ) -> None:
-    logger.debug(f"Attempting to update ElementType with id {id}.")
+    msg = f"Attempting to update ElementType with id {id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         try:
-            logger.debug(f"Fetching ElementType with id {id} from the database.")
+            msg = f"Fetching ElementType with id {id} from the database."
+            logger.debug(msg)
             element_type = fetch_et_by_id(session, id)
             if element_type:
-                logger.debug(f"Updating ElementType with id {id}.")
+                msg = f"Updating ElementType with id {id}."
+                logger.debug(msg)
                 for attr, value in et_update.dict(exclude_unset=True).items():
-                    logger.debug(
-                        f"Setting attribute {attr} to {value} for ElementType with id {id}."
-                    )
+                    msg = f"Setting attribute {attr} to {value} for ElementType with id {id}."
+                    logger.debug(msg)
                     setattr(element_type, attr, value)
 
-                logger.info(f"Successfully updated ElementType with id {id}.")
+                msg = f"Successfully updated ElementType with id {id}."
+                logger.debug(msg)
 
         except NoResultFound as e:
             session.rollback()
@@ -377,8 +405,12 @@ def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
     # This function is intended to be used as a helper within session-managed operations
     # and should not be called directly without proper session handling.
     try:
+        msg = f"Attempting to add ThingNode with id {thingnode_orm.id} to the session."
+        logger.debug(msg)
         session.add(thingnode_orm)
         session.flush()
+        msg = f"Successfully added ThingNode with id {thingnode_orm.id}."
+        logger.debug(msg)
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store thingnode "
@@ -391,41 +423,72 @@ def add_tn(session: SQLAlchemySession, thingnode_orm: ThingNodeOrm) -> None:
 def store_single_thingnode(
     thingnode: ThingNode,
 ) -> None:
+    msg = f"Storing single ThingNode with external_id {thingnode.external_id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_tn = thingnode.to_orm_model()
         add_tn(session, orm_tn)
+        msg = f"Successfully stored ThingNode with id {orm_tn.id}."
+        logger.debug(msg)
 
 
 def read_single_thingnode(
     id: UUID,  # noqa: A002
 ) -> ThingNode:
+    msg = f"Reading single ThingNode with id {id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_tn = fetch_tn_by_id(session, id)
+        msg = f"Successfully read ThingNode with id {id}."
+        logger.debug(msg)
         return ThingNode.from_orm_model(orm_tn)
 
 
 def read_single_thingnode_by_external_id(external_id: str, stakeholder_key: str) -> ThingNode:
+    msg = (
+        f"Reading single ThingNode with external_id {external_id}"
+        f" and stakeholder_key {stakeholder_key}."
+    )
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         orm_tn = fetch_tn_by_external_id(session, external_id, stakeholder_key)
+        msg = (
+            f"Successfully read ThingNode with external_id {external_id}"
+            f" and stakeholder_key {stakeholder_key}."
+        )
+        logger.debug(msg)
         return ThingNode.from_orm_model(orm_tn)
 
 
 def delete_tn(id: UUID) -> None:  # noqa: A002
+    msg = f"Attempting to delete ThingNode with id {id}."
+    logger.debug(msg)
     with get_session()() as session, session.begin():
         try:
             # Fetch the ThingNode to be deleted
             thingnode = fetch_tn_by_id(session, id)
+            msg = f"Fetched ThingNode with id {id} for deletion."
+            logger.debug(msg)
 
             # Remove associations with sources
             sources = (
                 session.query(SourceOrm).filter(SourceOrm.thing_nodes.any(id=thingnode.id)).all()
             )
             for source in sources:
+                msg = (
+                    f"Removing association with Source id {source.id}"
+                    f" from ThingNode id {thingnode.id}."
+                )
+                logger.debug(msg)
                 source.thing_nodes.remove(thingnode)
 
             # Remove associations with sinks
             sinks = session.query(SinkOrm).filter(SinkOrm.thing_nodes.any(id=thingnode.id)).all()
             for sink in sinks:
+                msg = (
+                    f"Removing association with Sink id {sink.id} from ThingNode id {thingnode.id}."
+                )
+                logger.debug(msg)
                 sink.thing_nodes.remove(thingnode)
 
             # Recursively delete child ThingNodes
@@ -435,11 +498,15 @@ def delete_tn(id: UUID) -> None:  # noqa: A002
                 .all()
             )
             for child in children:
+                msg = f"Recursively deleting child ThingNode with id {child.id}."
+                logger.debug(msg)
                 delete_tn(child.id)
 
             # Delete the ThingNode itself
             session.delete(thingnode)
             session.commit()
+            msg = f"Successfully deleted ThingNode with id {id}."
+            logger.debug(msg)
 
         except Exception as e:
             session.rollback()
@@ -503,7 +570,8 @@ def get_ancestors_tn_ids(
     current_id = id
     with get_session()() as session, session.begin():
         try:
-            # Traverse up the hierarchy, stopping if the root is reached or the specified depth is exceeded
+            # Traverse up the hierarchy, stopping if the root is
+            # reached or the specified depth is exceeded
             while current_id and (depth == -1 or current_depth < depth):
                 ancestors_ids.append(current_id)
                 thingnode = fetch_tn_by_id(session, current_id)  # Fetch the current node
@@ -541,7 +609,8 @@ def get_descendants_tn_ids(
                         msg = f"No children found for thingnode with parent_id {current_id}"
                         logger.error(msg)
                     continue
-                # Add each child node's ID to the list of descendants and queue them for further exploration
+                # Add each child node's ID to the list of descendants
+                # and queue them for further exploration
                 for child_id in child_ids:
                     descendant_ids.append(child_id)
                     nodes_to_visit.append((child_id, current_depth + 1))
@@ -710,15 +779,17 @@ def sort_thing_nodes_from_db(
     thing_nodes: list[ThingNode], existing_thing_nodes: dict[str, ThingNodeOrm]
 ) -> dict[int, list[ThingNode]]:
     """
-    This function sorts a list of ThingNodes into hierarchical levels using existing ThingNode data
-    fetched from the database. It ensures that the existing database IDs are retained for each node.
-    The function does not directly access the database but relies on the provided existing_thing_nodes.
-
+    This function sorts a list of ThingNodes into hierarchical levels using
+    existing ThingNode data fetched from the database. It ensures that the
+    existing database IDs are retained for each node. The function does not directly
+    access the database but relies on the provided existing_thing_nodes.
     """
-
-    logger.debug("Starting to sort ThingNodes into hierarchical levels.")
-    logger.debug(f"Number of ThingNodes to process: {len(thing_nodes)}")
-    logger.debug(f"Number of existing ThingNodes: {len(existing_thing_nodes)}")
+    msg = "Starting to sort ThingNodes into hierarchical levels."
+    logger.debug(msg)
+    msg = f"Number of ThingNodes to process: {len(thing_nodes)}"
+    logger.debug(msg)
+    msg = f"Number of existing ThingNodes: {len(existing_thing_nodes)}"
+    logger.debug(msg)
 
     # Map existing ThingNodes from the database to a dictionary using a unique key
     existing_node_map = {
@@ -726,7 +797,8 @@ def sort_thing_nodes_from_db(
         for node in existing_thing_nodes.values()
     }
 
-    logger.debug(f"Mapped existing ThingNodes to keys: {list(existing_node_map.keys())}")
+    msg = f"Mapped existing ThingNodes to keys: {list(existing_node_map.keys())}"
+    logger.debug(msg)
 
     # Assign existing IDs to new nodes if they match by stakeholder_key + external_id
     for node in thing_nodes:
@@ -734,7 +806,8 @@ def sort_thing_nodes_from_db(
         existing_node = existing_node_map.get(key)
         if existing_node:
             node.id = existing_node.id  # Retain the existing ID for the node
-            logger.debug(f"Node {node.name} matched with existing node, ID retained: {node.id}")
+            msg = f"Node {node.name} matched with existing node, ID retained: {node.id}"
+            logger.debug(msg)
 
     # Initialize a dictionary to hold the children of each node, and an empty list for root nodes
     children_by_node_id: dict[UUID, list[ThingNode]] = {node.id: [] for node in thing_nodes}
@@ -746,10 +819,12 @@ def sort_thing_nodes_from_db(
             if node.parent_node_id not in children_by_node_id:
                 children_by_node_id[node.parent_node_id] = []
             children_by_node_id[node.parent_node_id].append(node)
-            logger.debug(f"Node {node.name} added as child to parent ID: {node.parent_node_id}")
+            msg = f"Node {node.name} added as child to parent ID: {node.parent_node_id}"
+            logger.debug(msg)
         else:
             root_nodes.append(node)
-            logger.debug(f"Node {node.name} identified as root node.")
+            msg = f"Node {node.name} identified as root node."
+            logger.debug(msg)
 
     # Dictionary to hold nodes sorted by their hierarchical levels
     sorted_nodes_by_level = defaultdict(list)
@@ -761,7 +836,8 @@ def sort_thing_nodes_from_db(
         current_level_nodes, level = queue.popleft()
         next_level_nodes = []
 
-        logger.debug(f"Processing level {level} with {len(current_level_nodes)} nodes.")
+        msg = f"Processing level {level} with {len(current_level_nodes)} nodes."
+        logger.debug(msg)
 
         for node in current_level_nodes:
             # Add the current node to its respective level in the sorted dictionary
@@ -772,16 +848,20 @@ def sort_thing_nodes_from_db(
                 # Prepare the nodes for the next level of traversal
                 next_level_nodes.extend(children_by_node_id[node.id])
 
-                logger.debug(
-                    f"Node {node.name} at level {level} has {len(children_by_node_id[node.id])} children."
+                msg = (
+                    f"Node {node.name} at level {level}"
+                    f" has {len(children_by_node_id[node.id])} children."
                 )
+                logger.debug(msg)
 
         if next_level_nodes:
-            logger.debug(f"Queueing {len(next_level_nodes)} nodes for next level {level + 1}.")
+            msg = f"Queueing {len(next_level_nodes)} nodes for next level {level + 1}."
+            logger.debug(msg)
             # Queue the next level nodes for processing
             queue.append((next_level_nodes, level + 1))
 
-    logger.info("Completed sorting ThingNodes into hierarchical levels.")
+    msg = "Completed sorting ThingNodes into hierarchical levels."
+    logger.debug(msg)
     return sorted_nodes_by_level
 
 
@@ -949,14 +1029,10 @@ def update_structure(complete_structure: CompleteStructure) -> CompleteStructure
             update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
             session.flush()
 
-            update_or_create_sources_or_sinks(
-                complete_structure.sources, existing_sources, session, SourceOrm
-            )
+            update_or_create_sources_or_sinks(complete_structure.sources, existing_sources, session)
             session.flush()
 
-            update_or_create_sources_or_sinks(
-                complete_structure.sinks, existing_sinks, session, SinkOrm
-            )
+            update_or_create_sources_or_sinks(complete_structure.sinks, existing_sinks, session)
             session.flush()
 
             # Establish associations between thing nodes, sources, and sinks
@@ -1004,7 +1080,8 @@ def update_existing_elements(
     session: SQLAlchemySession, model_class: Any, existing_elements: dict[str, Any]
 ) -> None:
     """
-    Updates the existing_elements dictionary with records from the database for the specified model class.
+    Updates the existing_elements dictionary with records
+    from the database for the specified model class.
     """
     try:
         # Query the database for all records of the specified model class
@@ -1052,10 +1129,9 @@ def update_or_create_thing_nodes(
 
 
 def update_or_create_sources_or_sinks(
-    sources_or_sinks: list[Source | Sink],
+    sources_or_sinks: Sequence[Source | Sink],
     existing_items: dict[str, SourceOrm | SinkOrm],
     session: SQLAlchemySession,
-    model_class: Type[SourceOrm | SinkOrm],
 ) -> None:
     """
     Updates existing source or sink items, or creates new ones if they do not exist.
@@ -1069,9 +1145,9 @@ def update_or_create_sources_or_sinks(
             db_item.type = item.type
             db_item.visible = item.visible
             db_item.adapter_key = item.adapter_key
-            if model_class == SourceOrm:
+            if isinstance(db_item, SourceOrm) and isinstance(item, Source):
                 db_item.source_id = item.source_id
-            elif model_class == SinkOrm:
+            elif isinstance(db_item, SinkOrm) and isinstance(item, Sink):
                 db_item.sink_id = item.sink_id
             db_item.meta_data = item.meta_data
             db_item.preset_filters = item.preset_filters

@@ -246,7 +246,7 @@ def test_update_structure(mocked_clean_test_db_session):
     complete_structure = CompleteStructure(**data)
 
     # Perform the update
-    updated_structure = update_structure(complete_structure)
+    update_structure(complete_structure)
 
     with mocked_clean_test_db_session() as session:
         # Verify the structure was inserted/updated correctly
@@ -285,6 +285,7 @@ def test_update_structure(mocked_clean_test_db_session):
             ),
             None,
         )
-        assert (
-            sink is not None
-        ), "Expected sink 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' not found"
+        assert sink is not None, (
+            "Expected sink 'Anomaly Score für die Energieverbräuche"
+            " des Pumpensystems in Hochbehälter' not found"
+        )

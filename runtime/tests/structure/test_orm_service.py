@@ -7,7 +7,6 @@ import pytest
 from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
