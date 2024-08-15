@@ -365,10 +365,10 @@ def update_structure_from_file(file_path: str) -> CompleteStructure:
     complete_structure = load_structure_from_json_file(file_path)
     msg = "Successfully loaded structure from JSON file."
     logger.debug(msg)
-    return update_structure(complete_structure)
+    return orm_update_structure(complete_structure)
 
 
-def update_structure(complete_structure: CompleteStructure) -> CompleteStructure:
+def orm_update_structure(complete_structure: CompleteStructure) -> CompleteStructure:
     """
     This function updates or inserts the given complete structure into the database.
     """
@@ -593,7 +593,7 @@ def update_or_create_sources_or_sinks(
             session.add(new_item)
 
 
-def delete_structure(session: SQLAlchemySession) -> None:
+def orm_delete_structure(session: SQLAlchemySession) -> None:
     msg = "Deleting all structure data from the database."
     logger.debug(msg)
     try:
@@ -621,7 +621,7 @@ def delete_structure(session: SQLAlchemySession) -> None:
         raise
 
 
-def is_database_empty() -> bool:
+def orm_is_database_empty() -> bool:
     msg = "Checking if the database is empty."
     logger.debug(msg)
     with get_session()() as session:

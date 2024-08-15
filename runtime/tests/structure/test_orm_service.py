@@ -14,16 +14,16 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     ThingNodeOrm,
 )
 from hetdesrun.structure.db.orm_service import (
-    delete_structure,
     fetch_all_element_types,
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
-    is_database_empty,
     load_structure_from_json_file,
+    orm_delete_structure,
+    orm_is_database_empty,
+    orm_update_structure,
     thingnode_sink_association,
     thingnode_source_association,
-    update_structure,
     update_structure_from_file,
 )
 from hetdesrun.structure.models import (
@@ -228,13 +228,6 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
 ### Structure Helper Functions
 
 
-ElementType.update_forward_refs()
-ThingNode.update_forward_refs()
-Source.update_forward_refs()
-Sink.update_forward_refs()
-CompleteStructure.update_forward_refs()
-
-
 def test_load_structure_from_json_file(db_test_structure_file_path):
     complete_structure = load_structure_from_json_file(db_test_structure_file_path)
 
@@ -284,7 +277,7 @@ def test_delete_structure(mocked_clean_test_db_session):
         assert session.query(thingnode_source_association).count() > 0
         assert session.query(thingnode_sink_association).count() > 0
 
-        delete_structure(session)
+        orm_delete_structure(session)
 
         # Verify that all tables are empty after purging
         assert session.query(ElementTypeOrm).count() == 0
@@ -306,7 +299,7 @@ def test_update_structure_with_new_elements():
         updated_structure = load_structure_from_json_file(file_path)
 
     # Update the structure in the database
-    update_structure(updated_structure)
+    orm_update_structure(updated_structure)
 
     # Verify structure after update
     with get_session()() as session, session.begin():
@@ -502,9 +495,9 @@ def test_update_structure_from_file():
 
 @pytest.mark.usefixtures("_db_empty_database")
 def test_is_database_empty_when_empty(mocked_clean_test_db_session):
-    assert is_database_empty(), "Database should be empty but is not."
+    assert orm_is_database_empty(), "Database should be empty but is not."
 
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
-    assert not is_database_empty(), "Database should not be empty but it is."
+    assert not orm_is_database_empty(), "Database should not be empty but it is."

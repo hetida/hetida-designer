@@ -10,9 +10,11 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
-from hetdesrun.structure.db.orm_service import delete_structure as orm_delete_structure
-from hetdesrun.structure.db.orm_service import is_database_empty as orm_is_database_empty
-from hetdesrun.structure.db.orm_service import update_structure as orm_update_structure
+from hetdesrun.structure.db.orm_service import (
+    orm_delete_structure,
+    orm_is_database_empty,
+    orm_update_structure,
+)
 from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
 
 logger = logging.getLogger(__name__)
