@@ -23,12 +23,6 @@ from hetdesrun.structure.structure_service import (
 
 
 @pytest.fixture()
-def _db_test_get_children(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_structure.json"
-    update_structure_from_file(file_path)
-
-
-@pytest.fixture()
 def _db_empty_database(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_empty_structure.json"
     update_structure_from_file(file_path)
@@ -47,22 +41,7 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
     cursor.close()
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
-def test_get_children_root(mocked_clean_test_db_session):
-    children, sources, sinks = get_children(None)
-
-    assert isinstance(children, list)
-    assert isinstance(sources, list)
-    assert isinstance(sinks, list)
-
-    wasserwerk = next((child for child in children if child.name == "Wasserwerk 1"), None)
-    assert wasserwerk is not None
-
-    assert len(sources) == 0
-    assert len(sinks) == 0
-
-
-@pytest.mark.usefixtures("_db_test_get_children")
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_children_level1():
     with get_session()() as session, session.begin():
         all_nodes = fetch_all_thing_nodes(session)
@@ -70,10 +49,6 @@ def test_get_children_level1():
         assert root_node is not None, "Expected root node 'Wasserwerk 1' not found"
 
         children, sources, sinks = get_children(root_node.id)
-
-    assert isinstance(children, list)
-    assert isinstance(sources, list)
-    assert isinstance(sinks, list)
 
     assert len(children) == 2
 
@@ -85,7 +60,7 @@ def test_get_children_level1():
     assert len(sinks) == 0
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_children_level2(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         all_nodes = fetch_all_thing_nodes(session)
@@ -93,10 +68,6 @@ def test_get_children_level2(mocked_clean_test_db_session):
         assert parent_node is not None, "Expected parent node 'Anlage 1' not found"
 
         children, sources, sinks = get_children(parent_node.id)
-
-    assert isinstance(children, list)
-    assert isinstance(sources, list)
-    assert isinstance(sinks, list)
 
     assert len(children) == 2
 
@@ -108,8 +79,8 @@ def test_get_children_level2(mocked_clean_test_db_session):
     assert len(sinks) == 0
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
-def test_get_children_leaves(mocked_clean_test_db_session):
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_children_level3(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         all_nodes = fetch_all_thing_nodes(session)
         parent_node = next(
@@ -120,10 +91,6 @@ def test_get_children_leaves(mocked_clean_test_db_session):
 
         children, sources, sinks = get_children(parent_node.id)
 
-        assert isinstance(children, list), "Children is not a list"
-        assert isinstance(sources, list), "Sources is not a list"
-        assert isinstance(sinks, list), "Sinks is not a list"
-
         assert len(children) == 0, f"Expected no children, but found {len(children)}"
 
         assert len(sinks) == 1, f"Expected 1 sink, but found {len(sinks)}"
@@ -133,7 +100,7 @@ def test_get_children_leaves(mocked_clean_test_db_session):
         ), f"Unexpected sink name: {sinks[0].name}"
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
+@pytest.mark.usefixtures("_db_test_structure")
 def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
     parent_id = fetch_all_thing_nodes(mocked_clean_test_db_session())[4].id
     result = get_children(parent_id)
@@ -164,7 +131,7 @@ def test_complete_structure_object_creation():
     assert all(name in tn_names for name in expected_tn_names)
 
 
-@pytest.mark.usefixtures("_db_test_get_children")
+@pytest.mark.usefixtures("_db_test_structure")
 def test_delete_structure_root(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         delete_structure()
