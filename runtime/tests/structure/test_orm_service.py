@@ -1,5 +1,4 @@
 import json
-import time
 import uuid
 from sqlite3 import Connection as SQLite3Connection
 
@@ -14,7 +13,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SourceOrm,
     ThingNodeOrm,
 )
-from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.db.orm_service import (
     delete_structure,
     fetch_all_element_types,
@@ -31,7 +29,6 @@ from hetdesrun.structure.db.orm_service import (
 from hetdesrun.structure.models import (
     CompleteStructure,
     ElementType,
-    FilterType,
     Sink,
     Source,
     ThingNode,

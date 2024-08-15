@@ -6,10 +6,6 @@ from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_session
-from hetdesrun.persistence.structure_service_dbmodels import (
-    thingnode_sink_association,
-    thingnode_source_association,
-)
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,

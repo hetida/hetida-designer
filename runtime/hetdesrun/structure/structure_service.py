@@ -109,7 +109,7 @@ def get_collection_of_thingnodes_from_db(tn_ids: list[UUID]) -> dict[UUID, Thing
     msg = f"Fetching collection of ThingNodes with IDs: {tn_ids}."
     logger.debug(msg)
     thingnodes = {tn_id: get_single_thingnode_from_db(tn_id) for tn_id in tn_ids}
-    msg = f"Successfully fetched collection of ThingNodes."
+    msg = "Successfully fetched collection of ThingNodes."
     logger.debug(msg)
     return thingnodes
 
@@ -145,7 +145,7 @@ def get_collection_of_sources_from_db(src_ids: list[UUID]) -> dict[UUID, Source]
     logger.debug(msg)
     sources = {src_id: get_single_source_from_db(src_id) for src_id in src_ids}
 
-    msg = f"Successfully fetched collection of Sources."
+    msg = "Successfully fetched collection of Sources."
     logger.debug(msg)
     return sources
 
@@ -181,7 +181,7 @@ def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
     logger.debug(msg)
 
     sinks = {sink_id: get_single_sink_from_db(sink_id) for sink_id in sink_ids}
-    msg = f"Successfully fetched collection of Sinks."
+    msg = "Successfully fetched collection of Sinks."
     logger.debug(msg)
     return sinks
 

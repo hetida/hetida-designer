@@ -6,9 +6,6 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Table, delete
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy_utils import UUIDType
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
@@ -19,7 +16,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_sink_association,
     thingnode_source_association,
 )
-from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.models import (
     CompleteStructure,
     ElementType,
