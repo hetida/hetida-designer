@@ -67,8 +67,8 @@ def prepopulate_structure() -> None:
     logger.info("Starting the prepopulation process for the virtual structure adapter")
     if not get_config().prepopulate_virtual_structure_adapter_at_designer_startup:
         logger.info(
-            "Structure of the virtual structure adapter was not prepopulated,"
-            "because the environment variable"
+            "Structure of the virtual structure adapter was not prepopulated, "
+            "because the environment variable "
             "'PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP' is set to false"
         )
         return
@@ -78,7 +78,7 @@ def prepopulate_structure() -> None:
             if not is_db_empty:
                 delete_structure()
                 logger.info(
-                    "An existing structure was found in the database and deleted,"
+                    "An existing structure was found in the database and deleted, "
                     "during the prepopulation process of the virtual structure adapter"
                 )
             update_structure(complete_structure)
@@ -92,7 +92,7 @@ def prepopulate_structure() -> None:
             )
         return
     logger.info(
-        "Structure of the virtual structure adapter was not prepopulated,"
-        "because no structure was provided"
+        "Structure of the virtual structure adapter was not prepopulated, "
+        "because no structure was provided "
         "via the environment variable 'STRUCTURE_TO_PREPOPULATE_VST_ADAPTER'"
     )
