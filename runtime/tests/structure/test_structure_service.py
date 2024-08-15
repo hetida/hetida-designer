@@ -122,20 +122,7 @@ def test_get_children_leaves(mocked_clean_test_db_session):
 
         assert parent_node is not None, "Expected parent node 'Hochbehälter 1 Anlage 1' not found"
 
-        source_associations = session.query(thingnode_source_association).all()
-        print(" ############## Contents of thingnode_source_associations:")
-        for row in source_associations:
-            print(row)
-
-        sink_associations = session.query(thingnode_sink_association).all()
-        print(" ############## Contents of thingnode_sink_associations:")
-        for row in sink_associations:
-            print(row)
-
         children, sources, sinks = get_children(parent_node.id)
-
-        print(sources)
-        print(sinks)
 
         assert isinstance(children, list), "Children is not a list"
         assert isinstance(sources, list), "Sources is not a list"
