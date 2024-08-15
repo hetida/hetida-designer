@@ -29,7 +29,6 @@ from hetdesrun.structure.models import (
 )
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 # Fetch Functions
 
