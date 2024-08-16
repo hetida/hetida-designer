@@ -1,7 +1,7 @@
 # Virtual Structure Adapter
 The built-in virtual structure adapter enables the user to create flexible, abstract hierarchical structures for their data.  
 This allows the user to provide names, descriptions and metadata for each element of the hierarchy as seen fit.  
-The adapter does not handle the in- and egestion of data itself. The sources and sinks of each defined structure map onto other adapters that actually handle the data in- and egestion.  
+The adapter does not handle the in- and egestion of data itself. The sources and sinks of each defined structure map onto other adapters that actually handle the data in- and egestion. 
 The structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`.  
 Below is a template for the JSON file:
 ```
@@ -88,5 +88,10 @@ There are several environment variables which can be used to configure the use o
 * `VST_ADAPTER_ACTIVE` (default `True`): Whether the adapter is active (registered in the designer application)
 * `VST_ADAPTER_SERVICE_IN_RUNTIME` (default `True`): Whether the adapter is part of the backend or the runtime
 * `PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP` (default `False`): Set to `True` if you wish to provide a structure for the adapter at designer startup
-* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Whether an existing structure is completely deleted and inserted or just updated in the database
+* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Whether an existing structure is completely deleted and inserted or (partially) updated in the database. ⚠️ **Disclaimer:** Presently, partial updates of the structure are not yet supported <!-- Remove once partial updates are safely possible -->
 * `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a JSON defining a structure to this variable
+
+## Technical Information
+
+To process wirings with virtual structure adapter sources and sinks, an additional step in the execution pipeline of the hetida designer was introduced.  
+Before the data is actually loaded from or passed to an adapter, all virtual structure adapter related information is removed from the wiring and replaced with information on the referenced source or sink. 
