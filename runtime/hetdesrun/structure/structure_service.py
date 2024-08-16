@@ -27,35 +27,61 @@ def get_children(
     Retrieves the child nodes, sources, and sinks associated  with a given parent
     node from the database.
 
-    If `parent_id` is None, it returns the root nodes (nodes without a parent).
-    Otherwise, it fetches the direct child nodes, sources, and sinks associated
-    with the specified parent node.
+    If `parent_id` is None, it returns the root nodes (nodes without a parent),
+    along with any sources and sinks associated with the root nodes. Otherwise,
+    it fetches the direct child nodes, sources, and sinks associated with the
+    specified parent node.
     """
 
-    msg = f"Fetching children for parent_id: {parent_id}."
-    logger.debug(msg)
+    logger.debug("Fetching children for parent_id: %s", parent_id)
 
     with get_session()() as session:
         if parent_id is None:
-            msg = "No parent_id provided, fetching root nodes."
-            logger.debug(msg)
+            logger.debug("No parent_id provided, fetching root nodes.")
             root_nodes = (
                 session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id.is_(None)).all()
             )
-            msg = f"Fetched {len(root_nodes)} root nodes."
-            logger.debug(msg)
-            return ([ThingNode.from_orm_model(node) for node in root_nodes], [], [])
+            logger.debug("Fetched %d root nodes.", len(root_nodes))
 
-        msg = f"Fetching child nodes for parent_id: {parent_id}."
-        logger.debug(msg)
+            root_node_ids = [node.id for node in root_nodes]
+
+            logger.debug("Fetching sources associated with root nodes.")
+            sources = (
+                session.query(SourceOrm)
+                .join(
+                    thingnode_source_association,
+                    thingnode_source_association.c.source_id == SourceOrm.id,
+                )
+                .filter(thingnode_source_association.c.thing_node_id.in_(root_node_ids))
+                .all()
+            )
+            logger.debug("Fetched %d sources associated with root nodes.", len(sources))
+
+            logger.debug("Fetching sinks associated with root nodes.")
+            sinks = (
+                session.query(SinkOrm)
+                .join(
+                    thingnode_sink_association,
+                    thingnode_sink_association.c.sink_id == SinkOrm.id,
+                )
+                .filter(thingnode_sink_association.c.thing_node_id.in_(root_node_ids))
+                .all()
+            )
+            logger.debug("Fetched %d sinks associated with root nodes.", len(sinks))
+
+            return (
+                [ThingNode.from_orm_model(node) for node in root_nodes],
+                [Source.from_orm_model(source) for source in sources],
+                [Sink.from_orm_model(sink) for sink in sinks],
+            )
+
+        logger.debug("Fetching child nodes for parent_id: %s", parent_id)
         child_nodes = (
             session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == parent_id).all()
         )
-        msg = f"Fetched {len(child_nodes)} child nodes."
-        logger.debug(msg)
+        logger.debug("Fetched %d child nodes.", len(child_nodes))
 
-        msg = f"Fetching sources for parent_id: {parent_id}."
-        logger.debug(msg)
+        logger.debug("Fetching sources for parent_id: %s", parent_id)
         sources = (
             session.query(SourceOrm)
             .join(
@@ -65,25 +91,24 @@ def get_children(
             .filter(thingnode_source_association.c.thing_node_id == parent_id)
             .all()
         )
-        msg = f"Fetched {len(sources)} sources."
-        logger.debug(msg)
+        logger.debug("Fetched %d sources.", len(sources))
 
-        msg = f"Fetching sinks for parent_id: {parent_id}."
-        logger.debug(msg)
+        logger.debug("Fetching sinks for parent_id: %s", parent_id)
         sinks = (
             session.query(SinkOrm)
             .join(thingnode_sink_association, thingnode_sink_association.c.sink_id == SinkOrm.id)
             .filter(thingnode_sink_association.c.thing_node_id == parent_id)
             .all()
         )
-        msg = f"Fetched {len(sinks)} sinks."
-        logger.debug(msg)
+        logger.debug("Fetched %d sinks.", len(sinks))
 
-        msg = (
-            f"Returning {len(child_nodes)} child nodes, {len(sources)} sources, "
-            f"and {len(sinks)} sinks for parent_id: {parent_id}."
+        logger.debug(
+            "Returning %d child nodes, %d sources, and %d sinks for parent_id: %s",
+            len(child_nodes),
+            len(sources),
+            len(sinks),
+            parent_id,
         )
-        logger.debug(msg)
 
         return (
             [ThingNode.from_orm_model(node) for node in child_nodes],
