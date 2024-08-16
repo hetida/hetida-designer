@@ -22,6 +22,7 @@ from hetdesrun.structure.db.orm_service import (
     orm_delete_structure,
     orm_is_database_empty,
     orm_update_structure,
+    sort_thing_nodes_from_db,
     thingnode_sink_association,
     thingnode_source_association,
     update_structure_from_file,
@@ -497,3 +498,50 @@ def test_is_database_empty_when_empty(mocked_clean_test_db_session):
 @pytest.mark.usefixtures("_db_test_structure")
 def test_is_database_empty_when_not_empty(mocked_clean_test_db_session):
     assert not orm_is_database_empty(), "Database should not be empty but it is."
+
+
+@pytest.mark.usefixtures("_db_test_unordered_structure")
+def test_sort_thing_nodes_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch all thing nodes from the database
+        thing_nodes_in_db = fetch_all_thing_nodes(session)
+
+        # Create a mapping of thing nodes for the sort function
+        existing_thing_nodes = {tn.stakeholder_key + tn.external_id: tn for tn in thing_nodes_in_db}
+
+        # Run the sort function
+        sorted_nodes_by_level = sort_thing_nodes_from_db(thing_nodes_in_db, existing_thing_nodes)
+
+        # Check that the nodes are sorted into the correct levels
+        # Level 0 should contain the root node "Wasserwerk 1"
+        assert len(sorted_nodes_by_level[0]) == 1
+        assert sorted_nodes_by_level[0][0].name == "Wasserwerk 1"
+
+        # Level 1 should contain "Anlage 1" and "Anlage 2"
+        assert len(sorted_nodes_by_level[1]) == 2
+        level_1_names = {node.name for node in sorted_nodes_by_level[1]}
+        assert level_1_names == {"Anlage 1", "Anlage 2"}
+
+        # Level 2 should contain the Hochbehälter nodes
+        assert len(sorted_nodes_by_level[2]) == 4
+        level_2_names = {node.name for node in sorted_nodes_by_level[2]}
+        assert level_2_names == {
+            "Hochbehälter 1 Anlage 1",
+            "Hochbehälter 2 Anlage 1",
+            "Hochbehälter 1 Anlage 2",
+            "Hochbehälter 2 Anlage 2",
+        }
+
+        # Ensure the nodes are sorted within their levels by external_id
+        expected_level_1_order = ["Anlage 1", "Anlage 2"]
+        actual_level_1_order = [node.name for node in sorted_nodes_by_level[1]]
+        assert actual_level_1_order == expected_level_1_order
+
+        expected_level_2_order = [
+            "Hochbehälter 1 Anlage 1",
+            "Hochbehälter 2 Anlage 1",
+            "Hochbehälter 1 Anlage 2",
+            "Hochbehälter 2 Anlage 2",
+        ]
+        actual_level_2_order = [node.name for node in sorted_nodes_by_level[2]]
+        assert actual_level_2_order == expected_level_2_order
