@@ -6,6 +6,9 @@ from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_session
+from hetdesrun.persistence.structure_service_dbmodels import (
+    ThingNodeOrm,
+)
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
@@ -13,7 +16,12 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_thing_nodes,
     update_structure_from_file,
 )
-from hetdesrun.structure.models import CompleteStructure
+from hetdesrun.structure.models import (
+    CompleteStructure,
+    Sink,
+    Source,
+    ThingNode,
+)
 from hetdesrun.structure.structure_service import (
     delete_structure,
     get_children,
@@ -45,137 +53,91 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
 def test_get_children():
     with get_session()() as session, session.begin():
         # Test for root level
-        all_nodes = fetch_all_thing_nodes(session)
-        root_node = next((node for node in all_nodes if node.name == "Wasserwerk 1"), None)
-        assert root_node is not None, "Expected root node 'Wasserwerk 1' not found"
-
+        root_node = get_node_by_name(session, "Wasserwerk 1")
         children, sources, sinks = get_children(root_node.id)
-        assert len(children) == 2, f"Expected 2 children at root level, found {len(children)}"
-        expected_children_names = {"Anlage 1", "Anlage 2"}
-        children_names = {child.name for child in children}
-        assert (
-            children_names == expected_children_names
-        ), f"Unexpected child names: {children_names}"
-
-        assert len(sources) == 1, f"Expected 1 source at root level, found {len(sources)}"
-        assert (
-            sources[0].name == "Energieverbrauch des Wasserwerks"
-        ), f"Unexpected source name: {sources[0].name}"
-
-        assert len(sinks) == 1, f"Expected 1 sink at root level, found {len(sinks)}"
-        assert (
-            sinks[0].name == "Anomaly Score für den Energieverbrauch des Wasserwerks"
-        ), f"Unexpected sink name: {sinks[0].name}"
+        verify_children(children, {"Anlage 1", "Anlage 2"}, 2)
+        verify_sources(sources, ["Energieverbrauch des Wasserwerks"], 1)
+        verify_sinks(sinks, ["Anomaly Score für den Energieverbrauch des Wasserwerks"], 1)
 
         # Test for first child level under "Anlage 1"
-        parent_node = next((node for node in all_nodes if node.name == "Anlage 1"), None)
-        assert parent_node is not None, "Expected parent node 'Anlage 1' not found"
-
+        parent_node = get_node_by_name(session, "Anlage 1")
         children, sources, sinks = get_children(parent_node.id)
-        assert len(children) == 2, f"Expected 2 children under 'Anlage 1', found {len(children)}"
-        expected_children_names = {"Hochbehälter 1 Anlage 1", "Hochbehälter 2 Anlage 1"}
-        children_names = {child.name for child in children}
-        assert (
-            children_names == expected_children_names
-        ), f"Unexpected child names: {children_names}"
-        assert len(sources) == 0, f"Expected no sources under 'Anlage 1', found {len(sources)}"
-        assert len(sinks) == 0, f"Expected no sinks under 'Anlage 1', found {len(sinks)}"
+        verify_children(children, {"Hochbehälter 1 Anlage 1", "Hochbehälter 2 Anlage 1"}, 2)
+        verify_sources(sources, [], 0)
+        verify_sinks(sinks, [], 0)
 
         # Test for second child level under "Hochbehälter 1 Anlage 1"
-        parent_node = next(
-            (node for node in all_nodes if node.name == "Hochbehälter 1 Anlage 1"), None
-        )
-        assert parent_node is not None, "Expected parent node 'Hochbehälter 1 Anlage 1' not found"
-
+        parent_node = get_node_by_name(session, "Hochbehälter 1 Anlage 1")
         children, sources, sinks = get_children(parent_node.id)
-        assert (
-            len(children) == 0
-        ), f"Expected no children under 'Hochbehälter 1 Anlage 1', found {len(children)}"
-        assert (
-            len(sources) == 1
-        ), f"Expected 1 source under 'Hochbehälter 1 Anlage 1', found {len(sources)}"
-        assert (
-            sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
-        ), f"Unexpected source name: {sources[0].name}"
-        assert (
-            len(sinks) == 1
-        ), f"Expected 1 sink under 'Hochbehälter 1 Anlage 1', found {len(sinks)}"
-        assert (
-            sinks[0].name
-            == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
-        ), f"Unexpected sink name: {sinks[0].name}"
+        verify_children(children, set(), 0)
+        verify_sources(sources, ["Energieverbräuche des Pumpensystems in Hochbehälter"], 1)
+        verify_sinks(
+            sinks, ["Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"], 1
+        )
 
         # Test for second child level under "Hochbehälter 2 Anlage 1"
-        parent_node = next(
-            (node for node in all_nodes if node.name == "Hochbehälter 2 Anlage 1"), None
-        )
-        assert parent_node is not None, "Expected parent node 'Hochbehälter 2 Anlage 1' not found"
-
+        parent_node = get_node_by_name(session, "Hochbehälter 2 Anlage 1")
         children, sources, sinks = get_children(parent_node.id)
-        assert (
-            len(children) == 0
-        ), f"Expected no children under 'Hochbehälter 2 Anlage 1', found {len(children)}"
-        assert (
-            len(sources) == 1
-        ), f"Expected 1 source under 'Hochbehälter 2 Anlage 1', found {len(sources)}"
-        assert (
-            sources[0].name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"
-        ), f"Unexpected source name: {sources[0].name}"
-        assert (
-            len(sinks) == 1
-        ), f"Expected 1 sink under 'Hochbehälter 2 Anlage 1', found {len(sinks)}"
-        assert (
-            sinks[0].name
-            == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
-        ), f"Unexpected sink name: {sinks[0].name}"
+        verify_children(children, set(), 0)
+        verify_sources(sources, ["Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1)
+        verify_sinks(
+            sinks, ["Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"], 1
+        )
 
         # Test for second child level under "Hochbehälter 1 Anlage 2"
-        parent_node = next(
-            (node for node in all_nodes if node.name == "Hochbehälter 1 Anlage 2"), None
-        )
-        assert parent_node is not None, "Expected parent node 'Hochbehälter 1 Anlage 2' not found"
-
+        parent_node = get_node_by_name(session, "Hochbehälter 1 Anlage 2")
         children, sources, sinks = get_children(parent_node.id)
-        assert (
-            len(children) == 0
-        ), f"Expected no children under 'Hochbehälter 1 Anlage 2', found {len(children)}"
-        assert (
-            len(sources) == 1
-        ), f"Expected 1 source under 'Hochbehälter 1 Anlage 2', found {len(sources)}"
-        assert (
-            sources[0].name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"
-        ), f"Unexpected source name: {sources[0].name}"
-        assert (
-            len(sinks) == 1
-        ), f"Expected 1 sink under 'Hochbehälter 1 Anlage 2', found {len(sinks)}"
-        assert (
-            sinks[0].name
-            == "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"
-        ), f"Unexpected sink name: {sinks[0].name}"
+        verify_children(children, set(), 0)
+        verify_sources(sources, ["Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1)
+        verify_sinks(
+            sinks, ["Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1
+        )
 
         # Test for second child level under "Hochbehälter 2 Anlage 2"
-        parent_node = next(
-            (node for node in all_nodes if node.name == "Hochbehälter 2 Anlage 2"), None
-        )
-        assert parent_node is not None, "Expected parent node 'Hochbehälter 2 Anlage 2' not found"
-
+        parent_node = get_node_by_name(session, "Hochbehälter 2 Anlage 2")
         children, sources, sinks = get_children(parent_node.id)
-        assert (
-            len(children) == 0
-        ), f"Expected no children under 'Hochbehälter 2 Anlage 2', found {len(children)}"
-        assert (
-            len(sources) == 1
-        ), f"Expected 1 source under 'Hochbehälter 2 Anlage 2', found {len(sources)}"
-        assert (
-            sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
-        ), f"Unexpected source name: {sources[0].name}"
-        assert (
-            len(sinks) == 1
-        ), f"Expected 1 sink under 'Hochbehälter 2 Anlage 2', found {len(sinks)}"
-        assert (
-            sinks[0].name
-            == "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"
-        ), f"Unexpected sink name: {sinks[0].name}"
+        verify_children(children, set(), 0)
+        verify_sources(sources, ["Energieverbräuche des Pumpensystems in Hochbehälter"], 1)
+        verify_sinks(
+            sinks, ["Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1
+        )
+
+
+def get_node_by_name(session, name: str) -> ThingNodeOrm:
+    """Helper function to fetch a ThingNode by name."""
+    all_nodes = fetch_all_thing_nodes(session)
+    node = next((node for node in all_nodes if node.name == name), None)
+    assert node is not None, f"Expected node '{name}' not found"
+    return node
+
+
+def verify_children(children: list[ThingNode], expected_names: set, expected_count: int):
+    """Helper function to verify the children nodes."""
+    assert (
+        len(children) == expected_count
+    ), f"Expected {expected_count} children, found {len(children)}"
+    children_names = {child.name for child in children}
+    assert children_names == expected_names, f"Unexpected child names: {children_names}"
+
+
+def verify_sources(sources: list[Source], expected_names: list, expected_count: int):
+    """Helper function to verify the sources."""
+    assert (
+        len(sources) == expected_count
+    ), f"Expected {expected_count} source(s), found {len(sources)}"
+    if expected_count > 0:
+        assert [
+            source.name for source in sources
+        ] == expected_names, f"Unexpected source names: {[source.name for source in sources]}"
+
+
+def verify_sinks(sinks: list[Sink], expected_names: list, expected_count: int):
+    """Helper function to verify the sinks."""
+    assert len(sinks) == expected_count, f"Expected {expected_count} sink(s), found {len(sinks)}"
+    if expected_count > 0:
+        assert [
+            sink.name for sink in sinks
+        ] == expected_names, f"Unexpected sink names: {[sink.name for sink in sinks]}"
 
 
 def test_complete_structure_object_creation():
