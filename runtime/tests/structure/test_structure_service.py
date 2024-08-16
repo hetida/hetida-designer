@@ -249,4 +249,3 @@ def test_update_structure(mocked_clean_test_db_session):
             "Expected sink 'Anomaly Score für die Energieverbräuche"
             " des Pumpensystems in Hochbehälter' not found"
         )
-
