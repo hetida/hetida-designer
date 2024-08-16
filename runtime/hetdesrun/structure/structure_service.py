@@ -24,7 +24,7 @@ def get_children(
     parent_id: UUID | None,
 ) -> tuple[list[ThingNode], list[Source], list[Sink]]:
     """
-    Retrieves the child nodes, sources, and sinks associated  with a given parent
+    Retrieves the child nodes, sources, and sinks associated with a given parent
     node from the database.
 
     If `parent_id` is None, it returns the root nodes (nodes without a parent),
@@ -118,129 +118,104 @@ def get_children(
 
 
 def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
-    msg = f"Fetching single ThingNode from database with ID: {tn_id}."
-    logger.debug(msg)
+    logger.debug("Fetching single ThingNode from database with ID: %s", tn_id)
     with get_session()() as session:
         thing_node = session.query(ThingNodeOrm).filter(ThingNodeOrm.id == tn_id).one_or_none()
         if thing_node:
-            msg = f"ThingNode with ID {tn_id} found."
-            logger.debug(msg)
+            logger.debug("ThingNode with ID %s found.", tn_id)
             return ThingNode.from_orm_model(thing_node)
 
-    msg = f"No ThingNode found for ID {tn_id}. Raising DBNotFoundError."
-    logger.error(msg)
-    raise DBNotFoundError(f"No ThingNode found for ID {tn_id}")
+    logger.error("No ThingNode found for ID %s. Raising DBNotFoundError.", tn_id)
+    raise DBNotFoundError("No ThingNode found for ID %s" % tn_id)
 
 
 def get_collection_of_thingnodes_from_db(tn_ids: list[UUID]) -> dict[UUID, ThingNode]:
-    msg = f"Fetching collection of ThingNodes with IDs: {tn_ids}."
-    logger.debug(msg)
+    logger.debug("Fetching collection of ThingNodes with IDs: %s", tn_ids)
     thingnodes = {tn_id: get_single_thingnode_from_db(tn_id) for tn_id in tn_ids}
-    msg = "Successfully fetched collection of ThingNodes."
-    logger.debug(msg)
+    logger.debug("Successfully fetched collection of ThingNodes.")
     return thingnodes
 
 
 def get_single_source_from_db(src_id: UUID) -> Source:
-    msg = f"Fetching single Source from database with ID: {src_id}."
-    logger.debug(msg)
+    logger.debug("Fetching single Source from database with ID: %s", src_id)
     with get_session()() as session:
         source = session.query(SourceOrm).filter(SourceOrm.id == src_id).one_or_none()
         if source:
-            msg = f"Source with ID {src_id} found."
-            logger.debug(msg)
+            logger.debug("Source with ID %s found.", src_id)
             return Source.from_orm_model(source)
 
-    msg = f"No Source found for ID {src_id}. Raising DBNotFoundError."
-    logger.error(msg)
-    raise DBNotFoundError(f"No Source found for ID {src_id}")
+    logger.error("No Source found for ID %s. Raising DBNotFoundError.", src_id)
+    raise DBNotFoundError("No Source found for ID %s" % src_id)
 
 
 def get_all_sources_from_db() -> list[Source]:
-    msg = "Fetching all Sources from the database."
-    logger.debug(msg)
+    logger.debug("Fetching all Sources from the database.")
     with get_session()() as session:
         sources = session.query(SourceOrm).all()
 
-    msg = f"Successfully fetched {len(sources)} sources from the database."
-    logger.debug(msg)
+    logger.debug("Successfully fetched %d sources from the database.", len(sources))
     return [Source.from_orm_model(source) for source in sources]
 
 
 def get_collection_of_sources_from_db(src_ids: list[UUID]) -> dict[UUID, Source]:
-    msg = f"Fetching collection of Sources with IDs: {src_ids}."
-    logger.debug(msg)
+    logger.debug("Fetching collection of Sources with IDs: %s", src_ids)
     sources = {src_id: get_single_source_from_db(src_id) for src_id in src_ids}
 
-    msg = "Successfully fetched collection of Sources."
-    logger.debug(msg)
+    logger.debug("Successfully fetched collection of Sources.")
     return sources
 
 
 def get_single_sink_from_db(sink_id: UUID) -> Sink:
-    msg = f"Fetching single Sink from database with ID: {sink_id}."
-    logger.debug(msg)
+    logger.debug("Fetching single Sink from database with ID: %s", sink_id)
     with get_session()() as session:
         sink = session.query(SinkOrm).filter(SinkOrm.id == sink_id).one_or_none()
         if sink:
-            msg = f"Sink with ID {sink_id} found."
-            logger.debug(msg)
+            logger.debug("Sink with ID %s found.", sink_id)
             return Sink.from_orm_model(sink)
 
-    msg = f"No Sink found for ID {sink_id}. Raising DBNotFoundError."
-    logger.error(msg)
-    raise DBNotFoundError(f"No Sink found for ID {sink_id}")
+    logger.error("No Sink found for ID %s. Raising DBNotFoundError.", sink_id)
+    raise DBNotFoundError("No Sink found for ID %s" % sink_id)
 
 
 def get_all_sinks_from_db() -> list[Sink]:
-    msg = "Fetching all Sinks from the database."
-    logger.debug(msg)
+    logger.debug("Fetching all Sinks from the database.")
     with get_session()() as session:
         sinks = session.query(SinkOrm).all()
 
-    msg = f"Successfully fetched {len(sinks)} sinks from the database."
-    logger.debug(msg)
+    logger.debug("Successfully fetched %d sinks from the database.", len(sinks))
     return [Sink.from_orm_model(sink) for sink in sinks]
 
 
 def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
-    msg = f"Fetching collection of Sinks with IDs: {sink_ids}."
-    logger.debug(msg)
+    logger.debug("Fetching collection of Sinks with IDs: %s", sink_ids)
 
     sinks = {sink_id: get_single_sink_from_db(sink_id) for sink_id in sink_ids}
-    msg = "Successfully fetched collection of Sinks."
-    logger.debug(msg)
+    logger.debug("Successfully fetched collection of Sinks.")
     return sinks
 
 
 def is_database_empty() -> bool:
     """Wrapper function to check if the database is empty."""
 
-    msg = "Checking if the database is empty."
-    logger.debug(msg)
+    logger.debug("Checking if the database is empty.")
     is_empty = orm_is_database_empty()
-    msg = f"Database is {'empty' if is_empty else 'not empty'}."
-    logger.debug(msg)
+    logger.debug("Database is %s.", "empty" if is_empty else "not empty")
     return is_empty
 
 
 def delete_structure() -> None:
     """Wrapper function to delete the entire structure in the database."""
-    msg = "Deleting the entire structure from the database."
-    logger.debug(msg)
+    logger.debug("Deleting the entire structure from the database.")
     with get_session()() as session:
         orm_delete_structure(session)
-    msg = "Successfully deleted the entire structure from the database."
-    logger.debug(msg)
+    logger.debug("Successfully deleted the entire structure from the database.")
 
 
 def update_structure(
     complete_structure: CompleteStructure,
 ) -> CompleteStructure:
     """Wrapper function to update or insert the given complete structure into the database."""
-    msg = "Updating or inserting the complete structure into the database."
-    logger.debug(msg)
+    logger.debug("Updating or inserting the complete structure into the database.")
     updated_structure = orm_update_structure(complete_structure)
-    msg = "Successfully updated or inserted the complete structure into the database."
-    logger.debug(msg)
+    logger.debug("Successfully updated or inserted the complete structure into the database.")
     return updated_structure
