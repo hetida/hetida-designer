@@ -205,7 +205,8 @@ def test_update_structure(mocked_clean_test_db_session):
         sinks = fetch_all_sinks(session)
         element_types = fetch_all_element_types(session)
 
-        # Verify that the number of ThingNodes in the database matches the number in the JSON structure
+        # Verify that the number of ThingNodes in the database
+        # matches the number in the JSON structure
         assert len(thing_nodes) == len(
             complete_structure.thing_nodes
         ), "Mismatch in number of thing nodes"
@@ -213,7 +214,8 @@ def test_update_structure(mocked_clean_test_db_session):
         assert len(sources) == len(complete_structure.sources), "Mismatch in number of sources"
         # Verify that the number of Sinks in the database matches the number in the JSON structure
         assert len(sinks) == len(complete_structure.sinks), "Mismatch in number of sinks"
-        # Verify that the number of ElementTypes in the database matches the number in the JSON structure
+        # Verify that the number of ElementTypes in the database
+        # matches the number in the JSON structure
         assert len(element_types) == len(
             complete_structure.element_types
         ), "Mismatch in number of element types"
@@ -224,7 +226,8 @@ def test_update_structure(mocked_clean_test_db_session):
         wasserwerk_node = next((tn for tn in thing_nodes if tn.name == "Wasserwerk 1"), None)
         assert wasserwerk_node is not None, "Expected 'Wasserwerk 1' node not found"
 
-        # Check if the 'Energieverbrauch einer Einzelpumpe in Hochbehälter' Source was correctly inserted
+        # Check if the 'Energieverbrauch einer Einzelpumpe in
+        # Hochbehälter' Source was correctly inserted
         # The `next` function retrieves the first matching Source or returns None if not found
         source = next(
             (s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"),
@@ -234,7 +237,8 @@ def test_update_structure(mocked_clean_test_db_session):
             source is not None
         ), "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
 
-        # Check if the 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' Sink was correctly inserted
+        # Check if the 'Anomaly Score für die Energieverbräuche des
+        # Pumpensystems in Hochbehälter' Sink was correctly inserted
         # The `next` function retrieves the first matching Sink or returns None if not found
         sink = next(
             (
