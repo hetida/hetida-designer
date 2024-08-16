@@ -60,9 +60,9 @@ The `structure_service.py` and `orm_service.py` modules manage the hierarchical 
 
 - **`update_structure_from_file(file_path: str)`**: Loads a structure from a JSON file and updates the database with it.
 
-- **`delete_structure(session: SQLAlchemySession)`**: Deletes all records from the database, effectively clearing the entire structure.
+- **`orm_delete_structure(session: SQLAlchemySession)`**: Deletes all records from the database, effectively clearing the entire structure.
 
-- **`is_database_empty()`**: Checks if the database is empty.
+- **`orm_is_database_empty()`**: Checks if the database is empty.
 
 
 ### Key Functions in `structure_service.py`
