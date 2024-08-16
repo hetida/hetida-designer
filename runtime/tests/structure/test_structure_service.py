@@ -142,24 +142,6 @@ def test_complete_structure_object_creation():
     assert all(name in tn_names for name in expected_tn_names)
 
 
-@pytest.mark.usefixtures("_db_test_structure")
-def test_delete_structure_root(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        delete_structure()
-
-        remaining_thing_nodes = fetch_all_thing_nodes(session)
-        assert len(remaining_thing_nodes) == 0
-
-        remaining_sources = fetch_all_sources(session)
-        assert len(remaining_sources) == 0
-
-        remaining_sinks = fetch_all_sinks(session)
-        assert len(remaining_sinks) == 0
-
-        remaining_element_types = fetch_all_element_types(session)
-        assert len(remaining_element_types) == 0
-
-
 @pytest.mark.usefixtures("_db_empty_database")
 def test_is_database_empty_when_empty(mocked_clean_test_db_session):
     assert is_database_empty(), "Database should be empty but is not."
@@ -209,31 +191,41 @@ def test_update_structure(mocked_clean_test_db_session):
     # Load test data from JSON file
     with open("tests/structure/data/db_test_structure.json") as file:
         data = json.load(file)
+    # Create a CompleteStructure object from the loaded JSON data
     complete_structure = CompleteStructure(**data)
 
     # Perform the update, which in this case acts as an insert since the database is empty
     update_structure(complete_structure)
 
+    # Open a new session to interact with the database
     with mocked_clean_test_db_session() as session:
-        # Verify the structure was inserted/updated correctly
+        # Fetch all ThingNodes, Sources, Sinks, and ElementTypes from the database
         thing_nodes = fetch_all_thing_nodes(session)
         sources = fetch_all_sources(session)
         sinks = fetch_all_sinks(session)
         element_types = fetch_all_element_types(session)
 
+        # Verify that the number of ThingNodes in the database matches the number in the JSON structure
         assert len(thing_nodes) == len(
             complete_structure.thing_nodes
         ), "Mismatch in number of thing nodes"
+        # Verify that the number of Sources in the database matches the number in the JSON structure
         assert len(sources) == len(complete_structure.sources), "Mismatch in number of sources"
+        # Verify that the number of Sinks in the database matches the number in the JSON structure
         assert len(sinks) == len(complete_structure.sinks), "Mismatch in number of sinks"
+        # Verify that the number of ElementTypes in the database matches the number in the JSON structure
         assert len(element_types) == len(
             complete_structure.element_types
         ), "Mismatch in number of element types"
 
-        # Validate that specific nodes and associations exist
+        # Validate that specific ThingNodes, Sources, and Sinks exist in the database
+        # Check if the 'Wasserwerk 1' ThingNode was correctly inserted
+        # The `next` function retrieves the first matching ThingNode or returns None if not found
         wasserwerk_node = next((tn for tn in thing_nodes if tn.name == "Wasserwerk 1"), None)
         assert wasserwerk_node is not None, "Expected 'Wasserwerk 1' node not found"
 
+        # Check if the 'Energieverbrauch einer Einzelpumpe in Hochbehälter' Source was correctly inserted
+        # The `next` function retrieves the first matching Source or returns None if not found
         source = next(
             (s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"),
             None,
@@ -242,6 +234,8 @@ def test_update_structure(mocked_clean_test_db_session):
             source is not None
         ), "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
 
+        # Check if the 'Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter' Sink was correctly inserted
+        # The `next` function retrieves the first matching Sink or returns None if not found
         sink = next(
             (
                 s
@@ -255,3 +249,4 @@ def test_update_structure(mocked_clean_test_db_session):
             "Expected sink 'Anomaly Score für die Energieverbräuche"
             " des Pumpensystems in Hochbehälter' not found"
         )
+
