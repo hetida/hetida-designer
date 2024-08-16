@@ -252,12 +252,17 @@ def test_delete_structure(mocked_clean_test_db_session):
 
 @pytest.mark.usefixtures("_db_empty_database")
 def test_update_structure(mocked_clean_test_db_session):
-    # Load test data
+    # This test checks both the insert and update functionality of the update_structure function.
+    # It starts with an empty database, loads a complete structure from a JSON file, and then
+    # updates the database with this structure. The test then verifies that the structure
+    # has been correctly inserted/updated in the database.
+
+    # Load test data from JSON file
     with open("tests/structure/data/db_test_structure.json") as file:
         data = json.load(file)
     complete_structure = CompleteStructure(**data)
 
-    # Perform the update
+    # Perform the update, which in this case acts as an insert since the database is empty
     update_structure(complete_structure)
 
     with mocked_clean_test_db_session() as session:

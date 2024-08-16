@@ -229,9 +229,10 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
 
 
 def test_load_structure_from_json_file(db_test_structure_file_path):
+    # Load the structure from the JSON file using the load_structure_from_json_file function
     complete_structure = load_structure_from_json_file(db_test_structure_file_path)
 
-    # Check if the complete_structure is an instance of CompleteStructure
+    # Assert that the loaded structure is an instance of the CompleteStructure class
     assert isinstance(
         complete_structure, CompleteStructure
     ), "Loaded structure is not an instance of CompleteStructure"
@@ -240,20 +241,32 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
     with open(db_test_structure_file_path) as file:
         expected_structure_json = json.load(file)
 
+    # Convert the expected JSON structure into a CompleteStructure instance
     expected_structure = CompleteStructure(**expected_structure_json)
 
-    # Set all UUID fields to the same value pairwise
+    # Pair corresponding lists from the complete_structure and expected_structure
+    # (such as element_types, thing_nodes, sources, and sinks).
+    # Ensure that UUIDs match by setting them to the same value for each pair.
     for complete_list, expected_list in [
         (complete_structure.element_types, expected_structure.element_types),
         (complete_structure.thing_nodes, expected_structure.thing_nodes),
         (complete_structure.sources, expected_structure.sources),
         (complete_structure.sinks, expected_structure.sinks),
     ]:
+        # Iterate over pairs of corresponding elements (like individual ThingNodes or Sources)
+        # from the complete_list and expected_list. This is necessary because the UUIDs (id fields)
+        # in these elements are randomly generated and will differ between the loaded structure
+        # (complete_structure) and the expected structure (expected_structure). To allow for a
+        # meaningful comparison of these structures, we need to set the UUIDs to the same value.
+        # The strict=False argument allows the loop to continue even if the two lists have
+        # different lengths, which helps prevent unexpected errors in case of discrepancies
+        # between the loaded and expected data.
         for complete, expected in zip(complete_list, expected_list, strict=False):
             uniform_id = uuid.uuid4()
             complete.id = uniform_id
             expected.id = uniform_id
 
+    # Ensure that element_type_id fields in ThingNodes match
     for complete, expected in zip(
         complete_structure.thing_nodes, expected_structure.thing_nodes, strict=False
     ):
@@ -261,6 +274,7 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
         complete.element_type_id = uniform_id
         expected.element_type_id = uniform_id
 
+    # Assert that the entire loaded structure matches the expected structure
     assert (
         complete_structure == expected_structure
     ), "Loaded structure does not match the expected structure"
@@ -290,6 +304,10 @@ def test_delete_structure(mocked_clean_test_db_session):
 
 @pytest.mark.usefixtures("_db_test_structure")
 def test_update_structure_with_new_elements():
+    # This test checks the update functionality of the orm_update_structure function.
+    # It starts with an existing structure in the database, then updates it with new elements
+    # from a JSON file and verifies that the structure in the database reflects these updates.
+
     with get_session()() as session, session.begin():
         # Verify initial structure
         verify_initial_structure(session)
@@ -443,6 +461,10 @@ def verify_associations(session):
 
 @pytest.mark.usefixtures("_db_empty_database")
 def test_update_structure_from_file():
+    # This test specifically checks the insert functionality of the update_structure function.
+    # It starts with an empty database and verifies that the structure from the JSON file is
+    # correctly inserted into the database.
+
     # Path to the JSON file containing the test structure
     file_path = "tests/structure/data/db_test_structure.json"
 
