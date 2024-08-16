@@ -1,6 +1,6 @@
 ## Structure Package
 
-The structure package provides a set of tools and services for managing hierarchical structures in IoT-based data systems. It includes utilities for interacting with databases, managing data entities like ThingNodes, Sources, and Sinks, and ensuring the integrity and consistency of these entities within the system.
+The structure package provides a set of tools and services for managing hierarchical data structures. It includes utilities for interacting with databases, managing data entities like ThingNodes, Sources, and Sinks, and ensuring the integrity and consistency of these entities within the system.
 
 ## Components
 
@@ -10,9 +10,9 @@ The `structure_service_dbmodels.py` module defines the ORM (Object-Relational Ma
 
 ### `models.py`
 
-The `models.py` module defines Pydantic models that represent the data structures used within the application. These models are used to ensure that data remains consistent and valid as it moves through the application. Pydantic models are especially useful for structuring and validating data both internally within the application logic and when interacting with external APIs.
+The `models.py` module defines Pydantic models that represent the data structures used within the application. These models are used to ensure that data remains consistent and valid as it moves through the application. Pydantic models are especially useful for structuring and validating data, both internally within the application logic and when interacting with external APIs.
 
-The `CompleteStructure` class in the `models.py` module encapsulates the entire hierarchical data structure within an IoT-based system, including all ThingNodes, Sources, Sinks, and ElementTypes. Its primary role is to provide a unified container that allows for comprehensive management of the hierarchical data. By maintaining consistent relationships between entities such as ThingNodes and their associated Sources and Sinks, `CompleteStructure` ensures data integrity throughout the system. Additionally, it simplifies operations involving multiple entities by offering a single interface for interacting with the entire structure, making it an essential tool for efficiently managing and manipulating the hierarchical data model within the application.
+The `CompleteStructure` class in the `models.py` module encapsulates the entire hierarchical data structure, including all ThingNodes, Sources, Sinks, and ElementTypes. Its primary role is to provide a unified container that allows for comprehensive management of the hierarchical data. By maintaining consistent relationships between entities such as ThingNodes and their associated Sources and Sinks, `CompleteStructure` ensures data integrity throughout the system. Additionally, it simplifies operations involving multiple entities by offering a single interface for interacting with the entire structure, making it an essential tool for efficiently managing and manipulating the hierarchical data model within the application.
 
 
 ### `orm_service.py`
