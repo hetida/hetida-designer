@@ -94,6 +94,8 @@ class OutputWiring(BaseModel):
 
     @classmethod
     def from_structure_sink(cls, struct_sink: Sink) -> "OutputWiring":
+        # For metadata(any) sinks the ref_id does not reference
+        # the sink itself, but the thingnode it is attached to
         if struct_sink.type != "metadata(any)":
             ref_id = struct_sink.sink_id
             ref_id_type = RefIdType.SINK
@@ -188,6 +190,8 @@ class InputWiring(BaseModel):
 
     @classmethod
     def from_structure_source(cls, struct_source: Source) -> "InputWiring":
+        # For metadata(any) sources the ref_id does not reference
+        # the source itself, but the thingnode it is attached to
         if struct_source.type != "metadata(any)":
             ref_id = struct_source.source_id
             ref_id_type = RefIdType.SOURCE
