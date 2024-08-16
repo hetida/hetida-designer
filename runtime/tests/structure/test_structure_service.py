@@ -42,78 +42,132 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
 
 
 @pytest.mark.usefixtures("_db_test_structure")
-def test_get_children_level1():
+def test_get_children():
     with get_session()() as session, session.begin():
+        # Test for root level
         all_nodes = fetch_all_thing_nodes(session)
         root_node = next((node for node in all_nodes if node.name == "Wasserwerk 1"), None)
         assert root_node is not None, "Expected root node 'Wasserwerk 1' not found"
 
         children, sources, sinks = get_children(root_node.id)
+        assert len(children) == 2, f"Expected 2 children at root level, found {len(children)}"
+        expected_children_names = {"Anlage 1", "Anlage 2"}
+        children_names = {child.name for child in children}
+        assert (
+            children_names == expected_children_names
+        ), f"Unexpected child names: {children_names}"
+        assert len(sources) == 0, f"Expected no sources at root level, found {len(sources)}"
+        assert len(sinks) == 0, f"Expected no sinks at root level, found {len(sinks)}"
 
-    assert len(children) == 2
-
-    expected_children_names = {"Anlage 1", "Anlage 2"}
-    children_names = {child.name for child in children}
-    assert children_names == expected_children_names
-
-    assert len(sources) == 0
-    assert len(sinks) == 0
-
-
-@pytest.mark.usefixtures("_db_test_structure")
-def test_get_children_level2(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        all_nodes = fetch_all_thing_nodes(session)
+        # Test for first child level under "Anlage 1"
         parent_node = next((node for node in all_nodes if node.name == "Anlage 1"), None)
         assert parent_node is not None, "Expected parent node 'Anlage 1' not found"
 
         children, sources, sinks = get_children(parent_node.id)
+        assert len(children) == 2, f"Expected 2 children under 'Anlage 1', found {len(children)}"
+        expected_children_names = {"Hochbehälter 1 Anlage 1", "Hochbehälter 2 Anlage 1"}
+        children_names = {child.name for child in children}
+        assert (
+            children_names == expected_children_names
+        ), f"Unexpected child names: {children_names}"
+        assert len(sources) == 0, f"Expected no sources under 'Anlage 1', found {len(sources)}"
+        assert len(sinks) == 0, f"Expected no sinks under 'Anlage 1', found {len(sinks)}"
 
-    assert len(children) == 2
-
-    expected_children_names = {"Hochbehälter 1 Anlage 1", "Hochbehälter 2 Anlage 1"}
-    children_names = {child.name for child in children}
-    assert children_names == expected_children_names
-
-    assert len(sources) == 0
-    assert len(sinks) == 0
-
-
-@pytest.mark.usefixtures("_db_test_structure")
-def test_get_children_level3(mocked_clean_test_db_session):
-    with mocked_clean_test_db_session() as session:
-        all_nodes = fetch_all_thing_nodes(session)
+        # Test for second child level under "Hochbehälter 1 Anlage 1"
         parent_node = next(
             (node for node in all_nodes if node.name == "Hochbehälter 1 Anlage 1"), None
         )
-
         assert parent_node is not None, "Expected parent node 'Hochbehälter 1 Anlage 1' not found"
 
         children, sources, sinks = get_children(parent_node.id)
-
-        assert len(children) == 0, f"Expected no children, but found {len(children)}"
-
-        assert len(sinks) == 1, f"Expected 1 sink, but found {len(sinks)}"
+        assert (
+            len(children) == 0
+        ), f"Expected no children under 'Hochbehälter 1 Anlage 1', found {len(children)}"
+        assert (
+            len(sources) == 1
+        ), f"Expected 1 source under 'Hochbehälter 1 Anlage 1', found {len(sources)}"
+        assert (
+            sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+        ), f"Unexpected source name: {sources[0].name}"
+        assert (
+            len(sinks) == 1
+        ), f"Expected 1 sink under 'Hochbehälter 1 Anlage 1', found {len(sinks)}"
         assert (
             sinks[0].name
             == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
         ), f"Unexpected sink name: {sinks[0].name}"
 
+        # Test for second child level under "Hochbehälter 2 Anlage 1"
+        parent_node = next(
+            (node for node in all_nodes if node.name == "Hochbehälter 2 Anlage 1"), None
+        )
+        assert parent_node is not None, "Expected parent node 'Hochbehälter 2 Anlage 1' not found"
 
-@pytest.mark.usefixtures("_db_test_structure")
-def test_get_children_leaf_with_sources_and_sinks(mocked_clean_test_db_session):
-    parent_id = fetch_all_thing_nodes(mocked_clean_test_db_session())[4].id
-    result = get_children(parent_id)
-    assert isinstance(result, tuple)
-    assert len(result) == 3
-    assert len(result[0]) == 0
-    assert len(result[1]) == 1
-    assert len(result[2]) == 1
-    assert result[1][0].name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"
-    assert (
-        result[2][0].name
-        == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
-    )
+        children, sources, sinks = get_children(parent_node.id)
+        assert (
+            len(children) == 0
+        ), f"Expected no children under 'Hochbehälter 2 Anlage 1', found {len(children)}"
+        assert (
+            len(sources) == 1
+        ), f"Expected 1 source under 'Hochbehälter 2 Anlage 1', found {len(sources)}"
+        assert (
+            sources[0].name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"
+        ), f"Unexpected source name: {sources[0].name}"
+        assert (
+            len(sinks) == 1
+        ), f"Expected 1 sink under 'Hochbehälter 2 Anlage 1', found {len(sinks)}"
+        assert (
+            sinks[0].name
+            == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
+        ), f"Unexpected sink name: {sinks[0].name}"
+
+        # Test for second child level under "Hochbehälter 1 Anlage 2"
+        parent_node = next(
+            (node for node in all_nodes if node.name == "Hochbehälter 1 Anlage 2"), None
+        )
+        assert parent_node is not None, "Expected parent node 'Hochbehälter 1 Anlage 2' not found"
+
+        children, sources, sinks = get_children(parent_node.id)
+        assert (
+            len(children) == 0
+        ), f"Expected no children under 'Hochbehälter 1 Anlage 2', found {len(children)}"
+        assert (
+            len(sources) == 1
+        ), f"Expected 1 source under 'Hochbehälter 1 Anlage 2', found {len(sources)}"
+        assert (
+            sources[0].name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"
+        ), f"Unexpected source name: {sources[0].name}"
+        assert (
+            len(sinks) == 1
+        ), f"Expected 1 sink under 'Hochbehälter 1 Anlage 2', found {len(sinks)}"
+        assert (
+            sinks[0].name
+            == "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"
+        ), f"Unexpected sink name: {sinks[0].name}"
+
+        # Test for second child level under "Hochbehälter 2 Anlage 2"
+        parent_node = next(
+            (node for node in all_nodes if node.name == "Hochbehälter 2 Anlage 2"), None
+        )
+        assert parent_node is not None, "Expected parent node 'Hochbehälter 2 Anlage 2' not found"
+
+        children, sources, sinks = get_children(parent_node.id)
+        assert (
+            len(children) == 0
+        ), f"Expected no children under 'Hochbehälter 2 Anlage 2', found {len(children)}"
+        assert (
+            len(sources) == 1
+        ), f"Expected 1 source under 'Hochbehälter 2 Anlage 2', found {len(sources)}"
+        assert (
+            sources[0].name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+        ), f"Unexpected source name: {sources[0].name}"
+        assert (
+            len(sinks) == 1
+        ), f"Expected 1 sink under 'Hochbehälter 2 Anlage 2', found {len(sinks)}"
+        assert (
+            sinks[0].name
+            == "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"
+        ), f"Unexpected sink name: {sinks[0].name}"
 
 
 def test_complete_structure_object_creation():
