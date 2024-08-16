@@ -88,7 +88,7 @@ There are several environment variables which can be used to configure the use o
 * `VST_ADAPTER_ACTIVE` (default `True`): Whether the adapter is active (registered in the designer application)
 * `VST_ADAPTER_SERVICE_IN_RUNTIME` (default `True`): Whether the adapter is part of the backend or the runtime
 * `PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP` (default `False`): Set to `True` if you wish to provide a structure for the adapter at designer startup
-* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Whether an existing structure is completely deleted and inserted or (partially) updated in the database. ⚠️ **Disclaimer:** Presently, partial updates of the structure are not yet supported
+* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Whether an existing structure is completely deleted and inserted or (partially) updated in the database. ⚠️ **Disclaimer:** Presently, partial updates of the structure are not yet supported <!-- Remove once partial updates are safely possible -->
 * `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a JSON defining a structure to this variable
 
 ## Technical Information

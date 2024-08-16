@@ -35,6 +35,7 @@ def test_if_existing_structure_is_overwritten_if_specified():
             mocked_delete.assert_called_once()
 
 
+# TODO Remove once partial updates are safely possible
 def test_if_error_is_raised_when_partial_structure_update_is_attempted(
     mocked_clean_test_db_session,
 ):

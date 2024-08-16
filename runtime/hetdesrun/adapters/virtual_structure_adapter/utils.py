@@ -83,6 +83,7 @@ def prepopulate_structure() -> None:
                 )
             update_structure(complete_structure)
         else:
+            # TODO Remove once functionality is implemented
             raise NotImplementedError(
                 "Partial updates of the structure are not supported yet. "
                 "Please change the environment variable "
