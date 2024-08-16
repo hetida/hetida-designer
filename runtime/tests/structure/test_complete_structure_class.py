@@ -10,8 +10,8 @@ def test_object_creation_from_json():
     complete_structure = CompleteStructure(**structure_json)
     assert len(complete_structure.element_types) == 3
     assert len(complete_structure.thing_nodes) == 7
-    assert len(complete_structure.sources) == 2
-    assert len(complete_structure.sinks) == 2
+    assert len(complete_structure.sources) == 3
+    assert len(complete_structure.sinks) == 3
 
     thing_node_names = [tn.name for tn in complete_structure.thing_nodes]
 

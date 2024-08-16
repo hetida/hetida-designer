@@ -126,7 +126,7 @@ def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
             return ThingNode.from_orm_model(thing_node)
 
     logger.error("No ThingNode found for ID %s. Raising DBNotFoundError.", tn_id)
-    raise DBNotFoundError("No ThingNode found for ID %s" % tn_id)
+    raise DBNotFoundError(f"No ThingNode found for ID {tn_id}")
 
 
 def get_collection_of_thingnodes_from_db(tn_ids: list[UUID]) -> dict[UUID, ThingNode]:
@@ -145,7 +145,7 @@ def get_single_source_from_db(src_id: UUID) -> Source:
             return Source.from_orm_model(source)
 
     logger.error("No Source found for ID %s. Raising DBNotFoundError.", src_id)
-    raise DBNotFoundError("No Source found for ID %s" % src_id)
+    raise DBNotFoundError(f"No Source found for ID {src_id}")
 
 
 def get_all_sources_from_db() -> list[Source]:
@@ -174,7 +174,7 @@ def get_single_sink_from_db(sink_id: UUID) -> Sink:
             return Sink.from_orm_model(sink)
 
     logger.error("No Sink found for ID %s. Raising DBNotFoundError.", sink_id)
-    raise DBNotFoundError("No Sink found for ID %s" % sink_id)
+    raise DBNotFoundError(f"No Sink found for ID {sink_id}")
 
 
 def get_all_sinks_from_db() -> list[Sink]:

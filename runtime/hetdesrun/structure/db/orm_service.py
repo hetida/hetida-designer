@@ -213,7 +213,8 @@ def fill_all_thingnode_parent_uuids_from_db(
                 if parent_node:
                     node.parent_node_id = parent_node.id
                     logger.debug(
-                        "Found parent node in thing_nodes and set parent_node_id %s for ThingNode with external_id %s.",
+                        "Found parent node in thing_nodes and set parent_node_id %s"
+                        "for ThingNode with external_id %s.",
                         parent_node.id,
                         node.external_id,
                     )
@@ -337,7 +338,8 @@ def fill_source_sink_associations_db(
     )
 
     logger.debug(
-        "Completed establishing associations between ThingNodes and their corresponding Sources and Sinks."
+        "Completed establishing associations between ThingNodes"
+        " and their corresponding Sources and Sinks."
     )
 
 
