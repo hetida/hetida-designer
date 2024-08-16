@@ -83,6 +83,12 @@ def prepopulate_structure() -> None:
                 )
             update_structure(complete_structure)
         else:
+            raise NotImplementedError(
+                "Partial updates of the structure are not supported yet. "
+                "Please change the environment variable "
+                "'COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP'"
+                " back to its default value."
+            )
             update_structure(complete_structure)
             logger.info(
                 "%s and the update_structure function was executed.",
