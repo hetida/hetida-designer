@@ -40,32 +40,6 @@ Source.update_forward_refs()
 Sink.update_forward_refs()
 CompleteStructure.update_forward_refs()
 
-# Fixture definitions
-
-
-@pytest.fixture()
-def db_test_structure_file_path():
-    return "tests/structure/data/db_test_structure.json"
-
-
-@pytest.fixture()
-def _db_test_structure(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_structure.json"
-    update_structure_from_file(file_path)
-
-
-@pytest.fixture()
-def _db_test_unordered_structure(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_test_unordered_structure.json"
-    update_structure_from_file(file_path)
-
-
-@pytest.fixture()
-def _db_empty_database(mocked_clean_test_db_session):
-    file_path = "tests/structure/data/db_empty_structure.json"
-    update_structure_from_file(file_path)
-
-
 # Enable Foreign Key Constraints for SQLite Connections
 
 
