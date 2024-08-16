@@ -18,7 +18,6 @@ def test_with_prepopulation_disabled(mocked_clean_test_db_session):
     assert is_database_empty()
 
 
-@pytest.mark.skip("Check if delete structure works as expected")
 @pytest.mark.usefixtures("_fill_db")
 def test_if_existing_structure_is_overwritten_if_specified():
     with mock.patch.multiple(  # noqa: SIM117
