@@ -91,8 +91,8 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):
         # Ensure the counts match the expected values
         expected_element_types_count = 3
         expected_thing_nodes_count = 7
-        expected_sources_count = 2
-        expected_sinks_count = 2
+        expected_sources_count = 3
+        expected_sinks_count = 3
 
         assert (
             len(element_types_in_db) == expected_element_types_count
@@ -171,7 +171,7 @@ def test_fetch_all_thing_nodes(mocked_clean_test_db_session):
 def test_fetch_all_sources(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         sources = fetch_all_sources(session)
-        assert len(sources) == 2, "Expected 2 Sources in the database"
+        assert len(sources) == 3, "Expected 3 Sources in the database"
 
         expected_sources = [
             {
@@ -200,7 +200,7 @@ def test_fetch_all_sources(mocked_clean_test_db_session):
 def test_fetch_all_sinks(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         sinks = fetch_all_sinks(session)
-        assert len(sinks) == 2, "Expected 2 Sinks in the database"
+        assert len(sinks) == 3, "Expected 3 Sinks in the database"
 
         expected_sinks = [
             {
@@ -314,8 +314,8 @@ def verify_initial_structure(session):
 
     assert len(initial_element_types) == 3
     assert len(initial_thing_nodes) == 7
-    assert len(initial_sources) == 2
-    assert len(initial_sinks) == 2
+    assert len(initial_sources) == 3
+    assert len(initial_sinks) == 3
 
     # Initial values before the update
     initial_tn = (
@@ -345,8 +345,8 @@ def verify_updated_structure(session):
 
     assert len(final_element_types) == 4
     assert len(final_thing_nodes) == 8
-    assert len(final_sources) == 3
-    assert len(final_sinks) == 2
+    assert len(final_sources) == 4
+    assert len(final_sinks) == 3
 
     verify_new_elements_and_nodes(session, final_element_types, final_thing_nodes)
     verify_associations(session)
@@ -460,8 +460,8 @@ def test_update_structure_from_file():
     with get_session()() as session:
         assert session.query(ElementTypeOrm).count() == 3
         assert session.query(ThingNodeOrm).count() == 7
-        assert session.query(SourceOrm).count() == 2
-        assert session.query(SinkOrm).count() == 2
+        assert session.query(SourceOrm).count() == 3
+        assert session.query(SinkOrm).count() == 3
 
         # Example check for a specific ElementType
         wasserwerk_typ = session.query(ElementTypeOrm).filter_by(external_id="Wasserwerk_Typ").one()

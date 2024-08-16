@@ -56,8 +56,16 @@ def test_get_children():
         assert (
             children_names == expected_children_names
         ), f"Unexpected child names: {children_names}"
-        assert len(sources) == 0, f"Expected no sources at root level, found {len(sources)}"
-        assert len(sinks) == 0, f"Expected no sinks at root level, found {len(sinks)}"
+
+        assert len(sources) == 1, f"Expected 1 source at root level, found {len(sources)}"
+        assert (
+            sources[0].name == "Energieverbrauch des Wasserwerks"
+        ), f"Unexpected source name: {sources[0].name}"
+
+        assert len(sinks) == 1, f"Expected 1 sink at root level, found {len(sinks)}"
+        assert (
+            sinks[0].name == "Anomaly Score für den Energieverbrauch des Wasserwerks"
+        ), f"Unexpected sink name: {sinks[0].name}"
 
         # Test for first child level under "Anlage 1"
         parent_node = next((node for node in all_nodes if node.name == "Anlage 1"), None)
@@ -177,8 +185,8 @@ def test_complete_structure_object_creation():
 
     assert len(cs.thing_nodes) == 7
     assert len(cs.element_types) == 3
-    assert len(cs.sources) == 2
-    assert len(cs.sinks) == 2
+    assert len(cs.sources) == 3
+    assert len(cs.sinks) == 3
 
     tn_names = [tn.name for tn in cs.thing_nodes]
     expected_tn_names = [tn["name"] for tn in data["thing_nodes"]]
