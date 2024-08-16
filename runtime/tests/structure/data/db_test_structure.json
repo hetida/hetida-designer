@@ -176,6 +176,38 @@
                 "Wasserwerk1_Anlage1_Hochbehaelter2",
                 "Wasserwerk1_Anlage2_Hochbehaelter1"
             ]
+        },
+        {
+            "external_id": "Energieverbrauch_Wasserwerk1",
+            "stakeholder_key": "GW",
+            "name": "Energieverbrauch des Wasserwerks",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010004": {
+                    "unit": "kW/h",
+                    "description": "Energieverbrauchsdaten für das gesamte Wasserwerk"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010004"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Wasserwerk1"
+            ]
         }
     ],
     "sinks": [
@@ -247,6 +279,38 @@
             "thing_node_external_ids": [
                 "Wasserwerk1_Anlage2_Hochbehaelter2",
                 "Wasserwerk1_Anlage2_Hochbehaelter1"
+            ]
+        },
+        {
+            "external_id": "Anomaly_Score_Energieverbrauch_Wasserwerk1",
+            "stakeholder_key": "GW",
+            "name": "Anomaly Score für den Energieverbrauch des Wasserwerks",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "10010004": {
+                    "description": "Anomaly Score für das gesamte Wasserwerk",
+                    "calculation_details": "Window size: 4h, Timestamp location: center"
+                }
+            },
+            "preset_filters": {
+                "metrics": "10010004"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Wasserwerk1"
             ]
         }
     ]
