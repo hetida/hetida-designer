@@ -30,7 +30,7 @@ Some of the main features include:
 
 ### `structure_service.py`
 
-The `structure_service.py` module offers high-level service functions that make it easier to interact with the database. These functions go beyond basic ORM operations and provide an abstracted interface for application use. They handle more complex tasks, like retrieving and managing hierarchical structures, deleting and updating data in the database, and checking the state of the database.
+The `structure_service.py` module provides a simplified interface for interacting with the database, making it accessible for other applications. While it wraps around the more detailed operations found in the `orm_service.py` module, it abstracts away the underlying complexity. This allows the module to offer a clean and straightforward interface for tasks such as managing hierarchical structures, updating data, and verifying the state of the database, all while keeping the complexity hidden from the user.
 
 Some of the main features include:
 - Retrieving child nodes, sources, and sinks that are associated with a specific parent node.
@@ -98,6 +98,8 @@ The `structure_service.py` and `orm_service.py` modules manage the hierarchical 
 ## Example JSON Structure for a Waterworks System
 
 To provide a more concrete understanding of how the structure package is used in a real-world scenario, below is an example of a JSON configuration for a waterworks system. This example illustrates how the different entities such as ThingNodes, Sources, and Sinks are structured and connected within the hierarchical data model. The structure represents a waterworks facility with various nodes, including plants and storage tanks, and the associated data sources and sinks that manage and monitor energy consumption and anomaly detection.
+
+**Note:** The JSON configuration contains German-language entries, reflecting terms commonly used in the context of waterworks and their operations.
 
 This JSON configuration provides a comprehensive example of how to model and manage a complex IoT-based system like a waterworks within the structure package.
 
