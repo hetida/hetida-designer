@@ -38,3 +38,4 @@ demo-adapter-python/upload_settings/*
 demo-adapter-python/settings/*
 .vscode/.ropeproject/objectdb
 .tmp
+.jupyter
