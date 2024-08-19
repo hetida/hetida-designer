@@ -6,12 +6,11 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
-    thingnode_sink_association,
-    thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import (
     orm_delete_structure,
+    orm_get_children,
     orm_is_database_empty,
     orm_update_structure,
 )
@@ -23,98 +22,13 @@ logger = logging.getLogger(__name__)
 def get_children(
     parent_id: UUID | None,
 ) -> tuple[list[ThingNode], list[Source], list[Sink]]:
+    """Wrapper function to retrieve the child nodes, sources,
+    and sinks associated with a given parent node from the database.
     """
-    Retrieves the child nodes, sources, and sinks associated with a given parent
-    node from the database.
-
-    If `parent_id` is None, it returns the root nodes (nodes without a parent),
-    along with any sources and sinks associated with the root nodes. Otherwise,
-    it fetches the direct child nodes, sources, and sinks associated with the
-    specified parent node.
-    """
-
-    logger.debug("Fetching children for parent_id: %s", parent_id)
-
-    with get_session()() as session:
-        if parent_id is None:
-            logger.debug("No parent_id provided, fetching root nodes.")
-            root_nodes = (
-                session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id.is_(None)).all()
-            )
-            logger.debug("Fetched %d root nodes.", len(root_nodes))
-
-            root_node_ids = [node.id for node in root_nodes]
-
-            logger.debug("Fetching sources associated with root nodes.")
-            sources = (
-                session.query(SourceOrm)
-                .join(
-                    thingnode_source_association,
-                    thingnode_source_association.c.source_id == SourceOrm.id,
-                )
-                .filter(thingnode_source_association.c.thing_node_id.in_(root_node_ids))
-                .all()
-            )
-            logger.debug("Fetched %d sources associated with root nodes.", len(sources))
-
-            logger.debug("Fetching sinks associated with root nodes.")
-            sinks = (
-                session.query(SinkOrm)
-                .join(
-                    thingnode_sink_association,
-                    thingnode_sink_association.c.sink_id == SinkOrm.id,
-                )
-                .filter(thingnode_sink_association.c.thing_node_id.in_(root_node_ids))
-                .all()
-            )
-            logger.debug("Fetched %d sinks associated with root nodes.", len(sinks))
-
-            return (
-                [ThingNode.from_orm_model(node) for node in root_nodes],
-                [Source.from_orm_model(source) for source in sources],
-                [Sink.from_orm_model(sink) for sink in sinks],
-            )
-
-        logger.debug("Fetching child nodes for parent_id: %s", parent_id)
-        child_nodes = (
-            session.query(ThingNodeOrm).filter(ThingNodeOrm.parent_node_id == parent_id).all()
-        )
-        logger.debug("Fetched %d child nodes.", len(child_nodes))
-
-        logger.debug("Fetching sources for parent_id: %s", parent_id)
-        sources = (
-            session.query(SourceOrm)
-            .join(
-                thingnode_source_association,
-                thingnode_source_association.c.source_id == SourceOrm.id,
-            )
-            .filter(thingnode_source_association.c.thing_node_id == parent_id)
-            .all()
-        )
-        logger.debug("Fetched %d sources.", len(sources))
-
-        logger.debug("Fetching sinks for parent_id: %s", parent_id)
-        sinks = (
-            session.query(SinkOrm)
-            .join(thingnode_sink_association, thingnode_sink_association.c.sink_id == SinkOrm.id)
-            .filter(thingnode_sink_association.c.thing_node_id == parent_id)
-            .all()
-        )
-        logger.debug("Fetched %d sinks.", len(sinks))
-
-        logger.debug(
-            "Returning %d child nodes, %d sources, and %d sinks for parent_id: %s",
-            len(child_nodes),
-            len(sources),
-            len(sinks),
-            parent_id,
-        )
-
-        return (
-            [ThingNode.from_orm_model(node) for node in child_nodes],
-            [Source.from_orm_model(source) for source in sources],
-            [Sink.from_orm_model(sink) for sink in sinks],
-        )
+    logger.debug("Calling wrapper function 'get_children' for parent_id: %s", parent_id)
+    children = orm_get_children(parent_id)
+    logger.debug("Wrapper function 'get_children' completed for parent_id: %s", parent_id)
+    return children
 
 
 def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
@@ -196,26 +110,34 @@ def get_collection_of_sinks_from_db(sink_ids: list[UUID]) -> dict[UUID, Sink]:
 
 def is_database_empty() -> bool:
     """Wrapper function to check if the database is empty."""
-
-    logger.debug("Checking if the database is empty.")
+    logger.debug("Calling wrapper function 'is_database_empty'.")
     is_empty = orm_is_database_empty()
-    logger.debug("Database is %s.", "empty" if is_empty else "not empty")
+    logger.debug(
+        "Wrapper function 'is_database_empty' completed. Database is %s.",
+        "empty" if is_empty else "not empty",
+    )
     return is_empty
 
 
 def delete_structure() -> None:
     """Wrapper function to delete the entire structure in the database."""
-    logger.debug("Deleting the entire structure from the database.")
+    logger.debug("Calling wrapper function 'delete_structure'.")
     with get_session()() as session:
         orm_delete_structure(session)
-    logger.debug("Successfully deleted the entire structure from the database.")
+    logger.debug(
+        "Wrapper function 'delete_structure' completed. "
+        "Successfully deleted the entire structure from the database."
+    )
 
 
 def update_structure(
     complete_structure: CompleteStructure,
 ) -> CompleteStructure:
     """Wrapper function to update or insert the given complete structure into the database."""
-    logger.debug("Updating or inserting the complete structure into the database.")
+    logger.debug("Calling wrapper function 'update_structure'.")
     updated_structure = orm_update_structure(complete_structure)
-    logger.debug("Successfully updated or inserted the complete structure into the database.")
+    logger.debug(
+        "Wrapper function 'update_structure' completed. "
+        "Successfully updated or inserted the complete structure into the database."
+    )
     return updated_structure
