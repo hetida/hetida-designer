@@ -39,4 +39,3 @@ demo-adapter-python/settings/*
 .vscode/.ropeproject/objectdb
 .tmp
 .jupyter
-runtime/run_debug.sh
