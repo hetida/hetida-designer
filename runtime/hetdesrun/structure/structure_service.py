@@ -43,6 +43,15 @@ def get_single_thingnode_from_db(tn_id: UUID) -> ThingNode:
     raise DBNotFoundError(f"No ThingNode found for ID {tn_id}")
 
 
+def get_all_thing_nodes_from_db() -> list[ThingNode]:
+    logger.debug("Fetching all ThingNodes from the database.")
+    with get_session()() as session:
+        thing_nodes = session.query(ThingNodeOrm).all()
+
+    logger.debug("Successfully fetched %d ThingNodes from the database.", len(thing_nodes))
+    return [ThingNode.from_orm_model(thing_node) for thing_node in thing_nodes]
+
+
 def get_collection_of_thingnodes_from_db(tn_ids: list[UUID]) -> dict[UUID, ThingNode]:
     logger.debug("Fetching collection of ThingNodes with IDs: %s", tn_ids)
     thingnodes = {tn_id: get_single_thingnode_from_db(tn_id) for tn_id in tn_ids}
