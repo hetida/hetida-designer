@@ -4,6 +4,7 @@ from sqlite3 import Connection as SQLite3Connection
 
 import pytest
 from sqlalchemy import event
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_session
@@ -12,34 +13,30 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SinkOrm,
     SourceOrm,
     ThingNodeOrm,
+    thingnode_sink_association,
+    thingnode_source_association,
 )
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
+    fetch_existing_records,
+    fill_source_sink_associations_db,
     load_structure_from_json_file,
     orm_delete_structure,
     orm_is_database_empty,
     orm_update_structure,
     sort_thing_nodes_from_db,
-    thingnode_sink_association,
-    thingnode_source_association,
+    update_existing_elements,
     update_structure_from_file,
 )
 from hetdesrun.structure.models import (
     CompleteStructure,
-    ElementType,
     Sink,
     Source,
     ThingNode,
 )
-
-ElementType.update_forward_refs()
-ThingNode.update_forward_refs()
-Source.update_forward_refs()
-Sink.update_forward_refs()
-CompleteStructure.update_forward_refs()
 
 # Enable Foreign Key Constraints for SQLite Connections
 
@@ -282,6 +279,12 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
     assert (
         complete_structure == expected_structure
     ), "Loaded structure does not match the expected structure"
+
+
+def test_load_structure_from_invalid_json_file():
+    # Use a non-existent file path to simulate a failure in loading JSON
+    with pytest.raises(Exception):
+        load_structure_from_json_file("non_existent_file.json")
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -603,3 +606,157 @@ def test_sort_thing_nodes_from_db(mocked_clean_test_db_session):
         ]
         actual_level_2_order = [node.name for node in sorted_nodes_by_level[2]]
         assert actual_level_2_order == expected_level_2_order
+
+        # Ensure the condition where a parent_node_id is not initially in children_by_node_id
+        # Create a new node with a parent_node_id that isn't in children_by_node_id
+        orphan_node = ThingNode(
+            external_id="Orphan_Hochbehälter",
+            name="Orphan Hochbehälter",
+            stakeholder_key="GW",
+            parent_node_id=uuid.uuid4(),  # Ensure this UUID does not match any existing node
+            element_type_id=uuid.uuid4(),
+            element_type_external_id="Hochbehaelter_Typ",  # Provide the required element_type_external_id
+            meta_data={},
+        )
+
+        thing_nodes_in_db.append(orphan_node)
+
+        # Re-run the sort function with the orphan node added
+        sorted_nodes_by_level_with_orphan = sort_thing_nodes_from_db(
+            thing_nodes_in_db, existing_thing_nodes
+        )
+
+        # Verify that the orphan node is not placed in any level (since it doesn't have a valid parent in the set)
+        orphan_in_levels = any(
+            orphan_node in level_nodes for level_nodes in sorted_nodes_by_level_with_orphan.values()
+        )
+        assert not orphan_in_levels, "Orphan node should not be placed in any level."
+
+
+def test_fill_source_sink_associations_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Load a complete structure from JSON for testing
+        complete_structure = load_structure_from_json_file(
+            "tests/structure/data/db_test_structure.json"
+        )
+
+        # Add a Source with no associated ThingNodes to the structure
+        orphan_source = Source(
+            external_id="Orphan_Source",
+            stakeholder_key="GW",
+            name="Orphan Source",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={"unit": "kW/h", "description": "Orphan Source"},
+            preset_filters={"metrics": "1010005"},
+            passthrough_filters=[],
+            thing_node_external_ids=[],  # No associated ThingNodes
+        )
+        complete_structure.sources.append(orphan_source)
+
+        # Add a Sink with no associated ThingNodes to the structure
+        orphan_sink = Sink(
+            external_id="Orphan_Sink",
+            stakeholder_key="GW",
+            name="Orphan Sink",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            sink_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={"description": "Orphan Sink"},
+            preset_filters={"metrics": "10010005"},
+            passthrough_filters=[],
+            thing_node_external_ids=[],  # No associated ThingNodes
+        )
+        complete_structure.sinks.append(orphan_sink)
+
+        # Add an entity to CompleteStructure that doesn't exist in the database
+        missing_source = Source(
+            external_id="Missing_Source",
+            stakeholder_key="GW",
+            name="Missing Source",
+            type="multitsframe",
+            adapter_key="sql-adapter",
+            source_id="improvt_timescale_db/ts_table/ts_values",
+            meta_data={"unit": "kW/h", "description": "Missing Source"},
+            preset_filters={"metrics": "1010006"},
+            passthrough_filters=[],
+            thing_node_external_ids=["Wasserwerk1"],  # Associated with an existing ThingNode
+        )
+        complete_structure.sources.append(missing_source)
+
+        # Add orphan source and sink to the session
+        session.add(orphan_source.to_orm_model())
+        session.add(orphan_sink.to_orm_model())
+        session.commit()
+
+        # Fill the associations in the database
+        fill_source_sink_associations_db(complete_structure, session)
+
+        # Check that the Orphan Source and Sink were skipped during association processing
+        orphan_source_in_db = (
+            session.query(SourceOrm).filter_by(external_id="Orphan_Source").one_or_none()
+        )
+        orphan_sink_in_db = (
+            session.query(SinkOrm).filter_by(external_id="Orphan_Sink").one_or_none()
+        )
+
+        assert orphan_source_in_db is not None, "Orphan Source should exist in the database."
+        assert orphan_sink_in_db is not None, "Orphan Sink should exist in the database."
+
+        # Verify that no associations exist for the Orphan Source and Sink
+        orphan_source_associations = (
+            session.query(thingnode_source_association)
+            .filter_by(source_id=orphan_source_in_db.id)
+            .all()
+        )
+        orphan_sink_associations = (
+            session.query(thingnode_sink_association).filter_by(sink_id=orphan_sink_in_db.id).all()
+        )
+
+        assert len(orphan_source_associations) == 0, "Orphan Source should have no associations."
+        assert len(orphan_sink_associations) == 0, "Orphan Sink should have no associations."
+
+        # Verify that the "Missing Source" was not associated due to it not existing in the database
+        missing_source_associations = (
+            session.query(thingnode_source_association)
+            .join(SourceOrm, thingnode_source_association.c.source_id == SourceOrm.id)
+            .filter(SourceOrm.external_id == "Missing_Source")
+            .all()
+        )
+
+        assert (
+            len(missing_source_associations) == 0
+        ), "Missing Source should not create any associations because it doesn't exist in the database."
+
+        # Verify that the "Missing Source" was indeed skipped in processing
+        missing_source_in_db = (
+            session.query(SourceOrm).filter_by(external_id="Missing_Source").one_or_none()
+        )
+        assert missing_source_in_db is None, "Missing Source should not exist in the database."
+
+
+def test_fetch_existing_records_exception_handling(mocked_clean_test_db_session):
+    class InvalidModel:
+        # This is a dummy class that does not correspond to any database model
+        pass
+
+    with pytest.raises(
+        SQLAlchemyError
+    ):  # Adjusted to catch SQLAlchemyError or any derived exception
+        with mocked_clean_test_db_session() as session:
+            # Attempt to fetch records using an invalid model class, which should raise an exception
+            fetch_existing_records(session, InvalidModel)
+
+
+def test_update_existing_elements_exception_handling(mocked_clean_test_db_session):
+    class InvalidModel:
+        # This is a dummy class that does not correspond to any database model
+        pass
+
+    existing_elements = {}
+
+    with pytest.raises(SQLAlchemyError):  # Adjust to catch the appropriate exception type
+        with mocked_clean_test_db_session() as session:
+            # Attempt to update elements using an invalid model class, which should raise an exception
+            update_existing_elements(session, InvalidModel, existing_elements)

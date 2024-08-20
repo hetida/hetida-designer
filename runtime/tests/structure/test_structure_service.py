@@ -1,4 +1,5 @@
 import json
+import uuid
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
@@ -7,8 +8,11 @@ from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
+    SinkOrm,
+    SourceOrm,
     ThingNodeOrm,
 )
+from hetdesrun.structure.db.exceptions import DBNotFoundError
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
@@ -23,7 +27,16 @@ from hetdesrun.structure.models import (
 )
 from hetdesrun.structure.structure_service import (
     delete_structure,
+    get_all_sinks_from_db,
+    get_all_sources_from_db,
+    get_all_thing_nodes_from_db,
     get_children,
+    get_collection_of_sinks_from_db,
+    get_collection_of_sources_from_db,
+    get_collection_of_thingnodes_from_db,
+    get_single_sink_from_db,
+    get_single_source_from_db,
+    get_single_thingnode_from_db,
     is_database_empty,
     update_structure,
 )
@@ -253,3 +266,233 @@ def test_update_structure(mocked_clean_test_db_session):
             "Expected sink 'Anomaly Score für die Energieverbräuche"
             " des Pumpensystems in Hochbehälter' not found"
         )
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_single_thingnode_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch an existing ThingNode ID
+        existing_tn = session.query(ThingNodeOrm).first()
+        assert existing_tn is not None, "No ThingNode found in the test database."
+
+        # Test retrieving the ThingNode by ID
+        fetched_tn = get_single_thingnode_from_db(existing_tn.id)
+        assert fetched_tn.id == existing_tn.id, "Fetched ThingNode ID does not match."
+
+        # Test that a non-existent ThingNode raises a DBNotFoundError
+        non_existent_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            get_single_thingnode_from_db(non_existent_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_all_thing_nodes_from_db(mocked_clean_test_db_session):
+    # Open a session to interact with the database
+    with mocked_clean_test_db_session() as session:
+        # Ensure the database is not empty and contains ThingNodes
+        assert session.query(ThingNodeOrm).count() > 0, "Expected non-empty ThingNodes table"
+
+        # Fetch all ThingNodes using the function
+        thing_nodes = get_all_thing_nodes_from_db()
+
+        # Verify that the number of ThingNodes fetched matches the number in the database
+        assert (
+            len(thing_nodes) == session.query(ThingNodeOrm).count()
+        ), "Mismatch between number of ThingNodes fetched and number in the database"
+
+        # Check that specific ThingNodes exist and have expected properties
+        expected_thing_nodes = [
+            {"external_id": "Wasserwerk1", "name": "Wasserwerk 1"},
+            {"external_id": "Wasserwerk1_Anlage1", "name": "Anlage 1"},
+            {"external_id": "Wasserwerk1_Anlage2", "name": "Anlage 2"},
+        ]
+
+        for expected_tn in expected_thing_nodes:
+            found = any(
+                tn.external_id == expected_tn["external_id"] and tn.name == expected_tn["name"]
+                for tn in thing_nodes
+            )
+            assert found, (
+                f"Expected ThingNode with external_id {expected_tn['external_id']} "
+                f"and name {expected_tn['name']} not found"
+            )
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_collection_of_thingnodes_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch a list of existing ThingNode IDs
+        existing_tns = session.query(ThingNodeOrm).limit(3).all()
+        assert len(existing_tns) == 3, "Expected at least 3 ThingNodes in the test database."
+        existing_tn_ids = [tn.id for tn in existing_tns]
+
+        # Test retrieving a collection of ThingNodes by their IDs
+        fetched_tns = get_collection_of_thingnodes_from_db(existing_tn_ids)
+        assert len(fetched_tns) == 3, "Expected to fetch 3 ThingNodes."
+        for tn_id in existing_tn_ids:
+            assert (
+                tn_id in fetched_tns
+            ), f"ThingNode with ID {tn_id} not found in fetched collection."
+
+        # Test that a non-existent ThingNode raises a DBNotFoundError
+        non_existent_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            get_collection_of_thingnodes_from_db(existing_tn_ids + [non_existent_id])
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_single_source_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch an existing Source ID from the database
+        existing_source = session.query(SourceOrm).first()
+        assert existing_source is not None, "Expected at least one Source in the test database."
+        existing_source_id = existing_source.id
+
+        # Test retrieving the Source by its ID
+        fetched_source = get_single_source_from_db(existing_source_id)
+        assert fetched_source.id == existing_source_id, f"Expected Source ID {existing_source_id}."
+
+        # Test that a non-existent Source raises a DBNotFoundError
+        non_existent_id = uuid.uuid4()
+        with pytest.raises(DBNotFoundError):
+            get_single_source_from_db(non_existent_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_all_sources_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch all sources directly from the database using the ORM for comparison
+        expected_sources = session.query(SourceOrm).all()
+
+    # Use the get_all_sources_from_db function to fetch all sources
+    fetched_sources = get_all_sources_from_db()
+
+    # Verify that the number of sources fetched matches the expected number
+    assert len(fetched_sources) == len(expected_sources), (
+        f"Expected {len(expected_sources)} sources, " f"but fetched {len(fetched_sources)} sources."
+    )
+
+    # Verify that all sources fetched match the expected sources
+    for expected_source in expected_sources:
+        matched_source = next(
+            (source for source in fetched_sources if source.id == expected_source.id), None
+        )
+        assert (
+            matched_source is not None
+        ), f"Source with ID {expected_source.id} was expected but not found."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_collection_of_sources_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch some specific sources directly from the database
+        expected_sources = session.query(SourceOrm).limit(2).all()
+        expected_source_ids = [source.id for source in expected_sources]
+
+    # Use the get_collection_of_sources_from_db function to fetch the sources
+    fetched_sources = get_collection_of_sources_from_db(expected_source_ids)
+
+    # Verify that the number of sources fetched matches the expected number
+    assert len(fetched_sources) == len(expected_source_ids), (
+        f"Expected {len(expected_source_ids)} sources, "
+        f"but fetched {len(fetched_sources)} sources."
+    )
+
+    # Verify that each expected source is in the fetched sources dictionary
+    for expected_source in expected_sources:
+        assert (
+            expected_source.id in fetched_sources
+        ), f"Source with ID {expected_source.id} was expected but not found in the fetched sources."
+
+        # Verify that the fetched source matches the expected source
+        fetched_source = fetched_sources[expected_source.id]
+        assert (
+            fetched_source.external_id == expected_source.external_id
+        ), f"Source with ID {expected_source.id} has mismatched external_id."
+        assert (
+            fetched_source.name == expected_source.name
+        ), f"Source with ID {expected_source.id} has mismatched name."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_single_sink_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch a specific sink directly from the database
+        expected_sink = session.query(SinkOrm).first()
+        assert expected_sink is not None, "No sinks found in the test database."
+
+    # Use the get_single_sink_from_db function to fetch the sink
+    fetched_sink = get_single_sink_from_db(expected_sink.id)
+
+    # Verify that the fetched sink matches the expected sink
+    assert (
+        fetched_sink.id == expected_sink.id
+    ), f"Expected sink ID {expected_sink.id}, but got {fetched_sink.id}."
+    assert (
+        fetched_sink.external_id == expected_sink.external_id
+    ), f"Expected external_id '{expected_sink.external_id}', but got '{fetched_sink.external_id}'."
+    assert (
+        fetched_sink.name == expected_sink.name
+    ), f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+
+    # Test that fetching a non-existent sink raises DBNotFoundError
+    non_existent_sink_id = uuid.UUID("00000000-0000-0000-0000-000000000000")
+    with pytest.raises(DBNotFoundError, match=f"No Sink found for ID {non_existent_sink_id}"):
+        get_single_sink_from_db(non_existent_sink_id)
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_all_sinks_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch all sinks directly from the database
+        expected_sinks = session.query(SinkOrm).all()
+        assert len(expected_sinks) > 0, "No sinks found in the test database."
+
+    # Use the get_all_sinks_from_db function to fetch all sinks
+    fetched_sinks = get_all_sinks_from_db()
+
+    # Verify that the number of fetched sinks matches the expected number
+    assert len(fetched_sinks) == len(
+        expected_sinks
+    ), f"Expected {len(expected_sinks)} sinks, but got {len(fetched_sinks)}."
+
+    # Verify that each fetched sink matches the expected sinks
+    for expected_sink in expected_sinks:
+        found_sink = next((sink for sink in fetched_sinks if sink.id == expected_sink.id), None)
+        assert found_sink is not None, f"Expected sink with ID {expected_sink.id} not found."
+        assert found_sink.external_id == expected_sink.external_id, (
+            f"Expected external_id '{expected_sink.external_id}',"
+            f" but got '{found_sink.external_id}'."
+        )
+        assert (
+            found_sink.name == expected_sink.name
+        ), f"Expected name '{expected_sink.name}', but got '{found_sink.name}'."
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_get_collection_of_sinks_from_db(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        # Fetch some sinks directly from the database
+        sinks_in_db = session.query(SinkOrm).limit(2).all()
+        sink_ids = [sink.id for sink in sinks_in_db]
+        assert len(sink_ids) > 0, "No sinks found in the test database."
+
+    # Use the get_collection_of_sinks_from_db function to fetch sinks by their IDs
+    fetched_sinks = get_collection_of_sinks_from_db(sink_ids)
+
+    # Verify that the number of fetched sinks matches the expected number
+    assert len(fetched_sinks) == len(
+        sink_ids
+    ), f"Expected {len(sink_ids)} sinks, but got {len(fetched_sinks)}."
+
+    # Verify that each fetched sink matches the expected sinks
+    for expected_sink in sinks_in_db:
+        fetched_sink = fetched_sinks.get(expected_sink.id)
+        assert fetched_sink is not None, f"Expected sink with ID {expected_sink.id} not found."
+        assert fetched_sink.external_id == expected_sink.external_id, (
+            f"Expected external_id '{expected_sink.external_id}', "
+            f"but got '{fetched_sink.external_id}'."
+        )
+        assert (
+            fetched_sink.name == expected_sink.name
+        ), f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
