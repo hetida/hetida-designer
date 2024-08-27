@@ -105,7 +105,7 @@ jobs:
           cd "$GITHUB_WORKSPACE/frontend"
           
           echo "RUN PLAYWRIGHT TESTS"
-          DEBUG=pw:browser,pw:api,pw:webserver PLAYWRIGHT_TARGET_URL="http:/localhost:4200" npm run e2e-all
+          DEBUG=pw:browser,pw:api,pw:webserver PLAYWRIGHT_TARGET_URL="http://localhost:4200" npm run e2e-all
 
       - name: Cleanup
         run: |
