@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.09
+          node-version: 20.x
 
       - uses: cachix/install-nix-action@v27
         with:
