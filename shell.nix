@@ -50,7 +50,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c327dcc2d863eb7f3cc06ad630df4.tar.gz")
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/bb8bdb47b718645b2f198a6cf9dff98d967d0fd4.tar.gz")
 {
   config = {
     permittedInsecurePackages = [
