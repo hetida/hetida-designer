@@ -63,7 +63,6 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c
 # 23.05: 4ecab3273592f27479a583fb6d975d4aba3486fe
 
 let
-  nixpkgs_for_nodejs14 = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") { };
   pythonPackages = python312Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
@@ -355,7 +354,7 @@ pkgs.mkShell rec {
     postgresql
     postgresql.lib
     # Node
-    nixpkgs_for_nodejs14.nodejs-14_x
+    nodejs_20
     chromium # for tests
     #google-chrome
     # you may use google-chrome for tests with chrome instead of chromium.
