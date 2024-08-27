@@ -20,9 +20,14 @@ import { NavigationItemComponent } from '../navigation/navigation-item/navigatio
 import { PopoverTransformationComponent } from '../popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from '../protocol-viewer/protocol-viewer.component';
 import { WorkflowEditorComponent } from '../workflow-editor/workflow-editor.component';
+import { ConfigService } from '../../service/configuration/config.service';
 import { of } from 'rxjs';
 
 class AuthServiceStub {
+  public isAuthEnabled(): boolean {
+    return false;
+  }
+
   public isAuthenticated$() {
     return of(false);
   }
@@ -37,8 +42,18 @@ class AuthServiceStub {
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
+  let mockConfigService: jasmine.SpyObj<ConfigService>;
+
+  const createConfigServiceMock = () =>
+    jasmine.createSpyObj<ConfigService>('ConfigService', {
+      getConfig: of({
+        apiEndpoint: 'http://localhost:8080/api'
+      })
+    });
 
   beforeEach(waitForAsync(() => {
+    mockConfigService = createConfigServiceMock();
+
     TestBed.configureTestingModule({
       imports: [
         BasicTestModule,
@@ -54,6 +69,10 @@ describe('HomeComponent', () => {
         {
           provide: AuthService,
           useClass: AuthServiceStub
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService
         }
       ],
       declarations: [

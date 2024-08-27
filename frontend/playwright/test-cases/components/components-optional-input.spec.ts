@@ -21,7 +21,7 @@ test('Create a component with Option Input and Default Value', async ({
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickAddButtonInNavigation('Add component');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Create new component")`
+    'mat-dialog-container:has-text("Create new component")'
   );
   await hetidaDesigner.typeInInputById('name', componentName);
   await hetidaDesigner.typeInInputById('category', componentCategory);
@@ -55,6 +55,9 @@ test('Create a component with Option Input and Default Value', async ({
     componentOutputName
   );
   await hetidaDesigner.clickByTestId('save-component-io-dialog');
+
+  // Wait for the store to update
+  await page.waitForTimeout(2000);
 
   // Publish component
   await hetidaDesigner.clickIconInToolbar('Publish');
@@ -90,7 +93,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     componentCategory,
     componentName
   );
-  await page.locator('.mat-menu-panel').hover();
+  await page.locator('.mat-mdc-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Deprecate');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`

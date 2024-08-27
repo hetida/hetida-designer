@@ -5,6 +5,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { ThemeService } from './service/theme/theme.service';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'hd-root',
@@ -19,7 +20,8 @@ export class AppComponent implements OnInit {
     private readonly localStorage: LocalStorageService,
     private readonly overlayContainer: OverlayContainer,
     private readonly appElement: ElementRef<Element>,
-    private readonly themeService: ThemeService
+    private readonly themeService: ThemeService,
+    private readonly authService: AuthService
   ) {
     this.iconRegistry.addSvgIcon(
       'icon-component',
@@ -60,6 +62,8 @@ export class AppComponent implements OnInit {
         this.themeService.lastTheme === 'light-theme';
     });
 
-    this.oidcSecurityService.checkAuth().subscribe();
+    if (this.authService.isAuthEnabled()) {
+      this.oidcSecurityService.checkAuth().subscribe();
+    }
   }
 }

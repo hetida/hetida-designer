@@ -24,6 +24,10 @@ export class HomeComponent {
     return this.authService.isAuthenticated$();
   }
 
+  public get isAuthEnabled(): boolean {
+    return this.authService.isAuthEnabled();
+  }
+
   public get isLightTheme(): boolean {
     return this.themeService.isLightTheme;
   }

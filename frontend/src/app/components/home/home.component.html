@@ -28,11 +28,7 @@
   <hd-popover-transformation></hd-popover-transformation>
 
   <mat-menu #menu="matMenu">
-    <button
-      [disabled]="!(isAuthenticated$ | async)"
-      (click)="logout()"
-      mat-menu-item
-    >
+    <button [disabled]="!isAuthEnabled" (click)="logout()" mat-menu-item>
       Logout
     </button>
   </mat-menu>

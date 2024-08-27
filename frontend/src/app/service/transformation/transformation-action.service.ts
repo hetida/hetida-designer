@@ -46,6 +46,7 @@ import { Link } from 'src/app/model/link';
 import { Constant } from 'src/app/model/constant';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
+import { QueryParameterService } from '../query-parameter/query-parameter.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -60,7 +61,8 @@ export class TransformationActionService {
     private readonly transformationHttpService: TransformationHttpService,
     private readonly transformationService: TransformationService,
     private readonly tabItemService: TabItemService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly queryParameterService: QueryParameterService
   ) {}
 
   public async execute(transformation: Transformation) {
@@ -452,6 +454,7 @@ export class TransformationActionService {
       .pipe(
         switchMap(isConfirmed => {
           if (isConfirmed) {
+            this.queryParameterService.deleteQueryParameter(transformation.id);
             return this.transformationService.disableTransformation(
               transformation
             );
@@ -488,6 +491,7 @@ export class TransformationActionService {
     transformation: Transformation
   ): Observable<void> {
     this.tabItemService.deselectActiveTabItem();
+    this.queryParameterService.deleteQueryParameter(transformation.id);
     return this.transformationService.deleteTransformation(transformation.id);
   }
 

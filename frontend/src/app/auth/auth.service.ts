@@ -21,6 +21,10 @@ export class AuthService {
     });
   }
 
+  public isAuthEnabled(): boolean {
+    return this.authEnabled;
+  }
+
   /**
    * Returns true once the user is logged in.
    */
