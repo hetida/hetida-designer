@@ -1,239 +1,141 @@
-## Structure Package
+### Structure Service Package
 
-The structure package provides a set of tools and services for managing hierarchical data structures. It includes utilities for interacting with databases, managing data entities like ThingNodes, Sources, and Sinks, and ensuring the integrity and consistency of these entities within the system.
+The **Structure Service Package** provides functionality for managing and organizing hierarchical data structures within a system. It is useful when dealing with complex data models, such as those found in IoT systems like water management or financial portfolios. The Structure Service Package helps you create a structured representation of these systems, allowing for organized data flow and management that is aligned with the underlying data model. The package interacts with the Virtual Structure Adapter to ensure that data is categorized and processed according to the specific business logic defined by the user.
 
-## Components
+#### Purpose and Use
 
-### `structure_service_dbmodels.py`
+The purpose of the Structure Service Package is to enable users to define, manage, and interact with hierarchical structures in a way that reflects both real-world and abstract systems. For example, this package can be used to represent a wide range of complex systems, including but not limited to:
 
-The `structure_service_dbmodels.py` module defines the ORM (Object-Relational Mapping) models for the entities managed by the application, like ThingNodes, Sources, Sinks, and ElementTypes. These ORM models are used by SQLAlchemy to map Python objects to database records, allowing for smooth interaction with the underlying database.
+- **Water Treatment Systems**: Users can model the structure of water treatment plants, storage tanks, and associated data flows such as energy consumption monitoring and anomaly detection.
 
-### `models.py`
+- **Financial Portfolios**: It can be used to organize and manage a hierarchical structure of financial assets, where portfolios contain different sectors, and sectors contain individual stocks, each with associated data sources such as market data and analytical outputs.
 
-The `models.py` module defines Pydantic models that represent the data structures used within the application. These models are used to ensure that data remains consistent and valid as it moves through the application. Pydantic models are especially useful for structuring and validating data, both internally within the application logic and when interacting with external APIs.
+- **Computer Architectures**: The package can represent the hierarchical structure of a computer system, detailing components such as processors, memory units, and storage devices, along with their performance metrics and monitoring data.
 
-The `CompleteStructure` class in the `models.py` module encapsulates the entire hierarchical data structure, including all ThingNodes, Sources, Sinks, and ElementTypes. Its primary role is to provide a unified container that allows for comprehensive management of the hierarchical data. By maintaining consistent relationships between entities such as ThingNodes and their associated Sources and Sinks, `CompleteStructure` ensures data integrity throughout the system. Additionally, it simplifies operations involving multiple entities by offering a single interface for interacting with the entire structure, making it an essential tool for efficiently managing and manipulating the hierarchical data model within the application.
-
-
-### `orm_service.py`
-
-The `orm_service.py` module contains functions for direct database interactions using SQLAlchemy ORM models. These functions handle CRUD (Create, Read, Update, Delete) operations for entities such as ThingNodes, Sources, Sinks, and ElementTypes. Compared to `structure_service.py`, this module provides lower-level operations, which are useful for more detailed control over database actions.
-
-Some of the main features include:
-
-- Retrieving all entities of a specific type (e.g., all ThingNodes, Sources, or Sinks) from the database.
-- Fetching single entities like ThingNodes, Sources, or Sinks by their unique identifiers (UUIDs).
-- Performing bulk updates or inserts of structures loaded from external JSON files into the database.
-- Deleting the entire structure from the database, effectively clearing all related records.
-- Checking if the database is empty, ensuring there are no residual records before new data is inserted.
+- **File Systems**: Users can model a file system hierarchy, including directories, subdirectories, and files, with data sources representing file contents and data sinks representing backups or version control output.
 
 
-### `structure_service.py`
+This hierarchical structure is not just a static model, but a dynamic one that can be updated, extended, or modified as the system evolves. The Structure Service Package ensures that all parts of this hierarchy are consistent and aligned with the business logic, providing a clear and organized view of the entire system.
 
-The `structure_service.py` module provides a simplified interface for interacting with the database, making it accessible for other applications. While it wraps around the more detailed operations found in the `orm_service.py` module, it abstracts away the underlying complexity. This allows the module to offer a clean and straightforward interface for tasks such as managing hierarchical structures, updating data, and verifying the state of the database, all while keeping the complexity hidden from the user.
+### Key Concepts and Their Relevance
 
-Some of the main features include:
-- Retrieving child nodes, sources, and sinks that are associated with a specific parent node.
-- Fetching single entities like ThingNodes, Sources, or Sinks from the database.
-- Checking if the database is empty.
-- Deleting the entire structure from the database.
-- Updating the structure in the database with new or modified data.
+In order to effectively use the Structure Service Package to model complex systems, it is important to understand the key concepts:
+
+- **ThingNode**: Represents individual elements within your hierarchical structure, such as a water treatment plant or a storage tank in a waterworks system. ThingNodes are the building blocks of your hierarchy and can have parent-child relationships, helping you create a clear, nested structure of your system.
+
+- **Source**: Represents data inputs in your system, such as sensor data from a pump in a waterworks facility. Sources are linked to ThingNodes and provide real-time or historical data that feeds into the system for analysis or monitoring.
+
+- **Sink**: Represents outputs or results within your system, such as calculated anomaly scores based on energy consumption data. Sinks are also linked to ThingNodes and are the endpoints where processed data is stored or utilized.
+
+- **ElementType**: Defines the type of a ThingNode, such as "Plant" or "Storage Tank," and encapsulates its characteristics. This ensures that each node behaves according to its role within the system.
+
+- **CompleteStructure**: Encapsulates the entire hierarchical data model, including all ThingNodes, Sources, Sinks, and ElementTypes. This concept ensures that the system's structure is managed as a unified whole, keeping all parts of the hierarchy in sync.
+
 
 ### Integration with the Virtual Structure Adapter
 
-The `structure_service.py` and `orm_service.py` modules manage the hierarchical data structure used by the [Virtual Structure Adapter](adapter_system/virtual_structure_adapter.md). They handle database operations like creating, reading, updating, and deleting elements. These modules keep the database data aligned with the requirements of the adapter. The `CompleteStructure` class is used to represent the entire hierarchy, allowing the adapter to work with the most recent data from the database.
+The Structure Service Package is closely integrated with the Virtual Structure Adapter, which overlays business logic onto the data managed by the Structure Service Package. The adapter relies on the hierarchical structures defined within the Structure Service Package to translate real-world or abstract systems into a conceptual model for advanced data processing.
 
-## Glossary of Classes and Functions
+For detailed information on how the Virtual Structure Adapter works and how it applies business logic to these structures, refer to the [Virtual Structure Adapter Documentation](adapter_system/virtual_structure_adapter.md).
 
-### Classes
+### Practical Example: Waterworks System
 
-- **`ThingNode`**: Represents a node in the hierarchical structure. It can have child nodes, and it might be linked with one or more Sources and Sinks.
-- **`Source`**: Represents a data source within the system. Sources are linked with ThingNodes and provide data to the system.
-- **`Sink`**: Represents a data sink within the system. Sinks are linked with ThingNodes and consume data from the system.
-- **`ElementType`**: Represents the type of a ThingNode, defining its characteristics and behavior within the hierarchy.
-- **`CompleteStructure`**: Encapsulates the entire hierarchical data structure, including all ThingNodes, Sources, Sinks, and ElementTypes. It ensures consistent relationships between these entities and provides a unified interface for managing and manipulating the entire structure as a single entity.
+To illustrate the application of the Structure Service Package in a real-world scenario, consider a waterworks system. The system includes various nodes such as plants and storage tanks, each with associated data sources and sinks. The Structure Service Package manages this underlying data structure, ensuring that each facility’s data is accurately linked and organized.
 
-### Key Functions in `orm_service.py`
+Below is an example of how such a system might be modeled using the Structure Service Package:
 
-- **`fetch_all_element_types(session: SQLAlchemySession)`**: Fetches all ElementTypes from the database.
+#### JSON Structure Example
 
-- **`fetch_all_sinks(session: SQLAlchemySession)`**: Fetches all Sinks from the database.
+The hierarchical structure of the waterworks system can be represented in a JSON format, where each entity (ThingNode, Source, Sink, etc.) is clearly defined and connected within the overall hierarchy. This structure can be imported into the system to automatically set up the necessary data model.
 
-- **`fetch_all_sources(session: SQLAlchemySession)`**: Fetches all Sources from the database.
-
-- **`fetch_all_thing_nodes(session: SQLAlchemySession)`**: Fetches all ThingNodes from the database.
-
-- **`update_structure_from_file(file_path: str)`**: Loads a structure from a JSON file and updates the database with it.
-
-- **`orm_delete_structure(session: SQLAlchemySession)`**: Deletes all records from the database, effectively clearing the entire structure.
-
-- **`orm_is_database_empty()`**: Checks if the database is empty.
-
-### Key Functions in `structure_service.py`
-
-- **`get_children(parent_id: UUID | None)`**: Retrieves the child nodes, sources, and sinks associated with a given parent node. If `parent_id` is `None`, it returns the root nodes.
-  
-- **`get_single_thingnode_from_db(tn_id: UUID)`**: Fetches a single ThingNode from the database by its UUID. Raises an exception if the node is not found.
-
-- **`get_collection_of_thingnodes_from_db(tn_ids: list[UUID])`**: Retrieves a collection of ThingNodes from the database, returned as a dictionary keyed by their UUIDs.
-
-- **`get_single_source_from_db(src_id: UUID)`**: Fetches a single Source from the database by its UUID. Raises an exception if the source is not found.
-
-- **`get_all_sources_from_db()`**: Fetches all Sources from the database.
-
-- **`get_collection_of_sources_from_db(src_ids: list[UUID])`**: Retrieves a collection of Sources from the database, returned as a dictionary keyed by their UUIDs.
-
-- **`get_single_sink_from_db(sink_id: UUID)`**: Fetches a single Sink from the database by its UUID. Raises an exception if the sink is not found.
-
-- **`get_all_sinks_from_db()`**: Fetches all Sinks from the database.
-
-- **`get_collection_of_sinks_from_db(sink_ids: list[UUID])`**: Retrieves a collection of Sinks from the database, returned as a dictionary keyed by their UUIDs.
-
-- **`is_database_empty()`**: Checks if the database is empty.
-
-- **`delete_structure()`**: Deletes the entire structure from the database.
-
-- **`update_structure(complete_structure: CompleteStructure)`**: Updates or inserts the given complete structure into the database.
-
-## Example JSON Structure for a Waterworks System
-
-To provide a more concrete understanding of how the structure package is used in a real-world scenario, below is an example of a JSON configuration for a waterworks system. This example illustrates how the different entities such as ThingNodes, Sources, and Sinks are structured and connected within the hierarchical data model. The structure represents a waterworks facility with various nodes, including plants and storage tanks, and the associated data sources and sinks that manage and monitor energy consumption and anomaly detection.
-
-**Note:** The JSON configuration contains German-language entries, reflecting terms commonly used in the context of waterworks and their operations.
-
-This JSON configuration provides a comprehensive example of how to model and manage a complex IoT-based system like a waterworks within the structure package.
-
-You can find this example in the file [`db_test_structure.json`](../runtime/tests/structure/data/db_test_structure.json).
+**Example JSON Structure for a Waterworks System:**
 
 ```json
 {
     "element_types": [
         {
-            "external_id": "Wasserwerk_Typ",
+            "external_id": "Waterworks_Type",
             "stakeholder_key": "GW",
-            "name": "Wasserwerk",
-            "description": "Elementtyp für Wasserwerke"
+            "name": "Waterworks",
+            "description": "Type element for waterworks facilities"
         },
         {
-            "external_id": "Anlage_Typ",
+            "external_id": "Plant_Type",
             "stakeholder_key": "GW",
-            "name": "Anlage",
-            "description": "Elementtyp für Anlagen"
+            "name": "Plant",
+            "description": "Type element for plants"
         },
         {
-            "external_id": "Hochbehaelter_Typ",
+            "external_id": "StorageTank_Type",
             "stakeholder_key": "GW",
-            "name": "Hochbehälter",
-            "description": "Elementtyp für Hochbehälter"
+            "name": "Storage Tank",
+            "description": "Type element for storage tanks"
         }
     ],
     "thing_nodes": [
         {
-            "external_id": "Wasserwerk1",
+            "external_id": "Waterworks1",
             "stakeholder_key": "GW",
-            "name": "Wasserwerk 1",
-            "description": "Root Node für das Wasserwerk 1",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
             "parent_external_node_id": null,
-            "element_type_external_id": "Wasserwerk_Typ",
+            "element_type_external_id": "Waterworks_Type",
             "meta_data": {
-                "location": "Hauptstandort"
+                "location": "Main Site"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage1",
+            "external_id": "Waterworks1_Plant1",
             "stakeholder_key": "GW",
-            "name": "Anlage 1",
-            "description": "Erste Anlage",
-            "parent_external_node_id": "Wasserwerk1",
-            "element_type_external_id": "Anlage_Typ",
+            "name": "Plant 1",
+            "description": "First plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
             "meta_data": {
-                "location": "Nord"
+                "location": "North"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage2",
+            "external_id": "Waterworks1_Plant2",
             "stakeholder_key": "GW",
-            "name": "Anlage 2",
-            "description": "Zweite Anlage",
-            "parent_external_node_id": "Wasserwerk1",
-            "element_type_external_id": "Anlage_Typ",
+            "name": "Plant 2",
+            "description": "Second plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
             "meta_data": {
-                "location": "Süd"
+                "location": "South"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage1_Hochbehaelter1",
+            "external_id": "Waterworks1_Plant1_StorageTank1",
             "stakeholder_key": "GW",
-            "name": "Hochbehälter 1 Anlage 1",
-            "description": "Erster Hochbehälter in Anlage 1",
-            "parent_external_node_id": "Wasserwerk1_Anlage1",
-            "element_type_external_id": "Hochbehaelter_Typ",
+            "name": "Storage Tank 1, Plant 1",
+            "description": "First storage tank in Plant 1",
+            "parent_external_node_id": "Waterworks1_Plant1",
+            "element_type_external_id": "StorageTank_Type",
             "meta_data": {
                 "capacity": "5000",
                 "capacity_unit": "m³",
-                "description": "Wasserspeicherungskapazität für Hochbehälter 1"
-            }
-        },
-        {
-            "external_id": "Wasserwerk1_Anlage1_Hochbehaelter2",
-            "stakeholder_key": "GW",
-            "name": "Hochbehälter 2 Anlage 1",
-            "description": "Zweiter Hochbehälter in Anlage 1",
-            "parent_external_node_id": "Wasserwerk1_Anlage1",
-            "element_type_external_id": "Hochbehaelter_Typ",
-            "meta_data": {
-                "capacity": "6000",
-                "capacity_unit": "m³",
-                "description": "Wasserspeicherungskapazität für Hochbehälter 2"
-            }
-        },
-        {
-            "external_id": "Wasserwerk1_Anlage2_Hochbehaelter1",
-            "stakeholder_key": "GW",
-            "name": "Hochbehälter 1 Anlage 2",
-            "description": "Erster Hochbehälter in Anlage 2",
-            "parent_external_node_id": "Wasserwerk1_Anlage2",
-            "element_type_external_id": "Hochbehaelter_Typ",
-            "meta_data": {
-                "capacity": "5500",
-                "capacity_unit": "m³",
-                "description": "Wasserspeicherungskapazität für Hochbehälter 1"
-            }
-        },
-        {
-            "external_id": "Wasserwerk1_Anlage2_Hochbehaelter2",
-            "stakeholder_key": "GW",
-            "name": "Hochbehälter 2 Anlage 2",
-            "description": "Zweiter Hochbehälter in Anlage 2",
-            "parent_external_node_id": "Wasserwerk1_Anlage2",
-            "element_type_external_id": "Hochbehaelter_Typ",
-            "meta_data": {
-                "capacity": "7000",
-                "capacity_unit": "m³",
-                "description": "Wasserspeicherungskapazität für Hochbehälter 2"
+                "description": "Water storage capacity for Storage Tank 1"
             }
         }
     ],
     "sources": [
         {
-            "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "external_id": "EnergyUsage_PumpSystem_StorageTank",
             "stakeholder_key": "GW",
-            "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+            "name": "Energy usage of the pump system in Storage Tank",
             "type": "multitsframe",
             "adapter_key": "sql-adapter",
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010001": {
                     "unit": "kW/h",
-                    "description": "Energieverbrauchsdaten für eine Einzelpumpe"
-                },
-                "1010002": {
-                    "unit": "kW/h",
-                    "description": "Energieverbrauchsdaten für eine Einzelpumpe"
+                    "description": "Energy consumption data for a single pump"
                 }
             },
             "preset_filters": {
-                "metrics": "1010001, 1010002"
+                "metrics": "1010001"
             },
             "passthrough_filters": [
                 {
@@ -248,96 +150,26 @@ You can find this example in the file [`db_test_structure.json`](../runtime/test
                 }
             ],
             "thing_node_external_ids": [
-                "Wasserwerk1_Anlage1_Hochbehaelter1",
-                "Wasserwerk1_Anlage2_Hochbehaelter2"
-            ]
-        },
-        {
-            "external_id": "Energieverbrauch_Einzelpumpe_Hochbehaelter",
-            "stakeholder_key": "GW",
-            "name": "Energieverbrauch einer Einzelpumpe in Hochbehälter",
-            "type": "multitsframe",
-            "adapter_key": "sql-adapter",
-            "source_id": "improvt_timescale_db/ts_table/ts_values",
-            "meta_data": {
-                "1010003": {
-                    "unit": "kW/h",
-                    "description": "Energieverbrauchsdaten für eine Einzelpumpe"
-                }
-            },
-            "preset_filters": {
-                "metrics": "1010003"
-            },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
-            "thing_node_external_ids": [
-                "Wasserwerk1_Anlage1_Hochbehaelter2",
-                "Wasserwerk1_Anlage2_Hochbehaelter1"
-            ]
-        },
-        {
-            "external_id": "Energieverbrauch_Wasserwerk1",
-            "stakeholder_key": "GW",
-            "name": "Energieverbrauch des Wasserwerks",
-            "type": "multitsframe",
-            "adapter_key": "sql-adapter",
-            "source_id": "improvt_timescale_db/ts_table/ts_values",
-            "meta_data": {
-                "1010004": {
-                    "unit": "kW/h",
-                    "description": "Energieverbrauchsdaten für das gesamte Wasserwerk"
-                }
-            },
-            "preset_filters": {
-                "metrics": "1010004"
-            },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
-            "thing_node_external_ids": [
-                "Wasserwerk1"
+                "Waterworks1_Plant1_StorageTank1"
             ]
         }
     ],
     "sinks": [
         {
-            "external_id": "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "external_id": "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
             "stakeholder_key": "GW",
-            "name": "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter",
+            "name": "Anomaly Score for the energy usage of the pump system in Storage Tank",
             "type": "multitsframe",
             "adapter_key": "sql-adapter",
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010001": {
-                    "description": "Anomaly Score für eine Einzelpumpe",
-                    "calculation_details": "Window size: 4h, Timestamp location: center"
-                },
-                "10010002": {
-                    "description": "Anomaly Score für eine Einzelpumpe",
+                    "description": "Anomaly score for a single pump",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
             },
             "preset_filters": {
-                "metrics": "10010001, 10010002"
+                "metrics": "10010001"
             },
             "passthrough_filters": [
                 {
@@ -352,74 +184,31 @@ You can find this example in the file [`db_test_structure.json`](../runtime/test
                 }
             ],
             "thing_node_external_ids": [
-                "Wasserwerk1_Anlage1_Hochbehaelter1",
-                "Wasserwerk1_Anlage1_Hochbehaelter2"
-            ]
-        },
-        {
-            "external_id": "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
-            "stakeholder_key": "GW",
-            "name": "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter",
-            "type": "multitsframe",
-            "adapter_key": "sql-adapter",
-            "sink_id": "improvt_timescale_db/ts_table/ts_values",
-            "meta_data": {
-                "10010003": {
-                    "description": "Anomaly Score für eine Einzelpumpe",
-                    "calculation_details": "Window size: 4h, Timestamp location: center"
-                }
-            },
-            "preset_filters": {
-                "metrics": "10010003"
-            },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
-            "thing_node_external_ids": [
-                "Wasserwerk1_Anlage2_Hochbehaelter2",
-                "Wasserwerk1_Anlage2_Hochbehaelter1"
-            ]
-        },
-        {
-            "external_id": "Anomaly_Score_Energieverbrauch_Wasserwerk1",
-            "stakeholder_key": "GW",
-            "name": "Anomaly Score für den Energieverbrauch des Wasserwerks",
-            "type": "multitsframe",
-            "adapter_key": "sql-adapter",
-            "sink_id": "improvt_timescale_db/ts_table/ts_values",
-            "meta_data": {
-                "10010004": {
-                    "description": "Anomaly Score für das gesamte Wasserwerk",
-                    "calculation_details": "Window size: 4h, Timestamp location: center"
-                }
-            },
-            "preset_filters": {
-                "metrics": "10010004"
-            },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
-            "thing_node_external_ids": [
-                "Wasserwerk1"
+                "Waterworks1_Plant1_StorageTank1"
             ]
         }
     ]
 }
+```
+
+
+### Configuration
+
+To configure the hierarchical structures managed by the Structure Service Package, you can utilize JSON files that define the layout of ThingNodes, Sources, Sinks, and ElementTypes. These JSON files can be loaded into the system to create or update the structure. The Virtual Structure Adapter can then organizes and categorizes the data flow, ensuring that data is processed according to the hierarchy defined by the user.
+
+Key configuration options include:
+
+- **JSON Structure Files**: These files define the hierarchy of ThingNodes, their relationships, and the associated data sources and sinks. By loading a JSON file, you can set up or modify the structure as needed.
+
+- **Environment Variables**: The system may use environment variables to control how structures are prepopulated or updated at startup, particularly when integrating with the [Virtual Structure Adapter](adapter_system/virtual_structure_adapter.md).
+
+### Technical Information
+
+The Structure Service Package integrates tightly with the Virtual Structure Adapter to manage and maintain hierarchical data structures within a database. The technical components ensure that the database accurately reflects the current structure and supports the necessary operations, such as creating, querying, updating, and deleting data.
+
+- **Database Interaction**: The Structure Service Package uses SQLAlchemy ORM models to map Python objects to database records. This allows for seamless interaction with the underlying database, ensuring that data structures are accurately represented and managed.
+
+- **Data Integrity**: The Structure Service Package ensures that all relationships between ThingNodes, Sources, Sinks, and ElementTypes are consistent. This is important for maintaining the integrity of the data model as it evolves.
+
+- **Updating Structures**: The package allows for updating existing structures by adding new elements or modifying existing ones. However, elements not present in a new structure will not be deleted unless the entire structure is removed and reinserted.
+
