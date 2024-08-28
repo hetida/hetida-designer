@@ -1,0 +1,132 @@
+{
+    "element_types": [
+        {
+            "external_id": "Wasserwerk_Typ",
+            "stakeholder_key": "GW",
+            "name": "Wasserwerk",
+            "description": "Elementtyp für Wasserwerke"
+        },
+        {
+            "external_id": "Anlage_Typ",
+            "stakeholder_key": "GW",
+            "name": "Anlage",
+            "description": "Elementtyp für Anlagen"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Wasserwerk1",
+            "stakeholder_key": "GW",
+            "name": "Wasserwerk 1",
+            "description": "Root Node für das Wasserwerk 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Wasserwerk_Typ",
+            "meta_data": {
+                "location": "Hauptstandort"
+            }
+        },
+        {
+            "external_id": "Wasserwerk1_Anlage1",
+            "stakeholder_key": "GW",
+            "name": "Anlage 1",
+            "description": "Erste Anlage",
+            "parent_external_node_id": "Wasserwerk1",
+            "element_type_external_id": "Anlage_Typ",
+            "meta_data": {
+                "location": "Nord"
+            }
+        },
+        {
+            "external_id": "Wasserwerk1_Anlage2",
+            "stakeholder_key": "GW",
+            "name": "Anlage 2",
+            "description": "Zweite Anlage",
+            "parent_external_node_id": "Wasserwerk1",
+            "element_type_external_id": "Anlage_Typ",
+            "meta_data": {
+                "location": "Süd"
+            }
+        },
+        {
+            "external_id": "Wasserwerk1_Anlage1_Hochbehaelter1",
+            "stakeholder_key": "GW",
+            "name": "Hochbehälter 1 Anlage 1",
+            "description": "Erster Hochbehälter in Anlage 1",
+            "parent_external_node_id": "Wasserwerk1_Anlage1",
+            "element_type_external_id": "Hochbehaelter_Typ",
+            "meta_data": {
+                "capacity": "5000",
+                "capacity_unit": "m³",
+                "description": "Wasserspeicherungskapazität für Hochbehälter 1"
+            }
+        }
+    ],
+    "sources": [
+        {
+            "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "stakeholder_key": "GW",
+            "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010001": {
+                    "unit": "kW/h",
+                    "description": "Energieverbrauchsdaten für eine Einzelpumpe"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010001"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Wasserwerk1_Anlage1_Hochbehaelter1"
+            ]
+        }
+    ],
+    "sinks": [
+        {
+            "external_id": "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "stakeholder_key": "GW",
+            "name": "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "10010001": {
+                    "description": "Anomaly Score für eine Einzelpumpe",
+                    "calculation_details": "Window size: 4h, Timestamp location: center"
+                }
+            },
+            "preset_filters": {
+                "metrics": "10010001"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Wasserwerk1_Anlage1_Hochbehaelter1"
+            ]
+        }
+    ]
+}

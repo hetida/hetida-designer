@@ -551,6 +551,59 @@ def test_update_structure_from_file():
         )
 
 
+@pytest.mark.usefixtures("_db_test_structure")
+def test_update_structure_no_elements_deleted():
+    # This test ensures that no elements are deleted when updating the structure
+    # with a new JSON file that omits some elements. It verifies that the total number of elements
+    # remains unchanged and that specific elements from the original structure are still present.
+
+    # Define paths to the JSON files
+    old_file_path = "tests/structure/data/db_test_structure.json"
+    new_file_path = "tests/structure/data/db_test_incomplete_structure.json"
+
+    # Load initial structure from JSON file
+    initial_structure: CompleteStructure = load_structure_from_json_file(old_file_path)
+
+    # Load updated structure from new JSON file
+    updated_structure: CompleteStructure = load_structure_from_json_file(new_file_path)
+
+    # Update the structure in the database with new structure
+    orm_update_structure(updated_structure)
+
+    # Verify structure after update
+    with get_session()() as session:
+        # Check the number of elements after update
+        assert session.query(ElementTypeOrm).count() == len(initial_structure.element_types)
+        assert session.query(ThingNodeOrm).count() == len(initial_structure.thing_nodes)
+        assert session.query(SourceOrm).count() == len(initial_structure.sources)
+        assert session.query(SinkOrm).count() == len(initial_structure.sinks)
+
+        # Verify specific elements from the initial structure are still present
+        # Element Types
+        for element_type in initial_structure.element_types:
+            assert (
+                session.query(ElementTypeOrm)
+                .filter_by(external_id=element_type.external_id)
+                .count()
+                == 1
+            )
+
+        # Thing Nodes
+        for thing_node in initial_structure.thing_nodes:
+            assert (
+                session.query(ThingNodeOrm).filter_by(external_id=thing_node.external_id).count()
+                == 1
+            )
+
+        # Sources
+        for source in initial_structure.sources:
+            assert session.query(SourceOrm).filter_by(external_id=source.external_id).count() == 1
+
+        # Sinks
+        for sink in initial_structure.sinks:
+            assert session.query(SinkOrm).filter_by(external_id=sink.external_id).count() == 1
+
+
 @pytest.mark.usefixtures("_db_empty_database")
 def test_is_database_empty_when_empty(mocked_clean_test_db_session):
     assert orm_is_database_empty(), "Database should be empty but is not."
