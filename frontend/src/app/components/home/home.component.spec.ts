@@ -4,7 +4,7 @@ import { BasicTestModule } from 'src/app/basic-test.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { StoreModule } from '@ngrx/store';
 import { AuthService } from 'src/app/auth/auth.service';
@@ -47,7 +47,7 @@ describe('HomeComponent', () => {
   const createConfigServiceMock = () =>
     jasmine.createSpyObj<ConfigService>('ConfigService', {
       getConfig: of({
-        apiEndpoint: 'http://localhost:8080/api'
+        apiEndpoint: '/api'
       })
     });
 
@@ -62,7 +62,7 @@ describe('HomeComponent', () => {
         NgHetidaFlowchartModule,
         MonacoEditorModule,
         StoreModule.forRoot(appReducers),
-        HttpClientModule,
+        HttpClientTestingModule,
         RouterTestingModule
       ],
       providers: [
