@@ -283,7 +283,7 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
 
 def test_load_structure_from_invalid_json_file():
     # Use a non-existent file path to simulate a failure in loading JSON
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         load_structure_from_json_file("non_existent_file.json")
 
 
