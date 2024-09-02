@@ -1,12 +1,14 @@
 ### Virtual Structure Adapter
 
-The built-in Virtual Structure Adapter enables users to create flexible, abstract hierarchical structures that apply specific business logic to their data. Unlike other adapters that directly handle the in- and egestion of data, the Virtual Structure Adapter serves as a conceptual overlay. It imprints a business hierarchy or structure onto the sources and sinks managed by other adapters, which are responsible for the actual data processing.
+The built-in Virtual Structure Adapter enables users to create flexible, abstract hierarchical structures that apply domain-specific logic to their data. Unlike other adapters that directly handle the in- and egestion of data, the Virtual Structure Adapter serves as a conceptual overlay. It imprints a domain-specific business hierarchy or structure onto the sources and sinks managed by other adapters, which are responsible for the actual data processing.
 
-This means that while the Virtual Structure Adapter does not interact with the data directly, it organizes and categorizes the data flow based on the business logic defined by the user. For instance, you can use this adapter to impose a structure that represents the layout of a stock portfolio, an IoT system in water management, or any other business-relevant model. This structure is then mapped onto the actual data-handling adapters, ensuring that the data is processed according to the defined business perspective.
+This means that while the Virtual Structure Adapter does not interact with the data directly, it organizes and categorizes the data flow based on the domain-specific requirements defined by the user. For instance, you can use this adapter to impose a structure that represents the layout of a stock portfolio, an IoT system in water management, or any other business-relevant model. This structure is then mapped onto the actual data-handling adapters, ensuring that the data is processed according to the defined business perspective.
+
+The adapter relies on the [Structure Service Package](../structure.md), which provides the necessary interface for performing CRUD (Create, Read, Update, Delete) operations on the hierarchical structures within the database. 
 
 ## Key Concepts
 
-The Virtual Structure Adapter relies on a set of defined entities, such as ThingNodes, Sources, Sinks, and ElementTypes, which collectively form the basis of the hierarchical structures that the adapter manages. These concepts help ensure that data is organized, categorized, and processed according to the business logic defined by the user.
+The Virtual Structure Adapter relies on a set of defined entities, such as ThingNodes, Sources, Sinks, and ElementTypes, which collectively form the basis of the hierarchical structures that the adapter manages. These concepts help ensure that data is organized, categorized, and processed according to the domain-specific logic defined by the user.
 
 ## Glossary of Concepts
 
