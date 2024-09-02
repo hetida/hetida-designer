@@ -1,21 +1,21 @@
 ### Structure Service Package
 
-The **Structure Service Package** provides functionality for managing and organizing hierarchical data structures within a system. It is useful when dealing with complex data models, such as those found in IoT systems like water management or financial portfolios. The Structure Service Package helps you create a structured representation of these systems, allowing for organized data flow and management that is aligned with the underlying data model. The package interacts with the Virtual Structure Adapter to ensure that data is categorized and processed according to the specific business logic defined by the user.
+The **Structure Service Package** provides functionality for managing and organizing hierarchical data structures within a system. It is useful when dealing with complex data models, such as those found in IoT systems like water management or financial portfolios. The Structure Service Package helps you create a structured representation of these systems, allowing for organized data flow and management that is aligned with the underlying data model. The package interacts with the [Virtual Structure Adapter](adapter_system/virtual_structure_adapter.md) to ensure that data is categorized and processed according to the domain-specific logic defined by the user.
 
 #### Purpose and Use
 
-The purpose of the Structure Service Package is to enable users to define, manage, and interact with hierarchical structures in a way that reflects both real-world and abstract systems. For example, this package can be used to represent a wide range of complex systems, including but not limited to:
+The purpose of the Structure Service Package is to enable users to define, manage, and interact with hierarchical structures in a way that reflects both real-world and abstract systems. For example, this package can be used to represent the domain-specific logic of a wide range of complex systems, including but not limited to::
 
 - **Water Treatment Systems**: Users can model the structure of water treatment plants, storage tanks, and associated data flows such as energy consumption monitoring and anomaly detection.
 
 - **Financial Portfolios**: It can be used to organize and manage a hierarchical structure of financial assets, where portfolios contain different sectors, and sectors contain individual stocks, each with associated data sources such as market data and analytical outputs.
 
-- **Computer Architectures**: The package can represent the hierarchical structure of a computer system, detailing components such as processors, memory units, and storage devices, along with their performance metrics and monitoring data.
+- **Supply Chain Networks**: The package can model the hierarchical structure of a supply chain, detailing various levels such as suppliers, manufacturers, distribution centers, and retailers, with associated data flows like inventory levels, shipment tracking, and demand forecasting.
 
 - **File Systems**: Users can model a file system hierarchy, including directories, subdirectories, and files, with data sources representing file contents and data sinks representing backups or version control output.
 
 
-This hierarchical structure is not just a static model, but a dynamic one that can be updated, extended, or modified as the system evolves. The Structure Service Package ensures that all parts of this hierarchy are consistent and aligned with the business logic, providing a clear and organized view of the entire system.
+This hierarchical structure is not just a static model, but a dynamic one that can be updated, extended, or modified as the system evolves. The Structure Service Package ensures that all parts of this hierarchy are consistent and aligned with the domain-specific requirements, providing a clear and organized view of the entire system.
 
 ### Key Concepts and Their Relevance
 
@@ -31,12 +31,17 @@ In order to effectively use the Structure Service Package to model complex syste
 
 - **CompleteStructure**: Encapsulates the entire hierarchical data model, including all ThingNodes, Sources, Sinks, and ElementTypes. This concept ensures that the system's structure is managed as a unified whole, keeping all parts of the hierarchy in sync.
 
+The following ERM (Entity-Relationship Model) diagram provides a visual representation of how these key concepts are structured and interrelated within the Structure Service Package:
+
+![ERM](./assets/structure_service_erm.png) 
+
+This diagram illustrates the relationships between ThingNodes, Sources, Sinks, and ElementTypes, showing how they are linked within the system to ensure consistent and organized data management. The gray-highlighted fields in each entity represent attributes that must be provided in a JSON structure. These fields are required to correctly integrate the respective entity into the hierarchical data model. Non-highlighted fields are defined internally within the system and do not need to be provided in the JSON structure. The IDs are automatically generated and managed by the system.
 
 ### Integration with the Virtual Structure Adapter
 
-The Structure Service Package is closely integrated with the Virtual Structure Adapter, which overlays business logic onto the data managed by the Structure Service Package. The adapter relies on the hierarchical structures defined within the Structure Service Package to translate real-world or abstract systems into a conceptual model for advanced data processing.
+The Structure Service Package is closely integrated with the Virtual Structure Adapter, which overlays domain-specific logic onto the hierarchical data structures. While the Virtual Structure Adapter is responsible for organizing and categorizing data flows according to the domain-specific requirements defined by the user, the Structure Service Package provides the interface to the database, handling the CRUD (Create, Read, Update, Delete) operations.
 
-For detailed information on how the Virtual Structure Adapter works and how it applies business logic to these structures, refer to the [Virtual Structure Adapter Documentation](adapter_system/virtual_structure_adapter.md).
+For detailed information on how the Virtual Structure Adapter works and how it applies domain-specific logic to these structures, refer to the [Virtual Structure Adapter Documentation](adapter_system/virtual_structure_adapter.md).
 
 ### Practical Example: Waterworks System
 
@@ -206,7 +211,7 @@ Key configuration options include:
 
 The Structure Service Package integrates tightly with the Virtual Structure Adapter to manage and maintain hierarchical data structures within a database. The technical components ensure that the database accurately reflects the current structure and supports the necessary operations, such as creating, querying, updating, and deleting data.
 
-- **Database Interaction**: The Structure Service Package uses SQLAlchemy ORM models to map Python objects to database records. This allows for seamless interaction with the underlying database, ensuring that data structures are accurately represented and managed.
+- **Database Interaction**: The Structure Service Package uses SQLAlchemy ORM models to map Python objects to database records. This allows for interaction with the underlying database, ensuring that data structures are accurately represented and managed.
 
 - **Data Integrity**: The Structure Service Package ensures that all relationships between ThingNodes, Sources, Sinks, and ElementTypes are consistent. This is important for maintaining the integrity of the data model as it evolves.
 
