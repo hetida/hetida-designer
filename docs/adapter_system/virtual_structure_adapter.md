@@ -20,7 +20,90 @@ The Virtual Structure Adapter relies on a set of defined entities, such as Thing
 
 ## JSON Structure Example
 
-The hierarchical structure can be provided via a JSON file assigned to the environment variable STRUCTURE_TO_PREPOPULATE_VST_ADAPTER. Below is an example of such a JSON file, illustrating how you might use the Virtual Structure Adapter to organize an equity portfolio for a specific client.
+The hierarchical structure can be provided via a JSON file assigned to the environment variable STRUCTURE_TO_PREPOPULATE_VST_ADAPTER. The structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`. 
+
+Below is a template for the JSON file:
+
+```
+{
+    "element_types": [  // Contains element types for your data
+        {
+            "external_id": "string",  // An ID used in your organization
+            "stakeholder_key": "string",  // Some short letter combination representing your org
+            "name": "string",  // How you want to name the element type
+            "description": "string"  // Arbitrary description
+        },...
+    ],
+    "thing_nodes": [ // Contains thingnodes for your data
+        {
+            "external_id": "string",
+            "stakeholder_key": "string",
+            "name": "string",
+            "description": "string",
+            "parent_external_node_id": null or "string",  // referencing the parent of this node
+            "element_type_external_id": "string", // referencing the element_type of this node
+            "meta_data": {
+                "key": "value"
+            }
+        },...
+    ],
+    "sources": [
+        {
+            "external_id": "string",
+            "stakeholder_key": "string",
+            "name": "string",
+            "type": "string", // Representing the hetida designer datatype e.g. "timeseries(float)"
+            "adapter_key": "string", // Key of the adapter that actually handles data in- and egestion, e.g. "demo-adapter-python"
+            "source_id": "string",  // ID of the source in the target adapter
+            "ref_key": "string",  // Optional key of the referenced metadatum, only used for sources of type metadata(any)
+            "ref_id": "string",  // Optional ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if source has type metadata(any)
+            "meta_data": {
+                "key": "value"
+            },
+            "passthrough_filters": [  // Values for filters that should be modifyable be the user
+                {
+                    "name": "string",
+                    "type": "string",  // Which type the filter has, the designer defines specific types
+                    "required": bool  // Whether this filter is required for the source to work properly
+                },...
+            ]
+            "preset_filters": {"key": "value"},  // Values for filters that should not be modifyable by the user
+            "thing_node_external_ids": [  // Parent IDs of this source
+                "string1", "string2",...
+            ]
+        },...
+    ],
+    "sinks": [  // Analogous to source
+        {
+            "external_id": "string",
+            "stakeholder_key": "string",
+            "name": "string",
+            "type": "string",
+            "adapter_key": "string",
+            "sink_id": "string",
+            "ref_key": "string",
+            "ref_id": "string",
+            "meta_data": {
+                "key": "value"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "string",
+                    "type": "string",
+                    "required": bool
+                },...
+            ]
+            "preset_filters": {"key": "value"},
+            "thing_node_external_ids": [
+                "string1", "string2",...
+            ]
+        }
+    ]
+}
+```
+
+
+Additionally, an example of such a JSON file is provided below, demonstrating how the Virtual Structure Adapter can be used to organize an equity portfolio for a specific client.
 
 
 ```json
