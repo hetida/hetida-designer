@@ -53,53 +53,53 @@ def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) ->
 def test_get_children():
     with get_session()() as session, session.begin():
         # Test for root level
-        root_node = get_node_by_name(session, "Wasserwerk 1")
+        root_node = get_node_by_name(session, "Waterworks 1")
         children, sources, sinks = get_children(root_node.id)
-        verify_children(children, {"Anlage 1", "Anlage 2"}, 2)
-        verify_sources(sources, ["Energieverbrauch des Wasserwerks"], 1)
-        verify_sinks(sinks, ["Anomaly Score für den Energieverbrauch des Wasserwerks"], 1)
+        verify_children(children, {"Plant 1", "Plant 2"}, 2)
+        verify_sources(sources, ["Energy consumption of the waterworks"], 1)
+        verify_sinks(sinks, ["Anomaly Score for the energy consumption of the waterworks"], 1)
 
-        # Test for first child level under "Anlage 1"
-        parent_node = get_node_by_name(session, "Anlage 1")
+        # Test for first child level under "Plant 1"
+        parent_node = get_node_by_name(session, "Plant 1")
         children, sources, sinks = get_children(parent_node.id)
-        verify_children(children, {"Hochbehälter 1 Anlage 1", "Hochbehälter 2 Anlage 1"}, 2)
+        verify_children(children, {"Storage Tank 1, Plant 1", "Storage Tank 2, Plant 1"}, 2)
         verify_sources(sources, [], 0)
         verify_sinks(sinks, [], 0)
 
-        # Test for second child level under "Hochbehälter 1 Anlage 1"
-        parent_node = get_node_by_name(session, "Hochbehälter 1 Anlage 1")
+        # Test for second child level under "Storage Tank 1, Plant 1"
+        parent_node = get_node_by_name(session, "Storage Tank 1, Plant 1")
         children, sources, sinks = get_children(parent_node.id)
         verify_children(children, set(), 0)
-        verify_sources(sources, ["Energieverbräuche des Pumpensystems in Hochbehälter"], 1)
+        verify_sources(sources, ["Energy usage of the pump system in Storage Tank"], 1)
         verify_sinks(
-            sinks, ["Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"], 1
+            sinks, ["Anomaly Score for the energy usage of the pump system in Storage Tank"], 1
         )
 
-        # Test for second child level under "Hochbehälter 2 Anlage 1"
-        parent_node = get_node_by_name(session, "Hochbehälter 2 Anlage 1")
+        # Test for second child level under "Storage Tank 2, Plant 1"
+        parent_node = get_node_by_name(session, "Storage Tank 2, Plant 1")
         children, sources, sinks = get_children(parent_node.id)
         verify_children(children, set(), 0)
-        verify_sources(sources, ["Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1)
+        verify_sources(sources, ["Energy consumption of a single pump in Storage Tank"], 1)
         verify_sinks(
-            sinks, ["Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"], 1
+            sinks, ["Anomaly Score for the energy usage of the pump system in Storage Tank"], 1
         )
 
-        # Test for second child level under "Hochbehälter 1 Anlage 2"
-        parent_node = get_node_by_name(session, "Hochbehälter 1 Anlage 2")
+        # Test for second child level under "Storage Tank 1, Plant 2"
+        parent_node = get_node_by_name(session, "Storage Tank 1, Plant 2")
         children, sources, sinks = get_children(parent_node.id)
         verify_children(children, set(), 0)
-        verify_sources(sources, ["Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1)
+        verify_sources(sources, ["Energy consumption of a single pump in Storage Tank"], 1)
         verify_sinks(
-            sinks, ["Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1
+            sinks, ["Anomaly Score for the energy consumption of a single pump in Storage Tank"], 1
         )
 
-        # Test for second child level under "Hochbehälter 2 Anlage 2"
-        parent_node = get_node_by_name(session, "Hochbehälter 2 Anlage 2")
+        # Test for second child level under "Storage Tank 2, Plant 2"
+        parent_node = get_node_by_name(session, "Storage Tank 2, Plant 2")
         children, sources, sinks = get_children(parent_node.id)
         verify_children(children, set(), 0)
-        verify_sources(sources, ["Energieverbräuche des Pumpensystems in Hochbehälter"], 1)
+        verify_sources(sources, ["Energy usage of the pump system in Storage Tank"], 1)
         verify_sinks(
-            sinks, ["Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter"], 1
+            sinks, ["Anomaly Score for the energy consumption of a single pump in Storage Tank"], 1
         )
 
 
@@ -234,37 +234,36 @@ def test_update_structure(mocked_clean_test_db_session):
         ), "Mismatch in number of element types"
 
         # Validate that specific ThingNodes, Sources, and Sinks exist in the database
-        # Check if the 'Wasserwerk 1' ThingNode was correctly inserted
+        # Check if the 'Waterworks 1' ThingNode was correctly inserted
         # The `next` function retrieves the first matching ThingNode or returns None if not found
-        wasserwerk_node = next((tn for tn in thing_nodes if tn.name == "Wasserwerk 1"), None)
-        assert wasserwerk_node is not None, "Expected 'Wasserwerk 1' node not found"
+        waterworks_node = next((tn for tn in thing_nodes if tn.name == "Waterworks 1"), None)
+        assert waterworks_node is not None, "Expected 'Waterworks 1' node not found"
 
-        # Check if the 'Energieverbrauch einer Einzelpumpe in
-        # Hochbehälter' Source was correctly inserted
+        # Check if the 'Energy consumption of a single pump
+        # in Storage Tank' Source was correctly inserted
         # The `next` function retrieves the first matching Source or returns None if not found
         source = next(
-            (s for s in sources if s.name == "Energieverbrauch einer Einzelpumpe in Hochbehälter"),
+            (s for s in sources if s.name == "Energy consumption of a single pump in Storage Tank"),
             None,
         )
         assert (
             source is not None
-        ), "Expected source 'Energieverbrauch einer Einzelpumpe in Hochbehälter' not found"
+        ), "Expected source 'Energy consumption of a single pump in Storage Tank' not found"
 
-        # Check if the 'Anomaly Score für die Energieverbräuche des
-        # Pumpensystems in Hochbehälter' Sink was correctly inserted
+        # Check if the 'Anomaly Score for the energy usage of the pump system
+        # in Storage Tank' Sink was correctly inserted
         # The `next` function retrieves the first matching Sink or returns None if not found
         sink = next(
             (
                 s
                 for s in sinks
-                if s.name
-                == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
+                if s.name == "Anomaly Score for the energy usage of the pump system in Storage Tank"
             ),
             None,
         )
         assert sink is not None, (
-            "Expected sink 'Anomaly Score für die Energieverbräuche"
-            " des Pumpensystems in Hochbehälter' not found"
+            "Expected sink 'Anomaly Score for the energy usage"
+            " of the pump system in Storage Tank' not found"
         )
 
 
@@ -302,9 +301,9 @@ def test_get_all_thing_nodes_from_db(mocked_clean_test_db_session):
 
         # Check that specific ThingNodes exist and have expected properties
         expected_thing_nodes = [
-            {"external_id": "Wasserwerk1", "name": "Wasserwerk 1"},
-            {"external_id": "Wasserwerk1_Anlage1", "name": "Anlage 1"},
-            {"external_id": "Wasserwerk1_Anlage2", "name": "Anlage 2"},
+            {"external_id": "Waterworks1", "name": "Waterworks 1"},
+            {"external_id": "Waterworks1_Plant1", "name": "Plant 1"},
+            {"external_id": "Waterworks1_Plant2", "name": "Plant 2"},
         ]
 
         for expected_tn in expected_thing_nodes:

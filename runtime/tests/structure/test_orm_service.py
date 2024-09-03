@@ -324,7 +324,7 @@ def test_update_structure_with_new_elements():
         verify_initial_structure(session)
 
         # Load updated structure from JSON file
-        file_path = "tests/structure/data/db_updated_test_structure_eng.json"
+        file_path = "tests/structure/data/db_updated_test_structure.json"
         updated_structure = load_structure_from_json_file(file_path)
 
     # Update the structure in the database
@@ -502,7 +502,7 @@ def test_update_structure_from_file():
     # correctly inserted into the database.
 
     # Path to the JSON file containing the test structure
-    file_path = "tests/structure/data/db_test_structure_eng.json"
+    file_path = "tests/structure/data/db_test_structure.json"
 
     # Ensure the database is empty at the beginning
     with get_session()() as session:
@@ -558,8 +558,8 @@ def test_update_structure_no_elements_deleted():
     # remains unchanged and that specific elements from the original structure are still present.
 
     # Define paths to the JSON files
-    old_file_path = "tests/structure/data/db_test_structure_eng.json"
-    new_file_path = "tests/structure/data/db_test_incomplete_structure_eng.json"
+    old_file_path = "tests/structure/data/db_test_structure.json"
+    new_file_path = "tests/structure/data/db_test_incomplete_structure.json"
 
     # Load initial structure from JSON file
     initial_structure: CompleteStructure = load_structure_from_json_file(old_file_path)
@@ -691,7 +691,7 @@ def test_fill_source_sink_associations_db(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Load a complete structure from JSON for testing
         complete_structure = load_structure_from_json_file(
-            "tests/structure/data/db_test_structure_eng.json"
+            "tests/structure/data/db_test_structure.json"
         )
 
         # Add a Source with no associated ThingNodes to the structure
