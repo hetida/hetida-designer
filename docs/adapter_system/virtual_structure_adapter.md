@@ -1,26 +1,28 @@
 ### Virtual Structure Adapter
 
-The built-in Virtual Structure Adapter enables users to create flexible, abstract hierarchical structures that apply domain-specific logic to their data. Unlike other adapters that directly handle the in- and egestion of data, the Virtual Structure Adapter serves as a conceptual overlay. It imprints a domain-specific business hierarchy or structure onto the sources and sinks managed by other adapters, which are responsible for the actual data processing.
+With the built-in Virtual Structure Adapter, users can create flexible, abstract hierarchical structures that superimpose a domain-specific view onto their data. The hierarchical organization ensures a high level of discoverability within the structure. Data can be located based on domain-specific criteria by navigating through the hierarchy. Unlike other adapters that deal directly with the input and output of data, the Virtual Structure Adapter serves as a conceptual overlay. It superimposes a domain-specific hierarchy over the sources and sinks managed by other adapters. These adapters are responsible for the actual data processing.
 
-This means that while the Virtual Structure Adapter does not interact with the data directly, it organizes and categorizes the data flow based on the domain-specific requirements defined by the user. For instance, you can use this adapter to impose a structure that represents the layout of a stock portfolio, an IoT system in water management, or any other business-relevant model. This structure is then mapped onto the actual data-handling adapters, ensuring that the data is processed according to the defined business perspective.
+For example, this adapter can be used to specify a structure that represents the layout of a stock portfolio, an IoT system in the water industry, or any other domain-specific model.
 
-The adapter relies on the [Structure Service Package](../structure.md), which provides the necessary interface for performing CRUD (Create, Read, Update, Delete) operations on the hierarchical structures within the database. 
+The adapter relies on the Structure Service Package, which provides the necessary interface for performing CRUD operations on the hierarchical structures within the database. 
 
 ## Key Concepts
 
-The Virtual Structure Adapter relies on a set of defined entities, such as ThingNodes, Sources, Sinks, and ElementTypes, which collectively form the basis of the hierarchical structures that the adapter manages. These concepts help ensure that data is organized, categorized, and processed according to the domain-specific logic defined by the user.
+The Virtual Structure Adapter relies on defined entities like ThingNodes, Sources, Sinks, and ElementTypes. These entities form the hierarchical structures managed by the adapter.
 
 ## Glossary of Concepts
 
-- **`ThingNode`**: Represents a node in the hierarchical structure. It can have child nodes, and it might be linked with one or more Sources and Sinks.
-- **`Source`**: Represents a data source within the system. Sources are linked with ThingNodes and provide data to the system.
-- **`Sink`**: Represents a data sink within the system. Sinks are linked with ThingNodes and consume data from the system.
-- **`ElementType`**: Represents the type of a ThingNode, defining its characteristics and behavior within the hierarchy.
-- **`CompleteStructure`**: Encapsulates the entire hierarchical data structure, including all ThingNodes, Sources, Sinks, and ElementTypes. It ensures consistent relationships between these entities and provides a unified interface for managing and manipulating the entire structure as a single entity.
+The key concepts of the Virtual Structure Adapter are described below:
+
+- **`ThingNode`**: Represents individual node elements within a hierarchical structure, e.g. a plant, a water treatment plant or a storage tank in a waterworks. ThingNodes can have parent-child relationships that help to create a clear, searchable structure of a system. They can be connected to one or more sources and sinks.
+- **`Source`**: Represents data inputs within the system, e.g. sensor data from a pump in a waterworks plant. Sources are linked to ThingNodes and provide real-time or historical data that is fed into the system for analysis or monitoring.
+- **`Sink`**:  Represents outputs or results within your system, such as calculated anomaly values based on energy consumption data. Sinks are linked to ThingNodes and are the endpoints where processed data is stored or used.
+- **`ElementType`**: Defines the type of a ThingNode, e.g. 'Plant' or 'Storage Tank,' and encapsulates its properties and behavior within the hierarchy. This can help in conducting analyses based on specific criteria.
+- **`CompleteStructure`**: Encapsulates the entire hierarchical data model, including ThingNodes, Sources, Sinks, and ElementTypes. Ensures the structure is managed as a unified whole with synchronized components. It validates and maintains consistent relationships between entities and provides a uniform interface for managing the entire structure.
 
 ## JSON Structure Example
 
-The hierarchical structure can be provided via a JSON file assigned to the environment variable STRUCTURE_TO_PREPOPULATE_VST_ADAPTER. The structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`. 
+The hierarchical structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`. 
 
 Below is a template for the JSON file:
 
