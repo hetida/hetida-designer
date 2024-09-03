@@ -1,10 +1,8 @@
-### Virtual Structure Adapter
+# Virtual Structure Adapter
 
 With the built-in Virtual Structure Adapter, users can create flexible, abstract hierarchical structures that superimpose a domain-specific view onto their data. The hierarchical organization ensures a high level of discoverability within the structure. Data can be located based on domain-specific criteria by navigating through the hierarchy. Unlike other adapters that deal directly with the input and output of data, the Virtual Structure Adapter serves as a conceptual overlay. It superimposes a domain-specific hierarchy over the sources and sinks managed by other adapters. These adapters are responsible for the actual data processing.
 
 For example, this adapter can be used to specify a structure that represents the layout of a stock portfolio, an IoT system in the water industry, or any other domain-specific model.
-
-The adapter relies on the Structure Service Package, which provides the necessary interface for performing CRUD operations on the hierarchical structures within the database. 
 
 ## Key Concepts
 
@@ -20,7 +18,9 @@ The key concepts of the Virtual Structure Adapter are described below:
 - **`ElementType`**: Defines the type of a ThingNode, e.g. 'Plant' or 'Storage Tank,' and encapsulates its properties and behavior within the hierarchy. This can help in conducting analyses based on specific criteria.
 - **`CompleteStructure`**: Encapsulates the entire hierarchical data model, including ThingNodes, Sources, Sinks, and ElementTypes. Ensures the structure is managed as a unified whole with synchronized components. It validates and maintains consistent relationships between entities and provides a uniform interface for managing the entire structure.
 
-## JSON Structure Example
+## JSON Structure
+
+### How to provide a structure
 
 The hierarchical structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`. 
 
@@ -104,8 +104,9 @@ Below is a template for the JSON file:
 }
 ```
 
+### JSON structure example
 
-Additionally, an example of such a JSON file is provided below, demonstrating how the Virtual Structure Adapter can be used to organize an equity portfolio for a specific client.
+An example of such a JSON file is provided below, demonstrating how the Virtual Structure Adapter can be used to organize an equity portfolio for a specific client.
 
 
 ```json
@@ -277,8 +278,8 @@ There are several environment variables which can be used to configure the use o
 * `VST_ADAPTER_ACTIVE` (default `True`): Whether the adapter is active (registered in the designer application)
 * `VST_ADAPTER_SERVICE_IN_RUNTIME` (default `True`): Whether the adapter is part of the backend or the runtime
 * `PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP` (default `False`): Set to `True` if you wish to provide a structure for the adapter at designer startup
-* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): Determines whether an existing structure is completely deleted and then reinserted into the database. If this option is set to False, the existing structure can be updated by adding new elements or updating the content of existing elements based on the JSON file. However, elements that are not included in the new JSON structure will not be deleted. To fully replace the structure, it must first be deleted before reinserting the new one.
 * `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a JSON defining a structure to this variable
+* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): This option controls whether a potentially existing structure in the database is removed during startup. When set to `True` (default), the existing structure is deleted entirely before the new structure specified in `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` is inserted. If set to `False`, the existing structure is retained and updated. New elements from the provided JSON structure will be added, and existing elements will be updated. Existing elements not specified in the new JSON structure will remain unchanged. To fully replace an existing structure, it must first be deleted, before inserting the new one.
 
 ## Technical Information
 
