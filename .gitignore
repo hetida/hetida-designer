@@ -39,3 +39,4 @@ demo-adapter-python/settings/*
 .vscode/.ropeproject/objectdb
 .tmp
 .jupyter
+runtime/tests/structure/data/db_structure_020924.json
