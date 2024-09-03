@@ -1,78 +1,78 @@
 {
     "element_types": [
         {
-            "external_id": "Wasserwerk_Typ",
+            "external_id": "Waterworks_Type",
             "stakeholder_key": "GW",
-            "name": "Wasserwerk",
-            "description": "Elementtyp für Wasserwerke"
+            "name": "Waterworks",
+            "description": "Element type for waterworks"
         },
         {
-            "external_id": "Anlage_Typ",
+            "external_id": "Plant_Type",
             "stakeholder_key": "GW",
-            "name": "Anlage",
-            "description": "Elementtyp für Anlagen"
+            "name": "Plant",
+            "description": "Element type for plants"
         }
     ],
     "thing_nodes": [
         {
-            "external_id": "Wasserwerk1",
+            "external_id": "Waterworks1",
             "stakeholder_key": "GW",
-            "name": "Wasserwerk 1",
-            "description": "Root Node für das Wasserwerk 1",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
             "parent_external_node_id": null,
-            "element_type_external_id": "Wasserwerk_Typ",
+            "element_type_external_id": "Waterworks_Type",
             "meta_data": {
-                "location": "Hauptstandort"
+                "location": "Main Site"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage1",
+            "external_id": "Waterworks1_Plant1",
             "stakeholder_key": "GW",
-            "name": "Anlage 1",
-            "description": "Erste Anlage",
-            "parent_external_node_id": "Wasserwerk1",
-            "element_type_external_id": "Anlage_Typ",
+            "name": "Plant 1",
+            "description": "First plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
             "meta_data": {
-                "location": "Nord"
+                "location": "North"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage2",
+            "external_id": "Waterworks1_Plant2",
             "stakeholder_key": "GW",
-            "name": "Anlage 2",
-            "description": "Zweite Anlage",
-            "parent_external_node_id": "Wasserwerk1",
-            "element_type_external_id": "Anlage_Typ",
+            "name": "Plant 2",
+            "description": "Second plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
             "meta_data": {
-                "location": "Süd"
+                "location": "South"
             }
         },
         {
-            "external_id": "Wasserwerk1_Anlage1_Hochbehaelter1",
+            "external_id": "Waterworks1_Plant1_StorageTank1",
             "stakeholder_key": "GW",
-            "name": "Hochbehälter 1 Anlage 1",
-            "description": "Erster Hochbehälter in Anlage 1",
-            "parent_external_node_id": "Wasserwerk1_Anlage1",
-            "element_type_external_id": "Hochbehaelter_Typ",
+            "name": "Storage Tank 1, Plant 1",
+            "description": "First storage tank in Plant 1",
+            "parent_external_node_id": "Waterworks1_Plant1",
+            "element_type_external_id": "StorageTank_Type",
             "meta_data": {
                 "capacity": "5000",
                 "capacity_unit": "m³",
-                "description": "Wasserspeicherungskapazität für Hochbehälter 1"
+                "description": "Water storage capacity for Storage Tank 1"
             }
         }
     ],
     "sources": [
         {
-            "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "external_id": "EnergyUsage_PumpSystem_StorageTank",
             "stakeholder_key": "GW",
-            "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+            "name": "Energy usage of the pump system in Storage Tank",
             "type": "multitsframe",
             "adapter_key": "sql-adapter",
             "source_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "1010001": {
                     "unit": "kW/h",
-                    "description": "Energieverbrauchsdaten für eine Einzelpumpe"
+                    "description": "Energy consumption data for a single pump"
                 }
             },
             "preset_filters": {
@@ -91,21 +91,21 @@
                 }
             ],
             "thing_node_external_ids": [
-                "Wasserwerk1_Anlage1_Hochbehaelter1"
+                "Waterworks1_Plant1_StorageTank1"
             ]
         }
     ],
     "sinks": [
         {
-            "external_id": "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "external_id": "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
             "stakeholder_key": "GW",
-            "name": "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter",
+            "name": "Anomaly Score for the energy usage of the pump system in Storage Tank",
             "type": "multitsframe",
             "adapter_key": "sql-adapter",
             "sink_id": "improvt_timescale_db/ts_table/ts_values",
             "meta_data": {
                 "10010001": {
-                    "description": "Anomaly Score für eine Einzelpumpe",
+                    "description": "Anomaly score for a single pump",
                     "calculation_details": "Window size: 4h, Timestamp location: center"
                 }
             },
@@ -125,7 +125,7 @@
                 }
             ],
             "thing_node_external_ids": [
-                "Wasserwerk1_Anlage1_Hochbehaelter1"
+                "Waterworks1_Plant1_StorageTank1"
             ]
         }
     ]

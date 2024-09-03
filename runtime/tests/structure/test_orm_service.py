@@ -81,9 +81,9 @@ def test_fetch_all_element_types(mocked_clean_test_db_session):
 
         # Define the expected Element Types based on the structure in the test database
         expected_element_types = [
-            {"external_id": "Wasserwerk_Typ", "name": "Wasserwerk"},
-            {"external_id": "Anlage_Typ", "name": "Anlage"},
-            {"external_id": "Hochbehaelter_Typ", "name": "Hochbehälter"},
+            {"external_id": "Waterworks_Type", "name": "Waterworks"},
+            {"external_id": "Plant_Type", "name": "Plant"},
+            {"external_id": "StorageTank_Type", "name": "Storage Tank"},
         ]
 
         # Loop over each expected Element Type and verify that it exists in the retrieved list
@@ -114,24 +114,24 @@ def test_fetch_all_thing_nodes(mocked_clean_test_db_session):
 
         # Define the expected ThingNodes with their external_id and name
         expected_thing_nodes = [
-            {"external_id": "Wasserwerk1", "name": "Wasserwerk 1"},
-            {"external_id": "Wasserwerk1_Anlage1", "name": "Anlage 1"},
-            {"external_id": "Wasserwerk1_Anlage2", "name": "Anlage 2"},
+            {"external_id": "Waterworks1", "name": "Waterworks 1"},
+            {"external_id": "Waterworks1_Plant1", "name": "Plant 1"},
+            {"external_id": "Waterworks1_Plant2", "name": "Plant 2"},
             {
-                "external_id": "Wasserwerk1_Anlage1_Hochbehaelter1",
-                "name": "Hochbehälter 1 Anlage 1",
+                "external_id": "Waterworks1_Plant1_StorageTank1",
+                "name": "Storage Tank 1, Plant 1",
             },
             {
-                "external_id": "Wasserwerk1_Anlage1_Hochbehaelter2",
-                "name": "Hochbehälter 2 Anlage 1",
+                "external_id": "Waterworks1_Plant1_StorageTank2",
+                "name": "Storage Tank 2, Plant 1",
             },
             {
-                "external_id": "Wasserwerk1_Anlage2_Hochbehaelter1",
-                "name": "Hochbehälter 1 Anlage 2",
+                "external_id": "Waterworks1_Plant2_StorageTank1",
+                "name": "Storage Tank 1, Plant 2",
             },
             {
-                "external_id": "Wasserwerk1_Anlage2_Hochbehaelter2",
-                "name": "Hochbehälter 2 Anlage 2",
+                "external_id": "Waterworks1_Plant2_StorageTank2",
+                "name": "Storage Tank 2, Plant 2",
             },
         ]
 
@@ -163,12 +163,12 @@ def test_fetch_all_sources(mocked_clean_test_db_session):
         # Define the expected Sources with their external_id and name
         expected_sources = [
             {
-                "external_id": "Energieverbraeuche_Pumpensystem_Hochbehaelter",
-                "name": "Energieverbräuche des Pumpensystems in Hochbehälter",
+                "external_id": "EnergyUsage_PumpSystem_StorageTank",
+                "name": "Energy usage of the pump system in Storage Tank",
             },
             {
-                "external_id": "Energieverbrauch_Einzelpumpe_Hochbehaelter",
-                "name": "Energieverbrauch einer Einzelpumpe in Hochbehälter",
+                "external_id": "EnergyConsumption_SinglePump_StorageTank",
+                "name": "Energy consumption of a single pump in Storage Tank",
             },
         ]
 
@@ -201,12 +201,16 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
         # Define the expected Sinks with their external_id and name
         expected_sinks = [
             {
-                "external_id": "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
-                "name": "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter",
+                "external_id": "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
+                "name": "Anomaly Score for the energy usage of the pump system in Storage Tank",
             },
             {
-                "external_id": "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
-                "name": "Anomaly Score für den Energieverbrauch einer Einzelpumpe in Hochbehälter",
+                "external_id": "AnomalyScore_EnergyConsumption_SinglePump_StorageTank",
+                "name": "Anomaly Score for the energy consumption of a single pump in Storage Tank",
+            },
+            {
+                "external_id": "AnomalyScore_EnergyConsumption_Waterworks1",
+                "name": "Anomaly Score for the energy consumption of the waterworks",
             },
         ]
 
@@ -320,7 +324,7 @@ def test_update_structure_with_new_elements():
         verify_initial_structure(session)
 
         # Load updated structure from JSON file
-        file_path = "tests/structure/data/db_updated_test_structure.json"
+        file_path = "tests/structure/data/db_updated_test_structure_eng.json"
         updated_structure = load_structure_from_json_file(file_path)
 
     # Update the structure in the database
@@ -346,26 +350,20 @@ def verify_initial_structure(session):
 
     # Verify specific attributes of the ThingNodes before the update
     initial_tn = (
-        session.query(ThingNodeOrm)
-        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter1")
-        .one()
+        session.query(ThingNodeOrm).filter_by(external_id="Waterworks1_Plant1_StorageTank1").one()
     )
     assert (
         initial_tn.meta_data["capacity"] == "5000"
-    ), "Initial capacity of Hochbehälter 1 should be 5000"
-    assert initial_tn.meta_data["description"] == ("Wasserspeicherungskapazität für Hochbehälter 1")
+    ), "Initial capacity of Storage Tank 1 should be 5000"
+    assert initial_tn.meta_data["description"] == "Water storage capacity for Storage Tank 1"
 
     initial_tn2 = (
-        session.query(ThingNodeOrm)
-        .filter_by(external_id="Wasserwerk1_Anlage1_Hochbehaelter2")
-        .one()
+        session.query(ThingNodeOrm).filter_by(external_id="Waterworks1_Plant1_StorageTank2").one()
     )
     assert (
         initial_tn2.meta_data["capacity"] == "6000"
-    ), "Initial capacity of Hochbehälter 2 should be 6000"
-    assert initial_tn2.meta_data["description"] == (
-        "Wasserspeicherungskapazität für Hochbehälter 2"
-    )
+    ), "Initial capacity of Storage Tank 2 should be 6000"
+    assert initial_tn2.meta_data["description"] == "Water storage capacity for Storage Tank 2"
 
 
 def verify_updated_structure(session):
@@ -390,41 +388,43 @@ def verify_updated_structure(session):
 def verify_new_elements_and_nodes(session, final_element_types, final_thing_nodes):
     # Verify that a new ElementType was added
     new_element_type = next(
-        et for et in final_element_types if et.external_id == "Filteranlage_Typ"
+        et for et in final_element_types if et.external_id == "FiltrationPlant_Type"
     )
-    assert new_element_type.name == "Filteranlage", "Expected new Element Type 'Filteranlage'"
-    assert new_element_type.description == "Elementtyp für Filteranlagen"
+    assert (
+        new_element_type.name == "Filtration Plant"
+    ), "Expected new Element Type 'Filtration Plant'"
+    assert new_element_type.description == "Element type for filtration plants"
 
     # Verify that a new ThingNode was added
-    new_tn = next(tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Filteranlage")
-    assert new_tn.name == "Filteranlage 1", "Expected new Thing Node 'Filteranlage 1'"
-    assert new_tn.description == "Neue Filteranlage im Wasserwerk 1"
+    new_tn = next(tn for tn in final_thing_nodes if tn.external_id == "Waterworks1_FiltrationPlant")
+    assert new_tn.name == "Filtration Plant 1", "Expected new Thing Node 'Filtration Plant 1'"
+    assert new_tn.description == "New filtration plant in Waterworks 1"
     assert (
-        new_tn.meta_data["location"] == "Zentral"
-    ), "Expected location 'Zentral' for the new Thing Node"
+        new_tn.meta_data["location"] == "Central"
+    ), "Expected location 'Central' for the new Thing Node"
     assert (
         new_tn.meta_data["technology"] == "Advanced Filtration"
     ), "Expected technology 'Advanced Filtration'"
 
     # Verify that the ThingNodes were updated correctly
     updated_tn1 = next(
-        tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Anlage1_Hochbehaelter1"
+        tn for tn in final_thing_nodes if tn.external_id == "Waterworks1_Plant1_StorageTank1"
     )
     assert (
         updated_tn1.meta_data["capacity"] == "5200"
-    ), "Expected updated capacity 5200 for Hochbehälter 1"
+    ), "Expected updated capacity 5200 for Storage Tank 1"
     assert updated_tn1.meta_data["description"] == (
-        "Erhöhte Wasserspeicherungskapazität für Hochbehälter 1"
+        "Increased water storage capacity for Storage Tank 1"
     )
 
     updated_tn2 = next(
-        tn for tn in final_thing_nodes if tn.external_id == "Wasserwerk1_Anlage1_Hochbehaelter2"
+        tn for tn in final_thing_nodes if tn.external_id == "Waterworks1_Plant1_StorageTank2"
     )
     assert (
         updated_tn2.meta_data["capacity"] == "6100"
-    ), "Expected updated capacity 6100 for Hochbehälter 2"
+    ), "Expected updated capacity 6100 for Storage Tank 2"
     assert updated_tn2.meta_data["description"] == (
-        "Erhöhte Wasserspeicherungskapazität für Hochbehälter 2"
+        "Increased water storage capacity for Storage Tank 2"
     )
 
 
@@ -435,31 +435,31 @@ def verify_associations(session):
 
     # Define the expected associations between ThingNodes and Sources
     expected_source_associations = [
-        ("Wasserwerk1_Anlage1_Hochbehaelter1", "Energieverbraeuche_Pumpensystem_Hochbehaelter"),
-        ("Wasserwerk1_Filteranlage", "Energieverbraeuche_Pumpensystem_Hochbehaelter"),
-        ("Wasserwerk1_Anlage2_Hochbehaelter1", "Energieverbrauch_Einzelpumpe_Hochbehaelter"),
-        ("Wasserwerk1_Filteranlage", "Neue_Energiequelle_Filteranlage"),
+        ("Waterworks1_Plant1_StorageTank1", "EnergyUsage_PumpSystem_StorageTank"),
+        ("Waterworks1_FiltrationPlant", "EnergyUsage_PumpSystem_StorageTank"),
+        ("Waterworks1_Plant2_StorageTank1", "EnergyConsumption_SinglePump_StorageTank"),
+        ("Waterworks1_FiltrationPlant", "New_EnergySource_FiltrationPlant"),
     ]
 
     # Define the expected associations between ThingNodes and Sinks
     expected_sink_associations = [
         (
-            "Wasserwerk1_Anlage1_Hochbehaelter1",
-            "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "Waterworks1_Plant1_StorageTank1",
+            "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
         ),
         (
-            "Wasserwerk1_Anlage1_Hochbehaelter2",
-            "Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter",
+            "Waterworks1_Plant1_StorageTank2",
+            "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
         ),
         (
-            "Wasserwerk1_Anlage2_Hochbehaelter1",
-            "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
+            "Waterworks1_Plant2_StorageTank1",
+            "AnomalyScore_EnergyConsumption_SinglePump_StorageTank",
         ),
         (
-            "Wasserwerk1_Anlage2_Hochbehaelter2",
-            "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter",
+            "Waterworks1_Plant2_StorageTank2",
+            "AnomalyScore_EnergyConsumption_SinglePump_StorageTank",
         ),
-        ("Wasserwerk1_Filteranlage", "Anomaly_Score_Energieverbrauch_Einzelpumpe_Hochbehaelter"),
+        ("Waterworks1_FiltrationPlant", "AnomalyScore_EnergyConsumption_SinglePump_StorageTank"),
     ]
 
     # Verify that each expected Source association exists in the database
@@ -502,7 +502,7 @@ def test_update_structure_from_file():
     # correctly inserted into the database.
 
     # Path to the JSON file containing the test structure
-    file_path = "tests/structure/data/db_test_structure.json"
+    file_path = "tests/structure/data/db_test_structure_eng.json"
 
     # Ensure the database is empty at the beginning
     with get_session()() as session:
@@ -522,33 +522,33 @@ def test_update_structure_from_file():
         assert session.query(SinkOrm).count() == 3
 
         # Example check for a specific ElementType
-        wasserwerk_typ = session.query(ElementTypeOrm).filter_by(external_id="Wasserwerk_Typ").one()
-        assert wasserwerk_typ.name == "Wasserwerk"
-        assert wasserwerk_typ.description == "Elementtyp für Wasserwerke"
+        waterworks_type = (
+            session.query(ElementTypeOrm).filter_by(external_id="Waterworks_Type").one()
+        )
+        assert waterworks_type.name == "Waterworks"
+        assert waterworks_type.description == "Element type for waterworks"
 
         # Example check for a specific ThingNode
-        wasserwerk1 = session.query(ThingNodeOrm).filter_by(external_id="Wasserwerk1").one()
-        assert wasserwerk1.name == "Wasserwerk 1"
-        assert wasserwerk1.meta_data["location"] == "Hauptstandort"
+        waterworks1 = session.query(ThingNodeOrm).filter_by(external_id="Waterworks1").one()
+        assert waterworks1.name == "Waterworks 1"
+        assert waterworks1.meta_data["location"] == "Main Site"
 
         # Example check for a specific Source
         source = (
             session.query(SourceOrm)
-            .filter_by(external_id="Energieverbraeuche_Pumpensystem_Hochbehaelter")
+            .filter_by(external_id="EnergyUsage_PumpSystem_StorageTank")
             .one()
         )
-        assert source.name == "Energieverbräuche des Pumpensystems in Hochbehälter"
+        assert source.name == "Energy usage of the pump system in Storage Tank"
         assert source.meta_data["1010001"]["unit"] == "kW/h"
 
         # Example check for a specific Sink
         sink = (
             session.query(SinkOrm)
-            .filter_by(external_id="Anomaly_Score_Energieverbraeuche_Pumpensystem_Hochbehaelter")
+            .filter_by(external_id="AnomalyScore_EnergyUsage_PumpSystem_StorageTank")
             .one()
         )
-        assert (
-            sink.name == "Anomaly Score für die Energieverbräuche des Pumpensystems in Hochbehälter"
-        )
+        assert sink.name == "Anomaly Score for the energy usage of the pump system in Storage Tank"
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -558,8 +558,8 @@ def test_update_structure_no_elements_deleted():
     # remains unchanged and that specific elements from the original structure are still present.
 
     # Define paths to the JSON files
-    old_file_path = "tests/structure/data/db_test_structure.json"
-    new_file_path = "tests/structure/data/db_test_incomplete_structure.json"
+    old_file_path = "tests/structure/data/db_test_structure_eng.json"
+    new_file_path = "tests/structure/data/db_test_incomplete_structure_eng.json"
 
     # Load initial structure from JSON file
     initial_structure: CompleteStructure = load_structure_from_json_file(old_file_path)
@@ -627,35 +627,35 @@ def test_sort_thing_nodes_from_db(mocked_clean_test_db_session):
         sorted_nodes_by_level = sort_thing_nodes_from_db(thing_nodes_in_db, existing_thing_nodes)
 
         # Check that the nodes are sorted into the correct levels
-        # Level 0 should contain the root node "Wasserwerk 1"
+        # Level 0 should contain the root node "Waterworks 1"
         assert len(sorted_nodes_by_level[0]) == 1
-        assert sorted_nodes_by_level[0][0].name == "Wasserwerk 1"
+        assert sorted_nodes_by_level[0][0].name == "Waterworks 1"
 
-        # Level 1 should contain "Anlage 1" and "Anlage 2"
+        # Level 1 should contain "Plant 1" and "Plant 2"
         assert len(sorted_nodes_by_level[1]) == 2
         level_1_names = {node.name for node in sorted_nodes_by_level[1]}
-        assert level_1_names == {"Anlage 1", "Anlage 2"}
+        assert level_1_names == {"Plant 1", "Plant 2"}
 
-        # Level 2 should contain the Hochbehälter nodes
+        # Level 2 should contain the Storage Tank nodes
         assert len(sorted_nodes_by_level[2]) == 4
         level_2_names = {node.name for node in sorted_nodes_by_level[2]}
         assert level_2_names == {
-            "Hochbehälter 1 Anlage 1",
-            "Hochbehälter 2 Anlage 1",
-            "Hochbehälter 1 Anlage 2",
-            "Hochbehälter 2 Anlage 2",
+            "Storage Tank 1, Plant 1",
+            "Storage Tank 2, Plant 1",
+            "Storage Tank 1, Plant 2",
+            "Storage Tank 2, Plant 2",
         }
 
         # Ensure the nodes are sorted within their levels by external_id
-        expected_level_1_order = ["Anlage 1", "Anlage 2"]
+        expected_level_1_order = ["Plant 1", "Plant 2"]
         actual_level_1_order = [node.name for node in sorted_nodes_by_level[1]]
         assert actual_level_1_order == expected_level_1_order
 
         expected_level_2_order = [
-            "Hochbehälter 1 Anlage 1",
-            "Hochbehälter 2 Anlage 1",
-            "Hochbehälter 1 Anlage 2",
-            "Hochbehälter 2 Anlage 2",
+            "Storage Tank 1, Plant 1",
+            "Storage Tank 2, Plant 1",
+            "Storage Tank 1, Plant 2",
+            "Storage Tank 2, Plant 2",
         ]
         actual_level_2_order = [node.name for node in sorted_nodes_by_level[2]]
         assert actual_level_2_order == expected_level_2_order
@@ -663,12 +663,12 @@ def test_sort_thing_nodes_from_db(mocked_clean_test_db_session):
         # Ensure the condition where a parent_node_id is not initially in children_by_node_id
         # Create a new node with a parent_node_id that isn't in children_by_node_id
         orphan_node = ThingNode(
-            external_id="Orphan_Hochbehälter",
-            name="Orphan Hochbehälter",
+            external_id="Orphan_StorageTank",
+            name="Orphan Storage Tank",
             stakeholder_key="GW",
             parent_node_id=uuid.uuid4(),  # Ensure this UUID does not match any existing node
             element_type_id=uuid.uuid4(),
-            element_type_external_id="Hochbehaelter_Typ",  # Required element_type_external_id
+            element_type_external_id="StorageTank_Type",  # Required element_type_external_id
             meta_data={},
         )
 
@@ -691,7 +691,7 @@ def test_fill_source_sink_associations_db(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Load a complete structure from JSON for testing
         complete_structure = load_structure_from_json_file(
-            "tests/structure/data/db_test_structure.json"
+            "tests/structure/data/db_test_structure_eng.json"
         )
 
         # Add a Source with no associated ThingNodes to the structure
@@ -735,7 +735,7 @@ def test_fill_source_sink_associations_db(mocked_clean_test_db_session):
             meta_data={"unit": "kW/h", "description": "Missing Source"},
             preset_filters={"metrics": "1010006"},
             passthrough_filters=[],
-            thing_node_external_ids=["Wasserwerk1"],  # Associated with an existing ThingNode
+            thing_node_external_ids=["Waterworks1"],  # Associated with an existing ThingNode
         )
         complete_structure.sources.append(missing_source)
 
