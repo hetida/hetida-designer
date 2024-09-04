@@ -33,19 +33,3 @@ def test_if_existing_structure_is_overwritten_if_specified():
         ) as mocked_delete:
             prepopulate_structure()
             mocked_delete.assert_called_once()
-
-
-# TODO Remove once partial updates are safely possible
-def test_if_error_is_raised_when_partial_structure_update_is_attempted(
-    mocked_clean_test_db_session,
-):
-    with mock.patch.multiple(  # noqa: SIM117
-        "hetdesrun.webservice.config.runtime_config",
-        prepopulate_virtual_structure_adapter_at_designer_startup=True,
-        completely_overwrite_an_existing_virtual_structure_at_hd_startup=False,
-        structure_to_prepopulate_virtual_structure_adapter=load_structure_from_json_file(
-            "tests/virtual_structure_adapter/data/simple_end_to_end_test.json"
-        ),
-    ):
-        with pytest.raises(NotImplementedError):
-            prepopulate_structure()
