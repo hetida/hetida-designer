@@ -40,3 +40,4 @@ demo-adapter-python/settings/*
 .tmp
 .jupyter
 runtime/tests/structure/data/db_structure_020924.json
+runtime/tests/structure/test_orm_service_gw.py
