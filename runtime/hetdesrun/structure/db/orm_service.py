@@ -612,36 +612,10 @@ def orm_get_children(
             )
             logger.debug("Fetched %d root nodes.", len(root_nodes))
 
-            root_node_ids = [node.id for node in root_nodes]
-
-            logger.debug("Fetching sources associated with root nodes.")
-            sources = (
-                session.query(SourceOrm)
-                .join(
-                    thingnode_source_association,
-                    thingnode_source_association.c.source_id == SourceOrm.id,
-                )
-                .filter(thingnode_source_association.c.thing_node_id.in_(root_node_ids))
-                .all()
-            )
-            logger.debug("Fetched %d sources associated with root nodes.", len(sources))
-
-            logger.debug("Fetching sinks associated with root nodes.")
-            sinks = (
-                session.query(SinkOrm)
-                .join(
-                    thingnode_sink_association,
-                    thingnode_sink_association.c.sink_id == SinkOrm.id,
-                )
-                .filter(thingnode_sink_association.c.thing_node_id.in_(root_node_ids))
-                .all()
-            )
-            logger.debug("Fetched %d sinks associated with root nodes.", len(sinks))
-
             return (
                 [ThingNode.from_orm_model(node) for node in root_nodes],
-                [Source.from_orm_model(source) for source in sources],
-                [Sink.from_orm_model(sink) for sink in sinks],
+                [],
+                [],
             )
 
         logger.debug("Fetching child nodes for parent_id: %s", parent_id)
