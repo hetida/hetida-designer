@@ -54,7 +54,7 @@ def fetch_all_sinks(session: SQLAlchemySession) -> list[SinkOrm]:
 
 
 # Structure Services
-def load_structure_from_json_file(
+def orm_load_structure_from_json_file(
     file_path: str,
 ) -> CompleteStructure:
     logger.debug("Loading structure from JSON file at %s.", file_path)
@@ -345,7 +345,7 @@ def fill_source_sink_associations_db(
 
 def update_structure_from_file(file_path: str) -> CompleteStructure:
     logger.debug("Updating structure from JSON file at path: %s.", file_path)
-    complete_structure = load_structure_from_json_file(file_path)
+    complete_structure = orm_load_structure_from_json_file(file_path)
     logger.debug("Successfully loaded structure from JSON file.")
     return orm_update_structure(complete_structure)
 

@@ -12,6 +12,7 @@ from hetdesrun.structure.db.orm_service import (
     orm_delete_structure,
     orm_get_children,
     orm_is_database_empty,
+    orm_load_structure_from_json_file,
     orm_update_structure,
 )
 from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
@@ -150,3 +151,7 @@ def update_structure(
         "Successfully updated or inserted the complete structure into the database."
     )
     return updated_structure
+
+
+def load_structure_from_json_file(file_path: str) -> CompleteStructure:
+    return orm_load_structure_from_json_file(file_path)

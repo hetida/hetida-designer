@@ -23,9 +23,9 @@ from hetdesrun.structure.db.orm_service import (
     fetch_all_thing_nodes,
     fetch_existing_records,
     fill_source_sink_associations_db,
-    load_structure_from_json_file,
     orm_delete_structure,
     orm_is_database_empty,
+    orm_load_structure_from_json_file,
     orm_update_structure,
     sort_thing_nodes_from_db,
     update_existing_elements,
@@ -235,7 +235,7 @@ def test_fetch_all_sinks(mocked_clean_test_db_session):
 
 def test_load_structure_from_json_file(db_test_structure_file_path):
     # Load the structure from the JSON file using the load_structure_from_json_file function
-    complete_structure = load_structure_from_json_file(db_test_structure_file_path)
+    complete_structure = orm_load_structure_from_json_file(db_test_structure_file_path)
 
     # Assert that the loaded structure is an instance of the CompleteStructure class
     assert isinstance(
@@ -288,7 +288,7 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
 def test_load_structure_from_invalid_json_file():
     # Use a non-existent file path to simulate a failure in loading JSON
     with pytest.raises(FileNotFoundError):
-        load_structure_from_json_file("non_existent_file.json")
+        orm_load_structure_from_json_file("non_existent_file.json")
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -325,7 +325,7 @@ def test_update_structure_with_new_elements():
 
         # Load updated structure from JSON file
         file_path = "tests/structure/data/db_updated_test_structure.json"
-        updated_structure = load_structure_from_json_file(file_path)
+        updated_structure = orm_load_structure_from_json_file(file_path)
 
     # Update the structure in the database
     orm_update_structure(updated_structure)
@@ -562,10 +562,10 @@ def test_update_structure_no_elements_deleted():
     new_file_path = "tests/structure/data/db_test_incomplete_structure.json"
 
     # Load initial structure from JSON file
-    initial_structure: CompleteStructure = load_structure_from_json_file(old_file_path)
+    initial_structure: CompleteStructure = orm_load_structure_from_json_file(old_file_path)
 
     # Load updated structure from new JSON file
-    updated_structure: CompleteStructure = load_structure_from_json_file(new_file_path)
+    updated_structure: CompleteStructure = orm_load_structure_from_json_file(new_file_path)
 
     # Update the structure in the database with new structure
     orm_update_structure(updated_structure)
@@ -690,7 +690,7 @@ def test_sort_thing_nodes_from_db(mocked_clean_test_db_session):
 def test_fill_source_sink_associations_db(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Load a complete structure from JSON for testing
-        complete_structure = load_structure_from_json_file(
+        complete_structure = orm_load_structure_from_json_file(
             "tests/structure/data/db_test_structure.json"
         )
 
