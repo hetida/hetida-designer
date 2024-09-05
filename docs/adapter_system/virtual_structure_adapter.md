@@ -6,17 +6,16 @@ For example, this adapter can be used to specify a structure that represents the
 
 ## Key Concepts
 
-The Virtual Structure Adapter relies on defined entities like ThingNodes, Sources, Sinks, and ElementTypes. These entities form the hierarchical structures managed by the adapter.
+The Virtual Structure Adapter relies on defined entities like thing nodes, sources, sinks, and element types. These entities form the hierarchical structures managed by the adapter.
 
 ## Glossary of Concepts
 
 The key concepts of the Virtual Structure Adapter are described below:
 
-- **`ThingNode`**: Represents individual node elements within a hierarchical structure, e.g. a plant, a water treatment plant or a storage tank in a waterworks. ThingNodes can have parent-child relationships that help to create a clear, searchable structure of a system. They can be connected to one or more sources and sinks.
-- **`Source`**: Represents data inputs within the system, e.g. sensor data from a pump in a waterworks plant. Sources are linked to ThingNodes and provide real-time or historical data that is fed into the system for analysis or monitoring.
-- **`Sink`**:  Represents outputs or results within your system, such as calculated anomaly values based on energy consumption data. Sinks are linked to ThingNodes and are the endpoints where processed data is stored or used.
-- **`ElementType`**: Defines the type of a ThingNode, e.g. 'Plant' or 'Storage Tank,' and encapsulates its properties and behavior within the hierarchy. This can help in conducting analyses based on specific criteria.
-- **`CompleteStructure`**: Encapsulates the entire hierarchical data model, including ThingNodes, Sources, Sinks, and ElementTypes. Ensures the structure is managed as a unified whole with synchronized components. It validates and maintains consistent relationships between entities and provides a uniform interface for managing the entire structure.
+- **`Thing node`**: Represents individual node elements within a hierarchical structure, e.g. a plant, a water treatment plant or a storage tank in a waterworks. Thing nodes can have parent-child relationships that help to create a clear, searchable structure of a system. They can be connected to one or more sources and sinks.
+- **`Source`**: Represents data inputs within the system, e.g. sensor data from a pump in a waterworks plant. Sources are linked to thing nodes and provide real-time or historical data that is fed into the system for analysis or monitoring.
+- **`Sink`**:  Represents outputs or results within your system, such as calculated anomaly values based on energy consumption data. Sinks are linked to thing nodes and are the endpoints where processed data is stored or used.
+- **`Element type`**: Defines the type of a thing node, e.g. 'Plant' or 'Storage Tank,' and encapsulates its properties and behavior within the hierarchy. This can help in conducting analyses based on specific criteria.
 
 ## JSON Structure
 

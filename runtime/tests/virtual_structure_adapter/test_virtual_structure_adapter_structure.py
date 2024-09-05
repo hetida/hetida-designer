@@ -21,7 +21,7 @@ def test_get_structure_with_none():
     assert len(structure.thingNodes) == 1
     assert isinstance(structure.thingNodes[0], StructureThingNode)
     assert structure.thingNodes[0].parentId is None
-    assert structure.thingNodes[0].name == "Wasserwerk 1"
+    assert structure.thingNodes[0].name == "Waterworks 1"
 
 
 @pytest.mark.usefixtures("_fill_db")
@@ -49,8 +49,8 @@ def test_get_structure_with_existing_uuid():
     assert len(structure.sources) == 2
     assert isinstance(structure.sources[0], StructureVirtualSource)
     expected_source_names = [
-        "Energieverbräuche mit preset filter",
-        "Energieverbräuche mit passthrough filters",
+        "Energy usage with preset filter",
+        "Energy usage with passthrough filters",
     ]
     for source in structure.sources:
         assert source.name in expected_source_names
@@ -58,4 +58,7 @@ def test_get_structure_with_existing_uuid():
     # Check Sinks
     assert len(structure.sinks) == 1
     assert isinstance(structure.sinks[0], StructureVirtualSink)
-    assert structure.sinks[0].name == "Anomaliescore des Pumpensystems in Hochbehälter"
+    assert (
+        structure.sinks[0].name
+        == "Anomaly score for the energy usage of the pump system in Storage Tank"
+    )

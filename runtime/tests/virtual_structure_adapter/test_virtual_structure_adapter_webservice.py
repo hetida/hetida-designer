@@ -80,13 +80,13 @@ async def test_vst_adapter_get_structure_from_webservice(async_test_client_with_
 
     sink_name = resp_obj["sinks"][0]["name"]
     expected_source_names = [
-        "Energieverbräuche mit preset filter",
-        "Energieverbräuche mit passthrough filters",
+        "Energy usage with preset filter",
+        "Energy usage with passthrough filters",
     ]
 
     for source in resp_obj["sources"]:
         assert source["name"] in expected_source_names
-    assert sink_name == "Anomaliescore des Pumpensystems in Hochbehälter"
+    assert sink_name == "Anomaly score for the energy usage of the pump system in Storage Tank"
 
 
 @pytest.mark.asyncio
