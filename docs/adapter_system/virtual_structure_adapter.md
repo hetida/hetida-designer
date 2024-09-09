@@ -21,7 +21,9 @@ The key concepts of the Virtual Structure Adapter are described below:
 
 ### How to provide a structure
 
-The hierarchical structure can be provided via a JSON assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`. 
+The hierarchical structure can be provided in two ways:
+1. Via a JSON directly assigned to the environment variable `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER`.
+2. Via a filepath pointing to a JSON-file assigned to the environment variable `STRUCTURE_FILEPATH_TO_PREPOPULATE_VST_ADAPTER`.
 
 Below is a template for the JSON file:
 
@@ -273,12 +275,14 @@ An example of such a JSON file is provided below, demonstrating how the Virtual 
 
 ## Configuration
 
-There are several environment variables which can be used to configure the use of the virtual structure adapter.  
+There are several environment variables which can be used to configure the use of the virtual structure adapter.   
 * `VST_ADAPTER_ACTIVE` (default `True`): Whether the adapter is active (registered in the designer application)
 * `VST_ADAPTER_SERVICE_IN_RUNTIME` (default `True`): Whether the adapter is part of the backend or the runtime
 * `PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP` (default `False`): Set to `True` if you wish to provide a structure for the adapter at designer startup
+* `PREPOPULATE_VST_ADAPTER_VIA_FILE` (default `False`): Whether to load the structure from a JSON-file or not
 * `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a JSON defining a structure to this variable
-* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): This option controls whether a potentially existing structure in the database is removed during startup. When set to `True` (default), the existing structure is deleted entirely before the new structure specified in `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` is inserted. If set to `False`, the existing structure is retained and updated. New elements from the provided JSON structure will be added, and existing elements will be updated. Existing elements not specified in the new JSON structure will remain unchanged. To fully replace an existing structure, it must first be deleted, before inserting the new one.
+* `STRUCTURE_FILEPATH_TO_PREPOPULATE_VST_ADAPTER` (default `None`): One can assign a filepath pointing to a JSON-file containing the structure
+* `COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP` (default `True`): This option controls whether a potentially existing structure in the database is removed during startup. When set to `True` (default), the existing structure is deleted entirely before the new structure specified in `STRUCTURE_TO_PREPOPULATE_VST_ADAPTER` is inserted. If set to `False`, the existing structure is retained and updated. New elements from the provided JSON structure will be added, and existing elements will be updated. Existing elements not specified in the new JSON structure will remain unchanged. To fully replace an existing structure, it must first be deleted, before inserting the new one
 
 ## Technical Information
 
