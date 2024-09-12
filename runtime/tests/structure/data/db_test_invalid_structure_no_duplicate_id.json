@@ -1,0 +1,25 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "element_type_external_id": "Waterworks_Type"
+        },
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Duplicate Waterworks 1",
+            "element_type_external_id": "Waterworks_Type"
+        }
+    ],
+    "sources": [],
+    "sinks": []
+}
