@@ -9,14 +9,6 @@ from sqlalchemy import Table, delete
 from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
-from hetdesrun.structure.db.exceptions import (
-    DBAssociationError,
-    DBFetchError,
-    DBInsertError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateError,
-)
 from hetdesrun.persistence.structure_service_dbmodels import (
     ElementTypeOrm,
     SinkOrm,
@@ -24,6 +16,12 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     ThingNodeOrm,
     thingnode_sink_association,
     thingnode_source_association,
+)
+from hetdesrun.structure.db.exceptions import (
+    DBAssociationError,
+    DBFetchError,
+    DBIntegrityError,
+    DBUpdateError,
 )
 from hetdesrun.structure.models import (
     CompleteStructure,
@@ -371,7 +369,10 @@ def fill_source_sink_associations_db(
             " and their corresponding Sources and Sinks."
         )
     except IntegrityError as e:
-        msg = f"Integrity Error while establishing associations between ThingNodes and Sources/Sinks: {str(e)}"
+        msg = (
+            f"Integrity Error while establishing associations between ThingNodes "
+            f"and Sources/Sinks: {str(e)}"
+        )
         logger.error(msg)
         raise DBIntegrityError(msg) from e
     except Exception as e:
@@ -469,7 +470,11 @@ def fetch_existing_records(session: SQLAlchemySession, model_class: Any) -> dict
         # Create a dictionary mapping stakeholder_key + external_id to the record
         return {rec.stakeholder_key + rec.external_id: rec for rec in records}
     except IntegrityError as e:
-        msg = f"Integrity Error while fetching records for model class {model_class.__name__}: {str(e)}"
+        msg = (
+            f"Integrity Error while fetching records for model class "
+            f"{model_class.__name__}: {str(e)}"
+        )
+
         logger.error(msg)
         raise DBIntegrityError(msg) from e
     except Exception as e:

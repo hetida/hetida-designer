@@ -320,7 +320,7 @@ class CompleteStructure(BaseModel):
 
     # Root validator to check if the parent_external_node_id does not exist in the other nodes
     @root_validator(pre=True)
-    def validate_root_nodes(cls, values):
+    def validate_root_nodes(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Create a set of all external_ids in the thing_nodes list
         external_ids = {node["external_id"] for node in values.get("thing_nodes", [])}
         for node in values.get("thing_nodes", []):
@@ -330,6 +330,7 @@ class CompleteStructure(BaseModel):
                 if parent_ext_id not in external_ids:
                     raise ValueError(
                         f"Root node '{node.get('name')}' has an invalid "
-                        f"parent_external_node_id '{parent_ext_id}' that does not reference any existing ThingNode."
+                        f"parent_external_node_id '{parent_ext_id}' that does "
+                        "not reference any existing ThingNode."
                     )
         return values
