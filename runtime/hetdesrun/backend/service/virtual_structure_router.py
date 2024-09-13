@@ -2,7 +2,13 @@ import logging
 
 from fastapi import HTTPException, status
 
-from hetdesrun.structure.db.exceptions import DBError, DBIntegrityError, DBNotFoundError
+from hetdesrun.structure.db.exceptions import (
+    DBAssociationError,
+    DBFetchError,
+    DBIntegrityError,
+    DBNotFoundError,
+    DBUpdateError,
+)
 from hetdesrun.structure.models import CompleteStructure
 from hetdesrun.structure.structure_service import (
     delete_structure,
@@ -33,7 +39,7 @@ virtual_structure_router = HandleTrailingSlashAPIRouter(
 )
 async def update_structure_endpoint(
     new_structure: CompleteStructure, delete_existing_structure: bool = True
-):
+) -> None:
     logger.info("Starting to update the vst structure via the API endpoint")
     if delete_existing_structure:
         delete_structure()
@@ -44,5 +50,9 @@ async def update_structure_endpoint(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except DBError as e:
+    except DBUpdateError as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except DBAssociationError as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except DBFetchError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
