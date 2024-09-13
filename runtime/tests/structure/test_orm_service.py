@@ -3,6 +3,7 @@ import uuid
 from sqlite3 import Connection as SQLite3Connection
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy import event
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future.engine import Engine
@@ -16,6 +17,7 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_sink_association,
     thingnode_source_association,
 )
+from hetdesrun.structure.db.exceptions import DBIntegrityError
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
@@ -813,3 +815,35 @@ def test_update_existing_elements_exception_handling(mocked_clean_test_db_sessio
         # Attempt to update elements using an invalid model class,
         # which should raise an exception
         update_existing_elements(session, InvalidModel, existing_elements)
+
+
+def test_update_structure_from_file_valid_root_node(mocked_clean_test_db_session):
+    """Tests an valid structure where the root node has an valid parent_external_node_id."""
+    update_structure_from_file("tests/structure/data/db_test_structure.json")
+
+
+def test_update_structure_from_file_invalid_root_node(mocked_clean_test_db_session):
+    """Tests an invalid structure where the root node has an invalid parent_external_node_id."""
+    with pytest.raises(ValidationError) as excinfo:
+        update_structure_from_file(
+            "tests/structure/data/db_test_invalid_structure_no_root_node.json"
+        )
+
+    assert (
+        "Root node 'Waterworks 1' has an invalid parent_external_node_id 'NonExistingNode' "
+        "that does not reference any existing ThingNode." in str(excinfo.value)
+    ), "Expected ValidationError for invalid parent_external_node_id was not raised as expected."
+
+
+def test_update_structure_from_file_integrity_error_handling(mocked_clean_test_db_session):
+    """Tests that IntegrityError is handled correctly and raises DBIntegrityError."""
+
+    file_path = "tests/structure/data/db_test_invalid_structure_no_duplicate_id.json"
+
+    with pytest.raises(DBIntegrityError) as excinfo:
+        update_structure_from_file(file_path)
+
+    # Assert that the raised error is DBIntegrityError and includes a relevant message
+    assert "Integrity Error while updating or inserting the structure" in str(
+        excinfo.value
+    ), "Expected DBIntegrityError was not raised or the error message is incorrect."

@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Table, delete
+from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import (
@@ -15,6 +16,12 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     ThingNodeOrm,
     thingnode_sink_association,
     thingnode_source_association,
+)
+from hetdesrun.structure.db.exceptions import (
+    DBAssociationError,
+    DBFetchError,
+    DBIntegrityError,
+    DBUpdateError,
 )
 from hetdesrun.structure.models import (
     CompleteStructure,
@@ -30,27 +37,47 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_all_element_types(session: SQLAlchemySession) -> list[ElementTypeOrm]:
-    element_types = session.query(ElementTypeOrm).all()
-    logger.debug("Fetched %d element types from the database.", len(element_types))
-    return element_types
+    try:
+        element_types = session.query(ElementTypeOrm).all()
+        logger.debug("Fetched %d element types from the database.", len(element_types))
+        return element_types
+    except Exception as e:
+        msg = f"Error fetching element types from the database: {str(e)}"
+        logger.error(msg)
+        raise DBFetchError(msg) from e
 
 
 def fetch_all_thing_nodes(session: SQLAlchemySession) -> list[ThingNodeOrm]:
-    thing_nodes = session.query(ThingNodeOrm).all()
-    logger.debug("Fetched %d thing nodes from the database", len(thing_nodes))
-    return thing_nodes
+    try:
+        thing_nodes = session.query(ThingNodeOrm).all()
+        logger.debug("Fetched %d thing nodes from the database", len(thing_nodes))
+        return thing_nodes
+    except Exception as e:
+        msg = f"Error fetching thing nodes from the database: {str(e)}"
+        logger.error(msg)
+        raise DBFetchError(msg) from e
 
 
 def fetch_all_sources(session: SQLAlchemySession) -> list[SourceOrm]:
-    sources = session.query(SourceOrm).all()
-    logger.debug("Fetched %d sources from the database.", len(sources))
-    return sources
+    try:
+        sources = session.query(SourceOrm).all()
+        logger.debug("Fetched %d sources from the database.", len(sources))
+        return sources
+    except Exception as e:
+        msg = f"Error fetching sources from the database: {str(e)}"
+        logger.error(msg)
+        raise DBFetchError(msg) from e
 
 
 def fetch_all_sinks(session: SQLAlchemySession) -> list[SinkOrm]:
-    sinks = session.query(SinkOrm).all()
-    logger.debug("Fetched %d sinks from the database.", len(sinks))
-    return sinks
+    try:
+        sinks = session.query(SinkOrm).all()
+        logger.debug("Fetched %d sinks from the database.", len(sinks))
+        return sinks
+    except Exception as e:
+        msg = f"Error fetching sinks from the database: {str(e)}"
+        logger.error(msg)
+        raise DBFetchError(msg) from e
 
 
 # Structure Services
@@ -238,109 +265,122 @@ def fill_source_sink_associations_db(
     logger.debug(
         "Establishing associations between ThingNodes and their corresponding Sources and Sinks."
     )
+    try:
+        existing_thing_nodes = {
+            tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
+        }
+        logger.debug(
+            "Fetched %d existing ThingNodes from the database.",
+            len(existing_thing_nodes),
+        )
 
-    existing_thing_nodes = {
-        tn.stakeholder_key + tn.external_id: tn for tn in session.query(ThingNodeOrm).all()
-    }
-    logger.debug(
-        "Fetched %d existing ThingNodes from the database.",
-        len(existing_thing_nodes),
-    )
+        existing_sources = {
+            src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
+        }
+        logger.debug(
+            "Fetched %d existing Sources from the database.",
+            len(existing_sources),
+        )
 
-    existing_sources = {
-        src.stakeholder_key + src.external_id: src for src in session.query(SourceOrm).all()
-    }
-    logger.debug(
-        "Fetched %d existing Sources from the database.",
-        len(existing_sources),
-    )
+        existing_sinks = {
+            snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
+        }
+        logger.debug(
+            "Fetched %d existing Sinks from the database.",
+            len(existing_sinks),
+        )
 
-    existing_sinks = {
-        snk.stakeholder_key + snk.external_id: snk for snk in session.query(SinkOrm).all()
-    }
-    logger.debug(
-        "Fetched %d existing Sinks from the database.",
-        len(existing_sinks),
-    )
-
-    def process_db_associations(
-        entities: list[Source | Sink],
-        existing_entities: dict[str, Source | Sink],
-        assoc_table: Table,
-        entity_key: str,
-    ) -> None:
-        logger.debug("Processing associations for %d entities.", len(entities))
-        for entity in entities:
-            if not entity.thing_node_external_ids:
-                logger.debug(
-                    "Skipping entity with external_id %s as it has no associated ThingNodes.",
-                    entity.external_id,
-                )
-                continue
-            for tn_external_id in entity.thing_node_external_ids:
-                tn_key = entity.stakeholder_key + tn_external_id
-                thing_node = existing_thing_nodes.get(tn_key)
-                if not thing_node:
+        def process_db_associations(
+            entities: list[Source | Sink],
+            existing_entities: dict[str, Source | Sink],
+            assoc_table: Table,
+            entity_key: str,
+        ) -> None:
+            logger.debug("Processing associations for %d entities.", len(entities))
+            for entity in entities:
+                if not entity.thing_node_external_ids:
                     logger.debug(
-                        "ThingNode with key %s not found in existing ThingNodes, skipping.",
-                        tn_key,
+                        "Skipping entity with external_id %s as it has no associated ThingNodes.",
+                        entity.external_id,
                     )
                     continue
-                thing_node_id = thing_node.id
-                entity_key_full = entity.stakeholder_key + entity.external_id
-                db_entity = existing_entities.get(entity_key_full)
-                if not db_entity:
-                    logger.debug(
-                        "Entity with key %s not found in existing entities, skipping.",
-                        entity_key_full,
+                for tn_external_id in entity.thing_node_external_ids:
+                    tn_key = entity.stakeholder_key + tn_external_id
+                    thing_node = existing_thing_nodes.get(tn_key)
+                    if not thing_node:
+                        logger.debug(
+                            "ThingNode with key %s not found in existing ThingNodes, skipping.",
+                            tn_key,
+                        )
+                        continue
+                    thing_node_id = thing_node.id
+                    entity_key_full = entity.stakeholder_key + entity.external_id
+                    db_entity = existing_entities.get(entity_key_full)
+                    if not db_entity:
+                        logger.debug(
+                            "Entity with key %s not found in existing entities, skipping.",
+                            entity_key_full,
+                        )
+                        continue
+                    entity_id = db_entity.id
+                    association_exists = (
+                        session.query(assoc_table)
+                        .filter_by(thing_node_id=thing_node_id, **{entity_key: entity_id})
+                        .first()
                     )
-                    continue
-                entity_id = db_entity.id
-                association_exists = (
-                    session.query(assoc_table)
-                    .filter_by(thing_node_id=thing_node_id, **{entity_key: entity_id})
-                    .first()
-                )
-                if association_exists:
-                    logger.debug(
-                        "Association already exists between ThingNode id %s and %s id %s.",
-                        thing_node_id,
-                        entity_key,
-                        entity_id,
-                    )
-                else:
-                    association = {
-                        "thing_node_id": thing_node_id,
-                        entity_key: entity_id,
-                    }
-                    session.execute(assoc_table.insert().values(association))
-                    logger.debug(
-                        "Created new association between ThingNode id %s and %s id %s.",
-                        thing_node_id,
-                        entity_key,
-                        entity_id,
-                    )
+                    if association_exists:
+                        logger.debug(
+                            "Association already exists between ThingNode id %s and %s id %s.",
+                            thing_node_id,
+                            entity_key,
+                            entity_id,
+                        )
+                    else:
+                        association = {
+                            "thing_node_id": thing_node_id,
+                            entity_key: entity_id,
+                        }
+                        session.execute(assoc_table.insert().values(association))
+                        logger.debug(
+                            "Created new association between ThingNode id %s and %s id %s.",
+                            thing_node_id,
+                            entity_key,
+                            entity_id,
+                        )
 
-    logger.debug("Processing associations for Sources.")
-    process_db_associations(
-        complete_structure.sources,  # type: ignore
-        existing_sources,
-        thingnode_source_association,
-        "source_id",
-    )
+        logger.debug("Processing associations for Sources.")
+        process_db_associations(
+            complete_structure.sources,  # type: ignore
+            existing_sources,
+            thingnode_source_association,
+            "source_id",
+        )
 
-    logger.debug("Processing associations for Sinks.")
-    process_db_associations(
-        complete_structure.sinks,  # type: ignore
-        existing_sinks,
-        thingnode_sink_association,
-        "sink_id",
-    )
+        logger.debug("Processing associations for Sinks.")
+        process_db_associations(
+            complete_structure.sinks,  # type: ignore
+            existing_sinks,
+            thingnode_sink_association,
+            "sink_id",
+        )
 
-    logger.debug(
-        "Completed establishing associations between ThingNodes"
-        " and their corresponding Sources and Sinks."
-    )
+        logger.debug(
+            "Completed establishing associations between ThingNodes"
+            " and their corresponding Sources and Sinks."
+        )
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while establishing associations between ThingNodes "
+            f"and Sources/Sinks: {str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+    except Exception as e:
+        msg = (
+            f"Error while establishing associations between ThingNodes and Sources/Sinks: {str(e)}"
+        )
+        logger.error(msg)
+        raise DBAssociationError(msg) from e
 
 
 def update_structure_from_file(file_path: str) -> CompleteStructure:
@@ -356,55 +396,62 @@ def orm_update_structure(complete_structure: CompleteStructure) -> CompleteStruc
     """
     logger.debug("Starting update or insert operation for the complete structure in the database.")
 
-    with get_session()() as session, session.begin():
-        logger.debug("Fetching existing records from the database.")
+    try:
+        with get_session()() as session, session.begin():
+            logger.debug("Fetching existing records from the database.")
 
-        existing_element_types = fetch_existing_records(session, ElementTypeOrm)
-        existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
-        existing_sources = fetch_existing_records(session, SourceOrm)
-        existing_sinks = fetch_existing_records(session, SinkOrm)
+            existing_element_types = fetch_existing_records(session, ElementTypeOrm)
+            existing_thing_nodes = fetch_existing_records(session, ThingNodeOrm)
+            existing_sources = fetch_existing_records(session, SourceOrm)
+            existing_sinks = fetch_existing_records(session, SinkOrm)
 
-        with session.no_autoflush:
-            logger.debug("Updating or creating element types.")
-            update_or_create_element_types(
-                complete_structure.element_types, existing_element_types, session
-            )
-            session.flush()
+            with session.no_autoflush:
+                logger.debug("Updating or creating element types.")
+                update_or_create_element_types(
+                    complete_structure.element_types, existing_element_types, session
+                )
+                session.flush()
 
-            update_existing_elements(session, ElementTypeOrm, existing_element_types)
+                update_existing_elements(session, ElementTypeOrm, existing_element_types)
 
-            logger.debug("Filling in element type IDs for thing nodes.")
-            fill_all_thingnode_element_type_ids_from_db(
-                complete_structure.thing_nodes, existing_element_types
-            )
+                logger.debug("Filling in element type IDs for thing nodes.")
+                fill_all_thingnode_element_type_ids_from_db(
+                    complete_structure.thing_nodes, existing_element_types
+                )
 
-            logger.debug("Filling in parent node IDs for thing nodes.")
-            fill_all_thingnode_parent_uuids_from_db(
-                complete_structure.thing_nodes, existing_thing_nodes
-            )
+                logger.debug("Filling in parent node IDs for thing nodes.")
+                fill_all_thingnode_parent_uuids_from_db(
+                    complete_structure.thing_nodes, existing_thing_nodes
+                )
 
-            logger.debug("Sorting and flattening the thing nodes hierarchy.")
-            sorted_thing_nodes = sort_and_flatten_thing_nodes(
-                complete_structure.thing_nodes, existing_thing_nodes
-            )
+                logger.debug("Sorting and flattening the thing nodes hierarchy.")
+                sorted_thing_nodes = sort_and_flatten_thing_nodes(
+                    complete_structure.thing_nodes, existing_thing_nodes
+                )
 
-            logger.debug("Updating or creating thing nodes.")
-            update_or_create_thing_nodes(sorted_thing_nodes, existing_thing_nodes, session)
-            session.flush()
+                logger.debug("Updating or creating thing nodes.")
+                update_or_create_thing_nodes(sorted_thing_nodes, existing_thing_nodes, session)
+                session.flush()
 
-            update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
-            session.flush()
+                update_existing_elements(session, ThingNodeOrm, existing_thing_nodes)
+                session.flush()
 
-            logger.debug("Updating or creating sources.")
-            update_or_create_sources_or_sinks(complete_structure.sources, existing_sources, session)
-            session.flush()
+                logger.debug("Updating or creating sources.")
+                update_or_create_sources_or_sinks(
+                    complete_structure.sources, existing_sources, session
+                )
+                session.flush()
 
-            logger.debug("Updating or creating sinks.")
-            update_or_create_sources_or_sinks(complete_structure.sinks, existing_sinks, session)
-            session.flush()
+                logger.debug("Updating or creating sinks.")
+                update_or_create_sources_or_sinks(complete_structure.sinks, existing_sinks, session)
+                session.flush()
 
-            logger.debug("Establishing associations between thing nodes, sources, and sinks.")
-            fill_source_sink_associations_db(complete_structure, session)
+                logger.debug("Establishing associations between thing nodes, sources, and sinks.")
+                fill_source_sink_associations_db(complete_structure, session)
+    except IntegrityError as e:
+        msg = f"Integrity Error while updating or inserting the structure: {str(e)}"
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
 
     logger.debug("Completed update or insert operation for the complete structure.")
     return complete_structure
@@ -422,6 +469,14 @@ def fetch_existing_records(session: SQLAlchemySession, model_class: Any) -> dict
         logger.debug("Fetched %d records for model class %s.", len(records), model_class.__name__)
         # Create a dictionary mapping stakeholder_key + external_id to the record
         return {rec.stakeholder_key + rec.external_id: rec for rec in records}
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while fetching records for model class "
+            f"{model_class.__name__}: {str(e)}"
+        )
+
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
     except Exception as e:
         # Log the error and re-raise the exception if something goes wrong
         logger.error("Error fetching records for model class %s: %s", model_class.__name__, str(e))
@@ -434,19 +489,28 @@ def update_or_create_element_types(
     session: SQLAlchemySession,
 ) -> None:
     logger.debug("Updating or creating %d element types.", len(elements))
-    for element in elements:
-        key = element.stakeholder_key + element.external_id
-        db_element = existing_elements.get(key)
-        if db_element:
-            logger.debug("Updating existing element with key %s.", key)
-            element.id = db_element.id  # Set the existing ID
-            db_element.name = element.name
-            db_element.description = element.description
-            db_element.stakeholder_key = element.stakeholder_key
-        else:
-            logger.debug("Creating new element with key %s.", key)
-            new_element = element.to_orm_model()
-            session.add(new_element)
+    try:
+        for element in elements:
+            key = element.stakeholder_key + element.external_id
+            db_element = existing_elements.get(key)
+            if db_element:
+                logger.debug("Updating existing element with key %s.", key)
+                element.id = db_element.id  # Set the existing ID
+                db_element.name = element.name
+                db_element.description = element.description
+                db_element.stakeholder_key = element.stakeholder_key
+            else:
+                logger.debug("Creating new element with key %s.", key)
+                new_element = element.to_orm_model()
+                session.add(new_element)
+    except IntegrityError as e:
+        msg = f"Integrity Error while updating or creating element types: {str(e)}"
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+    except Exception as e:
+        msg = f"Error updating or creating element types: {str(e)}"
+        logger.error(msg)
+        raise DBUpdateError(msg) from e
 
 
 def update_existing_elements(
@@ -497,23 +561,32 @@ def update_or_create_thing_nodes(
     Updates existing thing nodes, or creates new ones if they do not exist.
     """
     logger.debug("Updating or creating %d thing nodes.", len(thing_nodes))
-    for node in thing_nodes:
-        key = node.stakeholder_key + node.external_id
-        db_node = existing_thing_nodes.get(key)
-        if db_node:
-            logger.debug("Updating existing thing node with key %s.", key)
-            node.id = db_node.id  # Set the existing ID
-            db_node.name = node.name
-            db_node.description = node.description
-            db_node.element_type_id = node.element_type_id
-            db_node.meta_data = node.meta_data
-            db_node.parent_node_id = (
-                node.parent_node_id if node.parent_node_id else db_node.parent_node_id
-            )
-        else:
-            logger.debug("Creating new thing node with key %s.", key)
-            new_node = node.to_orm_model()
-            session.add(new_node)
+    try:
+        for node in thing_nodes:
+            key = node.stakeholder_key + node.external_id
+            db_node = existing_thing_nodes.get(key)
+            if db_node:
+                logger.debug("Updating existing thing node with key %s.", key)
+                node.id = db_node.id  # Set the existing ID
+                db_node.name = node.name
+                db_node.description = node.description
+                db_node.element_type_id = node.element_type_id
+                db_node.meta_data = node.meta_data
+                db_node.parent_node_id = (
+                    node.parent_node_id if node.parent_node_id else db_node.parent_node_id
+                )
+            else:
+                logger.debug("Creating new thing node with key %s.", key)
+                new_node = node.to_orm_model()
+                session.add(new_node)
+    except IntegrityError as e:
+        msg = f"Integrity Error while updating or creating thing nodes: {str(e)}"
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+    except Exception as e:
+        msg = f"Error updating or creating thing nodes: {str(e)}"
+        logger.error(msg)
+        raise DBUpdateError(msg) from e
 
 
 def update_or_create_sources_or_sinks(
@@ -525,28 +598,37 @@ def update_or_create_sources_or_sinks(
     Updates existing source or sink items, or creates new ones if they do not exist.
     """
     logger.debug("Updating or creating %d sources or sinks.", len(sources_or_sinks))
-    for item in sources_or_sinks:
-        key = item.stakeholder_key + item.external_id
-        db_item = existing_items.get(key)
-        if db_item:
-            logger.debug("Updating existing item with key %s.", key)
-            item.id = db_item.id  # Set the existing ID
-            db_item.name = item.name
-            db_item.type = item.type
-            db_item.visible = item.visible
-            db_item.adapter_key = item.adapter_key
-            if isinstance(db_item, SourceOrm) and isinstance(item, Source):
-                db_item.source_id = item.source_id
-            elif isinstance(db_item, SinkOrm) and isinstance(item, Sink):
-                db_item.sink_id = item.sink_id
-            db_item.meta_data = item.meta_data
-            db_item.preset_filters = item.preset_filters
-            db_item.passthrough_filters = item.passthrough_filters
-            db_item.thing_node_external_ids = item.thing_node_external_ids
-        else:
-            logger.debug("Creating new item with key %s.", key)
-            new_item = item.to_orm_model()
-            session.add(new_item)
+    try:
+        for item in sources_or_sinks:
+            key = item.stakeholder_key + item.external_id
+            db_item = existing_items.get(key)
+            if db_item:
+                logger.debug("Updating existing item with key %s.", key)
+                item.id = db_item.id  # Set the existing ID
+                db_item.name = item.name
+                db_item.type = item.type
+                db_item.visible = item.visible
+                db_item.adapter_key = item.adapter_key
+                if isinstance(db_item, SourceOrm) and isinstance(item, Source):
+                    db_item.source_id = item.source_id
+                elif isinstance(db_item, SinkOrm) and isinstance(item, Sink):
+                    db_item.sink_id = item.sink_id
+                db_item.meta_data = item.meta_data
+                db_item.preset_filters = item.preset_filters
+                db_item.passthrough_filters = item.passthrough_filters
+                db_item.thing_node_external_ids = item.thing_node_external_ids
+            else:
+                logger.debug("Creating new item with key %s.", key)
+                new_item = item.to_orm_model()
+                session.add(new_item)
+    except IntegrityError as e:
+        msg = f"Integrity Error while updating or creating sources/sinks: {str(e)}"
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+    except Exception as e:
+        msg = f"Error updating or creating sources/sinks: {str(e)}"
+        logger.error(msg)
+        raise DBUpdateError(msg) from e
 
 
 def orm_delete_structure(session: SQLAlchemySession) -> None:
@@ -568,6 +650,11 @@ def orm_delete_structure(session: SQLAlchemySession) -> None:
             session.execute(delete(table))
 
         session.commit()
+    except IntegrityError as e:
+        msg = f"Integrity Error while deleting structure: {str(e)}"
+        logger.error(msg)
+        session.rollback()
+        raise DBIntegrityError(msg) from e
     except Exception as e:
         session.rollback()
         logger.error("Error during structure deletion: %s", str(e))
