@@ -26,6 +26,7 @@ from hetdesrun.backend.service.transformation_router import (
     dashboard_router,
     transformation_router,
 )
+from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
 from hetdesrun.webservice.auth_dependency import get_auth_deps
@@ -225,6 +226,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             dashboard_router,
             prefix="/api",  # individual auth dependency
         )
+        app.include_router(virtual_structure_router, prefix="/api", dependencies=get_auth_deps())
         possible_maintenance_secret = get_config().maintenance_secret
         if (
             possible_maintenance_secret is not None
