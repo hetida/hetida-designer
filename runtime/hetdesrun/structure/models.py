@@ -318,19 +318,20 @@ class CompleteStructure(BaseModel):
     sources: list[Source] = Field(default_factory=list, description="All sources of the structure")
     sinks: list[Sink] = Field(default_factory=list, description="All sinks of the structure")
 
-    # Root validator to check if the parent_external_node_id does not exist in the other nodes
+    # Root validator to check if each parent_external_node_id exists in at least one other node
     @root_validator(pre=True)
     def validate_root_nodes(cls, values: dict[str, Any]) -> dict[str, Any]:
+        nodes = values.get("thing_nodes", [])
         # Create a set of all external_ids in the thing_nodes list
-        external_ids = {node["external_id"] for node in values.get("thing_nodes", [])}
-        for node in values.get("thing_nodes", []):
-            if node.get("parent_external_node_id") is not None:
-                parent_ext_id = node.get("parent_external_node_id")
+        external_ids = {node["external_id"] for node in nodes}
+
+        for node in nodes:
+            parent_ext_id = node.get("parent_external_node_id")
+            if parent_ext_id is not None and parent_ext_id not in external_ids:
                 # Raise an error if the parent_external_node_id does not exist in the other nodes
-                if parent_ext_id not in external_ids:
-                    raise ValueError(
-                        f"Root node '{node.get('name')}' has an invalid "
-                        f"parent_external_node_id '{parent_ext_id}' that does "
-                        "not reference any existing ThingNode."
-                    )
+                raise ValueError(
+                    f"Root node '{node.get('name')}' has an invalid "
+                    f"parent_external_node_id '{parent_ext_id}' that does "
+                    "not reference any existing ThingNode."
+                )
         return values
