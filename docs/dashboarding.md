@@ -81,7 +81,7 @@ In addition to the configuration described there you need to specify how the das
 
 ```
 { 
-    "auth_url" : "http://localhost:8081/auth/",
+    "auth_url" : "http://localhost:8081/",
     "client_id": "hetida-designer",
     "realm": "hetida-designer"
 }

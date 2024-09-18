@@ -352,7 +352,7 @@ def calculate_timerange_timestamps(
 
 
 DASHBOARD_HEAD_ELEMENTS = (
-    script(src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"),
+    script(src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"),
     script(src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"),
     link(
         href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css",
@@ -951,7 +951,7 @@ def generate_login_dashboard_stub() -> str:
     """
 
     dashboard_login_stub_html = html[
-        script(src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"),
+        script(src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"),
         script()[
             Markup(
                 r"""       const Keycloak = window["Keycloak"];
@@ -1157,23 +1157,37 @@ def generate_dashboard_html(
             await keycloak.logout(); // will reload page
         }
 
+        let kc_inited = false;
+
         async function init_keycloak() {
-            try {
-                const authenticated = await keycloak.init(
-                    {token: access_token, refreshToken: refresh_token,
-                    onLoad: 'login-required',
-                 checkLoginIframe:false,
-                pkceMethod:"S256" }
-                );
-                console.log(`User is ${authenticated ? 'authenticated' : 'not authenticated'}`);
-            } catch (error) {
-                console.error('Failed to initialize auth adapter:', error);
+            if (!kc_inited) {
+                try {
+                    console.log("access token:", access_token);
+                    console.log("refresh token:", refresh_token);
+                    console.log(keycloak);
+                    const authenticated = await keycloak.init(
+                        {token: access_token, refreshToken: refresh_token,
+                        onLoad: "check-sso",
+                        redirectUri: location.href, enableLogging: true,
+                    checkLoginIframe:false,
+                        pkceMethod:"S256" }
+                    );
+                    console.log("Waiting");
+                    console.log(`User is ${authenticated ? 'authenticated' : 'not authenticated'}`);
+                } catch (error) {
+                    console.error('Failed to initialize auth adapter:', error);
+                }
+                updateAuthCookies();
+
+                if (keycloak.idTokenParsed != null) {
+                    console.log("Setting username form id token");
+                    document.getElementById("logout_button").title=(
+                        "Logout " + keycloak.idTokenParsed.preferred_username
+                    );
+                }
+                kc_inited = true;
+                //window.location.reload();
             }
-            updateAuthCookies();
-            document.getElementById("logout_button").title=(
-                "Logout " + keycloak.idTokenParsed.preferred_username
-            );
-            //window.location.reload();
         }
 
         """
@@ -1194,17 +1208,17 @@ def generate_dashboard_html(
         });
 
         async function refresh_token_and_update_cookies() {
-            refreshed = await keycloak.updateToken();
-            updateAuthCookies();
-        }
-
-        if (auth_active) {
-            console.log("Initializing keycloak")
-            init_keycloak();
-            keycloak.onTokenExpired = () => {
-                refresh_token_and_update_cookies();
+            if (keycloak.parsedRefreshToken != null) {
+                console.log("Updating tokens via keycloak object")
+                refreshed = await keycloak.updateToken();
+                console.log("Finished updating tokens via keycloak object")
+                updateAuthCookies();
+            } else {
+                console.log("Not refreshing since not refresh token was available.")
             }
         }
+
+
 
 
         // ======== Gridstack / resizing ========
@@ -1251,7 +1265,7 @@ def generate_dashboard_html(
             + ("true" if locked else "false")
             + r""";
 
-        function apply_lock_state() {
+        async function apply_lock_state() {
             if (dashboard_locked) {
                 document.getElementById("lock-button-image").className="fa-solid fa-lock";
                 grid.disable();
@@ -1263,15 +1277,30 @@ def generate_dashboard_html(
             }
         }
 
-        apply_lock_state();
 
 
-        function toggle_lock(locked=null) {
+        async function toggle_lock(locked=null) {
             if (dashboard_locked) {
                 dashboard_locked = false;
             } else {
                 dashboard_locked = true;
             }
+            await apply_lock_state();
+        }
+
+        if (auth_active) {
+            (async function() {
+                console.log("Initializing keycloak in actual dashboard")
+
+                await init_keycloak();
+                keycloak.onTokenExpired = () => {
+                    console.log("Refreshing tokens and cookies")
+                    refresh_token_and_update_cookies();
+                }
+                await apply_lock_state();
+                console.log("Keycloak sucessfully initialized")
+            })();
+        } else {
             apply_lock_state();
         }
 
@@ -1402,6 +1431,12 @@ def generate_dashboard_html(
             }
         }
 
+        function delete_query_parameter(param) {
+            var queryParams = new URLSearchParams(window.location.search);
+            queryParams.delete(param);
+            history.replaceState(null, null, "?"+queryParams.toString());
+        }
+
         function upsert_query_parameters_in_url(param_dict) {
             var queryParams = new URLSearchParams(window.location.search);
 
@@ -1416,7 +1451,9 @@ def generate_dashboard_html(
 
             headers =  {'Content-Type': 'application/json'}
             if (auth_active) {
+                console.log("Refreshing tokens / cookie")
                 await refresh_token_and_update_cookies();
+                console.log("Finished refreshing tokens / cookie")
                 headers["Authorization"] = "Bearer " + keycloak.token;
             }
 
