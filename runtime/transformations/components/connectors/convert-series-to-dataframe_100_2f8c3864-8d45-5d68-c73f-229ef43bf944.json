@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Convert Series to DataFrame\n\n# Convert Series to DataFrame\n\n## Description\nConvert a Series to a DataFrame with one column.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n\n## Outputs\n* **output** (Pandas DataFrame): The output DataFrame with one column.\n\n## Details\nJust converts a series to a DataFrame with the series becoming the only one column of the new DataFrame.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Convert Series to DataFrame\",\n    \"category\": \"Connectors\",\n    \"description\": \"Convert a Series to a DataFrame with one column\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    \"revision_group_id\": \"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.109282+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input.to_frame()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for Convert Series to DataFrame\n\n# Convert Series to DataFrame\n\n## Description\nConvert a Series to a DataFrame with one column.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n\n## Outputs\n* **output** (Pandas DataFrame): The output DataFrame with one column.\n\n## Details\nJust converts a series to a DataFrame with the series becoming the only one column of the new DataFrame.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Convert Series to DataFrame\",\n    \"category\": \"Connectors\",\n    \"description\": \"Convert a Series to a DataFrame with one column\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    \"revision_group_id\": \"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.109282+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input.to_frame()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Convert a Series to a DataFrame with one column",
   "documentation": "# Convert Series to DataFrame\n\n## Description\nConvert a Series to a DataFrame with one column.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n\n## Outputs\n* **output** (Pandas DataFrame): The output DataFrame with one column.\n\n## Details\nJust converts a series to a DataFrame with the series becoming the only one column of the new DataFrame.\n",
   "id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
@@ -22,6 +22,11 @@
     ]
   },
   "name": "Convert Series to DataFrame",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:34.109282+00:00",
   "revision_group_id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
   "state": "RELEASED",

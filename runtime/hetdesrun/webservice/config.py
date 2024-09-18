@@ -334,7 +334,10 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/sql,"
         "kafka|Kafka Adapter"
         "|http://localhost:8090/adapters/kafka"
-        "|http://localhost:8090/adapters/kafka",
+        "|http://localhost:8090/adapters/kafka,"
+        "external-sources|External Sources"
+        "|http://localhost:8090/adapters/external_sources"
+        "|http://localhost:8090/adapters/external_sources",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )

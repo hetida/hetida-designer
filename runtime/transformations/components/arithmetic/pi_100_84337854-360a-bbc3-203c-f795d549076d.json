@@ -1,6 +1,6 @@
 {
   "category": "Arithmetic",
-  "content": "\"\"\"Documentation for Pi\n\n# Pi\n\n## Description\nThis component returns the mathematical constant Pi = 3.1415... as float.\n\n## Inputs\n-\n\n## Outputs\n* **pi** (float): The mathematical constant Pi = 3.1415.... \n\n## Details\nThe component returns the mathematical constant Pi = 3.1415... as float.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"pi\": 3.141592653589793\n\n```\n\"\"\"\n\nimport math\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"pi\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"Pi\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Returns the mathematical constant Pi = 3.1415...\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"84337854-360a-bbc3-203c-f795d549076d\",\n    \"revision_group_id\": \"84337854-360a-bbc3-203c-f795d549076d\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.824904+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"pi\": math.pi}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for Pi\n\n# Pi\n\n## Description\nThis component returns the mathematical constant Pi = 3.1415... as float.\n\n## Inputs\n-\n\n## Outputs\n* **pi** (float): The mathematical constant Pi = 3.1415.... \n\n## Details\nThe component returns the mathematical constant Pi = 3.1415... as float.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"pi\": 3.141592653589793\n\n```\n\"\"\"\n\nimport math\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"pi\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"Pi\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Returns the mathematical constant Pi = 3.1415...\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"84337854-360a-bbc3-203c-f795d549076d\",\n    \"revision_group_id\": \"84337854-360a-bbc3-203c-f795d549076d\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.824904+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"pi\": math.pi}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Returns the mathematical constant Pi = 3.1415...",
   "documentation": "# Pi\n\n## Description\nThis component returns the mathematical constant Pi = 3.1415... as float.\n\n## Inputs\n-\n\n## Outputs\n* **pi** (float): The mathematical constant Pi = 3.1415.... \n\n## Details\nThe component returns the mathematical constant Pi = 3.1415... as float.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"pi\": 3.141592653589793\n\n```\n",
   "id": "84337854-360a-bbc3-203c-f795d549076d",
@@ -15,6 +15,11 @@
     ]
   },
   "name": "Pi",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:31.824904+00:00",
   "revision_group_id": "84337854-360a-bbc3-203c-f795d549076d",
   "state": "RELEASED",

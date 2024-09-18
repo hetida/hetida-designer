@@ -1,6 +1,6 @@
 {
   "category": "Arithmetic",
-  "content": "\"\"\"Documentation for Modulo\n\n# Modulo\n\n## Description\nThis component calculates the modulo of the given input.\n\n## Inputs\n* **a** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric.\n* **b** (Integer)\n\n## Outputs\n* **modulo** (Integer, Float, Pandas Series or Pandas DataFrame): The result of a mod b.\n\n## Details\nThis component calculates a mod b.\n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\t\"a\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 4.0,\n\t\t\t\t\"2019-08-01T15:44:12\": 9.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.420,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n           \t\t\t\"2019-08-07T11:01:00\": -10\n\t},\n\t\t\t\t\"b\" = 3\n}\n```\nThe expected output is\n```\n\t\"modulo\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 1,\n\t\t\t\t\"2019-08-01T15:44:12\": 0.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.42,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n             \t\t\t\"2019-08-07T11:01:00\": 2\n\t}\n\n```\n\"\"\"\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"a\": {\"data_type\": \"ANY\"},\n        \"b\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"modulo\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Modulo\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Calculates the modulo to some given b\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f\",\n    \"revision_group_id\": \"ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T18:33:31.739754+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"modulo\": a % b}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"a\",\n            \"adapter_id\": \"direct_provisioning\",\n            \"filters\": {\"value\": \"27\"},\n        },\n        {\n            \"workflow_input_name\": \"b\",\n            \"adapter_id\": \"direct_provisioning\",\n            \"filters\": {\"value\": \"4\"},\n        },\n    ]\n}\n",
+  "content": "\"\"\"Documentation for Modulo\n\n# Modulo\n\n## Description\nThis component calculates the modulo of the given input.\n\n## Inputs\n* **a** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric.\n* **b** (Integer)\n\n## Outputs\n* **modulo** (Integer, Float, Pandas Series or Pandas DataFrame): The result of a mod b.\n\n## Details\nThis component calculates a mod b.\n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\t\"a\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 4.0,\n\t\t\t\t\"2019-08-01T15:44:12\": 9.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.420,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n           \t\t\t\"2019-08-07T11:01:00\": -10\n\t},\n\t\t\t\t\"b\" = 3\n}\n```\nThe expected output is\n```\n\t\"modulo\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 1,\n\t\t\t\t\"2019-08-01T15:44:12\": 0.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.42,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n             \t\t\t\"2019-08-07T11:01:00\": 2\n\t}\n\n```\n\"\"\"\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"a\": {\"data_type\": \"ANY\"},\n        \"b\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"modulo\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Modulo\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Calculates the modulo to some given b\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f\",\n    \"revision_group_id\": \"ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T18:33:31.739754+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"modulo\": a % b}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\"workflow_input_name\": \"a\", \"filters\": {\"value\": \"27\"}},\n        {\"workflow_input_name\": \"b\", \"filters\": {\"value\": \"4\"}},\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\"workflow_input_name\": \"a\", \"filters\": {\"value\": \"27\"}},\n        {\"workflow_input_name\": \"b\", \"filters\": {\"value\": \"4\"}},\n    ]\n}\n",
   "description": "Calculates the modulo to some given b",
   "documentation": "# Modulo\n\n## Description\nThis component calculates the modulo of the given input.\n\n## Inputs\n* **a** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric.\n* **b** (Integer)\n\n## Outputs\n* **modulo** (Integer, Float, Pandas Series or Pandas DataFrame): The result of a mod b.\n\n## Details\nThis component calculates a mod b.\n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\t\"a\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 4.0,\n\t\t\t\t\"2019-08-01T15:44:12\": 9.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.420,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n           \t\t\t\"2019-08-07T11:01:00\": -10\n\t},\n\t\t\t\t\"b\" = 3\n}\n```\nThe expected output is\n```\n\t\"modulo\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 1,\n\t\t\t\t\"2019-08-01T15:44:12\": 0.5,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.42,\n\t\t\t\t\"2019-08-05T12:00:34\": null,\n             \t\t\t\"2019-08-07T11:01:00\": 2\n\t}\n\n```\n",
   "id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
@@ -28,6 +28,28 @@
     ]
   },
   "name": "Modulo",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "27"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "a"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "4"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "b"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T18:33:31.739754+00:00",
   "revision_group_id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
   "state": "RELEASED",

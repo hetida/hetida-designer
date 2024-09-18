@@ -123,3 +123,4 @@ def main(*, df_or_series, timedelta):
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}
+RELEASE_WIRING = {}

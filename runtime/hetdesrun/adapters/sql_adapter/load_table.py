@@ -43,7 +43,7 @@ def extract_time_range(
     to_timestamp = source_filters.get("timestampTo")
 
     if from_timestamp is None or to_timestamp is None:
-        msg = "Missing timestamp filters for multitsframe timeseries table source"
+        msg = "Missing timestamp filters for multitsframe timeseries source"
         logger.error(msg)
         raise AdapterHandlingException(msg)
 
