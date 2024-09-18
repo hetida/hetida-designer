@@ -159,7 +159,7 @@ DASHBOARD_HEAD = r"""
     <html>
 
     <script
-        src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"
+        src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"
         >
     </script>
 
@@ -577,7 +577,7 @@ def generate_login_dashboard_stub() -> str:
     <html>
 
     <script
-        src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"
+        src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"
         >
     </script>
 
