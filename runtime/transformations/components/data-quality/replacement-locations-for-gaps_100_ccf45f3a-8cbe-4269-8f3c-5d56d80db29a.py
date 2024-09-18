@@ -904,33 +904,26 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "gap_intervals",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": "[\n"
-                "    {\n"
-                '        "start_time": "2020-01-01T01:16:00.000Z",\n'
-                '        "end_time": "2020-01-01T01:25:00.000Z",\n'
-                '        "start_inclusive": true,\n'
-                '        "end_inclusive": true\n'
-                "    },\n"
-                "    {\n"
-                '        "start_time": "2020-01-01T01:29:00.000Z",\n'
-                '        "end_time": "2020-01-01T01:29:00.000Z",\n'
-                '        "start_inclusive": true,\n'
-                '        "end_inclusive": true\n'
-                "    },\n"
-                "    {\n"
-                '        "start_time": "2020-01-01T01:31:00.000Z",\n'
-                '        "end_time": "2020-01-01T01:34:00.000Z",\n'
-                '        "start_inclusive": false,\n'
-                '        "end_inclusive": true\n'
-                "    }\n"
-                "]\n"
+                "value": '[\n    {\n        "start_time": "2020-01-01T01:16:00.000Z",\n        "end_time": "2020-01-01T01:25:00.000Z",\n        "start_inclusive": true,\n        "end_inclusive": true\n    },\n    {\n        "start_time": "2020-01-01T01:29:00.000Z",\n        "end_time": "2020-01-01T01:29:00.000Z",\n        "start_inclusive": true,\n        "end_inclusive": true\n    },\n    {\n        "start_time": "2020-01-01T01:31:00.000Z",\n        "end_time": "2020-01-01T01:34:00.000Z",\n        "start_inclusive": false,\n        "end_inclusive": true\n    }\n]\n'
             },
         },
         {
             "workflow_input_name": "expected_data_frequency",
-            "adapter_id": "direct_provisioning",
+            "filters": {"value": "2min"},
+        },
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "gap_intervals",
+            "filters": {
+                "value": '[\n    {\n        "start_time": "2020-01-01T01:16:00.000Z",\n        "end_time": "2020-01-01T01:25:00.000Z",\n        "start_inclusive": true,\n        "end_inclusive": true\n    },\n    {\n        "start_time": "2020-01-01T01:29:00.000Z",\n        "end_time": "2020-01-01T01:29:00.000Z",\n        "start_inclusive": true,\n        "end_inclusive": true\n    },\n    {\n        "start_time": "2020-01-01T01:31:00.000Z",\n        "end_time": "2020-01-01T01:34:00.000Z",\n        "start_inclusive": false,\n        "end_inclusive": true\n    }\n]\n'
+            },
+        },
+        {
+            "workflow_input_name": "expected_data_frequency",
             "filters": {"value": "2min"},
         },
     ]

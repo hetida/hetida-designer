@@ -19,17 +19,77 @@ transformation revisions as part of their validation.
 The affected workflows are automatically repaired by this migration script.
 """
 
-from sqlalchemy import orm, select, update
+from uuid import UUID, uuid4
+
+
+from sqlalchemy import (
+    orm,
+    select,
+    update,
+    JSON,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
+from sqlalchemy_utils import UUIDType
+from sqlalchemy.orm import declarative_base
+
 
 from alembic import op
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-from hetdesrun.utils import State
+from hetdesrun.utils import State, Type
 
 # revision identifiers, used by Alembic.
 revision = "99f61ce50ad5"
 down_revision = "7bd371c84b25"
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
+
+
+class TransformationRevisionDBModel(Base):
+    __tablename__ = "transformation_revisions"
+
+    id: UUIDType = Column(  # noqa: A003
+        UUIDType(binary=False), primary_key=True, default=uuid4
+    )
+    revision_group_id: UUIDType = Column(UUIDType(binary=False), default=uuid4, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+    version_tag = Column(String, nullable=False)
+    state = Column(Enum(State), nullable=False)
+    type = Column(Enum(Type), nullable=False)  # noqa: A003
+    documentation = Column(String, nullable=False)
+    workflow_content = Column(JSON(none_as_null=True), nullable=True, default=lambda: None)
+    component_code = Column(String, nullable=True)
+    io_interface = Column(JSON, nullable=False)
+    test_wiring = Column(JSON, nullable=False)
+    released_timestamp = Column(DateTime, nullable=True, default=lambda: None)
+    disabled_timestamp = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "revision_group_id",
+            "version_tag",
+            name="_revision_group_id_plus_version_tag_uc",
+        ),
+        CheckConstraint(
+            """
+            (
+                (  (CASE WHEN component_code IS NULL THEN 0 ELSE 1 END)
+                +  (CASE WHEN workflow_content IS NULL THEN 0 ELSE 1 END)
+                ) = 1
+            )
+            """,
+            name="_exactly_one_of_component_code_or_workflow_content_null_cc",
+        ),
+    )
 
 
 def upgrade() -> None:

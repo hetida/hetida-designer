@@ -599,6 +599,10 @@ holidays==0.52 \
     --hash=sha256:2891f548dd34e3596e2537fb32da7ad3b42caa73053cffd582c68ed20257d9c3 \
     --hash=sha256:82df94441ed585afedbdd09328538db6af418dd6008a28948bf8a7664764ae2d
     # via -r ./requirements.in
+htpy==24.9.1 \
+    --hash=sha256:ddafc31354e0226f86ccc4bd312b1592895441e43d2c07b6b9e3168267294b3b \
+    --hash=sha256:e19975b193943122e2020a7c0cb93cf7ed5fa44bd4a9fbf4e71f1bd09ec5ae8d
+    # via -r ./requirements.in
 httpcore==1.0.5 \
     --hash=sha256:34a38e2f9291467ee3b44e89dd52615370e152954ba21721378a87b2960f7a61 \
     --hash=sha256:421f18bac248b25d310f3cacd198d55b8e6125c107797b609ff9b7a6ba7991b5
@@ -809,6 +813,7 @@ markupsafe==2.1.5 \
     --hash=sha256:fce659a462a1be54d2ffcacea5e3ba2d74daa74f30f5f143fe0c58636e355fdd \
     --hash=sha256:ffee1f21e5ef0d712f9033568f8344d5da8cc2869dbd08d87c84656e6a2d2f68
     # via
+    #   htpy
     #   jinja2
     #   mako
 mdurl==0.1.2 \

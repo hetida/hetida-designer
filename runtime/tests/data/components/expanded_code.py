@@ -85,15 +85,11 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "scores",
-            "adapter_id": "direct_provisioning",
             "filters": {
                 "value": '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
             },
         },
-        {
-            "workflow_input_name": "threshold",
-            "adapter_id": "direct_provisioning",
-            "filters": {"value": "42"},
-        },
+        {"workflow_input_name": "threshold", "filters": {"value": "42"}},
     ]
 }
+RELEASE_WIRING = None

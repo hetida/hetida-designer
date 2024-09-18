@@ -338,6 +338,11 @@
     ]
   },
   "name": "Get ExampleClass Object Attributes",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-02-10T13:45:46.989976+00:00",
   "revision_group_id": "bb6ffbca-abb6-4bf6-aef1-4eaa42ef816f",
   "state": "RELEASED",
