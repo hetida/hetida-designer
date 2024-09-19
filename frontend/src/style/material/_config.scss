@@ -50,16 +50,16 @@ $light-primary-text: map_get($mg-primary-palette, 700);
 
 $mg-typography: mat.define-typography-config(
   $font-family: 'Roboto, "Helvetica Neue", sans-serif',
-  $headline-1: mat.define-typography-level(24px, 32px, 300),
+  $headline-1: mat.define-typography-level(24px, 32px, 400),
   $headline-2: mat.define-typography-level(20px, 32px, 400),
   $headline-3: mat.define-typography-level(16px, 24px, 400),
-  $headline-4: mat.define-typography-level(14px, 24px, 400),
-  $headline-5: mat.define-typography-level(20px, 32px, 400),
+  $headline-4: mat.define-typography-level(15px, 24px, 400),
+  $headline-5: mat.define-typography-level(24px, 32px, 400),
   $headline-6: mat.define-typography-level(20px, 32px, 500),
-  $subtitle-1: mat.define-typography-level(16px, 20px, 500),
-  $subtitle-2: mat.define-typography-level(14px, 24px, 500),
-  $body-1: mat.define-typography-level(14px, 24px, 500),
-  $body-2: mat.define-typography-level(14px, 24px, 500),
+  $subtitle-1: mat.define-typography-level(16px, 28px, 400),
+  $subtitle-2: mat.define-typography-level(14px, 20px, 500),
+  $body-1: mat.define-typography-level(14px, 20px, 400),
+  $body-2: mat.define-typography-level(14px, 20px, 400),
   $caption: mat.define-typography-level(10.5px, 12px, 500),
   $button: mat.define-typography-level(14px, 14px, 500)
 );

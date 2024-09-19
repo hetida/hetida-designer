@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Inject } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -34,7 +34,7 @@ export interface ComponentIoDialogData {
   templateUrl: 'component-io-dialog.component.html',
   styleUrls: ['component-io-dialog.component.scss']
 })
-export class ComponentIODialogComponent implements OnInit {
+export class ComponentIODialogComponent implements AfterViewInit {
   componentTransformation: ComponentTransformation;
 
   _preview: FlowchartConfiguration = {
@@ -74,11 +74,12 @@ export class ComponentIODialogComponent implements OnInit {
     this._svgConfiguration.allowPanning = false;
     this._svgConfiguration.allowZooming = false;
     this._svgConfiguration.showContextMenu = false;
-    this._createPreview();
+
+    this._setupFormControl();
   }
 
-  ngOnInit(): void {
-    this._setupFormControl();
+  ngAfterViewInit(): void {
+    this._createPreview();
   }
 
   private _setupFormControl(): void {
