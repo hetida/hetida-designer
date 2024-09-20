@@ -335,3 +335,88 @@ class CompleteStructure(BaseModel):
                     "not reference any existing ThingNode."
                 )
         return values
+
+    @root_validator(pre=True)
+    def check_stakeholder_key_consistency(cls, values: dict[str, Any]) -> dict[str, Any]:
+        stakeholder_keys = set()
+
+        for node in values.get("thing_nodes", []):
+            stakeholder_keys.add(node["stakeholder_key"])
+
+        for element_type in values.get("element_types", []):
+            stakeholder_keys.add(element_type["stakeholder_key"])
+
+        if len(stakeholder_keys) > 1:
+            sorted_keys = sorted(stakeholder_keys)
+            raise ValueError(
+                f"Inconsistent stakeholder keys found: {set(sorted_keys)}. "
+                "All stakeholder keys must be consistent across element_types and thing_nodes."
+            )
+
+        return values
+
+    @root_validator(pre=True)
+    def check_for_circular_reference(cls, values: dict[str, Any]) -> dict[str, Any]:
+        nodes_by_external_id = {node["external_id"]: node for node in values.get("thing_nodes", [])}
+        visited = set()
+
+        def visit(node: dict[str, Any]) -> None:
+            if node["external_id"] in visited:
+                raise ValueError(f"Circular reference detected in node {node['external_id']}")
+            visited.add(node["external_id"])
+            parent_external_id = node.get("parent_external_node_id")
+            if parent_external_id and parent_external_id in nodes_by_external_id:
+                visit(nodes_by_external_id[parent_external_id])
+            visited.remove(node["external_id"])  # Remove node from visited after visiting
+
+        for node in values.get("thing_nodes", []):
+            if node["external_id"] not in visited:
+                visit(node)
+        return values
+
+    @root_validator(pre=True)
+    def check_unique_external_ids(cls, values: dict[str, Any]) -> dict[str, Any]:
+        unique_check = {
+            "element_types": set(),
+            "thing_nodes": set(),
+            "sources": set(),
+            "sinks": set(),
+        }
+        for category in unique_check.keys():
+            for item in values.get(category, []):
+                if item["external_id"] in unique_check[category]:
+                    raise ValueError(
+                        f"Duplicate external_id '{item['external_id']}' found in {category}."
+                    )
+                unique_check[category].add(item["external_id"])
+        return values
+
+    @root_validator(pre=True)
+    def validate_source_sink_references(cls, values: dict[str, Any]) -> dict[str, Any]:
+        thing_node_ids = {node["external_id"] for node in values.get("thing_nodes", [])}
+        for source in values.get("sources", []):
+            for tn_id in source.get("thing_node_external_ids", []):
+                if tn_id not in thing_node_ids:
+                    raise ValueError(
+                        f"Source '{source['external_id']}' references "
+                        f"non-existing ThingNode '{tn_id}'."
+                    )
+        for sink in values.get("sinks", []):
+            for tn_id in sink.get("thing_node_external_ids", []):
+                if tn_id not in thing_node_ids:
+                    raise ValueError(
+                        f"Sink '{sink['external_id']}' references "
+                        f"non-existing ThingNode '{tn_id}'."
+                    )
+        return values
+
+    @validator("sources", "sinks", pre=True, each_item=True)
+    def validate_passthrough_filters(cls, v: Any) -> Any:
+        for filter in v.get("passthrough_filters", []):
+            if "name" not in filter or not isinstance(filter["name"], str):
+                raise ValueError("Each passthrough filter must have a 'name' of type str.")
+            if "type" not in filter or filter["type"] not in ["free_text", "number", "date"]:
+                raise ValueError("Each passthrough filter must have a valid 'type'.")
+            if "required" not in filter or not isinstance(filter["required"], bool):
+                raise ValueError("Each passthrough filter must have a 'required' boolean field.")
+        return v
