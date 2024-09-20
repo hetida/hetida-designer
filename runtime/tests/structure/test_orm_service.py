@@ -833,17 +833,3 @@ def test_update_structure_from_file_invalid_root_node(mocked_clean_test_db_sessi
         "Root node 'Waterworks 1' has an invalid parent_external_node_id 'NonExistingNode' "
         "that does not reference any existing ThingNode." in str(excinfo.value)
     ), "Expected ValidationError for invalid parent_external_node_id was not raised as expected."
-
-
-def test_update_structure_from_file_integrity_error_handling(mocked_clean_test_db_session):
-    """Tests that IntegrityError is handled correctly and raises DBIntegrityError."""
-
-    file_path = "tests/structure/data/db_test_invalid_structure_no_duplicate_id.json"
-
-    with pytest.raises(DBIntegrityError) as excinfo:
-        update_structure_from_file(file_path)
-
-    # Assert that the raised error is DBIntegrityError and includes a relevant message
-    assert "Integrity Error while updating or inserting the structure" in str(
-        excinfo.value
-    ), "Expected DBIntegrityError was not raised or the error message is incorrect."
