@@ -12,19 +12,14 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     SourceOrm,
     ThingNodeOrm,
 )
-from hetdesrun.structure.db.exceptions import DBNotFoundError
+from hetdesrun.structure.db.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
     fetch_all_sources,
     fetch_all_thing_nodes,
 )
-from hetdesrun.structure.models import (
-    CompleteStructure,
-    Sink,
-    Source,
-    ThingNode,
-)
+from hetdesrun.structure.models import CompleteStructure, Sink, Source, ThingNode
 from hetdesrun.structure.structure_service import (
     delete_structure,
     get_all_sinks_from_db,
@@ -495,3 +490,632 @@ def test_get_collection_of_sinks_from_db(mocked_clean_test_db_session):
         assert (
             fetched_sink.name == expected_sink.name
         ), f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+
+
+def test_circular_tn_relation(mocked_clean_test_db_session):
+    circular_data = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": "Node3",  # Circular reference
+                "element_type_external_id": "Type1",
+            },
+            {
+                "external_id": "Node2",
+                "stakeholder_key": "SK1",
+                "name": "Node 2",
+                "parent_external_node_id": "Node1",
+                "element_type_external_id": "Type1",
+            },
+            {
+                "external_id": "Node3",
+                "stakeholder_key": "SK1",
+                "name": "Node 3",
+                "parent_external_node_id": "Node2",
+                "element_type_external_id": "Type1",
+            },
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Circular reference detected in node"):
+        CompleteStructure(**circular_data)
+
+
+def test_update_with_conflicting_stakeholder_key(mocked_clean_test_db_session):
+    # Initial Structure: A thing node with a specific external_id and stakeholder_key
+    initial_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+    }
+
+    # Updating Structure: Same external_id but with a different stakeholder_key
+    conflicting_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK2",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK2",
+                "name": "Node 1 - Conflicting Stakeholder Key",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+    }
+
+    update_structure(CompleteStructure(**initial_structure))  # Insert initial Structure
+
+    # Verify initial structure is in the database
+    thing_nodes = get_all_thing_nodes_from_db()
+    assert len(thing_nodes) == 1
+    assert thing_nodes[0].external_id == "Node1"
+    assert thing_nodes[0].stakeholder_key == "SK1"
+
+    # Attempt to create the conflicting structure with validation error check
+    with pytest.raises(
+        DBIntegrityError,
+        match=(
+            r"Integrity Error while updating or inserting the structure:.*"
+            r"UNIQUE constraint failed.*element_type.name"
+        ),
+    ):
+        update_structure(CompleteStructure(**conflicting_structure))
+
+
+def test_stakeholder_key_consistency(mocked_clean_test_db_session):
+    # Initial Structure with conflicting stakeholder keys
+    conflicting_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            },
+            {
+                "external_id": "Node2",
+                "stakeholder_key": "SK2",  # Inconsistent stakeholder_key
+                "name": "Node 2",
+                "parent_external_node_id": "Node1",
+                "element_type_external_id": "Type1",
+            },
+        ],
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"Inconsistent stakeholder keys found: \{('SK1', 'SK2'|'SK2', 'SK1')\}. "
+        r"All stakeholder keys must be consistent across element_types and thing_nodes.",
+    ):
+        CompleteStructure(**conflicting_structure)
+
+
+def test_unique_external_id_validation(mocked_clean_test_db_session):
+    duplicate_element_types = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            },
+            {
+                "external_id": "Type1",  # Duplicate
+                "stakeholder_key": "SK1",
+                "name": "Duplicate Type 1",
+            },
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+            }
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Duplicate external_id 'Type1' found in element_types"):
+        CompleteStructure(**duplicate_element_types)
+
+    duplicate_thing_nodes = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            },
+            {
+                "external_id": "Node1",  # Duplicate
+                "stakeholder_key": "SK1",
+                "name": "Duplicate Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            },
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+            }
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Duplicate external_id 'Node1' found in thing_nodes"):
+        CompleteStructure(**duplicate_thing_nodes)
+
+    duplicate_sources = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+            },
+            {
+                "external_id": "Source1",  # Duplicate
+                "stakeholder_key": "SK1",
+                "name": "Duplicate Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_other_id",
+            },
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+            }
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Duplicate external_id 'Source1' found in sources"):
+        CompleteStructure(**duplicate_sources)
+
+    duplicate_sinks = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+            },
+            {
+                "external_id": "Sink1",  # Duplicate
+                "stakeholder_key": "SK1",
+                "name": "Duplicate Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_other_id",
+            },
+        ],
+    }
+    with pytest.raises(ValueError, match="Duplicate external_id 'Sink1' found in sinks"):
+        CompleteStructure(**duplicate_sinks)
+
+
+def test_validate_source_sink_references(mocked_clean_test_db_session):
+    invalid_source_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["NonExistentNode"],  # invalid reference
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["Node1"],  # valid reference
+            }
+        ],
+    }
+
+    with pytest.raises(
+        ValueError, match="Source 'Source1' references non-existing ThingNode 'NonExistentNode'"
+    ):
+        CompleteStructure(**invalid_source_structure)
+
+    invalid_sink_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["Node1"],  # valid reference
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["NonExistentNode"],  # invalid reference
+            }
+        ],
+    }
+
+    with pytest.raises(
+        ValueError, match="Sink 'Sink1' references non-existing ThingNode 'NonExistentNode'"
+    ):
+        CompleteStructure(**invalid_sink_structure)
+
+
+def test_validate_passthrough_filters():
+    valid_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "timestampFrom", "type": "free_text", "required": True},
+                    {"name": "sensorID", "type": "free_text", "required": False},
+                ],
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "threshold", "type": "free_text", "required": True}
+                ],
+            }
+        ],
+    }
+
+    CompleteStructure(**valid_structure)
+
+    invalid_name_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"type": "free_text", "required": True}  # missing 'name' field
+                ],
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "threshold", "type": "free_text", "required": True}
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Each passthrough filter must have a 'name' of type str."):
+        CompleteStructure(**invalid_name_structure)
+
+    invalid_type_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "timestampFrom", "type": "free_text", "required": True}
+                ],
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "threshold", "type": "invalid_type", "required": True}  # invalid type
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(ValueError, match="Each passthrough filter must have a valid 'type'."):
+        CompleteStructure(**invalid_type_structure)
+
+    invalid_required_structure = {
+        "element_types": [
+            {
+                "external_id": "Type1",
+                "stakeholder_key": "SK1",
+                "name": "Type 1",
+            }
+        ],
+        "thing_nodes": [
+            {
+                "external_id": "Node1",
+                "stakeholder_key": "SK1",
+                "name": "Node 1",
+                "parent_external_node_id": None,
+                "element_type_external_id": "Type1",
+            }
+        ],
+        "sources": [
+            {
+                "external_id": "Source1",
+                "stakeholder_key": "SK1",
+                "name": "Source 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "source_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "timestampFrom", "type": "free_text"}  # missing 'required' field
+                ],
+            }
+        ],
+        "sinks": [
+            {
+                "external_id": "Sink1",
+                "stakeholder_key": "SK1",
+                "name": "Sink 1",
+                "type": "multitsframe",
+                "adapter_key": "sql-adapter",
+                "sink_id": "some_id",
+                "thing_node_external_ids": ["Node1"],
+                "passthrough_filters": [
+                    {"name": "threshold", "type": "free_text", "required": True}
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(
+        ValueError, match="Each passthrough filter must have a 'required' boolean field."
+    ):
+        CompleteStructure(**invalid_required_structure)
