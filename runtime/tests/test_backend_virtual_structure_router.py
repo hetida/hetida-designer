@@ -24,5 +24,7 @@ async def test_update_structure_with_invalid_structure(
 
     async with async_test_client as ac:
         response = await ac.put("/api/structure/update/", json=structure_json)
-    assert response.status_code == 500
-    assert "Integrity Error while updating or inserting the structure" in response.json()["detail"]
+    
+    assert response.status_code == 422, f"Unexpected status code: {response.status_code}"
+    assert "Duplicate external_id 'Waterworks1' found in thing_nodes." in response.json()["detail"][0]["msg"], \
+        "Expected validation error message was not found in the response."
