@@ -92,7 +92,7 @@ def test_add_module_level_variable(reduced_component_code: str):
 
 
 def test_update_module_level_variable(expanded_component_code: str):
-    assert '"adapter_id": "direct_provisioning"' in expanded_component_code
+    assert '"workflow_input_name": "scores"' in expanded_component_code
 
     updated_code = update_module_level_variable(
         code=expanded_component_code,
@@ -100,7 +100,7 @@ def test_update_module_level_variable(expanded_component_code: str):
         value={"input_wirings": []},
     )
 
-    assert '"adapter_id": "direct_provisioning"' not in updated_code
+    assert '"workflow_input_name": "scores"' not in updated_code
     assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' in updated_code
 
 
@@ -109,7 +109,7 @@ def test_update_one_of_two_module_level_variable_assignments(
 ):
     second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
     expanded_component_code_with_second_test_wiring = expanded_component_code + second_test_wiring
-    assert '"adapter_id": "direct_provisioning"' in expanded_component_code_with_second_test_wiring
+    assert '"workflow_input_name": "scores"' in expanded_component_code_with_second_test_wiring
     assert (
         'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n'
         in expanded_component_code_with_second_test_wiring
@@ -121,7 +121,7 @@ def test_update_one_of_two_module_level_variable_assignments(
         value={},
     )
 
-    assert '"adapter_id": "direct_provisioning"' not in updated_code
+    assert '"workflow_input_name": "scores"' not in updated_code
     assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' not in updated_code
     assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
 
@@ -137,7 +137,7 @@ def test_update_module_level_variable_with_same_variable_in_function_scope(
         )
     )
     assert (
-        '"adapter_id": "direct_provisioning"'
+        '"workflow_input_name": "scores"'
         in expanded_component_code_with_second_test_wiring_in_function_scope
     )
     assert (
@@ -151,7 +151,7 @@ def test_update_module_level_variable_with_same_variable_in_function_scope(
         value={},
     )
 
-    assert '"adapter_id": "direct_provisioning"' not in updated_code
+    assert '"workflow_input_name": "scores"' not in updated_code
     assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' in updated_code
     assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
 

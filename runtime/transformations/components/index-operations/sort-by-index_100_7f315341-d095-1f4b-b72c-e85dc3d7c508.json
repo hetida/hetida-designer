@@ -1,6 +1,6 @@
 {
   "category": "Index Operations",
-  "content": "\"\"\"Documentation for Sort by Index\n\n# Sort Index\n\n## Description\nThe component sorts values by index. \n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted. \n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Sort by Index\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Sort values by Index\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"revision_group_id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.487436+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.sort_index()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for Sort by Index\n\n# Sort Index\n\n## Description\nThe component sorts values by index. \n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted. \n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Sort by Index\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Sort values by Index\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"revision_group_id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.487436+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.sort_index()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Sort values by Index",
   "documentation": "# Sort Index\n\n## Description\nThe component sorts values by index. \n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted. \n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n",
   "id": "7f315341-d095-1f4b-b72c-e85dc3d7c508",
@@ -22,6 +22,11 @@
     ]
   },
   "name": "Sort by Index",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:31.487436+00:00",
   "revision_group_id": "7f315341-d095-1f4b-b72c-e85dc3d7c508",
   "state": "RELEASED",

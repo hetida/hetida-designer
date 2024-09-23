@@ -1,6 +1,6 @@
 {
   "category": "Arithmetic",
-  "content": "\"\"\"Documentation for E\n\n# E\n\n## Description\nThis component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Inputs\n-\n\n## Outputs\n* **e** (float): The mathematical constant e = 2.718281... \n\n## Details\nThe component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"e\": 2.718281828459045\n```\n\"\"\"\n\nimport math\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"e\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"E\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Returns the mathematical constant e = 2.718281...\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"13d3376a-9c08-d78f-8ad4-6d24fef504ca\",\n    \"revision_group_id\": \"13d3376a-9c08-d78f-8ad4-6d24fef504ca\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.624208+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"e\": math.e}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for E\n\n# E\n\n## Description\nThis component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Inputs\n-\n\n## Outputs\n* **e** (float): The mathematical constant e = 2.718281... \n\n## Details\nThe component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"e\": 2.718281828459045\n```\n\"\"\"\n\nimport math\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"e\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"E\",\n    \"category\": \"Arithmetic\",\n    \"description\": \"Returns the mathematical constant e = 2.718281...\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"13d3376a-9c08-d78f-8ad4-6d24fef504ca\",\n    \"revision_group_id\": \"13d3376a-9c08-d78f-8ad4-6d24fef504ca\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.624208+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"e\": math.e}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Returns the mathematical constant e = 2.718281...",
   "documentation": "# E\n\n## Description\nThis component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Inputs\n-\n\n## Outputs\n* **e** (float): The mathematical constant e = 2.718281... \n\n## Details\nThe component returns the mathematical constant e = 2.718281... as a float variable.\n\n## Examples\nThe json input of a call of this component is \n```\n\t{}\n```\nThe expected output of this component is\n```\n\t\"e\": 2.718281828459045\n```\n",
   "id": "13d3376a-9c08-d78f-8ad4-6d24fef504ca",
@@ -15,6 +15,11 @@
     ]
   },
   "name": "E",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:31.624208+00:00",
   "revision_group_id": "13d3376a-9c08-d78f-8ad4-6d24fef504ca",
   "state": "RELEASED",

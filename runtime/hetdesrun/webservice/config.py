@@ -194,7 +194,7 @@ class RuntimeConfig(BaseSettings):
 
     dashboarding_frontend_auth_settings: FrontendAuthOptions = Field(
         FrontendAuthOptions(
-            auth_url="http://localhost:8081/auth/",
+            auth_url="http://localhost:8081/",
             client_id="hetida-designer",
             realm="hetida-designer",
         ),
@@ -206,7 +206,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_url: str = Field(
-        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
+        "http://hetida-designer-keycloak:8080/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
         description="URL to endpoint providing public keys for verifying bearer token signature",
         env="HD_AUTH_PUBLIC_KEY_URL",
     )
@@ -279,7 +279,7 @@ class RuntimeConfig(BaseSettings):
             " file."
         ),
         example=(
-            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
             ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
             ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
             ' "post_kwargs": {}}'
@@ -300,7 +300,7 @@ class RuntimeConfig(BaseSettings):
         None,
         description="Client credentials as json encoded string.",
         example=(
-            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
             ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
             ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
             ' "post_kwargs": {}}'
@@ -383,7 +383,10 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/kafka,"
         "virtual-structure-adapter|Virtual Structure Adapter"
         "|http://localhost:8090/adapters/vst"
-        "|http://localhost:8090/adapters/vst",
+        "|http://localhost:8090/adapters/vst,"
+        "external-sources|External Sources"
+        "|http://localhost:8090/adapters/external_sources"
+        "|http://localhost:8090/adapters/external_sources",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )

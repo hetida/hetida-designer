@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Add/Update Value in Dictionary\n\n# Add/Update Value in Dictionary\n\n## Description\nAdd/Update the value for a key in the dictionary.\n\n## Inputs\n* **dictionary** (Dict): A dictionary, it may be empty.\n* **key** (String): A string for the key to be updated.\n* **value** (Any): The value to which the key in the dictionary shall be updated.\n\n## Outputs\n* **dictionary** (Dict): Updated dictionary.\n\n## Details\nIf the key already existed in the input dictionary, its value will be overwritten and the updated dictionary will be returned in the output.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n        \"key\": {\"data_type\": \"STRING\"},\n        \"value\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Add/Update Value in Dictionary\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add/Update a value in a dictionary\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"6c956baa-7fd2-4465-b87d-adbe4069d072\",\n    \"revision_group_id\": \"634d8d15-15ee-4ef8-be3f-85553e0002c9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-04-05T17:28:14.248221+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dictionary, key, value):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    dictionary |= {key: value}\n    return {\"dictionary\": dictionary}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dictionary\",\n            \"adapter_id\": \"direct_provisioning\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n        {\n            \"workflow_input_name\": \"key\",\n            \"adapter_id\": \"direct_provisioning\",\n            \"filters\": {\"value\": \"c\"},\n        },\n        {\n            \"workflow_input_name\": \"value\",\n            \"adapter_id\": \"direct_provisioning\",\n            \"filters\": {\"value\": \"1\"},\n        },\n    ]\n}\n",
+  "content": "\"\"\"Documentation for Add/Update Value in Dictionary\n\n# Add/Update Value in Dictionary\n\n## Description\nAdd/Update the value for a key in the dictionary.\n\n## Inputs\n* **dictionary** (Dict): A dictionary, it may be empty.\n* **key** (String): A string for the key to be updated.\n* **value** (Any): The value to which the key in the dictionary shall be updated.\n\n## Outputs\n* **dictionary** (Dict): Updated dictionary.\n\n## Details\nIf the key already existed in the input dictionary, its value will be overwritten and the updated dictionary will be returned in the output.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n        \"key\": {\"data_type\": \"STRING\"},\n        \"value\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Add/Update Value in Dictionary\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add/Update a value in a dictionary\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"6c956baa-7fd2-4465-b87d-adbe4069d072\",\n    \"revision_group_id\": \"634d8d15-15ee-4ef8-be3f-85553e0002c9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-04-05T17:28:14.248221+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dictionary, key, value):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    dictionary |= {key: value}\n    return {\"dictionary\": dictionary}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dictionary\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n        {\"workflow_input_name\": \"key\", \"filters\": {\"value\": \"c\"}},\n        {\"workflow_input_name\": \"value\", \"filters\": {\"value\": \"1\"}},\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dictionary\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n        {\"workflow_input_name\": \"key\", \"filters\": {\"value\": \"c\"}},\n        {\"workflow_input_name\": \"value\", \"filters\": {\"value\": \"1\"}},\n    ]\n}\n",
   "description": "Add/Update a value in a dictionary",
   "documentation": "# Add/Update Value in Dictionary\n\n## Description\nAdd/Update the value for a key in the dictionary.\n\n## Inputs\n* **dictionary** (Dict): A dictionary, it may be empty.\n* **key** (String): A string for the key to be updated.\n* **value** (Any): The value to which the key in the dictionary shall be updated.\n\n## Outputs\n* **dictionary** (Dict): Updated dictionary.\n\n## Details\nIf the key already existed in the input dictionary, its value will be overwritten and the updated dictionary will be returned in the output.",
   "id": "6c956baa-7fd2-4465-b87d-adbe4069d072",
@@ -34,6 +34,36 @@
     ]
   },
   "name": "Add/Update Value in Dictionary",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "dictionary"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "c"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "key"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-04-05T17:28:14.248221+00:00",
   "revision_group_id": "634d8d15-15ee-4ef8-be3f-85553e0002c9",
   "state": "RELEASED",

@@ -447,6 +447,52 @@
     ]
   },
   "name": "Combine two Series as named columns into DataFrame",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "asdf"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "column_name_1"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "series_1"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "series_or_dataframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "asdf"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "column_name_2"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "series_2"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:37.269504+00:00",
   "revision_group_id": "047cbb52-c7b4-4134-9fd8-4006bd66c192",
   "state": "RELEASED",

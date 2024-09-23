@@ -33,7 +33,7 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
 "**/tests/auth/test_outgoing_auth.py" = ["S106"]
-"**/transformations/components/*/*.py" = ["INP001"]
+"**/transformations/components/*/*.py" = ["INP001", "E501"]
 
 
 [tool.ruff.lint.isort]

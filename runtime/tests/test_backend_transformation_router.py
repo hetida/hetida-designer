@@ -654,6 +654,7 @@ async def test_get_transformation_revisions_strip_wirings(
     tr_dict["test_wiring"]["input_wirings"].append(
         {
             "workflow_input_name": "operator_input_2",
+            "ref_id": "some_ref_id",
             "adapter_id": "other",
             "use_default_value": False,
             "filters": {"value": "100"},

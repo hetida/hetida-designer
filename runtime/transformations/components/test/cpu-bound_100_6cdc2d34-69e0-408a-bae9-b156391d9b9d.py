@@ -98,3 +98,4 @@ def main(*, rounds, bind):
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}
+RELEASE_WIRING = {}
