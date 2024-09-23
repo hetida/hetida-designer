@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
@@ -155,10 +156,16 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.external_sources.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
     )
+    from hetdesrun.adapters.external_sources.webservice import external_sources_adapter_router
     from hetdesrun.adapters.kafka.webservice import kafka_adapter_router
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
@@ -194,6 +201,14 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(kafka_adapter_router)
         if get_sql_adapter_config().active and get_sql_adapter_config().service_in_runtime:
             app.include_router(sql_adapter_router)  # auth dependency set individually per endpoint
+        if (
+            get_external_sources_adapter_config().active
+            and get_external_sources_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                external_sources_adapter_router
+            )  # auth dependency set individually per endpoint
+
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
                 blob_storage_adapter_router
@@ -208,6 +223,14 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         app.include_router(virtual_structure_adapter_router)
         if get_sql_adapter_config().active and not get_sql_adapter_config().service_in_runtime:
             app.include_router(sql_adapter_router)  # auth dependency set individually per endpoint
+        if (
+            get_external_sources_adapter_config().active
+            and not get_external_sources_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                external_sources_adapter_router
+            )  # auth dependency set individually per endpoint
+
         if get_kafka_adapter_config().active and not get_kafka_adapter_config().service_in_runtime:
             app.include_router(
                 kafka_adapter_router

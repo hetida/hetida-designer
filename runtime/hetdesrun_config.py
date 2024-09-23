@@ -92,6 +92,17 @@ from hetdesrun.adapters.sql_adapter import (  # noqa: E402
 
 register_sink_adapter(adapter_key="sql-adapter", send_func=sql_adapter_send_data)
 
+# Registering external source adapter
+
+from hetdesrun.adapters.external_sources import load_data as external_source_load_data  # noqa: E402
+
+register_source_adapter(adapter_key="external-sources", load_func=external_source_load_data)
+
+from hetdesrun.adapters.external_sources import send_data as external_source_send_data  # noqa: E402
+
+register_sink_adapter(adapter_key="external-sources", send_func=external_source_send_data)
+
+
 # Register kafka adapter
 from hetdesrun.adapters.kafka import load_data as kafka_adapter_load_data  # noqa: E402
 

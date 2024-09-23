@@ -221,6 +221,14 @@ class TransformationRevision(BaseModel):
         ),
     )
 
+    release_wiring: WorkflowWiring | None = Field(
+        None,
+        description=(
+            "Wiring that is stored during release. This allows to reset to a fixed wiring."
+            " And to use a fixed wiring for dashboarding."
+        ),
+    )
+
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
@@ -366,6 +374,7 @@ class TransformationRevision(BaseModel):
 
     def release(self) -> None:
         self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
+        self.release_wiring = self.test_wiring
         self.state = State.RELEASED
 
     def deprecate(self) -> None:
@@ -375,8 +384,11 @@ class TransformationRevision(BaseModel):
     def strip_wirings(
         self,
         strip_wiring: bool = False,
+        strip_release_wiring: bool = False,
         strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
         keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+        strip_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+        keep_only_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
     ) -> None:
         """Strip wirings as parametrized"""
         if strip_wirings_with_adapter_ids is None:
@@ -385,8 +397,17 @@ class TransformationRevision(BaseModel):
         if keep_only_wirings_with_adapter_ids is None:
             keep_only_wirings_with_adapter_ids = set()
 
+        if strip_release_wirings_with_adapter_ids is None:
+            strip_release_wirings_with_adapter_ids = set()
+
+        if keep_only_release_wirings_with_adapter_ids is None:
+            keep_only_release_wirings_with_adapter_ids = set()
+
         if strip_wiring:
             self.test_wiring = WorkflowWiring()
+
+        if strip_release_wiring:
+            self.release_wiring = None
 
         if len(strip_wirings_with_adapter_ids) != 0:
             self.test_wiring.input_wirings = [
@@ -409,6 +430,29 @@ class TransformationRevision(BaseModel):
                 outp_wiring
                 for outp_wiring in self.test_wiring.output_wirings
                 if outp_wiring.adapter_id in keep_only_wirings_with_adapter_ids
+            ]
+
+        if len(strip_release_wirings_with_adapter_ids) != 0 and self.release_wiring is not None:
+            self.release_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in self.release_wiring.input_wirings
+                if inp_wiring.adapter_id not in strip_release_wirings_with_adapter_ids
+            ]
+            self.release_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in self.release_wiring.output_wirings
+                if outp_wiring.adapter_id not in strip_release_wirings_with_adapter_ids
+            ]
+        if len(keep_only_release_wirings_with_adapter_ids) != 0 and self.release_wiring is not None:
+            self.release_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in self.release_wiring.input_wirings
+                if inp_wiring.adapter_id in keep_only_release_wirings_with_adapter_ids
+            ]
+            self.release_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in self.release_wiring.output_wirings
+                if outp_wiring.adapter_id in keep_only_release_wirings_with_adapter_ids
             ]
 
     def to_component_revision(self) -> ComponentRevision:
@@ -503,6 +547,7 @@ class TransformationRevision(BaseModel):
             component_code=cast(str, self.content) if self.type is Type.COMPONENT else None,
             io_interface=self.io_interface.dict(),
             test_wiring=self.test_wiring.dict(),
+            release_wiring=self.release_wiring.dict() if self.release_wiring is not None else None,
             released_timestamp=self.released_timestamp,
             disabled_timestamp=self.disabled_timestamp,
         )
@@ -557,6 +602,7 @@ class TransformationRevision(BaseModel):
                 ],
             ),
             test_wiring=self.test_wiring,
+            release_wiring=self.release_wiring,
         )
 
     @classmethod
@@ -577,6 +623,7 @@ class TransformationRevision(BaseModel):
                 else orm_model.component_code,
                 io_interface=orm_model.io_interface,
                 test_wiring=orm_model.test_wiring,
+                release_wiring=orm_model.release_wiring,
                 released_timestamp=orm_model.released_timestamp.replace(
                     tzinfo=datetime.timezone.utc
                 )

@@ -906,9 +906,11 @@ def determine_normalized_interval_sizes(
     expected_data_frequency_in_seconds = expected_data_frequency.total_seconds()
 
     normalized_interval_sizes = [
-        pd.Timedelta(gap).total_seconds() / expected_data_frequency_in_seconds
-        if pd.notna(gap)
-        else None
+        (
+            pd.Timedelta(gap).total_seconds() / expected_data_frequency_in_seconds
+            if pd.notna(gap)
+            else None
+        )
         for gap in intervals
     ]
 
@@ -1305,9 +1307,11 @@ def get_gap_intervals_info(
             "gap_size_in_seconds": gap_ends - gap_starts,
             "value_to_left": left_values,
             "value_to_right": right_values,
-            "mean_left_right": np.mean((left_values, right_values), axis=0)
-            if pd.api.types.is_numeric_dtype(constricted_timeseries_with_bounds) is True
-            else None,
+            "mean_left_right": (
+                np.mean((left_values, right_values), axis=0)
+                if pd.api.types.is_numeric_dtype(constricted_timeseries_with_bounds) is True
+                else None
+            ),
         }
     )
 
@@ -1517,24 +1521,19 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "timeseries",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": (
-                    "{\n"
-                    '    "2020-01-01T01:16:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:18:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:19:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:20:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:22:00.000Z": 20.0,\n'
-                    '    "2020-01-01T01:23:00.000Z": 20.0,\n'
-                    '    "2020-01-01T01:25:00.000Z": 20.0,\n'
-                    '    "2020-01-01T08:28:00.000Z": 20.0,\n'
-                    '    "2020-01-01T08:30:00.000Z": 30.0,\n'
-                    '    "2020-01-01T08:31:00.000Z": 30.0,\n'
-                    '    "2020-01-01T16:34:00.000Z": 30.0\n'
-                    "}"
-                )
+                "value": '{\n    "2020-01-01T01:16:00.000Z": 10.0,\n    "2020-01-01T01:18:00.000Z": 10.0,\n    "2020-01-01T01:19:00.000Z": 10.0,\n    "2020-01-01T01:20:00.000Z": 10.0,\n    "2020-01-01T01:22:00.000Z": 20.0,\n    "2020-01-01T01:23:00.000Z": 20.0,\n    "2020-01-01T01:25:00.000Z": 20.0,\n    "2020-01-01T08:28:00.000Z": 20.0,\n    "2020-01-01T08:30:00.000Z": 30.0,\n    "2020-01-01T08:31:00.000Z": 30.0,\n    "2020-01-01T16:34:00.000Z": 30.0\n}'
             },
-        },
-    ],
+        }
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "timeseries",
+            "filters": {
+                "value": '{\n    "2020-01-01T01:16:00.000Z": 10.0,\n    "2020-01-01T01:18:00.000Z": 10.0,\n    "2020-01-01T01:19:00.000Z": 10.0,\n    "2020-01-01T01:20:00.000Z": 10.0,\n    "2020-01-01T01:22:00.000Z": 20.0,\n    "2020-01-01T01:23:00.000Z": 20.0,\n    "2020-01-01T01:25:00.000Z": 20.0,\n    "2020-01-01T08:28:00.000Z": 20.0,\n    "2020-01-01T08:30:00.000Z": 30.0,\n    "2020-01-01T08:31:00.000Z": 30.0,\n    "2020-01-01T16:34:00.000Z": 30.0\n}'
+            },
+        }
+    ]
 }

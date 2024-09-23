@@ -234,6 +234,7 @@ def test_strip_wirings_and_keep_only_wirings(mocked_clean_test_db_session):
                 filters={"value": 5},
             ),
             InputWiring(
+                ref_id="some_ref_id",
                 workflow_input_name="input2",
                 adapter_id="blah",
                 filters={"value": 5},
@@ -265,6 +266,80 @@ def test_strip_wirings_and_keep_only_wirings(mocked_clean_test_db_session):
     )
     assert len(received_tr_object.test_wiring.input_wirings) == 1
     assert received_tr_object.test_wiring.input_wirings[0].adapter_id == "blah"
+
+
+def test_strip_release_wirings_and_keep_only_release_wirings(mocked_clean_test_db_session):
+    tr_uuid = get_uuid_from_seed("test_strip_release_wirings_and_keep_only_release_wirings")
+
+    tr_object = TransformationRevision(
+        id=tr_uuid,
+        revision_group_id=tr_uuid,
+        name="Test",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.RELEASED,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        release_wiring=WorkflowWiring(),
+        released_timestamp="2024-09-05T11:56:00+00:00",
+        documentation="",
+    )
+
+    store_single_transformation_revision(tr_object)
+
+    tr_object.name = "Test Update"
+
+    tr_object.io_interface = IOInterface(
+        inputs=[
+            TransformationInput(name="input", data_type=DataType.Integer),
+            TransformationInput(name="input2", data_type=DataType.Integer),
+        ]
+    )
+    tr_object.release_wiring = WorkflowWiring(
+        input_wirings=[
+            InputWiring(
+                workflow_input_name="input",
+                adapter_id="direct_provisioning",
+                filters={"value": 5},
+            ),
+            InputWiring(
+                ref_id="some_ref_id",
+                workflow_input_name="input2",
+                adapter_id="blah",
+                filters={"value": 5},
+            ),
+        ]
+    )
+
+    # Test strip_wiring
+    received_tr_object = update_or_create_single_transformation_revision(
+        tr_object.copy(deep=True), strip_release_wiring=True, allow_overwrite_released=True
+    )
+    assert received_tr_object.release_wiring is None
+
+    # Test strip_wirings_with_adapter_ids
+    received_tr_object = update_or_create_single_transformation_revision(
+        tr_object.copy(deep=True),
+        strip_release_wiring=False,
+        strip_release_wirings_with_adapter_ids={"blubb", "blah"},
+        allow_overwrite_released=True,
+    )
+    assert len(received_tr_object.release_wiring.input_wirings) == 1
+    assert received_tr_object.release_wiring.input_wirings[0].adapter_id == "direct_provisioning"
+
+    # Test keep_only_wirings_with_adapter_ids
+
+    received_tr_object = update_or_create_single_transformation_revision(
+        tr_object.copy(deep=True),
+        strip_release_wiring=False,
+        keep_only_release_wirings_with_adapter_ids={"blubb", "blah"},
+        allow_overwrite_released=True,
+    )
+    assert len(received_tr_object.release_wiring.input_wirings) == 1
+    assert received_tr_object.release_wiring.input_wirings[0].adapter_id == "blah"
 
 
 def test_creating(mocked_clean_test_db_session):

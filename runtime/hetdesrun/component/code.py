@@ -372,14 +372,37 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
     return expanded_code
 
 
+def add_release_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
+    try:
+        expanded_code = update_module_level_variable(
+            code=code,
+            variable_name="RELEASE_WIRING",
+            value=json.loads(
+                tr.release_wiring.json(exclude_unset=True, exclude_defaults=True)
+                if tr.release_wiring is not None
+                else "null"
+            ),
+        )
+    except CodeParsingException as e:
+        msg = (
+            f"Failed to update release wiring in code for trafo {tr.name} ({tr.version_tag})"
+            f"(id: {str(tr.id)}). Returning non-updated code. Error was: {str(e)}"
+        )
+        logger.warning(msg)
+        return code
+    return expanded_code
+
+
 def expand_code(
     tr: TransformationRevision,
 ) -> str:
-    """Add documentation and test wiring to component code
+    """Add documentation and test wiring and release wiring to component code
 
     Add the documentation as module docstring at the top of the component code.
 
     Add test_wiring as dictionary at the end of the component code.
+
+    Add release_wiring as dictionary at the end of the component code.
     """
 
     if tr.type != Type.COMPONENT:
@@ -396,6 +419,7 @@ def expand_code(
 
     expanded_code = add_documentation_as_module_doc_string(existing_code, tr)
     expanded_code = add_test_wiring_dictionary(expanded_code, tr)
+    expanded_code = add_release_wiring_dictionary(expanded_code, tr)
 
     try:
         return format_code_with_black(expanded_code)

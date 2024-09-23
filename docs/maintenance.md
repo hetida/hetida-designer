@@ -8,6 +8,7 @@ Typical maintenance and devops task around a hetida designer installation, possi
 * Autoimport of sets of components / workflows
 * Updating base components / workflows or other specific sets of transformation revisions
 * Cleanup operations, like 
+  * resetting test wirings to release wirings (i.e. wiring during release)
   * deleting drafts
   * deprecating "old" revisions
   * delete unused deprecated revisions

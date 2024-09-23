@@ -1,4 +1,5 @@
 import re
+from enum import StrEnum
 
 from pydantic import BaseModel, ConstrainedStr, Field, StrictInt, StrictStr, validator
 
@@ -19,7 +20,7 @@ class FilterKey(ConstrainedStr):
 
 class OutputWiring(BaseModel):
     workflow_output_name: str = Field(..., alias="workflow_output_name")
-    adapter_id: StrictInt | StrictStr = Field(..., alias="adapter_id")
+    adapter_id: StrictInt | StrictStr = Field("direct_provisioning", alias="adapter_id")
     ref_id: str | None = Field(
         None,
         description=(
@@ -74,6 +75,12 @@ class OutputWiring(BaseModel):
             )
         return v
 
+    @validator("ref_id")
+    def ref_id_set_for_non_direct_provisioning(cls, v: str | None, values: dict) -> str | None:
+        if values["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+            raise ValueError("ref_id must be provided for non direct_provisioning output wirings")
+        return v
+
     @validator("filters")
     def no_reserved_filter_keys(
         cls, filters: dict[FilterKey, str | None]
@@ -116,7 +123,7 @@ class OutputWiring(BaseModel):
 
 class InputWiring(BaseModel):
     workflow_input_name: str = Field(..., alias="workflow_input_name")
-    adapter_id: StrictInt | StrictStr = Field(..., alias="adapter_id")
+    adapter_id: StrictInt | StrictStr = Field("direct_provisioning", alias="adapter_id")
 
     ref_id: str | None = Field(
         None,
@@ -170,6 +177,12 @@ class InputWiring(BaseModel):
             )
         return v
 
+    @validator("ref_id")
+    def ref_id_set_for_non_direct_provisioning(cls, v: str | None, values: dict) -> str | None:
+        if values["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+            raise ValueError("ref_id must be provided for non direct_provisioning input wirings")
+        return v
+
     @validator("filters")
     def no_reserved_filter_keys(
         cls, filters: dict[FilterKey, str | None]
@@ -210,6 +223,11 @@ class InputWiring(BaseModel):
         )
 
 
+class GridstackPositioningType(StrEnum):
+    INPUT = "INPUT"
+    OUTPUT = "OUTPUT"
+
+
 class GridstackItemPositioning(BaseModel):
     x: int | None = Field(None, ge=0)
     y: int | None = Field(None, ge=0)
@@ -221,6 +239,8 @@ class GridstackItemPositioning(BaseModel):
             "gs-id of the .grid-stack-item which is extracted as id by " "gridstacks save method"
         ),
     )
+    type: GridstackPositioningType = GridstackPositioningType.OUTPUT
+    allowed_input_values: list[str] = []
 
 
 class WorkflowWiring(BaseModel):

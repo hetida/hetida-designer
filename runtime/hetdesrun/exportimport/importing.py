@@ -102,6 +102,9 @@ def import_importable(
                 strip_wiring=multi_import_config.strip_wirings,
                 strip_wirings_with_adapter_ids=multi_import_config.strip_wirings_with_adapter_ids,
                 keep_only_wirings_with_adapter_ids=multi_import_config.keep_only_wirings_with_adapter_ids,
+                strip_release_wiring=multi_import_config.strip_release_wirings,
+                strip_release_wirings_with_adapter_ids=multi_import_config.strip_release_wirings_with_adapter_ids,
+                keep_only_release_wirings_with_adapter_ids=multi_import_config.keep_only_release_wirings_with_adapter_ids,
             )
 
         except (

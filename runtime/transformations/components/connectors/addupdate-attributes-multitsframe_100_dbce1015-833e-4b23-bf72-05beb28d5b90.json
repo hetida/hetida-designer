@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Add/Update Attributes (MultiTSFrame)\n\n# Add/Update Attributes (MultiTSFrame)\n\n## Description\nAdd attributes to a MultiTSFrame or update attributes of a MultiTSFrame.\n\n## Inputs\n* **multitsframe** (Pandas DataFrame): The input MultiTSFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input MultiTSFrame.\n\n## Outputs\n* **multitsframe** (Pandas DataFrame): The input multitsframe with added attributes.\n\n## Details\nAdds attributes to a MultiTSFrame. Adding an attribute with a key, that is already included in the attributes of the multitsframe, will update the corresponding value.\n\n**Note:** Selecting \"Only Output\" for the output multitsframe means that it is wired to the \"direct provisioning\" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the \"Extract Attributes (MultiTSFrame)\" component.\n \n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n    },\n    \"name\": \"Add/Update Attributes (MultiTSFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"dbce1015-833e-4b23-bf72-05beb28d5b90\",\n    \"revision_group_id\": \"38ecd7c8-4ece-418e-91db-336f8d1d4090\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-10-06T13:47:27.068933+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, multitsframe, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    multitsframe.attrs.update(attributes)\n\n    return {\"multitsframe\": multitsframe}\n",
+  "content": "\"\"\"Documentation for Add/Update Attributes (MultiTSFrame)\n\n# Add/Update Attributes (MultiTSFrame)\n\n## Description\nAdd attributes to a MultiTSFrame or update attributes of a MultiTSFrame.\n\n## Inputs\n* **multitsframe** (Pandas DataFrame): The input MultiTSFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input MultiTSFrame.\n\n## Outputs\n* **multitsframe** (Pandas DataFrame): The input multitsframe with added attributes.\n\n## Details\nAdds attributes to a MultiTSFrame. Adding an attribute with a key, that is already included in the attributes of the multitsframe, will update the corresponding value.\n\n**Note:** Selecting \"Only Output\" for the output multitsframe means that it is wired to the \"direct provisioning\" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the \"Extract Attributes (MultiTSFrame)\" component.\n \n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n    },\n    \"name\": \"Add/Update Attributes (MultiTSFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"dbce1015-833e-4b23-bf72-05beb28d5b90\",\n    \"revision_group_id\": \"38ecd7c8-4ece-418e-91db-336f8d1d4090\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-10-06T13:47:27.068933+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, multitsframe, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    multitsframe.attrs.update(attributes)\n\n    return {\"multitsframe\": multitsframe}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"multitsframe\",\n            \"filters\": {\n                \"value\": '{\\n    \"value\": [\\n        1,\\n        1.2,\\n        0.5\\n    ],\\n    \"metric\": [\\n        \"a\",\\n        \"b\",\\n        \"c\"\\n    ],\\n    \"timestamp\": [\\n        \"2019-08-01T15:45:36.000Z\",\\n        \"2019-08-01T15:48:36.000Z\",\\n        \"2019-08-01T15:42:36.000Z\"\\n    ]\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"multitsframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.anomalies\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"multitsframe\",\n            \"filters\": {\"metric_names\": \"\"},\n        }\n    ],\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"multitsframe\",\n            \"filters\": {\n                \"value\": '{\\n    \"value\": [\\n        1,\\n        1.2,\\n        0.5\\n    ],\\n    \"metric\": [\\n        \"a\",\\n        \"b\",\\n        \"c\"\\n    ],\\n    \"timestamp\": [\\n        \"2019-08-01T15:45:36.000Z\",\\n        \"2019-08-01T15:48:36.000Z\",\\n        \"2019-08-01T15:42:36.000Z\"\\n    ]\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"multitsframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.anomalies\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"multitsframe\",\n            \"filters\": {\"metric_names\": \"\"},\n        }\n    ],\n}\n",
   "description": "Add attributes to a dataframe or update attributes of a series",
   "documentation": "# Add/Update Attributes (MultiTSFrame)\n\n## Description\nAdd attributes to a MultiTSFrame or update attributes of a MultiTSFrame.\n\n## Inputs\n* **multitsframe** (Pandas DataFrame): The input MultiTSFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input MultiTSFrame.\n\n## Outputs\n* **multitsframe** (Pandas DataFrame): The input multitsframe with added attributes.\n\n## Details\nAdds attributes to a MultiTSFrame. Adding an attribute with a key, that is already included in the attributes of the multitsframe, will update the corresponding value.\n\n**Note:** Selecting \"Only Output\" for the output multitsframe means that it is wired to the \"direct provisioning\" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the \"Extract Attributes (MultiTSFrame)\" component.\n \n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
   "id": "dbce1015-833e-4b23-bf72-05beb28d5b90",
@@ -28,6 +28,39 @@
     ]
   },
   "name": "Add/Update Attributes (MultiTSFrame)",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"value\": [\n        1,\n        1.2,\n        0.5\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"c\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:48:36.000Z\",\n        \"2019-08-01T15:42:36.000Z\"\n    ]\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "multitsframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "attributes"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": "demo-adapter-python",
+        "filters": {
+          "metric_names": ""
+        },
+        "ref_id": "root.plantA.anomalies",
+        "ref_id_type": "SINK",
+        "type": "multitsframe",
+        "workflow_output_name": "multitsframe"
+      }
+    ]
+  },
   "released_timestamp": "2023-10-06T13:47:27.068933+00:00",
   "revision_group_id": "38ecd7c8-4ece-418e-91db-336f8d1d4090",
   "state": "RELEASED",
