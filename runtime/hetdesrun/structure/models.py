@@ -318,9 +318,10 @@ class CompleteStructure(BaseModel):
     sources: list[Source] = Field(default_factory=list, description="All sources of the structure")
     sinks: list[Sink] = Field(default_factory=list, description="All sinks of the structure")
 
-    # Root validator to check if each parent_external_node_id exists in at least one other node
     @root_validator(pre=True)
-    def validate_root_nodes(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def validate_root_nodes_parent_ids_are_none(cls, values: dict[str, Any]) -> dict[str, Any]:
+        # Check if each parent_external_node_id exists in at least one other node
+
         nodes = values.get("thing_nodes", [])
         # Create a set of all external_ids in the thing_nodes list
         external_ids = {node["external_id"] for node in nodes}
@@ -338,85 +339,131 @@ class CompleteStructure(BaseModel):
 
     @root_validator(pre=True)
     def check_stakeholder_key_consistency(cls, values: dict[str, Any]) -> dict[str, Any]:
-        stakeholder_keys = set()
+        # Retrieve the list of thing_nodes from the input values.
+        # If 'thing_nodes' is not provided, default to an empty list.
+        thing_nodes = values.get("thing_nodes", [])
 
-        for node in values.get("thing_nodes", []):
-            stakeholder_keys.add(node["stakeholder_key"])
+        # Identify root nodes.
+        # A root node is defined as a node without a parent (parent_external_node_id is None).
+        root_nodes = [node for node in thing_nodes if node.get("parent_external_node_id") is None]
 
-        for element_type in values.get("element_types", []):
-            stakeholder_keys.add(element_type["stakeholder_key"])
+        # Iterate over each root node to validate the hierarchy starting from it.
+        for root_node in root_nodes:
+            # The expected stakeholder_key for this hierarchy is
+            # the stakeholder_key of the root node.
+            expected_stakeholder_key = root_node["stakeholder_key"]
 
-        if len(stakeholder_keys) > 1:
-            sorted_keys = sorted(stakeholder_keys)
-            raise ValueError(
-                f"Inconsistent stakeholder keys found: {set(sorted_keys)}. "
-                "All stakeholder keys must be consistent across element_types and thing_nodes."
-            )
+            # Initialize a stack for depth-first traversal of the hierarchy.
+            stack = [root_node]
 
+            # Initialize a set to keep track of visited nodes to
+            # prevent infinite loops in case of cycles.
+            visited: set[str] = set()
+
+            # Traverse the hierarchy using a stack (iterative Depth-First Search).
+            while stack:
+                # Pop the last node from the stack to process it.
+                current_node = stack.pop()
+
+                # Get the external_id of the current node for identification.
+                current_external_id = current_node["external_id"]
+
+                # Check if the current node has already been visited.
+                if current_external_id in visited:
+                    # If visited, skip processing this node to avoid
+                    # revisiting and potential infinite loops.
+                    continue  # Already visited
+
+                # Mark the current node as visited by adding its external_id to the visited set.
+                visited.add(current_external_id)
+
+                # Validate the stakeholder_key of the current node.
+                if current_node["stakeholder_key"] != expected_stakeholder_key:
+                    # If the stakeholder_key does not match the expected one, raise a ValueError.
+                    raise ValueError(
+                        f"Inconsistent stakeholder_key at node {current_external_id}. "
+                        f"Expected: {expected_stakeholder_key}, "
+                        f"found: {current_node['stakeholder_key']}"
+                    )
+
+                # Find all child nodes of the current node.
+                child_nodes = [
+                    node
+                    for node in thing_nodes
+                    if node.get("parent_external_node_id") == current_external_id
+                ]
+
+                # Add all child nodes to the stack to continue the traversal.
+                stack.extend(child_nodes)
+        # If all hierarchies have consistent stakeholder_keys, return the validated values.
         return values
 
     @root_validator(pre=True)
     def check_for_circular_reference(cls, values: dict[str, Any]) -> dict[str, Any]:
+        # Checks for circular references in the thing_nodes hierarchy
+        # by recursively visiting parent nodes.
+
+        # Create a dictionary mapping from external_id to the corresponding node for quick access.
         nodes_by_external_id = {node["external_id"]: node for node in values.get("thing_nodes", [])}
+
+        # Set to keep track of nodes currently being visited to detect circular references.
         visited = set()
 
+        # Define a nested function to recursively visit nodes and check for circular references.
         def visit(node: dict[str, Any]) -> None:
+            # If the current node is already in the visited set, a circular reference is detected.
             if node["external_id"] in visited:
                 raise ValueError(f"Circular reference detected in node {node['external_id']}")
+
+            # Mark the current node as visited by adding its external_id to the visited set.
             visited.add(node["external_id"])
+
+            # Get the external_id of the parent node.
             parent_external_id = node.get("parent_external_node_id")
+
+            # If the parent_external_id exists and the parent node is in the
+            # nodes_by_external_id dictionary, recursively visit the parent node.
             if parent_external_id and parent_external_id in nodes_by_external_id:
                 visit(nodes_by_external_id[parent_external_id])
-            visited.remove(node["external_id"])  # Remove node from visited after visiting
 
+            # After visiting all parent nodes, remove the current node from the visited set.
+            visited.remove(node["external_id"])
+
+        # Iterate over all thing_nodes in the input values.
         for node in values.get("thing_nodes", []):
+            # If the node has not been visited yet, initiate a visit starting from this node.
             if node["external_id"] not in visited:
                 visit(node)
-        return values
 
-    @root_validator(pre=True)
-    def check_unique_external_ids(cls, values: dict[str, Any]) -> dict[str, Any]:
-        unique_check = {
-            "element_types": set(),
-            "thing_nodes": set(),
-            "sources": set(),
-            "sinks": set(),
-        }
-        for category in unique_check.keys():
-            for item in values.get(category, []):
-                if item["external_id"] in unique_check[category]:
-                    raise ValueError(
-                        f"Duplicate external_id '{item['external_id']}' found in {category}."
-                    )
-                unique_check[category].add(item["external_id"])
+        # If no circular references are detected, return the validated values.
         return values
 
     @root_validator(pre=True)
     def validate_source_sink_references(cls, values: dict[str, Any]) -> dict[str, Any]:
+        # Ensure that all sources and sinks reference valid thing_nodes by checking their
+        # thing_node_external_ids against the set of known thing_node IDs.
+
         thing_node_ids = {node["external_id"] for node in values.get("thing_nodes", [])}
         for source in values.get("sources", []):
+            # For each source, check all referenced ThingNode external IDs.
             for tn_id in source.get("thing_node_external_ids", []):
+                # If a ThingNode external ID referenced by the source
+                # does not exist in 'thing_node_ids', raise an error.
                 if tn_id not in thing_node_ids:
                     raise ValueError(
                         f"Source '{source['external_id']}' references "
                         f"non-existing ThingNode '{tn_id}'."
                     )
+
         for sink in values.get("sinks", []):
+            # For each sink, check all referenced ThingNode external IDs.
             for tn_id in sink.get("thing_node_external_ids", []):
+                # If a ThingNode external ID referenced by the sink
+                # does not exist in 'thing_node_ids', raise an error.
                 if tn_id not in thing_node_ids:
                     raise ValueError(
                         f"Sink '{sink['external_id']}' references "
                         f"non-existing ThingNode '{tn_id}'."
                     )
+        # If all sources and sinks reference existing ThingNodes, return the validated values.
         return values
-
-    @validator("sources", "sinks", pre=True, each_item=True)
-    def validate_passthrough_filters(cls, v: Any) -> Any:
-        for filter in v.get("passthrough_filters", []):
-            if "name" not in filter or not isinstance(filter["name"], str):
-                raise ValueError("Each passthrough filter must have a 'name' of type str.")
-            if "type" not in filter or filter["type"] not in ["free_text", "number", "date"]:
-                raise ValueError("Each passthrough filter must have a valid 'type'.")
-            if "required" not in filter or not isinstance(filter["required"], bool):
-                raise ValueError("Each passthrough filter must have a 'required' boolean field.")
-        return v
