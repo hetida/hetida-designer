@@ -17,7 +17,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     thingnode_sink_association,
     thingnode_source_association,
 )
-from hetdesrun.structure.db.exceptions import DBIntegrityError
 from hetdesrun.structure.db.orm_service import (
     fetch_all_element_types,
     fetch_all_sinks,
