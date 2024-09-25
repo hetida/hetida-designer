@@ -1,8 +1,10 @@
 # Virtual Structure Adapter
 
-With the built-in Virtual Structure Adapter, users can create flexible, abstract hierarchical structures that superimpose a domain-specific view onto their data. The hierarchical organization ensures a high level of discoverability within the structure. Data can be located based on domain-specific criteria by navigating through the hierarchy. Unlike other adapters that deal directly with the input and output of data, the Virtual Structure Adapter serves as a conceptual overlay. It superimposes a domain-specific hierarchy over the sources and sinks managed by other adapters. These adapters are responsible for the actual data processing.
+With the built-in Virtual Structure Adapter, users can create flexible, abstract hierarchical structures that provide a domain-specific view of their data and provides discoverability.
 
-For example, this adapter can be used to specify a structure that represents the layout of a stock portfolio, an IoT system in the water industry, or any other domain-specific model.
+Unlike other adapters that deal directly with the input and output of data, the Virtual Structure Adapter serves as a conceptual overlay. It superimposes a domain-specific hierarchy over the sources and sinks managed by other adapters. For actual data receiving and sending the original adapters are used.
+
+For example, this can be used to specify a structure that represents the layout of a stock portfolio, an IoT system in the water industry, or any other domain-specific model, where actual data is provided by a combination of sources from e.g. the sql adapter, kafka adapter or the local file adapter.
 
 ## Key Concepts
 
