@@ -247,7 +247,7 @@ def input_value_gridstack_div(
         div(
             class_="grid-stack-item-content",
             id=f"container-{db_id}",
-            style="display:flex;flex-direction:column;",
+            style="display:flex;flex-direction:column;overflow:hidden;",
         )[
             div(
                 class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
@@ -382,6 +382,14 @@ DASHBOARD_HEAD_ELEMENTS = (
     margin: 0;
 }
 
+.tabulator-header {
+    height: fit-content;
+}
+
+.tabulator-header-filter {
+    display: var(--table-filters-display);
+}
+
 .panel-tooltiptext {
     visibility: hidden;
     width: 200px;
@@ -444,6 +452,10 @@ DASHBOARD_HEAD_ELEMENTS = (
     user-select:none;
     height:20;
     opacity:1;
+}
+
+.hd_df_table_for_dashboarding {
+    width: 100%
 }
 
 .hd-dashboard-timerange-picker {
@@ -1222,6 +1234,9 @@ def generate_dashboard_html(
 
 
         // ======== Gridstack / resizing ========
+
+
+
         var options = { // put in gridstack options here
             disableOneColumnMode: true, // for jfiddle small window size
             column: 24,
@@ -1232,7 +1247,8 @@ def generate_dashboard_html(
             draggable: {
                 handle: '.panel-heading',
             },
-            animate: false
+            animate: false,
+            cellHeight: 80 // fix to n pixels
         };
         var grid = GridStack.init(options);
 
@@ -1362,6 +1378,7 @@ def generate_dashboard_html(
             )
             + r"""
 
+
         grid.on('resizestop', function(event, el) {
             var inp_name = el.getAttribute("db_id");
             var inp_type = el.getAttribute("input_type");
@@ -1371,6 +1388,12 @@ def generate_dashboard_html(
                 resize_plot(inp_name);
                 resize_plot(inp_name); // second time, otherwise width is not correct in chrome
             }
+
+            registered_datatables.forEach( (datatable) => {
+                if (datatable != null) {
+                    datatable.redraw()
+                }
+            });
         });
 
         function dashboard_id_for_io(io_name, type) {
@@ -1502,6 +1525,13 @@ def generate_dashboard_html(
                 )
             )
             + r"""
+
+            registered_datatables.forEach( (datatable) => {
+                if (datatable != null) {
+                    datatable.redraw()
+                }
+            });
+
         }, true);
 
         function get_current_positionings_dict() {
@@ -1708,6 +1738,12 @@ def generate_dashboard_html(
 
         const datetime_picker_absolute = document.getElementById("datetimepicker-absolute")
 
+        registered_datatables.forEach( (datatable) => {
+                if (datatable != null) {
+                    datatable.redraw()
+                }
+            });
+
     """,
             errors="ignore",
         )
@@ -1716,6 +1752,9 @@ def generate_dashboard_html(
     # construct the html from its parts
 
     body_contents = (
+        script[Markup(r"""
+            registered_datatables = [];
+        """)],
         div(style="display:flex;margin-bottom:4px;")[
             generate_dashboard_title_div(transformation_revision),
             generate_timerange_overriding_controls_div(override_mode, relNow),
