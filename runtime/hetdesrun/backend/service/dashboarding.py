@@ -1752,9 +1752,11 @@ def generate_dashboard_html(
     # construct the html from its parts
 
     body_contents = (
-        script[Markup(r"""
+        script[
+            Markup(r"""
             registered_datatables = [];
-        """)],
+        """)
+        ],
         div(style="display:flex;margin-bottom:4px;")[
             generate_dashboard_title_div(transformation_revision),
             generate_timerange_overriding_controls_div(override_mode, relNow),

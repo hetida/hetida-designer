@@ -22,3 +22,19 @@ or
 ```
 {"latitude": "51.4817,51.45657", "longitude": "7.2165,7.01228", "hourly": "temperature_2m,precipitation", "daily": "temperature"}
 ```
+
+### Energy-Charts.info API /price endpoint
+Energy-Charts.info by Fraunhofer ISE offers data around central european / german energy markets, power usage and distribution.
+
+A source of type MULTITSFRAME is provided for the /price endpoint of the https://energy-charts.info API (https://api.energy-charts.info/#/prices) which makes "dayahead" prices available for selectable bidding zones.
+
+The bidding zone (bzn) is a required filter. See https://api.energy-charts.info/#/prices on documentation about which bidding zone is available und license of the respective data.
+
+Note that there is at the time of writing (2024-09) neither explicit commercial offering for usage of this API nor usage terms restricting usage, at least as far as we know. Please make sure that 
+
+* your usage of this API via hetida designer is in agreement with the current conditions and terms of energy-charts.info!
+* your usage of the provided data is in accordance with the provided license.
+
+The source returns a MULTITSFRAME containing a single metric "dayahead-price".
+
+

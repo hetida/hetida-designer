@@ -71,6 +71,21 @@ sources["open-meteo-historical-forecast"] = ExternalSourcesStructureSource(
 )
 
 
+sources["energy-charts-info-prices"] = ExternalSourcesStructureSource(
+    id="energy-charts-info-prices",
+    name="Energy-Charts.info Dayahead Prices EUR/MWh",
+    type=ExternalType.MULTITSFRAME,
+    path="energy-charts.info api /prices",
+    filters={
+        "bzn": {
+            "name": "bidding zone (e.g. DE-LU)",
+            "type": "free_text",
+            "required": True,
+        }
+    },
+)
+
+
 def openmeteo_table_to_multitsframe(parsed_pandas_df: pd.DataFrame) -> pd.DataFrame:
     time_column = pd.to_datetime(parsed_pandas_df["time"], utc=True)
     parsed_pandas_df["time"] = time_column
@@ -199,7 +214,7 @@ async def load_open_meteo(  # noqa: PLR0915
         msg = (
             f"Open Meteo forecast api with query parameters from {query_params_str}"
             " produced an error."
-            f" Http Status Cude: {str(response.status_code)}"
+            f" Http Status Code: {str(response.status_code)}"
         )
         logger.error(msg)
         raise AdapterHandlingException(msg)
@@ -272,3 +287,89 @@ source_load_functions["open-meteo-archive"] = functools.partial(
 source_load_functions["open-meteo-historical-forecast"] = functools.partial(
     load_open_meteo, base_url=f"{open_meteo_url}/forecast"
 )
+
+
+async def energy_chart_api_call(
+    bzn: str,
+    from_datetime_str: str,
+    to_datetime_str: str,
+    base_url: str = "https://api.energy-charts.info/price",
+    async_client: AsyncClient | None = None,
+) -> Response:
+    if async_client is None:
+        async_client = AsyncClient(timeout=15)
+    async with async_client as client:
+        response = await client.get(
+            base_url, params={"bzn": bzn, "start": from_datetime_str, "end": to_datetime_str}
+        )
+    return response
+
+
+async def load_energy_charts_info_prices(
+    source_id: str,  # noqa: ARG001
+    filters: dict[str, str],
+) -> pd.DataFrame:
+    from_datetime, to_datetime = extract_time_range(filters)
+
+    bzn = filters.get("bzn")
+
+    if bzn is None:
+        msg = "Loading Price data from energy charts requires a bidding zone (bzn)."
+        raise AdapterHandlingException(msg)
+
+    try:
+        response = await energy_chart_api_call(
+            bzn=bzn,
+            from_datetime_str=from_datetime.isoformat(),
+            to_datetime_str=to_datetime.isoformat(),
+        )
+    except Exception as e:
+        msg = "Failed request to Energy-Charts.info price endpoint"
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from e
+
+    if response.status_code != 200:
+        msg = (
+            f"Energy-Charts.info price endpoint with bzn {bzn}"
+            " produced an error."
+            f" Http Status Code: {str(response.status_code)}"
+        )
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
+
+    try:
+        resp_json = response.json()
+    except ValueError as e:
+        msg = f"Could not parse open meteo forecast api response json:\n{response.text}"
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from e
+
+    result_df = pd.DataFrame(columns=["timestamp", "metric", "value"])
+    result_df.attrs = {
+        "energy-charts-info-price-metadata": {
+            "license-info": (
+                "Please see "
+                "https://api.energy-charts.info/#/prices/day_ahead_price_price_get"
+                " for details on license of data per bidding zone."
+            ),
+            "license": resp_json.get("license", None),
+            "unit": resp_json.get("unit", None),
+            "deprecated": resp_json.get("deprecated", None),
+        },
+        "ref_interval_start_timestamp": from_datetime.isoformat(),
+        "ref_interval_end_timestamp": to_datetime.isoformat(),
+    }
+
+    result_df["timestamp"] = pd.to_datetime(resp_json.get("unix_seconds", []), unit="s", utc=True)
+    result_df["metric"] = "dayahead-price"
+    result_df["value"] = resp_json.get("price", [])
+    result_df["value"] = result_df["value"].astype(float)
+
+    result_df.attrs["hetida-designer_filters"] = filters
+
+    result_df.reset_index(drop=True, inplace=True)  # noqa: PD002
+
+    return result_df
+
+
+source_load_functions["energy-charts-info-prices"] = load_energy_charts_info_prices
