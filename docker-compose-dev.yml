@@ -28,7 +28,7 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
-
+      
     depends_on:
       hetida-designer-db:
         condition: service_healthy

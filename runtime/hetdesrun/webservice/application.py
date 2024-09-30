@@ -16,6 +16,7 @@ from hetdesrun import VERSION
 from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
+from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
@@ -26,6 +27,7 @@ from hetdesrun.backend.service.transformation_router import (
     dashboard_router,
     transformation_router,
 )
+from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
 from hetdesrun.webservice.auth_dependency import get_auth_deps
@@ -150,6 +152,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         pass
 
     try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.virtual_structure_adapter.webservice"]
+    except KeyError:
+        pass
+
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.external_sources.webservice"]
     except KeyError:
         pass
@@ -164,6 +171,9 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         local_file_adapter_router,
     )
     from hetdesrun.adapters.sql_adapter.webservice import sql_adapter_router
+    from hetdesrun.adapters.virtual_structure_adapter.webservice import (
+        virtual_structure_adapter_router,
+    )
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -203,11 +213,14 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 blob_storage_adapter_router
             )  # auth dependency set individually per endpoint
+        if get_vst_adapter_config().active and get_vst_adapter_config().service_in_runtime:
+            app.include_router(virtual_structure_adapter_router)
         app.include_router(
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
 
     if get_config().is_backend_service and len(get_config().restrict_to_trafo_exec_service) == 0:
+        app.include_router(virtual_structure_adapter_router)
         if get_sql_adapter_config().active and not get_sql_adapter_config().service_in_runtime:
             app.include_router(sql_adapter_router)  # auth dependency set individually per endpoint
         if (
@@ -222,6 +235,8 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
+        if get_vst_adapter_config().active and not get_vst_adapter_config().service_in_runtime:
+            app.include_router(virtual_structure_adapter_router)
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())
@@ -234,6 +249,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             dashboard_router,
             prefix="/api",  # individual auth dependency
         )
+        app.include_router(virtual_structure_router, prefix="/api", dependencies=get_auth_deps())
         possible_maintenance_secret = get_config().maintenance_secret
         if (
             possible_maintenance_secret is not None

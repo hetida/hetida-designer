@@ -1,0 +1,303 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks",
+            "description": "Element type for waterworks"
+        },
+        {
+            "external_id": "Plant_Type",
+            "stakeholder_key": "GW",
+            "name": "Plant",
+            "description": "Element type for plants"
+        },
+        {
+            "external_id": "StorageTank_Type",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank",
+            "description": "Element type for storage tanks"
+        },
+        {
+            "external_id": "FiltrationPlant_Type",
+            "stakeholder_key": "GW",
+            "name": "Filtration Plant",
+            "description": "Element type for filtration plants"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1_Plant1",
+            "stakeholder_key": "GW",
+            "name": "Plant 1",
+            "description": "First plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
+            "meta_data": {
+                "location": "North"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant2",
+            "stakeholder_key": "GW",
+            "name": "Plant 2",
+            "description": "Second plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
+            "meta_data": {
+                "location": "South"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant1_StorageTank1",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank 1, Plant 1",
+            "description": "First storage tank in Plant 1",
+            "parent_external_node_id": "Waterworks1_Plant1",
+            "element_type_external_id": "StorageTank_Type",
+            "meta_data": {
+                "capacity": "5200",
+                "capacity_unit": "m³",
+                "description": "Increased water storage capacity for Storage Tank 1"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant1_StorageTank2",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank 2, Plant 1",
+            "description": "Second storage tank in Plant 1",
+            "parent_external_node_id": "Waterworks1_Plant1",
+            "element_type_external_id": "StorageTank_Type",
+            "meta_data": {
+                "capacity": "6100",
+                "capacity_unit": "m³",
+                "description": "Increased water storage capacity for Storage Tank 2"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant2_StorageTank1",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank 1, Plant 2",
+            "description": "First storage tank in Plant 2",
+            "parent_external_node_id": "Waterworks1_Plant2",
+            "element_type_external_id": "StorageTank_Type",
+            "meta_data": {
+                "capacity": "5500",
+                "capacity_unit": "m³",
+                "description": "Water storage capacity for Storage Tank 1"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant2_StorageTank2",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank 2, Plant 2",
+            "description": "Second storage tank in Plant 2",
+            "parent_external_node_id": "Waterworks1_Plant2",
+            "element_type_external_id": "StorageTank_Type",
+            "meta_data": {
+                "capacity": "7000",
+                "capacity_unit": "m³",
+                "description": "Water storage capacity for Storage Tank 2"
+            }
+        },
+        {
+            "external_id": "Waterworks1_FiltrationPlant",
+            "stakeholder_key": "GW",
+            "name": "Filtration Plant 1",
+            "description": "New filtration plant in Waterworks 1",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "FiltrationPlant_Type",
+            "meta_data": {
+                "location": "Central",
+                "technology": "Advanced Filtration"
+            }
+        },
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Waterworks_Type",
+            "meta_data": {
+                "location": "Main Site"
+            }
+        }
+    ],
+    "sources": [
+        {
+            "external_id": "EnergyUsage_PumpSystem_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "Energy usage of the pump system in Storage Tank",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010001": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for a single pump"
+                },
+                "1010002": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for a single pump"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010001, 1010002"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_Plant1_StorageTank1",
+                "Waterworks1_FiltrationPlant"
+            ]
+        },
+        {
+            "external_id": "EnergyConsumption_SinglePump_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "Energy consumption of a single pump in Storage Tank",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010003": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for a single pump"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010003"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_Plant2_StorageTank1"
+            ]
+        },
+        {
+            "external_id": "New_EnergySource_FiltrationPlant",
+            "stakeholder_key": "GW",
+            "name": "Energy consumption of the new filtration plant",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010005": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for the filtration plant"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010005"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_FiltrationPlant"
+            ]
+        }
+    ],
+    "sinks": [
+        {
+            "external_id": "AnomalyScore_EnergyUsage_PumpSystem_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "Anomaly Score for the energy usage of the pump system in Storage Tank",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "10010001": {
+                    "description": "Anomaly score for a single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center"
+                },
+                "10010002": {
+                    "description": "Anomaly score for a single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center"
+                }
+            },
+            "preset_filters": {
+                "metrics": "10010001, 10010002"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_Plant1_StorageTank1",
+                "Waterworks1_Plant1_StorageTank2"
+            ]
+        },
+        {
+            "external_id": "AnomalyScore_EnergyConsumption_SinglePump_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "Anomaly Score for the energy consumption of a single pump in Storage Tank",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "10010003": {
+                    "description": "Anomaly score for a single pump",
+                    "calculation_details": "Window size: 4h, Timestamp location: center"
+                }
+            },
+            "preset_filters": {
+                "metrics": "10010003"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_Plant2_StorageTank2",
+                "Waterworks1_Plant2_StorageTank1",
+                "Waterworks1_FiltrationPlant"
+            ]
+        }
+    ]
+}

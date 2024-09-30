@@ -11,4 +11,4 @@ async def test_get_all_default_adapters(
 
     assert response.status_code == 200
     adapter_list = response.json()
-    assert len(adapter_list) == 5
+    assert len(adapter_list) == 6

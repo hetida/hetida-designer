@@ -55,26 +55,40 @@ from hetdesrun.adapters.blob_storage.write_blob import (  # noqa: E402
     send_data as blob_storage_send_data,
 )
 
-register_source_adapter(adapter_key="blob-storage-adapter", load_func=blob_storage_load_data)
+register_source_adapter(
+    adapter_key="blob-storage-adapter", load_func=blob_storage_load_data
+)
 
-register_sink_adapter(adapter_key="blob-storage-adapter", send_func=blob_storage_send_data)
+register_sink_adapter(
+    adapter_key="blob-storage-adapter", send_func=blob_storage_send_data
+)
 
 
 # Registering local file adapter
-from hetdesrun.adapters.local_file import load_data as local_file_load_data  # noqa: E402
-from hetdesrun.adapters.local_file import send_data as local_file_send_data  # noqa: E402
+from hetdesrun.adapters.local_file import (  # noqa: E402
+    load_data as local_file_load_data,
+)
+from hetdesrun.adapters.local_file import (  # noqa: E402
+    send_data as local_file_send_data,
+)
 
-register_source_adapter(adapter_key="local-file-adapter", load_func=local_file_load_data)
+register_source_adapter(
+    adapter_key="local-file-adapter", load_func=local_file_load_data
+)
 
 register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
 
 # Registering sql adapter
 
-from hetdesrun.adapters.sql_adapter import load_data as sql_adapter_load_data  # noqa: E402
+from hetdesrun.adapters.sql_adapter import (  # noqa: E402
+    load_data as sql_adapter_load_data,
+)
 
 register_source_adapter(adapter_key="sql-adapter", load_func=sql_adapter_load_data)
 
-from hetdesrun.adapters.sql_adapter import send_data as sql_adapter_send_data  # noqa: E402
+from hetdesrun.adapters.sql_adapter import (  # noqa: E402
+    send_data as sql_adapter_send_data,
+)
 
 register_sink_adapter(adapter_key="sql-adapter", send_func=sql_adapter_send_data)
 
@@ -98,6 +112,23 @@ from hetdesrun.adapters.kafka import send_data as kafka_adapter_send_data  # noq
 
 register_sink_adapter(adapter_key="kafka", send_func=kafka_adapter_send_data)
 
+# TODO Make sequence of importing and registering the same in the entire file
+# If there is no reason for the current state
+from hetdesrun.adapters.virtual_structure_adapter import (  # noqa: E402
+    load_data as vst_adapter_load_data,
+)
+
+register_source_adapter(
+    adapter_key="virtual-structure-adapter", load_func=vst_adapter_load_data
+)
+
+from hetdesrun.adapters.virtual_structure_adapter import (  # noqa: E402
+    send_data as vst_adapter_send_data,
+)
+
+register_sink_adapter(
+    adapter_key="virtual-structure-adapter", send_func=vst_adapter_send_data
+)
 
 # Registering File Support Handlers for the local file adapter
 from hetdesrun.adapters.local_file.extensions import (  # noqa: E402

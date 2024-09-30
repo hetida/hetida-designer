@@ -2,8 +2,84 @@ from collections import defaultdict
 from typing import Any
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
+from hetdesrun.adapters.virtual_structure_adapter.utils import (
+    create_new_wirings_based_on_referenced_sources_and_sinks,
+    get_enumerated_ids_of_vst_sources_or_sinks,
+)
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
+
+
+def replace_vst_wirings(
+    input_ids: list[tuple[int, str]],
+    output_ids: list[tuple[int, str]],
+    actual_input_wirings: dict[str, InputWiring],
+    actual_output_wirings: dict[str, OutputWiring],
+    workflow_wiring: WorkflowWiring,
+) -> None:
+    """Replaces all virtual structure adapter sources and sinks of a WorkflowWiring
+    with their referenced sources and sinks in place.
+
+    Args:
+        input_ids: Indices and IDs of sources to be replaced in workflow_wiring.input_wirings
+        output_ids: Same for sinks
+        actual_input_wirings: Source IDs matched to their InputWiring objects
+        actual_output_wirings: Same for sinks
+        workflow_wiring: The Wiring to be modified
+    """
+    # Fill input wirings
+    for idx, ref_id in input_ids:
+        new_input_wiring = actual_input_wirings[ref_id]
+        # Replace the dummy wf_input_name used for creation of target InputWiring
+        wf_input_name = workflow_wiring.input_wirings[idx].workflow_input_name
+        new_input_wiring.workflow_input_name = wf_input_name
+        # Merge the preset filters from the target InputWiring
+        # with the passthrough filters of the original
+        new_input_wiring.filters = (
+            new_input_wiring.filters | workflow_wiring.input_wirings[idx].filters
+        )
+        # Replace the original input wiring
+        workflow_wiring.input_wirings[idx] = new_input_wiring
+
+    # Fill output wirings
+    for idx, ref_id in output_ids:
+        new_output_wiring = actual_output_wirings[ref_id]
+        wf_output_name = workflow_wiring.output_wirings[idx].workflow_output_name
+        new_output_wiring.workflow_output_name = wf_output_name
+        new_output_wiring.filters = (
+            new_output_wiring.filters | workflow_wiring.output_wirings[idx].filters
+        )
+        workflow_wiring.output_wirings[idx] = new_output_wiring
+
+
+# TODO Make it async?
+def resolve_virtual_structure_wirings(
+    workflow_wiring: WorkflowWiring,
+) -> None:
+    """Takes a WorkflowWiring and finds all vst sources and sinks to be replaced,
+    retrieves their referenced sources and sinks to be inserted
+    and calls the function to actually replace the input and output wirings."""
+
+    # Retrieve IDs of wirings referencing vst-adapter
+    # and keep track of the indices for easier replacement later on
+    input_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.input_wirings)
+    output_ref_ids = get_enumerated_ids_of_vst_sources_or_sinks(workflow_wiring.output_wirings)
+
+    if input_ref_ids or output_ref_ids:
+        actual_input_wirings, actual_output_wirings = (
+            create_new_wirings_based_on_referenced_sources_and_sinks(
+                [id_tuple[1] for id_tuple in input_ref_ids],
+                [id_tuple[1] for id_tuple in output_ref_ids],
+            )
+        )
+
+        replace_vst_wirings(
+            input_ref_ids,
+            output_ref_ids,
+            actual_input_wirings,
+            actual_output_wirings,
+            workflow_wiring,
+        )
 
 
 async def resolve_and_load_data_from_wiring(

@@ -388,6 +388,7 @@ async def sink(sink_id: str) -> StructureSink:
 async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
+            Metadatum(key="Additional Info", value="This is an example", dataType="any"),
             Metadatum(key="Temperature Unit", value="F", dataType="string"),
             Metadatum(key="Pressure Unit", value="psi", dataType="string"),
             Metadatum(
@@ -426,6 +427,8 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
 ) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
+        if key == "Additional Info":
+            return Metadatum(key="Additional Info", value="This is an example", dataType="any")
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",

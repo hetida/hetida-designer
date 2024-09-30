@@ -71,6 +71,9 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
         echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
     fi
 
+    # Prepopulation of the virtual structure adapter
+    python -c 'from hetdesrun.adapters.virtual_structure_adapter.utils import prepopulate_structure; prepopulate_structure();'
+
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
         python -c 'from hetdesrun.exportimport.importing import import_importables; from hetdesrun.trafoutils.io.load import get_import_sources, load_import_sources; print(import_importables(load_import_sources(get_import_sources("'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'"))))'
