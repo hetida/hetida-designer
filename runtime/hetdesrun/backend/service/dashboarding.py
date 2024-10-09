@@ -164,7 +164,7 @@ def plotlyjson_to_html_div(
             div(
                 class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
                 id=f"heading-{db_id}",
-            )[header_to_use],
+            )[div(class_="header-text", title=header_to_use)[header_to_use]],
             div(id=f"plot-container-{db_id}", style="margin:0;padding:0;width:100%")[
                 div(id=db_id, style="width:100%;height:100%;margin:0;padding:0")
             ],
@@ -192,13 +192,126 @@ def html_str_to_gridstack_div(
         }
         | gs_div_attributes_from_item_positioning_as_dict(item_positioning)  # type: ignore
     )[
-        div(class_="grid-stack-item-content", id=f"container-{db_id}", style="")[
+        div(
+            class_="grid-stack-item-content",
+            id=f"container-{db_id}",
+            style="display: flex; flex-direction: column;",
+        )[
             div(
                 class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
                 id=f"heading-{db_id}",
-            )[div(class_="header-text")[header_to_use]],
-            div(id=f"html-container-{db_id}", style="margin:0;padding:0;width:100%")[
-                div(id=db_id, style="width:100%;height:100%;margin:0;padding:0")[Markup(content)]
+            )[
+                div(class_="header-text", title=header_to_use)[header_to_use],
+                div(
+                    class_="panel-buttons",
+                    style="",
+                )["Some content"],
+            ],
+            div(
+                id=f"html-container-{db_id}",
+                style="margin:0;padding:0;flex-grow: 1;overflow-y: auto;",
+            )[
+                div(
+                    id=db_id,
+                    style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
+                )[Markup(content)]
+            ],
+        ]
+    ]
+
+
+def dataframe_to_table_gridstack_div(
+    db_id: str,
+    dataframe: pd.DataFrame,
+    item_positioning: GridstackItemPositioning,
+    header: str | None = None,
+) -> Element:
+    name = parse_dashboard_id(db_id)[0]
+    show_header_if_not_hovering, header_to_use = show_header(name, header)
+
+    my_table_id = "dftable-" + db_id
+
+    data_row_list = json.loads(dataframe.to_json(orient="records", date_format="iso"))
+
+    column_descriptions = [
+        {"title": col_name, "field": col_name, "headerFilter": True, "headerSortTristate": True}
+        for col_name in dataframe.columns
+    ]
+
+    data_table_html_elements = [
+        div(
+            id=f"datatable-{my_table_id}",
+            style="width:100%;max-width:100%;height:100%;max-height:100%;overflow-y:none",
+        ),
+        script[
+            Markup(
+                r"""
+
+        create_and_register_tabulator_datatable(
+            """
+                + '"'
+                + db_id
+                + '", '
+                + json.dumps(data_row_list)
+                + ", "
+                + json.dumps(column_descriptions)
+                + r"""
+        );
+
+        """
+            )
+        ],
+    ]
+
+    return div(
+        {
+            "class": "grid-stack-item",
+            "db_id": db_id,
+            "input_type": "DATAFRAME",
+            "id": f"gs-item-{db_id}",
+            "gs-id": db_id,
+            "style": "",
+        }
+        | gs_div_attributes_from_item_positioning_as_dict(item_positioning)  # type: ignore
+    )[
+        div(
+            class_="grid-stack-item-content",
+            id=f"container-{db_id}",
+            style="display: flex; flex-direction: column;",
+        )[
+            div(
+                class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
+                id=f"heading-{db_id}",
+            )[
+                div(class_="header-text", title=header_to_use)[header_to_use],
+                div(
+                    class_="panel-buttons",
+                    style="height:20px;font-size:12px",
+                )[
+                    button(
+                        onclick=r"""handle_toggle_button(event, {
+                        activeIcon: 'fa-filter',
+                        inactiveIcon: 'fa-filter-circle-xmark',
+                        onToggle: (isActive) => {
+                            toggle_column_filters("""
+                        + '"'
+                        + db_id
+                        + '"'
+                        + r""", isActive)
+                        }
+                    })""",
+                        style="height:100%;width:1em;",
+                    )[i(class_="fa-solid fa-filter-circle-xmark fa-1x", style="")],
+                ],
+            ],
+            div(
+                id=f"html-container-{db_id}",
+                style="margin:0;padding:0;flex-grow: 1;overflow-y: auto;",
+            )[
+                div(
+                    id=db_id,
+                    style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
+                )[*data_table_html_elements]
             ],
         ]
     ]
@@ -252,7 +365,7 @@ def input_value_gridstack_div(
             div(
                 class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
                 id=f"heading-{db_id}",
-            )[div(class_="header-text")[header_to_use]],
+            )[div(class_="header-text", title=header_to_use)[header_to_use]],
             div(
                 id=f"input-value-container-{db_id}",
                 style="margin:0;padding:0;width:100%;height:100%;flex-grow:1;",
@@ -374,6 +487,10 @@ DASHBOARD_HEAD_ELEMENTS = (
     ),
     script(src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"),
     link(href="https://unpkg.com/boltcss@0.7.0/bolt.min.css", rel="stylesheet"),
+    link(
+        href="https://unpkg.com/tabulator-tables@6.2.5/dist/css/tabulator.min.css", rel="stylesheet"
+    ),
+    script(src="https://unpkg.com/tabulator-tables@6.2.5/dist/js/tabulator.min.js"),
     head[
         style[
             Markup(r"""
@@ -388,6 +505,11 @@ DASHBOARD_HEAD_ELEMENTS = (
 
 .tabulator-header-filter {
     display: var(--table-filters-display);
+}
+
+
+.tabulator-tableholder {
+    background-color: #dddddd;
 }
 
 .panel-tooltiptext {
@@ -428,6 +550,30 @@ DASHBOARD_HEAD_ELEMENTS = (
     height:20;
 }
 
+.panel-buttons {
+    background-color:yellow;
+    position:absolute;
+    top: 0;
+    opacity:0;
+    z-index:2;
+    width:33%;
+    height:20;
+}
+
+.panel-heading:hover .panel-buttons {
+    opacity: 1
+}
+
+.header-text {
+    white-space: nowrap; /* Prevents text wrapping */
+    overflow: hidden; /* Hides overflow text */
+    text-overflow: ellipsis; /* Shows "..." for overflow */
+}
+
+.header-text:hover .panel-buttons {
+    opacity: 1
+}
+
 .panel-heading-hover-only {
     background: #f9f9f9;
     color:#888888;
@@ -454,6 +600,10 @@ DASHBOARD_HEAD_ELEMENTS = (
     opacity:1;
 }
 
+.panel-heading-hover-only .panel-buttons {
+    opacity: 1
+}
+
 .hd_df_table_for_dashboarding {
     width: 100%
 }
@@ -466,6 +616,7 @@ DASHBOARD_HEAD_ELEMENTS = (
     flex-grow: 1;
     max-width: inherit;
 }
+
 
 .gs-24 > .grid-stack-item {
 width: 4.167%;
@@ -889,6 +1040,7 @@ def generate_gridstack_div(
     positioning_dict: dict[str, GridstackItemPositioning],
     plotly_outputs: dict[str, Any],
     string_outputs: dict[str, str],
+    dataframe_outputs: dict[str, pd.DataFrame],
     actually_used_wiring: WorkflowWiring,
     exposed_manual_inputs: set[str],
 ) -> Element:
@@ -933,6 +1085,24 @@ def generate_gridstack_div(
                 ),
             )
             for ind, (db_id, content) in enumerate(string_outputs.items())
+        ),
+        *(
+            dataframe_to_table_gridstack_div(
+                db_id,
+                dataframe,
+                positioning_dict.get(
+                    db_id,
+                    GridstackItemPositioning(
+                        id=parse_dashboard_id(db_id)[0],
+                        x=(ind % 2) * 12,
+                        y=(ind // 2) * 3 + len(plotly_outputs) % 2 * 3,
+                        w=12,
+                        h=3,
+                        type=GridstackPositioningType.OUTPUT,
+                    ),
+                ),
+            )
+            for ind, (db_id, dataframe) in enumerate(dataframe_outputs.items())
         ),
         *(
             input_value_gridstack_div(
@@ -1133,9 +1303,156 @@ def generate_dashboard_html(
         if exec_resp.output_types_by_output_name[name] == "STRING"
     }
 
+    dataframe_outputs = {
+        (
+            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
+        ): exec_resp.output_results_by_output_name[name]
+        for name in exec_resp.output_results_by_output_name
+        if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
+    }
+
+    datatable_script = script[
+        Markup(r"""
+        // ======== Tabulator datatables ========
+
+        function get_datatable(div_id) {
+            dom_element = document.getElementById(div_id);
+            let table = Tabulator.findTable(dom_element)[0];
+            return table;
+        }
+
+        function get_datatable_by_dashboard_id(db_id) {
+            return get_datatable("datatable-" + "dftable-" + db_id);
+        }
+
+        function toggle_column_filters(db_id, active=null) {
+            let my_table_id = "dftable-" + db_id;
+            filter_checkbox = document.getElementById("filter_check-" + my_table_id);
+
+            let my_datatable = get_datatable_by_dashboard_id(db_id);
+
+            columns = my_datatable.getColumns();
+
+            let should_be_active
+            if (active==null) {
+                should_be_active = filter_checkbox.checked;
+            } else {
+                should_be_active = active;
+            }
+
+            console.log("toggling_column_filters")
+
+            document.documentElement.style.setProperty('--table-filters-display', 'none');
+
+            if (should_be_active) {
+                document.documentElement.style.setProperty('--table-filters-display', 'block');
+                // header_filter_div.style.display = "block"
+            } else {
+                document.documentElement.style.setProperty('--table-filters-display', 'none');
+                //header_filter_div.style.display = "none"
+            }
+
+
+
+            if (my_datatable != null) {
+                my_datatable.redraw();
+            }
+
+        }
+
+        function create_and_register_tabulator_datatable(db_id, data_row_list, column_descriptions) {
+            let my_table_id = "dftable-" + db_id;
+            let data_table_div = document.getElementById("datatable-" + my_table_id);
+
+            let my_datatable = new Tabulator(data_table_div, {
+                data: data_row_list,
+                columns: column_descriptions,
+                layout:"fitColumns", // fitColumns
+                resizableColumnFit: true,
+                // resizableColumnGuide: true,
+                placeholderHeaderFilter:"No Matching Data",
+                renderVertical:"basic",
+                renderHorizontal:"basic"
+
+            });
+
+            toggle_column_filters(db_id, false)
+
+        }""")
+    ]
+
     main_scripts = script[
         Markup(
             r"""
+
+
+        // ==== General functions =====
+
+        const handle_toggle_button = (event, options = {}) => {
+            // Example usage:
+            /*
+            <link
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+            rel="stylesheet"
+            >
+            <button onclick="handle_toggle_button(event, {
+                onToggle: (isActive) => console.log('Button toggled:', isActive)
+            })">
+                <i class="fa-regular fa-heart"></i>
+            </button>
+
+            // Or with event listener
+            document.querySelector('.toggle-button').addEventListener('click', (e) => {
+                handle_toggle_button(e, {
+                    activeIcon: 'fa-solid fa-star',
+                    inactiveIcon: 'fa-regular fa-star'
+                });
+            });
+            */
+
+            // Default options
+            const defaultOptions = {
+                activeClass: 'active',
+                inactiveClass: 'inactive',
+                activeIcon: 'fa-solid',
+                inactiveIcon: 'fa-regular',
+                onToggle: null, // Callback function
+                preventDefault: true
+            };
+
+            // Merge default options with provided options
+            const settings = { ...defaultOptions, ...options };
+
+            // Prevent default button behavior if specified
+            if (settings.preventDefault) {
+                event.preventDefault();
+            }
+
+            const button = event.currentTarget;
+            const icon = button.querySelector('i') || button.querySelector('svg');
+
+            if (!icon) {
+                console.warn('No Font Awesome icon found in button');
+                return;
+            }
+
+            // Toggle button active state
+            const isActive = button.classList.toggle(settings.activeClass);
+            button.classList.toggle(settings.inactiveClass, !isActive);
+
+            // Toggle icon classes
+            if (icon.classList.contains(settings.activeIcon)) {
+                icon.classList.replace(settings.activeIcon, settings.inactiveIcon);
+            } else {
+                icon.classList.replace(settings.inactiveIcon, settings.activeIcon);
+            }
+
+            // Call the callback function if provided
+            if (typeof settings.onToggle === 'function') {
+                settings.onToggle(isActive, button);
+            }
+        };
+
 
         // ======== Auth ========
         const Keycloak = window["Keycloak"];
@@ -1264,6 +1581,8 @@ def generate_dashboard_html(
         }
 
 
+
+
         // ======== Config / Query Params / Update / Reload ========
 
         function toggle_config_visibility() {
@@ -1389,11 +1708,9 @@ def generate_dashboard_html(
                 resize_plot(inp_name); // second time, otherwise width is not correct in chrome
             }
 
-            registered_datatables.forEach( (datatable) => {
-                if (datatable != null) {
-                    datatable.redraw()
-                }
-            });
+            if (inp_type=="DATAFRAME" || inp_type=="MULTITSFRAME") {
+                get_datatable_by_dashboard_id(inp_name).redraw();
+            }
         });
 
         function dashboard_id_for_io(io_name, type) {
@@ -1525,12 +1842,6 @@ def generate_dashboard_html(
                 )
             )
             + r"""
-
-            registered_datatables.forEach( (datatable) => {
-                if (datatable != null) {
-                    datatable.redraw()
-                }
-            });
 
         }, true);
 
@@ -1738,12 +2049,6 @@ def generate_dashboard_html(
 
         const datetime_picker_absolute = document.getElementById("datetimepicker-absolute")
 
-        registered_datatables.forEach( (datatable) => {
-                if (datatable != null) {
-                    datatable.redraw()
-                }
-            });
-
     """,
             errors="ignore",
         )
@@ -1752,11 +2057,7 @@ def generate_dashboard_html(
     # construct the html from its parts
 
     body_contents = (
-        script[
-            Markup(r"""
-            registered_datatables = [];
-        """)
-        ],
+        datatable_script,
         div(style="display:flex;margin-bottom:4px;")[
             generate_dashboard_title_div(transformation_revision),
             generate_timerange_overriding_controls_div(override_mode, relNow),
@@ -1772,6 +2073,7 @@ def generate_dashboard_html(
                 positioning_dict,
                 plotly_outputs,
                 string_outputs,
+                dataframe_outputs,
                 actually_used_wiring,
                 exposed_inputs,
             )
