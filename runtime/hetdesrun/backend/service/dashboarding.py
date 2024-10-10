@@ -39,7 +39,11 @@ from htpy import (
 from markupsafe import Markup
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.backend.service.dashboarding_utils import dashboard_id_for_io, parse_dashboard_id
+from hetdesrun.backend.service.dashboarding_utils import (
+    dashboard_id_for_io,
+    infer_col_width_factor_from_dtype,
+    parse_dashboard_id,
+)
 from hetdesrun.models.wiring import (
     FilterKey,
     GridstackItemPositioning,
@@ -234,7 +238,15 @@ def dataframe_to_table_gridstack_div(
     data_row_list = json.loads(dataframe.to_json(orient="records", date_format="iso"))
 
     column_descriptions = [
-        {"title": col_name, "field": col_name, "headerFilter": True, "headerSortTristate": True}
+        {
+            "title": col_name,
+            "field": col_name,
+            "headerFilter": True,
+            "headerSortTristate": True,
+            "headerTooltip": True,
+            "widthGrow": infer_col_width_factor_from_dtype(dataframe[col_name]),
+            "tooltip": True,
+        }
         for col_name in dataframe.columns
     ]
 
@@ -245,17 +257,12 @@ def dataframe_to_table_gridstack_div(
         ),
         script[
             Markup(
-                r"""
+                f"""
 
         create_and_register_tabulator_datatable(
-            """
-                + '"'
-                + db_id
-                + '", '
-                + json.dumps(data_row_list)
-                + ", "
-                + json.dumps(column_descriptions)
-                + r"""
+            "{db_id}",
+            {json.dumps(data_row_list)},
+            {json.dumps(column_descriptions)},
         );
 
         """
@@ -286,21 +293,22 @@ def dataframe_to_table_gridstack_div(
                 div(class_="header-text", title=header_to_use)[header_to_use],
                 div(
                     class_="panel-buttons",
-                    style="height:20px;font-size:12px",
+                    style="",
                 )[
                     button(
-                        onclick=r"""handle_toggle_button(event, {
+                        onclick=(
+                            r"""handle_toggle_button(event, {
                         activeIcon: 'fa-filter',
                         inactiveIcon: 'fa-filter-circle-xmark',
                         onToggle: (isActive) => {
                             toggle_column_filters("""
-                        + '"'
-                        + db_id
-                        + '"'
-                        + r""", isActive)
+                            '"' + db_id + '"'
+                            r""", isActive)
                         }
-                    })""",
-                        style="height:100%;width:1em;",
+                    })"""
+                        ),
+                        style="height:100%;width:fit-content;padding:1px;padding-top:2px",
+                        title="Toggle Show Column Filters",
                     )[i(class_="fa-solid fa-filter-circle-xmark fa-1x", style="")],
                 ],
             ],
@@ -551,13 +559,17 @@ DASHBOARD_HEAD_ELEMENTS = (
 }
 
 .panel-buttons {
-    background-color:yellow;
+    background-color:transparent;
     position:absolute;
     top: 0;
     opacity:0;
     z-index:2;
-    width:33%;
     height:20;
+    text-align:center;
+    align-items:normal;
+    padding:2px;
+    height:20px;
+    font-size:12px;
 }
 
 .panel-heading:hover .panel-buttons {
@@ -1041,6 +1053,7 @@ def generate_gridstack_div(
     plotly_outputs: dict[str, Any],
     string_outputs: dict[str, str],
     dataframe_outputs: dict[str, pd.DataFrame],
+    multitsframe_outputs: dict[str, pd.DataFrame],
     actually_used_wiring: WorkflowWiring,
     exposed_manual_inputs: set[str],
 ) -> Element:
@@ -1095,7 +1108,9 @@ def generate_gridstack_div(
                     GridstackItemPositioning(
                         id=parse_dashboard_id(db_id)[0],
                         x=(ind % 2) * 12,
-                        y=(ind // 2) * 3 + len(plotly_outputs) % 2 * 3,
+                        y=(ind // 2) * 3
+                        + len(plotly_outputs) % 2 * 3
+                        + len(string_outputs) % 2 * 3,
                         w=12,
                         h=3,
                         type=GridstackPositioningType.OUTPUT,
@@ -1105,6 +1120,37 @@ def generate_gridstack_div(
             for ind, (db_id, dataframe) in enumerate(dataframe_outputs.items())
         ),
         *(
+            dataframe_to_table_gridstack_div(
+                db_id,
+                multitsframe.reindex(
+                    columns=(
+                        ["timestamp", "metric"]
+                        + [
+                            col
+                            for col in multitsframe.columns
+                            if col not in {"timestamp", "metric"}
+                        ]
+                    ),
+                    copy=False,
+                ),
+                positioning_dict.get(
+                    db_id,
+                    GridstackItemPositioning(
+                        id=parse_dashboard_id(db_id)[0],
+                        x=(ind % 2) * 12,
+                        y=(ind // 2) * 3
+                        + len(plotly_outputs) % 2 * 3
+                        + len(string_outputs) % 2 * 3
+                        + len(dataframe_outputs) % 2 * 3,
+                        w=12,
+                        h=3,
+                        type=GridstackPositioningType.OUTPUT,
+                    ),
+                ),
+            )
+            for ind, (db_id, multitsframe) in enumerate(multitsframe_outputs.items())
+        ),
+        *(
             input_value_gridstack_div(
                 db_id,
                 positioning_dict.get(
@@ -1112,7 +1158,11 @@ def generate_gridstack_div(
                     GridstackItemPositioning(
                         id=parse_dashboard_id(db_id)[0],
                         x=(ind % 6) * 4,
-                        y=(ind // 6) + len(plotly_outputs) % 2 * 3 + len(string_outputs) % 2 * 3,
+                        y=(ind // 6)
+                        + len(plotly_outputs) % 2 * 3
+                        + len(string_outputs) % 2 * 3
+                        + len(dataframe_outputs) % 2 * 3
+                        + len(multitsframe_outputs) % 2 * 3,
                         w=4,
                         h=1,
                         type=GridstackPositioningType.INPUT,
@@ -1311,6 +1361,14 @@ def generate_dashboard_html(
         if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
     }
 
+    multitsframe_outputs = {
+        (
+            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
+        ): exec_resp.output_results_by_output_name[name]
+        for name in exec_resp.output_results_by_output_name
+        if exec_resp.output_types_by_output_name[name] == "MULTITSFRAME"
+    }
+
     datatable_script = script[
         Markup(r"""
         // ======== Tabulator datatables ========
@@ -1340,8 +1398,6 @@ def generate_dashboard_html(
                 should_be_active = active;
             }
 
-            console.log("toggling_column_filters")
-
             document.documentElement.style.setProperty('--table-filters-display', 'none');
 
             if (should_be_active) {
@@ -1360,7 +1416,11 @@ def generate_dashboard_html(
 
         }
 
-        function create_and_register_tabulator_datatable(db_id, data_row_list, column_descriptions) {
+        function create_and_register_tabulator_datatable(
+                db_id,
+                data_row_list,
+                column_descriptions
+        ) {
             let my_table_id = "dftable-" + db_id;
             let data_table_div = document.getElementById("datatable-" + my_table_id);
 
@@ -1376,7 +1436,11 @@ def generate_dashboard_html(
 
             });
 
-            toggle_column_filters(db_id, false)
+
+            my_datatable.on("tableBuilt", function(){
+                toggle_column_filters(db_id, false);
+            });
+
 
         }""")
     ]
@@ -1559,7 +1623,7 @@ def generate_dashboard_html(
             column: 24,
             float: true,
             resizable: {
-                handles: 'e, se, s, sw, w'
+                handles: 'se, sw'
             },
             draggable: {
                 handle: '.panel-heading',
@@ -2074,6 +2138,7 @@ def generate_dashboard_html(
                 plotly_outputs,
                 string_outputs,
                 dataframe_outputs,
+                multitsframe_outputs,
                 actually_used_wiring,
                 exposed_inputs,
             )

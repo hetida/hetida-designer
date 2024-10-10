@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 from copy import deepcopy
 
+import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype, is_string_dtype
 from pydantic import ValidationError
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -368,3 +370,31 @@ def update_wiring_from_query_parameters(
     )
 
     return new_wiring
+
+
+def infer_col_width_factor_from_dtype(series: pd.Series) -> int:
+    """Try to guess a good column width factor for a table visualization based on dtype.
+
+    Returns an abstract integer, which should represent the ratio according to
+    the sum of all such integers for all columns of the table.
+
+    """
+    dtype_col_width_factor = 1
+    if series.dtype == float:  # noqa: SIM114
+        dtype_col_width_factor = 1
+    elif series.dtype == int:  # noqa: SIM114
+        dtype_col_width_factor = 1
+    elif series.dtype == bool:  # noqa: SIM114
+        dtype_col_width_factor = 1
+    elif is_string_dtype(series):
+        series.str.len()
+        dtype_col_width_factor = 1 + int(min([max(series.str.len()), 240]) / 12)
+        # 1 + 1 for every complete 12 characters — up to a total maximum of 21
+
+    elif is_datetime64_any_dtype(series):
+        dtype_col_width_factor = 3  # microsends isoformat
+    elif series.dtype == object:
+        dtype_col_width_factor = 3
+    else:
+        dtype_col_width_factor = 3
+    return dtype_col_width_factor
