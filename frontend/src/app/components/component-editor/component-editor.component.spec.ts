@@ -2,7 +2,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { StoreModule } from '@ngrx/store';
-import { MonacoEditorModule } from 'ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { appReducers } from 'src/app/store/app.reducers';
 import { ComponentEditorComponent } from './component-editor.component';
 

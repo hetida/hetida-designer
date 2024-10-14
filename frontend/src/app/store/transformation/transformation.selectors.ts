@@ -64,13 +64,16 @@ export const selectTransformationsByCategoryAndName = (
           transformation => transformation.state !== RevisionState.DISABLED
         )
         .filter(transformation => filterByName(transformation, name))
-        .reduce((acc, transformation) => {
-          if (Utils.isNullOrUndefined(acc[transformation.category])) {
-            acc[transformation.category] = [];
-          }
-          acc[transformation.category].push(transformation);
-          return acc;
-        }, {} as { [category: string]: Transformation[] });
+        .reduce(
+          (acc, transformation) => {
+            if (Utils.isNullOrUndefined(acc[transformation.category])) {
+              acc[transformation.category] = [];
+            }
+            acc[transformation.category].push(transformation);
+            return acc;
+          },
+          {} as { [category: string]: Transformation[] }
+        );
     }
   );
 };

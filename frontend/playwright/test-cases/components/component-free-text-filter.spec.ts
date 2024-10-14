@@ -21,7 +21,7 @@ test('Free text filter for component', async ({
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickAddButtonInNavigation('Add component');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Create new component")`
+    'mat-dialog-container:has-text("Create new component")'
   );
   await hetidaDesigner.typeInInputById('name', componentName);
   await hetidaDesigner.typeInInputById('category', componentCategory);
@@ -82,7 +82,7 @@ test('Free text filter for component', async ({
   await hetidaDesigner.clickByTestId('done-tree-node-modal'); // Close Source Dialog
   await hetidaDesigner.clickByTestId('cancel-wiring-dialog'); // Close Execute Dialog
 
-  const freeTextInput = await page.getByTestId(
+  const freeTextInput = page.getByTestId(
     `${componentInputName}-free-text-filter-input-wiring-dialog`
   );
 
@@ -101,7 +101,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     componentCategory,
     componentName
   );
-  await page.locator('.mat-menu-panel').hover();
+  await page.locator('.mat-mdc-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Delete');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`

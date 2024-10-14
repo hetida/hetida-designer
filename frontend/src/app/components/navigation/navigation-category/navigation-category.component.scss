@@ -21,6 +21,7 @@
   .mat-expansion-panel-header-title {
     font-weight: 500;
     font-size: 13px !important;
+    flex-basis: max-content !important;
   }
 
   .mat-expansion-panel-content {
@@ -39,4 +40,8 @@
     margin: var(--spacing-1) 0 !important;
     display: flex;
   }
+}
+
+.mat-expansion-panel:not([class*='mat-elevation-z']) {
+  box-shadow: none;
 }

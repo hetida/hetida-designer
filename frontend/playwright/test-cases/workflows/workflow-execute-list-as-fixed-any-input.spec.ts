@@ -23,7 +23,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickAddButtonInNavigation('Add workflow');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Create new workflow")`
+    'mat-dialog-container:has-text("Create new workflow")'
   );
   await hetidaDesigner.typeInInputById('name', workflowName);
   await hetidaDesigner.typeInInputById('category', workflowCategory);
@@ -88,7 +88,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     workflowCategory,
     workflowName
   );
-  await page.locator('.mat-menu-panel').hover();
+  await page.locator('.mat-mdc-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Delete');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`

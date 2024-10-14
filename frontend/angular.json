@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "cli": {
     "analytics": false,
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": ["@angular-eslint/schematics"]
   },
   "version": 1,
   "newProjectRoot": "projects",
@@ -34,7 +34,7 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/monaco-editor",
-                "output": "assets/monaco-editor"
+                "output": "assets/monaco"
               },
               "src/silent-renew.html"
             ],
@@ -51,7 +51,8 @@
             "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
+            "namedChunks": true,
+            "allowedCommonJsDependencies": ["moment", "katex", "lodash"]
           },
           "configurations": {
             "production": {
@@ -121,6 +122,5 @@
         }
       }
     }
-  },
-  "defaultProject": "frontend"
+  }
 }

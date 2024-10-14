@@ -1,5 +1,5 @@
 {
   "apiEndpoint": "http://localhost:8080/api",
-  "authEnabled": false,
-  "userInfoText": ""
+  "userInfoText": "",
+  "authEnabled": false
 }

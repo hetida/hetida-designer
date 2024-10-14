@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { MaterialModule } from './material.module';
 
 @Injectable()
-export class FakeMatIconRegistry {
+export class FakeMatIconRegistry extends MatIconRegistry {
   addSvgIcon(): this {
     return this;
   }
@@ -47,7 +47,7 @@ export class FakeMatIconRegistry {
   }
 
   getDefaultFontSetClass() {
-    return 'material-icons';
+    return ['material-icons'];
   }
 
   getSvgIconFromUrl(): Observable<SVGElement> {

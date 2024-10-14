@@ -9,7 +9,7 @@
     <ng-template mat-tab-label>
       <mat-icon>home</mat-icon>
     </ng-template>
-    <hd-home (click)="_closePopover()"></hd-home>
+    <hd-home-tab (click)="_closePopover()"></hd-home-tab>
   </mat-tab>
   <mat-tab #matTab *ngFor="let tabItem of _tabItems; trackBy: _trackBy">
     <ng-container *ngIf="_isDocumentation(tabItem)">

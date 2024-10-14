@@ -28,12 +28,12 @@ export class HetidaDesigner {
 
   // Left navigation
   public async clickWorkflowsInNavigation(): Promise<void> {
-    await this.page.locator(`button:has-text("Workflows")`).click();
+    await this.page.locator('button:has-text("Workflows")').click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
   public async clickComponentsInNavigation(): Promise<void> {
-    await this.page.locator(`button:has-text("Components")`).click();
+    await this.page.locator('button:has-text("Components")').click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
@@ -127,7 +127,7 @@ export class HetidaDesigner {
     }
 
     await this.page
-      .locator(`.mat-menu-content >> button:has-text("${menuItem}")`)
+      .locator(`.mat-mdc-menu-content >> button:has-text("${menuItem}")`)
       .click();
   }
 
@@ -138,7 +138,7 @@ export class HetidaDesigner {
 
     await this.page
       .locator('.navigation-container__search >> input')
-      .type(searchTerm);
+      .pressSequentially(searchTerm);
   }
 
   public async clickIconInToolbar(iconTitle: string): Promise<void> {
@@ -153,7 +153,7 @@ export class HetidaDesigner {
 
   public async clickByTestId(testId: string): Promise<void> {
     if (testId === '') {
-      throw new Error(`ERROR: test id must not be empty`);
+      throw new Error('ERROR: test id must not be empty');
     }
 
     await this.page.getByTestId(testId).click();
@@ -171,7 +171,7 @@ export class HetidaDesigner {
     const input = this.page.getByTestId(testId);
     await input.click();
     await input.press('Control+a');
-    await input.type(inputText);
+    await input.pressSequentially(inputText);
   }
 
   public async typeInInputById(id: string, inputText: string): Promise<void> {
@@ -183,7 +183,7 @@ export class HetidaDesigner {
     const input = this.page.locator(`input[id="${id}"]`);
     await input.click();
     await input.press('Control+a');
-    await input.type(inputText);
+    await input.pressSequentially(inputText);
 
     // Workaround for autocomplete in create component / workflow dialog
     if (id === 'category') {
@@ -201,7 +201,7 @@ export class HetidaDesigner {
     await textArea.click();
     await textArea.press('Control+a');
     await textArea.press('Delete');
-    await textArea.type(textareaText);
+    await textArea.pressSequentially(textareaText);
   }
 
   public async typeInJsonEditor(textareaText: string): Promise<void> {
@@ -209,22 +209,35 @@ export class HetidaDesigner {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    const editorTextArea = this.page.locator('hd-json-editor >> .monaco-editor textarea').first();
+    const editorTextArea = this.page
+      .locator('hd-json-editor >> .monaco-editor textarea')
+      .first();
     await editorTextArea.press('Control+a');
     await editorTextArea.press('Delete');
-    await editorTextArea.type(textareaText);
+    await editorTextArea.pressSequentially(textareaText);
   }
 
-  public async typeInComponentEditor(pythonCode: string, removeCharsFromEnd: number = 0): Promise<void> {
+  public async typeInComponentEditor(
+    pythonCode: string,
+    removeCharsFromEnd: number = 0
+  ): Promise<void> {
     if (pythonCode === '') {
       throw new Error('ERROR: Editor python code must not be empty');
     }
     if (removeCharsFromEnd < 0) {
-      throw new Error('ERROR: Cannot remove a negative number of chars from the end');
+      throw new Error(
+        'ERROR: Cannot remove a negative number of chars from the end'
+      );
     }
 
     // Textarea gets focus, remove old code from the end and insert new python code
-    const editorTextArea = this.page.locator('hd-component-editor >> .monaco-editor textarea').first();
+    const editorTextArea = this.page
+      .locator('hd-component-editor >> .monaco-editor >> textarea')
+      .first();
+    await this.page
+      .locator('hd-component-editor >> .monaco-editor >> .view-line')
+      .getByText('pass', { exact: true })
+      .click();
     await editorTextArea.press('Control+a');
     await editorTextArea.press('End');
 
@@ -232,7 +245,7 @@ export class HetidaDesigner {
       await editorTextArea.press('Backspace');
     }
 
-    await editorTextArea.type(pythonCode);
+    await editorTextArea.pressSequentially(pythonCode);
   }
 
   public async selectItemInDropdown(
@@ -240,7 +253,7 @@ export class HetidaDesigner {
     itemText: string
   ): Promise<void> {
     if (testId === '' || itemText === '') {
-      throw new Error(`ERROR: Dropdown test id or item text must not be empty`);
+      throw new Error('ERROR: Dropdown test id or item text must not be empty');
     }
 
     await this.page.getByTestId(testId).click();
@@ -265,7 +278,7 @@ export class HetidaDesigner {
 
   public async selectTimestampRange(from: Moment, to: Moment): Promise<void> {
     if (from === undefined || to === undefined) {
-      throw new Error(`ERROR: From or to date must not be empty`);
+      throw new Error('ERROR: From or to date must not be empty');
     }
     if (to.isBefore(from)) {
       throw new Error('To date must be after from date');
@@ -296,7 +309,7 @@ export class HetidaDesigner {
       );
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=0')
-        .type(timestamp.hours().toString());
+        .pressSequentially(timestamp.hours().toString());
 
       // Choose minutes
       await this.page
@@ -308,7 +321,7 @@ export class HetidaDesigner {
       );
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=1')
-        .type(timestamp.minutes().toString());
+        .pressSequentially(timestamp.minutes().toString());
     }
 
     await this.page

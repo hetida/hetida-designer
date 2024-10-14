@@ -1,23 +1,22 @@
 import { Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
-  CanActivate,
   RouterStateSnapshot,
   UrlTree
 } from '@angular/router';
-import { AutoLoginAllRoutesGuard } from 'angular-auth-oidc-client';
+import { AutoLoginPartialRoutesGuard } from 'angular-auth-oidc-client';
 import { Observable } from 'rxjs';
 import { ConfigService } from '../service/configuration/config.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthGuard implements CanActivate {
+export class AuthGuard {
   private authEnabled = false;
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly autoLoginAllRoutesGuard: AutoLoginAllRoutesGuard
+    private readonly autoLoginPartialRoutesGuard: AutoLoginPartialRoutesGuard
   ) {
     this.configService.getConfig().subscribe(config => {
       this.authEnabled = config.authEnabled;
@@ -33,7 +32,7 @@ export class AuthGuard implements CanActivate {
     | boolean
     | UrlTree {
     return this.authEnabled
-      ? this.autoLoginAllRoutesGuard.canActivate(route, state)
+      ? this.autoLoginPartialRoutesGuard.canActivate(route, state)
       : true;
   }
 }

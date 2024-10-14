@@ -1,6 +1,5 @@
-import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { ErrorHandler, NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -13,7 +12,6 @@ import {
   ANIMATION_MODULE_TYPE,
   BrowserAnimationsModule
 } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { OwlMomentDateTimeModule } from '@danielmoncada/angular-datetime-picker-moment-adapter';
 import { StoreModule } from '@ngrx/store';
@@ -31,12 +29,11 @@ import {
   WiringTheme
 } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
-import { MonacoEditorModule } from 'ngx-monaco-editor';
-import { from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { environment } from '../environments/environment';
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { AuthGuard } from './auth/auth.guard';
+import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { TransformationContextMenuComponent } from './components/transformation-context-menu/transformation-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
@@ -46,6 +43,7 @@ import { ContentViewComponent } from './components/content-view/content-view.com
 import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
+import { HomeTabComponent } from './components/home-tab/home-tab.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
@@ -67,24 +65,18 @@ import { NotificationService } from './service/notifications/notification.servic
 import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
+import { from, map } from 'rxjs';
 
 const httpLoaderFactory = (configService: ConfigService) => {
-  // we need to first load the hetida designer config upon app initialization, then use its values to initialize the auth module
-  // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
-  // the calls can be split again once we migrate to v14 of the oidc library, see
-  // https://github.com/damienbod/angular-auth-oidc-client/blob/main/docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
-  const config$ = from(configService.loadConfig()).pipe(
+  const authConfig = from(configService.getConfig()).pipe(
     map(config => {
-      // unfortunately, the oidc library requires some config values upon initialization
-      // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
-      // the error can be fixed by migrating to version 14, see above
       return {
         authority: config.authConfig?.authority,
-        redirectUrl: window.location.origin,
+        redirectUrl: `${window.location.origin}/authcallback`,
+        postLogoutRedirectUri: window.location.origin,
         clientId: config.authConfig?.clientId,
         responseType: 'code',
         scope: 'openid',
-        postLogoutRedirectUri: window.location.origin,
         silentRenew: true,
         silentRenewUrl: `${window.location.origin}/silent-renew.html`,
         ...config.authConfig
@@ -92,18 +84,20 @@ const httpLoaderFactory = (configService: ConfigService) => {
     })
   );
 
-  return new StsConfigHttpLoader(config$);
+  return new StsConfigHttpLoader(authConfig);
 };
 
 @NgModule({
   declarations: [
     AppComponent,
+    AuthCallbackComponent,
     NavigationCategoryComponent,
     NavigationContainerComponent,
     ConfirmDialogComponent,
     ComponentIODialogComponent,
     WorkflowIODialogComponent,
     HomeComponent,
+    HomeTabComponent,
     WorkflowEditorComponent,
     ComponentEditorComponent,
     ContentViewComponent,
@@ -120,6 +114,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OptionalFieldsDialogComponent
   ],
   imports: [
+    AppRoutingModule,
     PlotlyViaWindowModule,
     BrowserModule,
     BrowserAnimationsModule,
@@ -149,14 +144,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
         useFactory: httpLoaderFactory,
         deps: [ConfigService]
       }
-    }),
-    RouterModule.forRoot([
-      {
-        path: '**',
-        component: AppComponent,
-        canActivate: [AuthGuard]
-      }
-    ])
+    })
   ],
   providers: [
     NotificationService,
@@ -181,8 +169,14 @@ const httpLoaderFactory = (configService: ConfigService) => {
     { provide: MatDialogRef, useValue: {} },
     ConfigService,
     {
-      provide: APP_BASE_HREF,
-      useValue: window.location.pathname
+      provide: APP_INITIALIZER,
+      useFactory: (appConfig: ConfigService) => {
+        return async () => {
+          await appConfig.loadConfig();
+        };
+      },
+      multi: true,
+      deps: [ConfigService]
     },
     {
       provide: HD_WIRING_CONFIG,

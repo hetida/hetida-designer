@@ -20,7 +20,7 @@ test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
   expect(countDialogContainer).toEqual(1);
 
   // Check for equal substrings in dialog-title and opened tab
-  const dialogTitle = page.locator('.mat-dialog-title h4');
+  const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
   const componentTabName = await page
     .locator('div[role="tab"] >> nth=1')
     .locator('.text-ellipsis')

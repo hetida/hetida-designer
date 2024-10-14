@@ -16,7 +16,7 @@ test('Open context-menu via right-click on a component in navigation-menu', asyn
 
   // Assert
   const countItemsContextMenu = await page
-    .locator('.mat-menu-content >> button')
+    .locator('.mat-mdc-menu-content >> button')
     .count();
   expect(countItemsContextMenu).toBeGreaterThan(0);
 

@@ -1,31 +1,21 @@
 import { HttpClientModule } from '@angular/common/http';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { StoreModule } from '@ngrx/store';
-import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
-import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { AppComponent } from './app.component';
-import { AuthService } from './auth/auth.service';
 import { BasicTestModule } from './basic-test.module';
-import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
-import { ContentViewComponent } from './components/content-view/content-view.component';
-import { HomeComponent } from './components/home/home.component';
-import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
-import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
-import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
-import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
-import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
-import { ToolbarComponent } from './components/toolbar/toolbar.component';
-import { WorkflowEditorComponent } from './components/workflow-editor/workflow-editor.component';
-import { appReducers } from './store/app.reducers';
 import { RouterTestingModule } from '@angular/router/testing';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { of } from 'rxjs';
+
+class OidcSecurityServiceStub {
+  checkAuth(url: string) {
+    return of(url);
+  }
+}
 
 describe('AppComponent', () => {
-  const mockAuthService = jasmine.createSpyObj<AuthService>('AuthSerivce', [
-    'isAuthenticated$',
-    'userName$',
-    'logout'
-  ]);
+  let app: AppComponent;
+  let fixture: ComponentFixture<AppComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -33,37 +23,26 @@ describe('AppComponent', () => {
         BasicTestModule,
         FormsModule,
         ReactiveFormsModule,
-        NgHetidaFlowchartModule,
-        MonacoEditorModule,
-        StoreModule.forRoot(appReducers),
         HttpClientModule,
         RouterTestingModule
       ],
       providers: [
         {
-          provide: AuthService,
-          useValue: mockAuthService
+          provide: OidcSecurityService,
+          useClass: OidcSecurityServiceStub
         }
       ],
-      declarations: [
-        AppComponent,
-        HomeComponent,
-        ToolbarComponent,
-        NavigationContainerComponent,
-        NavigationCategoryComponent,
-        NavigationItemComponent,
-        ContentViewComponent,
-        ProtocolViewerComponent,
-        PopoverTransformationComponent,
-        ComponentEditorComponent,
-        WorkflowEditorComponent
-      ]
+      declarations: [AppComponent]
     }).compileComponents();
   }));
 
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AppComponent);
+    app = fixture.debugElement.componentInstance;
+    fixture.detectChanges();
+  });
+
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
   });
 });

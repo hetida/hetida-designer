@@ -21,6 +21,10 @@ export class AuthService {
     });
   }
 
+  public isAuthEnabled(): boolean {
+    return this.authEnabled;
+  }
+
   /**
    * Returns true once the user is logged in.
    */
@@ -48,6 +52,6 @@ export class AuthService {
   }
 
   public logout(): void {
-    this.oidcSecurityService.logoff();
+    this.oidcSecurityService.logoff().subscribe();
   }
 }

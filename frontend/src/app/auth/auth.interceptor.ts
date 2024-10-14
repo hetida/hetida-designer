@@ -7,7 +7,7 @@ import {
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { Observable } from 'rxjs';
+import { mergeMap, Observable } from 'rxjs';
 import { ConfigService } from '../service/configuration/config.service';
 import { Utils } from '../utils/utils';
 
@@ -33,12 +33,15 @@ export class AuthInterceptor implements HttpInterceptor {
     if (!this.authEnabled || request.context.get(BYPASS_AUTH)) {
       return next.handle(request);
     }
-    const token = this.oidcSecurityService.getAccessToken();
-    if (Utils.isDefined(token)) {
-      request = request.clone({
-        headers: request.headers.set('Authorization', `Bearer ${token}`)
-      });
-    }
-    return next.handle(request);
+    return this.oidcSecurityService.getAccessToken().pipe(
+      mergeMap(token => {
+        if (Utils.isDefined(token)) {
+          request = request.clone({
+            headers: request.headers.set('Authorization', `Bearer ${token}`)
+          });
+        }
+        return next.handle(request);
+      })
+    );
   }
 }

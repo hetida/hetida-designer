@@ -13,6 +13,8 @@ import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
+import { QueryParameterService } from '../query-parameter/query-parameter.service';
+import { RouterTestingModule } from '@angular/router/testing';
 
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(
@@ -258,7 +260,7 @@ describe('TransformationActionService', () => {
     notificationServiceSpy = jasmine.createSpy();
 
     TestBed.configureTestingModule({
-      imports: [MaterialModule, HttpClientTestingModule],
+      imports: [MaterialModule, HttpClientTestingModule, RouterTestingModule],
       providers: [
         provideMockStore(),
         {
@@ -288,13 +290,15 @@ describe('TransformationActionService', () => {
     const transformationService = TestBed.inject(TransformationService);
     const tabItemService = TestBed.inject(TabItemService);
     const notificationService = TestBed.inject(NotificationService);
+    const queryParameterService = TestBed.inject(QueryParameterService);
     transformationActionService = new TransformationActionServiceExtended(
       matDialog,
       mockStore,
       transformationHttpService,
       transformationService,
       tabItemService,
-      notificationService
+      notificationService,
+      queryParameterService
     );
   });
 

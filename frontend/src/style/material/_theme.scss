@@ -31,10 +31,18 @@
   }
 
   // Angular Material overrides
-  .mat-form-field {
-    .mat-focus {
+  .mat-mdc-form-field {
+    .mat-focused {
       color: map-get($primary, 700);
     }
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background-color: map_get($secondary, 500) !important;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: unset !important;
   }
 
   .mat-expansion-panel {
@@ -76,7 +84,7 @@
       }
     }
 
-    &.component {
+    & .component {
       background-color: $hd-white !important;
       color: $hd-black;
       border-color: $hd-black;
@@ -92,28 +100,70 @@
   .app-context-menu {
     border: 1px solid map-get($primary, 700);
 
-    .mat-menu-content {
-      .mat-menu-item {
-        height: 25px;
+    .mat-mdc-menu-content {
+      .mat-mdc-menu-item {
+        min-height: 25px;
         line-height: 25px;
       }
     }
   }
 
-  .dark-theme {
-    .mat-dialog-title {
+  .mat-mdc-menu-item:hover:not([disabled]) {
+    background-color: $hd-grey-dark !important;
+  }
+
+  .mat-mdc-menu-item:focus:not([disabled]) {
+    background-color: $hd-grey-dark !important;
+  }
+
+  .mat-mdc-select-panel {
+    .mat-mdc-option:hover {
+      background-color: $hd-grey-dark !important;
+    }
+  }
+
+  .mdc-dialog__container {
+    // Won't work with map-get or variables
+    --mdc-dialog-supporting-text-color: #292929;
+
+    .mat-mdc-dialog-title {
+      color: $hd-black !important;
+      background-color: $hd-yellow;
+    }
+
+    .mat-mdc-text-field-wrapper
+      .mat-mdc-form-field-flex
+      .mat-mdc-floating-label {
       color: $hd-black;
     }
-    .hetida-context-menu {
-      ul {
-        li:hover {
-          background-color: $hd-blue-dark;
+  }
+
+  .dark-theme {
+    & .mdc-dialog__container {
+      // Won't work with map-get or variables
+      --mdc-dialog-supporting-text-color: #ffffff !important;
+
+      & .mat-mdc-dialog-title {
+        color: $hd-black !important;
+      }
+
+      .mat-mdc-text-field-wrapper
+        .mat-mdc-form-field-flex
+        .mat-mdc-floating-label {
+        color: $hd-white !important;
+      }
+
+      & .hetida-context-menu {
+        ul {
+          li:hover {
+            background-color: $hd-blue-dark;
+          }
         }
       }
     }
   }
 
-  .mat-tab-labels {
+  .mat-mdc-tab-labels {
     background-color: map-get($secondary, 700);
 
     .mat-icon-svg {
@@ -122,13 +172,17 @@
       }
     }
 
-    .mat-tab-label-active {
-      background-color: map-get($secondary, 500);
+    .mdc-tab-indicator--active {
+      background-color: map-get($secondary, 500) !important;
 
       .mat-icon-svg {
         .cls-1 {
           fill: $hd-yellow;
         }
+      }
+
+      .mdc-tab-indicator__content--underline {
+        border-color: map-get($secondary, 700);
       }
     }
   }
@@ -143,5 +197,34 @@
 
   .mat-tab-group .mat-tab-label-container {
     background-color: map-get($secondary, 700);
+  }
+
+  .navigation-container__search {
+    // Won't work with map-get or variables
+    --mdc-outlined-text-field-outline-color: #e3e3e3;
+  }
+
+  .dark-theme {
+    & .navigation-container__search {
+      --mdc-outlined-text-field-hover-outline-color: $hd-white;
+    }
+  }
+
+  .mat-mdc-snack-bar-container {
+    background-color: $hd-pink;
+    --mdc-snackbar-container-color: $hd-pink;
+  }
+
+  .dark-theme {
+    & .mat-mdc-snack-bar-container {
+      color: rgba($hd-white, 0.7) !important;
+      --mdc-snackbar-supporting-text-color: rgba($hd-white, 0.7) !important;
+      background-color: $hd-pink;
+      --mdc-snackbar-container-color: $hd-pink;
+    }
+  }
+
+  .mat-mdc-dialog-actions {
+    border-color: grey !important;
   }
 }

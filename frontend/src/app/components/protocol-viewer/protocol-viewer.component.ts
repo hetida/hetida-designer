@@ -147,6 +147,7 @@ export class ProtocolViewerComponent implements AfterViewInit {
   outputIsPlotlyJson(outputKey: string): boolean {
     const resultType =
       this.executionResponse.output_types_by_output_name[outputKey];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     return resultType === IOType.PLOTLYJSON;
   }
 

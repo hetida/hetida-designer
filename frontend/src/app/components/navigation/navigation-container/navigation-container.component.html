@@ -58,7 +58,7 @@
   <hd-navigation-category
     *ngFor="
       let item of transformationsByCategory
-        | keyvalue : sortByCategoryAlphabetically;
+        | keyvalue: sortByCategoryAlphabetically;
       trackBy: trackCategory
     "
     [transformations]="item.value"

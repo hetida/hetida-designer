@@ -27,7 +27,9 @@ export const test = base.extend<HetidaDesignerFixture>({
       }
     });
 
-    await page.goto(baseURL);
+    await page.goto(baseURL, {
+      waitUntil: 'domcontentloaded'
+    });
     await use(page);
   },
 

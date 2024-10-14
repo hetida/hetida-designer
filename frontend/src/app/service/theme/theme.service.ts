@@ -6,10 +6,12 @@ import { LocalStorageService } from '../local-storage/local-storage.service';
   providedIn: 'root'
 })
 export class ThemeService {
+  public readonly activeTheme: string;
+  public isLightTheme = true;
+  public lastTheme = 'light-theme';
+
   private readonly currentTheme$: ReplaySubject<string> =
     new ReplaySubject<string>();
-
-  readonly activeTheme: string;
 
   constructor(private readonly localStorage: LocalStorageService) {
     let theme: string = this.localStorage.getItem('theme');
@@ -22,11 +24,11 @@ export class ThemeService {
     this.setCurrentTheme(theme);
   }
 
-  get currentTheme(): ReplaySubject<string> {
+  public get currentTheme(): ReplaySubject<string> {
     return this.currentTheme$;
   }
 
-  setCurrentTheme(theme: string) {
+  public setCurrentTheme(theme: string) {
     this.currentTheme$.next(theme);
   }
 }

@@ -32,7 +32,7 @@ export class QueryParameterService {
       }
     } else {
       // add the first query parameter
-      url += `/?id=${transformationId}`;
+      url += `?id=${transformationId}`;
     }
 
     this.router.navigateByUrl(url);
@@ -57,7 +57,7 @@ export class QueryParameterService {
         }
       } else {
         // delete the query parameter, if there is only one left
-        url = url.replace(`/?id=${transformationId}`, '');
+        url = url.replace(`?id=${transformationId}`, '');
       }
 
       this.router.navigateByUrl(url);

@@ -51,7 +51,7 @@
               >
               <div
                 style="flex: 0 0 100px"
-                class="d-flex align-items-end text-ellipsis"
+                class="d-flex align-items-start text-ellipsis"
               >
                 <span
                   [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
@@ -169,6 +169,7 @@
             *ngIf="_isDefaultParameter(ioItem)"
             class="input-no-fixed-width default-value-input"
           >
+            <mat-label>Default Value</mat-label>
             <input
               formControlName="value"
               matInput
@@ -228,7 +229,7 @@
               class="text-ellipsis mat-body-strong"
               >{{ ioItem.get('connector').value }}</span
             >
-            <div style="flex: 0 0 100px" class="d-flex align-items-end">
+            <div style="flex: 0 0 100px" class="d-flex align-items-start">
               <span
                 [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
               >

@@ -3,66 +3,6 @@
 @import 'theme';
 @import '../colors';
 
-@mixin mat-form-field-outline-typography($config) {
-  // The unit-less line-height from the font config.
-  $line-height: mat.line-height($config, input);
-  // The amount to scale the font for the floating label and subscript.
-  $subscript-font-scale: 0.75;
-  // The padding above and below the infix.
-  $infix-padding: 0.5em;
-  // The margin applied to the form-field-infix to reserve space for the floating label.
-  $infix-margin-top: 1em * $line-height * $subscript-font-scale;
-  // The space between the bottom of the .mat-form-field-flex area and the subscript wrapper.
-  // Mocks show half of the text size, but this margin is applied to an element with the subscript
-  // text font size, so we need to divide by the scale factor to make it half of the original text
-  // size.
-  $subscript-margin-top: 0.5em / $subscript-font-scale;
-  // The padding applied to the form-field-wrapper to reserve space for the subscript, since it's
-  // absolutely positioned. This is a combination of the subscript's margin and line-height, but we
-  // need to multiply by the subscript font scale factor since the wrapper has a larger font size.
-  $wrapper-padding-bottom: ($subscript-margin-top + $line-height) *
-    $subscript-font-scale;
-  // The amount we offset the label from the input text in the outline appearance.
-  $outline-appearance-label-offset: 0.2em;
-
-  .mat-form-field-appearance-outline {
-    .mat-form-field-infix {
-      padding: $infix-padding 0 $infix-padding 0;
-    }
-
-    .mat-form-field-label {
-      top: $infix-margin-top + $infix-padding;
-      margin-top: $outline-appearance-label-offset;
-    }
-  }
-
-  .mat-form-field-can-float {
-    &.mat-form-field-should-float .mat-form-field-label,
-    .mat-input-server:focus
-      + .mat-form-field-label-wrapper
-      .mat-form-field-label {
-      @include _mat-form-field-outline-label-floating(
-        $subscript-font-scale,
-        $infix-padding + $outline-appearance-label-offset,
-        $infix-margin-top
-      );
-    }
-
-    // Server-side rendered matInput with a label attribute but label not shown
-    // (used as a pure CSS stand-in for mat-form-field-should-float).
-    //noinspection CssInvalidPseudoSelector
-    .mat-input-server[label]:not(:label-shown)
-      + .mat-form-field-label-wrapper
-      .mat-form-field-label {
-      @include _mat-form-field-outline-label-floating(
-        $subscript-font-scale,
-        $infix-padding + $outline-appearance-label-offset,
-        $infix-margin-top
-      );
-    }
-  }
-}
-
 @include mat.core();
 
 // Colors
@@ -110,20 +50,25 @@ $light-primary-text: map_get($mg-primary-palette, 700);
 
 $mg-typography: mat.define-typography-config(
   $font-family: 'Roboto, "Helvetica Neue", sans-serif',
-  $display-4: mat.define-typography-level(20px, 32px, 300),
-  $display-3: mat.define-typography-level(20px, 32px, 400),
-  $display-2: mat.define-typography-level(18px, 24px, 400),
-  $display-1: mat.define-typography-level(14px, 24px, 400),
-  $headline: mat.define-typography-level(20px, 32px, 400),
-  $title: mat.define-typography-level(20px, 32px, 500),
-  $subheading-2: mat.define-typography-level(16px, 20px, 500),
-  $subheading-1: mat.define-typography-level(16px, 20px, 400),
-  $body-2: mat.define-typography-level(14px, 24px, 500),
-  $body-1: mat.define-typography-level(14px, 24px, 400),
-  $caption: mat.define-typography-level(14px, 24px, 400),
-  $button: mat.define-typography-level(14px, 14px, 500),
-  $input: mat.define-typography-level(inherit, 1.125, 400)
+  $headline-1: mat.define-typography-level(24px, 32px, 400),
+  $headline-2: mat.define-typography-level(20px, 32px, 400),
+  $headline-3: mat.define-typography-level(16px, 24px, 400),
+  $headline-4: mat.define-typography-level(15px, 24px, 400),
+  $headline-5: mat.define-typography-level(24px, 32px, 400),
+  $headline-6: mat.define-typography-level(20px, 32px, 500),
+  $subtitle-1: mat.define-typography-level(16px, 28px, 400),
+  $subtitle-2: mat.define-typography-level(14px, 24px, 500),
+  $body-1: mat.define-typography-level(14px, 20px, 400),
+  $body-2: mat.define-typography-level(14px, 20px, 400),
+  $caption: mat.define-typography-level(10.5px, 12px, 500),
+  $button: mat.define-typography-level(14px, 14px, 500)
 );
+
+@include mat.all-component-typographies($mg-typography);
+
+// Density
+
+@include mat.all-component-densities(-1);
 
 // Light Theme
 
@@ -165,7 +110,15 @@ mat.$light-theme-background-palette: (
 $hd-primary: mat.define-palette($mg-primary-palette);
 $hd-accent: mat.define-palette($mg-secondary-palette, 200, 100, 400);
 $hd-warn: mat.define-palette(mat.$red-palette);
-$hd-theme: mat.define-light-theme($hd-primary, $hd-accent, $hd-warn);
+$hd-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $hd-primary,
+      accent: $hd-accent,
+      warn: $hd-warn
+    )
+  )
+);
 
 @include mat.all-component-themes($hd-theme);
 @include hd-material-theme($hd-theme);
@@ -211,12 +164,16 @@ $hd-dark-primary: mat.define-palette($mg-secondary-palette);
 $hd-dark-accent: mat.define-palette($mg-primary-palette, A200, A100, A400);
 $hd-dark-warn: mat.define-palette(mat.$red-palette);
 $hd-dark-theme: mat.define-dark-theme(
-  $hd-dark-primary,
-  $hd-dark-accent,
-  $hd-dark-warn
+  (
+    color: (
+      primary: $hd-dark-primary,
+      accent: $hd-dark-accent,
+      warn: $hd-dark-warn
+    )
+  )
 );
 
 .dark-theme {
-  @include mat.all-component-themes($hd-dark-theme);
+  @include mat.all-component-colors($hd-dark-theme);
   @include hd-material-theme($hd-dark-theme);
 }

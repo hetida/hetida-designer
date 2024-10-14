@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -95,7 +96,7 @@ function ioIsConstant(io: IO | Constant): io is Constant {
   styleUrls: ['./workflow-io-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowIODialogComponent {
+export class WorkflowIODialogComponent implements AfterViewInit {
   ioItemForm: FormGroup;
 
   readonly _ioTypeOptions = Object.keys(IOTypeOption);
@@ -132,11 +133,14 @@ export class WorkflowIODialogComponent {
     this.svgConfiguration.allowZooming = false;
     this.svgConfiguration.showContextMenu = false;
 
-    this.createPreview();
     this.setupFormControl();
     // Extra value for IOTypeOption that is not defined in ENUM,
     // because is only needed in the Workflow dialog
     this._ioTypeOptions.push('FIXED');
+  }
+
+  ngAfterViewInit(): void {
+    this.createPreview();
   }
 
   get valid(): boolean {

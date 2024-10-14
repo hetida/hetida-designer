@@ -1,12 +1,11 @@
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
-import { AuthService } from './auth/auth.service';
-import { ContextMenuService } from './service/context-menu/context-menu.service';
-import { LocalStorageService } from './service/local-storage/local-storage.service';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { ThemeService } from './service/theme/theme.service';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { LocalStorageService } from './service/local-storage/local-storage.service';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'hd-root',
@@ -14,18 +13,14 @@ import { ThemeService } from './service/theme/theme.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  private lastTheme = 'light-theme';
-
-  public lightTheme = true;
-
   constructor(
+    private readonly oidcSecurityService: OidcSecurityService,
     private readonly iconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer,
     private readonly localStorage: LocalStorageService,
     private readonly overlayContainer: OverlayContainer,
-    private readonly themeService: ThemeService,
     private readonly appElement: ElementRef<Element>,
-    private readonly contextMenuService: ContextMenuService,
+    private readonly themeService: ThemeService,
     private readonly authService: AuthService
   ) {
     this.iconRegistry.addSvgIcon(
@@ -56,39 +51,19 @@ export class AppComponent implements OnInit {
       this.localStorage.setItem('theme', theme);
       this.overlayContainer
         .getContainerElement()
-        .classList.remove(this.lastTheme);
-      this.appElement.nativeElement.classList.remove(this.lastTheme);
+        .classList.remove(this.themeService.lastTheme);
+      this.appElement.nativeElement.classList.remove(
+        this.themeService.lastTheme
+      );
       this.overlayContainer.getContainerElement().classList.add(theme);
       this.appElement.nativeElement.classList.add(theme);
-      this.lastTheme = theme;
-      this.lightTheme = this.lastTheme === 'light-theme';
+      this.themeService.lastTheme = theme;
+      this.themeService.isLightTheme =
+        this.themeService.lastTheme === 'light-theme';
     });
-  }
 
-  public toggleTheme() {
-    this.lightTheme = !this.lightTheme;
-    this.themeService.setCurrentTheme(
-      this.lightTheme ? 'light-theme' : 'dark-theme'
-    );
-  }
-
-  public get userName$(): Observable<string> {
-    return this.authService.userName$();
-  }
-
-  public logout(): void {
-    this.authService.logout();
-  }
-
-  public closeContextMenu() {
-    this.contextMenuService.disposeAllContextMenus();
-  }
-
-  public get isAuthenticated$(): Observable<boolean> {
-    return this.authService.isAuthenticated$();
-  }
-
-  public get theme(): string {
-    return this.lastTheme;
+    if (this.authService.isAuthEnabled()) {
+      this.oidcSecurityService.checkAuth().subscribe();
+    }
   }
 }
