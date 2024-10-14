@@ -1432,7 +1432,8 @@ def generate_dashboard_html(
                 // resizableColumnGuide: true,
                 placeholderHeaderFilter:"No Matching Data",
                 renderVertical:"basic",
-                renderHorizontal:"basic"
+                renderHorizontal:"basic",
+                movableColumns: true
 
             });
 
