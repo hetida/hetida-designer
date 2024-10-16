@@ -176,3 +176,37 @@ def test_update_module_level_variable_with_unsuitable_value(
             variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
             value=str,
         )
+
+
+def test_update_module_level_variable_keeping_other_assignments(expanded_component_code: str):
+    code_with_following_assignments = (
+        expanded_component_code
+        + """
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = "global_assignment_after"
+
+some_other_global_variable = "some_other_global_variable_assignment"
+
+
+def my_func():
+    TEST_WIRING_FROM_PY_FILE_IMPORT = "non_global_assignment_one"
+    assert len("assert_is_there") > 0
+    TEST_WIRING_FROM_PY_FILE_IMPORT = "non_global_assignment_two"
+    some_other_non_global_variable = "some_other_non_global_variable_assignment"
+    """
+    )
+
+    updated_code = update_module_level_variable(
+        code=code_with_following_assignments,
+        variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+        value={},
+    )
+
+    assert "global_assignment_after" not in updated_code
+
+    assert "some_other_global_variable_assignment" in updated_code
+
+    assert "non_global_assignment_one" in updated_code
+    assert "non_global_assignment_two" in updated_code
+
+    assert "some_other_non_global_variable_assignment" in updated_code

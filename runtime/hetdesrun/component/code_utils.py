@@ -206,15 +206,18 @@ class GlobalAssignValueTransformer(cst.CSTTransformer):
     ) -> cst.Assign | cst.RemovalSentinel:
         # replace value only on module level!
 
-        if self.found_once and not self.replace_all:
-            if self.remove_repetitions:
-                return cst.RemoveFromParent()
-            return updated_node
+        # TODO: Removing here is only allowed to happen if left name assignment
+        #       is correct. This needs to be checked here as well!
 
         if not original_node in self.assigns:
             return updated_node
 
         if len(original_node.targets) != 1:
+            return updated_node
+
+        if self.found_once and not self.replace_all:
+            if self.remove_repetitions:
+                return cst.RemoveFromParent()
             return updated_node
 
         assign_target = original_node.targets[0]  # cst.AssignTarget
