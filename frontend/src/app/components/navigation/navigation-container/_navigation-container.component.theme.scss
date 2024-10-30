@@ -16,6 +16,11 @@
               .mat-button-toggle-label-content {
                 height: 34px;
                 line-height: 34px;
+                font-size: 13px;
+
+                .mat-pseudo-checkbox {
+                  display: none;
+                }
               }
             }
 
