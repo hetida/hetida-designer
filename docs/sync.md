@@ -207,8 +207,6 @@ Unit tests should be entered directly in your component code files, for example 
 
 For example entering the following function at the bottom of a component which contains a `TEST_WIRING_FROM_PY_FILE_IMPORT` will create a test that runs the component's main function with those input wirings which are `direct_provisioning` data.
 
-Note that in release v0.9.8 you should enter the code for testing below the `main` function but before the `TEST_WIRING_FROM_PY_FILE_IMPORT`.
-
 ```py
 from hdutils import parse_value  # noqa: E402
 
