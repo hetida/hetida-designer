@@ -60,6 +60,15 @@
     color: map_get($primary, 500);
   }
 
+  .mdc-switch--selected {
+    --mdc-switch-selected-focus-track-color: #e3e3e3;
+    --mdc-switch-selected-hover-track-color: #e3e3e3;
+    --mdc-switch-selected-pressed-track-color: #e3e3e3;
+    --mdc-switch-selected-track-color: #e3e3e3;
+    --mdc-switch-handle-surface-color: #424242;
+    --mdc-switch-selected-hover-handle-color: #212121;
+  }
+
   .mat-icon-svg {
     &--draft {
       .cls-1 {
