@@ -2,14 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { TransformationService } from '../transformation/transformation.service';
 import { TabItemService } from './tab-item.service';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 
 describe('TabItemService', () => {
   const transformationService = jasmine.createSpy();
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
+      imports: [RouterModule.forRoot([])],
       providers: [
         provideMockStore(),
         {

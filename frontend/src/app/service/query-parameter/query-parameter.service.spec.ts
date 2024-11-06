@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { QueryParameterService } from './query-parameter.service';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { AppComponent } from 'src/app/app.component';
 
 describe('QueryParameterService', () => {
@@ -8,11 +8,7 @@ describe('QueryParameterService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule.withRoutes([
-          { path: '**', component: AppComponent }
-        ])
-      ]
+      imports: [RouterModule.forRoot([{ path: '**', component: AppComponent }])]
     });
 
     queryParameterService = TestBed.inject(QueryParameterService);

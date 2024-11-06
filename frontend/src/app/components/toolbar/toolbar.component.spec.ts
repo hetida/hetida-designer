@@ -7,7 +7,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { StoreModule } from '@ngrx/store';
 import { appReducers } from 'src/app/store/app.reducers';
 import { ToolbarComponent } from './toolbar.component';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
@@ -22,7 +22,7 @@ describe('ToolbarComponent', () => {
         HttpClientModule,
         StoreModule.forRoot(appReducers),
         MatSnackBarModule,
-        RouterTestingModule
+        RouterModule.forRoot([])
       ],
       declarations: [ToolbarComponent]
     }).compileComponents();

@@ -5,7 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { StoreModule } from '@ngrx/store';
 import { AuthService } from 'src/app/auth/auth.service';
 import { appReducers } from 'src/app/store/app.reducers';
@@ -63,7 +63,7 @@ describe('HomeComponent', () => {
         MonacoEditorModule,
         StoreModule.forRoot(appReducers),
         HttpClientTestingModule,
-        RouterTestingModule
+        RouterModule.forRoot([])
       ],
       providers: [
         {

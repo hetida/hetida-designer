@@ -8,7 +8,7 @@ import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { selectAllTransformations } from 'src/app/store/transformation/transformation.selectors';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { ConfigService } from '../../service/configuration/config.service';
 import { of } from 'rxjs';
 
@@ -32,7 +32,7 @@ describe('CopyTransformationDialogComponent', () => {
         BasicTestModule,
         FormsModule,
         ReactiveFormsModule,
-        RouterTestingModule
+        RouterModule.forRoot([])
       ],
       declarations: [CopyTransformationDialogComponent, ErrorVisualDirective],
       providers: [
