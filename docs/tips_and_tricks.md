@@ -1,7 +1,7 @@
 # Tips and Tricks
 
 ## General notes on debugging
-Since hetida designer is a web application, it is not possible to read the print function output in the user interface directly. Because of that print cannot be used for debugging. Similarly, setting breakpoints will not work as there is no direct access to a terminal where the code actually runs. 
+Since hetida designer is a web application, it is not possible to read the print function output in the user interface directly. Because of that print cannot be used for debugging. Similarly, setting breakpoints will not work as there is no direct access to a terminal where the code actually runs.
 
 If you depend on print and breakpoints you can of course first write / develop component code in your preferred IDE (or Jupyter notebooks), test and debug it there and afterwards copy-paste the relevant functions into component code. We, the creators of hetida designer, use this approach ourselves all the time. Indeed, we often extract, refactor and generalize the relevant parts of an analysis from Jupyter notebooks into "polished" designer components. See [Sync and hybrid working](./sync.md) for a way to simplify this style of development.
 
@@ -88,7 +88,7 @@ So the general tip is to avoid ANY as input that needs to be wired and instead t
 
 ## <a name="self-defined-classes"></a> Storing and loading objects with self defined classes
 When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
-The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes". 
+The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes".
 ```python
 
 class ExampleClass:
@@ -138,4 +138,26 @@ The attributes `ref_id` and `ref_key` of the corresponding input wiring must be 
 	"type": "metadata(any)",
 	"workflow_input_name": "example_class_object"
 }
+```
+
+## <a name="data-type-parsing"></a> Pandas objects in hetida workflows and components
+
+1. pd.DataFrame as return
+When returning a pandas.DataFrame duplicates in the index are not possible as a "ValueError" will
+occure stating "DataFrame index must be unique for orient='columns'.". Therefore, we recommend
+using the timeseries information as column and reset the index before returning
+the dataframe to avoid negative implications. (For pd.Series, the issue of having duplicates
+within the index is not relevant)
+```python
+dataframe_to_return = dataframe.reset_index(
+    names="new_time_column", drop=False, inplace=False
+)
+```
+
+2. pd.Series as input
+Some adapters may define a named or an unnamed series as input. Therefore,
+make sure that your code works with both versions. If you want to convert a
+pd.Series into a pd.DataFrame we recommend doing the following.
+```python
+dataframe = series.to_frame(name="new_column_name")
 ```
