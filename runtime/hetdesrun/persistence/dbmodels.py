@@ -38,7 +38,8 @@ class TransformationRevisionDBModel(Base):
     component_code = Column(String, nullable=True)
     io_interface = Column(JSON, nullable=False)
     test_wiring = Column(JSON, nullable=False)
-    released_timestamp = Column(DateTime, nullable=True)
+    release_wiring = Column(JSON, nullable=True)
+    released_timestamp = Column(DateTime, nullable=True, default=lambda: None)
     disabled_timestamp = Column(DateTime, nullable=True)
 
     __table_args__ = (

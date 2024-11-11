@@ -988,6 +988,52 @@
     ]
   },
   "name": "Moving Window MAD Band Filter Example",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2022-01-01T00:00:00Z\": 1.058,\n    \"2022-01-01T00:20:48Z\": 0.699,\n    \"2022-01-01T00:41:37Z\": 1.08,\n    \"2022-01-01T01:02:26Z\": 1.054,\n    \"2022-01-01T01:23:15Z\": 0.763,\n    \"2022-01-01T01:44:04Z\": 1.034,\n    \"2022-01-01T02:04:53Z\": 0.965,\n    \"2022-01-01T02:25:42Z\": 0.601,\n    \"2022-01-01T02:46:31Z\": 0.933,\n    \"2022-01-01T03:07:20Z\": 1.081,\n    \"2022-01-01T03:28:09Z\": 2.1,\n    \"2022-01-01T03:48:58Z\": 0.988,\n    \"2022-01-01T04:09:47Z\": 0.741,\n    \"2022-01-01T04:30:36Z\": 0.647,\n    \"2022-01-01T04:51:25Z\": 0.556,\n    \"2022-01-01T05:12:14Z\": 0.453,\n    \"2022-01-01T05:33:03Z\": 1.009,\n    \"2022-01-01T05:53:52Z\": 1.72,\n    \"2022-01-01T06:14:41Z\": 1.002,\n    \"2022-01-01T06:56:19Z\": 0.857,\n    \"2022-01-01T07:17:08Z\": 0.864,\n    \"2022-01-01T07:37:57Z\": 0.606,\n    \"2022-01-01T07:58:46Z\": 0.899,\n    \"2022-01-01T08:40:24Z\": 0.62,\n    \"2022-01-01T10:03:40Z\": 0.721,\n    \"2022-01-01T10:24:29Z\": 1.193,\n    \"2022-01-01T10:45:18Z\": 0.833,\n    \"2022-01-01T11:06:07Z\": 2.06,\n    \"2022-01-01T11:26:56Z\": 0.68,\n    \"2022-01-01T11:47:45Z\": 1.136,\n    \"2022-01-01T12:08:34Z\": 0.62,\n    \"2022-01-01T12:29:23Z\": 0.946,\n    \"2022-01-01T12:50:12Z\": 0.746,\n    \"2022-01-01T13:11:01Z\": 0.833,\n    \"2022-01-01T13:31:50Z\": 0.857,\n    \"2022-01-01T14:13:28Z\": 0.947,\n    \"2022-01-01T14:34:17Z\": 0.841,\n    \"2022-01-01T14:55:06Z\": 0.668,\n    \"2022-01-01T15:15:55Z\": 0.675,\n    \"2022-01-01T15:36:44Z\": 0.84,\n    \"2022-01-01T15:57:33Z\": 0.821,\n    \"2022-01-01T16:18:22Z\": 0.625,\n    \"2022-01-01T16:39:11Z\": 1.155,\n    \"2022-01-01T17:00:00Z\": 0.968\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "series"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "10"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "min_num_datapoints_in_window"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1.4"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "buffer_factor"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "4.4478"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "mad_scaling_factor"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "min_band_width_factor"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-11-17T10:37:31.743023+00:00",
   "revision_group_id": "916b006f-6fde-4ec6-aa5e-22c658c534e0",
   "state": "RELEASED",

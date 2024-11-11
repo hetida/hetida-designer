@@ -46,7 +46,7 @@ valid_wiring_dto_dict = {
             "refKey": None,
             "type": None,
             "workflowOutputName": "intercept",
-            "adapterId": "directprovisioning",
+            "adapterId": "direct_provisioning",
         },
         {
             "id": "c585607e-b8e0-445a-8b78-633c6875c8dd",

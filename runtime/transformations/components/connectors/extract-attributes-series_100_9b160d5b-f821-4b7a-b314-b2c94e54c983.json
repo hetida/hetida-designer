@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Extract Attributes (Series)\n\n# Extract Attributes\n\n## Description\nExtract attributes from a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the series.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"9b160d5b-f821-4b7a-b314-b2c94e54c983\",\n    \"revision_group_id\": \"30c08359-aeb2-4ce5-b1b0-c5ca253f9f23\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:54:16.543713+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, series):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"attributes\": series.attrs}\n",
+  "content": "\"\"\"Documentation for Extract Attributes (Series)\n\n# Extract Attributes\n\n## Description\nExtract attributes from a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the series.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"9b160d5b-f821-4b7a-b314-b2c94e54c983\",\n    \"revision_group_id\": \"30c08359-aeb2-4ce5-b1b0-c5ca253f9f23\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:54:16.543713+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, series):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"attributes\": series.attrs}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"series\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.picklingUnit.influx.anomaly_score\",\n            \"ref_id_type\": \"SOURCE\",\n            \"type\": \"timeseries(float)\",\n            \"filters\": {\n                \"timestampFrom\": \"2022-06-27T07:56:00.000000000Z\",\n                \"timestampTo\": \"2022-06-28T07:56:00.000000000Z\",\n            },\n        }\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"series\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.picklingUnit.influx.anomaly_score\",\n            \"ref_id_type\": \"SOURCE\",\n            \"type\": \"timeseries(float)\",\n            \"filters\": {\n                \"timestampFrom\": \"2022-06-27T07:56:00.000000000Z\",\n                \"timestampTo\": \"2022-06-28T07:56:00.000000000Z\",\n            },\n        }\n    ]\n}\n",
   "description": "Extract attributes from a series",
   "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the series.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
   "id": "9b160d5b-f821-4b7a-b314-b2c94e54c983",
@@ -22,6 +22,24 @@
     ]
   },
   "name": "Extract Attributes (Series)",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "demo-adapter-python",
+        "filters": {
+          "timestampFrom": "2022-06-27T07:56:00.000000000Z",
+          "timestampTo": "2022-06-28T07:56:00.000000000Z"
+        },
+        "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
+        "ref_id_type": "SOURCE",
+        "type": "timeseries(float)",
+        "use_default_value": false,
+        "workflow_input_name": "series"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-06-27T15:54:16.543713+00:00",
   "revision_group_id": "30c08359-aeb2-4ce5-b1b0-c5ca253f9f23",
   "state": "RELEASED",

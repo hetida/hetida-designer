@@ -110,6 +110,7 @@ def update_tr(session: SQLAlchemySession, transformation_revision: Transformatio
                 component_code=db_model.component_code,
                 io_interface=db_model.io_interface,
                 test_wiring=db_model.test_wiring,
+                release_wiring=db_model.release_wiring,
                 released_timestamp=db_model.released_timestamp,
                 disabled_timestamp=db_model.disabled_timestamp,
             )
@@ -285,11 +286,17 @@ def update_or_create_single_transformation_revision(
     strip_wiring: bool = False,
     strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
     keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+    strip_release_wiring: bool = False,
+    strip_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+    keep_only_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
 ) -> TransformationRevision:
     transformation_revision.strip_wirings(
         strip_wiring=strip_wiring,
         strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
         keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
+        strip_release_wiring=strip_release_wiring,
+        strip_release_wirings_with_adapter_ids=strip_release_wirings_with_adapter_ids,
+        keep_only_release_wirings_with_adapter_ids=keep_only_release_wirings_with_adapter_ids,
     )
 
     with get_session()() as session, session.begin():

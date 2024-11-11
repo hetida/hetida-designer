@@ -11,6 +11,7 @@ from hetdesrun.exportimport.purge import (
     delete_drafts,
     delete_unused_deprecated,
     deprecate_all_but_latest_per_group,
+    reset_test_wiring_to_release_wiring,
 )
 from hetdesrun.trafoutils.io.load import get_import_sources, load_import_sources
 from hetdesrun.webservice.config import get_config
@@ -74,6 +75,29 @@ def handle_maintenance_operation_request(
         response.status_code = 500
         return MaintenanceActionResult(success=False, error=msg)
     return MaintenanceActionResult()
+
+
+@maintenance_router.post(
+    "/reset_test_wiring_to_release_wiring",
+    response_model=MaintenanceActionResult,
+    summary="Reset test wiring of released transformation revision to their release wiring",
+)
+async def maintenance_reset_test_wiring_to_release_wiring(
+    maintenance_payload: MaintenancePayload, response: Response
+) -> MaintenanceActionResult:
+    """Reset the current test wiring to the stored release wiring
+
+    This affects released and deprecated transformation revisions.
+
+    **Warning**: This resets test wirings. We recommend to backup, e.g.
+    exporting / getting all transformation revisions before using this action!
+    """
+    return handle_maintenance_operation_request(
+        "reset_test_wiring_to_release_wiring",
+        maintenance_payload.maintenance_secret,
+        reset_test_wiring_to_release_wiring,
+        response=response,
+    )
 
 
 @maintenance_router.post(

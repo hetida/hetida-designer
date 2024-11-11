@@ -800,6 +800,10 @@ usage() {
     echo
     echo "  MAINTENANCE:"
     echo
+    echo "    Reset test wirings to stored release wirings for released and deprecated trafos:"
+    echo
+    echo "      $0 "'reset_test_wiring_to_release_wiring -i hddev'
+    echo
     echo "    Redeploy base trafos on a remote instance hddev, e.g. after upgrading:"
     echo
     echo "      $0 "'deploy_base_trafos -i hddev --url-query "allow_overwrite_released=true"'
@@ -816,6 +820,10 @@ usage() {
     echo "    running backend (WARNING: irreversible data loss!):"
     echo
     echo "      $0 purge"
+    echo
+    echo "    Delete all drafts"
+    echo
+    echo "      $0 delete_drafts"
     echo
     echo "GENERAL HINTS"
     echo "Parameters can be supplied with increasing priority as follows:"
@@ -1034,6 +1042,7 @@ usage() {
     echo
     echo "    Maintenance subcommands:"
     echo
+    echo "      $0 reset_test_wiring_to_release_wiring"
     echo "      $0 deprecate_all_but_latest_per_group"
     echo
     echo ""
@@ -1159,6 +1168,27 @@ _ensure_maintenance_secret() {
 }
 
 ######################### ~=~ maintenance actions ~=~ #########################
+
+# Reset test wirings to release wirings
+
+#    Resets the current test wiring to a stored release wiring if present.
+#    Only affects released and deprecated transformation revisions.
+reset_test_wirings_to_release_wirings() {
+    _setup "${@}"
+    _ensure_maintenance_secret
+    ensure_access_token
+
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
+    curl "${curl_args[@]}" -X POST \
+        -H "Authorization: Bearer $ACCESS_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+        "$HD_BACKEND_API_URL/maintenance/reset_test_wiring_to_release_wiring$QUERY_URL_APPEND" \
+        "${REMAINING_ARGS[@]}"
+}
 
 # Deprecate old transformation revision and keep only latest
 

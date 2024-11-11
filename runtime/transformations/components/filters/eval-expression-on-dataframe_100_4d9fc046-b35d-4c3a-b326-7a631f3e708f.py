@@ -55,14 +55,26 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "dataframe",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "A": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "B": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    }\n}'  # noqa: E501
+                "value": '{\n    "A": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "B": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    }\n}'
             },
         },
         {
             "workflow_input_name": "expression",
-            "adapter_id": "direct_provisioning",
+            "filters": {"value": "A > 1.8 and B > 2.5"},
+        },
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "dataframe",
+            "filters": {
+                "value": '{\n    "A": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "B": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    }\n}'
+            },
+        },
+        {
+            "workflow_input_name": "expression",
             "filters": {"value": "A > 1.8 and B > 2.5"},
         },
     ]

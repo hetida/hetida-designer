@@ -230,6 +230,11 @@
     ]
   },
   "name": "Load Keras Model with Custom Layer",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-04-05T16:43:45.177060+00:00",
   "revision_group_id": "1f2f8ca0-133a-4ab1-b874-7f03cd9f75c0",
   "state": "RELEASED",

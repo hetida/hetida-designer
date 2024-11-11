@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Add/Update Attributes (DataFrame)\n\n# Add/Update Attributes\n\n## Description\nAdd attributes to a dataframe or update attributes of a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input DataFrame.\n\n## Outputs\n* **dataframe** (Pandas DataFrame): The input DataFrame with added attributes.\n\n## Details\nAdds attributes to a dataframe. Adding an attribute with a key, that is already included in the attributes of the dataframe, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Add/Update Attributes (DataFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a dataframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"5372a8bb-717f-4183-a89b-94b0c8d8693a\",\n    \"revision_group_id\": \"4a7450b3-c462-4c11-ab5b-faab1b3010a5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T16:05:43.561302+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    dataframe.attrs.update(attributes)\n\n    return {\"dataframe\": dataframe}\n",
+  "content": "\"\"\"Documentation for Add/Update Attributes (DataFrame)\n\n# Add/Update Attributes\n\n## Description\nAdd attributes to a dataframe or update attributes of a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input DataFrame.\n\n## Outputs\n* **dataframe** (Pandas DataFrame): The input DataFrame with added attributes.\n\n## Details\nAdds attributes to a dataframe. Adding an attribute with a key, that is already included in the attributes of the dataframe, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Add/Update Attributes (DataFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a dataframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"5372a8bb-717f-4183-a89b-94b0c8d8693a\",\n    \"revision_group_id\": \"4a7450b3-c462-4c11-ab5b-faab1b3010a5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T16:05:43.561302+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    dataframe.attrs.update(attributes)\n\n    return {\"dataframe\": dataframe}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dataframe\",\n            \"filters\": {\n                \"value\": '{\\n    \"column1\": {\\n        \"2019-08-01T15:45:36.000Z\": 1,\\n        \"2019-08-02T11:33:41.000Z\": 2\\n    },\\n    \"column2\": {\\n        \"2019-08-01T15:45:36.000Z\": 1.3,\\n        \"2019-08-02T11:33:41.000Z\": 2.8\\n    }\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"dataframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.alerts\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"dataframe\",\n        }\n    ],\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dataframe\",\n            \"filters\": {\n                \"value\": '{\\n    \"column1\": {\\n        \"2019-08-01T15:45:36.000Z\": 1,\\n        \"2019-08-02T11:33:41.000Z\": 2\\n    },\\n    \"column2\": {\\n        \"2019-08-01T15:45:36.000Z\": 1.3,\\n        \"2019-08-02T11:33:41.000Z\": 2.8\\n    }\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"dataframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.alerts\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"dataframe\",\n        }\n    ],\n}\n",
   "description": "Add attributes to a dataframe or update attributes of a dataframe",
   "documentation": "# Add/Update Attributes\n\n## Description\nAdd attributes to a dataframe or update attributes of a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input DataFrame.\n\n## Outputs\n* **dataframe** (Pandas DataFrame): The input DataFrame with added attributes.\n\n## Details\nAdds attributes to a dataframe. Adding an attribute with a key, that is already included in the attributes of the dataframe, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
   "id": "5372a8bb-717f-4183-a89b-94b0c8d8693a",
@@ -28,6 +28,37 @@
     ]
   },
   "name": "Add/Update Attributes (DataFrame)",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"column1\": {\n        \"2019-08-01T15:45:36.000Z\": 1,\n        \"2019-08-02T11:33:41.000Z\": 2\n    },\n    \"column2\": {\n        \"2019-08-01T15:45:36.000Z\": 1.3,\n        \"2019-08-02T11:33:41.000Z\": 2.8\n    }\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "dataframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "attributes"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": "demo-adapter-python",
+        "filters": {},
+        "ref_id": "root.plantA.alerts",
+        "ref_id_type": "SINK",
+        "type": "dataframe",
+        "workflow_output_name": "dataframe"
+      }
+    ]
+  },
   "released_timestamp": "2022-06-27T16:05:43.561302+00:00",
   "revision_group_id": "4a7450b3-c462-4c11-ab5b-faab1b3010a5",
   "state": "RELEASED",

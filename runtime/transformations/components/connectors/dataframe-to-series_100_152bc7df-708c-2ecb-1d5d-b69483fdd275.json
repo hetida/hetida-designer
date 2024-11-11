@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for DataFrame to Series\n\n# DataFrame to Series\n\n## Description\nConvert a DataFrame with only one column to a Series.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame. Should have exactly one column.\n\n## Outputs\n* **output** (Pandas Series): The Series.\n\n## Details\nJust converts a DataFrame with exactly one column to a Series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"outputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"DataFrame to Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Convert a DataFrame with only one column to a Series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"152bc7df-708c-2ecb-1d5d-b69483fdd275\",\n    \"revision_group_id\": \"152bc7df-708c-2ecb-1d5d-b69483fdd275\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.063651+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"series\": dataframe.squeeze()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for DataFrame to Series\n\n# DataFrame to Series\n\n## Description\nConvert a DataFrame with only one column to a Series.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame. Should have exactly one column.\n\n## Outputs\n* **output** (Pandas Series): The Series.\n\n## Details\nJust converts a DataFrame with exactly one column to a Series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"outputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"DataFrame to Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Convert a DataFrame with only one column to a Series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"152bc7df-708c-2ecb-1d5d-b69483fdd275\",\n    \"revision_group_id\": \"152bc7df-708c-2ecb-1d5d-b69483fdd275\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.063651+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"series\": dataframe.squeeze()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Convert a DataFrame with only one column to a Series",
   "documentation": "# DataFrame to Series\n\n## Description\nConvert a DataFrame with only one column to a Series.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame. Should have exactly one column.\n\n## Outputs\n* **output** (Pandas Series): The Series.\n\n## Details\nJust converts a DataFrame with exactly one column to a Series.",
   "id": "152bc7df-708c-2ecb-1d5d-b69483fdd275",
@@ -22,6 +22,11 @@
     ]
   },
   "name": "DataFrame to Series",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T17:33:34.063651+00:00",
   "revision_group_id": "152bc7df-708c-2ecb-1d5d-b69483fdd275",
   "state": "RELEASED",

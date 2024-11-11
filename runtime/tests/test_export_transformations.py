@@ -1,18 +1,12 @@
 import json
 import os
-from copy import deepcopy
 from unittest import mock
-from uuid import UUID
 
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.exportimport.export import (
     export_transformations,
-    get_transformation_from_java_backend,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import Type
 
 root_path = "./transformations/"
 json_files = [
@@ -114,55 +108,6 @@ for file_path in json_files:
         bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
         bi_json = json.loads(bi.json())
     bi_list.append(bi_json)
-
-
-def java_backend_mock(url, *args, **kwargs):
-    call_infos_from_url = url.rsplit("/", 3)
-    bi_id = call_infos_from_url[-1]
-    endpoint = call_infos_from_url[-2]
-
-    response_mock = mock.Mock()
-    response_mock.status_code = 200
-
-    if endpoint == "components":
-        dto = ComponentRevisionFrontendDto.from_transformation_revision(
-            TransformationRevision(**tr_json_dict[bi_id])
-        )
-        response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
-
-    if endpoint == "workflows":
-        dto = WorkflowRevisionFrontendDto.from_transformation_revision(
-            TransformationRevision(**tr_json_dict[bi_id])
-        )
-        response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
-
-    if endpoint == "documentations":
-        response_mock.json = mock.Mock(
-            return_value={"document": tr_json_dict[bi_id]["documentation"]}
-        )
-
-    return response_mock
-
-
-def test_get_transformation_from_java_backend():
-    with mock.patch(
-        "hetdesrun.exportimport.export.requests.get",
-        new=java_backend_mock,
-    ):
-        tr_id_str = "18260aab-bdd6-af5c-cac1-7bafde85188f"
-        tr_json_from_dict = deepcopy(tr_json_dict[tr_id_str])
-        tr_from_backend = get_transformation_from_java_backend(
-            id=UUID(tr_id_str), type=Type.COMPONENT, headers={}
-        )
-        tr_json_from_backend = json.loads(tr_from_backend.json(exclude_none=True))
-
-        # released timestamp cannot be the same
-        # it is not set for java backend objects
-        #  and set to "now" during conversion
-        del tr_json_from_backend["released_timestamp"]
-        del tr_json_from_dict["released_timestamp"]
-
-        assert tr_json_from_backend == tr_json_from_dict
 
 
 def mock_get_trafo_from_java_backend(id, type, headers):  # noqa: A002,

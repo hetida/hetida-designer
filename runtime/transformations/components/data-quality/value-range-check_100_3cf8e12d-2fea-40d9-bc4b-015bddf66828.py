@@ -280,38 +280,31 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "timeseries_data",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": (
-                    "{\n"
-                    '    "2020-01-01T01:15:27.000Z": 10.0,\n'
-                    '    "2020-01-02T16:20:00.000Z": 20.0,\n'
-                    '    "2020-01-03T08:20:04.000Z": 30.0\n'
-                    "}"
-                )
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 10.0,\n    "2020-01-02T16:20:00.000Z": 20.0,\n    "2020-01-03T08:20:04.000Z": 30.0\n}'
             },
         },
         {
             "workflow_input_name": "value_range_dict",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": (
-                    "{\n"
-                    '    "[10,20]": {\n'
-                    '        "min_value": 10.0,\n'
-                    '        "max_value": 20.0,\n'
-                    '        "min_value_inclusive": true,\n'
-                    '        "max_value_inclusive": true\n'
-                    "    },\n"
-                    '    "(20,30)": {\n'
-                    '        "min_value": 20.0,\n'
-                    '        "max_value": 30.0,\n'
-                    '        "min_value_inclusive": false,\n'
-                    '        "max_value_inclusive": false\n'
-                    "    }\n"
-                    "}"
-                )
+                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false\n    }\n}'
             },
         },
-    ],
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "timeseries_data",
+            "filters": {
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 10.0,\n    "2020-01-02T16:20:00.000Z": 20.0,\n    "2020-01-03T08:20:04.000Z": 30.0\n}'
+            },
+        },
+        {
+            "workflow_input_name": "value_range_dict",
+            "filters": {
+                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false\n    }\n}'
+            },
+        },
+    ]
 }

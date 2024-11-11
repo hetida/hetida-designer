@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Add/Update Attributes (Series)\n\n# Add/Update Attributes (Series)\n\n## Description\nAdd attributes to a series or update attributes of a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n* **attributes** (Any): A dictionary with string keys to be added to the input Series.\n\n## Outputs\n* **series** (Pandas Series): The input Series with added attributes.\n\n## Details\nAdds attributes to a series. Adding an attribute with a key, that is already included in the attributes of the series, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Add/Update Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"635d23be-39b5-4665-ac1e-c8e4a001d06d\",\n    \"revision_group_id\": \"48f6fd85-bebf-434f-953a-19d64b042748\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T16:15:36.902520+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, series, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    series.attrs.update(attributes)\n\n    return {\"series\": series}\n",
+  "content": "\"\"\"Documentation for Add/Update Attributes (Series)\n\n# Add/Update Attributes (Series)\n\n## Description\nAdd attributes to a series or update attributes of a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n* **attributes** (Any): A dictionary with string keys to be added to the input Series.\n\n## Outputs\n* **series** (Pandas Series): The input Series with added attributes.\n\n## Details\nAdds attributes to a series. Adding an attribute with a key, that is already included in the attributes of the series, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"series\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Add/Update Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"635d23be-39b5-4665-ac1e-c8e4a001d06d\",\n    \"revision_group_id\": \"48f6fd85-bebf-434f-953a-19d64b042748\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T16:15:36.902520+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, series, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    series.attrs.update(attributes)\n\n    return {\"series\": series}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"series\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T01:15:27.000Z\": 42.2,\\n    \"2020-01-03T08:20:03.000Z\": 18.7,\\n    \"2020-01-03T08:20:04.000Z\": 25.9\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"series\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.picklingUnit.influx.anomaly_score\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"timeseries(float)\",\n        }\n    ],\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"series\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T01:15:27.000Z\": 42.2,\\n    \"2020-01-03T08:20:03.000Z\": 18.7,\\n    \"2020-01-03T08:20:04.000Z\": 25.9\\n}'\n            },\n        },\n        {\n            \"workflow_input_name\": \"attributes\",\n            \"filters\": {\"value\": '{\\n    \"a\": true,\\n    \"b\": 31.56\\n}'},\n        },\n    ],\n    \"output_wirings\": [\n        {\n            \"workflow_output_name\": \"series\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.picklingUnit.influx.anomaly_score\",\n            \"ref_id_type\": \"SINK\",\n            \"type\": \"timeseries(float)\",\n        }\n    ],\n}\n",
   "description": "Add attributes to a dataframe or update attributes of a series",
   "documentation": "# Add/Update Attributes (Series)\n\n## Description\nAdd attributes to a series or update attributes of a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n* **attributes** (Any): A dictionary with string keys to be added to the input Series.\n\n## Outputs\n* **series** (Pandas Series): The input Series with added attributes.\n\n## Details\nAdds attributes to a series. Adding an attribute with a key, that is already included in the attributes of the series, will update the corresponding value.\n\n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
   "id": "635d23be-39b5-4665-ac1e-c8e4a001d06d",
@@ -28,6 +28,37 @@
     ]
   },
   "name": "Add/Update Attributes (Series)",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "series"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "attributes"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": "demo-adapter-python",
+        "filters": {},
+        "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
+        "ref_id_type": "SINK",
+        "type": "timeseries(float)",
+        "workflow_output_name": "series"
+      }
+    ]
+  },
   "released_timestamp": "2022-06-27T16:15:36.902520+00:00",
   "revision_group_id": "48f6fd85-bebf-434f-953a-19d64b042748",
   "state": "RELEASED",

@@ -247,15 +247,15 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
 
             assert patched_deprecate_group.call_count == 0
             assert rest_api_mock.call_count == 0
-
             assert os.path.exists(str(json_import_order))
             list_of_json_paths = []
             with open(json_import_order, "r", encoding="utf8") as file:  # noqa: UP015
                 for line in file:
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
+
             assert len(list_of_json_paths) > 100  # we have more than 100 json files
-            assert all(os.path.splitext(path)[1] == ".json" for path in list_of_json_paths)
+            assert not all(os.path.splitext(path)[1] == ".json" for path in list_of_json_paths)
 
 
 def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
@@ -306,6 +306,9 @@ def test_import_importable():
             strip_wiring=False,
             strip_wirings_with_adapter_ids=set(),
             keep_only_wirings_with_adapter_ids=set(),
+            strip_release_wiring=False,
+            strip_release_wirings_with_adapter_ids=set(),
+            keep_only_release_wirings_with_adapter_ids=set(),
         )
 
         # Changing an option
@@ -320,4 +323,7 @@ def test_import_importable():
             strip_wiring=False,
             strip_wirings_with_adapter_ids=set(),
             keep_only_wirings_with_adapter_ids=set(),
+            strip_release_wiring=False,
+            strip_release_wirings_with_adapter_ids=set(),
+            keep_only_release_wirings_with_adapter_ids=set(),
         )

@@ -1,6 +1,6 @@
 {
   "category": "Examples",
-  "content": "\"\"\"Documentation for ExampleClass\n\n# ExampleClass\n## Description\nDefinition of the ExampleClass.\n## Inputs\nThis component has no inputs.\n## Outputs\n* **ExampleClass** (Any): Class object of the ExampleClass\n\n## Details\nThis component is used to provide workflows with the definition of the ExampleClass.\n\"\"\"\n\n\nclass ExampleClass:\n    def __init__(self, name: str, amount: int, value: float):\n        self.name = name\n        self.amount = amount\n        self.value = value\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"ExampleClass\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"ExampleClass\",\n    \"category\": \"Examples\",\n    \"description\": \"Define a class named ExampleClass\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"fd0464cb-4691-4ce1-bb2b-9efbcc7626f4\",\n    \"revision_group_id\": \"59cc4583-0b84-4fef-8076-468b6f150edd\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T12:25:01.990787+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"ExampleClass\": ExampleClass}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
+  "content": "\"\"\"Documentation for ExampleClass\n\n# ExampleClass\n## Description\nDefinition of the ExampleClass.\n## Inputs\nThis component has no inputs.\n## Outputs\n* **ExampleClass** (Any): Class object of the ExampleClass\n\n## Details\nThis component is used to provide workflows with the definition of the ExampleClass.\n\"\"\"\n\n\nclass ExampleClass:\n    def __init__(self, name: str, amount: int, value: float):\n        self.name = name\n        self.amount = amount\n        self.value = value\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"ExampleClass\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"ExampleClass\",\n    \"category\": \"Examples\",\n    \"description\": \"Define a class named ExampleClass\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"fd0464cb-4691-4ce1-bb2b-9efbcc7626f4\",\n    \"revision_group_id\": \"59cc4583-0b84-4fef-8076-468b6f150edd\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T12:25:01.990787+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"ExampleClass\": ExampleClass}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
   "description": "Define a class named ExampleClass",
   "documentation": "# ExampleClass\n## Description\nDefinition of the ExampleClass.\n## Inputs\nThis component has no inputs.\n## Outputs\n* **ExampleClass** (Any): Class object of the ExampleClass\n\n## Details\nThis component is used to provide workflows with the definition of the ExampleClass.",
   "id": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4",
@@ -15,6 +15,11 @@
     ]
   },
   "name": "ExampleClass",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-02-09T12:25:01.990787+00:00",
   "revision_group_id": "59cc4583-0b84-4fef-8076-468b6f150edd",
   "state": "RELEASED",

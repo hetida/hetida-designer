@@ -46,12 +46,16 @@ def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engin
         str(db_url_to_use),
         future=True,
         json_serializer=dumps,
-        pool_size=get_config().sqlalchemy_pool_size,
+        **(
+            {"pool_size": get_config().sqlalchemy_pool_size}
+            if not str(db_url_to_use).startswith("sqlite://")
+            else {}
+        ),
     )
 
     logger.debug("Created DB Engine with url: %s", repr(engine.url))
 
-    return engine
+    return engine  # type: ignore
 
 
 Session = sessionmaker(get_db_engine())

@@ -75,3 +75,4 @@ def main(*, series):
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}
+RELEASE_WIRING = {}

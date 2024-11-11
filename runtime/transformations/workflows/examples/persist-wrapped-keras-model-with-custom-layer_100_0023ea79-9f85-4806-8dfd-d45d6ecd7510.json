@@ -458,6 +458,11 @@
     ]
   },
   "name": "Persist Wrapped Keras Model with Custom Layer",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-04-05T17:36:58.771245+00:00",
   "revision_group_id": "534aff4b-2a51-4272-93c8-35ab9236e908",
   "state": "RELEASED",

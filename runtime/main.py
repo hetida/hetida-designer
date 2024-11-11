@@ -93,7 +93,6 @@ def run_migrations(
     command.upgrade(alembic_cfg, "head")
     logger.info("Finished running migrations.")
 
-
 def run_trafo_rev_deployment():
     from hetdesrun.exportimport.importing import import_transformations
 

@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Extract Attributes (DataFrame)\n\n# Extract Attributes\n\n## Description\nExtract attributes from a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the dataframe.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (DataFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a dataframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"816436b2-f303-48af-857c-6c4d7c7a0f4b\",\n    \"revision_group_id\": \"8264ab0e-9ab2-403e-a449-e874aa729ae6\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:50:25.505611+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"attributes\": dataframe.attrs}\n",
+  "content": "\"\"\"Documentation for Extract Attributes (DataFrame)\n\n# Extract Attributes\n\n## Description\nExtract attributes from a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the dataframe.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (DataFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a dataframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"816436b2-f303-48af-857c-6c4d7c7a0f4b\",\n    \"revision_group_id\": \"8264ab0e-9ab2-403e-a449-e874aa729ae6\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:50:25.505611+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"attributes\": dataframe.attrs}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dataframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.maintenance_events\",\n            \"ref_id_type\": \"SOURCE\",\n            \"type\": \"dataframe\",\n        }\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"dataframe\",\n            \"adapter_id\": \"demo-adapter-python\",\n            \"ref_id\": \"root.plantA.maintenance_events\",\n            \"ref_id_type\": \"SOURCE\",\n            \"type\": \"dataframe\",\n        }\n    ]\n}\n",
   "description": "Extract attributes from a dataframe",
   "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the dataframe.\n\n## Details\n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
   "id": "816436b2-f303-48af-857c-6c4d7c7a0f4b",
@@ -22,6 +22,21 @@
     ]
   },
   "name": "Extract Attributes (DataFrame)",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "demo-adapter-python",
+        "filters": {},
+        "ref_id": "root.plantA.maintenance_events",
+        "ref_id_type": "SOURCE",
+        "type": "dataframe",
+        "use_default_value": false,
+        "workflow_input_name": "dataframe"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-06-27T15:50:25.505611+00:00",
   "revision_group_id": "8264ab0e-9ab2-403e-a449-e874aa729ae6",
   "state": "RELEASED",

@@ -81,7 +81,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
     return json.dumps(input_info["default_value"])
 
 
-def transformation_revision_from_python_code(code: str) -> TransformationRevision:
+def transformation_revision_from_python_code(code: str) -> TransformationRevision:  # noqa: PLR0915
     """Get the TransformationRevision as a json-like object from just the Python code
 
     This uses information from the register decorator or a global variable COMPONENT_INFO
@@ -168,6 +168,29 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
         logger.warning("The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error))
         test_wiring = WorkflowWiring()
 
+    try:
+        release_wiring_dict = get_global_from_code(code, "RELEASE_WIRING", default_value=None)
+    except CodeParsingException as e:
+        msg = (
+            f"Could not parse component code for extracting release wiring:\n{str(e)}."
+            " Defaulting to empty wiring (None)"
+        )
+        logging.warning(msg)
+        release_wiring_dict = None
+
+    if release_wiring_dict is not None:
+        if len(release_wiring_dict) == 0:
+            logger.debug("Release wiring extraction result is an empty wiring.")
+
+        try:
+            release_wiring = WorkflowWiring(**release_wiring_dict)
+        except ValueError as error:
+            logger.warning("The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error))
+            release_wiring = None
+
+    else:
+        release_wiring = None
+
     transformation_revision = TransformationRevision(
         **component_info_dict,
         type=Type.COMPONENT,
@@ -210,6 +233,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
         ),
         content=code,
         test_wiring=test_wiring,
+        release_wiring=release_wiring,
     )
 
     return transformation_revision
@@ -263,6 +287,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                         directory_path=download_path,
                     )
                     path_dict[transformation.id] = path
+                path_dict[transformation.id] = path
             else:
                 path_dict[transformation.id] = path
 
@@ -329,6 +354,32 @@ class MultipleTrafosUpdateConfig(BaseModel):
         " if you actually want to remove all wirings in the test wiring). A typical case"
         " is when you want to only keep the wirings with adapter id direct_provisioning,"
         " i.e. manual inputs of the test wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation.",
+    )
+    strip_release_wirings: bool = Field(
+        False,
+        description=(
+            "Whether release wirings should be removed before importing."
+            "This can be necessary if an adapter used in a release wiring is not "
+            "available on this system."
+        ),
+    )
+    strip_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Field(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " release wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_release_wirings this allows to"
+        " fine-granulary exclude only those parts of release wirings corresponding to"
+        " adapters which are not present.",
+    )
+    keep_only_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Field(
+        set(),
+        description="In each release wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_release_wirings"
+        " if you actually want to remove all wirings in the release wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the release wiring, in order to remove dependencies from"
         " external adapters not present on the target hetida designer installation.",
     )
     abort_on_error: bool = Field(

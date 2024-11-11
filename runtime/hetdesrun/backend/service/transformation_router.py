@@ -13,6 +13,7 @@ from fastapi import (
     HTTPException,
     Path,
     Query,
+    Request,
     Response,
     status,
 )
@@ -34,6 +35,10 @@ from hetdesrun.backend.service.dashboarding import (
     generate_login_dashboard_stub,
     override_timestamps_in_wiring,
 )
+from hetdesrun.backend.service.dashboarding_utils import (
+    DashboardQueryParamValidationError,
+    update_wiring_from_query_parameters,
+)
 from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
@@ -42,7 +47,7 @@ from hetdesrun.exportimport.importing import (
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.models.wiring import GridstackItemPositioning
+from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -295,6 +300,42 @@ async def get_all_transformation_revisions(
         " is true.",
         alias="keep_only_wirings_with_adapter_id",
     ),
+    strip_release_wirings: bool = Query(
+        False,
+        description=(
+            "Whether release wirings should be completely removed and be replaced"
+            " with null."
+            " Note that expand_component_code needs to be true for this to affect"
+            " the release wiring stored in the component code. In particular if component_as_code"
+            " is true."
+        ),
+    ),
+    strip_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " release wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_release_wirings this allows to"
+        " fine-granulary exclude only those parts of release wirings corresponding to"
+        " adapters which are not present."
+        " Note that expand_component_code needs to be true for this to affect"
+        " the release wiring stored in the component code. In particular if component_as_code"
+        " is true.",
+        alias="strip_release_wirings_with_adapter_id",
+    ),
+    keep_only_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="In each release wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_release_wirings"
+        " if you actually want to remove all wirings in the release wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the release wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation."
+        " Note that expand_component_code needs to be true for this to affect"
+        " the release wiring stored in the component code. In particular if component_as_code"
+        " is true.",
+        alias="keep_only_wirings_with_adapter_id",
+    ),
 ) -> list[TransformationRevision | str]:
     """Get all transformation revisions from the data base.
 
@@ -333,6 +374,9 @@ async def get_all_transformation_revisions(
             strip_wiring=strip_wirings,
             strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
             keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
+            strip_release_wiring=strip_release_wirings,
+            strip_release_wirings_with_adapter_ids=strip_release_wirings_with_adapter_ids,
+            keep_only_release_wirings_with_adapter_ids=keep_only_release_wirings_with_adapter_ids,
         )
 
     code_list: list[str] = []
@@ -477,6 +521,34 @@ async def update_transformation_revisions(
         " external adapters not present on the target hetida designer installation.",
         alias="keep_only_wirings_with_adapter_id",
     ),
+    strip_release_wirings: bool = Query(
+        False,
+        description=(
+            "Whether release wirings should be removed before importing."
+            "This can be necessary if an adapter used in a release wiring is not "
+            "available on this system."
+        ),
+    ),
+    strip_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " release wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_release_wirings this allows to"
+        " fine-granulary exclude only those parts of release wirings corresponding to"
+        " adapters which are not present.",
+        alias="strip_release_wirings_with_adapter_id",
+    ),
+    keep_only_release_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="In each release wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_release_wirings"
+        " if you actually want to remove all wirings in the release wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the release wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation.",
+        alias="keep_only_release_wirings_with_adapter_id",
+    ),
     abort_on_error: bool = Query(
         False,
         description=(
@@ -540,6 +612,9 @@ async def update_transformation_revisions(
         strip_wirings=strip_wirings,
         strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
         keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
+        strip_release_wiring=strip_release_wirings,
+        strip_release_wirings_with_adapter_ids=strip_release_wirings_with_adapter_ids,
+        keep_only_release_wirings_with_adapter_ids=keep_only_release_wirings_with_adapter_ids,
         abort_on_error=abort_on_error,
         deprecate_older_revisions=deprecate_older_revisions,
     )
@@ -1052,6 +1127,7 @@ async def update_transformation_dashboard_positioning(
     },
 )
 async def transformation_dashboard(
+    request: Request,
     authenticated: Annotated[bool, Depends(is_authenticated_check_no_abort)],
     id: UUID = Path(  # noqa: A002
         ...,
@@ -1071,6 +1147,24 @@ async def transformation_dashboard(
         ),
     ),
     autoreload: int | None = Query(None, description=("Autoreload interval in seconds")),
+    exposed_inputs: str = Query(
+        "",
+        description=(
+            "Comma-separated list of trafo inputs,"
+            " that should be exposed to be entered/changed manually in the dashboard UI"
+        ),
+    ),
+    use_release_wiring: bool = Query(
+        False,
+        descripton=(
+            "Whether release_wiring should be used as basis instead of the current test_wiring."
+            " Using a released trafo and its fixed release wiring guarantees reproducibility of"
+            " the dashboard view."
+        ),
+    ),
+    locked: bool = Query(
+        False, description="Whether dashboard elements should be draggable and resizable"
+    ),
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
@@ -1116,6 +1210,8 @@ async def transformation_dashboard(
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
+    inputs_to_expose = {inp_name for inp_name in exposed_inputs.split(",") if inp_name != ""}
+
     # Calculate override mode
     override_mode: OverrideMode = (
         OverrideMode.Absolute
@@ -1136,7 +1232,21 @@ async def transformation_dashboard(
     logger.debug(transformation_revision.json())
 
     # obtain test wiring
-    wiring = deepcopy(transformation_revision.test_wiring)
+    wiring = (
+        deepcopy(transformation_revision.release_wiring)
+        if use_release_wiring
+        else deepcopy(transformation_revision.test_wiring)
+    )
+
+    if wiring is None:
+        wiring = WorkflowWiring()
+
+    try:
+        wiring = update_wiring_from_query_parameters(wiring, request.query_params.items())
+    except DashboardQueryParamValidationError as e:
+        msg = str(e)
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from e
 
     # compute possible override time range setting
     calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
@@ -1162,10 +1272,14 @@ async def transformation_dashboard(
     # construct dashboard html response
     return generate_dashboard_html(
         transformation_revision=transformation_revision,
+        actually_used_wiring=wiring,
         exec_resp=exec_resp,
         autoreload=autoreload,
         override_mode=override_mode,
         calculated_from_timestamp=calculated_from_timestamp,
         calculated_to_timestamp=calculated_to_timestamp,
         relNow=relNow,
+        inputs_to_expose=inputs_to_expose,
+        use_release_wiring=use_release_wiring,
+        locked=locked,
     )

@@ -139,14 +139,27 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "data",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "very very very looooooong column name": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "column2": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    },\n    "c": {\n        "2019-08-01T15:45:36.000Z": "0",\n        "2019-08-02T11:33:41.000Z": "The green fox jumps over some fence anr runs to the garden. What happens next?"        \n    }\n}'  # noqa: E501
+                "value": '{\n    "very very very looooooong column name": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "column2": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    },\n    "c": {\n        "2019-08-01T15:45:36.000Z": "0",\n        "2019-08-02T11:33:41.000Z": "The green fox jumps over some fence anr runs to the garden. What happens next?"        \n    }\n}'
             },
         },
         {
             "workflow_input_name": "auto_col_width",
-            "adapter_id": "direct_provisioning",
+            "use_default_value": True,
+            "filters": {"value": "true"},
+        },
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "very very very looooooong column name": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "column2": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    },\n    "c": {\n        "2019-08-01T15:45:36.000Z": "0",\n        "2019-08-02T11:33:41.000Z": "The green fox jumps over some fence anr runs to the garden. What happens next?"        \n    }\n}'
+            },
+        },
+        {
+            "workflow_input_name": "auto_col_width",
             "use_default_value": True,
             "filters": {"value": "true"},
         },

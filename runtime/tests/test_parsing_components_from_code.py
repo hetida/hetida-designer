@@ -140,6 +140,7 @@ async def get_check_trafo_via_multiple_get_endpoint(
     else:
         code_from_response = response.json()[0]
         tr_from_resp = transformation_revision_from_python_code(code_from_response)
+
     assert tr_from_resp == trafo
     assert code_from_response == trafo.content
 
@@ -168,7 +169,6 @@ async def test_component_trafo_code_equivalence(async_test_client, mocked_clean_
     async with async_test_client as ac:
         for py_path in [example_py_path, second_example_pa_path]:
             code, tr_from_py = load_check_from_code_file(py_path)
-
             await put_trafo_via_multiple_put_endpoint(tr_from_py, ac)
             await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
             await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)

@@ -1,0 +1,1294 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "a7897d98-6b6a-74be-c748-da53a5ea6adb",
+        "connector_name": "column",
+        "data_type": "STRING",
+        "id": "2414a82e-69e1-4531-aa0a-dd0458eee249",
+        "name": "value_range_filter_condition_col",
+        "operator_id": "6a98cd7b-b84d-4e67-8273-f04e1a3ef6f2",
+        "operator_name": "Select Column from DataFrame",
+        "position": {
+          "x": 915,
+          "y": 220
+        },
+        "type": "REQUIRED"
+      },
+      {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
+        "data_type": "SERIES",
+        "id": "9c2ba5d6-9125-4b45-925f-9ec9890586a0",
+        "name": "timeseries",
+        "operator_id": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc",
+        "operator_name": "Pass Through (Series)",
+        "position": {
+          "x": -55,
+          "y": 450
+        },
+        "type": "REQUIRED"
+      },
+      {
+        "connector_id": "c9439942-1907-65d2-7dc6-acfc78caaf1e",
+        "connector_name": "input",
+        "data_type": "ANY",
+        "id": "c56efcd8-812a-4c16-b43f-ebfb64411981",
+        "name": "value_ranges",
+        "operator_id": "fb949015-86d2-46d4-9ff6-b8cbbb7dfab2",
+        "operator_name": "Pass Through",
+        "position": {
+          "x": -55,
+          "y": 617
+        },
+        "type": "REQUIRED"
+      },
+      {
+        "connector_id": "896bfff4-2414-dab5-279e-b27530462167",
+        "connector_name": "replacement_value",
+        "data_type": "FLOAT",
+        "id": "da5a1870-2d8e-4943-a959-7b4e7bb70f9e",
+        "name": "fixed_replacement_value",
+        "operator_id": "02aa3dfe-6cbd-4c1b-b532-bbdf5b24a9d6",
+        "operator_name": "Fixed Replacement Value",
+        "position": {
+          "x": 2090,
+          "y": 420
+        },
+        "type": "REQUIRED"
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d172abe1-94f6-4be5-a7df-053c6cc08b41"
+        },
+        "id": "8e0ac92c-fc96-4d4a-bc25-fd2e4bf33867",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "8d8a2f12-85f1-bbe2-1794-59c97b66072f",
+            "name": "is_included_frame",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d7880a2c-dc92-4c97-a1d7-2d4622c78d56"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "6faf5462-6098-3cd4-88a4-7e7e753f114a",
+            "name": "value_interval_dict",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "896e9735-d98c-4e97-b97e-0a0fbd78c3a0"
+        },
+        "id": "b0a29ddc-e85b-4cfd-b3a9-9642f495a648",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "3d9ff219-67cb-2ad7-656d-01a3ebbecc50",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "fb949015-86d2-46d4-9ff6-b8cbbb7dfab2"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c0aadf2f-e7c7-de40-e671-c8354fd3b5fa",
+            "name": "value_range_dict",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d7880a2c-dc92-4c97-a1d7-2d4622c78d56"
+        },
+        "id": "a90aeec1-29b4-4ad5-9bc0-5d25ba2cff41",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "3d9ff219-67cb-2ad7-656d-01a3ebbecc50",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "fb949015-86d2-46d4-9ff6-b8cbbb7dfab2"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "a3203d9b-a6ce-e57d-30ff-7d993bb6ebab",
+            "name": "timeseries_data",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d7880a2c-dc92-4c97-a1d7-2d4622c78d56"
+        },
+        "id": "5907ab48-74c6-4508-b4b2-9df746f0a111",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "31a7c0a2-8d35-6c57-d742-f0a8092d0c87",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "896e9735-d98c-4e97-b97e-0a0fbd78c3a0"
+        },
+        "id": "1dfea1b0-5b58-436a-85a2-d1178c4939bd",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "dcd1cb0e-50db-8c9b-b60c-a5b60cd33926",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "6a98cd7b-b84d-4e67-8273-f04e1a3ef6f2"
+        },
+        "id": "1c83c202-a161-416d-8d13-1dec1b42e9fc",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "8d8a2f12-85f1-bbe2-1794-59c97b66072f",
+            "name": "is_included_frame",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d7880a2c-dc92-4c97-a1d7-2d4622c78d56"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "70753b5c-4a8d-fb0b-36d0-076fc7cd7967",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "00126cc3-f6ea-48f6-96f6-c72d81f1fd33"
+        },
+        "id": "f2f9d82d-0216-4c2d-9f80-e1b080e13730",
+        "path": [
+          {
+            "x": 565,
+            "y": 460
+          },
+          {
+            "x": 655,
+            "y": 112
+          },
+          {
+            "x": 1145,
+            "y": 107
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0c4e8dc1-681e-4584-bf3b-6c543d04632b"
+        },
+        "id": "3d0335c3-cde3-4096-b1c0-7b48b6e62fbd",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f082d101-acbc-6834-8445-3d8c130af436",
+            "name": "column_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "6a98cd7b-b84d-4e67-8273-f04e1a3ef6f2"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0c4e8dc1-681e-4584-bf3b-6c543d04632b"
+        },
+        "id": "43dd5881-f482-4f4a-81c1-c4ee908a4629",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "a7aca7e5-3f56-da1b-c553-50b63545b28a",
+            "name": "gap_timestamps",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "02aa3dfe-6cbd-4c1b-b532-bbdf5b24a9d6"
+        },
+        "id": "7cac069d-4199-4762-90d7-576360dc688c",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+            "name": "filtered",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0c4e8dc1-681e-4584-bf3b-6c543d04632b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "46fe5379-1e3d-12c4-7929-5ed3fcd8a5c6",
+            "name": "substitution_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "7eb86391-52f1-49c7-a512-9690888f25d8"
+        },
+        "id": "58ccb9ee-134b-4998-8289-07f4cfc8241b",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "bcd3cead-cba4-b0cf-148a-3dae4b83bb47",
+            "name": "replacement_value_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "02aa3dfe-6cbd-4c1b-b532-bbdf5b24a9d6"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "85ffd7a5-3cd5-0c23-a21c-969ee4f97bea",
+            "name": "raw_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "7eb86391-52f1-49c7-a512-9690888f25d8"
+        },
+        "id": "819d0425-59e8-42c3-8826-cfd8d6fbd88a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a7897d98-6b6a-74be-c748-da53a5ea6adb",
+            "name": "column",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "6a98cd7b-b84d-4e67-8273-f04e1a3ef6f2"
+        },
+        "id": "3be397f7-b5c4-4bb7-beab-acb7db671d70",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "2414a82e-69e1-4531-aa0a-dd0458eee249",
+            "name": "value_range_filter_condition_col",
+            "position": {
+              "x": 915,
+              "y": 220
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc"
+        },
+        "id": "c3d80194-3ddb-45af-8bc0-d8fc8aff9a41",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "9c2ba5d6-9125-4b45-925f-9ec9890586a0",
+            "name": "timeseries",
+            "position": {
+              "x": -55,
+              "y": 450
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c9439942-1907-65d2-7dc6-acfc78caaf1e",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "fb949015-86d2-46d4-9ff6-b8cbbb7dfab2"
+        },
+        "id": "4c97dfa9-57c4-4d7f-a399-35f38c6ea949",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c56efcd8-812a-4c16-b43f-ebfb64411981",
+            "name": "value_ranges",
+            "position": {
+              "x": -55,
+              "y": 617
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "896bfff4-2414-dab5-279e-b27530462167",
+            "name": "replacement_value",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "02aa3dfe-6cbd-4c1b-b532-bbdf5b24a9d6"
+        },
+        "id": "a5fdf7f8-d102-4dfb-b1aa-fa124210373f",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "da5a1870-2d8e-4943-a959-7b4e7bb70f9e",
+            "name": "fixed_replacement_value",
+            "position": {
+              "x": 2090,
+              "y": 420
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "c88dcd94-376c-403e-a3d4-b30e2ae4efc6",
+            "name": "_02_value_ranges",
+            "position": {
+              "x": 1595,
+              "y": 685
+            }
+          }
+        },
+        "id": "772c8174-d6da-4f19-86ac-38b49a3cde11",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "8d770e3d-b01e-1b01-230a-17e314c995b1",
+            "name": "series_with_intervals",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "896e9735-d98c-4e97-b97e-0a0fbd78c3a0"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "c895f42d-a9ee-496b-8f63-16dd0789e08d",
+            "name": "_04_value_range_check_results",
+            "position": {
+              "x": 1595,
+              "y": 522
+            }
+          }
+        },
+        "id": "9d1c1e2c-6890-46d5-93cf-aa317326f9f1",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "682fea3d-eff2-d055-8c28-30a37b5383f1",
+            "name": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d172abe1-94f6-4be5-a7df-053c6cc08b41"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "60453e2a-4a1e-4791-b659-2f6e6f5d723b",
+            "name": "_01_original_timeseries",
+            "position": {
+              "x": 1605,
+              "y": 97
+            }
+          }
+        },
+        "id": "8303be8f-fd13-4ac4-9d1b-6013fa98e543",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+            "name": "plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "00126cc3-f6ea-48f6-96f6-c72d81f1fd33"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "7032fa7b-b360-4e7c-ab64-4a8cdb7451e4",
+            "name": "_03_substituted_with_fixed_value",
+            "position": {
+              "x": 3215,
+              "y": 170
+            }
+          }
+        },
+        "id": "2ddde30c-748c-4243-8fe2-ea1c366d074a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+            "name": "substituted_ts_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "7eb86391-52f1-49c7-a512-9690888f25d8"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "d7880a2c-dc92-4c97-a1d7-2d4622c78d56",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "a3203d9b-a6ce-e57d-30ff-7d993bb6ebab",
+            "name": "timeseries_data",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "ANY",
+            "exposed": true,
+            "id": "c0aadf2f-e7c7-de40-e671-c8354fd3b5fa",
+            "name": "value_range_dict",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Value Range Check",
+        "outputs": [
+          {
+            "data_type": "DATAFRAME",
+            "id": "8d8a2f12-85f1-bbe2-1794-59c97b66072f",
+            "name": "is_included_frame",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 655,
+          "y": 265
+        },
+        "revision_group_id": "83dabdfc-2d34-4e72-8010-4d61db8a9d6a",
+        "state": "RELEASED",
+        "transformation_id": "3cf8e12d-2fea-40d9-bc4b-015bddf66828",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "896e9735-d98c-4e97-b97e-0a0fbd78c3a0",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "31a7c0a2-8d35-6c57-d742-f0a8092d0c87",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "ANY",
+            "exposed": true,
+            "id": "6faf5462-6098-3cd4-88a4-7e7e753f114a",
+            "name": "value_interval_dict",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "STRING",
+            "exposed": false,
+            "id": "fc50a7be-a6f3-281a-1373-2e7ba3249dec",
+            "name": "line_color",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "OPTIONAL",
+            "value": "rgb(40, 251, 0)"
+          },
+          {
+            "data_type": "STRING",
+            "exposed": false,
+            "id": "a40d95ab-3035-9bd9-f165-155f810d3e73",
+            "name": "fill_color",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "OPTIONAL",
+            "value": "rgba(40, 251, 0, 0.15)"
+          }
+        ],
+        "name": "Plot Time Series and Value Intervals",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "8d770e3d-b01e-1b01-230a-17e314c995b1",
+            "name": "series_with_intervals",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1145,
+          "y": 625
+        },
+        "revision_group_id": "b2c8fc6a-c550-4b4c-94f1-7cec0d87a081",
+        "state": "RELEASED",
+        "transformation_id": "9b4ca94e-0e20-4341-bb23-abe73d33c7ab",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "6a98cd7b-b84d-4e67-8273-f04e1a3ef6f2",
+        "inputs": [
+          {
+            "data_type": "DATAFRAME",
+            "exposed": true,
+            "id": "dcd1cb0e-50db-8c9b-b60c-a5b60cd33926",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "STRING",
+            "exposed": true,
+            "id": "a7897d98-6b6a-74be-c748-da53a5ea6adb",
+            "name": "column",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Select Column from DataFrame",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f082d101-acbc-6834-8445-3d8c130af436",
+            "name": "column_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1160,
+          "y": 195
+        },
+        "revision_group_id": "a652465e-b479-1cc9-bf82-41f7cedc4963",
+        "state": "RELEASED",
+        "transformation_id": "a652465e-b479-1cc9-bf82-41f7cedc4963",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "d172abe1-94f6-4be5-a7df-053c6cc08b41",
+        "inputs": [
+          {
+            "data_type": "DATAFRAME",
+            "exposed": true,
+            "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "BOOLEAN",
+            "exposed": false,
+            "id": "e2586ce7-9d4b-de8a-d68f-00031bc351b4",
+            "name": "auto_col_width",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "OPTIONAL",
+            "value": "true"
+          }
+        ],
+        "name": "Display Table",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "682fea3d-eff2-d055-8c28-30a37b5383f1",
+            "name": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1145,
+          "y": 462
+        },
+        "revision_group_id": "e0320729-10df-8979-4444-feb6fe7adc82",
+        "state": "RELEASED",
+        "transformation_id": "a11c5089-de92-4197-8e40-1ce827e094b8",
+        "type": "COMPONENT",
+        "version_tag": "1.0.1"
+      },
+      {
+        "id": "82acf9d9-01ee-4bf0-aed5-264a4a025bfc",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Pass Through (Series)",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 195,
+          "y": 390
+        },
+        "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "state": "RELEASED",
+        "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "fb949015-86d2-46d4-9ff6-b8cbbb7dfab2",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "exposed": true,
+            "id": "c9439942-1907-65d2-7dc6-acfc78caaf1e",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Pass Through",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "3d9ff219-67cb-2ad7-656d-01a3ebbecc50",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 195,
+          "y": 557
+        },
+        "revision_group_id": "1946d5f8-44a8-724c-176f-16f3e49963af",
+        "state": "RELEASED",
+        "transformation_id": "1946d5f8-44a8-724c-176f-16f3e49963af",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "00126cc3-f6ea-48f6-96f6-c72d81f1fd33",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "70753b5c-4a8d-fb0b-36d0-076fc7cd7967",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Single Timeseries Plot",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+            "name": "plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1155,
+          "y": 37
+        },
+        "revision_group_id": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+        "state": "RELEASED",
+        "transformation_id": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "0c4e8dc1-681e-4584-bf3b-6c543d04632b",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "exposed": true,
+            "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Filter",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+            "name": "filtered",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1815,
+          "y": 325
+        },
+        "revision_group_id": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+        "state": "RELEASED",
+        "transformation_id": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "02aa3dfe-6cbd-4c1b-b532-bbdf5b24a9d6",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "a7aca7e5-3f56-da1b-c553-50b63545b28a",
+            "name": "gap_timestamps",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "FLOAT",
+            "exposed": true,
+            "id": "896bfff4-2414-dab5-279e-b27530462167",
+            "name": "replacement_value",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Fixed Replacement Value",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "bcd3cead-cba4-b0cf-148a-3dae4b83bb47",
+            "name": "replacement_value_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 2340,
+          "y": 330
+        },
+        "revision_group_id": "2f66114c-2df9-4a03-b93e-60dc908e9cf4",
+        "state": "RELEASED",
+        "transformation_id": "82024fd1-b1a0-409d-a337-1db4330aa268",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "7eb86391-52f1-49c7-a512-9690888f25d8",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "85ffd7a5-3cd5-0c23-a21c-969ee4f97bea",
+            "name": "raw_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "46fe5379-1e3d-12c4-7929-5ed3fcd8a5c6",
+            "name": "substitution_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Timeseries Substitution Plot",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+            "name": "substituted_ts_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 2765,
+          "y": 110
+        },
+        "revision_group_id": "3160c5a1-0cfb-7396-739a-a106c2a3e130",
+        "state": "RELEASED",
+        "transformation_id": "3160c5a1-0cfb-7396-739a-a106c2a3e130",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "8d770e3d-b01e-1b01-230a-17e314c995b1",
+        "connector_name": "series_with_intervals",
+        "data_type": "PLOTLYJSON",
+        "id": "c88dcd94-376c-403e-a3d4-b30e2ae4efc6",
+        "name": "_02_value_ranges",
+        "operator_id": "896e9735-d98c-4e97-b97e-0a0fbd78c3a0",
+        "operator_name": "Plot Time Series and Value Intervals",
+        "position": {
+          "x": 1595,
+          "y": 685
+        }
+      },
+      {
+        "connector_id": "682fea3d-eff2-d055-8c28-30a37b5383f1",
+        "connector_name": "table",
+        "data_type": "PLOTLYJSON",
+        "id": "c895f42d-a9ee-496b-8f63-16dd0789e08d",
+        "name": "_04_value_range_check_results",
+        "operator_id": "d172abe1-94f6-4be5-a7df-053c6cc08b41",
+        "operator_name": "Display Table",
+        "position": {
+          "x": 1595,
+          "y": 522
+        }
+      },
+      {
+        "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+        "connector_name": "plot",
+        "data_type": "PLOTLYJSON",
+        "id": "60453e2a-4a1e-4791-b659-2f6e6f5d723b",
+        "name": "_01_original_timeseries",
+        "operator_id": "00126cc3-f6ea-48f6-96f6-c72d81f1fd33",
+        "operator_name": "Single Timeseries Plot",
+        "position": {
+          "x": 1605,
+          "y": 97
+        }
+      },
+      {
+        "connector_id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+        "connector_name": "substituted_ts_plot",
+        "data_type": "PLOTLYJSON",
+        "id": "7032fa7b-b360-4e7c-ab64-4a8cdb7451e4",
+        "name": "_03_substituted_with_fixed_value",
+        "operator_id": "7eb86391-52f1-49c7-a512-9690888f25d8",
+        "operator_name": "Timeseries Substitution Plot",
+        "position": {
+          "x": 3215,
+          "y": 170
+        }
+      }
+    ]
+  },
+  "description": "Detect whether timeseries datapoints are in certain intervals",
+  "documentation": "# Value Range Check and Substitution\n\n## Description\nDemonstrates\n* Value Range Check usage\n  * how to use its results for selection / filtering\n* Filtering\n* Substitution with a fixed value (only Plotting)\n\n## Examples\n\n**value_range_filter_condition**: `normal_IS_ABOVE`\n\n**fixed_replacement_value**: `912.0`\n\n**value_ranges**:\n```\n{\n    \"normal\": {\n        \"min_value\": 0.0,\n        \"max_value\": 500.0\n    },\n    \"increased\": {\n        \"min_value\": 100.0,\n        \"max_value\": 800.0,\n        \"display_name\": \"Increased\"\n    },\n    \"allowed\": {\n        \"min_value\": 0.0,\n        \"max_value\": 912.0\n    }        \n}\n```\n\n\n\n**timeseries**:\n```json\n{\n    \"2018-05-19T22:20:00.000Z\": 86.9358994238,\n    \"2018-05-19T22:25:00.000Z\": 78.6552569681,\n    \"2018-05-19T22:30:00.000Z\": 93.515633185,\n    \"2018-05-19T22:35:00.000Z\": 96.3497006614,\n    \"2018-05-19T22:40:00.000Z\": 83.1926874657,\n    \"2018-05-19T22:45:00.000Z\": 69.9740743464,\n    \"2018-05-19T22:50:00.000Z\": 90.5433921349,\n    \"2018-05-19T22:55:00.000Z\": 97.4750274531,\n    \"2018-05-19T23:00:00.000Z\": 101.6738801355,\n    \"2018-05-19T23:05:00.000Z\": 85.8482897506,\n    \"2018-05-19T23:10:00.000Z\": 84.770860201,\n    \"2018-05-19T23:15:00.000Z\": 85.8559629927,\n    \"2018-05-19T23:20:00.000Z\": 86.5037351162,\n    \"2018-05-19T23:25:00.000Z\": 80.7784552462,\n    \"2018-05-19T23:30:00.000Z\": 89.8411904351,\n    \"2018-05-19T23:35:00.000Z\": 83.1826662979,\n    \"2018-05-19T23:40:00.000Z\": 103.3734694408,\n    \"2018-05-19T23:45:00.000Z\": 101.6826743271,\n    \"2018-05-19T23:50:00.000Z\": 86.4656528841,\n    \"2018-05-19T23:55:00.000Z\": 74.1823425367,\n    \"2018-05-20T00:00:00.000Z\": 77.5083836047,\n    \"2018-05-20T00:05:00.000Z\": 109.1359083963,\n    \"2018-05-20T00:10:00.000Z\": 86.9635555496,\n    \"2018-05-20T00:15:00.000Z\": 72.4734381604,\n    \"2018-05-20T00:20:00.000Z\": 82.6569065462,\n    \"2018-05-20T00:25:00.000Z\": 95.6306292516,\n    \"2018-05-20T00:30:00.000Z\": 96.5189997059,\n    \"2018-05-20T00:35:00.000Z\": 80.0414834298,\n    \"2018-05-20T00:40:00.000Z\": 81.5688589141,\n    \"2018-05-20T00:45:00.000Z\": 66.8476389718,\n    \"2018-05-20T00:50:00.000Z\": 82.1313723217,\n    \"2018-05-20T00:55:00.000Z\": 88.9032494153,\n    \"2018-05-20T01:00:00.000Z\": 78.8591066896,\n    \"2018-05-20T01:05:00.000Z\": 60.278205314,\n    \"2018-05-20T01:10:00.000Z\": 53.8951835823,\n    \"2018-05-20T01:15:00.000Z\": 71.4961130601,\n    \"2018-05-20T01:20:00.000Z\": 78.9503633957,\n    \"2018-05-20T01:25:00.000Z\": 88.2164623807,\n    \"2018-05-20T01:30:00.000Z\": 67.4817188089,\n    \"2018-05-20T01:35:00.000Z\": 48.9307150285,\n    \"2018-05-20T01:40:00.000Z\": 65.6820065898,\n    \"2018-05-20T01:45:00.000Z\": 80.4674129099,\n    \"2018-05-20T01:50:00.000Z\": 83.0974319003,\n    \"2018-05-20T01:55:00.000Z\": 66.4044977776,\n    \"2018-05-20T02:00:00.000Z\": 52.6199439715,\n    \"2018-05-20T02:05:00.000Z\": 50.2284429626,\n    \"2018-05-20T02:10:00.000Z\": 85.1886876577,\n    \"2018-05-20T02:15:00.000Z\": 85.5129601692,\n    \"2018-05-20T02:20:00.000Z\": 71.3317339188,\n    \"2018-05-20T02:25:00.000Z\": 52.917747152,\n    \"2018-05-20T02:30:00.000Z\": 52.3827727031,\n    \"2018-05-20T02:35:00.000Z\": 64.1071562615,\n    \"2018-05-20T02:40:00.000Z\": 83.0344096679,\n    \"2018-05-20T02:45:00.000Z\": 71.5022451453,\n    \"2018-05-20T02:50:00.000Z\": 46.4394249402,\n    \"2018-05-20T02:55:00.000Z\": 43.382501745,\n    \"2018-05-20T03:00:00.000Z\": 54.4602695018,\n    \"2018-05-20T03:05:00.000Z\": 76.2991858088,\n    \"2018-05-20T03:10:00.000Z\": 82.7155861643,\n    \"2018-05-20T03:15:00.000Z\": 52.7799214093,\n    \"2018-05-20T03:20:00.000Z\": 48.0293243988,\n    \"2018-05-20T03:25:00.000Z\": 40.2136775726,\n    \"2018-05-20T03:30:00.000Z\": 30.8733628055,\n    \"2018-05-20T03:35:00.000Z\": 56.7236835216,\n    \"2018-05-20T03:40:00.000Z\": 80.7648985358,\n    \"2018-05-20T03:45:00.000Z\": 60.5576562717,\n    \"2018-05-20T03:50:00.000Z\": 42.7602142735,\n    \"2018-05-20T03:55:00.000Z\": 42.8245428316,\n    \"2018-05-20T04:00:00.000Z\": 45.9636153002,\n    \"2018-05-20T04:05:00.000Z\": 39.4304037403,\n    \"2018-05-20T04:10:00.000Z\": 54.3346944195,\n    \"2018-05-20T04:15:00.000Z\": 53.7024337135,\n    \"2018-05-20T04:20:00.000Z\": 48.0270534763,\n    \"2018-05-20T04:25:00.000Z\": 28.7165651222,\n    \"2018-05-20T04:30:00.000Z\": 25.1043662316,\n    \"2018-05-20T04:35:00.000Z\": 29.6552481484,\n    \"2018-05-20T04:40:00.000Z\": 33.9357116455,\n    \"2018-05-20T04:45:00.000Z\": 36.5774719321,\n    \"2018-05-20T04:50:00.000Z\": 57.2633214106,\n    \"2018-05-20T04:55:00.000Z\": 49.2236152236,\n    \"2018-05-20T05:00:00.000Z\": 42.0204170321,\n    \"2018-05-20T05:05:00.000Z\": 29.0357907363,\n    \"2018-05-20T05:10:00.000Z\": 28.972519502,\n    \"2018-05-20T05:15:00.000Z\": 25.5883073669,\n    \"2018-05-20T05:20:00.000Z\": 25.7142077601,\n    \"2018-05-20T05:25:00.000Z\": 44.4557411598,\n    \"2018-05-20T05:30:00.000Z\": 61.0614822236,\n    \"2018-05-20T05:35:00.000Z\": 52.7493209614,\n    \"2018-05-20T05:40:00.000Z\": 38.4079501823,\n    \"2018-05-20T05:45:00.000Z\": 31.3086890977,\n    \"2018-05-20T05:50:00.000Z\": 79.1806006473,\n    \"2018-05-20T05:55:00.000Z\": 138.3298304464,\n    \"2018-05-20T06:00:00.000Z\": 159.0636434544,\n    \"2018-05-20T06:05:00.000Z\": 123.3056279812,\n    \"2018-05-20T06:10:00.000Z\": 40.9117923242,\n    \"2018-05-20T06:15:00.000Z\": 54.6703391987,\n    \"2018-05-20T06:20:00.000Z\": 60.1409043033,\n    \"2018-05-20T06:25:00.000Z\": 61.773021148,\n    \"2018-05-20T06:30:00.000Z\": 136.3291547746,\n    \"2018-05-20T06:35:00.000Z\": 172.0109041951,\n    \"2018-05-20T06:40:00.000Z\": 185.3083213323,\n    \"2018-05-20T06:45:00.000Z\": 197.8518333074,\n    \"2018-05-20T06:50:00.000Z\": 184.816863378,\n    \"2018-05-20T06:55:00.000Z\": 52.3640067807,\n    \"2018-05-20T07:00:00.000Z\": 30.3856767594,\n    \"2018-05-20T07:05:00.000Z\": 19.6763950118,\n    \"2018-05-20T07:10:00.000Z\": 84.8995442156,\n    \"2018-05-20T07:15:00.000Z\": 106.2051480693,\n    \"2018-05-20T07:20:00.000Z\": 169.8752300099,\n    \"2018-05-20T07:25:00.000Z\": 213.8776647446,\n    \"2018-05-20T07:30:00.000Z\": 218.137763105,\n    \"2018-05-20T07:35:00.000Z\": 211.9986058951,\n    \"2018-05-20T07:40:00.000Z\": 141.5436667966,\n    \"2018-05-20T07:45:00.000Z\": 55.0101414275,\n    \"2018-05-20T07:50:00.000Z\": 54.6697059315,\n    \"2018-05-20T07:55:00.000Z\": 108.6148802995,\n    \"2018-05-20T08:00:00.000Z\": 164.3342435021,\n    \"2018-05-20T08:05:00.000Z\": 205.9293219405,\n    \"2018-05-20T08:10:00.000Z\": 216.0155924794,\n    \"2018-05-20T08:15:00.000Z\": 219.5429889277,\n    \"2018-05-20T08:20:00.000Z\": 214.6161859555,\n    \"2018-05-20T08:25:00.000Z\": 182.517250994,\n    \"2018-05-20T08:30:00.000Z\": 62.0884876359,\n    \"2018-05-20T08:35:00.000Z\": 67.2103674858,\n    \"2018-05-20T08:40:00.000Z\": 78.5314292403,\n    \"2018-05-20T08:45:00.000Z\": 189.482915713,\n    \"2018-05-20T08:50:00.000Z\": 217.701588994,\n    \"2018-05-20T08:55:00.000Z\": 215.6707899191,\n    \"2018-05-20T09:00:00.000Z\": 220.6857971485,\n    \"2018-05-20T09:05:00.000Z\": 223.2626321138,\n    \"2018-05-20T09:10:00.000Z\": 186.0879452113,\n    \"2018-05-20T09:15:00.000Z\": 66.6061463066,\n    \"2018-05-20T09:20:00.000Z\": 71.8896721611,\n    \"2018-05-20T09:25:00.000Z\": 106.1131048244,\n    \"2018-05-20T09:30:00.000Z\": 194.2396819964,\n    \"2018-05-20T09:35:00.000Z\": 212.9194052403,\n    \"2018-05-20T09:40:00.000Z\": 228.7988558129,\n    \"2018-05-20T09:45:00.000Z\": 223.0539335965,\n    \"2018-05-20T09:50:00.000Z\": 229.3014824671,\n    \"2018-05-20T09:55:00.000Z\": 73.057370576,\n    \"2018-05-20T10:00:00.000Z\": 63.8777934173,\n    \"2018-05-20T10:05:00.000Z\": 55.7252891637,\n    \"2018-05-20T10:10:00.000Z\": 124.6033069636,\n    \"2018-05-20T10:15:00.000Z\": 208.999834057,\n    \"2018-05-20T10:20:00.000Z\": 210.5973352137,\n    \"2018-05-20T10:25:00.000Z\": 134.6987564878,\n    \"2018-05-20T10:30:00.000Z\": 80.7366860452,\n    \"2018-05-20T10:35:00.000Z\": 74.0239748251,\n    \"2018-05-20T10:40:00.000Z\": 69.6519772124,\n    \"2018-05-20T10:45:00.000Z\": 66.6507449417,\n    \"2018-05-20T10:50:00.000Z\": 63.6565231819,\n    \"2018-05-20T10:55:00.000Z\": 77.2641910553,\n    \"2018-05-20T11:00:00.000Z\": 76.3756956564,\n    \"2018-05-20T11:05:00.000Z\": 78.390474376,\n    \"2018-05-20T11:10:00.000Z\": 91.0208850327,\n    \"2018-05-20T11:15:00.000Z\": 84.8828852992,\n    \"2018-05-20T11:20:00.000Z\": 100.6171083238,\n    \"2018-05-20T11:25:00.000Z\": 121.420014114,\n    \"2018-05-20T11:30:00.000Z\": 122.7422457964,\n    \"2018-05-20T11:35:00.000Z\": 114.0672784089,\n    \"2018-05-20T11:40:00.000Z\": 124.9792048426,\n    \"2018-05-20T11:45:00.000Z\": 153.3861054222,\n    \"2018-05-20T11:50:00.000Z\": 140.2611586143,\n    \"2018-05-20T11:55:00.000Z\": 138.9443262784,\n    \"2018-05-20T12:00:00.000Z\": 148.510151628,\n    \"2018-05-20T12:05:00.000Z\": 152.9166475408,\n    \"2018-05-20T12:10:00.000Z\": 160.2447124871,\n    \"2018-05-20T12:15:00.000Z\": 159.5788094645,\n    \"2018-05-20T12:20:00.000Z\": 165.8041637338,\n    \"2018-05-20T12:25:00.000Z\": 159.285387551,\n    \"2018-05-20T12:30:00.000Z\": 165.271884833,\n    \"2018-05-20T12:35:00.000Z\": 161.3833736925,\n    \"2018-05-20T12:40:00.000Z\": 176.8410887258,\n    \"2018-05-20T12:45:00.000Z\": 180.5956340785,\n    \"2018-05-20T12:50:00.000Z\": 170.5980778735,\n    \"2018-05-20T12:55:00.000Z\": 167.2900126682,\n    \"2018-05-20T13:00:00.000Z\": 185.4767849358,\n    \"2018-05-20T13:05:00.000Z\": 179.9265264363,\n    \"2018-05-20T13:10:00.000Z\": 176.207298797,\n    \"2018-05-20T13:15:00.000Z\": 188.3835400671,\n    \"2018-05-20T13:20:00.000Z\": 195.4749511852,\n    \"2018-05-20T13:25:00.000Z\": 166.0712157493,\n    \"2018-05-20T13:30:00.000Z\": 176.8166973904,\n    \"2018-05-20T13:35:00.000Z\": 189.1987544304,\n    \"2018-05-20T13:40:00.000Z\": 183.4236375455,\n    \"2018-05-20T13:45:00.000Z\": 186.5117851915,\n    \"2018-05-20T13:50:00.000Z\": 184.9337200978,\n    \"2018-05-20T13:55:00.000Z\": 187.4601888511,\n    \"2018-05-20T14:00:00.000Z\": 189.1652389195,\n    \"2018-05-20T14:05:00.000Z\": 186.1269425153,\n    \"2018-05-20T14:10:00.000Z\": 190.0385586888,\n    \"2018-05-20T14:15:00.000Z\": 176.2308785787,\n    \"2018-05-20T14:20:00.000Z\": 170.889032631,\n    \"2018-05-20T14:25:00.000Z\": 200.3437418988,\n    \"2018-05-20T14:30:00.000Z\": 191.8904045089,\n    \"2018-05-20T14:35:00.000Z\": 189.7712383502,\n    \"2018-05-20T14:40:00.000Z\": 180.1290800151,\n    \"2018-05-20T14:45:00.000Z\": 197.1780600239,\n    \"2018-05-20T14:50:00.000Z\": 195.0832041298,\n    \"2018-05-20T14:55:00.000Z\": 175.8725668583,\n    \"2018-05-20T15:00:00.000Z\": 187.3043246389,\n    \"2018-05-20T15:05:00.000Z\": 197.2477733158,\n    \"2018-05-20T15:10:00.000Z\": 189.7663337729,\n    \"2018-05-20T15:15:00.000Z\": 179.2387550989,\n    \"2018-05-20T15:20:00.000Z\": 183.8158897523,\n    \"2018-05-20T15:25:00.000Z\": 186.5921372968,\n    \"2018-05-20T15:30:00.000Z\": 181.0236973864,\n    \"2018-05-20T15:35:00.000Z\": 173.2669536706,\n    \"2018-05-20T15:40:00.000Z\": 179.3250753491,\n    \"2018-05-20T15:45:00.000Z\": 183.2442350433,\n    \"2018-05-20T15:50:00.000Z\": 174.8351975126,\n    \"2018-05-20T15:55:00.000Z\": 177.7823510347,\n    \"2018-05-20T16:00:00.000Z\": 195.2615650293,\n    \"2018-05-20T16:05:00.000Z\": 174.7665754694,\n    \"2018-05-20T16:10:00.000Z\": 175.6502762854,\n    \"2018-05-20T16:15:00.000Z\": 180.2494148226,\n    \"2018-05-20T16:20:00.000Z\": 187.516513023,\n    \"2018-05-20T16:25:00.000Z\": 185.899972629,\n    \"2018-05-20T16:30:00.000Z\": 167.5664793106,\n    \"2018-05-20T16:35:00.000Z\": 169.6490691354,\n    \"2018-05-20T16:40:00.000Z\": 176.158768683,\n    \"2018-05-20T16:45:00.000Z\": 184.3236702768,\n    \"2018-05-20T16:50:00.000Z\": 163.8026982105,\n    \"2018-05-20T16:55:00.000Z\": 157.6914259458,\n    \"2018-05-20T17:00:00.000Z\": 166.0935360593,\n    \"2018-05-20T17:05:00.000Z\": 159.1095964847,\n    \"2018-05-20T17:10:00.000Z\": 147.7065369358,\n    \"2018-05-20T17:15:00.000Z\": 154.7057897245,\n    \"2018-05-20T17:20:00.000Z\": 168.3555509087,\n    \"2018-05-20T17:25:00.000Z\": 170.5614796039,\n    \"2018-05-20T17:30:00.000Z\": 158.4394920499,\n    \"2018-05-20T17:35:00.000Z\": 141.5043245617,\n    \"2018-05-20T17:40:00.000Z\": 163.4957902013,\n    \"2018-05-20T17:45:00.000Z\": 174.2984169626,\n    \"2018-05-20T17:50:00.000Z\": 156.5764681255,\n    \"2018-05-20T17:55:00.000Z\": 145.6017108276,\n    \"2018-05-20T18:00:00.000Z\": 147.6871890956,\n    \"2018-05-20T18:05:00.000Z\": 162.9423506747,\n    \"2018-05-20T18:10:00.000Z\": 162.8512641091,\n    \"2018-05-20T18:15:00.000Z\": 149.6910092824,\n    \"2018-05-20T18:20:00.000Z\": 140.5253960882,\n    \"2018-05-20T18:25:00.000Z\": 158.8771839914,\n    \"2018-05-20T18:30:00.000Z\": 172.6007529438,\n    \"2018-05-20T18:35:00.000Z\": 160.4501536466,\n    \"2018-05-20T18:40:00.000Z\": 144.8699494803,\n    \"2018-05-20T18:45:00.000Z\": 143.2864996159,\n    \"2018-05-20T18:50:00.000Z\": 156.0899311688,\n    \"2018-05-20T18:55:00.000Z\": 166.2063491434,\n    \"2018-05-20T19:00:00.000Z\": 154.1839333819,\n    \"2018-05-20T19:05:00.000Z\": 142.1280736423,\n    \"2018-05-20T19:10:00.000Z\": 137.0410387908,\n    \"2018-05-20T19:15:00.000Z\": 150.8775981298,\n    \"2018-05-20T19:20:00.000Z\": 154.3254832531,\n    \"2018-05-20T19:25:00.000Z\": 153.1508155345,\n    \"2018-05-20T19:30:00.000Z\": 143.9982068534,\n    \"2018-05-20T19:35:00.000Z\": 142.3341752461,\n    \"2018-05-20T19:40:00.000Z\": 151.720255615,\n    \"2018-05-20T19:45:00.000Z\": 158.2621281129,\n    \"2018-05-20T19:50:00.000Z\": 153.4968545282,\n    \"2018-05-20T19:55:00.000Z\": 143.7376693548,\n    \"2018-05-20T20:00:00.000Z\": 142.0514856047,\n    \"2018-05-20T20:05:00.000Z\": 150.8437823056,\n    \"2018-05-20T20:10:00.000Z\": 166.1271294879,\n    \"2018-05-20T20:15:00.000Z\": 150.5006327538,\n    \"2018-05-20T20:20:00.000Z\": 134.8359733416,\n    \"2018-05-20T20:25:00.000Z\": 133.4771648482,\n    \"2018-05-20T20:30:00.000Z\": 149.6004988879,\n    \"2018-05-20T20:35:00.000Z\": 154.5810230519,\n    \"2018-05-20T20:40:00.000Z\": 162.066364617,\n    \"2018-05-20T20:45:00.000Z\": 145.7448446292,\n    \"2018-05-20T20:50:00.000Z\": 131.9934783902,\n    \"2018-05-20T20:55:00.000Z\": 148.1438116264,\n    \"2018-05-20T21:00:00.000Z\": 159.0688775438,\n    \"2018-05-20T21:05:00.000Z\": 164.1180432476,\n    \"2018-05-20T21:10:00.000Z\": 149.5302407304,\n    \"2018-05-20T21:15:00.000Z\": 140.28660358,\n    \"2018-05-20T21:20:00.000Z\": 149.2851079194,\n    \"2018-05-20T21:25:00.000Z\": 165.5659893612,\n    \"2018-05-20T21:30:00.000Z\": 154.1439776518,\n    \"2018-05-20T21:35:00.000Z\": 149.4644136489,\n    \"2018-05-20T21:40:00.000Z\": 154.5941907831,\n    \"2018-05-20T21:45:00.000Z\": 164.8406319427,\n    \"2018-05-20T21:50:00.000Z\": 181.6959680527,\n    \"2018-05-20T21:55:00.000Z\": 154.7350000859,\n    \"2018-05-20T22:00:00.000Z\": 151.5230909704,\n    \"2018-05-20T22:05:00.000Z\": 160.1882851689,\n    \"2018-05-20T22:10:00.000Z\": 174.8887210965,\n    \"2018-05-20T22:15:00.000Z\": 173.587771397,\n    \"2018-05-20T22:20:00.000Z\": 165.0105987918,\n    \"2018-05-20T22:25:00.000Z\": 161.9471576448,\n    \"2018-05-20T22:30:00.000Z\": 164.6495581777,\n    \"2018-05-20T22:35:00.000Z\": 171.8843956932,\n    \"2018-05-20T22:40:00.000Z\": 177.9174520466,\n    \"2018-05-20T22:45:00.000Z\": 166.6287705491,\n    \"2018-05-20T22:50:00.000Z\": 151.8515290201,\n    \"2018-05-20T22:55:00.000Z\": 173.3088905867,\n    \"2018-05-20T23:00:00.000Z\": 180.786055938,\n    \"2018-05-20T23:05:00.000Z\": 176.1478069596,\n    \"2018-05-20T23:10:00.000Z\": 164.6055015361,\n    \"2018-05-20T23:15:00.000Z\": 165.8118961347,\n    \"2018-05-20T23:20:00.000Z\": 182.7612266921,\n    \"2018-05-20T23:25:00.000Z\": 178.1625682363,\n    \"2018-05-20T23:30:00.000Z\": 176.1401257364,\n    \"2018-05-20T23:35:00.000Z\": 160.2761683119,\n    \"2018-05-20T23:40:00.000Z\": 174.3541932561,\n    \"2018-05-20T23:45:00.000Z\": 185.1896388696,\n    \"2018-05-20T23:50:00.000Z\": 173.4366359349,\n    \"2018-05-20T23:55:00.000Z\": 162.1251562512,\n    \"2018-05-21T00:00:00.000Z\": 152.2594113395,\n    \"2018-05-21T00:05:00.000Z\": 164.8759416863,\n    \"2018-05-21T00:10:00.000Z\": 182.6967505432,\n    \"2018-05-21T00:15:00.000Z\": 173.9322883794,\n    \"2018-05-21T00:20:00.000Z\": 167.9858934981,\n    \"2018-05-21T00:25:00.000Z\": 154.8519440563,\n    \"2018-05-21T00:30:00.000Z\": 171.5228817334,\n    \"2018-05-21T00:35:00.000Z\": 181.9999215285,\n    \"2018-05-21T00:40:00.000Z\": 169.4980785854,\n    \"2018-05-21T00:45:00.000Z\": 164.5742191052,\n    \"2018-05-21T00:50:00.000Z\": 149.1684670774,\n    \"2018-05-21T00:55:00.000Z\": 160.1198995794,\n    \"2018-05-21T01:00:00.000Z\": 172.462731262,\n    \"2018-05-21T01:05:00.000Z\": 170.5161373658,\n    \"2018-05-21T01:10:00.000Z\": 152.1337734829,\n    \"2018-05-21T01:15:00.000Z\": 130.6612099559,\n    \"2018-05-21T01:20:00.000Z\": 152.2316047161,\n    \"2018-05-21T01:25:00.000Z\": 168.4448294636,\n    \"2018-05-21T01:30:00.000Z\": 170.1531364678,\n    \"2018-05-21T01:35:00.000Z\": 152.5175797995,\n    \"2018-05-21T01:40:00.000Z\": 127.6457147537,\n    \"2018-05-21T01:45:00.000Z\": 137.6715320223,\n    \"2018-05-21T01:50:00.000Z\": 165.742231698,\n    \"2018-05-21T01:55:00.000Z\": 181.8724040376,\n    \"2018-05-21T02:00:00.000Z\": 159.056580575,\n    \"2018-05-21T02:05:00.000Z\": 133.7876578796,\n    \"2018-05-21T02:10:00.000Z\": 135.2260247207,\n    \"2018-05-21T02:15:00.000Z\": 148.615568763,\n    \"2018-05-21T02:20:00.000Z\": 170.7364057672,\n    \"2018-05-21T02:25:00.000Z\": 161.5976827976,\n    \"2018-05-21T02:30:00.000Z\": 139.7862988032,\n    \"2018-05-21T02:35:00.000Z\": 137.0496843075,\n    \"2018-05-21T02:40:00.000Z\": 130.2219953094,\n    \"2018-05-21T02:45:00.000Z\": 149.4338745325,\n    \"2018-05-21T02:50:00.000Z\": 167.1641922817,\n    \"2018-05-21T02:55:00.000Z\": 145.8422497591,\n    \"2018-05-21T03:00:00.000Z\": 130.4670061942,\n    \"2018-05-21T03:05:00.000Z\": 116.312792923,\n    \"2018-05-21T03:10:00.000Z\": 110.4228534731,\n    \"2018-05-21T03:15:00.000Z\": 130.5443425156,\n    \"2018-05-21T03:20:00.000Z\": 137.5629238799,\n    \"2018-05-21T03:25:00.000Z\": 137.8296174877,\n    \"2018-05-21T03:30:00.000Z\": 128.3065165246,\n    \"2018-05-21T03:35:00.000Z\": 121.0885937611,\n    \"2018-05-21T03:40:00.000Z\": 111.2250157042,\n    \"2018-05-21T03:45:00.000Z\": 132.4450062421,\n    \"2018-05-21T03:50:00.000Z\": 127.7633559327,\n    \"2018-05-21T03:55:00.000Z\": 134.8909334032,\n    \"2018-05-21T04:00:00.000Z\": 128.446440207,\n    \"2018-05-21T04:05:00.000Z\": 110.441006872,\n    \"2018-05-21T04:10:00.000Z\": 109.700946095,\n    \"2018-05-21T04:15:00.000Z\": 114.5340437289,\n    \"2018-05-21T04:20:00.000Z\": 122.0335804153,\n    \"2018-05-21T04:25:00.000Z\": 140.3120967139,\n    \"2018-05-21T04:30:00.000Z\": 141.6490414641,\n    \"2018-05-21T04:35:00.000Z\": 129.2456715238,\n    \"2018-05-21T04:40:00.000Z\": 128.3604702735,\n    \"2018-05-21T04:45:00.000Z\": 103.6823697419,\n    \"2018-05-21T04:50:00.000Z\": 107.7692280091,\n    \"2018-05-21T04:55:00.000Z\": 105.3069016698,\n    \"2018-05-21T05:00:00.000Z\": 133.3823375377,\n    \"2018-05-21T05:05:00.000Z\": 135.5761918319,\n    \"2018-05-21T05:10:00.000Z\": 126.3400846309,\n    \"2018-05-21T05:15:00.000Z\": 116.1887040832,\n    \"2018-05-21T05:20:00.000Z\": 110.0880811292,\n    \"2018-05-21T05:25:00.000Z\": 107.804272825,\n    \"2018-05-21T05:30:00.000Z\": 126.1140477471,\n    \"2018-05-21T05:35:00.000Z\": 100.5340249354,\n    \"2018-05-21T05:40:00.000Z\": 113.0860552474,\n    \"2018-05-21T05:45:00.000Z\": 125.3068239043,\n    \"2018-05-21T05:50:00.000Z\": 120.7452754491,\n    \"2018-05-21T05:55:00.000Z\": 109.0093390122,\n    \"2018-05-21T06:00:00.000Z\": 104.4720080124,\n    \"2018-05-21T06:05:00.000Z\": 114.3773182728,\n    \"2018-05-21T06:10:00.000Z\": 235.5743866226,\n    \"2018-05-21T06:15:00.000Z\": 259.9093971669,\n    \"2018-05-21T06:20:00.000Z\": 252.2075690771,\n    \"2018-05-21T06:25:00.000Z\": 160.3976473829,\n    \"2018-05-21T06:30:00.000Z\": 138.4378069079,\n    \"2018-05-21T06:35:00.000Z\": 135.5228422482,\n    \"2018-05-21T06:40:00.000Z\": 127.1940938929,\n    \"2018-05-21T06:45:00.000Z\": 131.0889830803,\n    \"2018-05-21T06:50:00.000Z\": 246.3764762481,\n    \"2018-05-21T06:55:00.000Z\": 275.7713523003,\n    \"2018-05-21T07:00:00.000Z\": 293.7155039596,\n    \"2018-05-21T07:05:00.000Z\": 285.5505063576,\n    \"2018-05-21T07:10:00.000Z\": 146.78786506,\n    \"2018-05-21T07:15:00.000Z\": 149.8764086882,\n    \"2018-05-21T07:20:00.000Z\": 144.187013584,\n    \"2018-05-21T07:25:00.000Z\": 130.86381675,\n    \"2018-05-21T07:30:00.000Z\": 194.7438116517,\n    \"2018-05-21T07:35:00.000Z\": 272.7913552453,\n    \"2018-05-21T07:40:00.000Z\": 290.820978105,\n    \"2018-05-21T07:45:00.000Z\": 296.9505939576,\n    \"2018-05-21T07:50:00.000Z\": 298.0083885275,\n    \"2018-05-21T07:55:00.000Z\": 187.4321505365,\n    \"2018-05-21T08:00:00.000Z\": 162.0547652346,\n    \"2018-05-21T08:05:00.000Z\": 150.9500058684,\n    \"2018-05-21T08:10:00.000Z\": 177.2718457395,\n    \"2018-05-21T08:15:00.000Z\": 226.9682405716,\n    \"2018-05-21T08:20:00.000Z\": 281.6991259616,\n    \"2018-05-21T08:25:00.000Z\": 299.6170843508,\n    \"2018-05-21T08:30:00.000Z\": 294.2845290055,\n    \"2018-05-21T08:35:00.000Z\": 293.2341244794,\n    \"2018-05-21T08:40:00.000Z\": 185.7453367837,\n    \"2018-05-21T08:45:00.000Z\": 150.9503373023,\n    \"2018-05-21T08:50:00.000Z\": 151.0371469267,\n    \"2018-05-21T08:55:00.000Z\": 206.0515768125,\n    \"2018-05-21T09:00:00.000Z\": 254.9134971128,\n    \"2018-05-21T09:05:00.000Z\": 260.5309795404,\n    \"2018-05-21T09:10:00.000Z\": 283.5240895158,\n    \"2018-05-21T09:15:00.000Z\": 299.5669472092,\n    \"2018-05-21T09:20:00.000Z\": 290.4716478637,\n    \"2018-05-21T09:25:00.000Z\": 150.1792877788,\n    \"2018-05-21T09:30:00.000Z\": 153.350843163,\n    \"2018-05-21T09:35:00.000Z\": 168.3919070356,\n    \"2018-05-21T09:40:00.000Z\": 246.2511128942,\n    \"2018-05-21T09:45:00.000Z\": 272.6459016925,\n    \"2018-05-21T09:50:00.000Z\": 284.3291444312,\n    \"2018-05-21T09:55:00.000Z\": 287.8771578655,\n    \"2018-05-21T10:00:00.000Z\": 293.9291535394,\n    \"2018-05-21T10:05:00.000Z\": 148.1034467543,\n    \"2018-05-21T10:10:00.000Z\": 144.6698776958,\n    \"2018-05-21T10:15:00.000Z\": 150.4993603999,\n    \"2018-05-21T10:20:00.000Z\": 165.9184380435,\n    \"2018-05-21T10:25:00.000Z\": 234.9516814197,\n    \"2018-05-21T10:30:00.000Z\": 258.7242848345,\n    \"2018-05-21T10:35:00.000Z\": 149.5856562879,\n    \"2018-05-21T10:40:00.000Z\": 157.3995593779,\n    \"2018-05-21T10:45:00.000Z\": 163.5934703779,\n    \"2018-05-21T10:50:00.000Z\": 165.4229952016,\n    \"2018-05-21T10:55:00.000Z\": 147.402825158,\n    \"2018-05-21T11:00:00.000Z\": 147.0929068055,\n    \"2018-05-21T11:05:00.000Z\": 169.5109621667,\n    \"2018-05-21T11:10:00.000Z\": 162.7524694778,\n    \"2018-05-21T11:15:00.000Z\": 156.2755862145,\n    \"2018-05-21T11:20:00.000Z\": 165.1037874415,\n    \"2018-05-21T11:25:00.000Z\": 174.8500792849,\n    \"2018-05-21T11:30:00.000Z\": 201.1382307932,\n    \"2018-05-21T11:35:00.000Z\": 194.9702303703,\n    \"2018-05-21T11:40:00.000Z\": 186.4801486217,\n    \"2018-05-21T11:45:00.000Z\": 199.7644485453,\n    \"2018-05-21T11:50:00.000Z\": 225.0726034308,\n    \"2018-05-21T11:55:00.000Z\": 229.2145947795,\n    \"2018-05-21T12:00:00.000Z\": 222.5780094354,\n    \"2018-05-21T12:05:00.000Z\": 220.3030741961,\n    \"2018-05-21T12:10:00.000Z\": 233.3964392018,\n    \"2018-05-21T12:15:00.000Z\": 239.4059502363,\n    \"2018-05-21T12:20:00.000Z\": 240.3887803522,\n    \"2018-05-21T12:25:00.000Z\": 240.8112614065,\n    \"2018-05-21T12:30:00.000Z\": 256.5808995769,\n    \"2018-05-21T12:35:00.000Z\": 242.7919703895,\n    \"2018-05-21T12:40:00.000Z\": 238.6621344019,\n    \"2018-05-21T12:45:00.000Z\": 250.261457039,\n    \"2018-05-21T12:50:00.000Z\": 259.4516469448,\n    \"2018-05-21T12:55:00.000Z\": 247.4866188483,\n    \"2018-05-21T13:00:00.000Z\": 262.8559965981,\n    \"2018-05-21T13:05:00.000Z\": 271.1144597549,\n    \"2018-05-21T13:10:00.000Z\": 268.1243822049,\n    \"2018-05-21T13:15:00.000Z\": 252.8992999006,\n    \"2018-05-21T13:20:00.000Z\": 263.7082366234,\n    \"2018-05-21T13:25:00.000Z\": 266.4385594157,\n    \"2018-05-21T13:30:00.000Z\": 254.0656734496,\n    \"2018-05-21T13:35:00.000Z\": 261.2732814771,\n    \"2018-05-21T13:40:00.000Z\": 269.0084799247,\n    \"2018-05-21T13:45:00.000Z\": 272.3602853329,\n    \"2018-05-21T13:50:00.000Z\": 264.6174163215,\n    \"2018-05-21T13:55:00.000Z\": 273.3087959959,\n    \"2018-05-21T14:00:00.000Z\": 271.2140332534,\n    \"2018-05-21T14:05:00.000Z\": 268.8151027545,\n    \"2018-05-21T14:10:00.000Z\": 255.285584259,\n    \"2018-05-21T14:15:00.000Z\": 269.3637345526,\n    \"2018-05-21T14:20:00.000Z\": 268.1926599218,\n    \"2018-05-21T14:25:00.000Z\": 267.99650141,\n    \"2018-05-21T14:30:00.000Z\": 279.18412017,\n    \"2018-05-21T14:35:00.000Z\": 275.8955013989,\n    \"2018-05-21T14:40:00.000Z\": 266.4569053169,\n    \"2018-05-21T14:45:00.000Z\": 258.4459289038,\n    \"2018-05-21T14:50:00.000Z\": 240.515998635,\n    \"2018-05-21T14:55:00.000Z\": 236.4320345496,\n    \"2018-05-21T15:00:00.000Z\": 232.7289742452,\n    \"2018-05-21T15:05:00.000Z\": 234.8597697921,\n    \"2018-05-21T15:10:00.000Z\": 269.9023580616,\n    \"2018-05-21T15:15:00.000Z\": 316.1587352767,\n    \"2018-05-21T15:20:00.000Z\": 323.8701332699,\n    \"2018-05-21T15:25:00.000Z\": 317.1190739985,\n    \"2018-05-21T15:30:00.000Z\": 301.2711390737,\n    \"2018-05-21T15:35:00.000Z\": 273.5258666903,\n    \"2018-05-21T15:40:00.000Z\": 261.1074678772,\n    \"2018-05-21T15:45:00.000Z\": 267.2029071704,\n    \"2018-05-21T15:50:00.000Z\": 280.0055655431,\n    \"2018-05-21T15:55:00.000Z\": 262.7845262553,\n    \"2018-05-21T16:00:00.000Z\": 253.3816216091,\n    \"2018-05-21T16:05:00.000Z\": 261.568429667,\n    \"2018-05-21T16:10:00.000Z\": 275.2199153263,\n    \"2018-05-21T16:15:00.000Z\": 261.7716808722,\n    \"2018-05-21T16:20:00.000Z\": 253.6702085202,\n    \"2018-05-21T16:25:00.000Z\": 264.644546991,\n    \"2018-05-21T16:30:00.000Z\": 260.0792034028,\n    \"2018-05-21T16:35:00.000Z\": 255.6138360084,\n    \"2018-05-21T16:40:00.000Z\": 237.9523419399,\n    \"2018-05-21T16:45:00.000Z\": 254.7334032544,\n    \"2018-05-21T16:50:00.000Z\": 269.3378390459,\n    \"2018-05-21T16:55:00.000Z\": 249.3728867568,\n    \"2018-05-21T17:00:00.000Z\": 248.1575754584,\n    \"2018-05-21T17:05:00.000Z\": 246.5340665318,\n    \"2018-05-21T17:10:00.000Z\": 265.0021522274,\n    \"2018-05-21T17:15:00.000Z\": 250.1687925269,\n    \"2018-05-21T17:20:00.000Z\": 231.7427349071,\n    \"2018-05-21T17:25:00.000Z\": 252.4959783249,\n    \"2018-05-21T17:30:00.000Z\": 266.3043893095,\n    \"2018-05-21T17:35:00.000Z\": 242.5763346215,\n    \"2018-05-21T17:40:00.000Z\": 235.7665786001,\n    \"2018-05-21T17:45:00.000Z\": 243.7718278734,\n    \"2018-05-21T17:50:00.000Z\": 252.3190830758,\n    \"2018-05-21T17:55:00.000Z\": 248.5787566114,\n    \"2018-05-21T18:00:00.000Z\": 240.5047675689,\n    \"2018-05-21T18:05:00.000Z\": 232.3865041056,\n    \"2018-05-21T18:10:00.000Z\": 251.6981540088,\n    \"2018-05-21T18:15:00.000Z\": 248.9267343335,\n    \"2018-05-21T18:20:00.000Z\": 230.5404194973,\n    \"2018-05-21T18:25:00.000Z\": 242.7762844033,\n    \"2018-05-21T18:30:00.000Z\": 232.2519884073,\n    \"2018-05-21T18:35:00.000Z\": 239.7646228635,\n    \"2018-05-21T18:40:00.000Z\": 241.3671348806,\n    \"2018-05-21T18:45:00.000Z\": 230.8082371746,\n    \"2018-05-21T18:50:00.000Z\": 223.0095260547,\n    \"2018-05-21T18:55:00.000Z\": 236.5057738225,\n    \"2018-05-21T19:00:00.000Z\": 244.1521561349,\n    \"2018-05-21T19:05:00.000Z\": 229.8200184242,\n    \"2018-05-21T19:10:00.000Z\": 227.260960443,\n    \"2018-05-21T19:15:00.000Z\": 224.8377126659,\n    \"2018-05-21T19:20:00.000Z\": 227.89230623,\n    \"2018-05-21T19:25:00.000Z\": 239.8052105909,\n    \"2018-05-21T19:30:00.000Z\": 234.7738052962,\n    \"2018-05-21T19:35:00.000Z\": 227.0413327901,\n    \"2018-05-21T19:40:00.000Z\": 209.0694083257,\n    \"2018-05-21T19:45:00.000Z\": 243.4394369104,\n    \"2018-05-21T19:50:00.000Z\": 244.0213561339,\n    \"2018-05-21T19:55:00.000Z\": 241.6512902164,\n    \"2018-05-21T20:00:00.000Z\": 235.9499431139,\n    \"2018-05-21T20:05:00.000Z\": 233.8867893589,\n    \"2018-05-21T20:10:00.000Z\": 248.4678463306,\n    \"2018-05-21T20:15:00.000Z\": 250.8534584491,\n    \"2018-05-21T20:20:00.000Z\": 244.7945724698,\n    \"2018-05-21T20:25:00.000Z\": 223.9864173817,\n    \"2018-05-21T20:30:00.000Z\": 236.3576690687,\n    \"2018-05-21T20:35:00.000Z\": 252.8759042316,\n    \"2018-05-21T20:40:00.000Z\": 251.7834371473,\n    \"2018-05-21T20:45:00.000Z\": 251.7672641732,\n    \"2018-05-21T20:50:00.000Z\": 241.3963533459,\n    \"2018-05-21T20:55:00.000Z\": 230.4328128909,\n    \"2018-05-21T21:00:00.000Z\": 247.6399977861,\n    \"2018-05-21T21:05:00.000Z\": 253.7207127357,\n    \"2018-05-21T21:10:00.000Z\": 239.4657299581,\n    \"2018-05-21T21:15:00.000Z\": 247.9547043044,\n    \"2018-05-21T21:20:00.000Z\": 246.305074974,\n    \"2018-05-21T21:25:00.000Z\": 263.3165011851,\n    \"2018-05-21T21:30:00.000Z\": 249.2690772476,\n    \"2018-05-21T21:35:00.000Z\": 241.6100739807,\n    \"2018-05-21T21:40:00.000Z\": 243.4235918785,\n    \"2018-05-21T21:45:00.000Z\": 266.8562870047,\n    \"2018-05-21T21:50:00.000Z\": 266.5168016185,\n    \"2018-05-21T21:55:00.000Z\": 245.7146588239,\n    \"2018-05-21T22:00:00.000Z\": 239.4711229568,\n    \"2018-05-21T22:05:00.000Z\": 258.4958009255,\n    \"2018-05-21T22:10:00.000Z\": 268.3613431855,\n    \"2018-05-21T22:15:00.000Z\": 262.6967871798,\n    \"2018-05-21T22:20:00.000Z\": 247.5249566328,\n    \"2018-05-21T22:25:00.000Z\": 254.4802266552,\n    \"2018-05-21T22:30:00.000Z\": 271.8935426721,\n    \"2018-05-21T22:35:00.000Z\": 261.5589828459,\n    \"2018-05-21T22:40:00.000Z\": 250.4267352513,\n    \"2018-05-21T22:45:00.000Z\": 253.8074231597,\n    \"2018-05-21T22:50:00.000Z\": 277.0182034074,\n    \"2018-05-21T22:55:00.000Z\": 275.6463660401,\n    \"2018-05-21T23:00:00.000Z\": 253.2511679689,\n    \"2018-05-21T23:05:00.000Z\": 267.1565324881,\n    \"2018-05-21T23:10:00.000Z\": 270.4126473875,\n    \"2018-05-21T23:15:00.000Z\": 269.9145241413,\n    \"2018-05-21T23:20:00.000Z\": 260.0427486542,\n    \"2018-05-21T23:25:00.000Z\": 261.8064823512,\n    \"2018-05-21T23:30:00.000Z\": 266.6216156216,\n    \"2018-05-21T23:35:00.000Z\": 284.688721616,\n    \"2018-05-21T23:40:00.000Z\": 263.1994072853,\n    \"2018-05-21T23:45:00.000Z\": 271.5607869015,\n    \"2018-05-21T23:50:00.000Z\": 285.3811400046,\n    \"2018-05-21T23:55:00.000Z\": 281.9405519198,\n    \"2018-05-22T00:00:00.000Z\": 260.0894340273,\n    \"2018-05-22T00:05:00.000Z\": 250.6104664999,\n    \"2018-05-22T00:10:00.000Z\": 260.8163204059,\n    \"2018-05-22T00:15:00.000Z\": 277.4287752733,\n    \"2018-05-22T00:20:00.000Z\": 271.4001182926,\n    \"2018-05-22T00:25:00.000Z\": 250.8881918718,\n    \"2018-05-22T00:30:00.000Z\": 255.5231829841,\n    \"2018-05-22T00:35:00.000Z\": 258.1096199613,\n    \"2018-05-22T00:40:00.000Z\": 268.8494409385,\n    \"2018-05-22T00:45:00.000Z\": 262.0037381571,\n    \"2018-05-22T00:50:00.000Z\": 257.0855238447,\n    \"2018-05-22T00:55:00.000Z\": 247.2844317479,\n    \"2018-05-22T01:00:00.000Z\": 257.2944776947,\n    \"2018-05-22T01:05:00.000Z\": 272.5675702006,\n    \"2018-05-22T01:10:00.000Z\": 261.694463174,\n    \"2018-05-22T01:15:00.000Z\": 240.8498347495,\n    \"2018-05-22T01:20:00.000Z\": 245.9439936497,\n    \"2018-05-22T01:25:00.000Z\": 258.387774892,\n    \"2018-05-22T01:30:00.000Z\": 269.2886912867,\n    \"2018-05-22T01:35:00.000Z\": 261.8955542843,\n    \"2018-05-22T01:40:00.000Z\": 251.2915418634,\n    \"2018-05-22T01:45:00.000Z\": 237.4755708467,\n    \"2018-05-22T01:50:00.000Z\": 257.9397295362,\n    \"2018-05-22T01:55:00.000Z\": 266.9124394115,\n    \"2018-05-22T02:00:00.000Z\": 259.1095812604,\n    \"2018-05-22T02:05:00.000Z\": 239.1312736228,\n    \"2018-05-22T02:10:00.000Z\": 226.8252040128,\n    \"2018-05-22T02:15:00.000Z\": 239.7562523088,\n    \"2018-05-22T02:20:00.000Z\": 259.1618084356,\n    \"2018-05-22T02:25:00.000Z\": 251.9870362708,\n    \"2018-05-22T02:30:00.000Z\": 222.695188851,\n    \"2018-05-22T02:35:00.000Z\": 214.7192107025,\n    \"2018-05-22T02:40:00.000Z\": 225.2440938564,\n    \"2018-05-22T02:45:00.000Z\": 233.3238891005,\n    \"2018-05-22T02:50:00.000Z\": 252.4799835974,\n    \"2018-05-22T02:55:00.000Z\": 227.6566076947,\n    \"2018-05-22T03:00:00.000Z\": 211.2675840162,\n    \"2018-05-22T03:05:00.000Z\": 202.8194796906,\n    \"2018-05-22T03:10:00.000Z\": 201.0177535739,\n    \"2018-05-22T03:15:00.000Z\": 221.0236022647,\n    \"2018-05-22T03:20:00.000Z\": 225.1295211278,\n    \"2018-05-22T03:25:00.000Z\": 214.0598596335,\n    \"2018-05-22T03:30:00.000Z\": 210.8554415183,\n    \"2018-05-22T03:35:00.000Z\": 207.9182176868,\n    \"2018-05-22T03:40:00.000Z\": 195.2428509288,\n    \"2018-05-22T03:45:00.000Z\": 187.3339838169,\n    \"2018-05-22T03:50:00.000Z\": 209.9363325208,\n    \"2018-05-22T03:55:00.000Z\": 221.0133169503,\n    \"2018-05-22T04:00:00.000Z\": 225.7554925234,\n    \"2018-05-22T04:05:00.000Z\": 204.6003619505,\n    \"2018-05-22T04:10:00.000Z\": 206.6622865083,\n    \"2018-05-22T04:15:00.000Z\": 190.8732616037,\n    \"2018-05-22T04:20:00.000Z\": 199.5414898747,\n    \"2018-05-22T04:25:00.000Z\": 192.3027709022,\n    \"2018-05-22T04:30:00.000Z\": 226.3519300424,\n    \"2018-05-22T04:35:00.000Z\": 227.4075134562,\n    \"2018-05-22T04:40:00.000Z\": 237.5801354038,\n    \"2018-05-22T04:45:00.000Z\": 370.0233873937,\n    \"2018-05-22T04:50:00.000Z\": 476.6929263243,\n    \"2018-05-22T04:55:00.000Z\": 556.1444745173,\n    \"2018-05-22T05:00:00.000Z\": 809.9805079678,\n    \"2018-05-22T05:05:00.000Z\": 940.1002078546,\n    \"2018-05-22T05:10:00.000Z\": 922.2172570652,\n    \"2018-05-22T05:15:00.000Z\": 921.9394395256,\n    \"2018-05-22T05:20:00.000Z\": 931.1326843594,\n    \"2018-05-22T05:25:00.000Z\": 927.7988392295,\n    \"2018-05-22T05:30:00.000Z\": 924.5430977054,\n    \"2018-05-22T05:35:00.000Z\": 932.5727269319,\n    \"2018-05-22T05:40:00.000Z\": 936.4962950281,\n    \"2018-05-22T05:45:00.000Z\": 929.0260192607,\n    \"2018-05-22T05:50:00.000Z\": 926.4357356548,\n    \"2018-05-22T05:55:00.000Z\": 934.7257131637,\n    \"2018-05-22T06:00:00.000Z\": 908.4082221891,\n    \"2018-05-22T06:05:00.000Z\": 917.7112901544,\n    \"2018-05-22T06:10:00.000Z\": 924.0958121497\n}\n```\n",
+  "id": "0ba83325-d541-4efc-9a88-b919ccbc5638",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "STRING",
+        "id": "2414a82e-69e1-4531-aa0a-dd0458eee249",
+        "name": "value_range_filter_condition_col",
+        "type": "REQUIRED"
+      },
+      {
+        "data_type": "SERIES",
+        "id": "9c2ba5d6-9125-4b45-925f-9ec9890586a0",
+        "name": "timeseries",
+        "type": "REQUIRED"
+      },
+      {
+        "data_type": "ANY",
+        "id": "c56efcd8-812a-4c16-b43f-ebfb64411981",
+        "name": "value_ranges",
+        "type": "REQUIRED"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "da5a1870-2d8e-4943-a959-7b4e7bb70f9e",
+        "name": "fixed_replacement_value",
+        "type": "REQUIRED"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "c88dcd94-376c-403e-a3d4-b30e2ae4efc6",
+        "name": "_02_value_ranges"
+      },
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "c895f42d-a9ee-496b-8f63-16dd0789e08d",
+        "name": "_04_value_range_check_results"
+      },
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "60453e2a-4a1e-4791-b659-2f6e6f5d723b",
+        "name": "_01_original_timeseries"
+      },
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "7032fa7b-b360-4e7c-ab64-4a8cdb7451e4",
+        "name": "_03_substituted_with_fixed_value"
+      }
+    ]
+  },
+  "name": "Value Range Check and Substitution",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "normal_IS_ABOVE"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value_range_filter_condition_col"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:20:00.000Z\": 86.9358994238,\n    \"2018-05-19T22:25:00.000Z\": 78.6552569681,\n    \"2018-05-19T22:30:00.000Z\": 93.515633185,\n    \"2018-05-19T22:35:00.000Z\": 96.3497006614,\n    \"2018-05-19T22:40:00.000Z\": 83.1926874657,\n    \"2018-05-19T22:45:00.000Z\": 69.9740743464,\n    \"2018-05-19T22:50:00.000Z\": 90.5433921349,\n    \"2018-05-19T22:55:00.000Z\": 97.4750274531,\n    \"2018-05-19T23:00:00.000Z\": 101.6738801355,\n    \"2018-05-19T23:05:00.000Z\": 85.8482897506,\n    \"2018-05-19T23:10:00.000Z\": 84.770860201,\n    \"2018-05-19T23:15:00.000Z\": 85.8559629927,\n    \"2018-05-19T23:20:00.000Z\": 86.5037351162,\n    \"2018-05-19T23:25:00.000Z\": 80.7784552462,\n    \"2018-05-19T23:30:00.000Z\": 89.8411904351,\n    \"2018-05-19T23:35:00.000Z\": 83.1826662979,\n    \"2018-05-19T23:40:00.000Z\": 103.3734694408,\n    \"2018-05-19T23:45:00.000Z\": 101.6826743271,\n    \"2018-05-19T23:50:00.000Z\": 86.4656528841,\n    \"2018-05-19T23:55:00.000Z\": 74.1823425367,\n    \"2018-05-20T00:00:00.000Z\": 77.5083836047,\n    \"2018-05-20T00:05:00.000Z\": 109.1359083963,\n    \"2018-05-20T00:10:00.000Z\": 86.9635555496,\n    \"2018-05-20T00:15:00.000Z\": 72.4734381604,\n    \"2018-05-20T00:20:00.000Z\": 82.6569065462,\n    \"2018-05-20T00:25:00.000Z\": 95.6306292516,\n    \"2018-05-20T00:30:00.000Z\": 96.5189997059,\n    \"2018-05-20T00:35:00.000Z\": 80.0414834298,\n    \"2018-05-20T00:40:00.000Z\": 81.5688589141,\n    \"2018-05-20T00:45:00.000Z\": 66.8476389718,\n    \"2018-05-20T00:50:00.000Z\": 82.1313723217,\n    \"2018-05-20T00:55:00.000Z\": 88.9032494153,\n    \"2018-05-20T01:00:00.000Z\": 78.8591066896,\n    \"2018-05-20T01:05:00.000Z\": 60.278205314,\n    \"2018-05-20T01:10:00.000Z\": 53.8951835823,\n    \"2018-05-20T01:15:00.000Z\": 71.4961130601,\n    \"2018-05-20T01:20:00.000Z\": 78.9503633957,\n    \"2018-05-20T01:25:00.000Z\": 88.2164623807,\n    \"2018-05-20T01:30:00.000Z\": 67.4817188089,\n    \"2018-05-20T01:35:00.000Z\": 48.9307150285,\n    \"2018-05-20T01:40:00.000Z\": 65.6820065898,\n    \"2018-05-20T01:45:00.000Z\": 80.4674129099,\n    \"2018-05-20T01:50:00.000Z\": 83.0974319003,\n    \"2018-05-20T01:55:00.000Z\": 66.4044977776,\n    \"2018-05-20T02:00:00.000Z\": 52.6199439715,\n    \"2018-05-20T02:05:00.000Z\": 50.2284429626,\n    \"2018-05-20T02:10:00.000Z\": 85.1886876577,\n    \"2018-05-20T02:15:00.000Z\": 85.5129601692,\n    \"2018-05-20T02:20:00.000Z\": 71.3317339188,\n    \"2018-05-20T02:25:00.000Z\": 52.917747152,\n    \"2018-05-20T02:30:00.000Z\": 52.3827727031,\n    \"2018-05-20T02:35:00.000Z\": 64.1071562615,\n    \"2018-05-20T02:40:00.000Z\": 83.0344096679,\n    \"2018-05-20T02:45:00.000Z\": 71.5022451453,\n    \"2018-05-20T02:50:00.000Z\": 46.4394249402,\n    \"2018-05-20T02:55:00.000Z\": 43.382501745,\n    \"2018-05-20T03:00:00.000Z\": 54.4602695018,\n    \"2018-05-20T03:05:00.000Z\": 76.2991858088,\n    \"2018-05-20T03:10:00.000Z\": 82.7155861643,\n    \"2018-05-20T03:15:00.000Z\": 52.7799214093,\n    \"2018-05-20T03:20:00.000Z\": 48.0293243988,\n    \"2018-05-20T03:25:00.000Z\": 40.2136775726,\n    \"2018-05-20T03:30:00.000Z\": 30.8733628055,\n    \"2018-05-20T03:35:00.000Z\": 56.7236835216,\n    \"2018-05-20T03:40:00.000Z\": 80.7648985358,\n    \"2018-05-20T03:45:00.000Z\": 60.5576562717,\n    \"2018-05-20T03:50:00.000Z\": 42.7602142735,\n    \"2018-05-20T03:55:00.000Z\": 42.8245428316,\n    \"2018-05-20T04:00:00.000Z\": 45.9636153002,\n    \"2018-05-20T04:05:00.000Z\": 39.4304037403,\n    \"2018-05-20T04:10:00.000Z\": 54.3346944195,\n    \"2018-05-20T04:15:00.000Z\": 53.7024337135,\n    \"2018-05-20T04:20:00.000Z\": 48.0270534763,\n    \"2018-05-20T04:25:00.000Z\": 28.7165651222,\n    \"2018-05-20T04:30:00.000Z\": 25.1043662316,\n    \"2018-05-20T04:35:00.000Z\": 29.6552481484,\n    \"2018-05-20T04:40:00.000Z\": 33.9357116455,\n    \"2018-05-20T04:45:00.000Z\": 36.5774719321,\n    \"2018-05-20T04:50:00.000Z\": 57.2633214106,\n    \"2018-05-20T04:55:00.000Z\": 49.2236152236,\n    \"2018-05-20T05:00:00.000Z\": 42.0204170321,\n    \"2018-05-20T05:05:00.000Z\": 29.0357907363,\n    \"2018-05-20T05:10:00.000Z\": 28.972519502,\n    \"2018-05-20T05:15:00.000Z\": 25.5883073669,\n    \"2018-05-20T05:20:00.000Z\": 25.7142077601,\n    \"2018-05-20T05:25:00.000Z\": 44.4557411598,\n    \"2018-05-20T05:30:00.000Z\": 61.0614822236,\n    \"2018-05-20T05:35:00.000Z\": 52.7493209614,\n    \"2018-05-20T05:40:00.000Z\": 38.4079501823,\n    \"2018-05-20T05:45:00.000Z\": 31.3086890977,\n    \"2018-05-20T05:50:00.000Z\": 79.1806006473,\n    \"2018-05-20T05:55:00.000Z\": 138.3298304464,\n    \"2018-05-20T06:00:00.000Z\": 159.0636434544,\n    \"2018-05-20T06:05:00.000Z\": 123.3056279812,\n    \"2018-05-20T06:10:00.000Z\": 40.9117923242,\n    \"2018-05-20T06:15:00.000Z\": 54.6703391987,\n    \"2018-05-20T06:20:00.000Z\": 60.1409043033,\n    \"2018-05-20T06:25:00.000Z\": 61.773021148,\n    \"2018-05-20T06:30:00.000Z\": 136.3291547746,\n    \"2018-05-20T06:35:00.000Z\": 172.0109041951,\n    \"2018-05-20T06:40:00.000Z\": 185.3083213323,\n    \"2018-05-20T06:45:00.000Z\": 197.8518333074,\n    \"2018-05-20T06:50:00.000Z\": 184.816863378,\n    \"2018-05-20T06:55:00.000Z\": 52.3640067807,\n    \"2018-05-20T07:00:00.000Z\": 30.3856767594,\n    \"2018-05-20T07:05:00.000Z\": 19.6763950118,\n    \"2018-05-20T07:10:00.000Z\": 84.8995442156,\n    \"2018-05-20T07:15:00.000Z\": 106.2051480693,\n    \"2018-05-20T07:20:00.000Z\": 169.8752300099,\n    \"2018-05-20T07:25:00.000Z\": 213.8776647446,\n    \"2018-05-20T07:30:00.000Z\": 218.137763105,\n    \"2018-05-20T07:35:00.000Z\": 211.9986058951,\n    \"2018-05-20T07:40:00.000Z\": 141.5436667966,\n    \"2018-05-20T07:45:00.000Z\": 55.0101414275,\n    \"2018-05-20T07:50:00.000Z\": 54.6697059315,\n    \"2018-05-20T07:55:00.000Z\": 108.6148802995,\n    \"2018-05-20T08:00:00.000Z\": 164.3342435021,\n    \"2018-05-20T08:05:00.000Z\": 205.9293219405,\n    \"2018-05-20T08:10:00.000Z\": 216.0155924794,\n    \"2018-05-20T08:15:00.000Z\": 219.5429889277,\n    \"2018-05-20T08:20:00.000Z\": 214.6161859555,\n    \"2018-05-20T08:25:00.000Z\": 182.517250994,\n    \"2018-05-20T08:30:00.000Z\": 62.0884876359,\n    \"2018-05-20T08:35:00.000Z\": 67.2103674858,\n    \"2018-05-20T08:40:00.000Z\": 78.5314292403,\n    \"2018-05-20T08:45:00.000Z\": 189.482915713,\n    \"2018-05-20T08:50:00.000Z\": 217.701588994,\n    \"2018-05-20T08:55:00.000Z\": 215.6707899191,\n    \"2018-05-20T09:00:00.000Z\": 220.6857971485,\n    \"2018-05-20T09:05:00.000Z\": 223.2626321138,\n    \"2018-05-20T09:10:00.000Z\": 186.0879452113,\n    \"2018-05-20T09:15:00.000Z\": 66.6061463066,\n    \"2018-05-20T09:20:00.000Z\": 71.8896721611,\n    \"2018-05-20T09:25:00.000Z\": 106.1131048244,\n    \"2018-05-20T09:30:00.000Z\": 194.2396819964,\n    \"2018-05-20T09:35:00.000Z\": 212.9194052403,\n    \"2018-05-20T09:40:00.000Z\": 228.7988558129,\n    \"2018-05-20T09:45:00.000Z\": 223.0539335965,\n    \"2018-05-20T09:50:00.000Z\": 229.3014824671,\n    \"2018-05-20T09:55:00.000Z\": 73.057370576,\n    \"2018-05-20T10:00:00.000Z\": 63.8777934173,\n    \"2018-05-20T10:05:00.000Z\": 55.7252891637,\n    \"2018-05-20T10:10:00.000Z\": 124.6033069636,\n    \"2018-05-20T10:15:00.000Z\": 208.999834057,\n    \"2018-05-20T10:20:00.000Z\": 210.5973352137,\n    \"2018-05-20T10:25:00.000Z\": 134.6987564878,\n    \"2018-05-20T10:30:00.000Z\": 80.7366860452,\n    \"2018-05-20T10:35:00.000Z\": 74.0239748251,\n    \"2018-05-20T10:40:00.000Z\": 69.6519772124,\n    \"2018-05-20T10:45:00.000Z\": 66.6507449417,\n    \"2018-05-20T10:50:00.000Z\": 63.6565231819,\n    \"2018-05-20T10:55:00.000Z\": 77.2641910553,\n    \"2018-05-20T11:00:00.000Z\": 76.3756956564,\n    \"2018-05-20T11:05:00.000Z\": 78.390474376,\n    \"2018-05-20T11:10:00.000Z\": 91.0208850327,\n    \"2018-05-20T11:15:00.000Z\": 84.8828852992,\n    \"2018-05-20T11:20:00.000Z\": 100.6171083238,\n    \"2018-05-20T11:25:00.000Z\": 121.420014114,\n    \"2018-05-20T11:30:00.000Z\": 122.7422457964,\n    \"2018-05-20T11:35:00.000Z\": 114.0672784089,\n    \"2018-05-20T11:40:00.000Z\": 124.9792048426,\n    \"2018-05-20T11:45:00.000Z\": 153.3861054222,\n    \"2018-05-20T11:50:00.000Z\": 140.2611586143,\n    \"2018-05-20T11:55:00.000Z\": 138.9443262784,\n    \"2018-05-20T12:00:00.000Z\": 148.510151628,\n    \"2018-05-20T12:05:00.000Z\": 152.9166475408,\n    \"2018-05-20T12:10:00.000Z\": 160.2447124871,\n    \"2018-05-20T12:15:00.000Z\": 159.5788094645,\n    \"2018-05-20T12:20:00.000Z\": 165.8041637338,\n    \"2018-05-20T12:25:00.000Z\": 159.285387551,\n    \"2018-05-20T12:30:00.000Z\": 165.271884833,\n    \"2018-05-20T12:35:00.000Z\": 161.3833736925,\n    \"2018-05-20T12:40:00.000Z\": 176.8410887258,\n    \"2018-05-20T12:45:00.000Z\": 180.5956340785,\n    \"2018-05-20T12:50:00.000Z\": 170.5980778735,\n    \"2018-05-20T12:55:00.000Z\": 167.2900126682,\n    \"2018-05-20T13:00:00.000Z\": 185.4767849358,\n    \"2018-05-20T13:05:00.000Z\": 179.9265264363,\n    \"2018-05-20T13:10:00.000Z\": 176.207298797,\n    \"2018-05-20T13:15:00.000Z\": 188.3835400671,\n    \"2018-05-20T13:20:00.000Z\": 195.4749511852,\n    \"2018-05-20T13:25:00.000Z\": 166.0712157493,\n    \"2018-05-20T13:30:00.000Z\": 176.8166973904,\n    \"2018-05-20T13:35:00.000Z\": 189.1987544304,\n    \"2018-05-20T13:40:00.000Z\": 183.4236375455,\n    \"2018-05-20T13:45:00.000Z\": 186.5117851915,\n    \"2018-05-20T13:50:00.000Z\": 184.9337200978,\n    \"2018-05-20T13:55:00.000Z\": 187.4601888511,\n    \"2018-05-20T14:00:00.000Z\": 189.1652389195,\n    \"2018-05-20T14:05:00.000Z\": 186.1269425153,\n    \"2018-05-20T14:10:00.000Z\": 190.0385586888,\n    \"2018-05-20T14:15:00.000Z\": 176.2308785787,\n    \"2018-05-20T14:20:00.000Z\": 170.889032631,\n    \"2018-05-20T14:25:00.000Z\": 200.3437418988,\n    \"2018-05-20T14:30:00.000Z\": 191.8904045089,\n    \"2018-05-20T14:35:00.000Z\": 189.7712383502,\n    \"2018-05-20T14:40:00.000Z\": 180.1290800151,\n    \"2018-05-20T14:45:00.000Z\": 197.1780600239,\n    \"2018-05-20T14:50:00.000Z\": 195.0832041298,\n    \"2018-05-20T14:55:00.000Z\": 175.8725668583,\n    \"2018-05-20T15:00:00.000Z\": 187.3043246389,\n    \"2018-05-20T15:05:00.000Z\": 197.2477733158,\n    \"2018-05-20T15:10:00.000Z\": 189.7663337729,\n    \"2018-05-20T15:15:00.000Z\": 179.2387550989,\n    \"2018-05-20T15:20:00.000Z\": 183.8158897523,\n    \"2018-05-20T15:25:00.000Z\": 186.5921372968,\n    \"2018-05-20T15:30:00.000Z\": 181.0236973864,\n    \"2018-05-20T15:35:00.000Z\": 173.2669536706,\n    \"2018-05-20T15:40:00.000Z\": 179.3250753491,\n    \"2018-05-20T15:45:00.000Z\": 183.2442350433,\n    \"2018-05-20T15:50:00.000Z\": 174.8351975126,\n    \"2018-05-20T15:55:00.000Z\": 177.7823510347,\n    \"2018-05-20T16:00:00.000Z\": 195.2615650293,\n    \"2018-05-20T16:05:00.000Z\": 174.7665754694,\n    \"2018-05-20T16:10:00.000Z\": 175.6502762854,\n    \"2018-05-20T16:15:00.000Z\": 180.2494148226,\n    \"2018-05-20T16:20:00.000Z\": 187.516513023,\n    \"2018-05-20T16:25:00.000Z\": 185.899972629,\n    \"2018-05-20T16:30:00.000Z\": 167.5664793106,\n    \"2018-05-20T16:35:00.000Z\": 169.6490691354,\n    \"2018-05-20T16:40:00.000Z\": 176.158768683,\n    \"2018-05-20T16:45:00.000Z\": 184.3236702768,\n    \"2018-05-20T16:50:00.000Z\": 163.8026982105,\n    \"2018-05-20T16:55:00.000Z\": 157.6914259458,\n    \"2018-05-20T17:00:00.000Z\": 166.0935360593,\n    \"2018-05-20T17:05:00.000Z\": 159.1095964847,\n    \"2018-05-20T17:10:00.000Z\": 147.7065369358,\n    \"2018-05-20T17:15:00.000Z\": 154.7057897245,\n    \"2018-05-20T17:20:00.000Z\": 168.3555509087,\n    \"2018-05-20T17:25:00.000Z\": 170.5614796039,\n    \"2018-05-20T17:30:00.000Z\": 158.4394920499,\n    \"2018-05-20T17:35:00.000Z\": 141.5043245617,\n    \"2018-05-20T17:40:00.000Z\": 163.4957902013,\n    \"2018-05-20T17:45:00.000Z\": 174.2984169626,\n    \"2018-05-20T17:50:00.000Z\": 156.5764681255,\n    \"2018-05-20T17:55:00.000Z\": 145.6017108276,\n    \"2018-05-20T18:00:00.000Z\": 147.6871890956,\n    \"2018-05-20T18:05:00.000Z\": 162.9423506747,\n    \"2018-05-20T18:10:00.000Z\": 162.8512641091,\n    \"2018-05-20T18:15:00.000Z\": 149.6910092824,\n    \"2018-05-20T18:20:00.000Z\": 140.5253960882,\n    \"2018-05-20T18:25:00.000Z\": 158.8771839914,\n    \"2018-05-20T18:30:00.000Z\": 172.6007529438,\n    \"2018-05-20T18:35:00.000Z\": 160.4501536466,\n    \"2018-05-20T18:40:00.000Z\": 144.8699494803,\n    \"2018-05-20T18:45:00.000Z\": 143.2864996159,\n    \"2018-05-20T18:50:00.000Z\": 156.0899311688,\n    \"2018-05-20T18:55:00.000Z\": 166.2063491434,\n    \"2018-05-20T19:00:00.000Z\": 154.1839333819,\n    \"2018-05-20T19:05:00.000Z\": 142.1280736423,\n    \"2018-05-20T19:10:00.000Z\": 137.0410387908,\n    \"2018-05-20T19:15:00.000Z\": 150.8775981298,\n    \"2018-05-20T19:20:00.000Z\": 154.3254832531,\n    \"2018-05-20T19:25:00.000Z\": 153.1508155345,\n    \"2018-05-20T19:30:00.000Z\": 143.9982068534,\n    \"2018-05-20T19:35:00.000Z\": 142.3341752461,\n    \"2018-05-20T19:40:00.000Z\": 151.720255615,\n    \"2018-05-20T19:45:00.000Z\": 158.2621281129,\n    \"2018-05-20T19:50:00.000Z\": 153.4968545282,\n    \"2018-05-20T19:55:00.000Z\": 143.7376693548,\n    \"2018-05-20T20:00:00.000Z\": 142.0514856047,\n    \"2018-05-20T20:05:00.000Z\": 150.8437823056,\n    \"2018-05-20T20:10:00.000Z\": 166.1271294879,\n    \"2018-05-20T20:15:00.000Z\": 150.5006327538,\n    \"2018-05-20T20:20:00.000Z\": 134.8359733416,\n    \"2018-05-20T20:25:00.000Z\": 133.4771648482,\n    \"2018-05-20T20:30:00.000Z\": 149.6004988879,\n    \"2018-05-20T20:35:00.000Z\": 154.5810230519,\n    \"2018-05-20T20:40:00.000Z\": 162.066364617,\n    \"2018-05-20T20:45:00.000Z\": 145.7448446292,\n    \"2018-05-20T20:50:00.000Z\": 131.9934783902,\n    \"2018-05-20T20:55:00.000Z\": 148.1438116264,\n    \"2018-05-20T21:00:00.000Z\": 159.0688775438,\n    \"2018-05-20T21:05:00.000Z\": 164.1180432476,\n    \"2018-05-20T21:10:00.000Z\": 149.5302407304,\n    \"2018-05-20T21:15:00.000Z\": 140.28660358,\n    \"2018-05-20T21:20:00.000Z\": 149.2851079194,\n    \"2018-05-20T21:25:00.000Z\": 165.5659893612,\n    \"2018-05-20T21:30:00.000Z\": 154.1439776518,\n    \"2018-05-20T21:35:00.000Z\": 149.4644136489,\n    \"2018-05-20T21:40:00.000Z\": 154.5941907831,\n    \"2018-05-20T21:45:00.000Z\": 164.8406319427,\n    \"2018-05-20T21:50:00.000Z\": 181.6959680527,\n    \"2018-05-20T21:55:00.000Z\": 154.7350000859,\n    \"2018-05-20T22:00:00.000Z\": 151.5230909704,\n    \"2018-05-20T22:05:00.000Z\": 160.1882851689,\n    \"2018-05-20T22:10:00.000Z\": 174.8887210965,\n    \"2018-05-20T22:15:00.000Z\": 173.587771397,\n    \"2018-05-20T22:20:00.000Z\": 165.0105987918,\n    \"2018-05-20T22:25:00.000Z\": 161.9471576448,\n    \"2018-05-20T22:30:00.000Z\": 164.6495581777,\n    \"2018-05-20T22:35:00.000Z\": 171.8843956932,\n    \"2018-05-20T22:40:00.000Z\": 177.9174520466,\n    \"2018-05-20T22:45:00.000Z\": 166.6287705491,\n    \"2018-05-20T22:50:00.000Z\": 151.8515290201,\n    \"2018-05-20T22:55:00.000Z\": 173.3088905867,\n    \"2018-05-20T23:00:00.000Z\": 180.786055938,\n    \"2018-05-20T23:05:00.000Z\": 176.1478069596,\n    \"2018-05-20T23:10:00.000Z\": 164.6055015361,\n    \"2018-05-20T23:15:00.000Z\": 165.8118961347,\n    \"2018-05-20T23:20:00.000Z\": 182.7612266921,\n    \"2018-05-20T23:25:00.000Z\": 178.1625682363,\n    \"2018-05-20T23:30:00.000Z\": 176.1401257364,\n    \"2018-05-20T23:35:00.000Z\": 160.2761683119,\n    \"2018-05-20T23:40:00.000Z\": 174.3541932561,\n    \"2018-05-20T23:45:00.000Z\": 185.1896388696,\n    \"2018-05-20T23:50:00.000Z\": 173.4366359349,\n    \"2018-05-20T23:55:00.000Z\": 162.1251562512,\n    \"2018-05-21T00:00:00.000Z\": 152.2594113395,\n    \"2018-05-21T00:05:00.000Z\": 164.8759416863,\n    \"2018-05-21T00:10:00.000Z\": 182.6967505432,\n    \"2018-05-21T00:15:00.000Z\": 173.9322883794,\n    \"2018-05-21T00:20:00.000Z\": 167.9858934981,\n    \"2018-05-21T00:25:00.000Z\": 154.8519440563,\n    \"2018-05-21T00:30:00.000Z\": 171.5228817334,\n    \"2018-05-21T00:35:00.000Z\": 181.9999215285,\n    \"2018-05-21T00:40:00.000Z\": 169.4980785854,\n    \"2018-05-21T00:45:00.000Z\": 164.5742191052,\n    \"2018-05-21T00:50:00.000Z\": 149.1684670774,\n    \"2018-05-21T00:55:00.000Z\": 160.1198995794,\n    \"2018-05-21T01:00:00.000Z\": 172.462731262,\n    \"2018-05-21T01:05:00.000Z\": 170.5161373658,\n    \"2018-05-21T01:10:00.000Z\": 152.1337734829,\n    \"2018-05-21T01:15:00.000Z\": 130.6612099559,\n    \"2018-05-21T01:20:00.000Z\": 152.2316047161,\n    \"2018-05-21T01:25:00.000Z\": 168.4448294636,\n    \"2018-05-21T01:30:00.000Z\": 170.1531364678,\n    \"2018-05-21T01:35:00.000Z\": 152.5175797995,\n    \"2018-05-21T01:40:00.000Z\": 127.6457147537,\n    \"2018-05-21T01:45:00.000Z\": 137.6715320223,\n    \"2018-05-21T01:50:00.000Z\": 165.742231698,\n    \"2018-05-21T01:55:00.000Z\": 181.8724040376,\n    \"2018-05-21T02:00:00.000Z\": 159.056580575,\n    \"2018-05-21T02:05:00.000Z\": 133.7876578796,\n    \"2018-05-21T02:10:00.000Z\": 135.2260247207,\n    \"2018-05-21T02:15:00.000Z\": 148.615568763,\n    \"2018-05-21T02:20:00.000Z\": 170.7364057672,\n    \"2018-05-21T02:25:00.000Z\": 161.5976827976,\n    \"2018-05-21T02:30:00.000Z\": 139.7862988032,\n    \"2018-05-21T02:35:00.000Z\": 137.0496843075,\n    \"2018-05-21T02:40:00.000Z\": 130.2219953094,\n    \"2018-05-21T02:45:00.000Z\": 149.4338745325,\n    \"2018-05-21T02:50:00.000Z\": 167.1641922817,\n    \"2018-05-21T02:55:00.000Z\": 145.8422497591,\n    \"2018-05-21T03:00:00.000Z\": 130.4670061942,\n    \"2018-05-21T03:05:00.000Z\": 116.312792923,\n    \"2018-05-21T03:10:00.000Z\": 110.4228534731,\n    \"2018-05-21T03:15:00.000Z\": 130.5443425156,\n    \"2018-05-21T03:20:00.000Z\": 137.5629238799,\n    \"2018-05-21T03:25:00.000Z\": 137.8296174877,\n    \"2018-05-21T03:30:00.000Z\": 128.3065165246,\n    \"2018-05-21T03:35:00.000Z\": 121.0885937611,\n    \"2018-05-21T03:40:00.000Z\": 111.2250157042,\n    \"2018-05-21T03:45:00.000Z\": 132.4450062421,\n    \"2018-05-21T03:50:00.000Z\": 127.7633559327,\n    \"2018-05-21T03:55:00.000Z\": 134.8909334032,\n    \"2018-05-21T04:00:00.000Z\": 128.446440207,\n    \"2018-05-21T04:05:00.000Z\": 110.441006872,\n    \"2018-05-21T04:10:00.000Z\": 109.700946095,\n    \"2018-05-21T04:15:00.000Z\": 114.5340437289,\n    \"2018-05-21T04:20:00.000Z\": 122.0335804153,\n    \"2018-05-21T04:25:00.000Z\": 140.3120967139,\n    \"2018-05-21T04:30:00.000Z\": 141.6490414641,\n    \"2018-05-21T04:35:00.000Z\": 129.2456715238,\n    \"2018-05-21T04:40:00.000Z\": 128.3604702735,\n    \"2018-05-21T04:45:00.000Z\": 103.6823697419,\n    \"2018-05-21T04:50:00.000Z\": 107.7692280091,\n    \"2018-05-21T04:55:00.000Z\": 105.3069016698,\n    \"2018-05-21T05:00:00.000Z\": 133.3823375377,\n    \"2018-05-21T05:05:00.000Z\": 135.5761918319,\n    \"2018-05-21T05:10:00.000Z\": 126.3400846309,\n    \"2018-05-21T05:15:00.000Z\": 116.1887040832,\n    \"2018-05-21T05:20:00.000Z\": 110.0880811292,\n    \"2018-05-21T05:25:00.000Z\": 107.804272825,\n    \"2018-05-21T05:30:00.000Z\": 126.1140477471,\n    \"2018-05-21T05:35:00.000Z\": 100.5340249354,\n    \"2018-05-21T05:40:00.000Z\": 113.0860552474,\n    \"2018-05-21T05:45:00.000Z\": 125.3068239043,\n    \"2018-05-21T05:50:00.000Z\": 120.7452754491,\n    \"2018-05-21T05:55:00.000Z\": 109.0093390122,\n    \"2018-05-21T06:00:00.000Z\": 104.4720080124,\n    \"2018-05-21T06:05:00.000Z\": 114.3773182728,\n    \"2018-05-21T06:10:00.000Z\": 235.5743866226,\n    \"2018-05-21T06:15:00.000Z\": 259.9093971669,\n    \"2018-05-21T06:20:00.000Z\": 252.2075690771,\n    \"2018-05-21T06:25:00.000Z\": 160.3976473829,\n    \"2018-05-21T06:30:00.000Z\": 138.4378069079,\n    \"2018-05-21T06:35:00.000Z\": 135.5228422482,\n    \"2018-05-21T06:40:00.000Z\": 127.1940938929,\n    \"2018-05-21T06:45:00.000Z\": 131.0889830803,\n    \"2018-05-21T06:50:00.000Z\": 246.3764762481,\n    \"2018-05-21T06:55:00.000Z\": 275.7713523003,\n    \"2018-05-21T07:00:00.000Z\": 293.7155039596,\n    \"2018-05-21T07:05:00.000Z\": 285.5505063576,\n    \"2018-05-21T07:10:00.000Z\": 146.78786506,\n    \"2018-05-21T07:15:00.000Z\": 149.8764086882,\n    \"2018-05-21T07:20:00.000Z\": 144.187013584,\n    \"2018-05-21T07:25:00.000Z\": 130.86381675,\n    \"2018-05-21T07:30:00.000Z\": 194.7438116517,\n    \"2018-05-21T07:35:00.000Z\": 272.7913552453,\n    \"2018-05-21T07:40:00.000Z\": 290.820978105,\n    \"2018-05-21T07:45:00.000Z\": 296.9505939576,\n    \"2018-05-21T07:50:00.000Z\": 298.0083885275,\n    \"2018-05-21T07:55:00.000Z\": 187.4321505365,\n    \"2018-05-21T08:00:00.000Z\": 162.0547652346,\n    \"2018-05-21T08:05:00.000Z\": 150.9500058684,\n    \"2018-05-21T08:10:00.000Z\": 177.2718457395,\n    \"2018-05-21T08:15:00.000Z\": 226.9682405716,\n    \"2018-05-21T08:20:00.000Z\": 281.6991259616,\n    \"2018-05-21T08:25:00.000Z\": 299.6170843508,\n    \"2018-05-21T08:30:00.000Z\": 294.2845290055,\n    \"2018-05-21T08:35:00.000Z\": 293.2341244794,\n    \"2018-05-21T08:40:00.000Z\": 185.7453367837,\n    \"2018-05-21T08:45:00.000Z\": 150.9503373023,\n    \"2018-05-21T08:50:00.000Z\": 151.0371469267,\n    \"2018-05-21T08:55:00.000Z\": 206.0515768125,\n    \"2018-05-21T09:00:00.000Z\": 254.9134971128,\n    \"2018-05-21T09:05:00.000Z\": 260.5309795404,\n    \"2018-05-21T09:10:00.000Z\": 283.5240895158,\n    \"2018-05-21T09:15:00.000Z\": 299.5669472092,\n    \"2018-05-21T09:20:00.000Z\": 290.4716478637,\n    \"2018-05-21T09:25:00.000Z\": 150.1792877788,\n    \"2018-05-21T09:30:00.000Z\": 153.350843163,\n    \"2018-05-21T09:35:00.000Z\": 168.3919070356,\n    \"2018-05-21T09:40:00.000Z\": 246.2511128942,\n    \"2018-05-21T09:45:00.000Z\": 272.6459016925,\n    \"2018-05-21T09:50:00.000Z\": 284.3291444312,\n    \"2018-05-21T09:55:00.000Z\": 287.8771578655,\n    \"2018-05-21T10:00:00.000Z\": 293.9291535394,\n    \"2018-05-21T10:05:00.000Z\": 148.1034467543,\n    \"2018-05-21T10:10:00.000Z\": 144.6698776958,\n    \"2018-05-21T10:15:00.000Z\": 150.4993603999,\n    \"2018-05-21T10:20:00.000Z\": 165.9184380435,\n    \"2018-05-21T10:25:00.000Z\": 234.9516814197,\n    \"2018-05-21T10:30:00.000Z\": 258.7242848345,\n    \"2018-05-21T10:35:00.000Z\": 149.5856562879,\n    \"2018-05-21T10:40:00.000Z\": 157.3995593779,\n    \"2018-05-21T10:45:00.000Z\": 163.5934703779,\n    \"2018-05-21T10:50:00.000Z\": 165.4229952016,\n    \"2018-05-21T10:55:00.000Z\": 147.402825158,\n    \"2018-05-21T11:00:00.000Z\": 147.0929068055,\n    \"2018-05-21T11:05:00.000Z\": 169.5109621667,\n    \"2018-05-21T11:10:00.000Z\": 162.7524694778,\n    \"2018-05-21T11:15:00.000Z\": 156.2755862145,\n    \"2018-05-21T11:20:00.000Z\": 165.1037874415,\n    \"2018-05-21T11:25:00.000Z\": 174.8500792849,\n    \"2018-05-21T11:30:00.000Z\": 201.1382307932,\n    \"2018-05-21T11:35:00.000Z\": 194.9702303703,\n    \"2018-05-21T11:40:00.000Z\": 186.4801486217,\n    \"2018-05-21T11:45:00.000Z\": 199.7644485453,\n    \"2018-05-21T11:50:00.000Z\": 225.0726034308,\n    \"2018-05-21T11:55:00.000Z\": 229.2145947795,\n    \"2018-05-21T12:00:00.000Z\": 222.5780094354,\n    \"2018-05-21T12:05:00.000Z\": 220.3030741961,\n    \"2018-05-21T12:10:00.000Z\": 233.3964392018,\n    \"2018-05-21T12:15:00.000Z\": 239.4059502363,\n    \"2018-05-21T12:20:00.000Z\": 240.3887803522,\n    \"2018-05-21T12:25:00.000Z\": 240.8112614065,\n    \"2018-05-21T12:30:00.000Z\": 256.5808995769,\n    \"2018-05-21T12:35:00.000Z\": 242.7919703895,\n    \"2018-05-21T12:40:00.000Z\": 238.6621344019,\n    \"2018-05-21T12:45:00.000Z\": 250.261457039,\n    \"2018-05-21T12:50:00.000Z\": 259.4516469448,\n    \"2018-05-21T12:55:00.000Z\": 247.4866188483,\n    \"2018-05-21T13:00:00.000Z\": 262.8559965981,\n    \"2018-05-21T13:05:00.000Z\": 271.1144597549,\n    \"2018-05-21T13:10:00.000Z\": 268.1243822049,\n    \"2018-05-21T13:15:00.000Z\": 252.8992999006,\n    \"2018-05-21T13:20:00.000Z\": 263.7082366234,\n    \"2018-05-21T13:25:00.000Z\": 266.4385594157,\n    \"2018-05-21T13:30:00.000Z\": 254.0656734496,\n    \"2018-05-21T13:35:00.000Z\": 261.2732814771,\n    \"2018-05-21T13:40:00.000Z\": 269.0084799247,\n    \"2018-05-21T13:45:00.000Z\": 272.3602853329,\n    \"2018-05-21T13:50:00.000Z\": 264.6174163215,\n    \"2018-05-21T13:55:00.000Z\": 273.3087959959,\n    \"2018-05-21T14:00:00.000Z\": 271.2140332534,\n    \"2018-05-21T14:05:00.000Z\": 268.8151027545,\n    \"2018-05-21T14:10:00.000Z\": 255.285584259,\n    \"2018-05-21T14:15:00.000Z\": 269.3637345526,\n    \"2018-05-21T14:20:00.000Z\": 268.1926599218,\n    \"2018-05-21T14:25:00.000Z\": 267.99650141,\n    \"2018-05-21T14:30:00.000Z\": 279.18412017,\n    \"2018-05-21T14:35:00.000Z\": 275.8955013989,\n    \"2018-05-21T14:40:00.000Z\": 266.4569053169,\n    \"2018-05-21T14:45:00.000Z\": 258.4459289038,\n    \"2018-05-21T14:50:00.000Z\": 240.515998635,\n    \"2018-05-21T14:55:00.000Z\": 236.4320345496,\n    \"2018-05-21T15:00:00.000Z\": 232.7289742452,\n    \"2018-05-21T15:05:00.000Z\": 234.8597697921,\n    \"2018-05-21T15:10:00.000Z\": 269.9023580616,\n    \"2018-05-21T15:15:00.000Z\": 316.1587352767,\n    \"2018-05-21T15:20:00.000Z\": 323.8701332699,\n    \"2018-05-21T15:25:00.000Z\": 317.1190739985,\n    \"2018-05-21T15:30:00.000Z\": 301.2711390737,\n    \"2018-05-21T15:35:00.000Z\": 273.5258666903,\n    \"2018-05-21T15:40:00.000Z\": 261.1074678772,\n    \"2018-05-21T15:45:00.000Z\": 267.2029071704,\n    \"2018-05-21T15:50:00.000Z\": 280.0055655431,\n    \"2018-05-21T15:55:00.000Z\": 262.7845262553,\n    \"2018-05-21T16:00:00.000Z\": 253.3816216091,\n    \"2018-05-21T16:05:00.000Z\": 261.568429667,\n    \"2018-05-21T16:10:00.000Z\": 275.2199153263,\n    \"2018-05-21T16:15:00.000Z\": 261.7716808722,\n    \"2018-05-21T16:20:00.000Z\": 253.6702085202,\n    \"2018-05-21T16:25:00.000Z\": 264.644546991,\n    \"2018-05-21T16:30:00.000Z\": 260.0792034028,\n    \"2018-05-21T16:35:00.000Z\": 255.6138360084,\n    \"2018-05-21T16:40:00.000Z\": 237.9523419399,\n    \"2018-05-21T16:45:00.000Z\": 254.7334032544,\n    \"2018-05-21T16:50:00.000Z\": 269.3378390459,\n    \"2018-05-21T16:55:00.000Z\": 249.3728867568,\n    \"2018-05-21T17:00:00.000Z\": 248.1575754584,\n    \"2018-05-21T17:05:00.000Z\": 246.5340665318,\n    \"2018-05-21T17:10:00.000Z\": 265.0021522274,\n    \"2018-05-21T17:15:00.000Z\": 250.1687925269,\n    \"2018-05-21T17:20:00.000Z\": 231.7427349071,\n    \"2018-05-21T17:25:00.000Z\": 252.4959783249,\n    \"2018-05-21T17:30:00.000Z\": 266.3043893095,\n    \"2018-05-21T17:35:00.000Z\": 242.5763346215,\n    \"2018-05-21T17:40:00.000Z\": 235.7665786001,\n    \"2018-05-21T17:45:00.000Z\": 243.7718278734,\n    \"2018-05-21T17:50:00.000Z\": 252.3190830758,\n    \"2018-05-21T17:55:00.000Z\": 248.5787566114,\n    \"2018-05-21T18:00:00.000Z\": 240.5047675689,\n    \"2018-05-21T18:05:00.000Z\": 232.3865041056,\n    \"2018-05-21T18:10:00.000Z\": 251.6981540088,\n    \"2018-05-21T18:15:00.000Z\": 248.9267343335,\n    \"2018-05-21T18:20:00.000Z\": 230.5404194973,\n    \"2018-05-21T18:25:00.000Z\": 242.7762844033,\n    \"2018-05-21T18:30:00.000Z\": 232.2519884073,\n    \"2018-05-21T18:35:00.000Z\": 239.7646228635,\n    \"2018-05-21T18:40:00.000Z\": 241.3671348806,\n    \"2018-05-21T18:45:00.000Z\": 230.8082371746,\n    \"2018-05-21T18:50:00.000Z\": 223.0095260547,\n    \"2018-05-21T18:55:00.000Z\": 236.5057738225,\n    \"2018-05-21T19:00:00.000Z\": 244.1521561349,\n    \"2018-05-21T19:05:00.000Z\": 229.8200184242,\n    \"2018-05-21T19:10:00.000Z\": 227.260960443,\n    \"2018-05-21T19:15:00.000Z\": 224.8377126659,\n    \"2018-05-21T19:20:00.000Z\": 227.89230623,\n    \"2018-05-21T19:25:00.000Z\": 239.8052105909,\n    \"2018-05-21T19:30:00.000Z\": 234.7738052962,\n    \"2018-05-21T19:35:00.000Z\": 227.0413327901,\n    \"2018-05-21T19:40:00.000Z\": 209.0694083257,\n    \"2018-05-21T19:45:00.000Z\": 243.4394369104,\n    \"2018-05-21T19:50:00.000Z\": 244.0213561339,\n    \"2018-05-21T19:55:00.000Z\": 241.6512902164,\n    \"2018-05-21T20:00:00.000Z\": 235.9499431139,\n    \"2018-05-21T20:05:00.000Z\": 233.8867893589,\n    \"2018-05-21T20:10:00.000Z\": 248.4678463306,\n    \"2018-05-21T20:15:00.000Z\": 250.8534584491,\n    \"2018-05-21T20:20:00.000Z\": 244.7945724698,\n    \"2018-05-21T20:25:00.000Z\": 223.9864173817,\n    \"2018-05-21T20:30:00.000Z\": 236.3576690687,\n    \"2018-05-21T20:35:00.000Z\": 252.8759042316,\n    \"2018-05-21T20:40:00.000Z\": 251.7834371473,\n    \"2018-05-21T20:45:00.000Z\": 251.7672641732,\n    \"2018-05-21T20:50:00.000Z\": 241.3963533459,\n    \"2018-05-21T20:55:00.000Z\": 230.4328128909,\n    \"2018-05-21T21:00:00.000Z\": 247.6399977861,\n    \"2018-05-21T21:05:00.000Z\": 253.7207127357,\n    \"2018-05-21T21:10:00.000Z\": 239.4657299581,\n    \"2018-05-21T21:15:00.000Z\": 247.9547043044,\n    \"2018-05-21T21:20:00.000Z\": 246.305074974,\n    \"2018-05-21T21:25:00.000Z\": 263.3165011851,\n    \"2018-05-21T21:30:00.000Z\": 249.2690772476,\n    \"2018-05-21T21:35:00.000Z\": 241.6100739807,\n    \"2018-05-21T21:40:00.000Z\": 243.4235918785,\n    \"2018-05-21T21:45:00.000Z\": 266.8562870047,\n    \"2018-05-21T21:50:00.000Z\": 266.5168016185,\n    \"2018-05-21T21:55:00.000Z\": 245.7146588239,\n    \"2018-05-21T22:00:00.000Z\": 239.4711229568,\n    \"2018-05-21T22:05:00.000Z\": 258.4958009255,\n    \"2018-05-21T22:10:00.000Z\": 268.3613431855,\n    \"2018-05-21T22:15:00.000Z\": 262.6967871798,\n    \"2018-05-21T22:20:00.000Z\": 247.5249566328,\n    \"2018-05-21T22:25:00.000Z\": 254.4802266552,\n    \"2018-05-21T22:30:00.000Z\": 271.8935426721,\n    \"2018-05-21T22:35:00.000Z\": 261.5589828459,\n    \"2018-05-21T22:40:00.000Z\": 250.4267352513,\n    \"2018-05-21T22:45:00.000Z\": 253.8074231597,\n    \"2018-05-21T22:50:00.000Z\": 277.0182034074,\n    \"2018-05-21T22:55:00.000Z\": 275.6463660401,\n    \"2018-05-21T23:00:00.000Z\": 253.2511679689,\n    \"2018-05-21T23:05:00.000Z\": 267.1565324881,\n    \"2018-05-21T23:10:00.000Z\": 270.4126473875,\n    \"2018-05-21T23:15:00.000Z\": 269.9145241413,\n    \"2018-05-21T23:20:00.000Z\": 260.0427486542,\n    \"2018-05-21T23:25:00.000Z\": 261.8064823512,\n    \"2018-05-21T23:30:00.000Z\": 266.6216156216,\n    \"2018-05-21T23:35:00.000Z\": 284.688721616,\n    \"2018-05-21T23:40:00.000Z\": 263.1994072853,\n    \"2018-05-21T23:45:00.000Z\": 271.5607869015,\n    \"2018-05-21T23:50:00.000Z\": 285.3811400046,\n    \"2018-05-21T23:55:00.000Z\": 281.9405519198,\n    \"2018-05-22T00:00:00.000Z\": 260.0894340273,\n    \"2018-05-22T00:05:00.000Z\": 250.6104664999,\n    \"2018-05-22T00:10:00.000Z\": 260.8163204059,\n    \"2018-05-22T00:15:00.000Z\": 277.4287752733,\n    \"2018-05-22T00:20:00.000Z\": 271.4001182926,\n    \"2018-05-22T00:25:00.000Z\": 250.8881918718,\n    \"2018-05-22T00:30:00.000Z\": 255.5231829841,\n    \"2018-05-22T00:35:00.000Z\": 258.1096199613,\n    \"2018-05-22T00:40:00.000Z\": 268.8494409385,\n    \"2018-05-22T00:45:00.000Z\": 262.0037381571,\n    \"2018-05-22T00:50:00.000Z\": 257.0855238447,\n    \"2018-05-22T00:55:00.000Z\": 247.2844317479,\n    \"2018-05-22T01:00:00.000Z\": 257.2944776947,\n    \"2018-05-22T01:05:00.000Z\": 272.5675702006,\n    \"2018-05-22T01:10:00.000Z\": 261.694463174,\n    \"2018-05-22T01:15:00.000Z\": 240.8498347495,\n    \"2018-05-22T01:20:00.000Z\": 245.9439936497,\n    \"2018-05-22T01:25:00.000Z\": 258.387774892,\n    \"2018-05-22T01:30:00.000Z\": 269.2886912867,\n    \"2018-05-22T01:35:00.000Z\": 261.8955542843,\n    \"2018-05-22T01:40:00.000Z\": 251.2915418634,\n    \"2018-05-22T01:45:00.000Z\": 237.4755708467,\n    \"2018-05-22T01:50:00.000Z\": 257.9397295362,\n    \"2018-05-22T01:55:00.000Z\": 266.9124394115,\n    \"2018-05-22T02:00:00.000Z\": 259.1095812604,\n    \"2018-05-22T02:05:00.000Z\": 239.1312736228,\n    \"2018-05-22T02:10:00.000Z\": 226.8252040128,\n    \"2018-05-22T02:15:00.000Z\": 239.7562523088,\n    \"2018-05-22T02:20:00.000Z\": 259.1618084356,\n    \"2018-05-22T02:25:00.000Z\": 251.9870362708,\n    \"2018-05-22T02:30:00.000Z\": 222.695188851,\n    \"2018-05-22T02:35:00.000Z\": 214.7192107025,\n    \"2018-05-22T02:40:00.000Z\": 225.2440938564,\n    \"2018-05-22T02:45:00.000Z\": 233.3238891005,\n    \"2018-05-22T02:50:00.000Z\": 252.4799835974,\n    \"2018-05-22T02:55:00.000Z\": 227.6566076947,\n    \"2018-05-22T03:00:00.000Z\": 211.2675840162,\n    \"2018-05-22T03:05:00.000Z\": 202.8194796906,\n    \"2018-05-22T03:10:00.000Z\": 201.0177535739,\n    \"2018-05-22T03:15:00.000Z\": 221.0236022647,\n    \"2018-05-22T03:20:00.000Z\": 225.1295211278,\n    \"2018-05-22T03:25:00.000Z\": 214.0598596335,\n    \"2018-05-22T03:30:00.000Z\": 210.8554415183,\n    \"2018-05-22T03:35:00.000Z\": 207.9182176868,\n    \"2018-05-22T03:40:00.000Z\": 195.2428509288,\n    \"2018-05-22T03:45:00.000Z\": 187.3339838169,\n    \"2018-05-22T03:50:00.000Z\": 209.9363325208,\n    \"2018-05-22T03:55:00.000Z\": 221.0133169503,\n    \"2018-05-22T04:00:00.000Z\": 225.7554925234,\n    \"2018-05-22T04:05:00.000Z\": 204.6003619505,\n    \"2018-05-22T04:10:00.000Z\": 206.6622865083,\n    \"2018-05-22T04:15:00.000Z\": 190.8732616037,\n    \"2018-05-22T04:20:00.000Z\": 199.5414898747,\n    \"2018-05-22T04:25:00.000Z\": 192.3027709022,\n    \"2018-05-22T04:30:00.000Z\": 226.3519300424,\n    \"2018-05-22T04:35:00.000Z\": 227.4075134562,\n    \"2018-05-22T04:40:00.000Z\": 237.5801354038,\n    \"2018-05-22T04:45:00.000Z\": 370.0233873937,\n    \"2018-05-22T04:50:00.000Z\": 476.6929263243,\n    \"2018-05-22T04:55:00.000Z\": 556.1444745173,\n    \"2018-05-22T05:00:00.000Z\": 809.9805079678,\n    \"2018-05-22T05:05:00.000Z\": 940.1002078546,\n    \"2018-05-22T05:10:00.000Z\": 922.2172570652,\n    \"2018-05-22T05:15:00.000Z\": 921.9394395256,\n    \"2018-05-22T05:20:00.000Z\": 931.1326843594,\n    \"2018-05-22T05:25:00.000Z\": 927.7988392295,\n    \"2018-05-22T05:30:00.000Z\": 924.5430977054,\n    \"2018-05-22T05:35:00.000Z\": 932.5727269319,\n    \"2018-05-22T05:40:00.000Z\": 936.4962950281,\n    \"2018-05-22T05:45:00.000Z\": 929.0260192607,\n    \"2018-05-22T05:50:00.000Z\": 926.4357356548,\n    \"2018-05-22T05:55:00.000Z\": 934.7257131637,\n    \"2018-05-22T06:00:00.000Z\": 908.4082221891,\n    \"2018-05-22T06:05:00.000Z\": 917.7112901544,\n    \"2018-05-22T06:10:00.000Z\": 924.0958121497\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"normal\": {\n        \"min_value\": 0.0,\n        \"max_value\": 500.0\n    },\n    \"increased\": {\n        \"min_value\": 100.0,\n        \"max_value\": 800.0,\n        \"display_name\": \"Increased\"\n    },\n    \"allowed\": {\n        \"min_value\": 0.0,\n        \"max_value\": 912.0\n    }        \n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value_ranges"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "912.0"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "fixed_replacement_value"
+      }
+    ],
+    "output_wirings": []
+  },
+  "released_timestamp": "2024-02-27T12:16:42.987157+00:00",
+  "revision_group_id": "5c50cd5f-066f-4dbe-a810-4f72ddd8e6ef",
+  "state": "RELEASED",
+  "test_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "normal_IS_ABOVE"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value_range_filter_condition_col"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:20:00.000Z\": 86.9358994238,\n    \"2018-05-19T22:25:00.000Z\": 78.6552569681,\n    \"2018-05-19T22:30:00.000Z\": 93.515633185,\n    \"2018-05-19T22:35:00.000Z\": 96.3497006614,\n    \"2018-05-19T22:40:00.000Z\": 83.1926874657,\n    \"2018-05-19T22:45:00.000Z\": 69.9740743464,\n    \"2018-05-19T22:50:00.000Z\": 90.5433921349,\n    \"2018-05-19T22:55:00.000Z\": 97.4750274531,\n    \"2018-05-19T23:00:00.000Z\": 101.6738801355,\n    \"2018-05-19T23:05:00.000Z\": 85.8482897506,\n    \"2018-05-19T23:10:00.000Z\": 84.770860201,\n    \"2018-05-19T23:15:00.000Z\": 85.8559629927,\n    \"2018-05-19T23:20:00.000Z\": 86.5037351162,\n    \"2018-05-19T23:25:00.000Z\": 80.7784552462,\n    \"2018-05-19T23:30:00.000Z\": 89.8411904351,\n    \"2018-05-19T23:35:00.000Z\": 83.1826662979,\n    \"2018-05-19T23:40:00.000Z\": 103.3734694408,\n    \"2018-05-19T23:45:00.000Z\": 101.6826743271,\n    \"2018-05-19T23:50:00.000Z\": 86.4656528841,\n    \"2018-05-19T23:55:00.000Z\": 74.1823425367,\n    \"2018-05-20T00:00:00.000Z\": 77.5083836047,\n    \"2018-05-20T00:05:00.000Z\": 109.1359083963,\n    \"2018-05-20T00:10:00.000Z\": 86.9635555496,\n    \"2018-05-20T00:15:00.000Z\": 72.4734381604,\n    \"2018-05-20T00:20:00.000Z\": 82.6569065462,\n    \"2018-05-20T00:25:00.000Z\": 95.6306292516,\n    \"2018-05-20T00:30:00.000Z\": 96.5189997059,\n    \"2018-05-20T00:35:00.000Z\": 80.0414834298,\n    \"2018-05-20T00:40:00.000Z\": 81.5688589141,\n    \"2018-05-20T00:45:00.000Z\": 66.8476389718,\n    \"2018-05-20T00:50:00.000Z\": 82.1313723217,\n    \"2018-05-20T00:55:00.000Z\": 88.9032494153,\n    \"2018-05-20T01:00:00.000Z\": 78.8591066896,\n    \"2018-05-20T01:05:00.000Z\": 60.278205314,\n    \"2018-05-20T01:10:00.000Z\": 53.8951835823,\n    \"2018-05-20T01:15:00.000Z\": 71.4961130601,\n    \"2018-05-20T01:20:00.000Z\": 78.9503633957,\n    \"2018-05-20T01:25:00.000Z\": 88.2164623807,\n    \"2018-05-20T01:30:00.000Z\": 67.4817188089,\n    \"2018-05-20T01:35:00.000Z\": 48.9307150285,\n    \"2018-05-20T01:40:00.000Z\": 65.6820065898,\n    \"2018-05-20T01:45:00.000Z\": 80.4674129099,\n    \"2018-05-20T01:50:00.000Z\": 83.0974319003,\n    \"2018-05-20T01:55:00.000Z\": 66.4044977776,\n    \"2018-05-20T02:00:00.000Z\": 52.6199439715,\n    \"2018-05-20T02:05:00.000Z\": 50.2284429626,\n    \"2018-05-20T02:10:00.000Z\": 85.1886876577,\n    \"2018-05-20T02:15:00.000Z\": 85.5129601692,\n    \"2018-05-20T02:20:00.000Z\": 71.3317339188,\n    \"2018-05-20T02:25:00.000Z\": 52.917747152,\n    \"2018-05-20T02:30:00.000Z\": 52.3827727031,\n    \"2018-05-20T02:35:00.000Z\": 64.1071562615,\n    \"2018-05-20T02:40:00.000Z\": 83.0344096679,\n    \"2018-05-20T02:45:00.000Z\": 71.5022451453,\n    \"2018-05-20T02:50:00.000Z\": 46.4394249402,\n    \"2018-05-20T02:55:00.000Z\": 43.382501745,\n    \"2018-05-20T03:00:00.000Z\": 54.4602695018,\n    \"2018-05-20T03:05:00.000Z\": 76.2991858088,\n    \"2018-05-20T03:10:00.000Z\": 82.7155861643,\n    \"2018-05-20T03:15:00.000Z\": 52.7799214093,\n    \"2018-05-20T03:20:00.000Z\": 48.0293243988,\n    \"2018-05-20T03:25:00.000Z\": 40.2136775726,\n    \"2018-05-20T03:30:00.000Z\": 30.8733628055,\n    \"2018-05-20T03:35:00.000Z\": 56.7236835216,\n    \"2018-05-20T03:40:00.000Z\": 80.7648985358,\n    \"2018-05-20T03:45:00.000Z\": 60.5576562717,\n    \"2018-05-20T03:50:00.000Z\": 42.7602142735,\n    \"2018-05-20T03:55:00.000Z\": 42.8245428316,\n    \"2018-05-20T04:00:00.000Z\": 45.9636153002,\n    \"2018-05-20T04:05:00.000Z\": 39.4304037403,\n    \"2018-05-20T04:10:00.000Z\": 54.3346944195,\n    \"2018-05-20T04:15:00.000Z\": 53.7024337135,\n    \"2018-05-20T04:20:00.000Z\": 48.0270534763,\n    \"2018-05-20T04:25:00.000Z\": 28.7165651222,\n    \"2018-05-20T04:30:00.000Z\": 25.1043662316,\n    \"2018-05-20T04:35:00.000Z\": 29.6552481484,\n    \"2018-05-20T04:40:00.000Z\": 33.9357116455,\n    \"2018-05-20T04:45:00.000Z\": 36.5774719321,\n    \"2018-05-20T04:50:00.000Z\": 57.2633214106,\n    \"2018-05-20T04:55:00.000Z\": 49.2236152236,\n    \"2018-05-20T05:00:00.000Z\": 42.0204170321,\n    \"2018-05-20T05:05:00.000Z\": 29.0357907363,\n    \"2018-05-20T05:10:00.000Z\": 28.972519502,\n    \"2018-05-20T05:15:00.000Z\": 25.5883073669,\n    \"2018-05-20T05:20:00.000Z\": 25.7142077601,\n    \"2018-05-20T05:25:00.000Z\": 44.4557411598,\n    \"2018-05-20T05:30:00.000Z\": 61.0614822236,\n    \"2018-05-20T05:35:00.000Z\": 52.7493209614,\n    \"2018-05-20T05:40:00.000Z\": 38.4079501823,\n    \"2018-05-20T05:45:00.000Z\": 31.3086890977,\n    \"2018-05-20T05:50:00.000Z\": 79.1806006473,\n    \"2018-05-20T05:55:00.000Z\": 138.3298304464,\n    \"2018-05-20T06:00:00.000Z\": 159.0636434544,\n    \"2018-05-20T06:05:00.000Z\": 123.3056279812,\n    \"2018-05-20T06:10:00.000Z\": 40.9117923242,\n    \"2018-05-20T06:15:00.000Z\": 54.6703391987,\n    \"2018-05-20T06:20:00.000Z\": 60.1409043033,\n    \"2018-05-20T06:25:00.000Z\": 61.773021148,\n    \"2018-05-20T06:30:00.000Z\": 136.3291547746,\n    \"2018-05-20T06:35:00.000Z\": 172.0109041951,\n    \"2018-05-20T06:40:00.000Z\": 185.3083213323,\n    \"2018-05-20T06:45:00.000Z\": 197.8518333074,\n    \"2018-05-20T06:50:00.000Z\": 184.816863378,\n    \"2018-05-20T06:55:00.000Z\": 52.3640067807,\n    \"2018-05-20T07:00:00.000Z\": 30.3856767594,\n    \"2018-05-20T07:05:00.000Z\": 19.6763950118,\n    \"2018-05-20T07:10:00.000Z\": 84.8995442156,\n    \"2018-05-20T07:15:00.000Z\": 106.2051480693,\n    \"2018-05-20T07:20:00.000Z\": 169.8752300099,\n    \"2018-05-20T07:25:00.000Z\": 213.8776647446,\n    \"2018-05-20T07:30:00.000Z\": 218.137763105,\n    \"2018-05-20T07:35:00.000Z\": 211.9986058951,\n    \"2018-05-20T07:40:00.000Z\": 141.5436667966,\n    \"2018-05-20T07:45:00.000Z\": 55.0101414275,\n    \"2018-05-20T07:50:00.000Z\": 54.6697059315,\n    \"2018-05-20T07:55:00.000Z\": 108.6148802995,\n    \"2018-05-20T08:00:00.000Z\": 164.3342435021,\n    \"2018-05-20T08:05:00.000Z\": 205.9293219405,\n    \"2018-05-20T08:10:00.000Z\": 216.0155924794,\n    \"2018-05-20T08:15:00.000Z\": 219.5429889277,\n    \"2018-05-20T08:20:00.000Z\": 214.6161859555,\n    \"2018-05-20T08:25:00.000Z\": 182.517250994,\n    \"2018-05-20T08:30:00.000Z\": 62.0884876359,\n    \"2018-05-20T08:35:00.000Z\": 67.2103674858,\n    \"2018-05-20T08:40:00.000Z\": 78.5314292403,\n    \"2018-05-20T08:45:00.000Z\": 189.482915713,\n    \"2018-05-20T08:50:00.000Z\": 217.701588994,\n    \"2018-05-20T08:55:00.000Z\": 215.6707899191,\n    \"2018-05-20T09:00:00.000Z\": 220.6857971485,\n    \"2018-05-20T09:05:00.000Z\": 223.2626321138,\n    \"2018-05-20T09:10:00.000Z\": 186.0879452113,\n    \"2018-05-20T09:15:00.000Z\": 66.6061463066,\n    \"2018-05-20T09:20:00.000Z\": 71.8896721611,\n    \"2018-05-20T09:25:00.000Z\": 106.1131048244,\n    \"2018-05-20T09:30:00.000Z\": 194.2396819964,\n    \"2018-05-20T09:35:00.000Z\": 212.9194052403,\n    \"2018-05-20T09:40:00.000Z\": 228.7988558129,\n    \"2018-05-20T09:45:00.000Z\": 223.0539335965,\n    \"2018-05-20T09:50:00.000Z\": 229.3014824671,\n    \"2018-05-20T09:55:00.000Z\": 73.057370576,\n    \"2018-05-20T10:00:00.000Z\": 63.8777934173,\n    \"2018-05-20T10:05:00.000Z\": 55.7252891637,\n    \"2018-05-20T10:10:00.000Z\": 124.6033069636,\n    \"2018-05-20T10:15:00.000Z\": 208.999834057,\n    \"2018-05-20T10:20:00.000Z\": 210.5973352137,\n    \"2018-05-20T10:25:00.000Z\": 134.6987564878,\n    \"2018-05-20T10:30:00.000Z\": 80.7366860452,\n    \"2018-05-20T10:35:00.000Z\": 74.0239748251,\n    \"2018-05-20T10:40:00.000Z\": 69.6519772124,\n    \"2018-05-20T10:45:00.000Z\": 66.6507449417,\n    \"2018-05-20T10:50:00.000Z\": 63.6565231819,\n    \"2018-05-20T10:55:00.000Z\": 77.2641910553,\n    \"2018-05-20T11:00:00.000Z\": 76.3756956564,\n    \"2018-05-20T11:05:00.000Z\": 78.390474376,\n    \"2018-05-20T11:10:00.000Z\": 91.0208850327,\n    \"2018-05-20T11:15:00.000Z\": 84.8828852992,\n    \"2018-05-20T11:20:00.000Z\": 100.6171083238,\n    \"2018-05-20T11:25:00.000Z\": 121.420014114,\n    \"2018-05-20T11:30:00.000Z\": 122.7422457964,\n    \"2018-05-20T11:35:00.000Z\": 114.0672784089,\n    \"2018-05-20T11:40:00.000Z\": 124.9792048426,\n    \"2018-05-20T11:45:00.000Z\": 153.3861054222,\n    \"2018-05-20T11:50:00.000Z\": 140.2611586143,\n    \"2018-05-20T11:55:00.000Z\": 138.9443262784,\n    \"2018-05-20T12:00:00.000Z\": 148.510151628,\n    \"2018-05-20T12:05:00.000Z\": 152.9166475408,\n    \"2018-05-20T12:10:00.000Z\": 160.2447124871,\n    \"2018-05-20T12:15:00.000Z\": 159.5788094645,\n    \"2018-05-20T12:20:00.000Z\": 165.8041637338,\n    \"2018-05-20T12:25:00.000Z\": 159.285387551,\n    \"2018-05-20T12:30:00.000Z\": 165.271884833,\n    \"2018-05-20T12:35:00.000Z\": 161.3833736925,\n    \"2018-05-20T12:40:00.000Z\": 176.8410887258,\n    \"2018-05-20T12:45:00.000Z\": 180.5956340785,\n    \"2018-05-20T12:50:00.000Z\": 170.5980778735,\n    \"2018-05-20T12:55:00.000Z\": 167.2900126682,\n    \"2018-05-20T13:00:00.000Z\": 185.4767849358,\n    \"2018-05-20T13:05:00.000Z\": 179.9265264363,\n    \"2018-05-20T13:10:00.000Z\": 176.207298797,\n    \"2018-05-20T13:15:00.000Z\": 188.3835400671,\n    \"2018-05-20T13:20:00.000Z\": 195.4749511852,\n    \"2018-05-20T13:25:00.000Z\": 166.0712157493,\n    \"2018-05-20T13:30:00.000Z\": 176.8166973904,\n    \"2018-05-20T13:35:00.000Z\": 189.1987544304,\n    \"2018-05-20T13:40:00.000Z\": 183.4236375455,\n    \"2018-05-20T13:45:00.000Z\": 186.5117851915,\n    \"2018-05-20T13:50:00.000Z\": 184.9337200978,\n    \"2018-05-20T13:55:00.000Z\": 187.4601888511,\n    \"2018-05-20T14:00:00.000Z\": 189.1652389195,\n    \"2018-05-20T14:05:00.000Z\": 186.1269425153,\n    \"2018-05-20T14:10:00.000Z\": 190.0385586888,\n    \"2018-05-20T14:15:00.000Z\": 176.2308785787,\n    \"2018-05-20T14:20:00.000Z\": 170.889032631,\n    \"2018-05-20T14:25:00.000Z\": 200.3437418988,\n    \"2018-05-20T14:30:00.000Z\": 191.8904045089,\n    \"2018-05-20T14:35:00.000Z\": 189.7712383502,\n    \"2018-05-20T14:40:00.000Z\": 180.1290800151,\n    \"2018-05-20T14:45:00.000Z\": 197.1780600239,\n    \"2018-05-20T14:50:00.000Z\": 195.0832041298,\n    \"2018-05-20T14:55:00.000Z\": 175.8725668583,\n    \"2018-05-20T15:00:00.000Z\": 187.3043246389,\n    \"2018-05-20T15:05:00.000Z\": 197.2477733158,\n    \"2018-05-20T15:10:00.000Z\": 189.7663337729,\n    \"2018-05-20T15:15:00.000Z\": 179.2387550989,\n    \"2018-05-20T15:20:00.000Z\": 183.8158897523,\n    \"2018-05-20T15:25:00.000Z\": 186.5921372968,\n    \"2018-05-20T15:30:00.000Z\": 181.0236973864,\n    \"2018-05-20T15:35:00.000Z\": 173.2669536706,\n    \"2018-05-20T15:40:00.000Z\": 179.3250753491,\n    \"2018-05-20T15:45:00.000Z\": 183.2442350433,\n    \"2018-05-20T15:50:00.000Z\": 174.8351975126,\n    \"2018-05-20T15:55:00.000Z\": 177.7823510347,\n    \"2018-05-20T16:00:00.000Z\": 195.2615650293,\n    \"2018-05-20T16:05:00.000Z\": 174.7665754694,\n    \"2018-05-20T16:10:00.000Z\": 175.6502762854,\n    \"2018-05-20T16:15:00.000Z\": 180.2494148226,\n    \"2018-05-20T16:20:00.000Z\": 187.516513023,\n    \"2018-05-20T16:25:00.000Z\": 185.899972629,\n    \"2018-05-20T16:30:00.000Z\": 167.5664793106,\n    \"2018-05-20T16:35:00.000Z\": 169.6490691354,\n    \"2018-05-20T16:40:00.000Z\": 176.158768683,\n    \"2018-05-20T16:45:00.000Z\": 184.3236702768,\n    \"2018-05-20T16:50:00.000Z\": 163.8026982105,\n    \"2018-05-20T16:55:00.000Z\": 157.6914259458,\n    \"2018-05-20T17:00:00.000Z\": 166.0935360593,\n    \"2018-05-20T17:05:00.000Z\": 159.1095964847,\n    \"2018-05-20T17:10:00.000Z\": 147.7065369358,\n    \"2018-05-20T17:15:00.000Z\": 154.7057897245,\n    \"2018-05-20T17:20:00.000Z\": 168.3555509087,\n    \"2018-05-20T17:25:00.000Z\": 170.5614796039,\n    \"2018-05-20T17:30:00.000Z\": 158.4394920499,\n    \"2018-05-20T17:35:00.000Z\": 141.5043245617,\n    \"2018-05-20T17:40:00.000Z\": 163.4957902013,\n    \"2018-05-20T17:45:00.000Z\": 174.2984169626,\n    \"2018-05-20T17:50:00.000Z\": 156.5764681255,\n    \"2018-05-20T17:55:00.000Z\": 145.6017108276,\n    \"2018-05-20T18:00:00.000Z\": 147.6871890956,\n    \"2018-05-20T18:05:00.000Z\": 162.9423506747,\n    \"2018-05-20T18:10:00.000Z\": 162.8512641091,\n    \"2018-05-20T18:15:00.000Z\": 149.6910092824,\n    \"2018-05-20T18:20:00.000Z\": 140.5253960882,\n    \"2018-05-20T18:25:00.000Z\": 158.8771839914,\n    \"2018-05-20T18:30:00.000Z\": 172.6007529438,\n    \"2018-05-20T18:35:00.000Z\": 160.4501536466,\n    \"2018-05-20T18:40:00.000Z\": 144.8699494803,\n    \"2018-05-20T18:45:00.000Z\": 143.2864996159,\n    \"2018-05-20T18:50:00.000Z\": 156.0899311688,\n    \"2018-05-20T18:55:00.000Z\": 166.2063491434,\n    \"2018-05-20T19:00:00.000Z\": 154.1839333819,\n    \"2018-05-20T19:05:00.000Z\": 142.1280736423,\n    \"2018-05-20T19:10:00.000Z\": 137.0410387908,\n    \"2018-05-20T19:15:00.000Z\": 150.8775981298,\n    \"2018-05-20T19:20:00.000Z\": 154.3254832531,\n    \"2018-05-20T19:25:00.000Z\": 153.1508155345,\n    \"2018-05-20T19:30:00.000Z\": 143.9982068534,\n    \"2018-05-20T19:35:00.000Z\": 142.3341752461,\n    \"2018-05-20T19:40:00.000Z\": 151.720255615,\n    \"2018-05-20T19:45:00.000Z\": 158.2621281129,\n    \"2018-05-20T19:50:00.000Z\": 153.4968545282,\n    \"2018-05-20T19:55:00.000Z\": 143.7376693548,\n    \"2018-05-20T20:00:00.000Z\": 142.0514856047,\n    \"2018-05-20T20:05:00.000Z\": 150.8437823056,\n    \"2018-05-20T20:10:00.000Z\": 166.1271294879,\n    \"2018-05-20T20:15:00.000Z\": 150.5006327538,\n    \"2018-05-20T20:20:00.000Z\": 134.8359733416,\n    \"2018-05-20T20:25:00.000Z\": 133.4771648482,\n    \"2018-05-20T20:30:00.000Z\": 149.6004988879,\n    \"2018-05-20T20:35:00.000Z\": 154.5810230519,\n    \"2018-05-20T20:40:00.000Z\": 162.066364617,\n    \"2018-05-20T20:45:00.000Z\": 145.7448446292,\n    \"2018-05-20T20:50:00.000Z\": 131.9934783902,\n    \"2018-05-20T20:55:00.000Z\": 148.1438116264,\n    \"2018-05-20T21:00:00.000Z\": 159.0688775438,\n    \"2018-05-20T21:05:00.000Z\": 164.1180432476,\n    \"2018-05-20T21:10:00.000Z\": 149.5302407304,\n    \"2018-05-20T21:15:00.000Z\": 140.28660358,\n    \"2018-05-20T21:20:00.000Z\": 149.2851079194,\n    \"2018-05-20T21:25:00.000Z\": 165.5659893612,\n    \"2018-05-20T21:30:00.000Z\": 154.1439776518,\n    \"2018-05-20T21:35:00.000Z\": 149.4644136489,\n    \"2018-05-20T21:40:00.000Z\": 154.5941907831,\n    \"2018-05-20T21:45:00.000Z\": 164.8406319427,\n    \"2018-05-20T21:50:00.000Z\": 181.6959680527,\n    \"2018-05-20T21:55:00.000Z\": 154.7350000859,\n    \"2018-05-20T22:00:00.000Z\": 151.5230909704,\n    \"2018-05-20T22:05:00.000Z\": 160.1882851689,\n    \"2018-05-20T22:10:00.000Z\": 174.8887210965,\n    \"2018-05-20T22:15:00.000Z\": 173.587771397,\n    \"2018-05-20T22:20:00.000Z\": 165.0105987918,\n    \"2018-05-20T22:25:00.000Z\": 161.9471576448,\n    \"2018-05-20T22:30:00.000Z\": 164.6495581777,\n    \"2018-05-20T22:35:00.000Z\": 171.8843956932,\n    \"2018-05-20T22:40:00.000Z\": 177.9174520466,\n    \"2018-05-20T22:45:00.000Z\": 166.6287705491,\n    \"2018-05-20T22:50:00.000Z\": 151.8515290201,\n    \"2018-05-20T22:55:00.000Z\": 173.3088905867,\n    \"2018-05-20T23:00:00.000Z\": 180.786055938,\n    \"2018-05-20T23:05:00.000Z\": 176.1478069596,\n    \"2018-05-20T23:10:00.000Z\": 164.6055015361,\n    \"2018-05-20T23:15:00.000Z\": 165.8118961347,\n    \"2018-05-20T23:20:00.000Z\": 182.7612266921,\n    \"2018-05-20T23:25:00.000Z\": 178.1625682363,\n    \"2018-05-20T23:30:00.000Z\": 176.1401257364,\n    \"2018-05-20T23:35:00.000Z\": 160.2761683119,\n    \"2018-05-20T23:40:00.000Z\": 174.3541932561,\n    \"2018-05-20T23:45:00.000Z\": 185.1896388696,\n    \"2018-05-20T23:50:00.000Z\": 173.4366359349,\n    \"2018-05-20T23:55:00.000Z\": 162.1251562512,\n    \"2018-05-21T00:00:00.000Z\": 152.2594113395,\n    \"2018-05-21T00:05:00.000Z\": 164.8759416863,\n    \"2018-05-21T00:10:00.000Z\": 182.6967505432,\n    \"2018-05-21T00:15:00.000Z\": 173.9322883794,\n    \"2018-05-21T00:20:00.000Z\": 167.9858934981,\n    \"2018-05-21T00:25:00.000Z\": 154.8519440563,\n    \"2018-05-21T00:30:00.000Z\": 171.5228817334,\n    \"2018-05-21T00:35:00.000Z\": 181.9999215285,\n    \"2018-05-21T00:40:00.000Z\": 169.4980785854,\n    \"2018-05-21T00:45:00.000Z\": 164.5742191052,\n    \"2018-05-21T00:50:00.000Z\": 149.1684670774,\n    \"2018-05-21T00:55:00.000Z\": 160.1198995794,\n    \"2018-05-21T01:00:00.000Z\": 172.462731262,\n    \"2018-05-21T01:05:00.000Z\": 170.5161373658,\n    \"2018-05-21T01:10:00.000Z\": 152.1337734829,\n    \"2018-05-21T01:15:00.000Z\": 130.6612099559,\n    \"2018-05-21T01:20:00.000Z\": 152.2316047161,\n    \"2018-05-21T01:25:00.000Z\": 168.4448294636,\n    \"2018-05-21T01:30:00.000Z\": 170.1531364678,\n    \"2018-05-21T01:35:00.000Z\": 152.5175797995,\n    \"2018-05-21T01:40:00.000Z\": 127.6457147537,\n    \"2018-05-21T01:45:00.000Z\": 137.6715320223,\n    \"2018-05-21T01:50:00.000Z\": 165.742231698,\n    \"2018-05-21T01:55:00.000Z\": 181.8724040376,\n    \"2018-05-21T02:00:00.000Z\": 159.056580575,\n    \"2018-05-21T02:05:00.000Z\": 133.7876578796,\n    \"2018-05-21T02:10:00.000Z\": 135.2260247207,\n    \"2018-05-21T02:15:00.000Z\": 148.615568763,\n    \"2018-05-21T02:20:00.000Z\": 170.7364057672,\n    \"2018-05-21T02:25:00.000Z\": 161.5976827976,\n    \"2018-05-21T02:30:00.000Z\": 139.7862988032,\n    \"2018-05-21T02:35:00.000Z\": 137.0496843075,\n    \"2018-05-21T02:40:00.000Z\": 130.2219953094,\n    \"2018-05-21T02:45:00.000Z\": 149.4338745325,\n    \"2018-05-21T02:50:00.000Z\": 167.1641922817,\n    \"2018-05-21T02:55:00.000Z\": 145.8422497591,\n    \"2018-05-21T03:00:00.000Z\": 130.4670061942,\n    \"2018-05-21T03:05:00.000Z\": 116.312792923,\n    \"2018-05-21T03:10:00.000Z\": 110.4228534731,\n    \"2018-05-21T03:15:00.000Z\": 130.5443425156,\n    \"2018-05-21T03:20:00.000Z\": 137.5629238799,\n    \"2018-05-21T03:25:00.000Z\": 137.8296174877,\n    \"2018-05-21T03:30:00.000Z\": 128.3065165246,\n    \"2018-05-21T03:35:00.000Z\": 121.0885937611,\n    \"2018-05-21T03:40:00.000Z\": 111.2250157042,\n    \"2018-05-21T03:45:00.000Z\": 132.4450062421,\n    \"2018-05-21T03:50:00.000Z\": 127.7633559327,\n    \"2018-05-21T03:55:00.000Z\": 134.8909334032,\n    \"2018-05-21T04:00:00.000Z\": 128.446440207,\n    \"2018-05-21T04:05:00.000Z\": 110.441006872,\n    \"2018-05-21T04:10:00.000Z\": 109.700946095,\n    \"2018-05-21T04:15:00.000Z\": 114.5340437289,\n    \"2018-05-21T04:20:00.000Z\": 122.0335804153,\n    \"2018-05-21T04:25:00.000Z\": 140.3120967139,\n    \"2018-05-21T04:30:00.000Z\": 141.6490414641,\n    \"2018-05-21T04:35:00.000Z\": 129.2456715238,\n    \"2018-05-21T04:40:00.000Z\": 128.3604702735,\n    \"2018-05-21T04:45:00.000Z\": 103.6823697419,\n    \"2018-05-21T04:50:00.000Z\": 107.7692280091,\n    \"2018-05-21T04:55:00.000Z\": 105.3069016698,\n    \"2018-05-21T05:00:00.000Z\": 133.3823375377,\n    \"2018-05-21T05:05:00.000Z\": 135.5761918319,\n    \"2018-05-21T05:10:00.000Z\": 126.3400846309,\n    \"2018-05-21T05:15:00.000Z\": 116.1887040832,\n    \"2018-05-21T05:20:00.000Z\": 110.0880811292,\n    \"2018-05-21T05:25:00.000Z\": 107.804272825,\n    \"2018-05-21T05:30:00.000Z\": 126.1140477471,\n    \"2018-05-21T05:35:00.000Z\": 100.5340249354,\n    \"2018-05-21T05:40:00.000Z\": 113.0860552474,\n    \"2018-05-21T05:45:00.000Z\": 125.3068239043,\n    \"2018-05-21T05:50:00.000Z\": 120.7452754491,\n    \"2018-05-21T05:55:00.000Z\": 109.0093390122,\n    \"2018-05-21T06:00:00.000Z\": 104.4720080124,\n    \"2018-05-21T06:05:00.000Z\": 114.3773182728,\n    \"2018-05-21T06:10:00.000Z\": 235.5743866226,\n    \"2018-05-21T06:15:00.000Z\": 259.9093971669,\n    \"2018-05-21T06:20:00.000Z\": 252.2075690771,\n    \"2018-05-21T06:25:00.000Z\": 160.3976473829,\n    \"2018-05-21T06:30:00.000Z\": 138.4378069079,\n    \"2018-05-21T06:35:00.000Z\": 135.5228422482,\n    \"2018-05-21T06:40:00.000Z\": 127.1940938929,\n    \"2018-05-21T06:45:00.000Z\": 131.0889830803,\n    \"2018-05-21T06:50:00.000Z\": 246.3764762481,\n    \"2018-05-21T06:55:00.000Z\": 275.7713523003,\n    \"2018-05-21T07:00:00.000Z\": 293.7155039596,\n    \"2018-05-21T07:05:00.000Z\": 285.5505063576,\n    \"2018-05-21T07:10:00.000Z\": 146.78786506,\n    \"2018-05-21T07:15:00.000Z\": 149.8764086882,\n    \"2018-05-21T07:20:00.000Z\": 144.187013584,\n    \"2018-05-21T07:25:00.000Z\": 130.86381675,\n    \"2018-05-21T07:30:00.000Z\": 194.7438116517,\n    \"2018-05-21T07:35:00.000Z\": 272.7913552453,\n    \"2018-05-21T07:40:00.000Z\": 290.820978105,\n    \"2018-05-21T07:45:00.000Z\": 296.9505939576,\n    \"2018-05-21T07:50:00.000Z\": 298.0083885275,\n    \"2018-05-21T07:55:00.000Z\": 187.4321505365,\n    \"2018-05-21T08:00:00.000Z\": 162.0547652346,\n    \"2018-05-21T08:05:00.000Z\": 150.9500058684,\n    \"2018-05-21T08:10:00.000Z\": 177.2718457395,\n    \"2018-05-21T08:15:00.000Z\": 226.9682405716,\n    \"2018-05-21T08:20:00.000Z\": 281.6991259616,\n    \"2018-05-21T08:25:00.000Z\": 299.6170843508,\n    \"2018-05-21T08:30:00.000Z\": 294.2845290055,\n    \"2018-05-21T08:35:00.000Z\": 293.2341244794,\n    \"2018-05-21T08:40:00.000Z\": 185.7453367837,\n    \"2018-05-21T08:45:00.000Z\": 150.9503373023,\n    \"2018-05-21T08:50:00.000Z\": 151.0371469267,\n    \"2018-05-21T08:55:00.000Z\": 206.0515768125,\n    \"2018-05-21T09:00:00.000Z\": 254.9134971128,\n    \"2018-05-21T09:05:00.000Z\": 260.5309795404,\n    \"2018-05-21T09:10:00.000Z\": 283.5240895158,\n    \"2018-05-21T09:15:00.000Z\": 299.5669472092,\n    \"2018-05-21T09:20:00.000Z\": 290.4716478637,\n    \"2018-05-21T09:25:00.000Z\": 150.1792877788,\n    \"2018-05-21T09:30:00.000Z\": 153.350843163,\n    \"2018-05-21T09:35:00.000Z\": 168.3919070356,\n    \"2018-05-21T09:40:00.000Z\": 246.2511128942,\n    \"2018-05-21T09:45:00.000Z\": 272.6459016925,\n    \"2018-05-21T09:50:00.000Z\": 284.3291444312,\n    \"2018-05-21T09:55:00.000Z\": 287.8771578655,\n    \"2018-05-21T10:00:00.000Z\": 293.9291535394,\n    \"2018-05-21T10:05:00.000Z\": 148.1034467543,\n    \"2018-05-21T10:10:00.000Z\": 144.6698776958,\n    \"2018-05-21T10:15:00.000Z\": 150.4993603999,\n    \"2018-05-21T10:20:00.000Z\": 165.9184380435,\n    \"2018-05-21T10:25:00.000Z\": 234.9516814197,\n    \"2018-05-21T10:30:00.000Z\": 258.7242848345,\n    \"2018-05-21T10:35:00.000Z\": 149.5856562879,\n    \"2018-05-21T10:40:00.000Z\": 157.3995593779,\n    \"2018-05-21T10:45:00.000Z\": 163.5934703779,\n    \"2018-05-21T10:50:00.000Z\": 165.4229952016,\n    \"2018-05-21T10:55:00.000Z\": 147.402825158,\n    \"2018-05-21T11:00:00.000Z\": 147.0929068055,\n    \"2018-05-21T11:05:00.000Z\": 169.5109621667,\n    \"2018-05-21T11:10:00.000Z\": 162.7524694778,\n    \"2018-05-21T11:15:00.000Z\": 156.2755862145,\n    \"2018-05-21T11:20:00.000Z\": 165.1037874415,\n    \"2018-05-21T11:25:00.000Z\": 174.8500792849,\n    \"2018-05-21T11:30:00.000Z\": 201.1382307932,\n    \"2018-05-21T11:35:00.000Z\": 194.9702303703,\n    \"2018-05-21T11:40:00.000Z\": 186.4801486217,\n    \"2018-05-21T11:45:00.000Z\": 199.7644485453,\n    \"2018-05-21T11:50:00.000Z\": 225.0726034308,\n    \"2018-05-21T11:55:00.000Z\": 229.2145947795,\n    \"2018-05-21T12:00:00.000Z\": 222.5780094354,\n    \"2018-05-21T12:05:00.000Z\": 220.3030741961,\n    \"2018-05-21T12:10:00.000Z\": 233.3964392018,\n    \"2018-05-21T12:15:00.000Z\": 239.4059502363,\n    \"2018-05-21T12:20:00.000Z\": 240.3887803522,\n    \"2018-05-21T12:25:00.000Z\": 240.8112614065,\n    \"2018-05-21T12:30:00.000Z\": 256.5808995769,\n    \"2018-05-21T12:35:00.000Z\": 242.7919703895,\n    \"2018-05-21T12:40:00.000Z\": 238.6621344019,\n    \"2018-05-21T12:45:00.000Z\": 250.261457039,\n    \"2018-05-21T12:50:00.000Z\": 259.4516469448,\n    \"2018-05-21T12:55:00.000Z\": 247.4866188483,\n    \"2018-05-21T13:00:00.000Z\": 262.8559965981,\n    \"2018-05-21T13:05:00.000Z\": 271.1144597549,\n    \"2018-05-21T13:10:00.000Z\": 268.1243822049,\n    \"2018-05-21T13:15:00.000Z\": 252.8992999006,\n    \"2018-05-21T13:20:00.000Z\": 263.7082366234,\n    \"2018-05-21T13:25:00.000Z\": 266.4385594157,\n    \"2018-05-21T13:30:00.000Z\": 254.0656734496,\n    \"2018-05-21T13:35:00.000Z\": 261.2732814771,\n    \"2018-05-21T13:40:00.000Z\": 269.0084799247,\n    \"2018-05-21T13:45:00.000Z\": 272.3602853329,\n    \"2018-05-21T13:50:00.000Z\": 264.6174163215,\n    \"2018-05-21T13:55:00.000Z\": 273.3087959959,\n    \"2018-05-21T14:00:00.000Z\": 271.2140332534,\n    \"2018-05-21T14:05:00.000Z\": 268.8151027545,\n    \"2018-05-21T14:10:00.000Z\": 255.285584259,\n    \"2018-05-21T14:15:00.000Z\": 269.3637345526,\n    \"2018-05-21T14:20:00.000Z\": 268.1926599218,\n    \"2018-05-21T14:25:00.000Z\": 267.99650141,\n    \"2018-05-21T14:30:00.000Z\": 279.18412017,\n    \"2018-05-21T14:35:00.000Z\": 275.8955013989,\n    \"2018-05-21T14:40:00.000Z\": 266.4569053169,\n    \"2018-05-21T14:45:00.000Z\": 258.4459289038,\n    \"2018-05-21T14:50:00.000Z\": 240.515998635,\n    \"2018-05-21T14:55:00.000Z\": 236.4320345496,\n    \"2018-05-21T15:00:00.000Z\": 232.7289742452,\n    \"2018-05-21T15:05:00.000Z\": 234.8597697921,\n    \"2018-05-21T15:10:00.000Z\": 269.9023580616,\n    \"2018-05-21T15:15:00.000Z\": 316.1587352767,\n    \"2018-05-21T15:20:00.000Z\": 323.8701332699,\n    \"2018-05-21T15:25:00.000Z\": 317.1190739985,\n    \"2018-05-21T15:30:00.000Z\": 301.2711390737,\n    \"2018-05-21T15:35:00.000Z\": 273.5258666903,\n    \"2018-05-21T15:40:00.000Z\": 261.1074678772,\n    \"2018-05-21T15:45:00.000Z\": 267.2029071704,\n    \"2018-05-21T15:50:00.000Z\": 280.0055655431,\n    \"2018-05-21T15:55:00.000Z\": 262.7845262553,\n    \"2018-05-21T16:00:00.000Z\": 253.3816216091,\n    \"2018-05-21T16:05:00.000Z\": 261.568429667,\n    \"2018-05-21T16:10:00.000Z\": 275.2199153263,\n    \"2018-05-21T16:15:00.000Z\": 261.7716808722,\n    \"2018-05-21T16:20:00.000Z\": 253.6702085202,\n    \"2018-05-21T16:25:00.000Z\": 264.644546991,\n    \"2018-05-21T16:30:00.000Z\": 260.0792034028,\n    \"2018-05-21T16:35:00.000Z\": 255.6138360084,\n    \"2018-05-21T16:40:00.000Z\": 237.9523419399,\n    \"2018-05-21T16:45:00.000Z\": 254.7334032544,\n    \"2018-05-21T16:50:00.000Z\": 269.3378390459,\n    \"2018-05-21T16:55:00.000Z\": 249.3728867568,\n    \"2018-05-21T17:00:00.000Z\": 248.1575754584,\n    \"2018-05-21T17:05:00.000Z\": 246.5340665318,\n    \"2018-05-21T17:10:00.000Z\": 265.0021522274,\n    \"2018-05-21T17:15:00.000Z\": 250.1687925269,\n    \"2018-05-21T17:20:00.000Z\": 231.7427349071,\n    \"2018-05-21T17:25:00.000Z\": 252.4959783249,\n    \"2018-05-21T17:30:00.000Z\": 266.3043893095,\n    \"2018-05-21T17:35:00.000Z\": 242.5763346215,\n    \"2018-05-21T17:40:00.000Z\": 235.7665786001,\n    \"2018-05-21T17:45:00.000Z\": 243.7718278734,\n    \"2018-05-21T17:50:00.000Z\": 252.3190830758,\n    \"2018-05-21T17:55:00.000Z\": 248.5787566114,\n    \"2018-05-21T18:00:00.000Z\": 240.5047675689,\n    \"2018-05-21T18:05:00.000Z\": 232.3865041056,\n    \"2018-05-21T18:10:00.000Z\": 251.6981540088,\n    \"2018-05-21T18:15:00.000Z\": 248.9267343335,\n    \"2018-05-21T18:20:00.000Z\": 230.5404194973,\n    \"2018-05-21T18:25:00.000Z\": 242.7762844033,\n    \"2018-05-21T18:30:00.000Z\": 232.2519884073,\n    \"2018-05-21T18:35:00.000Z\": 239.7646228635,\n    \"2018-05-21T18:40:00.000Z\": 241.3671348806,\n    \"2018-05-21T18:45:00.000Z\": 230.8082371746,\n    \"2018-05-21T18:50:00.000Z\": 223.0095260547,\n    \"2018-05-21T18:55:00.000Z\": 236.5057738225,\n    \"2018-05-21T19:00:00.000Z\": 244.1521561349,\n    \"2018-05-21T19:05:00.000Z\": 229.8200184242,\n    \"2018-05-21T19:10:00.000Z\": 227.260960443,\n    \"2018-05-21T19:15:00.000Z\": 224.8377126659,\n    \"2018-05-21T19:20:00.000Z\": 227.89230623,\n    \"2018-05-21T19:25:00.000Z\": 239.8052105909,\n    \"2018-05-21T19:30:00.000Z\": 234.7738052962,\n    \"2018-05-21T19:35:00.000Z\": 227.0413327901,\n    \"2018-05-21T19:40:00.000Z\": 209.0694083257,\n    \"2018-05-21T19:45:00.000Z\": 243.4394369104,\n    \"2018-05-21T19:50:00.000Z\": 244.0213561339,\n    \"2018-05-21T19:55:00.000Z\": 241.6512902164,\n    \"2018-05-21T20:00:00.000Z\": 235.9499431139,\n    \"2018-05-21T20:05:00.000Z\": 233.8867893589,\n    \"2018-05-21T20:10:00.000Z\": 248.4678463306,\n    \"2018-05-21T20:15:00.000Z\": 250.8534584491,\n    \"2018-05-21T20:20:00.000Z\": 244.7945724698,\n    \"2018-05-21T20:25:00.000Z\": 223.9864173817,\n    \"2018-05-21T20:30:00.000Z\": 236.3576690687,\n    \"2018-05-21T20:35:00.000Z\": 252.8759042316,\n    \"2018-05-21T20:40:00.000Z\": 251.7834371473,\n    \"2018-05-21T20:45:00.000Z\": 251.7672641732,\n    \"2018-05-21T20:50:00.000Z\": 241.3963533459,\n    \"2018-05-21T20:55:00.000Z\": 230.4328128909,\n    \"2018-05-21T21:00:00.000Z\": 247.6399977861,\n    \"2018-05-21T21:05:00.000Z\": 253.7207127357,\n    \"2018-05-21T21:10:00.000Z\": 239.4657299581,\n    \"2018-05-21T21:15:00.000Z\": 247.9547043044,\n    \"2018-05-21T21:20:00.000Z\": 246.305074974,\n    \"2018-05-21T21:25:00.000Z\": 263.3165011851,\n    \"2018-05-21T21:30:00.000Z\": 249.2690772476,\n    \"2018-05-21T21:35:00.000Z\": 241.6100739807,\n    \"2018-05-21T21:40:00.000Z\": 243.4235918785,\n    \"2018-05-21T21:45:00.000Z\": 266.8562870047,\n    \"2018-05-21T21:50:00.000Z\": 266.5168016185,\n    \"2018-05-21T21:55:00.000Z\": 245.7146588239,\n    \"2018-05-21T22:00:00.000Z\": 239.4711229568,\n    \"2018-05-21T22:05:00.000Z\": 258.4958009255,\n    \"2018-05-21T22:10:00.000Z\": 268.3613431855,\n    \"2018-05-21T22:15:00.000Z\": 262.6967871798,\n    \"2018-05-21T22:20:00.000Z\": 247.5249566328,\n    \"2018-05-21T22:25:00.000Z\": 254.4802266552,\n    \"2018-05-21T22:30:00.000Z\": 271.8935426721,\n    \"2018-05-21T22:35:00.000Z\": 261.5589828459,\n    \"2018-05-21T22:40:00.000Z\": 250.4267352513,\n    \"2018-05-21T22:45:00.000Z\": 253.8074231597,\n    \"2018-05-21T22:50:00.000Z\": 277.0182034074,\n    \"2018-05-21T22:55:00.000Z\": 275.6463660401,\n    \"2018-05-21T23:00:00.000Z\": 253.2511679689,\n    \"2018-05-21T23:05:00.000Z\": 267.1565324881,\n    \"2018-05-21T23:10:00.000Z\": 270.4126473875,\n    \"2018-05-21T23:15:00.000Z\": 269.9145241413,\n    \"2018-05-21T23:20:00.000Z\": 260.0427486542,\n    \"2018-05-21T23:25:00.000Z\": 261.8064823512,\n    \"2018-05-21T23:30:00.000Z\": 266.6216156216,\n    \"2018-05-21T23:35:00.000Z\": 284.688721616,\n    \"2018-05-21T23:40:00.000Z\": 263.1994072853,\n    \"2018-05-21T23:45:00.000Z\": 271.5607869015,\n    \"2018-05-21T23:50:00.000Z\": 285.3811400046,\n    \"2018-05-21T23:55:00.000Z\": 281.9405519198,\n    \"2018-05-22T00:00:00.000Z\": 260.0894340273,\n    \"2018-05-22T00:05:00.000Z\": 250.6104664999,\n    \"2018-05-22T00:10:00.000Z\": 260.8163204059,\n    \"2018-05-22T00:15:00.000Z\": 277.4287752733,\n    \"2018-05-22T00:20:00.000Z\": 271.4001182926,\n    \"2018-05-22T00:25:00.000Z\": 250.8881918718,\n    \"2018-05-22T00:30:00.000Z\": 255.5231829841,\n    \"2018-05-22T00:35:00.000Z\": 258.1096199613,\n    \"2018-05-22T00:40:00.000Z\": 268.8494409385,\n    \"2018-05-22T00:45:00.000Z\": 262.0037381571,\n    \"2018-05-22T00:50:00.000Z\": 257.0855238447,\n    \"2018-05-22T00:55:00.000Z\": 247.2844317479,\n    \"2018-05-22T01:00:00.000Z\": 257.2944776947,\n    \"2018-05-22T01:05:00.000Z\": 272.5675702006,\n    \"2018-05-22T01:10:00.000Z\": 261.694463174,\n    \"2018-05-22T01:15:00.000Z\": 240.8498347495,\n    \"2018-05-22T01:20:00.000Z\": 245.9439936497,\n    \"2018-05-22T01:25:00.000Z\": 258.387774892,\n    \"2018-05-22T01:30:00.000Z\": 269.2886912867,\n    \"2018-05-22T01:35:00.000Z\": 261.8955542843,\n    \"2018-05-22T01:40:00.000Z\": 251.2915418634,\n    \"2018-05-22T01:45:00.000Z\": 237.4755708467,\n    \"2018-05-22T01:50:00.000Z\": 257.9397295362,\n    \"2018-05-22T01:55:00.000Z\": 266.9124394115,\n    \"2018-05-22T02:00:00.000Z\": 259.1095812604,\n    \"2018-05-22T02:05:00.000Z\": 239.1312736228,\n    \"2018-05-22T02:10:00.000Z\": 226.8252040128,\n    \"2018-05-22T02:15:00.000Z\": 239.7562523088,\n    \"2018-05-22T02:20:00.000Z\": 259.1618084356,\n    \"2018-05-22T02:25:00.000Z\": 251.9870362708,\n    \"2018-05-22T02:30:00.000Z\": 222.695188851,\n    \"2018-05-22T02:35:00.000Z\": 214.7192107025,\n    \"2018-05-22T02:40:00.000Z\": 225.2440938564,\n    \"2018-05-22T02:45:00.000Z\": 233.3238891005,\n    \"2018-05-22T02:50:00.000Z\": 252.4799835974,\n    \"2018-05-22T02:55:00.000Z\": 227.6566076947,\n    \"2018-05-22T03:00:00.000Z\": 211.2675840162,\n    \"2018-05-22T03:05:00.000Z\": 202.8194796906,\n    \"2018-05-22T03:10:00.000Z\": 201.0177535739,\n    \"2018-05-22T03:15:00.000Z\": 221.0236022647,\n    \"2018-05-22T03:20:00.000Z\": 225.1295211278,\n    \"2018-05-22T03:25:00.000Z\": 214.0598596335,\n    \"2018-05-22T03:30:00.000Z\": 210.8554415183,\n    \"2018-05-22T03:35:00.000Z\": 207.9182176868,\n    \"2018-05-22T03:40:00.000Z\": 195.2428509288,\n    \"2018-05-22T03:45:00.000Z\": 187.3339838169,\n    \"2018-05-22T03:50:00.000Z\": 209.9363325208,\n    \"2018-05-22T03:55:00.000Z\": 221.0133169503,\n    \"2018-05-22T04:00:00.000Z\": 225.7554925234,\n    \"2018-05-22T04:05:00.000Z\": 204.6003619505,\n    \"2018-05-22T04:10:00.000Z\": 206.6622865083,\n    \"2018-05-22T04:15:00.000Z\": 190.8732616037,\n    \"2018-05-22T04:20:00.000Z\": 199.5414898747,\n    \"2018-05-22T04:25:00.000Z\": 192.3027709022,\n    \"2018-05-22T04:30:00.000Z\": 226.3519300424,\n    \"2018-05-22T04:35:00.000Z\": 227.4075134562,\n    \"2018-05-22T04:40:00.000Z\": 237.5801354038,\n    \"2018-05-22T04:45:00.000Z\": 370.0233873937,\n    \"2018-05-22T04:50:00.000Z\": 476.6929263243,\n    \"2018-05-22T04:55:00.000Z\": 556.1444745173,\n    \"2018-05-22T05:00:00.000Z\": 809.9805079678,\n    \"2018-05-22T05:05:00.000Z\": 940.1002078546,\n    \"2018-05-22T05:10:00.000Z\": 922.2172570652,\n    \"2018-05-22T05:15:00.000Z\": 921.9394395256,\n    \"2018-05-22T05:20:00.000Z\": 931.1326843594,\n    \"2018-05-22T05:25:00.000Z\": 927.7988392295,\n    \"2018-05-22T05:30:00.000Z\": 924.5430977054,\n    \"2018-05-22T05:35:00.000Z\": 932.5727269319,\n    \"2018-05-22T05:40:00.000Z\": 936.4962950281,\n    \"2018-05-22T05:45:00.000Z\": 929.0260192607,\n    \"2018-05-22T05:50:00.000Z\": 926.4357356548,\n    \"2018-05-22T05:55:00.000Z\": 934.7257131637,\n    \"2018-05-22T06:00:00.000Z\": 908.4082221891,\n    \"2018-05-22T06:05:00.000Z\": 917.7112901544,\n    \"2018-05-22T06:10:00.000Z\": 924.0958121497\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"normal\": {\n        \"min_value\": 0.0,\n        \"max_value\": 500.0\n    },\n    \"increased\": {\n        \"min_value\": 100.0,\n        \"max_value\": 800.0,\n        \"display_name\": \"Increased\"\n    },\n    \"allowed\": {\n        \"min_value\": 0.0,\n        \"max_value\": 912.0\n    }        \n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value_ranges"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "912.0"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "fixed_replacement_value"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

@@ -1,0 +1,560 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "adbf2ff2-5303-240a-1b2a-252612160640",
+        "connector_name": "filter_series",
+        "data_type": "SERIES",
+        "id": "e66cfe35-9805-478f-95f6-eb42ecc59f7a",
+        "name": "filter_series",
+        "operator_id": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f",
+        "operator_name": "Interpolate Timeseries",
+        "position": {
+          "x": 90,
+          "y": 350
+        },
+        "type": "REQUIRED"
+      },
+      {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
+        "data_type": "SERIES",
+        "id": "308d61a9-781a-4d45-ad03-0c0a83395f08",
+        "name": "timeseries",
+        "operator_id": "5e2c12d6-7923-491d-91e6-3a3de4e18905",
+        "operator_name": "Pass Through (Series)",
+        "position": {
+          "x": -380,
+          "y": 157
+        },
+        "type": "REQUIRED"
+      },
+      {
+        "connector_id": "50308eef-718d-f477-e8e4-01fe00cdda08",
+        "connector_name": "interpolation_params",
+        "data_type": "ANY",
+        "id": "c8181c3b-c622-4fea-bfdd-37944156bb7c",
+        "name": "interpolation_params",
+        "operator_id": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f",
+        "operator_name": "Interpolate Timeseries",
+        "position": {
+          "x": 90,
+          "y": 380
+        },
+        "type": "OPTIONAL",
+        "value": "{\"method\": \"time\"}"
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "46fe5379-1e3d-12c4-7929-5ed3fcd8a5c6",
+            "name": "substitution_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "c55da7ef-6e21-44f7-92d9-dcd7b96a0078"
+        },
+        "id": "0c1c158e-e2d5-4803-a7de-c03c21be8170",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "7a3e80ea-803c-60f2-0429-46a0fe284b08",
+            "name": "new_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "85ffd7a5-3cd5-0c23-a21c-969ee4f97bea",
+            "name": "raw_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "c55da7ef-6e21-44f7-92d9-dcd7b96a0078"
+        },
+        "id": "d6e5ad94-f050-42d6-adbc-d177cff98422",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "5e2c12d6-7923-491d-91e6-3a3de4e18905"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "32c68103-28a2-b3e4-2010-376ff57f0be0",
+            "name": "timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f"
+        },
+        "id": "3d37299a-37d0-4c70-8c5c-513980042af2",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "5e2c12d6-7923-491d-91e6-3a3de4e18905"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "adbf2ff2-5303-240a-1b2a-252612160640",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f"
+        },
+        "id": "36eb99a5-f4fd-4071-9d07-c416f6fcc41d",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "e66cfe35-9805-478f-95f6-eb42ecc59f7a",
+            "name": "filter_series",
+            "position": {
+              "x": 90,
+              "y": 350
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "5e2c12d6-7923-491d-91e6-3a3de4e18905"
+        },
+        "id": "4261d7bd-c747-4a34-bf29-388d81fcdadb",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "308d61a9-781a-4d45-ad03-0c0a83395f08",
+            "name": "timeseries",
+            "position": {
+              "x": -380,
+              "y": 157
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "50308eef-718d-f477-e8e4-01fe00cdda08",
+            "name": "interpolation_params",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f"
+        },
+        "id": "c26819c7-9117-41f2-b51e-0cb2cb43bdda",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c8181c3b-c622-4fea-bfdd-37944156bb7c",
+            "name": "interpolation_params",
+            "position": {
+              "x": 90,
+              "y": 380
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "cf47d656-48e7-4d95-8f40-34cbce44075e",
+            "name": "interpolated_timeseries",
+            "position": {
+              "x": 925,
+              "y": 320
+            }
+          }
+        },
+        "id": "63770734-011f-4d05-9430-d19612a7886b",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "cce7946e-b305-205c-41e5-19810332fd7a",
+            "name": "interpolated_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "f303b888-649d-4d1a-b323-03aeb145b9d2",
+            "name": "substitution_plot",
+            "position": {
+              "x": 1300,
+              "y": 185
+            }
+          }
+        },
+        "id": "25563bd2-c4ff-4f11-9aab-1020722d5c6e",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+            "name": "substituted_ts_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "c55da7ef-6e21-44f7-92d9-dcd7b96a0078"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "32c68103-28a2-b3e4-2010-376ff57f0be0",
+            "name": "timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "adbf2ff2-5303-240a-1b2a-252612160640",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "ANY",
+            "exposed": true,
+            "id": "50308eef-718d-f477-e8e4-01fe00cdda08",
+            "name": "interpolation_params",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "OPTIONAL",
+            "value": "{\"method\": \"time\"}"
+          }
+        ],
+        "name": "Interpolate Timeseries",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "cce7946e-b305-205c-41e5-19810332fd7a",
+            "name": "interpolated_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "7a3e80ea-803c-60f2-0429-46a0fe284b08",
+            "name": "new_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 340,
+          "y": 262
+        },
+        "revision_group_id": "ee2eb771-be37-44a4-b8f3-8a5414aff234",
+        "state": "RELEASED",
+        "transformation_id": "47c145cb-acce-442e-9f57-31446172a49a",
+        "type": "COMPONENT",
+        "version_tag": "0.1.4"
+      },
+      {
+        "id": "c55da7ef-6e21-44f7-92d9-dcd7b96a0078",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "85ffd7a5-3cd5-0c23-a21c-969ee4f97bea",
+            "name": "raw_values",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          },
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "46fe5379-1e3d-12c4-7929-5ed3fcd8a5c6",
+            "name": "substitution_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Timeseries Substitution Plot",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+            "name": "substituted_ts_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 885,
+          "y": 125
+        },
+        "revision_group_id": "3160c5a1-0cfb-7396-739a-a106c2a3e130",
+        "state": "RELEASED",
+        "transformation_id": "3160c5a1-0cfb-7396-739a-a106c2a3e130",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "5e2c12d6-7923-491d-91e6-3a3de4e18905",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "exposed": true,
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "type": "REQUIRED"
+          }
+        ],
+        "name": "Pass Through (Series)",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -130,
+          "y": 97
+        },
+        "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "state": "RELEASED",
+        "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "cce7946e-b305-205c-41e5-19810332fd7a",
+        "connector_name": "interpolated_timeseries",
+        "data_type": "SERIES",
+        "id": "cf47d656-48e7-4d95-8f40-34cbce44075e",
+        "name": "interpolated_timeseries",
+        "operator_id": "33ef86f3-e0e9-463e-ac00-4dbbfec14f1f",
+        "operator_name": "Interpolate Timeseries",
+        "position": {
+          "x": 925,
+          "y": 320
+        }
+      },
+      {
+        "connector_id": "c756773d-5e8a-6ee6-4c64-ea44f26b2336",
+        "connector_name": "substituted_ts_plot",
+        "data_type": "PLOTLYJSON",
+        "id": "f303b888-649d-4d1a-b323-03aeb145b9d2",
+        "name": "substitution_plot",
+        "operator_id": "c55da7ef-6e21-44f7-92d9-dcd7b96a0078",
+        "operator_name": "Timeseries Substitution Plot",
+        "position": {
+          "x": 1300,
+          "y": 185
+        }
+      }
+    ]
+  },
+  "description": "Demonstrates usage of the timeseries interpolation component",
+  "documentation": "# Interpolation Timeseries Example\n## Description\nDemonstrates usage of the timeseries interpolation component\n## Inputs\nSame inputs as for the Timeseries Interpolation component. See there for details\n## Outputs\nInterpolated data and a substitution plot\n## Details\nInterpolates a timeseries and plots the result\n## Examples\nfilter_params\n```\n{\n    \"2018-05-19T22:15:00.000Z\": true,\n    \"2018-05-19T22:20:00.000Z\": false,\n    \"2018-05-19T22:25:00.000Z\": false,\n    \"2018-05-19T22:30:00.000Z\": false,\n    \"2018-05-19T22:35:00.000Z\": true,\n    \"2018-05-19T22:40:00.000Z\": true,\n    \"2018-05-19T22:45:00.000Z\": true,\n    \"2018-05-19T22:50:00.000Z\": true,\n    \"2018-05-19T23:15:00.000Z\": false,\n    \"2018-05-19T23:20:00.000Z\": false,\n    \"2018-05-19T23:25:00.000Z\": false\n}\n```\n\ntimeseries\n```\n{\n    \"2018-05-19T22:20:00.000Z\": 4.0,\n    \"2018-05-19T22:25:00.000Z\": 5.0,\n    \"2018-05-19T22:30:00.000Z\": 6.0,\n    \"2018-05-19T22:35:00.000Z\": 4.0,\n    \"2018-05-19T22:40:00.000Z\": 4.0,\n    \"2018-05-19T23:15:00.000Z\": 4,\n    \"2018-05-19T23:20:00.000Z\": 3,\n    \"2018-05-19T23:25:00.000Z\": 2\n}\n```\n\ninterpolation_params:\n```\n{\"method\": \"cubic\", \"limit_direction\": \"both\"}\n```\n\nThis demonstrates an example\n* using non-linear (here cubic) interpolation\n* that both replaces existing values and adds values at some positions where no value was present previously\n* that shows that interpolation takes into account that the timeseries frequency is not fixed",
+  "id": "f28d403f-88bb-4328-afd5-6a4aa53aa039",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "SERIES",
+        "id": "e66cfe35-9805-478f-95f6-eb42ecc59f7a",
+        "name": "filter_series",
+        "type": "REQUIRED"
+      },
+      {
+        "data_type": "SERIES",
+        "id": "308d61a9-781a-4d45-ad03-0c0a83395f08",
+        "name": "timeseries",
+        "type": "REQUIRED"
+      },
+      {
+        "data_type": "ANY",
+        "id": "c8181c3b-c622-4fea-bfdd-37944156bb7c",
+        "name": "interpolation_params",
+        "type": "OPTIONAL",
+        "value": "{\"method\": \"time\"}"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "SERIES",
+        "id": "cf47d656-48e7-4d95-8f40-34cbce44075e",
+        "name": "interpolated_timeseries"
+      },
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "f303b888-649d-4d1a-b323-03aeb145b9d2",
+        "name": "substitution_plot"
+      }
+    ]
+  },
+  "name": "Interpolate Timeseries Example",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:15:00.000Z\": true,\n    \"2018-05-19T22:20:00.000Z\": false,\n    \"2018-05-19T22:25:00.000Z\": false,\n    \"2018-05-19T22:30:00.000Z\": false,\n    \"2018-05-19T22:35:00.000Z\": true,\n    \"2018-05-19T22:40:00.000Z\": true,\n    \"2018-05-19T22:45:00.000Z\": true,\n    \"2018-05-19T22:50:00.000Z\": true,\n    \"2018-05-19T23:15:00.000Z\": false,\n    \"2018-05-19T23:20:00.000Z\": false,\n    \"2018-05-19T23:25:00.000Z\": false\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "filter_series"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:20:00.000Z\": 4.0,\n    \"2018-05-19T22:25:00.000Z\": 5.0,\n    \"2018-05-19T22:30:00.000Z\": 6.0,\n    \"2018-05-19T22:35:00.000Z\": 4.0,\n    \"2018-05-19T22:40:00.000Z\": 4.0,\n    \"2018-05-19T23:15:00.000Z\": 4,\n    \"2018-05-19T23:20:00.000Z\": 3,\n    \"2018-05-19T23:25:00.000Z\": 2\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\"method\": \"cubic\", \"limit_direction\": \"both\"}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "interpolation_params"
+      }
+    ],
+    "output_wirings": []
+  },
+  "released_timestamp": "2024-02-22T16:03:07.398956+00:00",
+  "revision_group_id": "edd52821-9b74-40c2-ae43-151be3afc8e4",
+  "state": "RELEASED",
+  "test_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:15:00.000Z\": true,\n    \"2018-05-19T22:20:00.000Z\": false,\n    \"2018-05-19T22:25:00.000Z\": false,\n    \"2018-05-19T22:30:00.000Z\": false,\n    \"2018-05-19T22:35:00.000Z\": true,\n    \"2018-05-19T22:40:00.000Z\": true,\n    \"2018-05-19T22:45:00.000Z\": true,\n    \"2018-05-19T22:50:00.000Z\": true,\n    \"2018-05-19T23:15:00.000Z\": false,\n    \"2018-05-19T23:20:00.000Z\": false,\n    \"2018-05-19T23:25:00.000Z\": false\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "filter_series"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2018-05-19T22:20:00.000Z\": 4.0,\n    \"2018-05-19T22:25:00.000Z\": 5.0,\n    \"2018-05-19T22:30:00.000Z\": 6.0,\n    \"2018-05-19T22:35:00.000Z\": 4.0,\n    \"2018-05-19T22:40:00.000Z\": 4.0,\n    \"2018-05-19T23:15:00.000Z\": 4,\n    \"2018-05-19T23:20:00.000Z\": 3,\n    \"2018-05-19T23:25:00.000Z\": 2\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\"method\": \"cubic\", \"limit_direction\": \"both\"}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "interpolation_params"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

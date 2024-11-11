@@ -330,6 +330,36 @@
     ]
   },
   "name": "Create ExampleClass Object",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "name"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "name"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "amount"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "0.5"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "value"
+      }
+    ],
+    "output_wirings": []
+  },
   "released_timestamp": "2023-02-10T13:45:52.982547+00:00",
   "revision_group_id": "039f8445-93e8-4006-a5b2-47f60ee240e8",
   "state": "RELEASED",

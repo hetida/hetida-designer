@@ -118,11 +118,6 @@ def main(
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
-    "input_wirings": [
-        {
-            "workflow_input_name": "x",
-            "adapter_id": "direct_provisioning",
-            "filters": {"value": "45.6"},
-        }
-    ]
+    "input_wirings": [{"workflow_input_name": "x", "filters": {"value": "45.6"}}]
 }
+RELEASE_WIRING = None

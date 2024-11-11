@@ -331,6 +331,11 @@
     ]
   },
   "name": "Combine two Series into DataFrame",
+  "release_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [],
+    "output_wirings": []
+  },
   "released_timestamp": "2022-02-09T16:33:37.208298+00:00",
   "revision_group_id": "aa55faf1-7321-40ee-b41c-ab7267ef6468",
   "state": "RELEASED",
