@@ -132,18 +132,31 @@
   }
 
   .mdc-dialog__container {
-    // Won't work with map-get or variables
     --mdc-dialog-supporting-text-color: #292929;
+    --mdc-dialog-container-text-color: #292929;
 
     .mat-mdc-dialog-title {
       color: $hd-black !important;
       background-color: $hd-yellow;
     }
 
-    .mat-mdc-text-field-wrapper
-      .mat-mdc-form-field-flex
-      .mat-mdc-floating-label {
-      color: $hd-black;
+    .mat-mdc-form-field {
+      // Won't work with map-get or variables
+      --mdc-filled-text-field-input-text-color: #292929;
+      --mdc-filled-text-field-disabled-input-text-color: #29292961;
+      --mat-select-disabled-trigger-text-color: #29292961;
+
+      .mdc-line-ripple::before,
+      .mdc-line-ripple::after {
+        --mdc-filled-text-field-active-indicator-color: #0000006b;
+        --mdc-filled-text-field-disabled-active-indicator-color: #0000000f;
+      }
+
+      .mat-mdc-text-field-wrapper
+        .mat-mdc-form-field-flex
+        .mat-mdc-floating-label {
+        color: $hd-black !important;
+      }
     }
   }
 
@@ -211,6 +224,7 @@
   .navigation-container__search {
     // Won't work with map-get or variables
     --mdc-outlined-text-field-outline-color: #e3e3e3;
+    --mdc-outlined-text-field-hover-outline-color: $hd-grey-dark;
   }
 
   .dark-theme {
