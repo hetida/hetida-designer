@@ -142,22 +142,38 @@ The attributes `ref_id` and `ref_key` of the corresponding input wiring must be 
 
 ## <a name="data-type-parsing"></a> Pandas objects in hetida workflows and components
 
-1. pd.DataFrame as return
-When returning a pandas.DataFrame duplicates in the index are not possible as a "ValueError" will
-occure stating "DataFrame index must be unique for orient='columns'.". Therefore, we recommend
-using the timeseries information as column and reset the index before returning
-the dataframe to avoid negative implications. (For pd.Series, the issue of having duplicates
-within the index is not relevant)
+### Handling of index during DataFrame serialisation
+
+When your workflow or component has a pandas.DataFrame as a DATAFRAME output and is run directly, serialization will assume that the index is unique. If this is not the case you will get a `ValueError` stating "DataFrame index must be unique for orient='columns'."
+
+Moreover it is not guaranteed that the index itself is included. In fact this depends on the handling of the sink / adapter to which this output is wired for execution.
+
+Therefore we recommend
+* to assume that all relevant information of ingoing DataFrames is in columns and not in the index. E.g. timestamps should be expected in an explicit "timestamp" column and not in the index.
+* to finally prepare a result DataFrame to contain all relevant information in explicit columns and not in the index. E.g. add the DateTimeIndex as explicit column "timestamp"
+* to reindex it with a unique index prior to outputting it finally.
+
+E.g. the last two steps can be achieved via
+
 ```python
 dataframe_to_return = dataframe.reset_index(
     names="new_time_column", drop=False, inplace=False
 )
 ```
 
-2. pd.Series as input
-Some adapters may define a named or an unnamed series as input. Therefore,
-make sure that your code works with both versions. If you want to convert a
-pd.Series into a pd.DataFrame we recommend doing the following.
+**Notes**:
+* For pd.Series duplicate index entries are no issue since for them serialization is handled differently.
+* In-between operators of a workflow, DataFrame objects are transferred as they are, without intermediate serialization. So components working and expecting a index of a certain kind and form do make sense!
+
+### pd.Series names
+Adapters may provide pd.Series objects to SERIES inputs either with a name or without.
+
+You should ensure that your code works with both versions, to be independant of the adapter / source used with your workflow.
+
+Note that ax explicit "Name Series" component is available in the base component set.
+
+E.g. if you want to convert a pd.Series into a one-columed pd.DataFrame we recommend doing the following:
+
 ```python
 dataframe = series.to_frame(name="new_column_name")
 ```
