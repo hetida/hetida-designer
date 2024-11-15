@@ -122,7 +122,7 @@
             <mat-error [hdErrorVisual]="ioItem.get('constant')"></mat-error>
             <mat-label>Input Data</mat-label>
             <span
-              *ngIf="showEditorIcon(ioItem)"
+              *ngIf="showEditorIcon(ioItem) && data.editMode"
               class="clickable"
               matSuffix
               (click)="$event.preventDefault(); openJsonEditor(ioItem)"

@@ -82,7 +82,7 @@
       margin: 0;
     }
 
-    background-color: $hd-white !important;
+    background-color: $hd-white;
     color: $hd-black;
     border-color: $hd-black;
     border-radius: 5px;
@@ -94,7 +94,7 @@
     }
 
     & .component {
-      background-color: $hd-white !important;
+      background-color: $hd-white;
       color: $hd-black;
       border-color: $hd-black;
 
@@ -132,30 +132,41 @@
   }
 
   .mdc-dialog__container {
+    // Won't work with map-get or variables
     --mdc-dialog-supporting-text-color: #292929;
     --mdc-dialog-container-text-color: #292929;
 
     .mat-mdc-dialog-title {
-      color: $hd-black !important;
+      --mdc-dialog-subhead-color: #292929;
       background-color: $hd-yellow;
     }
 
+    .mat-mdc-select {
+      --mat-select-enabled-trigger-text-color: #292929;
+      --mat-select-disabled-trigger-text-color: #29292961;
+      --mat-select-placeholder-text-color: #292929;
+      //TODO: Fix for material 17, they used enabled arrow-color for a disabled select box
+      --mat-select-enabled-arrow-color: #29292961;
+    }
+
     .mat-mdc-form-field {
-      // Won't work with map-get or variables
       --mdc-filled-text-field-input-text-color: #292929;
       --mdc-filled-text-field-disabled-input-text-color: #29292961;
-      --mat-select-disabled-trigger-text-color: #29292961;
 
       .mdc-line-ripple::before,
       .mdc-line-ripple::after {
         --mdc-filled-text-field-active-indicator-color: #0000006b;
         --mdc-filled-text-field-disabled-active-indicator-color: #0000000f;
+        --mdc-filled-text-field-hover-active-indicator-color: #292929;
+        --mdc-filled-text-field-focus-active-indicator-color: #292929;
       }
 
       .mat-mdc-text-field-wrapper
         .mat-mdc-form-field-flex
         .mat-mdc-floating-label {
-        color: $hd-black !important;
+        --mdc-filled-text-field-label-text-color: #292929;
+        --mdc-filled-text-field-disabled-label-text-color: #292929;
+        --mdc-filled-text-field-hover-label-text-color: #292929;
       }
     }
   }
