@@ -43,6 +43,15 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
                 "dataType": "float",
             }
         )
+    if received_key_param == "max_val" and received_ref_id == "id_3":
+        assert received_ref_type_endpoint == "sinks"
+        response_mock.json = mock.Mock(
+            return_value={
+                "key": "max_val",
+                "value": "25.9",
+                "dataType": "numeric",
+            }
+        )
         return response_mock
 
     raise ValueError("Could not produce mock")
@@ -158,12 +167,21 @@ async def test_load_metadata_request():
                         type="metadata(float)",
                         filters={},
                     ),
+                    "wf_input_3": FilteredSource(
+                        ref_id="id_3",
+                        ref_id_type="SINK",
+                        ref_key="max_val",
+                        type="metadata(numeric)",
+                        filters={},
+                    ),
                 },
                 adapter_key="test_load_metadata_adapter_key_2",
             )
 
             assert loaded_metadata["wf_input_1"] == "some description"
             assert loaded_metadata["wf_input_2"] == 25.9
+            assert loaded_metadata["wf_input_3"] == 25.9
+
 
 
 @pytest.mark.asyncio

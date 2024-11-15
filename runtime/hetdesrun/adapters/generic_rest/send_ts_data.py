@@ -15,22 +15,34 @@ from hetdesrun.webservice.config import get_config
 
 def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
     """Raise appropriate exceptions if sink_type and series value dtype do not match"""
+
     if sink_type.endswith("(float)") and not pd.api.types.is_float_dtype(series):
         raise AdapterOutputDataError(
             f"Expected float value dtype for series but got {str(series.dtype)}."
         )
-    if sink_type.endswith("(int)") and not pd.api.types.is_integer_dtype(series):
+    elif sink_type.endswith("(int)") and not pd.api.types.is_integer_dtype(series):
         raise AdapterOutputDataError(
             f"Expected int value dtype for series but got {str(series.dtype)}."
         )
-    if (sink_type.endswith(("(boolean)", "(bool)"))) and not pd.api.types.is_bool_dtype(series):
+    elif (sink_type.endswith(("(boolean)", "(bool)"))) and not pd.api.types.is_bool_dtype(
+        series
+    ):
         raise AdapterOutputDataError(
             f"Expected bool value dtype for series but got {str(series.dtype)}."
         )
-    if (sink_type.endswith(("(str)", "(string)"))) and not pd.api.types.is_string_dtype(series):
+    elif (sink_type.endswith(("(str)", "(string)"))) and not pd.api.types.is_string_dtype(
+        series
+    ):
         raise AdapterOutputDataError(
             f"Expected string value dtype for series but got {str(series.dtype)}."
         )
+    elif (sink_type.endswith("(numeric)") and
+          not (pd.api.types.is_float_dtype(series) or pd.api.types.is_integer_dtype(series))):
+        raise AdapterOutputDataError(
+            f"Expected int or float value dtype for series but got {str(series.dtype)}."
+        )
+    else:
+        raise AdapterOutputDataError("Sink has no dtype specified for series")
 
 
 def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict]:
