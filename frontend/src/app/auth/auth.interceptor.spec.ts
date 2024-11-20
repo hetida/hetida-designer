@@ -1,11 +1,13 @@
 import {
   HTTP_INTERCEPTORS,
   HttpClient,
-  HttpContext
+  HttpContext,
+  provideHttpClient,
+  withInterceptorsFromDi
 } from '@angular/common/http';
 import {
-  HttpClientTestingModule,
-  HttpTestingController
+  HttpTestingController,
+  provideHttpClientTesting
 } from '@angular/common/http/testing';
 import { inject, TestBed } from '@angular/core/testing';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
@@ -28,7 +30,7 @@ describe('AuthInterceptor', () => {
   beforeEach(() => {
     mockConfigService = createConfigServiceMock();
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [],
       providers: [
         AuthInterceptor,
         {
@@ -43,7 +45,9 @@ describe('AuthInterceptor', () => {
           provide: HTTP_INTERCEPTORS,
           useClass: AuthInterceptor,
           multi: true
-        }
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     });
   });

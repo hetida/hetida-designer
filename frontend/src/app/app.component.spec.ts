@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
@@ -19,20 +22,20 @@ describe('AppComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
+      declarations: [AppComponent],
       imports: [
         BasicTestModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientModule,
         RouterModule.forRoot([])
       ],
       providers: [
         {
           provide: OidcSecurityService,
           useClass: OidcSecurityServiceStub
-        }
-      ],
-      declarations: [AppComponent]
+        },
+        provideHttpClient(withInterceptorsFromDi())
+      ]
     }).compileComponents();
   }));
 

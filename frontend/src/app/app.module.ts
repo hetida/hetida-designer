@@ -1,4 +1,8 @@
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -113,6 +117,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     TransformationContextMenuComponent,
     OptionalFieldsDialogComponent
   ],
+  bootstrap: [AppComponent],
   imports: [
     AppRoutingModule,
     PlotlyViaWindowModule,
@@ -120,7 +125,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     OwlDateTimeModule,
     OwlMomentDateTimeModule,
     MaterialModule,
@@ -199,8 +203,8 @@ const httpLoaderFactory = (configService: ConfigService) => {
     },
     // Fix for Frozen Progress bar animation, in an *ngIf condition.
     // https://github.com/angular/components/issues/11453#issuecomment-466038415
-    { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' }
-  ],
-  bootstrap: [AppComponent]
+    { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' },
+    provideHttpClient(withInterceptorsFromDi())
+  ]
 })
 export class AppModule {}

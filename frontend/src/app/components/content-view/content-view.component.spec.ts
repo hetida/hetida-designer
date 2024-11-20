@@ -14,7 +14,10 @@ import {
   selectContentViewStoreState
 } from './content-view.component';
 import { RouterModule } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 
 @Component({ selector: 'hd-home-tab', template: '' })
 class HomeStubComponent {}
@@ -25,14 +28,6 @@ describe('ContentViewComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        FormsModule,
-        MonacoEditorModule.forRoot(),
-        NgHetidaFlowchartModule,
-        RouterModule.forRoot([]),
-        HttpClientModule
-      ],
       declarations: [
         ContentViewComponent,
         ToolbarComponent,
@@ -40,7 +35,17 @@ describe('ContentViewComponent', () => {
         WorkflowEditorComponent,
         HomeStubComponent
       ],
-      providers: [provideMockStore()]
+      imports: [
+        BasicTestModule,
+        FormsModule,
+        MonacoEditorModule.forRoot(),
+        NgHetidaFlowchartModule,
+        RouterModule.forRoot([])
+      ],
+      providers: [
+        provideMockStore(),
+        provideHttpClient(withInterceptorsFromDi())
+      ]
     }).compileComponents();
   }));
 

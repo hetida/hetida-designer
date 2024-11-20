@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
@@ -15,6 +15,10 @@ import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { RouterModule } from '@angular/router';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(
@@ -260,11 +264,7 @@ describe('TransformationActionService', () => {
     notificationServiceSpy = jasmine.createSpy();
 
     TestBed.configureTestingModule({
-      imports: [
-        MaterialModule,
-        HttpClientTestingModule,
-        RouterModule.forRoot([])
-      ],
+      imports: [MaterialModule, RouterModule.forRoot([])],
       providers: [
         provideMockStore(),
         {
@@ -282,7 +282,9 @@ describe('TransformationActionService', () => {
         {
           provide: NotificationService,
           useValue: notificationServiceSpy
-        }
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     });
   });
