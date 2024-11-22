@@ -34,6 +34,7 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
             }
         )
         return response_mock
+
     if received_key_param == "max_val" and received_ref_id == "id_2":
         assert received_ref_type_endpoint == "sinks"
         response_mock.json = mock.Mock(
@@ -43,11 +44,13 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
                 "dataType": "float",
             }
         )
-    if received_key_param == "max_val" and received_ref_id == "id_3":
+        return response_mock
+
+    if received_key_param == "max_val_2" and received_ref_id == "id_3":
         assert received_ref_type_endpoint == "sinks"
         response_mock.json = mock.Mock(
             return_value={
-                "key": "max_val",
+                "key": "max_val_2",
                 "value": "25.9",
                 "dataType": "numeric",
             }
@@ -78,6 +81,7 @@ async def test_load_metadata_request():
                 filters={"filter_key": "filter_value"},
             ),
         }
+
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
@@ -145,8 +149,13 @@ async def test_load_metadata_request():
                     adapter_key="test_load_metadata_adapter_key",
                 )
 
-        # multiple metadata values:
 
+@pytest.mark.asyncio
+async def test_load_multiple_metadata_request():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
+        return_value="https://hetida.de",
+    ):
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             new=detailed_mocked_async_client_get,
@@ -170,12 +179,12 @@ async def test_load_metadata_request():
                     "wf_input_3": FilteredSource(
                         ref_id="id_3",
                         ref_id_type="SINK",
-                        ref_key="max_val",
+                        ref_key="max_val_2",
                         type="metadata(numeric)",
                         filters={},
                     ),
                 },
-                adapter_key="test_load_metadata_adapter_key_2",
+                adapter_key="test_load_metadata_adapter_key",
             )
 
             assert loaded_metadata["wf_input_1"] == "some description"
