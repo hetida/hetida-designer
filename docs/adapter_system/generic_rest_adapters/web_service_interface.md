@@ -22,6 +22,8 @@ Possible values
 
 - `any`
 
+- `numeric`,
+
 ### Enumeration "type"
 
 - `metadata({datatype})`(for example “metadata(string)” or “metadata(float)”)
@@ -40,10 +42,10 @@ These endpoints enable user interfaces (like the hetida designer test execution 
 
 Basic information about the adapter. This endpoint is currently not used by hetida designer itself.
 
-* no query parameters 
+* no query parameters
 
 * Response:
-  
+
   ```
   {
     "id": STRING,
@@ -57,7 +59,7 @@ Basic information about the adapter. This endpoint is currently not used by heti
 This endpoints allows for hierarchical browsing of data sources / data sinks. It returns exactly one level of the hierarchy (used by the hetida designer frontend for lazy loading). The nodes of the hierarchy are called thingNodes.
 
 * query parameters:
-  
+
   * `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all  sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks)  and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
 
 Response:
@@ -96,7 +98,7 @@ Response:
   "sinks": [
     {
       "id": STRING,
-      "thingNodeId": STRING,      
+      "thingNodeId": STRING,
       "name": STRING,
       "metadataKey": STRING, // optional/null if type not of form metadata(...)
       "type": STRING, // enumeration (see above)
@@ -151,7 +153,7 @@ Response of /sources/ (without id):
 ```
 {
 "resultCount": INTEGER
-"sources": 
+"sources":
   [
     {
       "id": STRING,
@@ -160,7 +162,7 @@ Response of /sources/ (without id):
       "type": TYPE,
       "visible": BOOL,
       "path": STRING,
-      "filters":{ 
+      "filters":{
         "<key>": {
           "name": STRING,
           "type": STRING,
@@ -283,12 +285,12 @@ Response:
 [
     {
         "key": STRING,
-        "value": value // json datatype corresponding to the dataType 
+        "value": value // json datatype corresponding to the dataType
                        // field. For "any" dataType this can be either
                        // a Json object or a string containing a Json
                        // object.
         "dataType": DATATYPE // see "datatype" enum description above
-        "isSinK": BOOL // optional (default: False). Will be used in 
+        "isSinK": BOOL // optional (default: False). Will be used in
                        // a later version to determine which metadata
                        // is writable
     },
@@ -307,12 +309,12 @@ Response (GET):
 ```
 {
     "key": STRING,
-    "value": value // json datatype corresponding to the dataType 
+    "value": value // json datatype corresponding to the dataType
                     // field. For "any" dataType this can be either
                     // a Json object or a string containing a Json
                     // object.
     "dataType": DATATYPE // see "datatype" enum description above
-    "isSinK": BOOL // optional (default: False). Will be used in 
+    "isSinK": BOOL // optional (default: False). Will be used in
                     // a later version to determine which metadata
                     // is writable / wirableto workflow outputs
 }
@@ -323,8 +325,8 @@ Payload (POST):
 ```
 {
     "key": STRING,
-    "value": value // json datatype corresponding to the dataType 
-                    // field. When posting this must be the 
+    "value": value // json datatype corresponding to the dataType
+                    // field. When posting this must be the
                     // JSON datatype corresponding to dataType
 }
 ```
@@ -415,7 +417,7 @@ Payload (List of timeseries records):
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
 ##### Retrieving attached timeseries metadata
-Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string. 
+Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 See [metadata attrs documentation](../../metadata_attrs.md) for details and conventions.
 
