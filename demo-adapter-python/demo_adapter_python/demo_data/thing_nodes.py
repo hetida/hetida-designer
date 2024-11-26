@@ -20,6 +20,12 @@ thing_node_json_objects: list[dict[str, Any]] = [
         "description": "Plant B",
     },
     {
+        "id": "root.plantC",
+        "parentId": "root",
+        "name": "Plant C",
+        "description": "Plant C",
+    },
+    {
         "id": "root.plantA.picklingUnit",
         "parentId": "root.plantA",
         "name": "Pickling Unit",
@@ -32,6 +38,12 @@ thing_node_json_objects: list[dict[str, Any]] = [
         "description": "Plant B Pickling Unit",
     },
     {
+        "id": "root.plantC.picklingUnit",
+        "parentId": "root.plantC",
+        "name": "Pickling Unit",
+        "description": "Plant C Pickling Unit",
+    },
+    {
         "id": "root.plantA.millingUnit",
         "parentId": "root.plantA",
         "name": "Milling Unit",
@@ -42,6 +54,12 @@ thing_node_json_objects: list[dict[str, Any]] = [
         "parentId": "root.plantB",
         "name": "Milling Unit",
         "description": "Plant B Milling Unit",
+    },
+    {
+        "id": "root.plantC.picklingUnit.influx",
+        "parentId": "root.plantC.picklingUnit",
+        "name": "Pickling Unit Influx",
+        "description": "Plant C Pickling Unit Influx",
     },
     {
         "id": "root.plantA.picklingUnit.influx",

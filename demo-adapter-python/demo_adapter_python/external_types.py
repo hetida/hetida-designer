@@ -73,18 +73,21 @@ class GeneralType(Enum):
 class ExternalType(str, Enum):
     METADATA_INT = "metadata(int)", "metadata(integer)"
     METADATA_FLOAT = "metadata(float)"
+    METADATA_NUMERIC = "metadata(numeric)"
     METADATA_STR = "metadata(string)", "metadata(str)"
     METADATA_BOOLEAN = "metadata(boolean)", "metadata(bool)"
     METADATA_ANY = "metadata(any)"
 
     TIMESERIES_INT = "timeseries(int)", "timeseries(integer)"
     TIMESERIES_FLOAT = "timeseries(float)"
+    TIMESERIES_NUMERIC = "timeseries(numeric)"
     TIMESERIES_STR = "timeseries(string)", "timeseries(str)"
     TIMESERIES_BOOLEAN = "timeseries(boolean)", "timeseries(bool)"
     TIMESERIES_ANY = "timeseries(any)", "timeseries(object)"
 
     SERIES_INT = "series(int)", "series(integer)"
     SERIES_FLOAT = "series(float)"
+    SERIES_NUMERIC = "series(numeric)"
     SERIES_STR = "series(string)", "series(str)"
     SERIES_BOOLEAN = "series(boolean)", "series(bool)"
     SERIES_ANY = "series(any)", "series(object)"
