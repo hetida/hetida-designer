@@ -14,7 +14,6 @@ from pydantic import create_model
 logger = logging.getLogger(__name__)
 
 
-
 def df_empty(
     col_to_dtype_map: dict[str, type | str],
     index: pd.Index | None = None,
@@ -117,7 +116,7 @@ class GeneralType(Enum):
 class ExternalType(str, Enum):
     METADATA_INT = "metadata(int)", "metadata(integer)"
     METADATA_FLOAT = "metadata(float)"
-    METADATA_NUMERIC= "metadata(numeric)"
+    METADATA_NUMERIC = "metadata(numeric)"
     METADATA_STR = "metadata(string)", "metadata(str)"
     METADATA_BOOLEAN = "metadata(boolean)", "metadata(bool)"
     METADATA_ANY = "metadata(any)"

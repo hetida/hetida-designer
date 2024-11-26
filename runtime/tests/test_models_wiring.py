@@ -148,17 +148,17 @@ def test_workflow_wiring_accepted() -> None:
 
 def test_workflow_wiring_validator_input_names_unique() -> None:
     workflow_wiring_with_not_unique_inputs_dict = deepcopy(workflow_wiring_dict)
-    workflow_wiring_with_not_unique_inputs_dict["input_wirings"][0]["workflow_input_name"] = (
-        workflow_wiring_with_not_unique_inputs_dict["input_wirings"][1]["workflow_input_name"]
-    )
+    workflow_wiring_with_not_unique_inputs_dict["input_wirings"][0][
+        "workflow_input_name"
+    ] = workflow_wiring_with_not_unique_inputs_dict["input_wirings"][1]["workflow_input_name"]
     with pytest.raises(ValueError, match=r"Duplicates.* not allowed"):
         WorkflowWiring(**workflow_wiring_with_not_unique_inputs_dict)
 
 
 def test_workflow_wiring_validator_output_names_unique() -> None:
     workflow_wiring_with_not_unique_outputs_dict = deepcopy(workflow_wiring_dict)
-    workflow_wiring_with_not_unique_outputs_dict["output_wirings"][0]["workflow_output_name"] = (
-        workflow_wiring_with_not_unique_outputs_dict["output_wirings"][1]["workflow_output_name"]
-    )
+    workflow_wiring_with_not_unique_outputs_dict["output_wirings"][0][
+        "workflow_output_name"
+    ] = workflow_wiring_with_not_unique_outputs_dict["output_wirings"][1]["workflow_output_name"]
     with pytest.raises(ValueError, match=r"Duplicates.* not allowed"):
         WorkflowWiring(**workflow_wiring_with_not_unique_outputs_dict)

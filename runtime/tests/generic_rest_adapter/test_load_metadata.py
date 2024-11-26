@@ -192,7 +192,6 @@ async def test_load_multiple_metadata_request():
             assert loaded_metadata["wf_input_3"] == 25.9
 
 
-
 @pytest.mark.asyncio
 async def test_load_metadata_any_from_string_response():
     with mock.patch(

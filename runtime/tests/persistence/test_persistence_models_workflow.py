@@ -272,9 +272,9 @@ def test_workflow_content_validator_operator_names_unique(
     workflow_content_dict: dict,
 ) -> None:
     workflow_content_double_operator_name_dict = deepcopy(workflow_content_dict)
-    workflow_content_double_operator_name_dict["operators"][1]["name"] = (
-        workflow_content_double_operator_name_dict["operators"][0]["name"]
-    )
+    workflow_content_double_operator_name_dict["operators"][1][
+        "name"
+    ] = workflow_content_double_operator_name_dict["operators"][0]["name"]
     workflow_content_double_operator_name = WorkflowContent(
         **workflow_content_double_operator_name_dict
     )
@@ -407,9 +407,9 @@ def test_validator_clean_up_workflow_content_inputs(
         workflow_content_with_input_referencing_wrong_operator_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_input_referencing_wrong_operator_dict["inputs"][0]["operator_id"] = (
-            str(get_uuid_from_seed("wrong id"))
-        )
+        workflow_content_with_input_referencing_wrong_operator_dict["inputs"][0][
+            "operator_id"
+        ] = str(get_uuid_from_seed("wrong id"))
         caplog.clear()
         WorkflowContent(**workflow_content_with_input_referencing_wrong_operator_dict)
         assert "Operator input" in caplog.text
@@ -453,9 +453,9 @@ def test_validator_clean_up_workflow_content_inputs(
         workflow_content_with_input_not_matching_link_start_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_input_not_matching_link_start_connector_dict["inputs"][0]["name"] = (
-            "wrong_name"
-        )
+        workflow_content_with_input_not_matching_link_start_connector_dict["inputs"][0][
+            "name"
+        ] = "wrong_name"
         caplog.clear()
         WorkflowContent(**workflow_content_with_input_not_matching_link_start_connector_dict)
         assert "Link start connector" in caplog.text
@@ -530,9 +530,9 @@ def test_validator_clean_up_workflow_content_outputs(
         workflow_content_with_output_not_matching_link_end_connector_dict = deepcopy(
             workflow_content_dict
         )
-        workflow_content_with_output_not_matching_link_end_connector_dict["outputs"][0]["name"] = (
-            "wrong_name"
-        )
+        workflow_content_with_output_not_matching_link_end_connector_dict["outputs"][0][
+            "name"
+        ] = "wrong_name"
         caplog.clear()
         WorkflowContent(**workflow_content_with_output_not_matching_link_end_connector_dict)
         assert "Link end connector" in caplog.text

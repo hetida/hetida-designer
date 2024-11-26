@@ -43,7 +43,8 @@ class Node(Protocol):
     async def result(self) -> dict[str, Any]:  # Outputs can have any type
         ...
 
-    def add_inputs(self, new_inputs: dict[str, tuple["Node", str]]) -> None: ...
+    def add_inputs(self, new_inputs: dict[str, tuple["Node", str]]) -> None:
+        ...
 
 
 class ComputationNode:

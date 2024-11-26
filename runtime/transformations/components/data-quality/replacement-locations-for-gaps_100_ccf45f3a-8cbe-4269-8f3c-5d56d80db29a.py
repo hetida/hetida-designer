@@ -547,9 +547,9 @@ def constrict_intervals_df_to_interval(
         gap_start_before_interval_start_index = gap_intervals[
             gap_intervals["start_time"] < interval_start_timestamp
         ].index
-        gap_intervals.loc[gap_start_before_interval_start_index, "start_time"] = (
-            interval_start_timestamp
-        )
+        gap_intervals.loc[
+            gap_start_before_interval_start_index, "start_time"
+        ] = interval_start_timestamp
         gap_intervals.loc[gap_start_before_interval_start_index, "start_inclusive"] = True
 
     if interval_end_timestamp is not None:

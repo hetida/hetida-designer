@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hetdesrun.adapters.exceptions import AdapterOutputDataError, AdapterClientWiringInvalidError
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError, AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
@@ -159,50 +159,71 @@ async def test_end_to_end_send_only_timeseries_data_works():
     ("series_input", "series_type", "error_msg"),
     [
         pytest.param(
-            pd.Series([1.0], index=["not a timestamp"]), "timeseries(float)",
+            pd.Series([1.0], index=["not a timestamp"]),
+            "timeseries(float)",
             "does not have DatetimeTZDtype dtype",
-            id="no DatetimeTZDtype"),
+            id="no DatetimeTZDtype",
+        ),
         pytest.param(
-            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36+01:00")]), "timeseries(float)",
+            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36+01:00")]),
+            "timeseries(float)",
             "does not have UTC timezone",
-            id="no UTC zone"),
+            id="no UTC zone",
+        ),
         pytest.param(
-            pd.Series(["not a float"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]), "timeseries(float)",
+            pd.Series(["not a float"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(float)",
             "Expected float",
-            id="not a float"),
+            id="not a float",
+        ),
         pytest.param(
-            pd.Series(["not an int"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]), "timeseries(int)",
+            pd.Series(["not an int"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(int)",
             "Expected int",
-            id="not a int"),
+            id="not a int",
+        ),
         pytest.param(
-            pd.Series(["not a bool"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]), "timeseries(bool)",
+            pd.Series(["not a bool"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(bool)",
             "Expected bool",
-            id="not a bool"),
+            id="not a bool",
+        ),
         pytest.param(
-            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36Z")]), "timeseries(string)",
+            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(string)",
             "Expected string",
-            id="not a string"),
+            id="not a string",
+        ),
         pytest.param(
-            pd.Series(["not a numeric"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]), "timeseries(numeric)",
+            pd.Series(["not a numeric"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(numeric)",
             "Expected int or float",
-            id="not a numeric"),
+            id="not a numeric",
+        ),
         pytest.param(
-            pd.DataFrame({"metric": ["a"], "timestamp": [pd.Timestamp("2019-08-01T15:45:36Z")],"value": [1.0],}), "timeseries(float)",
+            pd.DataFrame(
+                {
+                    "metric": ["a"],
+                    "timestamp": [pd.Timestamp("2019-08-01T15:45:36Z")],
+                    "value": [1.0],
+                }
+            ),
+            "timeseries(float)",
             "Did not receive Pandas Series",
-            id="not a series"),
+            id="not a series",
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_timeseries_data_exception_handling(
-    series_input, series_type, error_msg):
-
+    series_input, series_type, error_msg
+):
     with pytest.raises(AdapterOutputDataError, match=error_msg):
         await send_data(
             {"outp": FilteredSink(ref_id=f"sink", type=series_type)},
             {"outp": series_input},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )
-
 
 
 @pytest.mark.parametrize(
@@ -259,13 +280,22 @@ async def test_send_data_good(series_input, dtype):
 @pytest.mark.parametrize(
     ("series_input", "dtype", "error_type"),
     [
-        pytest.param(["1.5", "3.5", "5.5"], "metadata(float)", AdapterClientWiringInvalidError, id="metadata as string"),
-        pytest.param(["1.5", "3.5", "5.5"], "timeseries(Any)", AdapterClientWiringInvalidError, id="Any as string"),
+        pytest.param(
+            ["1.5", "3.5", "5.5"],
+            "metadata(float)",
+            AdapterClientWiringInvalidError,
+            id="metadata as string",
+        ),
+        pytest.param(
+            ["1.5", "3.5", "5.5"],
+            "timeseries(Any)",
+            AdapterClientWiringInvalidError,
+            id="Any as string",
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_send_data_undefined_type(series_input, dtype, error_type):
-
     ts_1 = pd.Series(
         series_input,
         index=pd.to_datetime(

@@ -501,7 +501,8 @@ DASHBOARD_HEAD_ELEMENTS = (
     script(src="https://unpkg.com/tabulator-tables@6.2.5/dist/js/tabulator.min.js"),
     head[
         style[
-            Markup(r"""
+            Markup(
+                r"""
 .grid-stack {
     padding: 0;
     margin: 0;
@@ -771,7 +772,8 @@ left: 95.833%;
 .gs-24 > .grid-stack-item[gs-w="24"] {
 width: 100%;
 }
-""")
+"""
+            )
         ]
     ],
 )
@@ -1370,7 +1372,8 @@ def generate_dashboard_html(
     }
 
     datatable_script = script[
-        Markup(r"""
+        Markup(
+            r"""
         // ======== Tabulator datatables ========
 
         function get_datatable(div_id) {
@@ -1443,7 +1446,8 @@ def generate_dashboard_html(
             });
 
 
-        }""")
+        }"""
+        )
     ]
 
     main_scripts = script[
