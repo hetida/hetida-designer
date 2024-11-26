@@ -22,32 +22,32 @@ def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
         raise AdapterOutputDataError(
             f"Expected float value dtype for series but got {str(series.dtype)}."
         )
-    elif sink_type.endswith("(int)"):
+    if sink_type.endswith("(int)"):
         if pd.api.types.is_integer_dtype(series):
             return
         raise AdapterOutputDataError(
             f"Expected int value dtype for series but got {str(series.dtype)}."
         )
-    elif sink_type.endswith(("(boolean)", "(bool)")):
+    if sink_type.endswith(("(boolean)", "(bool)")):
         if pd.api.types.is_bool_dtype(series):
             return
         raise AdapterOutputDataError(
             f"Expected bool value dtype for series but got {str(series.dtype)}."
         )
-    elif sink_type.endswith(("(str)", "(string)")):
+    if sink_type.endswith(("(str)", "(string)")):
         if pd.api.types.is_string_dtype(series):
             return
         raise AdapterOutputDataError(
             f"Expected string value dtype for series but got {str(series.dtype)}."
         )
-    elif sink_type.endswith("(numeric)"):
+    if sink_type.endswith("(numeric)"):
         if pd.api.types.is_float_dtype(series) or pd.api.types.is_integer_dtype(series):
             return
         raise AdapterOutputDataError(
             f"Expected int or float value dtype for series but got {str(series.dtype)}."
         )
-    else:
-        raise AdapterOutputDataError("Sink has no dtype specified for series")
+
+    raise AdapterOutputDataError(f"Sink has {sink_type} no known dtype specified for series")
 
 
 def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict]:

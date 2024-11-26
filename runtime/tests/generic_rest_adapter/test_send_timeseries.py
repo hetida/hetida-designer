@@ -220,7 +220,7 @@ async def test_end_to_end_send_only_timeseries_data_exception_handling(
 ):
     with pytest.raises(AdapterOutputDataError, match=error_msg):
         await send_data(
-            {"outp": FilteredSink(ref_id=f"sink", type=series_type)},
+            {"outp": FilteredSink(ref_id="sink", type=series_type)},
             {"outp": series_input},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )

@@ -6,7 +6,7 @@ The generic rest adapter "types" differ from the types used in the designer.
 import json
 import logging
 from enum import Enum
-from typing import Any, Union
+from typing import Any
 
 import pandas as pd
 from pydantic import create_model
@@ -34,7 +34,7 @@ class ValueDataType(str, Enum):
 
     INT = "int", int, int, "integer"
     FLOAT = "float", float, float
-    NUMERIC = "numeric", Union[float, int], float, "int|float"
+    NUMERIC = "numeric", float | int, float, "int|float"
     STRING = "string", str, str, "str"
     BOOLEAN = "boolean", bool, bool, "bool"
     ANY = "any", Any, object, "object"
