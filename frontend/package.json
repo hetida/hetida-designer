@@ -43,7 +43,7 @@
     "@angular/platform-browser-dynamic": "^18.2.12",
     "@angular/router": "^18.2.12",
     "@danielmoncada/angular-datetime-picker": "^18.1.0",
-    "@danielmoncada/angular-datetime-picker-moment-adapter": "^4.0.0",
+    "@danielmoncada/angular-datetime-picker-moment-adapter": "^5.0.0",
     "@ngrx/entity": "^18.1.1",
     "@ngrx/store": "^18.1.1",
     "@types/source-map": "0.5.7",
