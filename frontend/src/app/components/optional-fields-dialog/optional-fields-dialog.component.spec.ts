@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { OptionalFieldsDialogComponent } from './optional-fields-dialog.component';
 import { provideMockStore } from '@ngrx/store/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -10,8 +9,8 @@ describe('OptionalFieldsDialogComponent', () => {
   let component: OptionalFieldsDialogComponent;
   let fixture: ComponentFixture<OptionalFieldsDialogComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, MatIconModule],
       declarations: [OptionalFieldsDialogComponent],
       providers: [
@@ -32,7 +31,7 @@ describe('OptionalFieldsDialogComponent', () => {
         }
       ]
     }).compileComponents();
-  });
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(OptionalFieldsDialogComponent);
