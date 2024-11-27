@@ -256,3 +256,34 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
                 {"outp_9": mtsf_9},
                 adapter_key="test_end_to_end_send_only_multitsframe_data",
             )
+
+@pytest.mark.asyncio
+async def test_send_multitsframe_extra_columns() -> None:
+    post_mock = mock.AsyncMock(return_value=mock.Mock(status_code=200))
+
+    with (
+        mock.patch(  # noqa: SIM117
+            "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
+            return_value="https://hetida.de",
+        ),
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.send_multitsframe.AsyncClient.post",
+            new=post_mock,
+        ),
+    ):
+
+        mts = pd.DataFrame(
+            {
+                "metric": ["a"],
+                "timestamp": [pd.Timestamp("2019-08-01T15:45:36Z")],
+                "value": [1.0],
+                "min": [0.0]
+            })
+
+        await send_data(
+            {"outp": FilteredSink(ref_id="sink_id_8", type="multitsframe")},
+            {"outp": mts},
+            adapter_key="test_end_to_end_send_only_multitsframe_data"
+        )
+
+        assert post_mock.called  # we got through to actually posting!

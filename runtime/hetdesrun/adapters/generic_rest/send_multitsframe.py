@@ -23,12 +23,10 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if len(df) == 0:
         return []
 
-    if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
-        column_names_string = ", ".join(df.columns)
-        multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+    if set(df.columns).intersection(set(MULTITSFRAME_COLUMN_NAMES)) != set(MULTITSFRAME_COLUMN_NAMES):
         raise AdapterOutputDataError(
-            f"Received Pandas Dataframe has column names {column_names_string} that don't match "
-            f"the column names required for a MultiTSFrame {multitsframe_column_names_string}."
+            f"Received Pandas Dataframe has column names { {*df.columns} } that don't match "
+            f"the column names required for a MultiTSFrame { {*MULTITSFRAME_COLUMN_NAMES} }."
         )
 
     if df["metric"].isna().any():
