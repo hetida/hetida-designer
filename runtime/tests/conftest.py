@@ -207,9 +207,9 @@ def input_json_with_wiring() -> dict:
 def input_json_with_wiring_with_input() -> Any:
     json_with_wiring = deepcopy(base_workflow_json)
 
-    json_with_wiring["code_modules"][1][
-        "code"
-    ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'  # noqa: E501
+    json_with_wiring["code_modules"][1]["code"] = (
+        'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'  # noqa: E501
+    )
 
     json_with_wiring["code_modules"][1]["uuid"] = str(get_uuid_from_seed("value_giver_module"))
 

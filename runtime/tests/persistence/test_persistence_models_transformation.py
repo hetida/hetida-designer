@@ -251,9 +251,9 @@ def test_tr_validator_io_interface_fits_to_content():
 
 def test_tr_validator_disabled_requires_released_timestamp():
     tr_json_disabled_no_released_timestamp = deepcopy(tr_json_valid_released_example)
-    tr_json_disabled_no_released_timestamp[
-        "disabled_timestamp"
-    ] = tr_json_disabled_no_released_timestamp["released_timestamp"]
+    tr_json_disabled_no_released_timestamp["disabled_timestamp"] = (
+        tr_json_disabled_no_released_timestamp["released_timestamp"]
+    )
     tr_json_disabled_no_released_timestamp["state"] = "DISABLED"
     tr_json_disabled_no_released_timestamp["released_timestamp"] = None
     tr_set_released_timestamp = TransformationRevision(**tr_json_disabled_no_released_timestamp)
@@ -277,9 +277,9 @@ def test_tr_validator_timestampsset_corresponding_to_state():
         TransformationRevision(**tr_json_released_without_released_timestamp)
 
     tr_json_released_with_disabled_timestamp = deepcopy(tr_json_valid_released_example)
-    tr_json_released_with_disabled_timestamp[
-        "disabled_timestamp"
-    ] = tr_json_released_with_disabled_timestamp["released_timestamp"]
+    tr_json_released_with_disabled_timestamp["disabled_timestamp"] = (
+        tr_json_released_with_disabled_timestamp["released_timestamp"]
+    )
 
     with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
         TransformationRevision(**tr_json_released_with_disabled_timestamp)

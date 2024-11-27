@@ -13,9 +13,9 @@ from hetdesrun.adapters.kafka.models import (
     KafkaSingleValueMessage,
 )
 
-kafka_messages: ContextVar[
-    dict[str, None | KafkaSingleValueMessage | KafkaMultiValueMessage]
-] = ContextVar("kafka_messages")
+kafka_messages: ContextVar[dict[str, None | KafkaSingleValueMessage | KafkaMultiValueMessage]] = (
+    ContextVar("kafka_messages")
+)
 
 
 def _get_kafka_messages_context() -> (
