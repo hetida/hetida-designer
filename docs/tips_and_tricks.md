@@ -170,9 +170,9 @@ Adapters may provide pd.Series objects to SERIES inputs either with a name or wi
 
 You should ensure that your code works with both versions, to be independant of the adapter / source used with your workflow.
 
-Note that ax explicit "Name Series" component is available in the base component set.
+Note that an explicit "Name Series" component is available in the base component set.
 
-E.g. if you want to convert a pd.Series into a one-columed pd.DataFrame we recommend doing the following:
+E.g. if you want to convert a pd.Series into a single-column pd.DataFrame we recommend doing the following:
 
 ```python
 dataframe = series.to_frame(name="new_column_name")
