@@ -8,12 +8,22 @@ from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
-from hetdesrun.datatypes import MULTITSFRAME_COLUMN_NAMES
 from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.webservice.config import get_config
 
 
 def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
+    """function that
+    (1) validates form of the dataframe (columns and missing values)
+    (2) replaces np.nan with None
+    (3) returns a serialized object
+
+    Note: As the content of the given pandas.DataFrame should not be
+    modified (exception is np.nan to None) we do not use the
+    pydantic class PydanticMultiTimeseriesPandasDataFrame in hdutils.
+    However, the applied validations are mostly the same.
+    """
+
     if not isinstance(df, pd.DataFrame):
         raise AdapterOutputDataError(
             "Did not receive Pandas DataFrame as expected from workflow output."
@@ -23,12 +33,16 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if len(df) == 0:
         return []
 
-    if set(df.columns).intersection(set(MULTITSFRAME_COLUMN_NAMES)) != set(
-        MULTITSFRAME_COLUMN_NAMES
-    ):
-        raise AdapterOutputDataError(
-            f"Received Pandas Dataframe has column names { {*df.columns} } that don't match "
-            f"the column names required for a MultiTSFrame { {*MULTITSFRAME_COLUMN_NAMES} }."
+    if len(df.columns) < 3:
+        raise ValueError(
+            "MultiTSFrame requires at least 3 columns: metric, timestamp"
+            f" and at least one additional columns. Only found { {*df.columns} }"
+        )
+
+    if not ({"metric", "timestamp"}.issubset(set(df.columns))):
+        raise ValueError(
+            f"The column names { {*df.columns} } don't contain required columns"
+            ' "timestamp" and "metric" for a MultiTSFrame.'
         )
 
     if df["metric"].isna().any():
