@@ -23,7 +23,9 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if len(df) == 0:
         return []
 
-    if set(df.columns).intersection(set(MULTITSFRAME_COLUMN_NAMES)) != set(MULTITSFRAME_COLUMN_NAMES):
+    if set(df.columns).intersection(set(MULTITSFRAME_COLUMN_NAMES)) != set(
+        MULTITSFRAME_COLUMN_NAMES
+    ):
         raise AdapterOutputDataError(
             f"Received Pandas Dataframe has column names { {*df.columns} } that don't match "
             f"the column names required for a MultiTSFrame { {*MULTITSFRAME_COLUMN_NAMES} }."
