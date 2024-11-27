@@ -34,13 +34,13 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
         return []
 
     if len(df.columns) < 3:
-        raise ValueError(
+        raise AdapterOutputDataError(
             "MultiTSFrame requires at least 3 columns: metric, timestamp"
             f" and at least one additional columns. Only found { {*df.columns} }"
         )
 
     if not ({"metric", "timestamp"}.issubset(set(df.columns))):
-        raise ValueError(
+        raise AdapterOutputDataError(
             f"The column names { {*df.columns} } don't contain required columns"
             ' "timestamp" and "metric" for a MultiTSFrame.'
         )
