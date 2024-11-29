@@ -13,14 +13,16 @@ from hetdesrun.webservice.config import get_config
 
 
 def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
-    """function that
-    (1) validates form of the dataframe (columns and missing values)
-    (2) replaces np.nan with None
-    (3) returns a serialized object
+    """Prepares serialization by converting rows into json-serializable dicts
 
-    Note: As the content of the given pandas.DataFrame should not be
-    modified (exception is np.nan to None) we do not use the
-    pydantic class PydanticMultiTimeseriesPandasDataFrame in hdutils.
+    * validates form of the dataframe (columns and missing values)
+    * np.nan -> None
+    * datetimes are enforced to be UTC and are converted to zulu-format strings
+
+    Note: The given pandas.DataFrame is not modified. We cannot use
+    PydanticMultiTimeseriesPandasDataFrame here since this would mutate
+    the df object.
+    
     However, the applied validations are mostly the same.
     """
 
