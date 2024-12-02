@@ -25,11 +25,9 @@
             "outputPath": {
               "base": "dist/frontend"
             },
-            "baseHref": ".",
+            "baseHref": "./",
             "index": "src/index.html",
-            "polyfills": [
-              "src/polyfills.ts"
-            ],
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
@@ -53,16 +51,10 @@
             "sourceMap": true,
             "optimization": false,
             "namedChunks": true,
-            "allowedCommonJsDependencies": [
-              "moment",
-              "katex",
-              "lodash"
-            ],
+            "allowedCommonJsDependencies": ["moment", "katex", "lodash"],
             "browser": "src/main.ts",
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "."
-              ]
+              "includePaths": ["./"]
             }
           },
           "configurations": {
