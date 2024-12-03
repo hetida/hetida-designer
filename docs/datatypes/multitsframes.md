@@ -53,7 +53,7 @@ Within workflows and components the MultiTSFrame object is a pandas.DataFrame fo
 - "timestamp" column with timestamp information,
 - "additional" column, mostly named value.
 
-Note that Pandas will handle a column build from values of differing types as dtype `object` and this may negatively impact efficiency / performance).
+Note that Pandas will handle a column build from values of differing types as dtype `object` and this may negatively impact efficiency / performance.
 
 In contrast to pandas.Series the index of a MultiTSFrame should be considered irrelevant since timestamp information is in the "timestamp" column. When manipulating MultiTSFrame Pandas DataFrames you should ensure that the resulting index is duplicate-free. Ideally a generic integer index.
 
@@ -127,7 +127,7 @@ print(df.to_json(orient="columns", date_format="iso", indent=2))
 ```
 
 ### [Generic Rest Adapter](../adapter_system/generic_rest_adapters/web_service_interface.md)
-The generic rest adapter provides functionalities to load and send MultiTSFrames from the hd-instance using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
+The generic rest adapter provides functionalities to load ("get") and send ("post") MultiTSFrames from the hd-instance using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
 
 Sending MultiTSFrames requires that the output Pandas DataFrame of a workflow/component passes several validations:
 - column "timestamp" has no missing entries and a dtype of pandas.DatetimeTZDtype with timezone UTC
