@@ -63,7 +63,7 @@ In the documentation of the workflow and components the convention is to write *
 ```
 
 ## External: Adapter System
-### Manual Input / Direct Provisioning [Link](../adapter_system/manual_input.md)
+### Manual Input / Direct Provisioning [[Link]](../adapter_system/manual_input.md)
 To define a MultiTSFrame a json of the following format can be defined:
 
 ```json
@@ -128,7 +128,7 @@ For such cases, we recommend using the `wrapped format`, e.g.:
 
 
 
-### Generic Rest Adapter [Link](../adapter_system/generic_rest_adapters/web_service_interface.md)
+### Generic Rest Adapter [[Link]](../adapter_system/generic_rest_adapters/web_service_interface.md)
 The generic rest adapter provides functionalities to receive from and send to the hd-instance MultiTSFrames using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
 
 Receiving a MultiTSFrames from the hd-instance requires that the output of the workflow/component
