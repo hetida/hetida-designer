@@ -85,7 +85,12 @@ To define a MultiTSFrame a json of the following format can be defined:
     ]
 }
 ```
-It is also possible to define metadata for the MultiTSFrame.
+**Tip**: Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with these 3 columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+```python
+print(df.to_json(orient="columns", date_format="iso", indent=2))
+```
+
+It is possible to define metadata for the MultiTSFrame.
 Conventions for the metadata keys can be found [here](../metadata_attrs.md).
 For such cases, we recommend using the `wrapped format`, e.g.:
 ```json
@@ -93,8 +98,8 @@ For such cases, we recommend using the `wrapped format`, e.g.:
     "__hd_wrapped_data_object__": "DATAFRAME",
     "__metadata__": {
         "ref_data_frequency": {
-            "a": 1h,
-            "b": 1h
+            "a": "1h",
+            "b": "1h"
         }
     },
     "__data__": {
@@ -114,22 +119,21 @@ For such cases, we recommend using the `wrapped format`, e.g.:
             "0": "2019-08-01T01:00:00.000Z",
             "1": "2019-08-01T02:00:00.000Z",
             "2": "2019-08-01T01:00:00.000Z",
-            "2": "2019-08-01T02:00:00.000Z"
+            "3": "2019-08-01T02:00:00.000Z"
         }
     }
 }
 ```
 
 
-**Tip**: Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with these 3 columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
-```python
-print(df.to_json(orient="columns", date_format="iso", indent=2))
-```
+
 
 ### [Generic Rest Adapter](../adapter_system/generic_rest_adapters/web_service_interface.md)
-The generic rest adapter provides functionalities to load ("get") and send ("post") MultiTSFrames from the hd-instance using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
+The generic rest adapter provides functionalities to receive from and send to the hd-instance MultiTSFrames using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
 
-Sending MultiTSFrames requires that the output Pandas DataFrame of a workflow/component passes several validations:
+Receiving a MultiTSFrames from the hd-instance requires that the output of the workflow/component
+(defined as pandas.DataFrame in the code and MultiTSFrame in the hetida-designer)
+passes several validations:
 - column "timestamp" has no missing entries and a dtype of pandas.DatetimeTZDtype with timezone UTC
 - column "metric" has no missing entries
 - at least one additional column is defined.
