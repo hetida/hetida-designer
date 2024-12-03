@@ -1,7 +1,7 @@
 
 # MULTITSFRAME
 
-MultiTSFrames represents multiple timeseries (of same dimension) data with non-necessarily common timestamps.
+A MultiTSFrame represents multiple timeseries (of same dimension) data with non-necessarily common timestamps.
 
 Data is stored in records, one per metric per timestamp where this metric has value(s), i.e. in "long format".
 This is in contrast to "wide format" where each metric is its own column. A main advantage of the long-format is
@@ -35,23 +35,33 @@ that it is more storage-efficient in case that multiple timeseries do not have t
 A MultiTSFrame must have at least three columns:
 * a "timestamp" column (datetime, no missing entries allowed)
 * a "metric" column (string, no missing entries allowed)
-* at least one value column: Per convention the third column is often named "value". Many base components assume only the three columns "timestamp", "metric" and "value".
+* at least one value column: Per convention the third column is often named "value". Note that many base components operating on MultiTsFrames assume only the three columns "timestamp", "metric" and "value".
 
-A special case of a MultiTSFrame are multi-dimensional timeseries . For example, such a multi-dimensional timeseries
-is a climate station that measures temperature, precipitation and air pressure at the same time. In this case, the MultiTSFrame contains mutiple timeseries where the timestamps are always the same. Hereby it is useful to return a MultiTSFrame with additional columns. An example for multi-dimensional timeseries of two climate stations using a multiTSFrame with additonal columns is shown below.
+A MultiTSFrame can contain multi-dimensional timeseries data simply by having more than one value column. This implies that dimensions should agree for all metrics.
 
-| timestamp                 |  metric     |temp |prec |  pres |
-| :-----------------------: | :---------: | :-: | :-: | :---: |
-| 2024-12-01T01:00:00+00:00 |  station A  | 0.2 | 0.0 | 1014. |
-| 2024-12-01T02:00:00+00:00 |  station A  | 0.3 | 0.2 | 1015. |
-| 2024-12-01T01:01:00+00:00 |  station B  | 0.1 | 0.0 | 1013. |
+As an example consider a measurement by drones where location of measurement is relevant:
+
+| timestamp                 |  metric            | value | latitude            | longitude         |
+| :-----------------------: | :----------------: | :---: | :-----------------: | :---------------: |
+| 2024-12-01T01:00:00+00:00 |  drone_A.temp      |  10.2 |   51.43462264339895 | 7.030261299552767 |
+| 2024-12-01T01:00:00+00:00 |  drone_A.pressure  |  0.47 |   51.43462264339895 | 7.030261299552767 |
+| 2024-12-01T01:00:06+00:00 |  drone_A.temp      |  10.1 |   51.43462271146983 | 7.030265004120332 |
+| 2024-12-01T01:00:00+00:00 |  drone_B.temp      |   8.7 |   51.43952210110222 | 7.032115169871234 |
+| 2024-12-01T01:00:05+00:00 |  drone_B.temp      |   8.6 |   51.43952228945781 | 7.032115457891023 |
+
+Or stock share trade events where price and number of trades shares is necessary:
+
+| timestamp                 |  metric     | price    | number |
+| :-----------------------: | :---------: | :------: | :----: |
+| 2024-11-30T07:35:00+00:00 |  MSFT       |    409.6 |    -10 |
+| 2024-12-02T15:16:12+00:00 |  AMZN       |   200.65 |      3 |
 
 
 ## Internal: Workflow & Components
 Within workflows and components the MultiTSFrame object is a pandas.DataFrame following certain conventions:
 - "metric" column with string and no missing data,
 - "timestamp" column with timestamp information,
-- "additional" column, mostly named value.
+- additional value columns (at least one), often exactly one named "value".
 
 Note that Pandas will handle a column build from values of differing types as dtype `object` and this may negatively impact efficiency / performance.
 
@@ -64,7 +74,7 @@ In the documentation of the workflow and components the convention is to write *
 
 ## External: Adapter System
 ### Manual Input / Direct Provisioning [[Link]](../adapter_system/manual_input.md)
-To define a MultiTSFrame a json of the following format can be defined:
+A simple json representation of a MultiTSFrame is the following format:
 
 ```json
 {
@@ -125,15 +135,8 @@ For such cases, we recommend using the `wrapped format`, e.g.:
 }
 ```
 
-
-
-
 ### Generic Rest Adapter [[Link]](../adapter_system/generic_rest_adapters/web_service_interface.md)
-The generic rest adapter provides functionalities to receive from and send to the hd-instance MultiTSFrames using the two functions [`post_multitsframe`](../../runtime/hetdesrun/adapters/generic_rest/send_multitsframe.py), and [`load_framelike_data`](../../runtime/hetdesrun/adapters/generic_rest/load_multitsframe.py)
-
-Receiving a MultiTSFrames from the hd-instance requires that the output of the workflow/component
-(defined as pandas.DataFrame in the code and MultiTSFrame in the hetida-designer)
-passes several validations:
+Sending a MultiTSFrames from a hetida designer workflow/component output to a generic Rest adapter sink of type MULTITSFRAME requires that the output pandas.DataFrame object passes several validations:
 - column "timestamp" has no missing entries and a dtype of pandas.DatetimeTZDtype with timezone UTC
 - column "metric" has no missing entries
 - at least one additional column is defined.
