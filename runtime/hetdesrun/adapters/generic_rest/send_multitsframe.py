@@ -22,7 +22,7 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     Note: The given pandas.DataFrame is not modified. We cannot use
     PydanticMultiTimeseriesPandasDataFrame here since this would mutate
     the df object.
-    
+
     However, the applied validations are mostly the same.
     """
 
