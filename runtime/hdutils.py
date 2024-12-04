@@ -560,8 +560,9 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
 def modify_timezone(
     object_to_convert: pd.Series | pd.DataFrame,
     to_timezone: str,
-    column_name: str = "index"):
-    """ Modifies timestamps to a certain timezone
+    column_name: str = None
+):
+    """Modifies timestamps to a certain timezone
 
     Keyword arguments:
     timestamps -- timestamps to convert
@@ -569,18 +570,32 @@ def modify_timezone(
     column_name -- column_name to apply, default is index as pd.Series have timestamps in index
     """
     if not isinstance(object_to_convert, pd.Series | pd.DataFrame):
-        raise TypeError(f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame")
+        raise TypeError(
+            f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame"
+        )
+
     try:
-        new_object = object_to_convert.copy(deep=True)
-        if column_name == "index":
+        if isinstance(object_to_convert, pd.Series):
+            new_object = object_to_convert.to_frame(name=object_to_convert.name)
+        else:
+            new_object = object_to_convert.copy(deep=True)
+
+        if column_name is None:
             new_object.index = new_object.index.tz_convert(to_timezone)
         else:
-            new_object.loc[:,column_name] = new_object.loc[:,column_name].tz_convert(to_timezone)
+            new_object[column_name] = new_object[column_name].dt.tz_convert(to_timezone)
+
+        if isinstance(object_to_convert, pd.Series):
+            new_object= pd.Series(new_object[column_name], index=new_object.index, name=object_to_convert.name)
+
         return new_object
 
     except pytz.exceptions.UnknownTimeZoneError:
         possible_timezone = pytz.all_timezones
         raise ValueError(f"""Timezone not known, please choose from
                             {possible_timezone}""")
-    except (TypeError, AttributeError) as exc:
-        raise TypeError("Series does not contain valid timestamps as index", exc)
+    except (TypeError,AttributeError) as exc:
+        raise TypeError("Entries to convert do not contain valid timestamps", exc)
+
+    except KeyError as exc:
+        raise KeyError(f"Column name {column_name} not in object_to_convert", exc)
