@@ -558,9 +558,7 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
 
 
 def modify_timezone(
-    object_to_convert: pd.Series | pd.DataFrame,
-    to_timezone: str,
-    column_name: str = None
+    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str = None
 ):
     """Modifies timestamps to a certain timezone
 
@@ -586,7 +584,9 @@ def modify_timezone(
             new_object[column_name] = new_object[column_name].dt.tz_convert(to_timezone)
 
         if isinstance(object_to_convert, pd.Series):
-            new_object= pd.Series(new_object[column_name], index=new_object.index, name=object_to_convert.name)
+            new_object = pd.Series(
+                new_object[column_name], index=new_object.index, name=object_to_convert.name
+            )
 
         return new_object
 
@@ -594,7 +594,7 @@ def modify_timezone(
         possible_timezone = pytz.all_timezones
         raise ValueError(f"""Timezone not known, please choose from
                             {possible_timezone}""")
-    except (TypeError,AttributeError) as exc:
+    except (TypeError, AttributeError) as exc:
         raise TypeError("Entries to convert do not contain valid timestamps", exc)
 
     except KeyError as exc:

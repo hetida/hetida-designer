@@ -95,11 +95,13 @@ def test_modify_timezone_wrong_tzname(series_summer):
     with pytest.raises(ValueError):
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin2")
 
+
 def test_named_series(series_summer):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
     modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name="timestamp")
     assert modified_data[1].utcoffset() == datetime.timedelta(seconds=3600)
+
 
 def test_column_not_known(series_summer, dataframe):
     data = pd.Series(series_summer.index)
