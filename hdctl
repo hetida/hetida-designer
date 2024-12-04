@@ -709,8 +709,8 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
 
 
 def modify_timezone(
-    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str = None
-):
+    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str | None = None
+) -> pd.Series | pd.DataFrame:
     """Modifies timestamps to a certain timezone
 
     Keyword arguments:
