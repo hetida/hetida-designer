@@ -555,3 +555,32 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
+
+
+def modify_timezone(
+    object_to_convert: pd.Series | pd.DataFrame,
+    to_timezone: str,
+    column_name: str = "index"):
+    """ Modifies timestamps to a certain timezone
+
+    Keyword arguments:
+    timestamps -- timestamps to convert
+    to_timezone -- timezone to use
+    column_name -- column_name to apply, default is index as pd.Series have timestamps in index
+    """
+    if not isinstance(object_to_convert, pd.Series | pd.DataFrame):
+        raise TypeError(f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame")
+    try:
+        new_object = object_to_convert.copy(deep=True)
+        if column_name == "index":
+            new_object.index = new_object.index.tz_convert(to_timezone)
+        else:
+            new_object.loc[:,column_name] = new_object.loc[:,column_name].tz_convert(to_timezone)
+        return new_object
+
+    except pytz.exceptions.UnknownTimeZoneError:
+        possible_timezone = pytz.all_timezones
+        raise ValueError(f"""Timezone not known, please choose from
+                            {possible_timezone}""")
+    except (TypeError, AttributeError) as exc:
+        raise TypeError("Series does not contain valid timestamps as index", exc)
