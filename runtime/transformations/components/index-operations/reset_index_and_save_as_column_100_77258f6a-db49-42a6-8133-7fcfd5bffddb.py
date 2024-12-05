@@ -2,7 +2,7 @@
 
 # Reset Index and Save as Column
 ## Description
-Uses the pandas reset_index method to reset the index of a DataFrame and save the previous index as a column.
+Uses the pandas reset_index method to reset the index of a DataFrame and save the previous index as a new column.
 
 ## Inputs
 * **df_to_reset_index** (Pandas DataFrame): The input DataFrame the index of which will be reset.
