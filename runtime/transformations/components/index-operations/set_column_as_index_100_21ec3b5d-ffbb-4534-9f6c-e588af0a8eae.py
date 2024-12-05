@@ -88,7 +88,7 @@ except ImportError:
 else:
 
     @pytest.fixture()
-    def timeseries_dataframe():
+    def timestamp_in_columns_df():
         values = [1.0, 1.2, 1.2]
         timestamps = pd.to_datetime(
             [
@@ -99,12 +99,24 @@ else:
             format="%Y-%m-%dT%H:%M:%S.%fZ",
         ).tz_localize("UTC")
 
-        ts_df = pd.DataFrame({"value": values}, index=timestamps)
+        return pd.DataFrame({"timestamp": timestamps, "value": values})
 
-        return ts_df
+    @pytest.fixture()
+    def timestamp_in_index_df():
+        values = [1.0, 1.2, 1.2]
+        timestamps = pd.to_datetime(
+            [
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-02T11:33:41.000Z",
+                "2019-08-03T11:57:41.000Z",
+            ],
+            format="%Y-%m-%dT%H:%M:%S.%fZ",
+        ).tz_localize("UTC")
 
-    def test_run_from_test_wiring(timeseries_dataframe):
-        output_df = main(
+        return pd.DataFrame({"value": values}, index=timestamps)
+
+    def test_run_from_test_wiring():
+        result = main(
             **{
                 inp_wiring["workflow_input_name"]: parse_value(
                     inp_wiring["filters"]["value"],
@@ -114,25 +126,29 @@ else:
                 for inp_wiring in TEST_WIRING_FROM_PY_FILE_IMPORT["input_wirings"]
                 if inp_wiring.get("adapter_id", "direct_provisioning") == "direct_provisioning"
             }
-        )["reindexed_df"]
+        )
 
-        pd.testing.assert_frame_equal(output_df, timeseries_dataframe)
+        if not isinstance(result, dict):
+            raise TypeError("The result is not a dict")
 
-    def test_run_with_invalid_index_column(timeseries_dataframe):
-        input_df = timeseries_dataframe.reset_index(names="timestamp")
+    def test_if_output_df_equals_expectation(timestamp_in_index_df, timestamp_in_columns_df):
+        output_df = main(df_to_reindex=timestamp_in_columns_df)["reindexed_df"]
 
+        pd.testing.assert_frame_equal(output_df, timestamp_in_index_df)
+
+    def test_run_with_invalid_index_column(timestamp_in_columns_df):
         with pytest.raises(ComponentInputValidationException):
-            main(df_to_reindex=input_df, index_column="not_a_valid_column")
+            main(df_to_reindex=timestamp_in_columns_df, index_column="not_a_valid_column")
 
-    def test_run_with_missing_values_in_index_column(timeseries_dataframe):
-        input_df = timeseries_dataframe.reset_index(names="timestamp")
+    def test_run_with_missing_values_in_index_column(timestamp_in_columns_df):
+        input_df = timestamp_in_columns_df
         input_df.loc[0, "timestamp"] = np.nan
 
         with pytest.raises(ComponentInputValidationException):
             main(df_to_reindex=input_df)
 
-    def test_run_with_duplicates_in_index_column(timeseries_dataframe):
-        input_df = timeseries_dataframe.reset_index(names="timestamp")
+    def test_run_with_duplicates_in_index_column(timestamp_in_columns_df):
+        input_df = timestamp_in_columns_df
         input_df.loc[0, "timestamp"] = input_df.loc[1, "timestamp"]
 
         with pytest.raises(ComponentInputValidationException):
