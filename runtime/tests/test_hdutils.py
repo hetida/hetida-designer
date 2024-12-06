@@ -1,7 +1,8 @@
+
 import datetime
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
 from hdutils import modify_timezone
@@ -92,7 +93,7 @@ def test_modify_timezone_good_series(series_summer, series_winter):
 
 
 def test_modify_timezone_wrong_tzname(series_summer):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Timezone not known*"):
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin2")
 
 
@@ -107,18 +108,18 @@ def test_column_not_known(series_summer, dataframe):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="Column name*"):
         _ = modify_timezone(data, to_timezone="Europe/Berlin", column_name="timestamp2")
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="Column name*"):
         _ = modify_timezone(dataframe, to_timezone="Europe/Berlin", column_name="timestamp2")
 
 
 def test_modify_timezone_no_tz_known(series_summer):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Entries to convert do not contain valid timestamps"):
         _ = modify_timezone(series_summer.index.tz_localize(None), to_timezone="Europe/Berlin")
 
 
 def test_modify_timezone_no_tz_in_index(series_summer):
-    with pytest.raises(TypeError):
-        _ = modify_timezone(series_summer.reset_index(inplace=True), to_timezone="Europe/Berlin")
+    with pytest.raises(TypeError, match="Entries to convert do not contain valid timestamps"):
+        _ = modify_timezone(series_summer.reset_index(inplace=True), to_timezone="Europe/Berlin") #noqa: PD002
