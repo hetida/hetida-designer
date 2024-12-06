@@ -1,4 +1,3 @@
-
 import datetime
 
 import numpy as np
@@ -123,5 +122,5 @@ def test_modify_timezone_no_tz_known(series_summer):
 
 def test_modify_timezone_no_tz_in_index(series_summer):
     with pytest.raises(TypeError, match="Entries to convert do not contain valid timestamps*"):
-        series_summer.index  = series_summer.reset_index(drop=True)
+        series_summer.index = series_summer.reset_index(drop=True)
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin")
