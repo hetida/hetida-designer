@@ -54,7 +54,7 @@
             "allowedCommonJsDependencies": ["moment", "katex", "lodash"],
             "browser": "src/main.ts",
             "stylePreprocessorOptions": {
-              "includePaths": ["./"]
+              "includePaths": ["."]
             }
           },
           "configurations": {
