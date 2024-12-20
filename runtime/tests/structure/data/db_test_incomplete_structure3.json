@@ -60,18 +60,6 @@
             "preset_filters": {
                 "metrics": "1010001"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1_Plant1"
             ]

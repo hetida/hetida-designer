@@ -94,7 +94,7 @@ def filter_json():
     return f_json
 
 
-def test_filter_class_internal_name_field_creation(filter_json):
+def test_filter_class_internal_name_field_creation_and_validation(filter_json):
     # No value is provided for internal_name but name is provided
     filter_with_no_internal_name_provided = Filter(**filter_json["filter_without_internal_name"])
     assert filter_with_no_internal_name_provided.internal_name == "upper_threshold"
@@ -118,6 +118,13 @@ def test_filter_class_internal_name_field_creation(filter_json):
     )
     assert filter_with_weird_name_provided.internal_name == "min_max"
 
+    # Timestamp in internal_name
+    with pytest.raises(
+        ValidationError,
+        match="must not contain 'timestamp'.",
+    ):
+        Filter(**filter_json["filter_with_timestamp_in_internal_name"])
+
 
 def test_filter_class_name_validation(filter_json):
     # Test with empty name
@@ -135,6 +142,13 @@ def test_filter_class_name_validation(filter_json):
         "that only contains alphanumeric characters, underscores and spaces.",
     ):
         Filter(**filter_json["filter_with_invalid_string_as_name"])
+
+    # Test with timestamp in name
+    with pytest.raises(
+        ValidationError,
+        match="must not contain 'timestamp'.",
+    ):
+        Filter(**filter_json["filter_with_timestamp_in_name"])
 
 
 def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json):

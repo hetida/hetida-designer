@@ -47,6 +47,12 @@ class Filter(BaseModel):
             )
         return value
 
+    @validator("name", "internal_name", each_item=True)
+    def no_name_can_contain_timestamp(cls, value: str) -> str:
+        if "timestamp" in value.lower():
+            raise ValueError(f"'{value}' must not contain 'timestamp'.")
+        return value
+
     @root_validator(skip_on_failure=True)
     def generate_internal_name_if_not_provided(cls, values: dict) -> dict:
         # Internally the designer requires an identifier for the filter
@@ -286,6 +292,13 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             seen.add(internal_name)
         return v
 
+    @validator("preset_filters")
+    def no_preset_filter_key_can_contain_timestamp(cls, v: dict[str, Any]) -> dict[str, Any]:
+        for key in v:
+            if "timestamp" in key.lower():
+                raise ValueError("No key in preset_filters should contain 'timestamp'.")
+        return v
+
 
 class StructureServiceSink(StructureServiceCommonFieldsModel):
     id: UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the sink")  # noqa: A003
@@ -385,6 +398,13 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
                     "provided for this sink, it must be unique."
                 )
             seen.add(internal_name)
+        return v
+
+    @validator("preset_filters")
+    def no_preset_filter_key_can_contain_timestamp(cls, v: dict[str, Any]) -> dict[str, Any]:
+        for key in v:
+            if "timestamp" in key.lower():
+                raise ValueError("No key in preset_filters should contain 'timestamp'.")
         return v
 
 
