@@ -182,6 +182,34 @@ def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json
         StructureServiceSink(**example_sink)
 
 
+def test_source_sink_preset_filters_no_timestamp_in_name_validator():
+    example_source = {
+        "external_id": "EnergyUsage_PumpSystem_StorageTank",
+        "stakeholder_key": "GW",
+        "name": "nf",
+        "type": "multitsframe",
+        "adapter_key": "sql-adapter",
+        "source_id": "nf",
+        "thing_node_external_ids": ["Waterworks1"],
+        "preset_filters": {"timestamp": "23-05-1949", "timEstaMp23": "01-01-2025"},
+    }
+
+    with pytest.raises(
+        ValidationError,
+        match="No key in preset_filters should contain 'timestamp'.",
+    ):
+        StructureServiceSource(**example_source)
+
+    example_sink = example_source
+    example_sink["sink_id"] = example_sink.pop("source_id")
+
+    with pytest.raises(
+        ValidationError,
+        match="No key in preset_filters should contain 'timestamp'.",
+    ):
+        StructureServiceSink(**example_sink)
+
+
 def test_validate_root_nodes_parent_ids_are_none(mocked_clean_test_db_session):
     file_path = "tests/structure/data/db_invalid_structure_root_nodes.json"
     with open(file_path) as file:
