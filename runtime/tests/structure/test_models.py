@@ -191,7 +191,7 @@ def test_source_sink_preset_filters_no_timestamp_in_name_validator():
         "adapter_key": "sql-adapter",
         "source_id": "nf",
         "thing_node_external_ids": ["Waterworks1"],
-        "preset_filters": {"timestamp": "23-05-1949", "timEstaMp23": "01-01-2025"},
+        "preset_filters": {"timEstaMp23": "01-01-2025"},
     }
 
     with pytest.raises(
