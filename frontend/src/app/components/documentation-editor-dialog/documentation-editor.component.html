@@ -7,25 +7,26 @@
       color="primary"
       [attr.data-testid]="'save-edit-documentation-editor'"
     >
-      <ng-container *ngIf="!editMode">Edit</ng-container>
-      <ng-container *ngIf="editMode">Save</ng-container>
+      @if (!editMode) {
+        Edit
+      }
+      @if (editMode) {
+        Save
+      }
     </button>
   </div>
   <div class="editor-and-preview">
-    <div
-      #editorRef
-      *ngIf="editMode === true"
-      class="editor-and-preview__editor"
-      style="flex: 1 1 50%"
-    >
-      <textarea
-        (scroll)="editorRefScroll($event)"
-        (ngModelChange)="parseMarkdown($event)"
-        [ngModel]="markdown"
-        class="editor-and-preview__editor-textarea"
-        placeholder="Markdown Documentation"
-      ></textarea>
-    </div>
+    @if (editMode === true) {
+      <div #editorRef class="editor-and-preview__editor" style="flex: 1 1 50%">
+        <textarea
+          (scroll)="editorRefScroll($event)"
+          (ngModelChange)="parseMarkdown($event)"
+          [ngModel]="markdown"
+          class="editor-and-preview__editor-textarea"
+          placeholder="Markdown Documentation"
+        ></textarea>
+      </div>
+    }
     <div
       #previewRef
       [innerHTML]="parsedMarkdown"

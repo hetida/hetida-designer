@@ -11,27 +11,27 @@
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="copyItem()">Copy...</button>
-    <button mat-menu-item *ngIf="_isNotPublished" (click)="publish()">
-      Publish...
-    </button>
-    <button mat-menu-item *ngIf="_isNotPublished" (click)="delete()">
-      Delete...
-    </button>
+    @if (_isNotPublished) {
+      <button mat-menu-item (click)="publish()">Publish...</button>
+    }
+    @if (_isNotPublished) {
+      <button mat-menu-item (click)="delete()">Delete...</button>
+    }
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="editDocumentation()">
       Edit documentation...
     </button>
-    <button mat-menu-item *ngIf="!_isWorkflowWithoutIo" (click)="configureIO()">
-      Configure IO...
-    </button>
-    <button mat-menu-item *ngIf="!_isIncomplete" (click)="execute()">
-      Execute...
-    </button>
+    @if (!_isWorkflowWithoutIo) {
+      <button mat-menu-item (click)="configureIO()">Configure IO...</button>
+    }
+    @if (!_isIncomplete) {
+      <button mat-menu-item (click)="execute()">Execute...</button>
+    }
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="editItem()">Properties...</button>
     <mat-divider></mat-divider>
-    <button mat-menu-item *ngIf="!_isNotPublished" (click)="deprecate()">
-      Deprecate...
-    </button>
+    @if (!_isNotPublished) {
+      <button mat-menu-item (click)="deprecate()">Deprecate...</button>
+    }
   </mat-menu>
 </div>

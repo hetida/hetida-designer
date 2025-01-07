@@ -10,66 +10,63 @@
 </div>
 
 <div class="block" mat-dialog-content>
-  <form *ngIf="infoForm" [formGroup]="infoForm" autocomplete="off" novalidate>
-    <mat-form-field class="noPadding">
-      <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
-      <input
-        formControlName="name"
-        id="name"
-        matInput
-        placeholder="{{ data.transformation.type | titlecase }} name"
-        type="text"
-      />
-      <mat-hint align="end">Max. 60 characters.</mat-hint>
-      <mat-error [hdErrorVisual]="infoForm.get('name')"></mat-error>
-    </mat-form-field>
-
-    <mat-form-field class="noPadding">
-      <mat-label>Category</mat-label>
-      <input
-        formControlName="category"
-        id="category"
-        matInput
-        placeholder="Category"
-        type="text"
-        [matAutocomplete]="auto"
-      />
-      <mat-hint align="end">Max. 60 characters.</mat-hint>
-      <mat-error [hdErrorVisual]="infoForm.get('category')"></mat-error>
-      <mat-autocomplete #auto="matAutocomplete">
-        <mat-option
-          *ngFor="let category of filteredCategories$ | async"
-          [value]="category"
-          >{{ category }}
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-
-    <mat-form-field class="noPadding">
-      <mat-label>Short description</mat-label>
-      <input
-        formControlName="description"
-        id="description"
-        matInput
-        placeholder="Short description"
-        type="text"
-      />
-      <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
-    </mat-form-field>
-
-    <mat-form-field class="noPadding">
-      <mat-label>Tag</mat-label>
-      <input
-        formControlName="tag"
-        id="tag"
-        matInput
-        placeholder="Tag"
-        type="text"
-      />
-      <mat-hint align="end">Unique and max. 20 characters.</mat-hint>
-      <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
-    </mat-form-field>
-  </form>
+  @if (infoForm) {
+    <form [formGroup]="infoForm" autocomplete="off" novalidate>
+      <mat-form-field class="noPadding">
+        <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
+        <input
+          formControlName="name"
+          id="name"
+          matInput
+          placeholder="{{ data.transformation.type | titlecase }} name"
+          type="text"
+        />
+        <mat-hint align="end">Max. 60 characters.</mat-hint>
+        <mat-error [hdErrorVisual]="infoForm.get('name')"></mat-error>
+      </mat-form-field>
+      <mat-form-field class="noPadding">
+        <mat-label>Category</mat-label>
+        <input
+          formControlName="category"
+          id="category"
+          matInput
+          placeholder="Category"
+          type="text"
+          [matAutocomplete]="auto"
+        />
+        <mat-hint align="end">Max. 60 characters.</mat-hint>
+        <mat-error [hdErrorVisual]="infoForm.get('category')"></mat-error>
+        <mat-autocomplete #auto="matAutocomplete">
+          @for (category of filteredCategories$ | async; track category) {
+            <mat-option [value]="category">{{ category }} </mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field class="noPadding">
+        <mat-label>Short description</mat-label>
+        <input
+          formControlName="description"
+          id="description"
+          matInput
+          placeholder="Short description"
+          type="text"
+        />
+        <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
+      </mat-form-field>
+      <mat-form-field class="noPadding">
+        <mat-label>Tag</mat-label>
+        <input
+          formControlName="tag"
+          id="tag"
+          matInput
+          placeholder="Tag"
+          type="text"
+        />
+        <mat-hint align="end">Unique and max. 20 characters.</mat-hint>
+        <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
+      </mat-form-field>
+    </form>
+  }
   <small class="block__small-info"
     >{{ data.transformation.type | titlecase }} revision ID:
     <a
@@ -98,18 +95,19 @@
   }"
   mat-dialog-actions
 >
-  <button
-    class="mr-a"
-    *ngIf="data.showDeleteButton"
-    (click)="_onDelete()"
-    color="warn"
-    mat-raised-button
-    attr.data-testid="{{
-      data.deleteButtonText + '-copy-transformation-dialog' | lowercase
-    }}"
-  >
-    {{ data.deleteButtonText }}
-  </button>
+  @if (data.showDeleteButton) {
+    <button
+      class="mr-a"
+      (click)="_onDelete()"
+      color="warn"
+      mat-raised-button
+      attr.data-testid="{{
+        data.deleteButtonText + '-copy-transformation-dialog' | lowercase
+      }}"
+    >
+      {{ data.deleteButtonText }}
+    </button>
+  }
   <button
     (click)="onCancel()"
     color="primary"

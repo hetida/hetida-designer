@@ -5,19 +5,23 @@
   </button>
 </div>
 <div mat-dialog-content class="dialog-content">
-  <form *ngIf="optionalFieldsForm" [formGroup]="optionalFieldsForm" class="p-1">
-    <div
-      [formGroup]="optionalField"
-      *ngFor="let optionalField of optionalFieldsArray.controls"
-    >
-      <mat-checkbox class="example-margin mb-1" formControlName="exposed">
-        {{ optionalField.get('name').value }}
-        <span *ngIf="optionalField.get('value')?.value"
-          >({{ optionalField.get('value')?.value }})</span
-        >
-      </mat-checkbox>
-    </div>
-  </form>
+  @if (optionalFieldsForm) {
+    <form [formGroup]="optionalFieldsForm" class="p-1">
+      @for (
+        optionalField of optionalFieldsArray.controls;
+        track optionalField
+      ) {
+        <div [formGroup]="optionalField">
+          <mat-checkbox class="example-margin mb-1" formControlName="exposed">
+            {{ optionalField.get('name').value }}
+            @if (optionalField.get('value')?.value) {
+              <span>({{ optionalField.get('value')?.value }})</span>
+            }
+          </mat-checkbox>
+        </div>
+      }
+    </form>
+  }
 </div>
 
 <div mat-dialog-actions>
