@@ -118,13 +118,6 @@ def test_filter_class_internal_name_field_creation_and_validation(filter_json):
     )
     assert filter_with_weird_name_provided.internal_name == "min_max"
 
-    # Timestamp in internal_name
-    with pytest.raises(
-        ValidationError,
-        match="must not contain 'timestamp'.",
-    ):
-        Filter(**filter_json["filter_with_timestamp_in_internal_name"])
-
 
 def test_filter_class_name_validation(filter_json):
     # Test with empty name
@@ -142,13 +135,6 @@ def test_filter_class_name_validation(filter_json):
         "that only contains alphanumeric characters, underscores and spaces.",
     ):
         Filter(**filter_json["filter_with_invalid_string_as_name"])
-
-    # Test with timestamp in name
-    with pytest.raises(
-        ValidationError,
-        match="must not contain 'timestamp'.",
-    ):
-        Filter(**filter_json["filter_with_timestamp_in_name"])
 
 
 def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json):
@@ -182,7 +168,7 @@ def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json
         StructureServiceSink(**example_sink)
 
 
-def test_source_sink_preset_filters_no_timestamp_in_name_validator():
+def test_source_sink_filters_name_timestamp_validators():
     example_source = {
         "external_id": "EnergyUsage_PumpSystem_StorageTank",
         "stakeholder_key": "GW",
@@ -191,23 +177,26 @@ def test_source_sink_preset_filters_no_timestamp_in_name_validator():
         "adapter_key": "sql-adapter",
         "source_id": "nf",
         "thing_node_external_ids": ["Waterworks1"],
-        "preset_filters": {"timEstaMp23": "01-01-2025"},
+        "preset_filters": {"timEstaMpFROM": "01-01-2025"},
     }
 
     with pytest.raises(
         ValidationError,
-        match="No key in preset_filters should contain 'timestamp'.",
+        match="The filter names 'timestampFrom' or 'timestampTo' are not allowed.",
     ):
         StructureServiceSource(**example_source)
 
-    example_sink = example_source
-    example_sink["sink_id"] = example_sink.pop("source_id")
+    # Empty preset_filters and add passthrough filters
+    example_source["preset_filters"] = {}
+    example_source["passthrough_filters"] = [
+        Filter(name="timestamptO", type="free_text", required=False)
+    ]
 
     with pytest.raises(
         ValidationError,
-        match="No key in preset_filters should contain 'timestamp'.",
+        match="The filter names 'timestampFrom' or 'timestampTo' are not allowed.",
     ):
-        StructureServiceSink(**example_sink)
+        StructureServiceSource(**example_source)
 
 
 def test_validate_root_nodes_parent_ids_are_none(mocked_clean_test_db_session):

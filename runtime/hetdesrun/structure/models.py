@@ -47,12 +47,6 @@ class Filter(BaseModel):
             )
         return value
 
-    @validator("name", "internal_name", each_item=True)
-    def no_name_can_contain_timestamp(cls, value: str) -> str:
-        if "timestamp" in value.lower():
-            raise ValueError(f"'{value}' must not contain 'timestamp'.")
-        return value
-
     @root_validator(skip_on_failure=True)
     def generate_internal_name_if_not_provided(cls, values: dict) -> dict:
         # Internally the designer requires an identifier for the filter
@@ -270,11 +264,9 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v: Any) -> Any:
-        if not v:
-            return {}
-        return v
+    @validator("passthrough_filters", pre=True, always=True)
+    def validate_passthrough_filters_not_none(cls, v: list[Filter] | None) -> list[Filter]:
+        return v or []
 
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
@@ -292,12 +284,41 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             seen.add(internal_name)
         return v
 
-    @validator("preset_filters")
-    def no_preset_filter_key_can_contain_timestamp(cls, v: dict[str, Any]) -> dict[str, Any]:
-        for key in v:
-            if "timestamp" in key.lower():
-                raise ValueError("No key in preset_filters should contain 'timestamp'.")
-        return v
+    @root_validator(pre=False)
+    def check_for_filter_name_conflicts_with_timestamp_filters(
+        cls, values: dict[str, Any]
+    ) -> dict[str, Any]:
+        # Read values
+        src_type = values.get("type")
+        preset_filters = values.get("preset_filters", {})
+        passthrough_filters = values.get("passthrough_filters", [])
+
+        # Check if the source is a series or multitsframe
+        if src_type and any(
+            keyword in src_type.value.lower() for keyword in ("series", "multitsframe")
+        ):
+            filter_names_to_avoid = {"timestampfrom", "timestampto"}
+
+            # Validate preset_filters keys
+            for key in preset_filters:
+                if key.lower() in filter_names_to_avoid:
+                    raise ValueError(
+                        "The filter names 'timestampFrom' or 'timestampTo' are not allowed."
+                        " Regardless of capitalization."
+                    )
+
+            # Validate passthrough_filters
+            for pass_filter in passthrough_filters:
+                if (
+                    pass_filter.name.lower() in filter_names_to_avoid
+                    or pass_filter.internal_name.lower() in filter_names_to_avoid
+                ):
+                    raise ValueError(
+                        "The filter names 'timestampFrom' or 'timestampTo' are not allowed."
+                        " Regardless of capitalization."
+                    )
+
+        return values
 
 
 class StructureServiceSink(StructureServiceCommonFieldsModel):
@@ -378,11 +399,9 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v: Any) -> Any:
-        if not v:
-            return {}
-        return v
+    @validator("passthrough_filters", pre=True, always=True)
+    def validate_passthrough_filters_not_none(cls, v: list[Filter] | None) -> list[Filter]:
+        return v or []
 
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
@@ -398,13 +417,6 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
                     "provided for this sink, it must be unique."
                 )
             seen.add(internal_name)
-        return v
-
-    @validator("preset_filters")
-    def no_preset_filter_key_can_contain_timestamp(cls, v: dict[str, Any]) -> dict[str, Any]:
-        for key in v:
-            if "timestamp" in key.lower():
-                raise ValueError("No key in preset_filters should contain 'timestamp'.")
         return v
 
 
