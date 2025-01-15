@@ -53,7 +53,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-${componentName}-input-data-workflow-io-dialog`
   );
-  await hetidaDesigner.typeInJsonEditor(workflowInputData);
+  await hetidaDesigner.typeInJsonEditor(workflowInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
   await hetidaDesigner.typeInInputByTestId(
     `${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`,

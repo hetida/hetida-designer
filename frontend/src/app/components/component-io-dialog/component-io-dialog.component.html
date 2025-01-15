@@ -42,7 +42,7 @@
         </div>
         @for (
           ioItem of _ioItemInputsFormArray.controls;
-          track ioItem;
+          track $index;
           let i = $index
         ) {
           <div [formGroup]="ioItem">
@@ -176,7 +176,7 @@
         </div>
         @for (
           ioItem of _ioItemOutputsFormArray.controls;
-          track ioItem;
+          track $index;
           let i = $index
         ) {
           <div class="d-flex align-items-center" [formGroup]="ioItem">

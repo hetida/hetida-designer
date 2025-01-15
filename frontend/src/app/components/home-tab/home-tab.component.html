@@ -16,7 +16,7 @@
       <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
       new workflow...
     </li>
-    @for (item of lastOpenedWorkflows | async; track item) {
+    @for (item of lastOpenedWorkflows | async; track item.id) {
       <li
         class="home-content__item"
         (contextmenu)="
@@ -44,7 +44,7 @@
       <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
       new component...
     </li>
-    @for (item of lastOpenedComponents | async; track item) {
+    @for (item of lastOpenedComponents | async; track item.id) {
       <li
         class="home-content__item"
         (click)="select(item)"

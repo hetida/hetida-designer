@@ -71,7 +71,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-value-input-wiring-dialog`
   );
-  await hetidaDesigner.typeInJsonEditor(componentInputData);
+  await hetidaDesigner.typeInJsonEditor(componentInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
 
   // TODO: Wait for a change to happen

@@ -204,7 +204,10 @@ export class HetidaDesigner {
     await textArea.pressSequentially(textareaText);
   }
 
-  public async typeInJsonEditor(textareaText: string): Promise<void> {
+  public async typeInJsonEditor(
+    textareaText: string,
+    browserName: string
+  ): Promise<void> {
     if (textareaText === '') {
       throw new Error('ERROR: Textarea text must not be empty');
     }
@@ -214,7 +217,12 @@ export class HetidaDesigner {
       .first();
     await editorTextArea.press('Control+a');
     await editorTextArea.press('Delete');
-    await editorTextArea.pressSequentially(textareaText);
+
+    if (browserName === 'firefox') {
+      await editorTextArea.pressSequentially(textareaText);
+    } else {
+      await editorTextArea.fill(textareaText);
+    }
   }
 
   public async typeInComponentEditor(
