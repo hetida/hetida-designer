@@ -66,7 +66,7 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
     return True, ""
 
 
-async def load_framelike_data(  # noqa: PLR0915
+async def load_framelike_data(  # noqa: PLR0915,PLR0912
     filtered_sources: list[FilteredSource],
     additional_params: list[
         tuple[str, str]
@@ -152,7 +152,14 @@ async def load_framelike_data(  # noqa: PLR0915
                 raise AdapterConnectionError(msg)
             logger.info("Start reading in and parsing framelike data")
 
-            df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
+            try:
+                df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
+            except Exception as e:
+                msg = (
+                    f"Could not parse framelike response data from {url} via pd.read_json"
+                    f" Exception was:\n{str(e)}."
+                )
+                raise AdapterHandlingException(msg) from e
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (

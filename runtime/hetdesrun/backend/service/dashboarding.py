@@ -23,7 +23,7 @@ from htpy import (
     head,
     html,
     i,
-    input,
+    input,  # noqa: A004
     label,
     link,
     option,
@@ -38,6 +38,7 @@ from htpy import (
 )
 from markupsafe import Markup
 
+from hdutils import parse_value
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.service.dashboarding_utils import (
     dashboard_id_for_io,
@@ -501,7 +502,8 @@ DASHBOARD_HEAD_ELEMENTS = (
     script(src="https://unpkg.com/tabulator-tables@6.2.5/dist/js/tabulator.min.js"),
     head[
         style[
-            Markup(r"""
+            Markup(
+                r"""
 .grid-stack {
     padding: 0;
     margin: 0;
@@ -771,7 +773,8 @@ left: 95.833%;
 .gs-24 > .grid-stack-item[gs-w="24"] {
 width: 100%;
 }
-""")
+"""
+            )
         ]
     ],
 )
@@ -1354,23 +1357,24 @@ def generate_dashboard_html(
     }
 
     dataframe_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
+            exec_resp.output_results_by_output_name[name], "DATAFRAME", nullable=False
+        )  # actually parse as dataframe, this is a dict-like object when received from runtime
         for name in exec_resp.output_results_by_output_name
         if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
     }
 
     multitsframe_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
+            exec_resp.output_results_by_output_name[name], "MULTITSFRAME", nullable=False
+        )  # actually parse as dataframe, this is a dict-like object when received from runtime
         for name in exec_resp.output_results_by_output_name
         if exec_resp.output_types_by_output_name[name] == "MULTITSFRAME"
     }
 
     datatable_script = script[
-        Markup(r"""
+        Markup(
+            r"""
         // ======== Tabulator datatables ========
 
         function get_datatable(div_id) {
@@ -1443,7 +1447,8 @@ def generate_dashboard_html(
             });
 
 
-        }""")
+        }"""
+        )
     ]
 
     main_scripts = script[

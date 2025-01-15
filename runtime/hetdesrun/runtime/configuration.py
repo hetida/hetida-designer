@@ -8,6 +8,4 @@ from contextvars import ContextVar
 
 from hetdesrun.models.run import ConfigurationInput
 
-execution_config: ContextVar[ConfigurationInput] = ContextVar(
-    "execution_configuration", default=ConfigurationInput()
-)
+execution_config: ContextVar[ConfigurationInput] = ContextVar("execution_configuration")

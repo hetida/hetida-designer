@@ -28,6 +28,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
+        "id": "root.plantC.picklingUnit.influx.anomaly_score",
+        "thingNodeId": "root.plantC.picklingUnit.influx",
+        "name": "Influx Anomaly Score",
+        "path": "Plant C / Pickling Unit / Influx",
+        "type": ExternalType.TIMESERIES_NUMERIC,
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+    },
+    {
         "id": "root.plantA.millingUnit.influx.anomaly_score",
         "thingNodeId": "root.plantA.millingUnit.influx",
         "name": "Influx Anomaly Score",

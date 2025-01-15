@@ -1,12 +1,12 @@
 from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 
 from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
-from hetdesrun.models.run import HIERARCHY_SEPARATOR
+from hetdesrun.models.run import HIERARCHY_SEPARATOR, ConfigurationInput
 from hetdesrun.runtime import runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.context import ExecutionContext
@@ -24,6 +24,10 @@ from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
 
 runtime_execution_logger.addFilter(execution_context_filter)
+
+# TypeVars for self-referencing
+CompNodeType = TypeVar("CompNodeType", bound="ComputationNode")
+WorkflowType = TypeVar("WorkflowType", bound="Workflow")
 
 
 class Node(Protocol):
@@ -234,7 +238,8 @@ class ComputationNode:
         return function_result
 
     @cached_property  # compute each nodes result only once
-    async def result(self) -> dict[str, Any]:
+    async def result(self: Node | CompNodeType) -> dict[str, Any]:
+        assert isinstance(self, ComputationNode)  # for mypy # noqa: S101
         return await self._compute_result()
 
 
@@ -358,7 +363,8 @@ class Workflow:
                 ).set_context(self.context) from error
 
     @cached_property
-    async def result(self) -> dict[str, Any]:
+    async def result(self: Node | WorkflowType) -> dict[str, Any]:
+        assert isinstance(self, Workflow)  # for mypy # noqa: S101
         self._wire_workflow_inputs()
 
         execution_context_filter.bind_context(**self.context.dict())
@@ -367,7 +373,7 @@ class Workflow:
 
         # gather result from workflow operators
         results = {}
-        exe_context_config = execution_config.get()
+        exe_context_config = execution_config.get(ConfigurationInput())
 
         for (
             wf_output_name,

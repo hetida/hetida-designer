@@ -1,0 +1,40 @@
+{
+    "element_types": [
+        {
+            "external_id": "Type1",
+            "stakeholder_key": "SK1",
+            "name": "Type 1"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Node1",
+            "stakeholder_key": "SK1",
+            "name": "Node 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Type1"
+        }
+    ],
+    "sources": [
+        {
+            "external_id": "Source1",
+            "stakeholder_key": "SK1",
+            "name": "Source 1",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "some_id",
+            "thing_node_external_ids": ["Node1"]
+        }
+    ],
+    "sinks": [
+        {
+            "external_id": "Sink1",
+            "stakeholder_key": "SK1",
+            "name": "Sink 1",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "some_id",
+            "thing_node_external_ids": ["NonExistentNode"]
+        }
+    ]
+}

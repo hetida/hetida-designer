@@ -1,0 +1,32 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks",
+            "description": "Element type for waterworks"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
+            "parent_external_node_id": "NonExistingNode",
+            "element_type_external_id": "Waterworks_Type",
+            "meta_data": {"location": "Main Site"}
+        },
+        {
+            "external_id": "Waterworks1_Plant1",
+            "stakeholder_key": "GW",
+            "name": "Plant 1",
+            "description": "First plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Waterworks_Type",
+            "meta_data": {"location": "North"}
+        }
+    ],
+    "sources": [],
+    "sinks": []
+}

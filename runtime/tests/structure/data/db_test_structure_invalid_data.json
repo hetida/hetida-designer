@@ -1,0 +1,46 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
+            "parent_external_node_id": "Invalid_Parent",
+            "element_type_external_id": "Waterworks_Type",
+            "meta_data": {}
+        }
+    ],
+    "sources": [
+        {
+            "external_id": "EnergyUsage_PumpSystem",
+            "stakeholder_key": "GW",
+            "name": "Energy usage of pump system",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "timescale_db/ts_table/ts_values",
+            "meta_data": {},
+            "preset_filters": {},
+            "thing_node_external_ids": ["Invalid_Node"]
+        }
+    ],
+    "sinks": [
+        {
+            "external_id": "AnomalyScore_EnergyUsage",
+            "stakeholder_key": "GW",
+            "name": "Anomaly Score for energy usage",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "sink_id": "timescale_db/ts_table/ts_values",
+            "meta_data": {},
+            "preset_filters": {},
+            "thing_node_external_ids": ["Invalid_Node"]
+        }
+    ]
+}

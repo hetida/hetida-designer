@@ -4,7 +4,7 @@ import pytest
 
 from hetdesrun.backend.models.info import DocumentationFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence.db_engine_and_session import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,

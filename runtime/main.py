@@ -33,7 +33,7 @@ app = get_app()
 
 
 def detect_in_memory_db() -> bool:
-    from hetdesrun.persistence import get_db_engine
+    from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     engine = get_db_engine()
 
@@ -72,7 +72,7 @@ def run_migrations(
     import hetdesrun.persistence.dbmodels
     from alembic import command
     from alembic.config import Config
-    from hetdesrun.persistence import get_db_engine
+    from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     engine = get_db_engine()
 
@@ -93,6 +93,7 @@ def run_migrations(
     command.upgrade(alembic_cfg, "head")
     logger.info("Finished running migrations.")
 
+
 def run_trafo_rev_deployment():
     from hetdesrun.exportimport.importing import import_transformations
 
@@ -106,6 +107,7 @@ consumption_mode_variable = os.environ.get("HETIDA_DESIGNER_KAFKA_CONSUMPTION_MO
 kafka_consumption_modus = (
     consumption_mode_variable is not None and len(consumption_mode_variable) > 0
 )
+prepopulate_vst_structure = os.environ.get("PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP", False)
 
 if in_memory_db:
     logger.info("Detected in-memory db usage: Running migrations during importing of main.py.")
@@ -118,6 +120,14 @@ if in_memory_db:
             "during importing of main.py."
         )
         run_trafo_rev_deployment()
+
+        if prepopulate_vst_structure:
+            from hetdesrun.adapters.virtual_structure_adapter.structure_prepopulation import (
+                prepopulate_structure,
+            )
+
+            prepopulate_structure()
+
 
 if __name__ == "__main__":
     if not in_memory_db:

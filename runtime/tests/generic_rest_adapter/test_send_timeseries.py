@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hetdesrun.adapters.exceptions import AdapterOutputDataError
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError, AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
@@ -155,66 +155,167 @@ async def test_end_to_end_send_only_timeseries_data_works():
         assert kwargs_4["json"] == []
 
 
+@pytest.mark.parametrize(
+    ("series_input", "series_type", "error_msg"),
+    [
+        pytest.param(
+            pd.Series([1.0], index=["not a timestamp"]),
+            "timeseries(float)",
+            "does not have DatetimeTZDtype dtype",
+            id="no DatetimeTZDtype",
+        ),
+        pytest.param(
+            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36+01:00")]),
+            "timeseries(float)",
+            "does not have UTC timezone",
+            id="no UTC zone",
+        ),
+        pytest.param(
+            pd.Series(["not a float"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(float)",
+            "Expected float",
+            id="not a float",
+        ),
+        pytest.param(
+            pd.Series(["not an int"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(int)",
+            "Expected int",
+            id="not a int",
+        ),
+        pytest.param(
+            pd.Series(["not a bool"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(bool)",
+            "Expected bool",
+            id="not a bool",
+        ),
+        pytest.param(
+            pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(string)",
+            "Expected string",
+            id="not a string",
+        ),
+        pytest.param(
+            pd.Series(["not a numeric"], index=[pd.Timestamp("2019-08-01T15:45:36Z")]),
+            "timeseries(numeric)",
+            "Expected int or float",
+            id="not a numeric",
+        ),
+        pytest.param(
+            pd.DataFrame(
+                {
+                    "metric": ["a"],
+                    "timestamp": [pd.Timestamp("2019-08-01T15:45:36Z")],
+                    "value": [1.0],
+                }
+            ),
+            "timeseries(float)",
+            "Did not receive Pandas Series",
+            id="not a series",
+        ),
+    ],
+)
 @pytest.mark.asyncio
-async def test_end_to_end_send_only_timeseries_data_exception_handling():
-    ts_5 = pd.Series([1.0], index=["not a timestamp"])
-    with pytest.raises(AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"):
+async def test_end_to_end_send_only_timeseries_data_exception_handling(
+    series_input, series_type, error_msg
+):
+    with pytest.raises(AdapterOutputDataError, match=error_msg):
         await send_data(
-            {"outp_5": FilteredSink(ref_id="sink_id_5", type="timeseries(float)")},
-            {"outp_5": ts_5},
+            {"outp": FilteredSink(ref_id="sink", type=series_type)},
+            {"outp": series_input},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )
 
-    ts_6 = pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36+01:00")])
-    with pytest.raises(AdapterOutputDataError, match="does not have UTC timezone"):
-        await send_data(
-            {"outp_6": FilteredSink(ref_id="sink_id_6", type="timeseries(float)")},
-            {"outp_6": ts_6},
-            adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
+
+@pytest.mark.parametrize(
+    ("series_input", "dtype"),
+    [
+        pytest.param([1, 3, 5], "timeseries(numeric)", id="numerical as int"),
+        pytest.param([1.5, 3.5, 5.5], "timeseries(numeric)", id="numerical as float"),
+        pytest.param([1, 3, 5], "timeseries(int)", id="int as int"),
+        pytest.param([1.5, 3.5, 5.5], "timeseries(float)", id="float as float"),
+        pytest.param(["1.5", "3.5", "5.5"], "timeseries(string)", id="sting as string"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_send_data_good(series_input, dtype):
+    response = mock.Mock()
+    response.status_code = 200
+    post_mock = mock.AsyncMock(return_value=response)
+
+    with (
+        mock.patch(  # noqa: SIM117
+            "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
+            return_value="https://hetida.de",
+        ),
+        mock.patch(
+            "hetdesrun.adapters.generic_rest.send_ts_data.AsyncClient.post",
+            new=post_mock,
+        ),
+    ):
+        ts_1 = pd.Series(
+            series_input,
+            index=pd.to_datetime(
+                [
+                    "2020-01-15T00:00:00.000Z",
+                    "2020-01-15T01:00:00.000Z",
+                    "2020-01-15T02:00:00.000Z",
+                ]
+            ),
         )
 
-    ts_7 = pd.Series(["not a float"], index=[pd.Timestamp("2019-08-01T15:45:36Z")])
-    with pytest.raises(AdapterOutputDataError, match="Expected float"):
         await send_data(
-            {"outp_7": FilteredSink(ref_id="sink_id_7", type="timeseries(float)")},
-            {"outp_7": ts_7},
+            {
+                "outp_1": FilteredSink(
+                    ref_id="sink_id_1",
+                    type=dtype,
+                    filters={"filter_key": "filter_value"},
+                )
+            },
+            {"outp_1": ts_1},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )
+        assert post_mock.called  # we got through to actually posting!
 
-    ts_8 = pd.Series(["not an int"], index=[pd.Timestamp("2019-08-01T15:45:36Z")])
-    with pytest.raises(AdapterOutputDataError, match="Expected int"):
-        await send_data(
-            {"outp_8": FilteredSink(ref_id="sink_id_8", type="timeseries(int)")},
-            {"outp_8": ts_8},
-            adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
-        )
 
-    ts_9 = pd.Series(["not a bool"], index=[pd.Timestamp("2019-08-01T15:45:36Z")])
-    with pytest.raises(AdapterOutputDataError, match="Expected bool"):
-        await send_data(
-            {"outp_9": FilteredSink(ref_id="sink_id_9", type="timeseries(bool)")},
-            {"outp_9": ts_9},
-            adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
-        )
-
-    ts_10 = pd.Series([1.0], index=[pd.Timestamp("2019-08-01T15:45:36Z")])
-    with pytest.raises(AdapterOutputDataError, match="Expected string"):
-        await send_data(
-            {"outp_10": FilteredSink(ref_id="sink_id_10", type="timeseries(string)")},
-            {"outp_10": ts_10},
-            adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
-        )
-
-    no_ts = pd.DataFrame(
-        {
-            "metric": ["a"],
-            "timestamp": [pd.Timestamp("2019-08-01T15:45:36Z")],
-            "value": [1.0],
-        }
+@pytest.mark.parametrize(
+    ("series_input", "dtype", "error_type"),
+    [
+        pytest.param(
+            ["1.5", "3.5", "5.5"],
+            "metadata(float)",
+            AdapterClientWiringInvalidError,
+            id="metadata as string",
+        ),
+        pytest.param(
+            ["1.5", "3.5", "5.5"],
+            "timeseries(Any)",
+            AdapterClientWiringInvalidError,
+            id="Any as string",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_send_data_undefined_type(series_input, dtype, error_type):
+    ts_1 = pd.Series(
+        series_input,
+        index=pd.to_datetime(
+            [
+                "2020-01-15T00:00:00.000Z",
+                "2020-01-15T01:00:00.000Z",
+                "2020-01-15T02:00:00.000Z",
+            ]
+        ),
     )
-    with pytest.raises(AdapterOutputDataError, match="Did not receive Pandas Series"):
+
+    with pytest.raises(error_type):
         await send_data(
-            {"outp_11": FilteredSink(ref_id="sink_id_11", type="timeseries(float)")},
-            {"outp_11": no_ts},
+            {
+                "outp_1": FilteredSink(
+                    ref_id="sink_id_1",
+                    type=dtype,
+                    filters={"filter_key": "filter_value"},
+                )
+            },
+            {"outp_1": ts_1},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )

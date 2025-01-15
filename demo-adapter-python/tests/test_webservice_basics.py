@@ -121,12 +121,12 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
             open_async_test_client=client,
         )
 
-        assert len(all_tns) == 14
-        assert len(all_srcs) == 37
-        assert len(all_snks) == 14
+        assert len(all_tns) == 17
+        assert len(all_srcs) == 39
+        assert len(all_snks) == 15
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
-        assert len(tn_attached_metadata_dict) == 8
+        assert len(tn_attached_metadata_dict) == 9
 
         for src in all_srcs:
             response_obj = (await client.get(f"/sources/{src.id}")).json()

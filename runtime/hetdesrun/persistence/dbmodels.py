@@ -1,10 +1,10 @@
+from datetime import datetime
 from typing import NamedTuple
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
     CheckConstraint,
-    Column,
     DateTime,
     Enum,
     ForeignKey,
@@ -12,35 +12,41 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class TransformationRevisionDBModel(Base):
     __tablename__ = "transformation_revisions"
 
-    id: UUIDType = Column(  # noqa: A003
+    id: Mapped[UUIDType] = mapped_column(  # noqa: A003
         UUIDType(binary=False), primary_key=True, default=uuid4
     )
-    revision_group_id: UUIDType = Column(UUIDType(binary=False), default=uuid4, nullable=False)
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=False)
-    category = Column(String, nullable=False)
-    version_tag = Column(String, nullable=False)
-    state = Column(Enum(State), nullable=False)
-    type = Column(Enum(Type), nullable=False)  # noqa: A003
-    documentation = Column(String, nullable=False)
-    workflow_content = Column(JSON(none_as_null=True), nullable=True, default=lambda: None)
-    component_code = Column(String, nullable=True)
-    io_interface = Column(JSON, nullable=False)
-    test_wiring = Column(JSON, nullable=False)
-    release_wiring = Column(JSON, nullable=True)
-    released_timestamp = Column(DateTime, nullable=True, default=lambda: None)
-    disabled_timestamp = Column(DateTime, nullable=True)
+    revision_group_id: Mapped[UUIDType] = mapped_column(
+        UUIDType(binary=False), default=uuid4, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    category: Mapped[str] = mapped_column(String, nullable=False)
+    version_tag: Mapped[str] = mapped_column(String, nullable=False)
+    state: Mapped[State] = mapped_column(Enum(State), nullable=False)
+    type: Mapped[Type] = mapped_column(Enum(Type), nullable=False)
+    documentation: Mapped[str] = mapped_column(String, nullable=False)
+    workflow_content: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
+    )
+    component_code: Mapped[str | None] = mapped_column(String, nullable=True)
+    io_interface: Mapped[dict] = mapped_column(JSON, nullable=False)
+    test_wiring: Mapped[dict] = mapped_column(JSON, nullable=False)
+    release_wiring: Mapped[dict] = mapped_column(JSON, nullable=False)
+    released_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    disabled_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     __table_args__ = (
         UniqueConstraint(
@@ -64,44 +70,44 @@ class TransformationRevisionDBModel(Base):
 class NestingDBModel(Base):
     __tablename__ = "nestings"
 
-    workflow_id: UUIDType = Column(
+    workflow_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         ForeignKey(TransformationRevisionDBModel.id),
         primary_key=True,
         default=uuid4,
     )
-    via_transformation_id: UUIDType = Column(
+    via_transformation_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         ForeignKey(TransformationRevisionDBModel.id),
         default=uuid4,
         nullable=False,
     )
-    via_operator_id: UUIDType = Column(
+    via_operator_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         primary_key=True,
         default=uuid4,
     )
-    depth = Column(Integer, primary_key=True, nullable=False)
-    nested_transformation_id: UUIDType = Column(
+    depth: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    nested_transformation_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         ForeignKey(TransformationRevisionDBModel.id),
         default=uuid4,
         nullable=False,
     )
-    nested_operator_id: UUIDType = Column(
+    nested_operator_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         primary_key=True,
         default=uuid4,
     )
 
-    workflow: TransformationRevisionDBModel = relationship(
+    workflow: Mapped[TransformationRevisionDBModel] = relationship(
         TransformationRevisionDBModel,
         foreign_keys=[workflow_id],
     )
-    via_transformation: TransformationRevisionDBModel = relationship(
+    via_transformation: Mapped[TransformationRevisionDBModel] = relationship(
         TransformationRevisionDBModel, foreign_keys=[via_transformation_id]
     )
-    nested_transformation: TransformationRevisionDBModel = relationship(
+    nested_transformation: Mapped[TransformationRevisionDBModel] = relationship(
         TransformationRevisionDBModel, foreign_keys=[nested_transformation_id]
     )
 

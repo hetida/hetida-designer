@@ -26,7 +26,7 @@ numpy
 odfpy
 openpyxl
 ortools
-pandas<2.1.4
+pandas
 pillow
 plotly==5.15.0
 psycopg2
@@ -38,9 +38,10 @@ requests
 scikit-learn
 scipy
 shapely
-sqlalchemy[mypy]<2
+sqlalchemy[mypy]>=2.0,<3
 statsmodels
 tables
+typing-extensions
 uvicorn>=0.17.2
 uvloop
 xlrd>=2.0

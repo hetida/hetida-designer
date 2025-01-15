@@ -1,0 +1,39 @@
+{
+    "element_types": [
+        {
+            "external_id": "Type1",
+            "stakeholder_key": "SK1",
+            "name": "Type 1"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Node1",
+            "stakeholder_key": "SK1",
+            "name": "Node 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Type1"
+        },
+        {
+            "external_id": "Node2",
+            "stakeholder_key": "SK1",
+            "name": "Node 2",
+            "parent_external_node_id": "Node4",
+            "element_type_external_id": "Type1"
+        },
+        {
+            "external_id": "Node3",
+            "stakeholder_key": "SK1",
+            "name": "Node 3",
+            "parent_external_node_id": "Node2",
+            "element_type_external_id": "Type1"
+        },
+        {
+            "external_id": "Node4",
+            "stakeholder_key": "SK1",
+            "name": "Node 4",
+            "parent_external_node_id": "Node3",
+            "element_type_external_id": "Type1"
+        }
+    ]
+}

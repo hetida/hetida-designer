@@ -1,0 +1,81 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks",
+            "description": "Element type for waterworks"
+        },
+        {
+            "external_id": "Plant_Type",
+            "stakeholder_key": "GW",
+            "name": "Plant",
+            "description": "Element type for plants"
+        },
+        {
+            "external_id": "StorageTank_Type",
+            "stakeholder_key": "GW",
+            "name": "Storage Tank",
+            "description": "Element type for storage tanks"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "description": "Root node for Waterworks 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Waterworks_Type",
+            "meta_data": {
+                "location": "Main Site"
+            }
+        },
+        {
+            "external_id": "Waterworks1_Plant2",
+            "stakeholder_key": "GW",
+            "name": "Plant 2",
+            "description": "Second plant",
+            "parent_external_node_id": "Waterworks1",
+            "element_type_external_id": "Plant_Type",
+            "meta_data": {
+                "location": "South"
+            }
+        }
+    ],
+    "sources": [
+        {
+            "external_id": "EnergyUsage_PumpSystem_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "Energy usage of the pump system in Storage Tank",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "improvt_timescale_db/ts_table/ts_values",
+            "meta_data": {
+                "1010001": {
+                    "unit": "kW/h",
+                    "description": "Energy consumption data for a single pump"
+                }
+            },
+            "preset_filters": {
+                "metrics": "1010001"
+            },
+            "passthrough_filters": [
+                {
+                    "name": "timestampFrom",
+                    "type": "free_text",
+                    "required": true
+                },
+                {
+                    "name": "timestampTo",
+                    "type": "free_text",
+                    "required": false
+                }
+            ],
+            "thing_node_external_ids": [
+                "Waterworks1_Plant1"
+            ]
+        }
+    ],
+    "sinks": []
+}

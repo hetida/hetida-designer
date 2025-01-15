@@ -1,0 +1,25 @@
+{
+    "element_types": [
+        {
+            "external_id": "Type1",
+            "stakeholder_key": "SK1",
+            "name": "Type 1"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Node1",
+            "stakeholder_key": "SK1",
+            "name": "Node 1",
+            "parent_external_node_id": null,
+            "element_type_external_id": "Type1"
+        },
+        {
+            "external_id": "Node2",
+            "stakeholder_key": "SK1",
+            "name": "Node 2",
+            "parent_external_node_id": "InvalidNodeID",
+            "element_type_external_id": "Type1"
+        }
+    ]
+}

@@ -33,9 +33,9 @@ def get_file_support_handler(path: str) -> FileSupportHandler | None:
     This returns the first matching handler where ordering depends on Pythons dict keys ordering
     based on the order of registration.
     """
-    for registered_extension in handlers_by_extension:
+    for registered_extension, ext_handler in handlers_by_extension.items():
         if path.endswith(registered_extension):
-            return handlers_by_extension[registered_extension]
+            return ext_handler
 
     return None
 

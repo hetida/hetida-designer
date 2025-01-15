@@ -31,13 +31,13 @@ def structure_sources_from_kafka_config(
 
     return [
         KafkaAdapterStructureSource(
-            id=key + "_" + str(kc_type.value),
+            id=key + "_" + str(kc_type.value),  # type: ignore
             thingNodeId="base",
-            name=kafka_config.display_name + " " + str(kc_type.value),
+            name=kafka_config.display_name + " " + str(kc_type.value),  # type: ignore
             type=kc_type,
-            path=key + "/" + str(kc_type.value),
-            metadataKey=key + "_" + str(kc_type.value)
-            if str(kc_type.value).lower().startswith("metadata")
+            path=key + "/" + str(kc_type.value),  # type: ignore
+            metadataKey=key + "_" + str(kc_type.value)  # type: ignore
+            if str(kc_type.value).lower().startswith("metadata")  # type: ignore
             else None,
             filters={
                 "message_value_key": {
@@ -62,13 +62,13 @@ def structure_sinks_from_kafka_config(
 
     return [
         KafkaAdapterStructureSink(
-            id=key + "_" + str(kc_type.value),
+            id=key + "_" + str(kc_type.value),  # type: ignore
             thingNodeId="base",
-            name=kafka_config.display_name + " " + str(kc_type.value),
+            name=kafka_config.display_name + " " + str(kc_type.value),  # type: ignore
             type=kc_type,
-            path=key + "/" + str(kc_type.value),
-            metadataKey=key + "_" + str(kc_type.value)
-            if str(kc_type.value).lower().startswith("metadata")
+            path=key + "/" + str(kc_type.value),  # type: ignore
+            metadataKey=key + "_" + str(kc_type.value)  # type: ignore
+            if str(kc_type.value).lower().startswith("metadata")  # type: ignore
             else None,
             filters={
                 "message_value_key": {

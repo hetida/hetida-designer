@@ -21,6 +21,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "type": ExternalType.METADATA_STR,
     },
     {  # metadatum that appears as its own point in the tree and is filterable
+        "id": "root.plantA.plant_location",
+        "thingNodeId": "root.plantA",
+        "name": "Location",
+        "path": "Plant A",
+        "metadataKey": "Location",
+        "type": ExternalType.METADATA_ANY,
+    },
+    {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantB.plant_temperature_unit",
         "thingNodeId": "root.plantB",
         "name": "Temperature Unit",
@@ -126,6 +134,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+    },
+    {
+        "id": "root.plantC.picklingUnit.influx.anomaly_score",
+        "thingNodeId": "root.plantC.picklingUnit.influx",
+        "name": "Influx Anomaly Score",
+        "path": "Plant C / Pickling Unit / Influx",
+        "type": ExternalType.TIMESERIES_NUMERIC,
         "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
@@ -238,7 +254,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "thingNodeId": "root.plantA.picklingUnit.influx",
         "name": "Influx Anomaly Score",
         "path": "Plant A / Pickling Unit / Influx",
-        "type": ExternalType.TIMESERIES_FLOAT,
+        "type": ExternalType.TIMESERIES_NUMERIC,
     },
     {
         "id": "root.plantA.millingUnit.influx.anomaly_score",

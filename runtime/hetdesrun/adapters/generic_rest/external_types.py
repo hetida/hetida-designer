@@ -5,7 +5,7 @@ The generic rest adapter "types" differ from the types used in the designer.
 
 import json
 import logging
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 import pandas as pd
@@ -33,7 +33,8 @@ class ValueDataType(str, Enum):
     """Represents an external value datatype"""
 
     INT = "int", int, int, "integer"
-    FLOAT = ("float", float, float)
+    FLOAT = "float", float, float
+    NUMERIC = "numeric", float | int, float, "int|float"
     STRING = "string", str, str, "str"
     BOOLEAN = "boolean", bool, bool, "bool"
     ANY = "any", Any, object, "object"
@@ -112,21 +113,24 @@ class GeneralType(Enum):
     DATAFRAME = "dataframe"
 
 
-class ExternalType(str, Enum):
+class ExternalType(StrEnum):
     METADATA_INT = "metadata(int)", "metadata(integer)"
     METADATA_FLOAT = "metadata(float)"
+    METADATA_NUMERIC = "metadata(numeric)"
     METADATA_STR = "metadata(string)", "metadata(str)"
     METADATA_BOOLEAN = "metadata(boolean)", "metadata(bool)"
     METADATA_ANY = "metadata(any)"
 
     TIMESERIES_INT = "timeseries(int)", "timeseries(integer)"
     TIMESERIES_FLOAT = "timeseries(float)"
+    TIMESERIES_NUMERIC = "timeseries(numeric)"
     TIMESERIES_STR = "timeseries(string)", "timeseries(str)"
     TIMESERIES_BOOLEAN = "timeseries(boolean)", "timeseries(bool)"
     TIMESERIES_ANY = "timeseries(any)", "timeseries(object)"
 
     SERIES_INT = "series(int)", "series(integer)"
     SERIES_FLOAT = "series(float)"
+    SERIES_NUMERIC = "series(numeric)"
     SERIES_STR = "series(string)", "series(str)"
     SERIES_BOOLEAN = "series(boolean)", "series(bool)"
     SERIES_ANY = "series(any)", "series(object)"
@@ -175,6 +179,8 @@ class ExternalType(str, Enum):
             member.value_datatype = ValueDataType.INT
         elif member._value_.endswith("(boolean)"):
             member.value_datatype = ValueDataType.BOOLEAN
+        elif member._value_.endswith("(numeric)"):
+            member.value_datatype = ValueDataType.NUMERIC
         elif member._value_.endswith("(any)"):
             member.value_datatype = ValueDataType.ANY
         else:

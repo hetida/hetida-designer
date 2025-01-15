@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.persistence import SQLAlchemySession, get_session
+from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.transformation import TransformationRevision

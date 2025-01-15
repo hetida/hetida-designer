@@ -16,6 +16,30 @@ async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     assert "swagger-ui" in response.text.lower()
 
 
+# Suppressing duplicate operation_id warnings due to FastAPI's route registration behavior.
+# The warning occurs only here because this test requests the OpenAPI schema (/openapi.json),
+# triggering duplicate operation_id validation (see https://github.com/fastapi/fastapi/issues/4740).
+@pytest.mark.filterwarnings(
+    "ignore:Duplicate Operation ID receive_execution_response__callback_url__post "
+    "for function receive_execution_response:UserWarning"
+)
+@pytest.mark.asyncio
+async def test_openapi_json_available(async_test_client: AsyncClient) -> None:
+    """Test openapi.json available
+
+    Some Pydantic constructs like indirect String references can make the openapi.json
+    unrenderable while /docs actually loads (showing an error that openapi.json is not
+    available). To capture this we separately test for the presence of openapi.json.
+    """
+    try:
+        async with async_test_client as ac:
+            response = await ac.get("/openapi.json")
+    except TypeError:
+        pytest.fail("Fetching OpenAPI docs raised a TypeError unexpectedly.")
+
+    assert response.status_code == 200
+
+
 @pytest.mark.asyncio
 async def test_access_api_endpoint(async_test_client: AsyncClient) -> None:
     async with async_test_client as ac:

@@ -85,6 +85,7 @@ async def put_trafo_via_multiple_put_endpoint(
         json=[json.loads(trafo.json()) if isinstance(trafo, TransformationRevision) else trafo],
     )
     assert response.status_code == 207
+    assert len(response.json()) == 1
     assert response.json()[str(trafo_id)]["status"] == "SUCCESS"
 
 
@@ -124,14 +125,16 @@ async def get_check_trafo_via_multiple_get_endpoint(
     components_as_code: bool = False,
 ):
     response = await open_async_client.get(
-        f"/api/transformations?id={str(trafo.id)}",
+        "/api/transformations",
         params={
+            "id": str(trafo.id),
             "expand_component_code": expand_code,
             "update_component_code": update_code,
             "components_as_code": components_as_code,
         },
     )
     assert response.status_code == 200
+    assert len(response.json()) == 1  # queried exactly one id
 
     if not components_as_code:
         got_trafo_json_ob = response.json()[0]

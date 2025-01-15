@@ -8,12 +8,24 @@ from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
-from hetdesrun.datatypes import MULTITSFRAME_COLUMN_NAMES
 from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.webservice.config import get_config
 
 
 def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
+    """Prepares serialization by converting rows into json-serializable dicts
+
+    * validates form of the dataframe (columns and missing values)
+    * np.nan -> None
+    * datetimes are enforced to be UTC and are converted to zulu-format strings
+
+    Note: The given pandas.DataFrame is not modified. We cannot use
+    PydanticMultiTimeseriesPandasDataFrame here since this would mutate
+    the df object.
+
+    However, the applied validations are mostly the same.
+    """
+
     if not isinstance(df, pd.DataFrame):
         raise AdapterOutputDataError(
             "Did not receive Pandas DataFrame as expected from workflow output."
@@ -23,12 +35,16 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if len(df) == 0:
         return []
 
-    if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
-        column_names_string = ", ".join(df.columns)
-        multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+    if len(df.columns) < 3:
         raise AdapterOutputDataError(
-            f"Received Pandas Dataframe has column names {column_names_string} that don't match "
-            f"the column names required for a MultiTSFrame {multitsframe_column_names_string}."
+            "MultiTSFrame requires at least 3 columns: metric, timestamp"
+            f" and at least one additional columns. Only found { {*df.columns} }"
+        )
+
+    if not ({"metric", "timestamp"}.issubset(set(df.columns))):
+        raise AdapterOutputDataError(
+            f"The column names { {*df.columns} } don't contain required columns"
+            ' "timestamp" and "metric" for a MultiTSFrame.'
         )
 
     if df["metric"].isna().any():

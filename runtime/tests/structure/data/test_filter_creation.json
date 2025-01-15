@@ -1,0 +1,8 @@
+{
+    "filter_without_internal_name": {"name": "Upper threshold", "type": "free_text", "required": false},
+    "filter_with_valid_internal_name": {"name": "Lower threshold", "type": "free_text", "required": false, "internal_name": "lower_threshold1"},
+    "filter_with_invalid_internal_name": {"name": "Lower threshold", "type": "free_text", "required": false, "internal_name": "lower threshold1"},
+    "filter_without_internal_name_with_uncommon_whitespace": {"name": " Min     Max ", "type": "free_text", "required": false},
+    "filter_with_empty_string_as_name": {"name": "", "type": "free_text", "required": false},
+    "filter_with_invalid_string_as_name": {"name": "&$", "type": "free_text", "required": false}
+}

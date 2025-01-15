@@ -1,0 +1,31 @@
+{
+    "element_types": [
+        {
+            "external_id": "Waterworks_Type",
+            "stakeholder_key": "GW",
+            "name": "Waterworks"
+        }
+    ],
+    "thing_nodes": [
+        {
+            "external_id": "Waterworks1",
+            "stakeholder_key": "GW",
+            "name": "Waterworks 1",
+            "element_type_external_id": "Waterworks_Type"
+        }
+    ],
+    "sources": [ 
+        {
+            "external_id": "EnergyUsage_PumpSystem_StorageTank",
+            "stakeholder_key": "GW",
+            "name": "nf",
+            "type": "multitsframe",
+            "adapter_key": "sql-adapter",
+            "source_id": "nf",
+            "thing_node_external_ids": [
+                "Waterworks1",
+                "Waterworks1"
+            ]
+        }],
+    "sinks": []
+}

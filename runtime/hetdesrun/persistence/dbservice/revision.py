@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
-from hetdesrun.persistence import SQLAlchemySession, get_session
+from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (

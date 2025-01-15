@@ -33,6 +33,9 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Enabling OpenID Connect Authentication](enabling_openidconnect_auth.md)
 
+## Overview about available datatypes
+- [multitsframes](./datatypes/multitsframes.md)
+
 ## Adapter System
 
 - [Introduction to the Adapter System](./adapter_system/intro.md)

@@ -1,7 +1,7 @@
 # Tips and Tricks
 
 ## General notes on debugging
-Since hetida designer is a web application, it is not possible to read the print function output in the user interface directly. Because of that print cannot be used for debugging. Similarly, setting breakpoints will not work as there is no direct access to a terminal where the code actually runs. 
+Since hetida designer is a web application, it is not possible to read the print function output in the user interface directly. Because of that print cannot be used for debugging. Similarly, setting breakpoints will not work as there is no direct access to a terminal where the code actually runs.
 
 If you depend on print and breakpoints you can of course first write / develop component code in your preferred IDE (or Jupyter notebooks), test and debug it there and afterwards copy-paste the relevant functions into component code. We, the creators of hetida designer, use this approach ourselves all the time. Indeed, we often extract, refactor and generalize the relevant parts of an analysis from Jupyter notebooks into "polished" designer components. See [Sync and hybrid working](./sync.md) for a way to simplify this style of development.
 
@@ -88,7 +88,7 @@ So the general tip is to avoid ANY as input that needs to be wired and instead t
 
 ## <a name="self-defined-classes"></a> Storing and loading objects with self defined classes
 When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
-The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes". 
+The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes".
 ```python
 
 class ExampleClass:
@@ -138,4 +138,42 @@ The attributes `ref_id` and `ref_key` of the corresponding input wiring must be 
 	"type": "metadata(any)",
 	"workflow_input_name": "example_class_object"
 }
+```
+
+## <a name="data-type-parsing"></a> Pandas objects in hetida workflows and components
+
+### Handling of index during DataFrame serialisation
+
+When your workflow or component has a pandas.DataFrame as a DATAFRAME output and is run directly, serialization will assume that the index is unique. If this is not the case you will get a `ValueError` stating "DataFrame index must be unique for orient='columns'."
+
+Moreover it is not guaranteed that the index itself is included. In fact this depends on the handling of the sink / adapter to which this output is wired for execution.
+
+Therefore we recommend
+* to assume that all relevant information of ingoing DataFrames is in columns and not in the index. E.g. timestamps should be expected in an explicit "timestamp" column and not in the index.
+* to finally prepare a result DataFrame to contain all relevant information in explicit columns and not in the index. E.g. add the DateTimeIndex as explicit column "timestamp"
+* to reindex it with a unique index prior to outputting it finally.
+
+E.g. the last two steps can be achieved via
+
+```python
+dataframe_to_return = dataframe.reset_index(
+    names="new_time_column", drop=False, inplace=False
+)
+```
+
+**Notes**:
+* For pd.Series duplicate index entries are no issue since for them serialization is handled differently.
+* In-between operators of a workflow, DataFrame objects are transferred as they are, without intermediate serialization. So components working and expecting a index of a certain kind and form do make sense!
+
+### pd.Series names
+Adapters may provide pd.Series objects to SERIES inputs either with a name or without.
+
+You should ensure that your code works with both versions, to be independant of the adapter / source used with your workflow.
+
+Note that an explicit "Name Series" component is available in the base component set.
+
+E.g. if you want to convert a pd.Series into a single-column pd.DataFrame we recommend doing the following:
+
+```python
+dataframe = series.to_frame(name="new_column_name")
 ```

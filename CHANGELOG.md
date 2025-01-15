@@ -1,3 +1,22 @@
+## 0.9.10
+* dependency upgrades / Docker image upgrades / security upgrades
+* fix Python demo adapter tests
+
+## 0.9.9
+* Add structure service / [virtual structure adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/virtual_structure_adapter.md)
+* add modify_timezone helper function to hdutils
+* allow more than one value columns when sending data to a generic rest adapter MultiTFFrame sink
+* add a numeric external type (aka "timeseries(numeric)") to the adapter system to be less strict when serializing series data.
+* add new components to faciliate switching between long format (MultiTsFrame) and wide format multivariate timeseries data
+* upgrade Angular to version 17
+* add [tips and tricks](https://github.com/hetida/hetida-designer/blob/release/docs/tips_and_tricks.md) documentation concerning handling of Pandas objects and their indices
+* improve [documentation](https://github.com/hetida/hetida-designer/blob/release/docs/sync.md) for writing unit tests for components
+* improve and update auth / keycloak documentation and example image version.
+* Allow caching of released trafo revisions for execution
+* deep links to workflows / components and open selections of them
+* improve experimental dashboarding: tables, expose workflow inputs in dashboards
+* add [external sources adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/external_sources_adapter.md) providing builtin access to some relevant external data sources.
+
 ## 0.9.8
 * Add Kafka adapter to send and receive data via Kafka individually per input/output. See [docs](./docs/adapter_system/kafka_adapter.md).
 * Some frontend bug fixes
