@@ -168,7 +168,7 @@ def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json
         StructureServiceSink(**example_sink)
 
 
-def test_source_sink_filters_name_timestamp_validators():
+def test_source_filters_name_timestamp_validators():
     example_source = {
         "external_id": "EnergyUsage_PumpSystem_StorageTank",
         "stakeholder_key": "GW",
