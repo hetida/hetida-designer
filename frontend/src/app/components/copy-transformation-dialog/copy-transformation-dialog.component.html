@@ -37,7 +37,7 @@
         <mat-hint align="end">Max. 60 characters.</mat-hint>
         <mat-error [hdErrorVisual]="infoForm.get('category')"></mat-error>
         <mat-autocomplete #auto="matAutocomplete">
-          @for (category of filteredCategories$ | async; track category) {
+          @for (category of filteredCategories$ | async; track $index) {
             <mat-option [value]="category">{{ category }} </mat-option>
           }
         </mat-autocomplete>

@@ -7,10 +7,7 @@
 <div mat-dialog-content class="dialog-content">
   @if (optionalFieldsForm) {
     <form [formGroup]="optionalFieldsForm" class="p-1">
-      @for (
-        optionalField of optionalFieldsArray.controls;
-        track optionalField
-      ) {
+      @for (optionalField of optionalFieldsArray.controls; track $index) {
         <div [formGroup]="optionalField">
           <mat-checkbox class="example-margin mb-1" formControlName="exposed">
             {{ optionalField.get('name').value }}

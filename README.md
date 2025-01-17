@@ -201,7 +201,7 @@ instructions on setting up one of these modules for development below.
 
 #### Frontend
 
-Dependencies: Node 14.21.3 and npm 6.14.x (other versions are not tested).
+Dependencies: Node 20.18.1 and npm 10.8.x (other versions are not tested).
 
 1. Navigate to the `frontend` folder.
 2. Run `npm install` to install application dependencies.

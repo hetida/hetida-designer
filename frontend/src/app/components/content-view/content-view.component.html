@@ -11,7 +11,7 @@
     </ng-template>
     <hd-home-tab (click)="_closePopover()"></hd-home-tab>
   </mat-tab>
-  @for (tabItem of _tabItems; track _trackBy($index, tabItem)) {
+  @for (tabItem of _tabItems; track $index) {
     <mat-tab #matTab>
       @if (_isDocumentation(tabItem)) {
         <ng-template mat-tab-label>

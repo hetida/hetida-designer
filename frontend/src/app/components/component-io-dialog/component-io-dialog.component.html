@@ -58,7 +58,7 @@
                       | lowercase
                   }}"
                 >
-                  @for (ioTypeOption of _ioTypeOptions; track ioTypeOption) {
+                  @for (ioTypeOption of _ioTypeOptions; track $index) {
                     <mat-option [value]="ioTypeOption">
                       {{ ioTypeOption }}
                     </mat-option>
@@ -90,7 +90,7 @@
                       '-data-type-input-component-io-dialog' | lowercase
                   }}"
                 >
-                  @for (ioType of _ioTypes; track ioType) {
+                  @for (ioType of _ioTypes; track $index) {
                     <mat-option [value]="ioType">
                       {{ ioType }}
                     </mat-option>
@@ -204,7 +204,7 @@
                     | lowercase
                 }}"
               >
-                @for (ioType of _ioTypes; track ioType) {
+                @for (ioType of _ioTypes; track $index) {
                   <mat-option [value]="ioType">
                     {{ ioType }}
                   </mat-option>

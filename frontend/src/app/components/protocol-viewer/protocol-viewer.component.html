@@ -23,7 +23,7 @@
     <div class="protocol-content">
       @for (
         item of executionResponse.output_results_by_output_name | keyvalue;
-        track item
+        track $index
       ) {
         <div style="padding-bottom: 10px; padding-left: 15px">
           <ng-container

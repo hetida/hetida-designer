@@ -39,7 +39,7 @@
         <mat-divider></mat-divider>
         @for (
           ioItem of ioItemInputsArray.controls;
-          track ioItem;
+          track $index;
           let i = $index
         ) {
           <div [formGroup]="ioItem">
@@ -87,7 +87,7 @@
                       '-dynamic-fixed-workflow-io-dialog' | lowercase
                   }}"
                 >
-                  @for (ioTypeOption of _ioTypeOptions; track ioTypeOption) {
+                  @for (ioTypeOption of _ioTypeOptions; track $index) {
                     <mat-option [value]="ioTypeOption">
                       {{ ioTypeOption }}
                     </mat-option>
@@ -234,7 +234,7 @@
         <mat-divider></mat-divider>
         @for (
           ioItem of ioItemOutputsArray.controls;
-          track ioItem;
+          track $index;
           let i = $index
         ) {
           <div class="d-flex align-items-center" [formGroup]="ioItem">
