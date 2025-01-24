@@ -295,13 +295,13 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.0,\n    "2020-01-01T16:20:00.000Z": 16.1,\n    "2020-01-02T08:20:00.000Z": 27.0,\n    "2020-01-02T16:20:00.000Z": 2.6,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'  # noqa: E501
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.0,\n    "2020-01-01T16:20:00.000Z": 16.1,\n    "2020-01-02T08:20:00.000Z": 27.0,\n    "2020-01-02T16:20:00.000Z": 2.6,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
             },
         },
         {
             "workflow_input_name": "value_interval_dict",
             "filters": {
-                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'  # noqa: E501
+                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'
             },
         },
     ]
@@ -311,13 +311,13 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.0,\n    "2020-01-01T16:20:00.000Z": 16.1,\n    "2020-01-02T08:20:00.000Z": 27.0,\n    "2020-01-02T16:20:00.000Z": 2.6,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'  # noqa: E501
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.0,\n    "2020-01-01T16:20:00.000Z": 16.1,\n    "2020-01-02T08:20:00.000Z": 27.0,\n    "2020-01-02T16:20:00.000Z": 2.6,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
             },
         },
         {
             "workflow_input_name": "value_interval_dict",
             "filters": {
-                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'  # noqa: E501
+                "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'
             },
         },
     ]

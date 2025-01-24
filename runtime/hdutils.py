@@ -159,7 +159,7 @@ def parse_pandas_data_content(
         except Exception as read_json_exception:  # noqa: BLE001
             raise ValueError(
                 "Could not parse provided input as Pandas "
-                + ("Series" if type == "series" else "DataFrame")
+                + ("Series" if typ == "series" else "DataFrame")
             ) from read_json_exception
 
     return parsed_pandas_object
@@ -488,6 +488,7 @@ class NamedDataTypedValue(TypedDict):
 def parse_via_pydantic(
     entries: list[NamedDataTypedValue],
     type_map: dict[DataType, type] | dict[DataType, UnionType] | None = None,
+    null_str_to_None: bool = False,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 
@@ -496,8 +497,14 @@ def parse_via_pydantic(
     Returns an instantiated pydantic object if no parsing exception is thrown.
 
     May raise the typical exceptions of pydantic parsing.
+
+    null_str_to_None converts value strings "null" to None before injecting into the Pydantic
+    model __init__. This is necessary in order to allow entering null. E.g. consider the
+    a int | None type annotation of a model field. Pydantic will happily interpret
+    None, 42, "42" correctly but not try to interpret non-int-interpretable strings like
+    "null" as None for values in the init method.
     """
-    type_dict: dict[str, tuple[type | UnionType, "ellipsis"]] = {  # noqa: F821
+    type_dict: dict[str, tuple[type | UnionType, "ellipsis"]] = {  # noqa: F821, UP037
         entry["name"]: (
             type_map[entry["type"]]
             if type_map is not None
@@ -509,14 +516,23 @@ def parse_via_pydantic(
 
     DynamicModel = create_model("DynamicyModel", **type_dict)  # type: ignore
 
-    return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
+    return DynamicModel(  # type: ignore
+        **{
+            entry["name"]: (
+                entry["value"] if (not null_str_to_None or entry["value"] != "null") else None
+            )
+            for entry in entries
+        }
+    )
 
 
 def parse_dynamically_from_datatypes(
     entries: list[NamedDataTypedValue], nullable: bool = False
 ) -> BaseModel:
     return parse_via_pydantic(
-        entries, type_map=data_type_map if nullable is False else optional_data_type_map
+        entries,
+        type_map=data_type_map if nullable is False else optional_data_type_map,
+        null_str_to_None=nullable,  # interpretation of "null" string values as None
     )
 
 
@@ -592,12 +608,12 @@ def modify_timezone(
 
         return new_object
 
-    except pytz.exceptions.UnknownTimeZoneError:
+    except pytz.exceptions.UnknownTimeZoneError as e:
         possible_timezone = pytz.all_timezones
-        raise ValueError(f"""Timezone not known, please choose from
-                            {possible_timezone}""")
+        raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from e
     except (TypeError, AttributeError) as exc:
-        raise TypeError("Entries to convert do not contain valid timestamps", exc)
+        raise TypeError("Entries to convert do not contain valid timestamps") from exc
 
     except KeyError as exc:
-        raise KeyError(f"Column name {column_name} not in object_to_convert", exc)
+        exc.add_note(f"Column name {column_name} not in object_to_convert")
+        raise

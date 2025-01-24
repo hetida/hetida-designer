@@ -44,6 +44,9 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
+    execution_context_filter.bind_context(
+        current_code_modules=runtime_input.code_modules, current_components=runtime_input.components
+    )
     job_id_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,
@@ -118,7 +121,19 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         # ComputationNode knows that the input values are to be obtained from this node.
         # Where applicable, the information from the previous addition of the node with the
         # id_suffix "workflow_default_values" is overwritten.
-        parsed_wf.add_constant_providing_node(constant_providing_data, id_suffix="dynamic_data")
+
+        # Note that optional inputs are considered nullable (i.e. None may arrive).
+        # This also activates parsing strings "null" as None (even for string inputs)
+
+        parsed_wf.add_constant_providing_node(
+            [x for x in constant_providing_data if not wf_inputs_by_name[x["name"]].default],
+            id_suffix="dynamic_data",
+        )
+        parsed_wf.add_constant_providing_node(
+            [x for x in constant_providing_data if wf_inputs_by_name[x["name"]].default],
+            optional=True,
+            id_suffix="dynamic_data_optional",
+        )
     except WorkflowInputDataValidationError as exc:
         runtime_logger.info(
             "Input Data Validation Error during data provision",

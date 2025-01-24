@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
 
-from hetdesrun.backend.execution import ExecByIdInput
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
@@ -12,6 +11,7 @@ from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
 )
 from hetdesrun.component.code import update_code
+from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,

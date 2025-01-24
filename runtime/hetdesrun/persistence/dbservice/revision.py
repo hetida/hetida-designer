@@ -409,6 +409,23 @@ def is_unused(transformation_id: UUID) -> bool:
     return len(results) == 0
 
 
+def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
+    """Get unique categories of all trafo revisions of specified types
+
+    This is used for example by the component adapter to obtain thing nodes
+    """
+    types_to_query = [t.value for t in Type] if types is None else list(types)
+
+    with get_session()() as session, session.begin():
+        categories = session.execute(
+            select(TransformationRevisionDBModel.category)
+            .filter(TransformationRevisionDBModel.type.in_(types_to_query))
+            .distinct()
+        )
+
+    return list(categories.scalars().all())
+
+
 def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
@@ -418,6 +435,7 @@ def select_multiple_transformation_revisions(
     ids: list[UUID] | None = None,
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
+    states: list[State] | None = None,
 ) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with get_session()() as session, session.begin():
@@ -427,6 +445,8 @@ def select_multiple_transformation_revisions(
             selection = selection.where(TransformationRevisionDBModel.type == type)
         if state is not None:
             selection = selection.where(TransformationRevisionDBModel.state == state)
+        if states is not None:
+            selection = selection.where(TransformationRevisionDBModel.state.in_(states))
         if categories is not None:
             selection = selection.where(TransformationRevisionDBModel.category.in_(categories))
         if category_prefix is not None:

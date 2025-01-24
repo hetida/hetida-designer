@@ -43,7 +43,7 @@
                 "name": "null_text",
                 "data_type": "STRING",
                 "type": "OPTIONAL",
-                "value": "null"
+                "value": null
             },
             {
                 "id": "233fd617-41e5-48ff-b7e6-e450b934fd5e",

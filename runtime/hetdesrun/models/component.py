@@ -66,8 +66,7 @@ class ComponentRevision(BaseModel):
     code_module_uuid: UUID = Field(
         ...,
         description=(
-            "Reference to the code module in which the components entrypoint function"
-            " can be found."
+            "Reference to the code module in which the components entrypoint function can be found."
         ),
     )
     function_name: str = Field(

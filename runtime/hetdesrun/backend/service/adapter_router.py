@@ -9,9 +9,6 @@ from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 logger = logging.getLogger(__name__)
 
 
-adapters = get_config().hd_adapters
-
-
 adapter_router = HandleTrailingSlashAPIRouter(
     prefix="/adapters",
     tags=["adapters"],
@@ -35,6 +32,8 @@ async def get_all_adapters() -> list[AdapterFrontendDto]:
     """Get all adapters."""
     logger.info("get adapters")
     adapter_list: list[AdapterFrontendDto] = []
+
+    adapters = get_config().hd_adapters
 
     if adapters is None or adapters == "":
         return adapter_list

@@ -2,12 +2,18 @@ import contextvars
 import datetime
 import json
 import logging
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
 from uuid import UUID
 
 import numpy as np
 
-_WF_EXEC_LOGGING_CONTEXT_VAR: contextvars.ContextVar[dict] = contextvars.ContextVar(
+from hetdesrun.models.code import CodeModule
+
+ExecContextDict = TypedDict(  # noqa: UP013
+    "ExecContextDict", {"current_code_modules": list[CodeModule], "current_components": list[str]}
+)
+
+_WF_EXEC_LOGGING_CONTEXT_VAR: contextvars.ContextVar[ExecContextDict] = contextvars.ContextVar(
     "workflow_execution_logging_context"
 )
 
@@ -38,11 +44,11 @@ class MinimallyMoreCapableJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def _get_execution_context() -> dict[str, str | None]:
+def _get_execution_context() -> ExecContextDict:
     try:
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
     except LookupError:
-        _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+        _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
 
 
@@ -57,21 +63,30 @@ class ExecutionContextFilter(logging.Filter):
         self.currently_executed_operator_hierarchical_id = None
         self.currently_executed_operator_hierarchical_name = None
         self.currently_executed_job_id = None
+        self.code_modules = None
+        self.components = None
         super().__init__(*args, **kwargs)
 
     def bind_context(self, **kwargs: Any) -> None:
-        _get_execution_context().update(kwargs)
+        _get_execution_context().update(kwargs)  # type: ignore
 
     def unbind_context(self, *args: str) -> None:
         """Remove entries with provided keys from context"""
         ctx_dict = _get_execution_context()
         for key in args:
-            ctx_dict.pop(key, None)
+            ctx_dict.pop(key, None)  # type: ignore
 
-    def clear_context(self) -> None:
-        _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+    def clear_context(self, keys: list[str] | None = None) -> None:
+        if keys is None:
+            # reset / empty everything
+            _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
+        else:
+            context_dict = _WF_EXEC_LOGGING_CONTEXT_VAR.get()
+            for key in keys:
+                if key in context_dict:
+                    del context_dict[key]  # type: ignore
 
-    def get_value(self, key: str) -> str | None:
+    def get_value(self, key: str) -> Any:
         context_dict = _get_execution_context()
         return context_dict.get(key, None)
 
@@ -130,7 +145,7 @@ class JobIdContextFilter(logging.Filter):
             ctx_dict.pop(key, None)
 
     def clear_context(self) -> None:
-        _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+        _JOB_ID_LOGGING_CONTEXT_VAR.set({})
 
     def get_value(self, key: str) -> str | None | UUID:
         context_dict = _get_job_id_context()

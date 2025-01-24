@@ -24,6 +24,7 @@ libcst
 numba!=0.56.2 # due to setuptools dependency resolution problems
 numpy
 odfpy
+opencv-python-headless
 openpyxl
 ortools
 pandas

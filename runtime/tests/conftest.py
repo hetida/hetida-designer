@@ -40,13 +40,13 @@ def mocked_clean_test_db_session(clean_test_db_engine):
         yield _fixture
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # noqa: PT003
 def deactivate_auth() -> Generator:
     with mock.patch("hetdesrun.webservice.config.runtime_config.auth", new=False) as _fixture:
         yield _fixture
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # noqa: PT003
 def app_without_auth(deactivate_auth: Generator) -> FastAPI:
     return init_app()
 
@@ -59,10 +59,17 @@ def pytest_addoption(parser: Any) -> None:
         default=True,
     )
 
+    parser.addoption("--apply-fixes", action="store_true", dest="apply_fixes", default=False)
+
 
 @pytest.fixture(scope="session")
 def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("use_in_memory_db")
+
+
+@pytest.fixture(scope="session")
+def apply_fixes(pytestconfig: pytest.Config) -> Any:
+    return pytestconfig.getoption("apply_fixes")
 
 
 @pytest.fixture

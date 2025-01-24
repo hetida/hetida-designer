@@ -46,7 +46,7 @@ async def test_default_values_with_metadata(async_test_client, mocked_clean_test
     assert output_data["some_string_any"] == "text"
     assert output_data["some_number_any"] == 23
     assert output_data["null_any"] is None
-    assert output_data["null_text"] == "null"
+    assert output_data["null_text"] is None
 
     assert output_data["series"]["__metadata__"] == {}
 

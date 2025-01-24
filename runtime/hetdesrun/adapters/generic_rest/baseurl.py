@@ -47,20 +47,18 @@ class BackendRegisteredGenericRestAdapters(BaseModel):
 
 async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
-    try:
-        headers = await get_generic_rest_adapter_auth_headers(external=False)
-    except ServiceAuthenticationError as e:
-        msg = "Failure trying to get auth headers for adapter base url request. Error was:\n" + str(
-            e
-        )
-        logger.info(msg)
-        raise AdapterHandlingException(msg) from e
 
-    url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
-    logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
+    if not get_config().is_backend_service and get_config().hd_backend_api_url == "":
+        logger.info(
+            "HETIDA_DESIGNER_BACKEND_API_URL is empty string. Therefore"
+            " runtime will not request backend API for registered adapters to"
+            " get generic rest adapter internal urls. It will instead use only info"
+            " from HETIDA_DESIGNER_ADAPTERS directly registered to the runtime."
+        )
+        return []
 
     if get_config().is_backend_service:
-        # call function directly
+        # call endpoint function directly
         adapter_list = await get_all_adapters()
 
         try:
@@ -79,6 +77,19 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
             logger.info(msg)
             raise AdapterHandlingException(msg) from e
     else:
+        try:
+            headers = await get_generic_rest_adapter_auth_headers(external=False)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failure trying to get auth headers for adapter base url request. Error was:\n"
+                + str(e)
+            )
+            logger.info(msg)
+            raise AdapterHandlingException(msg) from e
+
+        url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
+        logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
+
         # call backend service "adapters" endpoint
         async with httpx.AsyncClient(
             verify=get_config().hd_backend_verify_certs,
@@ -123,12 +134,35 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
     return loaded_generic_rest_adapters
 
 
-async def update_generic_adapter_base_urls_cache() -> None:
+async def update_generic_adapter_base_urls_cache(clear: bool = False) -> None:
     """Update the cached mapping from adapter keys to their base urls"""
-    generic_adapter_infos = await load_generic_adapter_base_urls()
+    adapter_infos_from_registration_config = (
+        await get_all_adapters()  # fetch infos from adapter registration config
+    )
+    try:
+        generic_adapter_infos = await load_generic_adapter_base_urls()
+    except AdapterConnectionError as e:
+        msg = (
+            "Could not obtain adapter internalUrls from backend in runtime for"
+            " generic rest adapters. Filling cache only with adapters registered"
+            " explicetely in runtime via HETIDA_DESIGNER_ADAPTERS. Consider setting"
+            " HETIDA_DESIGNER_BACKEND_API_URL explicitely to empty string if your "
+            " intention is to only use generic rest adapters"
+            " explicitely registered in runtime."
+            f" Exception was:\n{str(e)}."
+        )
+        logger.warning(msg)
+        generic_adapter_infos = []
 
-    global generic_rest_adapter_urls  # noqa: PLW0602
+    global generic_rest_adapter_urls  # noqa: PLW0603
     with generic_rest_adapter_urls_lock:
+        if clear:
+            generic_rest_adapter_urls = {}
+        for registered_adapter_info in adapter_infos_from_registration_config:
+            generic_rest_adapter_urls[registered_adapter_info.id] = (
+                registered_adapter_info.internal_url
+            )
+
         for generic_adapter_info in generic_adapter_infos:
             generic_rest_adapter_urls[generic_adapter_info.id] = generic_adapter_info.internalUrl
 

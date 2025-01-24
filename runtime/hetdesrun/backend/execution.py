@@ -10,6 +10,10 @@ from uuid import UUID, uuid4
 import httpx
 from pydantic import ValidationError
 
+from hetdesrun.adapters.component_adapter.validate import (
+    validate_sink_trafos_for_component_adapter,
+    validate_source_trafos_for_component_adapter,
+)
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
@@ -23,12 +27,14 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
     read_single_transformation_revision,
     read_single_transformation_revision_with_caching,
+    select_multiple_transformation_revisions,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -57,6 +63,23 @@ class TrafoExecutionInputValidationError(TrafoExecutionError):
 
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionComponentAdapterComponentsNotFound(TrafoExecutionError):
+    """Raised when component sources/sinks cannot be found or validated by the backend
+
+    The backend looks up wired component adapter source / sink components
+    when preparing the execution input for the runtime. This is necessary to provide them
+    / their code to the runtime.
+
+    Not finding referred components (or failed validating them as proper/suitable
+    component adapter sources/sinks) cannot be a AdapterHandlingException, as those
+    are thrown and handled by the runtime (and converted to an appropriate error in
+    the execution result).
+
+    Hence we need a separate error for this early failure and capture it in the backend's
+    trafo execution handling routine.
+    """
 
 
 class TrafoExecutionRuntimeConnectionError(TrafoExecutionError):
@@ -123,6 +146,23 @@ def nested_nodes(
     return children_nodes(tr_workflow.content, ancestor_children)
 
 
+def get_component_ids_from_component_adapter_wirings(
+    wiring: WorkflowWiring,
+) -> tuple[list[UUID], list[UUID]]:
+    comp_ids_from_inp_wirings = [
+        UUID(inp_wiring.ref_id if inp_wiring.ref_key is None else inp_wiring.ref_key)
+        for inp_wiring in wiring.input_wirings
+        if inp_wiring.adapter_id == "component-adapter"
+    ]
+    comp_ids_from_outp_wirings = [
+        UUID(outp_wiring.ref_id if outp_wiring.ref_key is None else outp_wiring.ref_key)
+        for outp_wiring in wiring.output_wirings
+        if outp_wiring.adapter_id == "component-adapter"
+    ]
+
+    return comp_ids_from_inp_wirings, comp_ids_from_outp_wirings
+
+
 def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
     """Loads trafo revision and prepares execution input from it.
 
@@ -167,14 +207,86 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
+    # Obtain component adapter component ids from wiring
+    (
+        component_adapter_component_ids_from_input_wirings,
+        component_adapter_component_ids_from_output_wirings,
+    ) = (
+        get_component_ids_from_component_adapter_wirings(exec_by_id_input.wiring)
+        if exec_by_id_input.wiring is not None
+        else ([], [])
+    )
+
+    # Load component adapter components
+    try:
+        component_adapter_source_components = select_multiple_transformation_revisions(
+            ids=component_adapter_component_ids_from_input_wirings
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to load referenced components for component adapter input wirings from db."
+        ) from e
+
+    try:
+        component_adapter_sink_components = select_multiple_transformation_revisions(
+            ids=component_adapter_component_ids_from_output_wirings
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to load referenced components for component adapter output wirings from db."
+        ) from e
+
+    # Validate component adapter components
+
+    try:
+        validate_source_trafos_for_component_adapter(component_adapter_source_components)
+    except ValueError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to validate referenced components for component adapter input wirings"
+        ) from e
+
+    try:
+        validate_sink_trafos_for_component_adapter(component_adapter_sink_components)
+    except ValueError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to validate referenced components for component adapter output wirings"
+        ) from e
+
+    component_adapter_components = (
+        component_adapter_source_components + component_adapter_sink_components
+    )
+
+    # Build WorkflowExecutionInput and validate everything in combination
     try:
         execution_input = WorkflowExecutionInput(
-            code_modules=[
-                tr_component.to_code_module() for tr_component in nested_components.values()
-            ],
-            components=[
-                component.to_component_revision() for component in nested_components.values()
-            ],
+            code_modules=(
+                list(
+                    set().union(
+                        (
+                            tr_component.to_code_module()
+                            for tr_component in nested_components.values()
+                        ),
+                        (comp_tr.to_code_module() for comp_tr in component_adapter_components),
+                    )
+                )
+            ),
+            components=(
+                list(
+                    {
+                        c_rev.uuid: c_rev
+                        for c_rev in (
+                            [
+                                component.to_component_revision()
+                                for component in nested_components.values()
+                            ]
+                            + [
+                                comp_tr.to_component_revision()
+                                for comp_tr in component_adapter_components
+                            ]
+                        )
+                    }.values()
+                )
+            ),
             workflow=workflow_node,
             configuration=ConfigurationInput(
                 name=str(tr_workflow.id),

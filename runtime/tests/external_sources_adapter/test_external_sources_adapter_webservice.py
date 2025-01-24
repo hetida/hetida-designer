@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_access_kafka_adapter_info(
+async def test_access_external_sources_adapter_info(
     open_async_test_client_for_external_sources_tests,
 ) -> None:
     response = await open_async_test_client_for_external_sources_tests.get(

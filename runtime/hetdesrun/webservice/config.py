@@ -340,9 +340,21 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/virtual_structure,"
         "external-sources|External Sources"
         "|http://localhost:8090/adapters/external_sources"
-        "|http://localhost:8090/adapters/external_sources",
+        "|http://localhost:8090/adapters/external_sources,"
+        "component-adapter|Component Adapter"
+        "|http://localhost:8080/adapters/component"
+        "|http://localhost:8080/adapters/component",
         env="HETIDA_DESIGNER_ADAPTERS",
-        description="list of the installed adapters",
+        description=(
+            "Information on installed / registered adapters in format"
+            " key|Name|externalUrl|internalUrl,key2|Name2|externalUrl2|internalUrl2 ."
+            " Must be configured for backend!"
+            " If backend and runtime are separated this also can be used to tell"
+            " the runtime the internal urls explicitely, so that the runtime does"
+            " not have to query the backend's adapters endpoint. To enforce only"
+            " using this fallback set HETIDA_DESIGNER_BACKEND_API_URL to an empty"
+            " string for the runtime."
+        ),
     )
 
     hd_runtime_engine_url: str = Field(
@@ -360,6 +372,9 @@ class RuntimeConfig(BaseSettings):
         description=(
             "URL to backend. Necessary for transformation deployment "
             "and to allow runtime to access adapters endpoint."
+            " The runtime can fallback to HETIDA_DESIGNER_ADAPTERS, i.e. the"
+            " registered adapters. To enforce this and decouple runtime from designer"
+            " you can set this configuration here to an empty string."
         ),
     )
     hd_backend_use_basic_auth: bool = Field(

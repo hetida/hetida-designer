@@ -374,7 +374,22 @@ def recursively_parse_workflow_node(
                     value=inp.constantValue["value"],
                 )
                 for inp in constant_inputs
+                if inp.name not in optional_input_mappings  # does not have default value
             ],
+            optional=False,
+            id_suffix="workflow_constant_values",
+        )
+        workflow.add_constant_providing_node(
+            values=[
+                NamedDataTypedValue(
+                    name=generate_constant_input_name(inp),
+                    type=inp.type,
+                    value=inp.constantValue["value"],
+                )
+                for inp in constant_inputs
+                if inp.name in optional_input_mappings  # does have a default value
+            ],
+            optional=True,
             id_suffix="workflow_constant_values",
         )
     except WorkflowInputDataValidationError as error:

@@ -2,11 +2,11 @@ import logging
 
 from fastapi import HTTPException, status
 
-from hetdesrun.backend.execution import ExecByIdInput
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
 )
+from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 

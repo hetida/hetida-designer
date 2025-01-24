@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 from httpx import AsyncClient
 
+from hetdesrun.models.code import CodeModule
 from hetdesrun.models.run import (
     ConfigurationInput,
     ProcessStage,
@@ -342,26 +343,29 @@ def division_component_wf_exc_inp_replace(
     )
 
     if imports_and_definitions is not None:
-        division_component_wf_exc_inp.code_modules[
-            0
-        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
-            "from hdutils import ComponentException",
-            imports_and_definitions,
+        division_component_wf_exc_inp.code_modules[0] = CodeModule(
+            uuid=division_component_wf_exc_inp.code_modules[0].uuid,
+            code=division_component_wf_exc_inp.code_modules[0].code.replace(
+                "from hdutils import ComponentException",
+                imports_and_definitions,
+            ),
         )
 
     if function_code is not None:
-        division_component_wf_exc_inp.code_modules[
-            0
-        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
-            "pass",
-            function_code,
+        division_component_wf_exc_inp.code_modules[0] = CodeModule(
+            uuid=division_component_wf_exc_inp.code_modules[0].uuid,
+            code=division_component_wf_exc_inp.code_modules[0].code.replace(
+                "pass",
+                function_code,
+            ),
         )
 
     if function_header is not None:
-        division_component_wf_exc_inp.code_modules[
-            0
-        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
-            "def main(*, dividend, divisor):", function_header
+        division_component_wf_exc_inp.code_modules[0] = CodeModule(
+            uuid=division_component_wf_exc_inp.code_modules[0].uuid,
+            code=division_component_wf_exc_inp.code_modules[0].code.replace(
+                "def main(*, dividend, divisor):", function_header
+            ),
         )
 
     return division_component_wf_exc_inp
