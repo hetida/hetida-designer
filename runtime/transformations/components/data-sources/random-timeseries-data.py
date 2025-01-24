@@ -86,8 +86,7 @@ def main(
                 if frequency.strip() != ""
                 else metric_params_dict.get("frequency", "1h")
             ),
-            tz=datetime.timezone.utc,
-        )
+        ).tz_convert(datetime.timezone.utc)
 
         offset = metric_params_dict.get("offset", 0.0)
         factor = metric_params_dict.get("factor", 1.0)
