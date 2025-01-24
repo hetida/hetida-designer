@@ -197,7 +197,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
         default_factory=dict, description="Preset filters for the source"
     )
     passthrough_filters: list[Filter] | None = Field(
-        None, description="Passthrough filters for the source"
+        default_factory=list, description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: str = Field(..., description="Referenced HD StructureServiceSource identifier")
@@ -264,10 +264,6 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("passthrough_filters", pre=True, always=True)
-    def validate_passthrough_filters_not_none(cls, v: list[Filter] | None) -> list[Filter]:
-        return v or []
-
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
         if v is None:
@@ -332,7 +328,7 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
         default_factory=dict, description="Preset filters for the sink"
     )
     passthrough_filters: list[Filter] | None = Field(
-        None, description="Passthrough filters for the sink"
+        default_factory=list, description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: str = Field(..., description="Referenced HD StructureServiceSink identifier")
@@ -398,10 +394,6 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
             meta_data=orm_model.meta_data,
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
-
-    @validator("passthrough_filters", pre=True, always=True)
-    def validate_passthrough_filters_not_none(cls, v: list[Filter] | None) -> list[Filter]:
-        return v or []
 
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
