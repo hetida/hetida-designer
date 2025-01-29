@@ -62,6 +62,18 @@ export class TransformationService {
       );
   }
 
+  updateExpandComponent(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
+      .updateExpandComponent(transformation)
+      .pipe(
+        tap(updatedTransformation => {
+          this.store.dispatch(updateTransformation(updatedTransformation));
+        })
+      );
+  }
+
   getDefaultComponentTransformation(): ComponentTransformation {
     return {
       id: uuid().toString(),
