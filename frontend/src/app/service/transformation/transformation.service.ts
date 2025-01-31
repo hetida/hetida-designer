@@ -74,6 +74,20 @@ export class TransformationService {
       );
   }
 
+  importTrafoRevFromString(
+    trafo_rev_str: string,
+    updateCode: boolean,
+    expandCode: boolean,
+    overwriteReleased: boolean
+  ): Observable<Response> {
+    return this.transformationHttpService.importTrafoRevFromString(
+      trafo_rev_str,
+      updateCode,
+      expandCode,
+      overwriteReleased
+    );
+  }
+
   getDefaultComponentTransformation(): ComponentTransformation {
     return {
       id: uuid().toString(),

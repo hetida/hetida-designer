@@ -271,15 +271,14 @@ export class TransformationActionService {
 
   public updateExpand(transformation: Transformation): void {
     if (transformation.type === TransformationType.COMPONENT) {
-      console.log("ALSO HERE")
-      this.transformationService.updateExpandComponent(
-          transformation
-      ).subscribe();
+      this.transformationService
+        .updateExpandComponent(transformation)
+        .subscribe();
     } else {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} is not a component and therefore has no code.`
-        );
-      return;        
+      );
+      return;
     }
   }
 

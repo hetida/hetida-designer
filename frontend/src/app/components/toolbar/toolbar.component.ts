@@ -102,7 +102,6 @@ export class ToolbarComponent implements OnInit {
   }
 
   updateExpand(): void {
-    console.log("THERE")
     this.transformationActionService.updateExpand(this.transformation);
   }
 
