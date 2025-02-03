@@ -2,8 +2,13 @@ import logging
 
 from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
-from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
-from hetdesrun.runtime.service import runtime_service
+from hetdesrun.models.run import (
+    UnitTestPayload,
+    UnitTestResults,
+    WorkflowExecutionInput,
+    WorkflowExecutionResult,
+)
+from hetdesrun.runtime.service import runtime_service, unittest_service
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -30,3 +35,14 @@ async def info_service() -> dict[str, str]:
     Unauthorized, may be used for readiness probes.
     """
     return {"version": VERSION}
+
+
+@runtime_router.post(
+    "/unittest",
+    response_model=UnitTestResults,
+    dependencies=get_auth_deps(),
+)
+async def unittest_component(
+    payload: UnitTestPayload,
+) -> UnitTestResults:
+    return await unittest_service(payload.component_code)

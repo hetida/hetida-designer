@@ -4,6 +4,7 @@ from typing import Any
 from unittest import mock
 
 import pytest
+import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
@@ -77,7 +78,7 @@ def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def open_async_test_client(async_test_client: AsyncClient) -> AsyncGenerator:
     async with async_test_client as ac:
         yield ac

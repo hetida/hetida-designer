@@ -62,6 +62,14 @@
     >
     <mat-icon
       class="clickable unselectable"
+      title="{{ unitTestTooltip }}"
+      (click)="unitTestComponent()"
+      *ngIf="isComponent"
+    >
+      bug_report</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
       title="{{ publishTooltip }}"
       (click)="publish()"
       [ngClass]="{ disabled: isReleased() }"

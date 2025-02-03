@@ -8,7 +8,7 @@ from hetdesrun.structure.models import CompleteStructure
 class VirtualStructureAdapterConfig(BaseSettings):
     active: bool = Field(
         True,
-        description="Whether to register the adapter or not",
+        description="Whether the adapter is active and should expose web endpoints",
         env="VST_ADAPTER_ACTIVE",
     )
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { Observable } from 'rxjs';
-import { Transformation } from '../../model/transformation';
+import { Transformation, UnitTestResults } from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
@@ -46,6 +46,13 @@ export class TransformationHttpService {
   ): Observable<Transformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}?update_component_code=true&expand_component_code=true`;
     return this.httpClient.put<Transformation>(url, transformation);
+  }
+
+  public unitTestComponent(
+    transformation: Transformation
+  ): Observable<UnitTestResults> {
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}/test`;
+    return this.httpClient.post<UnitTestResults>(url, {});
   }
 
   public importTrafoRevFromString(

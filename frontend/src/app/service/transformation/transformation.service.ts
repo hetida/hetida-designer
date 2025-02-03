@@ -9,7 +9,8 @@ import { IAppState } from '../../store/app.state';
 import {
   ComponentTransformation,
   Transformation,
-  WorkflowTransformation
+  WorkflowTransformation,
+  UnitTestResults
 } from '../../model/transformation';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import {
@@ -72,6 +73,14 @@ export class TransformationService {
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
+  }
+
+  unitTestComponent(
+    transformation: Transformation
+  ): Observable<UnitTestResults> {
+    return this.transformationHttpService
+      .unitTestComponent(transformation)
+      .pipe(first());
   }
 
   importTrafoRevFromString(

@@ -97,12 +97,20 @@ export class ToolbarComponent implements OnInit {
     return 'Cannot change code for released component';
   }
 
+  get unitTestTooltip(): string {
+    return 'Run Unit Tests defined in Component Code';
+  }
+
   publish(): void {
     this.transformationActionService.publish(this.transformation);
   }
 
   updateExpand(): void {
     this.transformationActionService.updateExpand(this.transformation);
+  }
+
+  unitTestComponent(): void {
+    this.transformationActionService.unitTestComponent(this.transformation);
   }
 
   configureIO() {

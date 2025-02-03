@@ -15,7 +15,7 @@ import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { RouterModule } from '@angular/router';
-
+import { ResultDialogService } from '../result-service/result-dialog.service';
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(
     newId: string,
@@ -295,6 +295,8 @@ describe('TransformationActionService', () => {
     const tabItemService = TestBed.inject(TabItemService);
     const notificationService = TestBed.inject(NotificationService);
     const queryParameterService = TestBed.inject(QueryParameterService);
+    const resultDialogService = TestBed.inject(ResultDialogService);
+
     transformationActionService = new TransformationActionServiceExtended(
       matDialog,
       mockStore,
@@ -302,7 +304,8 @@ describe('TransformationActionService', () => {
       transformationService,
       tabItemService,
       notificationService,
-      queryParameterService
+      queryParameterService,
+      resultDialogService
     );
   });
 

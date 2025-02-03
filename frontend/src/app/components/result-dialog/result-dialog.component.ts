@@ -29,7 +29,6 @@ interface DialogData {
     `
       mat-dialog-content {
         min-width: 300px;
-        max-width: 500px;
         white-space: pre-wrap;
       }
     `
