@@ -84,13 +84,13 @@ export class TransformationService {
   }
 
   importTrafoRevFromString(
-    trafo_rev_str: string,
+    trafoRevsString: string,
     updateCode: boolean,
     expandCode: boolean,
     overwriteReleased: boolean
   ): Observable<Response> {
     return this.transformationHttpService.importTrafoRevFromString(
-      trafo_rev_str,
+      trafoRevsString,
       updateCode,
       expandCode,
       overwriteReleased

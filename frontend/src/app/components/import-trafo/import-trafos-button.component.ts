@@ -14,11 +14,11 @@ import { ImportDialogComponent } from './import-trafo-dialog.component';
     >
   `
 })
-export class ImportButtonComponent {
-  constructor(private readonly importTrafoDialog: MatDialog) {}
+export class ImportTransformationsButtonComponent {
+  constructor(private readonly matDialog: MatDialog) {}
 
   openImportDialog(): void {
-    this.importTrafoDialog.open(ImportDialogComponent, {
+    this.matDialog.open(ImportDialogComponent, {
       width: '700px',
       disableClose: true
     });

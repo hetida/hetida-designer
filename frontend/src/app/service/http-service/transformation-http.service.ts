@@ -44,8 +44,13 @@ export class TransformationHttpService {
   public updateExpandComponent(
     transformation: Transformation
   ): Observable<Transformation> {
-    const url = `${this.apiEndpoint}/transformations/${transformation.id}?update_component_code=true&expand_component_code=true`;
-    return this.httpClient.put<Transformation>(url, transformation);
+    let params = new HttpParams();
+
+    params = params.append('update_component_code', 'true');
+    params = params.append('expand_component_code', 'true');
+
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
+    return this.httpClient.put<Transformation>(url, transformation, { params });
   }
 
   public unitTestComponent(
@@ -56,24 +61,23 @@ export class TransformationHttpService {
   }
 
   public importTrafoRevFromString(
-    trafo_revs_str: string,
+    trafoRevisionsString: string,
     updateCode: boolean,
     expandCode: boolean,
     overwriteReleased: boolean
   ): Observable<Response> {
-    let import_obj: TrafoStringMixed[];
-
+    let importObj: TrafoStringMixed[];
     try {
-      const parsed_json = JSON.parse(trafo_revs_str) as Transformation;
+      const parsedJson = JSON.parse(trafoRevisionsString) as Transformation;
 
-      if (Array.isArray(parsed_json)) {
-        import_obj = parsed_json;
+      if (Array.isArray(parsedJson)) {
+        importObj = parsedJson;
       } else {
-        import_obj = [parsed_json];
+        importObj = [parsedJson];
       }
     } catch (error) {
       console.warn('Failed to parse Trafo(s) JSON:', error);
-      import_obj = [trafo_revs_str];
+      importObj = [trafoRevisionsString];
     }
 
     let params = new HttpParams();
@@ -88,8 +92,8 @@ export class TransformationHttpService {
       params = params.append('allow_overwrite_released', 'true');
     }
 
-    const url = `${this.apiEndpoint}/transformations/?update_component_code=true&expand_component_code=true`;
-    return this.httpClient.put<Response>(url, import_obj, { params });
+    const url = `${this.apiEndpoint}/transformations/`;
+    return this.httpClient.put<Response>(url, importObj, { params });
   }
 
   public deleteTransformation(id: string): Observable<void> {

@@ -66,7 +66,7 @@ import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 import { from, map } from 'rxjs';
-import { ImportButtonComponent } from './components/import-trafo/import-button.component';
+import { ImportTransformationsButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
 
 const httpLoaderFactory = (configService: ConfigService) => {
@@ -98,7 +98,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ConfirmDialogComponent,
     ComponentIODialogComponent,
     WorkflowIODialogComponent,
-    ImportButtonComponent,
+    ImportTransformationsButtonComponent,
     ImportDialogComponent,
     HomeComponent,
     HomeTabComponent,
