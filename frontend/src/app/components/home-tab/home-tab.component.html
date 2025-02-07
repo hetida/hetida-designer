@@ -30,7 +30,9 @@
           [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
         >
         </mat-icon>
-        <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
+        <span class="text-ellipsis"
+          >{{ item.name }} ({{ item.version_tag }})</span
+        >
       </li>
     }
   </ul>
@@ -58,7 +60,9 @@
           [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
         >
         </mat-icon>
-        <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
+        <span class="text-ellipsis"
+          >{{ item.name }} ({{ item.version_tag }})</span
+        >
       </li>
     }
   </ul>
