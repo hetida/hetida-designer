@@ -6,7 +6,7 @@ try:
     with open("VERSION", "r", encoding="utf8") as version_file:  # noqa: UP015
         VERSION = version_file.read().strip()
 except FileNotFoundError:
-    VERSION = "dev snapshot"
+    VERSION = "dev snapshot" # pyright: ignore
 
 
 def configure_logging(the_logger: logging.Logger) -> None:

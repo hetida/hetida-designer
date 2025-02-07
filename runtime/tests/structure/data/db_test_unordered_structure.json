@@ -127,18 +127,6 @@
             "preset_filters": {
                 "metrics": "1010001, 1010002"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1_Plant1_StorageTank1",
                 "Waterworks1_Plant2_StorageTank2"
@@ -160,18 +148,6 @@
             "preset_filters": {
                 "metrics": "1010003"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1_Plant1_StorageTank2",
                 "Waterworks1_Plant2_StorageTank1"
@@ -193,18 +169,6 @@
             "preset_filters": {
                 "metrics": "1010004"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1"
             ]
@@ -231,18 +195,6 @@
             "preset_filters": {
                 "metrics": "10010001, 10010002"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1_Plant1_StorageTank1",
                 "Waterworks1_Plant1_StorageTank2"
@@ -264,18 +216,6 @@
             "preset_filters": {
                 "metrics": "10010003"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1_Plant2_StorageTank2",
                 "Waterworks1_Plant2_StorageTank1"
@@ -297,18 +237,6 @@
             "preset_filters": {
                 "metrics": "10010004"
             },
-            "passthrough_filters": [
-                {
-                    "name": "timestampFrom",
-                    "type": "free_text",
-                    "required": true
-                },
-                {
-                    "name": "timestampTo",
-                    "type": "free_text",
-                    "required": false
-                }
-            ],
             "thing_node_external_ids": [
                 "Waterworks1"
             ]

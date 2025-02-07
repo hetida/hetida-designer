@@ -24,7 +24,7 @@ async def runtime_endpoint(
 
 
 @runtime_router.get("/info", response_model=VersionInfo)
-async def info_service() -> dict:
+async def info_service() -> dict[str, str]:
     """Version Info Endpoint
 
     Unauthorized, may be used for readiness probes.

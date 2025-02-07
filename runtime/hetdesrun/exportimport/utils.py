@@ -90,7 +90,7 @@ def update_or_create_transformation_revision(
 ) -> None:
     if directly_in_db:
         logger.info(
-            ("Update or create DB entry" " for %s with id %s\n" "in category %s with name %s"),
+            ("Update or create DB entry for %s with id %s\nin category %s with name %s"),
             tr.type.value,
             str(tr.id),
             tr.category,

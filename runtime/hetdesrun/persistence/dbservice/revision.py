@@ -7,7 +7,7 @@ from pydantic import StrictInt, StrictStr
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.component.code import update_code
+from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
@@ -26,7 +26,8 @@ from hetdesrun.persistence.models.exceptions import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.utils import State, Type, cache_conditionally
+from hetdesrun.utils import State, Type, cache_conditionally, cache_output_dict_conditionally
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,27 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
+def read_multiple_transformation_revisions_by_id(
+    ids: tuple[UUID, ...], log_error: bool = True
+) -> dict[UUID, TransformationRevision]:
+    with get_session()() as session, session.begin():
+        return {
+            trafo_id: select_tr_by_id(session, trafo_id, log_error=log_error) for trafo_id in ids
+        }
+
+
+@cache_output_dict_conditionally(
+    lambda trafo: (
+        get_config().enable_caching_for_non_draft_trafos_for_execution
+        and trafo.state != State.DRAFT
+    )
+)
+def read_multiple_transformation_revisions_by_id_with_possible_caching(
+    ids: tuple[UUID, ...], log_error: bool = True
+) -> dict[UUID, TransformationRevision]:
+    return read_multiple_transformation_revisions_by_id(ids, log_error=log_error)
+
+
 def read_single_transformation_revision(
     id: UUID,  # noqa: A002
     log_error: bool = True,
@@ -83,7 +105,12 @@ def read_single_transformation_revision(
         return select_tr_by_id(session, id, log_error)
 
 
-@cache_conditionally(lambda trafo: trafo.state != State.DRAFT)
+@cache_conditionally(
+    lambda trafo: (
+        get_config().enable_caching_for_non_draft_trafos_for_execution
+        and trafo.state != State.DRAFT
+    )
+)
 def read_single_transformation_revision_with_caching(
     id: UUID,  # noqa: A002
     log_error: bool = True,
@@ -183,8 +210,7 @@ def is_modifiable(
         and not allow_overwrite_released
     ):
         return False, (
-            f"Cannot modify released transformation revision "
-            f"{existing_transformation_revision.id}!"
+            f"Cannot modify released transformation revision {existing_transformation_revision.id}!"
         )
 
     return True, ""
@@ -220,9 +246,12 @@ def contains_deprecated(transformation_id: UUID) -> bool:
 def update_content(
     updated_transformation_revision: TransformationRevision,
     existing_transformation_revision: TransformationRevision | None = None,
+    do_expand_code: bool = False,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(updated_transformation_revision)
+        if do_expand_code:
+            updated_transformation_revision.content = expand_code(updated_transformation_revision)
     elif existing_transformation_revision is not None:
         assert isinstance(  # noqa: S101
             existing_transformation_revision.content, WorkflowContent
@@ -283,6 +312,7 @@ def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
     update_component_code: bool = True,
+    expand_component_code: bool = False,
     strip_wiring: bool = False,
     strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
     keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
@@ -306,7 +336,9 @@ def update_or_create_single_transformation_revision(
             )
         except DBNotFoundError:
             if transformation_revision.type == Type.WORKFLOW or update_component_code:
-                transformation_revision = update_content(transformation_revision)
+                transformation_revision = update_content(
+                    transformation_revision, do_expand_code=expand_component_code
+                )
 
             add_tr(session, transformation_revision)
         else:
@@ -325,7 +357,9 @@ def update_or_create_single_transformation_revision(
 
             if transformation_revision.type == Type.WORKFLOW or update_component_code:
                 transformation_revision = update_content(
-                    transformation_revision, existing_transformation_revision
+                    transformation_revision,
+                    existing_transformation_revision,
+                    do_expand_code=expand_component_code,
                 )
 
             update_tr(session, transformation_revision)
@@ -409,6 +443,23 @@ def is_unused(transformation_id: UUID) -> bool:
     return len(results) == 0
 
 
+def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
+    """Get unique categories of all trafo revisions of specified types
+
+    This is used for example by the component adapter to obtain thing nodes
+    """
+    types_to_query = [t.value for t in Type] if types is None else list(types)
+
+    with get_session()() as session, session.begin():
+        categories = session.execute(
+            select(TransformationRevisionDBModel.category)
+            .filter(TransformationRevisionDBModel.type.in_(types_to_query))
+            .distinct()
+        )
+
+    return list(categories.scalars().all())
+
+
 def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
@@ -418,6 +469,7 @@ def select_multiple_transformation_revisions(
     ids: list[UUID] | None = None,
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
+    states: list[State] | None = None,
 ) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with get_session()() as session, session.begin():
@@ -427,6 +479,8 @@ def select_multiple_transformation_revisions(
             selection = selection.where(TransformationRevisionDBModel.type == type)
         if state is not None:
             selection = selection.where(TransformationRevisionDBModel.state == state)
+        if states is not None:
+            selection = selection.where(TransformationRevisionDBModel.state.in_(states))
         if categories is not None:
             selection = selection.where(TransformationRevisionDBModel.category.in_(categories))
         if category_prefix is not None:
@@ -476,7 +530,7 @@ def get_multiple_transformation_revisions(
         tr_ids = {tr.id for tr in tr_list}
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
-                nested_tr_dict = get_all_nested_transformation_revisions(tr)
+                nested_tr_dict = get_all_nested_transformation_revisions(tr, allow_caching=False)
                 for nested_tr_id in nested_tr_dict:
                     if nested_tr_id not in tr_ids:
                         tr_ids.add(nested_tr_id)
@@ -495,7 +549,7 @@ def nof_db_entries() -> int:
 
 
 def get_all_nested_transformation_revisions(
-    transformation_revision: TransformationRevision,
+    transformation_revision: TransformationRevision, allow_caching: bool = True
 ) -> dict[UUID, TransformationRevision]:
     if transformation_revision.type != Type.WORKFLOW:
         msg = (
@@ -508,14 +562,21 @@ def get_all_nested_transformation_revisions(
     with get_session()() as session, session.begin():
         descendants = find_all_nested_transformation_revisions(session, transformation_revision.id)
 
-        nested_transformation_revisions: dict[UUID, TransformationRevision] = {}
+    nested_trafos_by_id = (
+        read_multiple_transformation_revisions_by_id_with_possible_caching
+        if allow_caching
+        else read_multiple_transformation_revisions_by_id
+    )(
+        tuple(descendant.transformation_id for descendant in descendants)  # noqa: UP034
+    )
 
-        for descendant in descendants:
-            nested_transformation_revisions[descendant.operator_id] = select_tr_by_id(
-                session, descendant.transformation_id
-            )
+    nested_transformation_revisions_by_operator_id: dict[UUID, TransformationRevision] = {}
+    for descendant in descendants:
+        nested_transformation_revisions_by_operator_id[descendant.operator_id] = (
+            nested_trafos_by_id[descendant.transformation_id]
+        )
 
-    return nested_transformation_revisions
+    return nested_transformation_revisions_by_operator_id
 
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:

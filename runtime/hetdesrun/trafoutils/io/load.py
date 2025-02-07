@@ -330,6 +330,10 @@ class MultipleTrafosUpdateConfig(BaseModel):
             " This should be harmless for components created in hetida designer."
         ),
     )
+    expand_component_code: bool = Field(
+        False,
+        description=("Extend component code with wirings etc."),
+    )
     strip_wirings: bool = Field(
         False,
         description=(

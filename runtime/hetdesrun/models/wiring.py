@@ -1,5 +1,6 @@
 import re
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConstrainedStr, Field, StrictInt, StrictStr, validator
 
@@ -23,7 +24,7 @@ class OutputWiring(BaseModel):
     ref_id: str | None = Field(
         None,
         description=(
-            "Id referencing the sink in external systems." " Not necessary for direct provisioning."
+            "Id referencing the sink in external systems. Not necessary for direct provisioning."
         ),
     )
     ref_id_type: RefIdType | None = Field(
@@ -106,8 +107,7 @@ class InputWiring(BaseModel):
     ref_id: str | None = Field(
         None,
         description=(
-            "Id referencing the source in external systems."
-            " Not necessary for direct provisioning."
+            "Id referencing the source in external systems. Not necessary for direct provisioning."
         ),
     )
     ref_id_type: RefIdType | None = Field(
@@ -124,7 +124,12 @@ class InputWiring(BaseModel):
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
     use_default_value: bool = False
-    filters: dict[FilterKey, str | None] = {}
+
+    # we must allow Any as filter value here, since InputWirings for Component Adapter
+    # sinks need to get the actual value as Python object isntead of a str in order
+    # to avoid unnecessary serializing/deserializing between trafo output and
+    # component adapter sink execution.
+    filters: dict[FilterKey, str | Any | None] = {}
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
@@ -146,6 +151,7 @@ class InputWiring(BaseModel):
     ) -> ExternalType | None:
         if (
             v is not None
+            and values["adapter_id"] not in {"direct_provisioning", 1}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (values["ref_id_type"] is None or values["ref_key"] is None)
         ):
@@ -193,7 +199,7 @@ class GridstackItemPositioning(BaseModel):
     id: str = Field(  # noqa: A003
         ...,
         description=(
-            "gs-id of the .grid-stack-item which is extracted as id by " "gridstacks save method"
+            "gs-id of the .grid-stack-item which is extracted as id by gridstacks save method"
         ),
     )
     type: GridstackPositioningType = GridstackPositioningType.OUTPUT

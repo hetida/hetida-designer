@@ -28,7 +28,7 @@ info_router = HandleTrailingSlashAPIRouter(
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_200_OK: {"description": "Successfully got a sign of life"}},
 )
-async def get_info() -> dict:
+async def get_info() -> dict[str, str]:
     """Show readiness and provide version info.
 
     If Kafka consumer execution is enabled this will also show

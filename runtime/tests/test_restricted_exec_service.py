@@ -67,7 +67,6 @@ async def test_restricted_single_allowed(
         response = await client.post(
             "/api/transformations/execute", json=json.loads(exec_by_id_input.json())
         )
-
         assert response.status_code == 200
 
         result = response.json()

@@ -99,6 +99,7 @@ def import_importable(
                 transformation,
                 allow_overwrite_released=multi_import_config.allow_overwrite_released,
                 update_component_code=multi_import_config.update_component_code,
+                expand_component_code=multi_import_config.expand_component_code,
                 strip_wiring=multi_import_config.strip_wirings,
                 strip_wirings_with_adapter_ids=multi_import_config.strip_wirings_with_adapter_ids,
                 keep_only_wirings_with_adapter_ids=multi_import_config.keep_only_wirings_with_adapter_ids,

@@ -6,4 +6,5 @@
 * [Kafka Adapter](./kafka_adapter.md)
 * [Local (mounted) File Adapter](./local_file_adapter.md)
 * [SQL Adapter](./sql_adapter.md)
-* [External Sources Adapter](./external_sources_adapter.md)
+* [External Sources Adapter](./external_sources_adapter.md): Builtin access to some external APIs / data sources.
+* [Component Adapter](./component_adapter.md): Write components that act as sources or sinks without compromising reproducibility and separation of concerns.

@@ -253,7 +253,11 @@ async def test_workflow_with_optional_string_inputs_via_constant_node():
     wf.add_constant_providing_node(
         values=[
             {"name": "first", "value": "", "type": "STRING"},
-            {"name": "second", "value": "null", "type": "STRING"},
+            {
+                "name": "second",
+                "value": "null",
+                "type": "STRING",
+            },  # "null" will be interpreted as None, since optional is True
             {"name": "third", "value": None, "type": "STRING"},
         ],
         optional=True,
@@ -261,7 +265,43 @@ async def test_workflow_with_optional_string_inputs_via_constant_node():
     )
 
     res = await wf.result
-    assert res["sum_result"] == ",null"
+    assert res["sum_result"] == ""
+
+    # behaviour without considering inputs as "OPTIONAL"
+    target_node = ComputationNode(
+        func=add_three_words,
+        operator_hierarchical_name="sum node",
+        operator_hierarchical_id="sum node",
+    )
+
+    wf = Workflow(
+        sub_nodes=[target_node],
+        input_mappings={
+            "first": (target_node, "c"),
+            "second": (target_node, "d"),
+            "third": (target_node, "e"),
+        },
+        output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
+        operator_hierarchical_name="Workflow",
+        operator_hierarchical_id="Workflow",
+    )
+
+    wf.add_constant_providing_node(
+        values=[
+            {"name": "first", "value": "", "type": "STRING"},
+            {"name": "second", "value": "null", "type": "STRING"},
+            {"name": "third", "value": "some", "type": "STRING"},
+        ],
+        optional=False,
+        id_suffix="workflow_default_values",
+    )
+
+    res = await wf.result
+
+    assert res["sum_result"] == ",null,some"
 
 
 @pytest.mark.asyncio

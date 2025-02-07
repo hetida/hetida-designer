@@ -45,7 +45,7 @@ maintenance_router = HandleTrailingSlashAPIRouter(
 def handle_maintenance_operation_request(
     maintenance_operation_name: str,
     secret_str: SecretStr,
-    func: Callable,
+    func: Callable[..., None],
     response: Response,
 ) -> MaintenanceActionResult:
     """Handle maintenance request

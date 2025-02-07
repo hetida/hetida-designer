@@ -713,7 +713,7 @@ COMPONENT_INFO = {
         "series": {"data_type": "SERIES"},
         "number_of_forecast_steps": {"data_type": "INT"},
         "seasonal_periods": {"data_type": "INT", "default_value": None},
-        "test_size": {"data_type": "FLOAT", "default_value": 0},
+        "test_size": {"data_type": "FLOAT", "default_value": 0.0},
         "hyperparameter_tuning_iterations": {"data_type": "INT", "default_value": 200},
         "confidence_level": {"data_type": "FLOAT", "default_value": 0.05},
         "plot_in_sample_forecast": {"data_type": "BOOLEAN", "default_value": False},
@@ -729,7 +729,10 @@ COMPONENT_INFO = {
     "id": "61ef085b-0a83-443b-a4ee-dc1cc6ce1077",
     "revision_group_id": "b1e582b3-b2a8-47a8-a019-e0a0ba0f1d87",
     "state": "RELEASED",
+    "released_timestamp": "2025-01-08T15:40:51.922451+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
@@ -737,13 +740,13 @@ def main(
     series,
     number_of_forecast_steps,
     seasonal_periods=None,
-    test_size=0,
+    test_size=0.0,
     hyperparameter_tuning_iterations=200,
     confidence_level=0.05,
     plot_in_sample_forecast=False,
     plot_marker=True,
 ):
-    """entrypoint function for this component"""
+    # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     # Step 1: Check if the time series has consistent intervals between its indices.
@@ -817,44 +820,23 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "series",
-            "adapter_id": "direct_provisioning",
             "filters": {
-                "value": """{
-    "2023-09-04T00:00:00.000Z": 201,
-    "2023-09-05T00:00:00.000Z": 194,
-    "2023-09-06T00:00:00.000Z": 281,
-    "2023-09-07T00:00:00.000Z": 279,
-    "2023-09-08T00:00:00.000Z": 375,
-    "2023-09-09T00:00:00.000Z": 393,
-    "2023-09-10T00:00:00.000Z": 390,
-    "2023-09-11T00:00:00.000Z": 220,
-    "2023-09-12T00:00:00.000Z": 222,
-    "2023-09-13T00:00:00.000Z": 312,
-    "2023-09-14T00:00:00.000Z": 277,
-    "2023-09-15T00:00:00.000Z": 332,
-    "2023-09-16T00:00:00.000Z": 401,
-    "2023-09-17T00:00:00.000Z": 400,
-    "2023-09-18T00:00:00.000Z": 291,
-    "2023-09-19T00:00:00.000Z": 282,
-    "2023-09-20T00:00:00.000Z": 316,
-    "2023-09-21T00:00:00.000Z": 305,
-    "2023-09-22T00:00:00.000Z": 333,
-    "2023-09-23T00:00:00.000Z": 398,
-    "2023-09-24T00:00:00.000Z": 414
-}
-"""
+                "value": '{\n    "2023-09-04T00:00:00.000Z": 201,\n    "2023-09-05T00:00:00.000Z": 194,\n    "2023-09-06T00:00:00.000Z": 281,\n    "2023-09-07T00:00:00.000Z": 279,\n    "2023-09-08T00:00:00.000Z": 375,\n    "2023-09-09T00:00:00.000Z": 393,\n    "2023-09-10T00:00:00.000Z": 390,\n    "2023-09-11T00:00:00.000Z": 220,\n    "2023-09-12T00:00:00.000Z": 222,\n    "2023-09-13T00:00:00.000Z": 312,\n    "2023-09-14T00:00:00.000Z": 277,\n    "2023-09-15T00:00:00.000Z": 332,\n    "2023-09-16T00:00:00.000Z": 401,\n    "2023-09-17T00:00:00.000Z": 400,\n    "2023-09-18T00:00:00.000Z": 291,\n    "2023-09-19T00:00:00.000Z": 282,\n    "2023-09-20T00:00:00.000Z": 316,\n    "2023-09-21T00:00:00.000Z": 305,\n    "2023-09-22T00:00:00.000Z": 333,\n    "2023-09-23T00:00:00.000Z": 398,\n    "2023-09-24T00:00:00.000Z": 414\n}\n'
             },
         },
+        {"workflow_input_name": "number_of_forecast_steps", "filters": {"value": "7"}},
+        {"workflow_input_name": "seasonal_periods", "filters": {"value": "7"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
         {
-            "workflow_input_name": "number_of_forecast_steps",
-            "adapter_id": "direct_provisioning",
-            "filters": {"value": 7},
+            "workflow_input_name": "series",
+            "filters": {
+                "value": '{\n    "2023-09-04T00:00:00.000Z": 201,\n    "2023-09-05T00:00:00.000Z": 194,\n    "2023-09-06T00:00:00.000Z": 281,\n    "2023-09-07T00:00:00.000Z": 279,\n    "2023-09-08T00:00:00.000Z": 375,\n    "2023-09-09T00:00:00.000Z": 393,\n    "2023-09-10T00:00:00.000Z": 390,\n    "2023-09-11T00:00:00.000Z": 220,\n    "2023-09-12T00:00:00.000Z": 222,\n    "2023-09-13T00:00:00.000Z": 312,\n    "2023-09-14T00:00:00.000Z": 277,\n    "2023-09-15T00:00:00.000Z": 332,\n    "2023-09-16T00:00:00.000Z": 401,\n    "2023-09-17T00:00:00.000Z": 400,\n    "2023-09-18T00:00:00.000Z": 291,\n    "2023-09-19T00:00:00.000Z": 282,\n    "2023-09-20T00:00:00.000Z": 316,\n    "2023-09-21T00:00:00.000Z": 305,\n    "2023-09-22T00:00:00.000Z": 333,\n    "2023-09-23T00:00:00.000Z": 398,\n    "2023-09-24T00:00:00.000Z": 414\n}\n'
+            },
         },
-        {
-            "workflow_input_name": "seasonal_periods",
-            "adapter_id": "direct_provisioning",
-            "use_default_value": False,
-            "filters": {"value": 7},
-        },
+        {"workflow_input_name": "number_of_forecast_steps", "filters": {"value": "7"}},
+        {"workflow_input_name": "seasonal_periods", "filters": {"value": "7"}},
     ]
 }

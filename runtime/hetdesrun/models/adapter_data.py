@@ -7,11 +7,3 @@ class RefIdType(str, Enum):
     SOURCE = "SOURCE"
     SINK = "SINK"
     THINGNODE = "THINGNODE"
-
-
-class DataType(str, Enum):
-    INT = "int"
-    FLOAT = "float"
-    STRING = "string"
-    BOOLEAN = "boolean"
-    ANY = "any"

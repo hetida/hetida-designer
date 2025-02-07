@@ -102,10 +102,10 @@ def gs_div_attributes_from_item_positioning(
 ) -> str:
     return f"""
 
-    {' gs-x="' + str(item_positioning.x)+'"' if item_positioning.x is not None else ' '}
-    {' gs-y="' + str(item_positioning.y)+'"' if item_positioning.y is not None else ' '}
-    {' gs-w="' + str(item_positioning.w)+'"' if item_positioning.w is not None else ' '}
-    {' gs-h="' + str(item_positioning.h)+'"' if item_positioning.h is not None else ' '}
+    {' gs-x="' + str(item_positioning.x) + '"' if item_positioning.x is not None else " "}
+    {' gs-y="' + str(item_positioning.y) + '"' if item_positioning.y is not None else " "}
+    {' gs-w="' + str(item_positioning.w) + '"' if item_positioning.w is not None else " "}
+    {' gs-h="' + str(item_positioning.h) + '"' if item_positioning.h is not None else " "}
 
     """
 
@@ -1047,6 +1047,118 @@ def generate_config_panel_div(
                 summary["Updated Wiring (actually used wiring)"],
                 div[pre(style="width:100%;max-width:inherit")[actually_used_wiring.json(indent=2)]],
             ],
+            details(style="margin-bottom: 6px")[
+                summary["Import Transformation Revisions"],
+                div[
+                    textarea(
+                        id="trafo_import_text",
+                        rows="20",
+                        cols="50",
+                        placeholder="Enter trafo (json or Python-Code)",
+                    ),
+                    br,
+                    label(for_="allow_overwrite_released")[
+                        input(
+                            type="checkbox",
+                            id="allow_overwrite_released",
+                            name="Allow overwriting released trafos",
+                            value="false",
+                            checked=False,
+                        ),
+                        "Allow overwriting released trafos",
+                    ],
+                    label(for_="update_component_code")[
+                        input(
+                            type="checkbox",
+                            id="update_component_code",
+                            name="Update component Code",
+                            value="false",
+                            checked=False,
+                        ),
+                        "Update component code (recommended input: json)",
+                    ],
+                    label(for_="expand_component_code")[
+                        input(
+                            type="checkbox",
+                            id="expand_component_code",
+                            name="Expand component Code",
+                            value="false",
+                            checked=False,
+                        ),
+                        "Expand component code (recommended input: json)",
+                    ],
+                    button(id="import_trafo_button")["Import Trafo"],
+                    div(id="import_trafo_response"),
+                    script()[
+                        Markup(r"""
+        document.addEventListener('DOMContentLoaded', async () => {
+            const inputText = document.getElementById('trafo_import_text');
+            const sendButton = document.getElementById('import_trafo_button');
+            const responseDiv = document.getElementById('import_trafo_response');
+            const inputOverwriteReleased = document.getElementById('allow_overwrite_released');
+            const updateComponentCode = document.getElementById('update_component_code');
+            const expandComponentCode = document.getElementById('expand_component_code');
+
+            sendButton.addEventListener('click', async () => {
+
+                let message_obj;
+                try {
+                    message_obj = JSON.parse(inputText.value);
+                    console.log("Could parse text as json object");
+                } catch (e) {
+                    message_obj = inputText.value;
+                    console.log(
+                        "Could not parse text as json object."
+                        + " Expecting it to be Component represented as Python code."
+                    );
+                }
+
+                const payload = Array.isArray(message_obj) ? message_obj : [message_obj]
+
+                const allow_overwrite_released = inputOverwriteReleased.checked
+                const update_component_code = updateComponentCode.checked
+                const expand_component_code = expandComponentCode.checked
+
+                headers =  {'Content-Type': 'application/json'}
+                if (auth_active) {
+                    console.log("Refreshing tokens / cookie")
+                    await refresh_token_and_update_cookies();
+                    console.log("Finished refreshing tokens / cookie")
+                    headers["Authorization"] = "Bearer " + keycloak.token;
+                }
+                const url = '../?' + new URLSearchParams({
+                        allow_overwrite_released: allow_overwrite_released,
+                        update_component_code: update_component_code,
+                        expand_component_code: expand_component_code
+                    }).toString()
+                console.log(url)
+                fetch(url, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    responseDiv.textContent = `Response: ${JSON.stringify(data)}`;
+                    responseDiv.style.color = 'green';
+                })
+                .catch(error => {
+                    responseDiv.textContent = `Error: ${error.message}`;
+                    responseDiv.style.color = 'red';
+                });
+            });
+        });
+
+                """)
+                    ],
+                ],
+            ],
+            div(),
         ]
     ]
 
@@ -1234,7 +1346,7 @@ def generate_login_dashboard_stub() -> str:
         }
 
         """  # noqa: ISC003
-                + f'auth_active={"true" if get_config().auth else "false"};'  # noqa: ISC003
+                + f"auth_active={'true' if get_config().auth else 'false'};"  # noqa: ISC003
                 + r"""
 
         console.log("Auth active:", auth_active);
@@ -1590,7 +1702,7 @@ def generate_dashboard_html(
         }
 
         """
-            f'auth_active={"true" if get_config().auth else "false"};'
+            f"auth_active={'true' if get_config().auth else 'false'};"
             r"""
 
         console.log("Auth active:", auth_active);
@@ -2097,13 +2209,19 @@ def generate_dashboard_html(
             clickOpens: (document.getElementById("override-timerange-select"
                 ).value == "absolute"),
             """
-            + f"""{ ('defaultDate: ["'
-            + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]+ "Z"
-            + '", "'
-            + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0] + "Z"
-            + '"],'
-     ) if (calculated_from_timestamp is not None
-           and calculated_to_timestamp is not None) else ""}"""
+            + f"""{
+                (
+                    'defaultDate: ["'
+                    + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]
+                    + "Z"
+                    + '", "'
+                    + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0]
+                    + "Z"
+                    + '"],'
+                )
+                if (calculated_from_timestamp is not None and calculated_to_timestamp is not None)
+                else ""
+            }"""
             + r"""
 
             onClose: async function(selectedDates, dateStr, instance){

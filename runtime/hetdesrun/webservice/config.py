@@ -118,8 +118,12 @@ class RuntimeConfig(BaseSettings):
         env="HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC",
         description=(
             "Cache transformation revisions for execution if their state is not DRAFT. "
-            "Instead of always loading them from the database. "
-            "The caching mechanism is NOT thread-safe."
+            "Instead of always loading them from the database when executing. "
+            "It should only be enabled in scenarios where released rafos never get overwritten "
+            "by for example maintenance operations. Typically you want to activate this kind of "
+            "caching in modes like Kafka consumption mode or similar streaming modes or "
+            "the restricted trafo execution mode, where one or a few transformation revisions "
+            "(and their nested trafos) are executed very often / continuously."
         ),
     )
 
@@ -198,8 +202,7 @@ class RuntimeConfig(BaseSettings):
             realm="hetida-designer",
         ),
         description=(
-            "Settings that will be provided to keycloak-js instance in dashboards."
-            "Must be set there"
+            "Settings that will be provided to keycloak-js instance in dashboards.Must be set there"
         ),
         env="HD_DASHBOARDING_FRONTEND_AUTH_SETTINGS",
     )
@@ -215,7 +218,7 @@ class RuntimeConfig(BaseSettings):
     auth_role_key: str = Field(
         "roles",
         description=(
-            "Under which key of the access token payload the roles will" " be expected as a list."
+            "Under which key of the access token payload the roles will be expected as a list."
         ),
         env="HD_AUTH_ROLE_KEY",
     )
@@ -340,7 +343,10 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/virtual_structure,"
         "external-sources|External Sources"
         "|http://localhost:8090/adapters/external_sources"
-        "|http://localhost:8090/adapters/external_sources",
+        "|http://localhost:8090/adapters/external_sources,"
+        "component-adapter|Component Adapter"
+        "|http://localhost:8080/adapters/component"
+        "|http://localhost:8080/adapters/component",
         env="HETIDA_DESIGNER_ADAPTERS",
         description=(
             "Information on installed / registered adapters in format"
@@ -396,6 +402,20 @@ class RuntimeConfig(BaseSettings):
     )
     hd_backend_verify_certs: bool = Field(True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS")
     hd_adapters_verify_certs: bool = Field(True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS")
+
+    hd_stream_mode: None | ExecByIdBase = Field(
+        None,
+        description=(
+            "If this is set, all backend, runtime and adapter webservices are deactivated. "
+            "Instead the provided execution input is run continuously: "
+            "Generator-like adapters / adaper sources are invoked as such. "
+            "Function-like adapters / adapter sources are invoked repeatedly "
+            "The same applies to sinks for sending data: If they are generator-like "
+            "data is send into the generator-like construct implying that the "
+            "sink can have state."
+        ),
+        env="HETIDA_DESIGNER_STREAM_MODE",
+    )
 
     hd_kafka_consumption_mode: None | ExecByIdBase = Field(
         None,

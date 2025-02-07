@@ -105,7 +105,6 @@
                     "required": false
                 }               
             ],
-            "preset_filters": {},
             "thing_node_external_ids": [
                 "Waterworks1_Plant1_StorageTank1"
             ]

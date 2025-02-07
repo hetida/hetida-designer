@@ -89,3 +89,6 @@ function called "main".
 """,
     )
     uuid: UUID
+
+    class Config:
+        frozen = True

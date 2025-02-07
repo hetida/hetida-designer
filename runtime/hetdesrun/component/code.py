@@ -263,7 +263,7 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
 
     try:
         return format_function_header(function_header)
-    except black.InvalidInput as error:
+    except black.InvalidInput as error: # type: ignore
         logger.warning(
             "Error while generating function header for compoent %s:\n%s",
             str(component.id),

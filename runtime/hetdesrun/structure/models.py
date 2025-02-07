@@ -197,7 +197,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
         default_factory=dict, description="Preset filters for the source"
     )
     passthrough_filters: list[Filter] | None = Field(
-        None, description="Passthrough filters for the source"
+        default_factory=list, description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: str = Field(..., description="Referenced HD StructureServiceSource identifier")
@@ -264,12 +264,6 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v: Any) -> Any:
-        if not v:
-            return {}
-        return v
-
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
         if v is None:
@@ -286,6 +280,42 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             seen.add(internal_name)
         return v
 
+    @root_validator(pre=False)
+    def check_for_filter_name_conflicts_with_timestamp_filters(
+        cls, values: dict[str, Any]
+    ) -> dict[str, Any]:
+        # Read values
+        src_type = values.get("type")
+        preset_filters = values.get("preset_filters", {})
+        passthrough_filters = values.get("passthrough_filters", [])
+
+        # Check if the source is a series or multitsframe
+        if src_type and any(
+            keyword in src_type.value.lower() for keyword in ("series", "multitsframe")
+        ):
+            filter_names_to_avoid = {"timestampfrom", "timestampto"}
+
+            # Validate preset_filters keys
+            for key in preset_filters:
+                if key.lower() in filter_names_to_avoid:
+                    raise ValueError(
+                        "The filter names 'timestampFrom' or 'timestampTo' are not allowed."
+                        " Regardless of capitalization."
+                    )
+
+            # Validate passthrough_filters
+            for pass_filter in passthrough_filters:
+                if (
+                    pass_filter.name.lower() in filter_names_to_avoid
+                    or pass_filter.internal_name.lower() in filter_names_to_avoid
+                ):
+                    raise ValueError(
+                        "The filter names 'timestampFrom' or 'timestampTo' are not allowed."
+                        " Regardless of capitalization."
+                    )
+
+        return values
+
 
 class StructureServiceSink(StructureServiceCommonFieldsModel):
     id: UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the sink")  # noqa: A003
@@ -298,7 +328,7 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
         default_factory=dict, description="Preset filters for the sink"
     )
     passthrough_filters: list[Filter] | None = Field(
-        None, description="Passthrough filters for the sink"
+        default_factory=list, description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: str = Field(..., description="Referenced HD StructureServiceSink identifier")
@@ -364,12 +394,6 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
             meta_data=orm_model.meta_data,
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
-
-    @validator("preset_filters", "passthrough_filters", pre=True, each_item=True)
-    def validate_filters(cls, v: Any) -> Any:
-        if not v:
-            return {}
-        return v
 
     @validator("passthrough_filters")
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:

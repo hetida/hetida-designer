@@ -107,13 +107,18 @@ consumption_mode_variable = os.environ.get("HETIDA_DESIGNER_KAFKA_CONSUMPTION_MO
 kafka_consumption_modus = (
     consumption_mode_variable is not None and len(consumption_mode_variable) > 0
 )
+
+stream_mode_variable = os.environ.get("HETIDA_DESIGNER_STREAM_MODE", None)
+stream_mode_modus = stream_mode_variable is not None and len(stream_mode_variable) > 0
+
+
 prepopulate_vst_structure = os.environ.get("PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP", False)
 
 if in_memory_db:
     logger.info("Detected in-memory db usage: Running migrations during importing of main.py.")
     run_migrations()
 
-    if is_backend or kafka_consumption_modus:
+    if is_backend or kafka_consumption_modus or stream_mode_modus:
         logger.info(
             "Detected in-memory db usage: "
             "Running base component and example workflow deployment "
@@ -134,7 +139,7 @@ if __name__ == "__main__":
         logger.info("Running migrations from main.py since main.py was invoked directly.")
         run_migrations()
 
-        if is_backend or kafka_consumption_modus:
+        if is_backend or kafka_consumption_modus or stream_mode_modus:
             logger.info(
                 "Running base component and example workflow deployment "
                 "from main.py since main.py was invoked directly."
@@ -146,6 +151,13 @@ if __name__ == "__main__":
         from hetdesrun.adapters.kafka.consumption_mode import start_consumption_mode
 
         asyncio.run(start_consumption_mode())
+
+    if stream_mode_modus:
+        import asyncio
+
+        from hetdesrun.streaming import start_streaming_mode
+
+        asyncio.run(start_streaming_mode())
 
     else:
         import os

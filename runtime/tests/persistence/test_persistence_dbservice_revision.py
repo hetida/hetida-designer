@@ -11,6 +11,7 @@ from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    get_distinct_categories,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
     is_modifiable,
@@ -68,6 +69,82 @@ def test_storing_and_receiving(mocked_clean_test_db_session):
     wrong_tr_uuid = get_uuid_from_seed("wrong id")
     with pytest.raises(DBNotFoundError):
         received_tr_object = read_single_transformation_revision(wrong_tr_uuid)
+
+
+def test_distinct_categories(mocked_clean_test_db_session):
+    tr_uuid_1 = get_uuid_from_seed("test_getting_categories_1")
+
+    tr_object_1 = TransformationRevision(
+        id=tr_uuid_1,
+        revision_group_id=tr_uuid_1,
+        name="Test",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    tr_uuid_2 = get_uuid_from_seed("test_getting_categories_2")
+
+    tr_object_2 = TransformationRevision(
+        id=tr_uuid_2,
+        revision_group_id=tr_uuid_2,
+        name="Test 2",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    tr_uuid_3 = get_uuid_from_seed("test_getting_categories_3")
+
+    tr_object_3 = TransformationRevision(
+        id=tr_uuid_3,
+        revision_group_id=tr_uuid_3,
+        name="Test 3",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Another category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    store_single_transformation_revision(tr_object_1)
+    store_single_transformation_revision(tr_object_2)
+    store_single_transformation_revision(tr_object_3)
+
+    categories = get_distinct_categories()  # allow all types
+
+    assert len(categories) == 2
+    assert "Test category" in categories
+    assert "Another category" in categories
+
+    categories = get_distinct_categories(types={Type.COMPONENT})
+    assert len(categories) == 2
+    assert "Test category" in categories
+    assert "Another category" in categories
+
+    categories = get_distinct_categories(types={Type.WORKFLOW})
+    assert len(categories) == 0
+
+    categories = get_distinct_categories(types={Type.COMPONENT, Type.WORKFLOW})
+    assert len(categories) == 2
+    assert "Test category" in categories
+    assert "Another category" in categories
 
 
 def test_is_modifiable():

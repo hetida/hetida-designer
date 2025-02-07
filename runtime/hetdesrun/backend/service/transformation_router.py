@@ -21,6 +21,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import HttpUrl, StrictInt, StrictStr
 
 from hetdesrun.backend.execution import (
+    TrafoExecutionComponentAdapterComponentsNotFound,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -40,6 +41,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import expand_code, update_code
+from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     UpdateProcessStatus,
@@ -61,7 +63,6 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
-    ComponentCodeImportError,
     Importable,
     ImportSourceConfig,
     MultipleTrafosUpdateConfig,
@@ -493,6 +494,7 @@ async def update_transformation_revisions(
     ),
     allow_overwrite_released: bool = Query(False, description="Only set to True for deployment."),
     update_component_code: bool = Query(True, description="Only set to False for deployment."),
+    expand_component_code: bool = Query(False, description="Extend with wirings etc."),
     strip_wirings: bool = Query(
         False,
         description=(
@@ -609,6 +611,7 @@ async def update_transformation_revisions(
     multi_import_config = MultipleTrafosUpdateConfig(
         allow_overwrite_released=allow_overwrite_released,
         update_component_code=update_component_code,
+        expand_component_code=expand_component_code,
         strip_wirings=strip_wirings,
         strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
         keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
@@ -686,6 +689,7 @@ async def update_transformation_revision(
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the database.
@@ -714,6 +718,7 @@ async def update_transformation_revision(
             updated_transformation_revision,
             allow_overwrite_released=allow_overwrite_released,
             update_component_code=update_component_code,
+            expand_component_code=expand_component_code,
             strip_wiring=strip_wiring,
         )
         logger.info("updated transformation revision %s", id)
@@ -795,6 +800,16 @@ async def handle_trafo_revision_execution_request(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
+    except TrafoExecutionComponentAdapterComponentsNotFound as err:
+        msg = (
+            "Could not find component revision for component adapter wirings or"
+            " could not validate them as suitable component sources/sinks when"
+            f" executing {exec_by_id.id}:\n{str(err)} with wiring\n{exec_by_id.wiring}."
+            f" Exception was:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
     except TrafoExecutionRuntimeConnectionError as err:
         msg = f"Could not connect to runtime to execute transformation {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
@@ -846,10 +861,7 @@ async def send_result_to_callback_url(
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
-        msg = (
-            "Failed to get auth headers for sending result to callback url."
-            f" Error was:\n{str(e)}"
-        )
+        msg = f"Failed to get auth headers for sending result to callback url. Error was:\n{str(e)}"
         logger.error(msg)
 
     async with httpx.AsyncClient(
@@ -1099,6 +1111,7 @@ async def update_transformation_dashboard_positioning(
             transformation_revision,
             allow_overwrite_released=False,
             update_component_code=False,
+            expand_component_code=False,
             strip_wiring=False,
         )
     except DBIntegrityError as err:

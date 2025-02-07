@@ -1,7 +1,8 @@
 import json
 import logging
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -13,6 +14,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
@@ -23,10 +25,6 @@ from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
-from hetdesrun.backend.service.transformation_router import (
-    dashboard_router,
-    transformation_router,
-)
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
@@ -46,7 +44,7 @@ class AdditionalLoggingRoute(APIRoute):
     Makes sure that requests are logged in every situation.
     """
 
-    def get_route_handler(self) -> Callable:
+    def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
@@ -61,7 +59,7 @@ class AdditionalLoggingRoute(APIRoute):
                     json.dumps(json_data, indent=2, sort_keys=True),
                 )
             try:
-                return await original_route_handler(request)  # type: ignore
+                return await original_route_handler(request)
             except RequestValidationError as exc:
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
@@ -83,7 +81,7 @@ middleware = [
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator:  # noqa: ARG001
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     logger.info("Initializing application ...")
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Initializing Kafka consumer...")
@@ -132,6 +130,15 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     )
 
     try:  # noqa: SIM105
+        del sys.modules["hetdesrun.service.transformation_router"]
+    except KeyError:
+        pass
+    from hetdesrun.backend.service.transformation_router import (
+        dashboard_router,
+        transformation_router,
+    )
+
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
     except KeyError:
         pass
@@ -161,10 +168,16 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.component_adapter.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
     )
+    from hetdesrun.adapters.component_adapter.webservice import component_adapter_router
     from hetdesrun.adapters.external_sources.webservice import external_sources_adapter_router
     from hetdesrun.adapters.kafka.webservice import kafka_adapter_router
     from hetdesrun.adapters.local_file.webservice import (
@@ -232,8 +245,17 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
+
+        if (
+            get_component_adapter_config().active
+        ):  # webservice runs always in backend, since it needs to access db
+            app.include_router(
+                component_adapter_router
+            )  # auth dependency set individually per endpoint
+
         if get_vst_adapter_config().active:
             app.include_router(virtual_structure_adapter_router)
+
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())
@@ -246,6 +268,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             dashboard_router,
             prefix="/api",  # individual auth dependency
         )
+
         app.include_router(virtual_structure_router, prefix="/api", dependencies=get_auth_deps())
         possible_maintenance_secret = get_config().maintenance_secret
         if (

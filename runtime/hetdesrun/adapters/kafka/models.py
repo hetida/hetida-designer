@@ -56,7 +56,7 @@ class StructureResponse(BaseModel):
     id: str  # noqa: A003
     name: str
     thingNodes: list[StructureThingNode]
-    sources: list
+    sources: list[KafkaAdapterStructureSource]
     sinks: list[KafkaAdapterStructureSink]
 
 

@@ -94,7 +94,7 @@ def filter_json():
     return f_json
 
 
-def test_filter_class_internal_name_field_creation(filter_json):
+def test_filter_class_internal_name_field_creation_and_validation(filter_json):
     # No value is provided for internal_name but name is provided
     filter_with_no_internal_name_provided = Filter(**filter_json["filter_without_internal_name"])
     assert filter_with_no_internal_name_provided.internal_name == "upper_threshold"
@@ -166,6 +166,37 @@ def test_source_sink_passthrough_filters_no_duplicate_keys_validator(filter_json
         match="is shared by atleast two filters, provided for this sink, it must be unique.",
     ):
         StructureServiceSink(**example_sink)
+
+
+def test_source_filters_name_timestamp_validators():
+    example_source = {
+        "external_id": "EnergyUsage_PumpSystem_StorageTank",
+        "stakeholder_key": "GW",
+        "name": "nf",
+        "type": "multitsframe",
+        "adapter_key": "sql-adapter",
+        "source_id": "nf",
+        "thing_node_external_ids": ["Waterworks1"],
+        "preset_filters": {"timEstaMpFROM": "01-01-2025"},
+    }
+
+    with pytest.raises(
+        ValidationError,
+        match="The filter names 'timestampFrom' or 'timestampTo' are not allowed.",
+    ):
+        StructureServiceSource(**example_source)
+
+    # Empty preset_filters and add passthrough filters
+    example_source["preset_filters"] = {}
+    example_source["passthrough_filters"] = [
+        Filter(name="timestamptO", type="free_text", required=False)
+    ]
+
+    with pytest.raises(
+        ValidationError,
+        match="The filter names 'timestampFrom' or 'timestampTo' are not allowed.",
+    ):
+        StructureServiceSource(**example_source)
 
 
 def test_validate_root_nodes_parent_ids_are_none(mocked_clean_test_db_session):

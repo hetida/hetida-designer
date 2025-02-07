@@ -8,6 +8,7 @@ import random
 from collections.abc import Callable, Coroutine
 from enum import StrEnum
 from functools import wraps
+from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
@@ -200,3 +201,80 @@ def cache_conditionally(condition_func: Callable) -> Callable:
         return cache_wrapper
 
     return cache_conditionally_decorator
+
+
+def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
+    """Caching decorator that caches some output result if a condition is fulfilled
+
+    The function to which this decorator is applied should output a dict and should
+    have exactly one argument which is a tuple of hashables.
+
+    The output dict's keys should consist of these hashables.
+
+    The condition is then evaluated for each key on the respective value of the output dict.
+
+    Each run the original function is only called on the subtuple of the provided tuple
+    consisting of those keys where there is no cached value present.
+
+    The resulting dict is then updated with the cached values for the missing keys.
+
+    * cache_output_dict_conditionally works for both synchronous and asynchronous functions
+    * The implementation is NOT thread-safe
+
+    Args:
+        condition_func (function): Takes a result dict val of `func`
+        and returns a boolean that determines whether this value should be cached
+    """
+
+    def cache_output_dict_conditionally_decorator(
+        func: Callable | Coroutine,
+    ) -> Callable | Coroutine:
+        cache: dict = {}
+
+        if asyncio.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_cache_wrapper(keys: tuple[Any]) -> Any:
+                # data already cached
+                cached_dict_part = {key: cache[key] for key in keys if key in cache}
+
+                keys_not_in_cache = tuple(key for key in keys if key not in cache)
+                if len(keys_not_in_cache) == 0:
+                    return MappingProxyType(cached_dict_part)
+
+                result_dict = await func(keys_not_in_cache)
+
+                for key, val in result_dict.items():
+                    if condition_func(val):
+                        cache[key] = val
+
+                return MappingProxyType(result_dict | cached_dict_part)
+
+            async_cache_wrapper.cache_ = cache  # type: ignore
+            return async_cache_wrapper
+
+        # Function is synchronous:
+        assert callable(func)  # for mypy # noqa: S101
+
+        @wraps(func)  # type: ignore
+        def cache_wrapper(keys: tuple[Any]) -> Any:
+            # data already cached
+            cached_dict_part = {key: cache[key] for key in keys if key in cache}
+
+            keys_not_in_cache = tuple(key for key in keys if key not in cache)
+
+            if len(keys_not_in_cache) == 0:
+                return MappingProxyType(cached_dict_part)
+
+            result_dict = func(keys_not_in_cache)
+
+            for key, val in result_dict.items():
+                if condition_func(val):
+                    cache[key] = val
+
+            return MappingProxyType(result_dict | cached_dict_part)
+
+        cache_wrapper.cache_ = cache  # type: ignore
+        return cache_wrapper
+
+    return cache_output_dict_conditionally_decorator

@@ -47,8 +47,10 @@ async def update_structure_endpoint(
     new_structure: CompleteStructure,
     delete_existing_structure: bool = Query(
         True,
-        description="Determines whether a potentially existent structure in the database is deleted"
-        " ,before inserting the structure provided to the endpoint",
+        description=(
+            "Determines whether a potentially existent structure in the database is deleted"
+            " ,before inserting the structure provided to the endpoint"
+        ),
     ),
 ) -> None:
     """Endpoint to update the structure of the virtual structure adapter.

@@ -11,8 +11,11 @@ async def test_plain_wf_parsing_and_execution(input_json_with_wiring):
         wf_exe_inp.workflow, wf_exe_inp.components, wf_exe_inp.code_modules
     )
 
-    assert len(parsed_wf.sub_nodes) == 4
-    # (2 operators + 2 constant provider nodes, one each for constant values and default values)
+    assert len(parsed_wf.sub_nodes) == 5
+    # (2 operators + 3 constant provider nodes,
+    # one for constant values without default values,
+    # one for constant values with default values (which are nullable!)
+    # and one for actually used default values)
 
     res = await parsed_wf.result  # workflow execution
 

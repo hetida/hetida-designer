@@ -106,6 +106,23 @@ from hetdesrun.adapters.kafka import send_data as kafka_adapter_send_data  # noq
 
 register_sink_adapter(adapter_key="kafka", send_func=kafka_adapter_send_data)
 
+# Register component adapter
+from hetdesrun.adapters.component_adapter.load import (  # noqa: E402
+    load_data as component_adapter_adapter_load_data,
+)
+
+register_source_adapter(
+    adapter_key="component-adapter", load_func=component_adapter_adapter_load_data
+)
+
+from hetdesrun.adapters.component_adapter.send import (  # noqa: E402
+    send_data as component_adapter_adapter_send_data,
+)
+
+register_sink_adapter(
+    adapter_key="component-adapter", send_func=component_adapter_adapter_send_data
+)
+
 
 # Registering File Support Handlers for the local file adapter
 from hetdesrun.adapters.local_file.extensions import (  # noqa: E402

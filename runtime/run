@@ -59,7 +59,7 @@ imsort() {
 }
 
 typecheck() {
-    python3 -m mypy hetdesrun
+    python3 -m mypy "${@}" hetdesrun
 }
 
 format() {

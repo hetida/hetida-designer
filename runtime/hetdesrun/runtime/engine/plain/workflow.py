@@ -218,7 +218,8 @@ class ComputationNode:
 
     async def _compute_result(self) -> dict[str, Any]:
         # set filter for contextualized logging
-        execution_context_filter.bind_context(**self.context.dict())
+        context_dict = self.context.dict()
+        execution_context_filter.bind_context(**context_dict)
 
         runtime_execution_logger.info("Starting computation")
         self._in_computation = True
@@ -233,7 +234,7 @@ class ComputationNode:
 
         # cleanup
         self._in_computation = False
-        execution_context_filter.clear_context()
+        execution_context_filter.clear_context(keys=list(context_dict.keys()))
 
         return function_result
 
@@ -329,7 +330,7 @@ class Workflow:
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "
-                "respective workflow input datatypes."
+                "respective workflow input datatypes: " + str(e)
             ).set_context(self.context) from e
 
         Const_Node = ComputationNode(
@@ -367,7 +368,8 @@ class Workflow:
         assert isinstance(self, Workflow)  # for mypy # noqa: S101
         self._wire_workflow_inputs()
 
-        execution_context_filter.bind_context(**self.context.dict())
+        context_dict = self.context.dict()
+        execution_context_filter.bind_context(**context_dict)
 
         runtime_execution_logger.info("Starting computation")
 
@@ -403,7 +405,7 @@ class Workflow:
                 raise e
 
         # cleanup
-        execution_context_filter.clear_context()
+        execution_context_filter.clear_context(keys=list(context_dict.keys()))
 
         return results
 
