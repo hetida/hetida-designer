@@ -47,7 +47,7 @@ import { Constant } from 'src/app/model/constant';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
-import { ResultDialogService } from '../result-service/result-dialog.service';
+import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -64,7 +64,7 @@ export class TransformationActionService {
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
     private readonly queryParameterService: QueryParameterService,
-    private readonly resultDialogService: ResultDialogService
+    private readonly resultDialogService: TextResultDialogService
   ) {}
 
   public async execute(transformation: Transformation) {

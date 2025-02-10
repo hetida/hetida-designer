@@ -16,12 +16,12 @@ interface DialogData {
   selector: 'app-result-dialog',
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule],
-  templateUrl: './result-dialog.component.html',
-  styleUrls: ['./result-dialog.component.scss']
+  templateUrl: './text-result-dialog.component.html',
+  styleUrls: ['./text-result-dialog.component.scss']
 })
-export class ResultDialogComponent {
+export class TextResultDialogComponent {
   constructor(
-    public dialogRef: MatDialogRef<ResultDialogComponent>,
+    public dialogRef: MatDialogRef<TextResultDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {}
 

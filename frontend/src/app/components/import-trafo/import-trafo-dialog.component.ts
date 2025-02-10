@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { TransformationService } from '../../service/transformation/transformation.service';
 
-import { ResultDialogService } from '../../service/result-service/result-dialog.service';
+import { TextResultDialogService } from '../../service/text-result-service/text-result-dialog.service';
 import { NotificationService } from '../../service/notifications/notification.service';
 
 @Component({
@@ -21,7 +21,7 @@ export class ImportDialogComponent {
   constructor(
     private readonly dialogRef: MatDialogRef<ImportDialogComponent>,
     private readonly transformationService: TransformationService,
-    private readonly resultDialogService: ResultDialogService,
+    private readonly resultDialogService: TextResultDialogService,
     private readonly notificationService: NotificationService
   ) {}
 

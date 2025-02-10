@@ -78,9 +78,7 @@ export class TransformationService {
   unitTestComponent(
     transformation: Transformation
   ): Observable<UnitTestResults> {
-    return this.transformationHttpService
-      .unitTestComponent(transformation)
-      .pipe(first());
+    return this.transformationHttpService.unitTestComponent(transformation);
   }
 
   importTrafoRevFromString(

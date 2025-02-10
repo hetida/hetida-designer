@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { ResultDialogComponent } from './result-dialog.component';
+import { TextResultDialogComponent } from './text-result-dialog.component';
 
 describe('ConfirmImportTrafoDialog', () => {
-  let component: ResultDialogComponent;
-  let fixture: ComponentFixture<ResultDialogComponent>;
+  let component: TextResultDialogComponent;
+  let fixture: ComponentFixture<TextResultDialogComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -22,7 +22,7 @@ describe('ConfirmImportTrafoDialog', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ResultDialogComponent);
+    fixture = TestBed.createComponent(TextResultDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
