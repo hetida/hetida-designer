@@ -17,7 +17,7 @@ interface DialogData {
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule],
   templateUrl: './result-dialog.component.html',
-  styleUrls: ['./result-dialog.component.scss'],
+  styleUrls: ['./result-dialog.component.scss']
 })
 export class ResultDialogComponent {
   constructor(

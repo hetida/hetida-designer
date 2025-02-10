@@ -4,7 +4,7 @@ import { ImportDialogComponent } from './import-trafo-dialog.component';
 
 @Component({
   selector: 'app-import-button',
-  templateUrl: './import-trafos-button.component.html',
+  templateUrl: './import-trafos-button.component.html'
 })
 export class ImportTransformationsButtonComponent {
   constructor(private readonly matDialog: MatDialog) {}
