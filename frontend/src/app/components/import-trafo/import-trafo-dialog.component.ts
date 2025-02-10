@@ -9,16 +9,7 @@ import { NotificationService } from '../../service/notifications/notification.se
 @Component({
   selector: 'app-import-dialog',
   templateUrl: './import-trafo-dialog.component.html',
-  styles: [
-    `
-      .full-width {
-        width: 100%;
-      }
-      textarea {
-        resize: none;
-      }
-    `
-  ]
+  styleUrls: ['./import-trafo-dialog.component.scss'],
 })
 export class ImportDialogComponent {
   importText = '';
