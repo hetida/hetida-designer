@@ -385,3 +385,12 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
             node_results=node_results,
             resolved_reproducibility_references=repr_reference,
         )
+
+
+class UnitTestPayload(BaseModel):
+    component_code: str
+
+
+class UnitTestResults(BaseModel):
+    pytest_stdout_str: str
+    pytest_stderr_str: str

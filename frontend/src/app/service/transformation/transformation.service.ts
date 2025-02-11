@@ -9,7 +9,8 @@ import { IAppState } from '../../store/app.state';
 import {
   ComponentTransformation,
   Transformation,
-  WorkflowTransformation
+  WorkflowTransformation,
+  UnitTestResults
 } from '../../model/transformation';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import {
@@ -60,6 +61,38 @@ export class TransformationService {
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
+  }
+
+  updateExpandComponent(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
+      .updateExpandComponent(transformation)
+      .pipe(
+        tap(updatedTransformation => {
+          this.store.dispatch(updateTransformation(updatedTransformation));
+        })
+      );
+  }
+
+  unitTestComponent(
+    transformation: Transformation
+  ): Observable<UnitTestResults> {
+    return this.transformationHttpService.unitTestComponent(transformation);
+  }
+
+  importTrafoRevFromString(
+    trafoRevsString: string,
+    updateCode: boolean,
+    expandCode: boolean,
+    overwriteReleased: boolean
+  ): Observable<Response> {
+    return this.transformationHttpService.importTrafoRevFromString(
+      trafoRevsString,
+      updateCode,
+      expandCode,
+      overwriteReleased
+    );
   }
 
   getDefaultComponentTransformation(): ComponentTransformation {

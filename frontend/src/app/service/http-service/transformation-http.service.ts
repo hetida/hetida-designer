@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { Observable } from 'rxjs';
-import { Transformation } from '../../model/transformation';
+import { Transformation, UnitTestResults } from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
+type TrafoStringMixed = Transformation | string;
 @Injectable({
   providedIn: 'root'
 })
@@ -38,6 +39,61 @@ export class TransformationHttpService {
   ): Observable<Transformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
     return this.httpClient.put<Transformation>(url, transformation);
+  }
+
+  public updateExpandComponent(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    let params = new HttpParams();
+
+    params = params.append('update_component_code', 'true');
+    params = params.append('expand_component_code', 'true');
+
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
+    return this.httpClient.put<Transformation>(url, transformation, { params });
+  }
+
+  public unitTestComponent(
+    transformation: Transformation
+  ): Observable<UnitTestResults> {
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}/test`;
+    return this.httpClient.post<UnitTestResults>(url, {});
+  }
+
+  public importTrafoRevFromString(
+    trafoRevisionsString: string,
+    updateCode: boolean,
+    expandCode: boolean,
+    overwriteReleased: boolean
+  ): Observable<Response> {
+    let importObj: TrafoStringMixed[];
+    try {
+      const parsedJson = JSON.parse(trafoRevisionsString) as Transformation;
+
+      if (Array.isArray(parsedJson)) {
+        importObj = parsedJson;
+      } else {
+        importObj = [parsedJson];
+      }
+    } catch (error) {
+      console.warn('Failed to parse Trafo(s) JSON:', error);
+      importObj = [trafoRevisionsString];
+    }
+
+    let params = new HttpParams();
+
+    if (updateCode) {
+      params = params.append('update_component_code', 'true');
+    }
+    if (expandCode) {
+      params = params.append('expand_component_code', 'true');
+    }
+    if (overwriteReleased) {
+      params = params.append('allow_overwrite_released', 'true');
+    }
+
+    const url = `${this.apiEndpoint}/transformations/`;
+    return this.httpClient.put<Response>(url, importObj, { params });
   }
 
   public deleteTransformation(id: string): Observable<void> {

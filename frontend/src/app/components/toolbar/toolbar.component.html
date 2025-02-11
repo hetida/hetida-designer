@@ -58,6 +58,24 @@
   <span>
     <mat-icon
       class="clickable unselectable"
+      title="{{ updateExpandTooltip }}"
+      (click)="updateExpand()"
+      *ngIf="isComponent"
+      [ngClass]="{ disabled: isReleased() }"
+    >
+      cleaning_services</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ unitTestTooltip }}"
+      (click)="unitTestComponent()"
+      *ngIf="isComponent"
+    >
+      bug_report</mat-icon
+    >
+    <mat-divider vertical *ngIf="isComponent"></mat-divider>
+    <mat-icon
+      class="clickable unselectable"
       title="{{ publishTooltip }}"
       (click)="publish()"
       [ngClass]="{ disabled: isReleased() }"

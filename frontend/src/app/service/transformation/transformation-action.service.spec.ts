@@ -11,6 +11,7 @@ import { WorkflowContent } from 'src/app/model/workflow-content';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
+import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
 import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
@@ -297,6 +298,8 @@ describe('TransformationActionService', () => {
     const tabItemService = TestBed.inject(TabItemService);
     const notificationService = TestBed.inject(NotificationService);
     const queryParameterService = TestBed.inject(QueryParameterService);
+    const resultDialogService = TestBed.inject(TextResultDialogService);
+
     transformationActionService = new TransformationActionServiceExtended(
       matDialog,
       mockStore,
@@ -304,7 +307,8 @@ describe('TransformationActionService', () => {
       transformationService,
       tabItemService,
       notificationService,
-      queryParameterService
+      queryParameterService,
+      resultDialogService
     );
   });
 

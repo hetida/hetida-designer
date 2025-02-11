@@ -47,6 +47,7 @@ import { Constant } from 'src/app/model/constant';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
+import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -62,7 +63,8 @@ export class TransformationActionService {
     private readonly transformationService: TransformationService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
-    private readonly queryParameterService: QueryParameterService
+    private readonly queryParameterService: QueryParameterService,
+    private readonly resultDialogService: TextResultDialogService
   ) {}
 
   public async execute(transformation: Transformation) {
@@ -267,6 +269,37 @@ export class TransformationActionService {
 
   public isReleased(transformation: Transformation) {
     return transformation.state === RevisionState.RELEASED;
+  }
+
+  public updateExpand(transformation: Transformation): void {
+    if (transformation.type === TransformationType.COMPONENT) {
+      this.transformationService
+        .updateExpandComponent(transformation)
+        .subscribe();
+    } else {
+      this.notificationService.warn(
+        `This ${transformation.type.toLowerCase()} is not a component and therefore has no code.`
+      );
+      return;
+    }
+  }
+
+  public unitTestComponent(transformation: Transformation): void {
+    if (transformation.type === TransformationType.COMPONENT) {
+      this.transformationService
+        .unitTestComponent(transformation)
+        .subscribe(test_results => {
+          this.resultDialogService.openDialog(
+            'Unit Test Results',
+            `${test_results.pytest_stdout_str}\n\nSTDERR:\n${test_results.pytest_stderr_str}`
+          );
+        });
+    } else {
+      this.notificationService.warn(
+        `This ${transformation.type.toLowerCase()} is not a component. Only components can have unit tests.`
+      );
+      return;
+    }
   }
 
   public publish(transformation: Transformation): void {

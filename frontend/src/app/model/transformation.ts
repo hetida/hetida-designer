@@ -46,3 +46,8 @@ export interface AbstractTransformation {
   io_interface: IoInterface;
   test_wiring: TestWiring;
 }
+
+export interface UnitTestResults {
+  pytest_stdout_str: string;
+  pytest_stderr_str: string;
+}

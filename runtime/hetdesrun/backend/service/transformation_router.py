@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 from copy import deepcopy
+from posixpath import join as posix_urljoin
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -18,7 +19,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse
-from pydantic import HttpUrl, StrictInt, StrictStr
+from pydantic import HttpUrl, StrictInt, StrictStr, ValidationError
 
 from hetdesrun.backend.execution import (
     TrafoExecutionComponentAdapterComponentsNotFound,
@@ -49,8 +50,9 @@ from hetdesrun.exportimport.importing import (
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
+from hetdesrun.models.run import UnitTestPayload, UnitTestResults
 from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import DBError, DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
@@ -61,6 +63,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.runtime.service import unittest_service
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     Importable,
@@ -843,6 +846,94 @@ async def execute_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
     return await handle_trafo_revision_execution_request(exec_by_id)
+
+
+@transformation_router.post(
+    "/{id}/test",
+    response_model=UnitTestResults,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="RUn unit tests for a transformation revision.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully tested the transformation revision."},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": "Not a component."},
+        status.HTTP_404_NOT_FOUND: {"description": "Could not find trafo rev in db."},
+    },
+)
+async def test_transformation_revision(
+    id: UUID,  # noqa: A002
+) -> UnitTestResults:
+    try:
+        trafo = read_single_transformation_revision(id)
+    except DBNotFoundError as e:
+        msg = f"Could not find transformation revision with id {id} in db for unittesting."
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from e
+    except DBError as e:
+        msg = f"Could not load transformation revision with id {id} from db for unittesting."
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
+
+    if not trafo.type is Type.COMPONENT:
+        msg = (
+            f"Transformation revision {trafo.name} ({trafo.version_tag}) "
+            f"with id {str(id)} is not a component"
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+    if get_config().is_runtime_service:
+        try:
+            assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
+            unittest_result = await unittest_service(trafo.content)
+        except Exception as e:
+            msg = f"Failure running unittest_service:\n{str(e)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
+    else:
+        unit_test_payload = UnitTestPayload(component_code=trafo.content)
+        try:
+            headers = await get_auth_headers(external=False)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for internal runtime execution request."
+                f" Error was:\n{str(e)}"
+            )
+            logger.info(msg)
+            raise TrafoExecutionRuntimeConnectionError(msg) from e
+
+        async with httpx.AsyncClient(
+            verify=get_config().hd_runtime_verify_certs,
+            timeout=get_config().external_request_timeout,
+        ) as client:
+            url = posix_urljoin(get_config().hd_runtime_engine_url, "unittest")
+            try:
+                response = await client.post(
+                    url,
+                    headers=headers,
+                    json=json.loads(unit_test_payload.json()),  # TODO: avoid double serialization.
+                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
+                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    timeout=None,
+                )
+            except httpx.HTTPError as e:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
+                msg = f"Failure connecting to hd runtime unittest endpoint ({url}):\n{str(e)}"
+                logger.error(msg)
+                # TODO: raise error
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
+            try:
+                json_obj = response.json()
+                unittest_result = UnitTestResults(**json_obj)
+            except ValidationError as e:
+                msg = (
+                    f"Could not validate hd runtime unitest result object. Exception:\n{str(e)}"
+                    f"\nJson Object is:\n{str(json_obj)}"
+                )
+                logger.error(msg)
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg) from e
+    return unittest_result
 
 
 callback_router = APIRouter()

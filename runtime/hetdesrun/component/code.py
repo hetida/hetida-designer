@@ -263,7 +263,7 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
 
     try:
         return format_function_header(function_header)
-    except black.InvalidInput as error: # type: ignore
+    except black.InvalidInput as error:  # type: ignore
         logger.warning(
             "Error while generating function header for compoent %s:\n%s",
             str(component.id),
@@ -345,11 +345,12 @@ def update_code(
 
 
 def add_documentation_as_module_doc_string(code: str, tr: TransformationRevision) -> str:
-    if code.startswith('"""'):
+    current_trafo_doc_stripped = tr.documentation.strip()
+    if code.startswith('"""') or current_trafo_doc_stripped == "":
         return code
 
     mod_doc_string = (
-        '"""Documentation for ' + tr.name + "\n\n" + tr.documentation.strip() + '\n"""\n\n'
+        '"""Documentation for ' + tr.name + "\n\n" + current_trafo_doc_stripped + '\n"""\n\n'
     )
 
     return mod_doc_string + code

@@ -1,0 +1,49 @@
+<div class="d-flex content-space-between" mat-dialog-title>
+  <h2 class="m-0">Import Transformation(s)</h2>
+  <button
+    (click)="onCancel()"
+    mat-icon-button
+    attr.data-testid="close-import-trafo-dialog"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<mat-dialog-content>
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Paste your transformation revision(s) here</mat-label>
+    <textarea
+      matInput
+      class="trafo-input-textarea"
+      [(ngModel)]="importText"
+      rows="20"
+      placeholder="Component Python code or JSON object or JSON array..."
+    ></textarea>
+  </mat-form-field>
+  <div>
+    <label>
+      <input type="checkbox" [(ngModel)]="updateCode" /> Update Code
+    </label>
+  </div>
+  <div>
+    <label>
+      <input type="checkbox" [(ngModel)]="expandCode" /> Expand Code
+    </label>
+  </div>
+  <div>
+    <label>
+      <input type="checkbox" [(ngModel)]="overwriteReleased" /> Overwrite
+      Released (DANGER!)
+    </label>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="closeDialog()">Cancel</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="importTrafos()"
+    [disabled]="!importText.trim()"
+  >
+    Import
+  </button>
+</mat-dialog-actions>

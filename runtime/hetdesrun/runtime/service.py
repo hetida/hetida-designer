@@ -5,6 +5,7 @@ from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
     PerformanceMeasuredStep,
     ProcessStage,
+    UnitTestResults,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -23,6 +24,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
 from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
+from hetdesrun.runtime.unittesting import unittest_code
 from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
     resolve_and_load_data_from_wiring,
@@ -277,3 +279,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     # TODO: avoid double serialization
     return wf_exec_result
+
+
+async def unittest_service(component_code: str) -> UnitTestResults:
+    return unittest_code(component_code=component_code)
