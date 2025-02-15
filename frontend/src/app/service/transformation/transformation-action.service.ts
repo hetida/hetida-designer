@@ -273,15 +273,15 @@ export class TransformationActionService {
 
   public upgradeWorkflowOperators(transformation: Transformation): void {
     if (transformation.type === TransformationType.WORKFLOW) {
-        this.transformationService
-          .upgradeWorkflowOperators(transformation)
-          .subscribe();
-      } else {
-        this.notificationService.warn(
-          `This ${transformation.type.toLowerCase()} is not a workflow and therefore has no operators.`
-        );
-        return;
-      }
+      this.transformationService
+        .upgradeWorkflowOperators(transformation)
+        .subscribe();
+    } else {
+      this.notificationService.warn(
+        `This ${transformation.type.toLowerCase()} is not a workflow and therefore has no operators.`
+      );
+      return;
+    }
   }
 
   public updateExpand(transformation: Transformation): void {

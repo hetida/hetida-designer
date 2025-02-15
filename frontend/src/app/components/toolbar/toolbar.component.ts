@@ -89,7 +89,7 @@ export class ToolbarComponent implements OnInit {
     }
     return 'Already published';
   }
-  
+
   get upgradeWorkflowOperatorsTooltip(): string {
     if (!this.isReleased()) {
       return 'Upgrade workflow operators';
@@ -113,7 +113,9 @@ export class ToolbarComponent implements OnInit {
   }
 
   upgradeWorkflowOperators(): void {
-    this.transformationActionService.upgradeWorkflowOperators(this.transformation);
+    this.transformationActionService.upgradeWorkflowOperators(
+      this.transformation
+    );
   }
 
   updateExpand(): void {

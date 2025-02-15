@@ -71,7 +71,10 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
     transformation_revision_from_python_code,
 )
-from hetdesrun.trafoutils.upgrade_operators import upgrade_operators_in_workflow
+from hetdesrun.trafoutils.upgrade_operators import (
+    upgrade_operators_in_workflow,
+    upgrade_workflow_operator_in_place,
+)
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import (
     get_auth_headers,
@@ -670,6 +673,136 @@ async def update_transformation_revisions(
 
 
 @transformation_router.put(
+    "/{id}/upgrade_operators/{operator_id}",
+    response_model=TransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Upgrade an operator in a DRAFT workflow transformation revision to a provided revision.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully updated the transformation revision"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "description": "Id from path does not match id from object in request body"
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": "DB entry is not modifiable due to status or non-matching types"
+        },
+    },
+)
+async def upgrade_workflow_operator_with_new_rev(
+    id: UUID,  # noqa: A002
+    operator_id: UUID,
+    updated_transformation_revision: TransformationRevision,
+    new_operator_transformation_revision_id: UUID = Query(
+        ..., description="The new transformation revision for the provided operator."
+    ),
+    allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
+    update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    expand_component_code: bool = Query(False, description="Expand with wirings etc."),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
+) -> TransformationRevision:
+    logger.info(
+        "Upgrade workflow operator %s in workflow %s with trafo revision %s",
+        operator_id,
+        id,
+        new_operator_transformation_revision_id,
+    )
+    if updated_transformation_revision.type is not Type.WORKFLOW:
+        msg = (
+            f"Transformation {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} is"
+            " not a workflow. Cannot upgrade operator."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+    if updated_transformation_revision.state is not State.DRAFT:
+        msg = (
+            f"Workflow {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} does"
+            " not have state DRAFT. Cannot upgrade operator."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+    if id != updated_transformation_revision.id:
+        msg = (
+            f"The id {id} does not match the id of the provided "
+            f"transformation revision DTO {updated_transformation_revision.id}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+    ops = [op for op in updated_transformation_revision.content.operators if op.id == operator_id]
+    if len(ops) != 1:
+        msg = (
+            f"Got {len(ops)} operators in workflow {id} with the provided id {operator_id}."
+            " Need exactly 1. Aborting operator upgrade"
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+    operator = ops[0]
+
+    try:
+        possibly_newer_trafo = read_single_transformation_revision(
+            id=new_operator_transformation_revision_id
+        )
+        logger.info(
+            "Found requested new transformation revision with id %s for operator %s in workflow %s",
+            new_operator_transformation_revision_id,
+            operator_id,
+            id,
+        )
+    except DBNotFoundError as err:
+        msg = (
+            "Could not find requested new transformation revision with id"
+            f" {new_operator_transformation_revision_id} for operator {operator_id} "
+            f"in workflow {id}:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    if possibly_newer_trafo.revision_group_id != operator.revision_group_id:
+        msg = (
+            f"In provided workflow {id} the revision_group_id of operator {operator_id}."
+            " Does not agree with that of the fetched new trafo "
+            f"rev {new_operator_transformation_revision_id}. Cannot upgrade."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+    upgrade_workflow_operator_in_place(
+        updated_transformation_revision, operator_id, operator, possibly_newer_trafo
+    )
+
+    try:
+        persisted_transformation_revision = update_or_create_single_transformation_revision(
+            updated_transformation_revision,
+            allow_overwrite_released=allow_overwrite_released,
+            update_component_code=update_component_code,
+            expand_component_code=expand_component_code,
+            strip_wiring=strip_wiring,
+        )
+        logger.info("updated transformation revision %s", id)
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except ModelConstraintViolation as err:
+        msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
+
+    logger.debug(persisted_transformation_revision.json())
+
+    return persisted_transformation_revision
+
+
+@transformation_router.put(
     "/{id}/upgrade_operators",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
@@ -696,8 +829,7 @@ async def upgrade_workflow_operators(
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
-    logger.info("Upgrade workflow operators %s", id)
-    # TODO: check if it really is a workflow
+    logger.info("Upgrade workflow %s operators", id)
 
     if updated_transformation_revision.type is not Type.WORKFLOW:
         msg = (
