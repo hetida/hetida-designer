@@ -200,7 +200,7 @@ class TransformationRevision(BaseModel):
     content: str | WorkflowContent = Field(
         ...,
         description=(
-            "Code as string in case of type COMPONENT, " "WorkflowContent in case of type WORKFLOW."
+            "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
         ),
     )
 

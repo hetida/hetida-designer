@@ -63,6 +63,17 @@ export class TransformationService {
       );
   }
 
+  upgradeWorkflowOperators(transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
+      .upgradeWorkflowOperators(transformation)
+      .pipe(
+        tap(updatedTransformation => {
+          this.store.dispatch(updateTransformation(updatedTransformation));
+        })
+      );
+  }
+
   updateExpandComponent(
     transformation: Transformation
   ): Observable<Transformation> {
