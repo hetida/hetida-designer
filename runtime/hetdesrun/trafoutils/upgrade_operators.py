@@ -13,6 +13,7 @@ from hetdesrun.persistence.models.io import (
     WorkflowContentDynamicInput,
     WorkflowContentOutput,
 )
+from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -25,7 +26,7 @@ def get_connector_end_y_positioning_by_operator_input_name(
     operator_box_header_height: float = 50.0,
     operator_content_vertical_free_space_base_height: float = 10.0,
     operator_input_rect_height: float = 20.0,
-) -> dict[str, (float, OperatorInput)]:
+) -> dict[str, tuple[float, OperatorInput]]:
     """Compute correct y positions for operator inputs by input name
 
     Returns:
@@ -47,7 +48,7 @@ def get_connector_end_y_positioning_by_operator_input_name(
     all_shown_inputs_by_name = {
         op_inp.name: op_inp
         for op_inp in operator.inputs
-        if op_inp.type is InputType.REQUIRED or op_inp.exposed
+        if (op_inp.type is InputType.REQUIRED or op_inp.exposed) and op_inp.name is not None
     }
 
     return {
@@ -71,7 +72,7 @@ def get_connector_start_y_positioning_by_operator_output_name(
     operator_box_header_height: float = 50.0,
     operator_content_vertical_free_space_base_height: float = 10.0,
     operator_output_rect_height: float = 20.0,
-) -> dict[str, (float, OperatorOutput)]:
+) -> dict[str, tuple[float, OperatorOutput]]:
     """Compute correct y positions for operator outputs by output name
 
     Returns:
@@ -90,7 +91,9 @@ def get_connector_start_y_positioning_by_operator_output_name(
     # * the flowchart component / hd frontend draws operator outputs using the given order
     #   in the received json!
 
-    all_shown_outputs_by_name = {op_outp.name: op_outp for op_outp in operator.outputs}
+    all_shown_outputs_by_name = {
+        op_outp.name: op_outp for op_outp in operator.outputs if op_outp.name is not None
+    }
 
     return {
         op_outp_name: (
@@ -154,9 +157,12 @@ def fix_path_end_y_positions(workflow: TransformationRevision, operator: Operato
 
     y_positions_by_inp_name = get_connector_end_y_positioning_by_operator_input_name(operator)
 
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     links_into_operator_by_input_name = {
         lnk.end.connector.name: lnk
-        for lnk in workflow.content.links
+        for lnk in workflow_content.links
         if lnk.end.operator == operator.id
     }
 
@@ -187,11 +193,14 @@ def fix_path_start_y_positions(workflow: TransformationRevision, operator: Opera
 
     y_positions_by_outp_name = get_connector_start_y_positioning_by_operator_output_name(operator)
 
-    links_outof_operator_by_output_name = {}
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
+    links_outof_operator_by_output_name: dict[str, list[Link]] = {}
 
     # Note: An operator output can have multiple links starting there.
-    for lnk in workflow.content.links:
-        if lnk.start.operator == operator.id:
+    for lnk in workflow_content.links:
+        if lnk.start.operator == operator.id and lnk.start.connector.name is not None:
             if lnk.start.connector.name not in links_outof_operator_by_output_name:
                 links_outof_operator_by_output_name[lnk.start.connector.name] = []
             links_outof_operator_by_output_name[lnk.start.connector.name].append(lnk)
@@ -214,9 +223,12 @@ def fix_links_into_operator(workflow: TransformationRevision, operator: Operator
     """In-place fix links in workflow after operator inputs changed"""
     operator_inputs_by_name = {op_inp.name: op_inp for op_inp in operator.inputs}
 
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     all_links_to_keep = [
         lnk
-        for lnk in workflow.content.links
+        for lnk in workflow_content.links
         if (
             lnk.end.connector.id != operator.id  # keep all links into other operators
             or (
@@ -228,12 +240,12 @@ def fix_links_into_operator(workflow: TransformationRevision, operator: Operator
         )
     ]
 
-    workflow.content = WorkflowContent(
-        operators=workflow.content.operators,
+    workflow.content = WorkflowContent.construct(
+        operators=workflow_content.operators,
         links=all_links_to_keep,  # change only this
-        constants=workflow.content.constants,
-        inputs=workflow.content.inputs,
-        outputs=workflow.content.outputs,
+        constants=workflow_content.constants,
+        inputs=workflow_content.inputs,
+        outputs=workflow_content.outputs,
     )
 
 
@@ -241,9 +253,12 @@ def fix_links_outof_operator(workflow: TransformationRevision, operator: Operato
     """In-place fix links in workflow after operator outputs changed"""
     operator_outputs_by_name = {op_outp.name: op_outp for op_outp in operator.outputs}
 
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     all_links_to_keep = [
         lnk
-        for lnk in workflow.content.links
+        for lnk in workflow_content.links
         if (
             lnk.start.connector.id != operator.id  # keep all links outof other operators
             or (
@@ -255,12 +270,12 @@ def fix_links_outof_operator(workflow: TransformationRevision, operator: Operato
         )
     ]
 
-    workflow.content = WorkflowContent(
-        operators=workflow.content.operators,
+    workflow.content = WorkflowContent.construct(
+        operators=workflow_content.operators,
         links=all_links_to_keep,  # change only this
-        constants=workflow.content.constants,
-        inputs=workflow.content.inputs,
-        outputs=workflow.content.outputs,
+        constants=workflow_content.constants,
+        inputs=workflow_content.inputs,
+        outputs=workflow_content.outputs,
     )
 
 
@@ -269,9 +284,12 @@ def fix_constants(workflow: TransformationRevision, operator: Operator) -> None:
 
     operator_inputs_by_name = {op_inp.name: op_inp for op_inp in operator.inputs}
 
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     all_constants_to_keep = [
         cst
-        for cst in workflow.content.constants
+        for cst in workflow_content.constants
         if (
             cst.operator_id != operator.id  # keep all constants into other operators
             or (
@@ -281,17 +299,18 @@ def fix_constants(workflow: TransformationRevision, operator: Operator) -> None:
         )
     ]
 
-    workflow.content = WorkflowContent(
-        operators=workflow.content.operators,
-        links=workflow.content.links,
+    workflow.content = WorkflowContent.construct(
+        operators=workflow_content.operators,
+        links=workflow_content.links,
         constants=all_constants_to_keep,  # change only this
-        inputs=workflow.content.inputs,
-        outputs=workflow.content.outputs,
+        inputs=workflow_content.inputs,
+        outputs=workflow_content.outputs,
     )
 
 
 def fix_test_wiring_input_wirings(
-    workflow: TransformationRevision, original_workflow_io_interface_inputs_by_name
+    workflow: TransformationRevision,
+    original_workflow_io_interface_inputs_by_name: dict[str, TransformationInput],
 ) -> None:
     """In-place fix test wiring after io_interface.inputs changed
 
@@ -312,7 +331,8 @@ def fix_test_wiring_input_wirings(
 
 
 def fix_test_wiring_output_wirings(
-    workflow: TransformationRevision, original_workflow_io_interface_outputs_by_name
+    workflow: TransformationRevision,
+    original_workflow_io_interface_outputs_by_name: dict[str, TransformationOutput],
 ) -> None:
     """In-place fix test wiring after io_interface.outputs changed
 
@@ -335,15 +355,16 @@ def fix_test_wiring_output_wirings(
 
 
 def get_operators_to_check_for_upgrades(
-    trafo: TransformationRevision, only_check_deprecated: bool = True
+    workflow: TransformationRevision, only_check_deprecated: bool = True
 ) -> dict[UUID, Operator]:
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     return {
         op.id: op
-        for op in trafo.content.operators
+        for op in workflow_content.operators
         if (not only_check_deprecated or op.state is State.DISABLED)
     }
-
-    # TODO: can op.state change? is it guaranteed, that this equals the trafo id state?
 
 
 def get_newest_released_revision(
@@ -408,11 +429,11 @@ def upgrade_workflow_operator_in_place(
     """
 
     original_workflow_io_interface_inputs_by_name = {
-        inp.name: inp for inp in workflow.io_interface.inputs
+        inp.name: inp for inp in workflow.io_interface.inputs if inp.name is not None
     }  # we need to keep track of this since wirings don't know their data_type!
 
     original_workflow_io_interface_outputs_by_name = {
-        outp.name: outp for outp in workflow.io_interface.outputs
+        outp.name: outp for outp in workflow.io_interface.outputs if outp.name is not None
     }  # we need to keep track of this since wirings don't know their data_type!
 
     # Change relevant operator attributes in-place
@@ -493,27 +514,21 @@ def upgrade_workflow_operator_in_place(
             )
 
             if trafo_inp.type is not InputType.OPTIONAL:
-                added_workflow_content_inputs.append(
-                    WorkflowContentDynamicInput(
-                        type=trafo_inp.type,
-                        data_type=trafo_inp.data_type,
-                        value=trafo_inp.value,
-                        operator_id=operator_id,
-                        connector_id=new_inp_id,
-                        operator_name=operator.name,
-                        connector_name=trafo_inp.name,
-                    )
-                )
+                new_wf_content_input_id = uuid4()
 
-                added_workflow_inputs.append(
-                    TransformationInput(
-                        type=trafo_inp.type,
-                        value=trafo_inp.value,
-                        id=new_inp_id,
-                        name=trafo_inp.name,
-                        data_type=trafo_inp.data_type,
-                    )
+                new_wf_content_input = WorkflowContentDynamicInput(
+                    id=new_wf_content_input_id,
+                    type=trafo_inp.type,
+                    data_type=trafo_inp.data_type,
+                    value=trafo_inp.value,
+                    operator_id=operator_id,
+                    connector_id=new_inp_id,
+                    operator_name=operator.name,
+                    connector_name=trafo_inp.name,
                 )
+                added_workflow_content_inputs.append(new_wf_content_input)
+
+                added_workflow_inputs.append(new_wf_content_input.to_transformation_input())
 
     operator.inputs = order_operator_inputs(
         list(to_keep_operator_inputs_by_name.values()) + list(new_operator_inputs_by_name.values())
@@ -525,19 +540,22 @@ def upgrade_workflow_operator_in_place(
 
     # fix workflow.content.inputs
 
+    workflow_content = workflow.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
+
     new_workflow_content_inputs = [
         wf_content_input
-        for wf_content_input in workflow.content.inputs
+        for wf_content_input in workflow_content.inputs
         if (wf_content_input.operator_id != operator_id)
         or wf_content_input.connector_name in to_keep_operator_inputs_by_name
     ] + added_workflow_content_inputs  # those from new trafo inputs.
 
-    workflow.content = WorkflowContent(
-        operators=workflow.content.operators,
-        links=workflow.content.links,
-        constants=workflow.content.constants,
+    workflow.content = WorkflowContent.construct(
+        operators=workflow_content.operators,
+        links=workflow_content.links,
+        constants=workflow_content.constants,
         inputs=new_workflow_content_inputs,  # changed only this
-        outputs=workflow.content.outputs,
+        outputs=workflow_content.outputs,
     )
 
     # Fix io_interface.inputs
@@ -602,23 +620,18 @@ def upgrade_workflow_operator_in_place(
                 position=Position(x=0, y=0),
             )
 
-            added_workflow_content_outputs.append(
-                WorkflowContentOutput(
-                    data_type=trafo_outp.data_type,
-                    operator_id=operator_id,
-                    connector_id=new_outp_id,
-                    operator_name=operator.name,
-                    connector_name=trafo_outp.name,
-                )
+            new_wf_output_id = uuid4()
+            new_wf_content_output = WorkflowContentOutput(
+                id=new_wf_output_id,
+                data_type=trafo_outp.data_type,
+                operator_id=operator_id,
+                connector_id=new_outp_id,
+                operator_name=operator.name,
+                connector_name=trafo_outp.name,
             )
+            added_workflow_content_outputs.append(new_wf_content_output)
 
-            added_workflow_outputs.append(
-                TransformationOutput(
-                    id=new_outp_id,
-                    name=trafo_outp.name,
-                    data_type=trafo_outp.data_type,
-                )
-            )
+            added_workflow_outputs.append(new_wf_content_output.to_transformation_output())
 
     operator.outputs = list(to_keep_operator_outputs_by_name.values()) + list(
         new_operator_outputs_by_name.values()
@@ -635,7 +648,7 @@ def upgrade_workflow_operator_in_place(
         or wf_content_output.connector_name in to_keep_operator_outputs_by_name
     ] + added_workflow_content_outputs  # those from new trafo outputs.
 
-    workflow.content = WorkflowContent(
+    workflow.content = WorkflowContent.construct(
         operators=workflow.content.operators,
         links=workflow.content.links,
         constants=workflow.content.constants,
@@ -684,8 +697,8 @@ def upgrade_operators_with_providided_revisions(
 
         # TODO: should we check if it is actually really newer? Could be equal released_date.
         # Should equality lead to a no-op?
-
-        upgrade_workflow_operator_in_place(new_workflow, op_id, operator, possibly_newer_trafo)
+        if possibly_newer_trafo is not None:
+            upgrade_workflow_operator_in_place(new_workflow, op_id, operator, possibly_newer_trafo)
 
     return new_workflow
 
@@ -713,7 +726,7 @@ def upgrade_operators_in_workflow(
     # map revision_group_id to trafo_rev ids that are requested to be found a newer rev
     trafo_revision_group_ids_to_check_for_newer_released_revs: dict[UUID, list[UUID]] = {}
 
-    for op_id, op in operators_to_check.items():
+    for op in operators_to_check.values():
         if (
             trafo_revision_group_ids_to_check_for_newer_released_revs.get(
                 op.transformation_id, None
@@ -726,12 +739,13 @@ def upgrade_operators_in_workflow(
             op.transformation_id
         )
 
-    trafo_revision_group_ids_to_check_for_newer_released_revs = list(
+    trafo_revision_group_ids_to_check_for_newer_released_revs_list = list(
         trafo_revision_group_ids_to_check_for_newer_released_revs.keys()
     )
 
     newer_by_trafo_group_id = get_newest_released_trafo_rev(
-        trafo_revision_group_ids_to_check_for_newer_released_revs, use_release_date=use_release_date
+        trafo_revision_group_ids_to_check_for_newer_released_revs_list,
+        use_release_date=use_release_date,
     )
 
     updated_trafo = upgrade_operators_with_providided_revisions(

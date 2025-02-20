@@ -209,7 +209,6 @@ def test_operator_output_from_transformation_output() -> None:
         pos_y=42,
     )
 
-    assert str(operator_output_from_transformation_output.id) == trafo_output["id"]
     assert operator_output_from_transformation_output.name == trafo_output["name"]
     assert operator_output_from_transformation_output.data_type == trafo_output["data_type"]
     assert operator_output_from_transformation_output.position.x == 23
@@ -263,7 +262,6 @@ def test_operator_input_from_transformation_input() -> None:
     operator_input_connector_from_required_input = OperatorInput.from_transformation_input(
         input=TransformationInput(**required_trafo_input), pos_x=17, pos_y=19
     )
-    assert str(operator_input_connector_from_required_input.id) == required_trafo_input["id"]
     assert operator_input_connector_from_required_input.name == required_trafo_input["name"]
     assert (
         operator_input_connector_from_required_input.data_type == required_trafo_input["data_type"]
@@ -276,7 +274,6 @@ def test_operator_input_from_transformation_input() -> None:
     operator_input_connector_from_optional_input = OperatorInput.from_transformation_input(
         input=TransformationInput(**optional_trafo_input), pos_x=19, pos_y=23
     )
-    assert str(operator_input_connector_from_optional_input.id) == optional_trafo_input["id"]
     assert operator_input_connector_from_optional_input.name == optional_trafo_input["name"]
     assert (
         operator_input_connector_from_optional_input.data_type == optional_trafo_input["data_type"]

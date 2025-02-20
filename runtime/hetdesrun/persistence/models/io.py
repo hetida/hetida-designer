@@ -123,7 +123,7 @@ class OperatorOutput(Connector):
         for execution.
         """
         return OperatorOutput(
-            id=transformation_output.id,
+            id=uuid4(),
             name=transformation_output.name,
             data_type=transformation_output.data_type,
             position=Position(x=pos_x, y=pos_y),
@@ -139,7 +139,7 @@ class OperatorInput(InputTypeMixIn, Connector):
             type = values["type"]  # noqa: A001
         except KeyError as error:
             raise ValueError(
-                "Cannot set 'exposed' to true for required inputs " "if the input type is missing!"
+                "Cannot set 'exposed' to true for required inputs if the input type is missing!"
             ) from error
         if type == InputType.REQUIRED:
             return True
@@ -159,7 +159,7 @@ class OperatorInput(InputTypeMixIn, Connector):
         for execution.
         """
         return OperatorInput(
-            id=input.id,
+            id=uuid4(),  # input.id,
             name=input.name,
             data_type=input.data_type,
             type=input.type,

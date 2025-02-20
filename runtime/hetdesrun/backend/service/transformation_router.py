@@ -63,6 +63,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.runtime.service import unittest_service
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
@@ -677,7 +678,9 @@ async def update_transformation_revisions(
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
-    summary="Upgrade an operator in a DRAFT workflow transformation revision to a provided revision.",
+    summary=(
+        "Upgrade an operator in a DRAFT workflow transformation revision to a provided revision."
+    ),
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_201_CREATED: {
@@ -735,7 +738,10 @@ async def upgrade_workflow_operator_with_new_rev(
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
-    ops = [op for op in updated_transformation_revision.content.operators if op.id == operator_id]
+    workflow_content = updated_transformation_revision.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 # for mypy
+
+    ops = [op for op in workflow_content.operators if op.id == operator_id]
     if len(ops) != 1:
         msg = (
             f"Got {len(ops)} operators in workflow {id} with the provided id {operator_id}."
