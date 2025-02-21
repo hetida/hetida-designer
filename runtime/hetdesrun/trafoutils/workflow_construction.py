@@ -5,7 +5,6 @@ Provides a WorkflowConstruction ContextManager that allows to define workflows a
 
 import datetime
 import json
-import logging
 from functools import cached_property
 from types import TracebackType
 from typing import Any, Literal
@@ -35,10 +34,10 @@ from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 from hetdesrun.trafoutils.upgrade_operators import order_operator_inputs
 from hetdesrun.utils import State, Type
 
-logger = logging.getLogger(__name__)
-
 
 class OperatorInputInfo:
+    """Infos about and references around an operator input during workflow construction"""
+
     def __init__(self, operator: Operator, operator_input: OperatorInput):
         self.operator = operator
         self.operator_input = operator_input
@@ -49,7 +48,7 @@ class OperatorInputInfo:
 
         self.blocked: bool = False  # whether something (constant, trafo input, link goes into it)
 
-    @property
+    @property  # cannot be cached since it changes when other op. inputs get exposed/unexposed.
     def position_index(self) -> int:
         """Get the input's position index in the exposed operator inputs
 
@@ -66,6 +65,8 @@ class OperatorInputInfo:
 
 
 class OperatorOutputInfo:
+    """Infos about and references around an operator output during workflow construction"""
+
     def __init__(self, operator: Operator, operator_output: OperatorOutput):
         self.operator = operator
         self.operator_output = operator_output
@@ -93,19 +94,29 @@ class OperatorOutputInfo:
 
 
 class OperatorInputInfos:
+    """Provides easier accessor as part of OperatorInfo.i attribute"""
+
     def __init__(self, operator_input_infos_by_name: dict[str, OperatorInputInfo]):
         self.operator_input_infos_by_name = operator_input_infos_by_name
 
-    def __getattr__(self, attr: str) -> OperatorInputInfo:
-        return self.operator_input_infos_by_name[attr]
+    def __getattr__(self, op_inp_name: str) -> OperatorInputInfo:
+        return self.operator_input_infos_by_name[op_inp_name]
+
+    def __getitem__(self, op_inp_name: str) -> OperatorInputInfo:
+        return self.operator_input_infos_by_name[op_inp_name]
 
 
 class OperatorOutputInfos:
+    """Provides easier accessor as part of OperatorInfo.o attribute"""
+
     def __init__(self, operator_output_infos_by_name: dict[str, OperatorOutputInfo]):
         self.operator_output_infos_by_name = operator_output_infos_by_name
 
-    def __getattr__(self, attr: str) -> OperatorOutputInfo:
-        return self.operator_output_infos_by_name[attr]
+    def __getattr__(self, op_outp_name: str) -> OperatorOutputInfo:
+        return self.operator_output_infos_by_name[op_outp_name]
+
+    def __getitem__(self, op_outp_name: str) -> OperatorOutputInfo:
+        return self.operator_output_infos_by_name[op_outp_name]
 
 
 class OperatorInfo:
@@ -125,14 +136,18 @@ class OperatorInfo:
         self.o = OperatorOutputInfos(self.operator_output_infos_by_name)
 
     def fix_input_ordering(self) -> None:
-        """Fixes the ordering of the operators inputs"""
+        """Fixes the ordering of the operators inputs
+
+        This mutates the underlying operator
+        """
         self.operator.inputs = order_operator_inputs(self.operator.inputs)
 
 
 class LinkInfo:
     """Links between operator inputs/outputs
 
-    Not between Trafo Inputs and operator inputs or operator outputs and Trafo Outputs!
+    Note: This does not handle/describe links between trafo inputs and operator inputs
+    or operator outputs and trafo outputs.
     """
 
     def __init__(self, lnk: Link, op_outp_info: OperatorOutputInfo, op_inp_info: OperatorInputInfo):
@@ -142,7 +157,11 @@ class LinkInfo:
 
 
 class WorkflowConstructor:
-    c: TrafoCollection | None
+    """Workflow construction context manager
+
+
+    See e.g. unit tests for usage examples.
+    """
 
     def __init__(
         self,
@@ -203,7 +222,7 @@ class WorkflowConstructor:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self._finalize()
+        self.finalize()
 
     def op(self, trafo: TransformationRevision, name: str | None = None) -> OperatorInfo:
         new_operator_info = OperatorInfo(trafo.to_operator(name=name))
@@ -465,7 +484,7 @@ class WorkflowConstructor:
 
         o_inp_info.blocked = True
 
-    def _finalize(self) -> TransformationRevision:
+    def finalize(self) -> TransformationRevision:
         """Finalize and create TransformationRevision object"""
 
         for op_info in self._operator_infos_by_id.values():
@@ -490,6 +509,8 @@ class WorkflowConstructor:
                 ),
             )
 
+        # Note: We heavily rely on validations of TransformationRevision which
+        # adds missing WorkflowContent.inputs, WorkflowContent.outputs, WorkflowContent.links
         self.result = TransformationRevision(
             id=self.id,
             revision_group_id=self.revision_group_id,
@@ -504,15 +525,15 @@ class WorkflowConstructor:
             documentation=self.documentation,
             content=WorkflowContent(
                 operators=[op_info.operator for op_info in self._operator_infos_by_id.values()],
-                links=[link_info.link for link_info in self.links] + self.io_links,
+                links=(  # will be auto-corrected
+                    [link_info.link for link_info in self.links] + self.io_links
+                ),
                 constants=self.constants,
-                inputs=self.content_inputs,  # will be auto-corrected?
-                outputs=self.content_outputs,  # will be auto-corrected?
+                inputs=self.content_inputs,  # will be auto-corrected
+                outputs=self.content_outputs,  # will be auto-corrected
             ),
             io_interface=IOInterface(inputs=self.trafo_inputs, outputs=self.trafo_outputs),
-            test_wiring=WorkflowWiring(
-                # TODO
-            ),
+            test_wiring=WorkflowWiring(),
             release_wiring=None,
         )
 

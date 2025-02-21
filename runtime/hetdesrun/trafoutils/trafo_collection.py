@@ -18,6 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 class TrafoCollection:
+    """Context Manager helping collecting transformation revisions
+
+    This can be used for
+    * workflow construction: collect necessary operator trafos
+    * unit tests: flexibly collect trafos from different sort of files, db etc. and store
+      them in db.
+    """
+
     def __init__(self, save_to_db: bool = False, store_into_directory: str | None = None):
         self.save_to_db = save_to_db
         self.store_into_directory = store_into_directory
@@ -65,7 +73,7 @@ class TrafoCollection:
         )
 
     def _save_to_db(self) -> None:
-        # TODO: expose FilterParams or MultipleTrafosUpdateConfig?
+        # TODO: expose more options from FilterParams or MultipleTrafosUpdateConfig?
         importable = Importable(
             transformation_revisions=self.registered_trafos,
             import_config=ImportSourceConfig(
