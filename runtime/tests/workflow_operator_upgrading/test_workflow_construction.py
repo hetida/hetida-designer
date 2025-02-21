@@ -1,11 +1,17 @@
+import json
 import os
 
+import pytest
+
+from hetdesrun.models.execution import ExecByIdInput
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 
 
-def test_workflow_construction():
-    with TrafoCollection() as tc:
+@pytest.mark.asyncio
+async def test_workflow_construction(async_test_client, mocked_clean_test_db_session):
+    with TrafoCollection(save_to_db=True) as tc:
         name_series_component = tc.add_from_json_file(
             os.path.join(
                 "tests",
@@ -28,3 +34,26 @@ def test_workflow_construction():
 
     assert wf.result
     print(wf.result.json())
+
+    # okay, check that it actually is runnable:
+
+    exec_input = ExecByIdInput(
+        id=wf.result.id,
+        wiring=WorkflowWiring(
+            input_wirings=[
+                {
+                    "workflow_input_name": "second_str_inp",
+                    "adapter_id": "direct_provisioning",
+                    "filters": {"value": "the real name"},
+                }
+            ]
+        ),
+    )
+
+    async with async_test_client as ac:
+        resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+
+    assert resp.status_code == 200
+
+    series_output_data_dict = resp.json()["output_results_by_output_name"]["second_op_output"]
+    assert series_output_data_dict["name"] == "the real name"

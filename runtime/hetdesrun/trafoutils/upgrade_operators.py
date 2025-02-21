@@ -1,5 +1,9 @@
 import datetime
+from functools import cmp_to_key
+from typing import Any
 from uuid import UUID, uuid4
+
+import semver
 
 from hdutils import DataType
 from hetdesrun.persistence.dbservice.revision import get_multiple_transformation_revisions
@@ -130,14 +134,6 @@ def order_operator_inputs(op_inputs: list[OperatorInput]) -> list[OperatorInput]
             )
 
     return required_operator_inputs + optional_operator_inputs
-
-
-def remove_invalid_input_links(workflow: TransformationRevision, operator: Operator) -> None:
-    """Remove invalid links in the workflow to the operator in-place
-
-    Mutates the workflow! Removes all invalid links and connector references.
-    """
-    raise NotImplementedError
 
 
 def fix_path_end_y_positions(workflow: TransformationRevision, operator: Operator) -> None:
@@ -367,12 +363,60 @@ def get_operators_to_check_for_upgrades(
     }
 
 
+def parse_semver_or_None(version_tag: str) -> semver.Version | None:
+    """Parses a version tag defaulting to None if it is not semver parsable"""
+    try:
+        ver = semver.Version.parse(version_tag)
+    except ValueError:
+        # not parsable
+        return None
+    return ver
+
+
+def safe_compare(
+    item1: tuple[Any, semver.Version | None], item2: tuple[Any, semver.Version | None]
+):
+    val1 = item1[1]
+    val2 = item2[1]
+
+    # Handle None cases
+    if val1 is None and val2 is None:
+        return 0
+    if val1 is None:
+        return -1  # None comes first
+    if val2 is None:
+        return 1
+
+    # handle non-None case by defering to semvers comparison operators
+    return -1 if val1 < val2 else (1 if val2 < val1 else 0)
+
+
+def get_newest_by_semver(trafos: list[TransformationRevision]) -> TransformationRevision or None:
+    if len(trafos) == 0:
+        return None
+
+    trafos_by_id = {trafo.id: trafo for trafo in trafos}
+    trafo_versions_by_id = {trafo.id: parse_semver_or_None(trafo.version_tag) for trafo in trafos}
+
+    sorted_items = sorted(trafo_versions_by_id.items(), key=cmp_to_key(safe_compare))
+    winner_id, winner_version = sorted_items[-1]
+
+    if winner_version is None:
+        return None
+
+    return trafos_by_id[winner_id]
+
+
 def get_newest_released_revision(
     trafos: list[TransformationRevision], use_release_date: bool = False
 ) -> TransformationRevision | None:
     """Among the given trafos, find the newest
 
     Returns None if a newest cannot be found for whatever reason.
+
+    Defaults to using semver versioning, returning None if nothing is parsable as semver.
+
+    Uses released_date timestampt instead if use_release_date is True.
     """
 
     if len(trafos) == 0:
@@ -381,8 +425,7 @@ def get_newest_released_revision(
     if use_release_date:
         return sorted(trafos, key=lambda x: x.released_timestamp or datetime.datetime.min)[-1]
 
-    # TODO: semver
-    raise NotImplementedError
+    return get_newest_by_semver(trafos)
 
 
 def get_newest_released_trafo_rev(
