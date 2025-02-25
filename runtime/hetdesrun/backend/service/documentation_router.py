@@ -83,9 +83,7 @@ async def update_documentation(
     logger.info("update documentation %s", id)
 
     if id != documentation_dto.id:
-        msg = (
-            f"The id {id} does not match " f"the id of the documentation DTO {documentation_dto.id}"
-        )
+        msg = f"The id {id} does not match the id of the documentation DTO {documentation_dto.id}"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 

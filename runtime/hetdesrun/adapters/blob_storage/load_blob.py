@@ -81,7 +81,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
-            f"The bucket '{bucket.name}' contains no object " f"with the key '{object_key.string}'!"
+            f"The bucket '{bucket.name}' contains no object with the key '{object_key.string}'!"
         ) from error
 
     if object_key.file_extension == FileExtension.H5:

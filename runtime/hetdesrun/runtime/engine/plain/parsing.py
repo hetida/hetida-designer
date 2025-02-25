@@ -360,8 +360,7 @@ def recursively_parse_workflow_node(
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(
-            "Some default values could not be parsed into the "
-            "respective workflow input datatypes."
+            "Some default values could not be parsed into the respective workflow input datatypes."
         ).set_context(workflow.context) from error
 
     # provide constant data
@@ -394,8 +393,7 @@ def recursively_parse_workflow_node(
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(
-            "Some constant values could not be parsed into the "
-            "respective workflow input datatypes."
+            "Some constant values could not be parsed into the respective workflow input datatypes."
         ).set_context(workflow.context) from error
 
     return workflow

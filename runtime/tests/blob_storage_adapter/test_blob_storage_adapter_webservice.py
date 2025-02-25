@@ -51,7 +51,7 @@ async def walk_thing_nodes(
     for src in response_obj["sources"]:
         metadata = (
             await open_async_test_client_with_blob_storage_adapter.get(
-                f'/adapters/blob/sources/{src["id"]}/metadata/'
+                f"/adapters/blob/sources/{src['id']}/metadata/"
             )
         ).json()
         for metadatum in metadata:
@@ -60,7 +60,7 @@ async def walk_thing_nodes(
     for snk in response_obj["sinks"]:
         metadata = (
             await open_async_test_client_with_blob_storage_adapter.get(
-                f'/adapters/blob/sinks/{snk["id"]}/metadata/'
+                f"/adapters/blob/sinks/{snk['id']}/metadata/"
             )
         ).json()
         for metadatum in metadata:
@@ -134,17 +134,17 @@ async def test_resources_offered_from_blob_storage_webservice(
         assert len(tn_attached_metadata_dict) == 0
 
         for src in all_srcs:
-            response_obj = (await client.get(f'/adapters/blob/sources/{src["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/blob/sources/{src['id']}")).json()
             for key in src:
                 assert response_obj[key] == src[key]
 
         for snk in all_snks:
-            response_obj = (await client.get(f'/adapters/blob/sinks/{snk["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/blob/sinks/{snk['id']}")).json()
             for key in snk:
                 assert response_obj[key] == snk[key]
 
         for tn in all_tns:
-            response_obj = (await client.get(f'/adapters/blob/thingNodes/{tn["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/blob/thingNodes/{tn['id']}")).json()
             for key in tn:
                 assert response_obj[key] == tn[key]
 

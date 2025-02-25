@@ -1,3 +1,4 @@
+# noqa: A005
 from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4

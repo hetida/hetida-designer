@@ -24,16 +24,16 @@ def test_fetch_single_source_from_db_by_id(mocked_clean_test_db_session):
     with mocked_clean_test_db_session() as session:
         # Fetch an existing StructureServiceSource ID from the database
         existing_source = session.query(StructureServiceSourceDBModel).first()
-        assert (
-            existing_source is not None
-        ), "Expected at least one StructureServiceSource in the test database."
+        assert existing_source is not None, (
+            "Expected at least one StructureServiceSource in the test database."
+        )
         existing_source_id = existing_source.id
 
         # Test retrieving the StructureServiceSource by its ID
         fetched_source = fetch_single_source_from_db_by_id(existing_source_id)
-        assert (
-            fetched_source.id == existing_source_id
-        ), f"Expected StructureServiceSource ID {existing_source_id}."
+        assert fetched_source.id == existing_source_id, (
+            f"Expected StructureServiceSource ID {existing_source_id}."
+        )
 
         # Test that a non-existent StructureServiceSource raises a DBNotFoundError
         non_existent_id = uuid.uuid4()
@@ -52,7 +52,7 @@ def test_fetch_all_sources_from_db(mocked_clean_test_db_session):
 
     # Verify that the number of sources fetched matches the expected number
     assert len(fetched_sources) == len(expected_sources), (
-        f"Expected {len(expected_sources)} sources, " f"but fetched {len(fetched_sources)} sources."
+        f"Expected {len(expected_sources)} sources, but fetched {len(fetched_sources)} sources."
     )
 
     # Verify that all sources fetched match the expected sources
@@ -61,9 +61,9 @@ def test_fetch_all_sources_from_db(mocked_clean_test_db_session):
             (source for source in fetched_sources if source.id == expected_source.id),
             None,
         )
-        assert (
-            matched_source is not None
-        ), f"StructureServiceSource with ID {expected_source.id} was expected but not found."
+        assert matched_source is not None, (
+            f"StructureServiceSource with ID {expected_source.id} was expected but not found."
+        )
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -78,8 +78,7 @@ def test_fetch_collection_of_sources_from_db_by_id(mocked_clean_test_db_session)
 
     # Verify that the number of sources fetched matches the expected number
     assert len(fetched_sources) == len(expected_source_ids), (
-        f"Expected {len(expected_source_ids)} sources, "
-        f"but fetched {len(fetched_sources)} sources."
+        f"Expected {len(expected_source_ids)} sources, but fetched {len(fetched_sources)} sources."
     )
 
     # Verify that each expected source is in the fetched sources dictionary
@@ -91,12 +90,12 @@ def test_fetch_collection_of_sources_from_db_by_id(mocked_clean_test_db_session)
 
         # Verify that the fetched source matches the expected source
         fetched_source = fetched_sources[expected_source.id]
-        assert (
-            fetched_source.external_id == expected_source.external_id
-        ), f"StructureServiceSource with ID {expected_source.id} has mismatched external_id."
-        assert (
-            fetched_source.name == expected_source.name
-        ), f"StructureServiceSource with ID {expected_source.id} has mismatched name."
+        assert fetched_source.external_id == expected_source.external_id, (
+            f"StructureServiceSource with ID {expected_source.id} has mismatched external_id."
+        )
+        assert fetched_source.name == expected_source.name, (
+            f"StructureServiceSource with ID {expected_source.id} has mismatched name."
+        )
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -110,15 +109,15 @@ def test_fetch_single_sink_from_db_by_id(mocked_clean_test_db_session):
     fetched_sink = fetch_single_sink_from_db_by_id(expected_sink.id)
 
     # Verify that the fetched sink matches the expected sink
-    assert (
-        fetched_sink.id == expected_sink.id
-    ), f"Expected sink ID {expected_sink.id}, but got {fetched_sink.id}."
-    assert (
-        fetched_sink.external_id == expected_sink.external_id
-    ), f"Expected external_id '{expected_sink.external_id}', but got '{fetched_sink.external_id}'."
-    assert (
-        fetched_sink.name == expected_sink.name
-    ), f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+    assert fetched_sink.id == expected_sink.id, (
+        f"Expected sink ID {expected_sink.id}, but got {fetched_sink.id}."
+    )
+    assert fetched_sink.external_id == expected_sink.external_id, (
+        f"Expected external_id '{expected_sink.external_id}', but got '{fetched_sink.external_id}'."
+    )
+    assert fetched_sink.name == expected_sink.name, (
+        f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+    )
 
     # Test that fetching a non-existent sink raises DBNotFoundError
     non_existent_sink_id = uuid.UUID("00000000-0000-0000-0000-000000000000")
@@ -139,9 +138,9 @@ def test_fetch_all_sinks_from_db(mocked_clean_test_db_session):
     fetched_sinks = fetch_all_sinks_from_db()
 
     # Verify that the number of fetched sinks matches the expected number
-    assert len(fetched_sinks) == len(
-        expected_sinks
-    ), f"Expected {len(expected_sinks)} sinks, but got {len(fetched_sinks)}."
+    assert len(fetched_sinks) == len(expected_sinks), (
+        f"Expected {len(expected_sinks)} sinks, but got {len(fetched_sinks)}."
+    )
 
     # Verify that each fetched sink matches the expected sinks
     for expected_sink in expected_sinks:
@@ -151,9 +150,9 @@ def test_fetch_all_sinks_from_db(mocked_clean_test_db_session):
             f"Expected external_id '{expected_sink.external_id}',"
             f" but got '{found_sink.external_id}'."
         )
-        assert (
-            found_sink.name == expected_sink.name
-        ), f"Expected name '{expected_sink.name}', but got '{found_sink.name}'."
+        assert found_sink.name == expected_sink.name, (
+            f"Expected name '{expected_sink.name}', but got '{found_sink.name}'."
+        )
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -168,9 +167,9 @@ def test_fetch_collection_of_sinks_from_db_by_id(mocked_clean_test_db_session):
     fetched_sinks = fetch_collection_of_sinks_from_db_by_id(sink_ids)
 
     # Verify that the number of fetched sinks matches the expected number
-    assert len(fetched_sinks) == len(
-        sink_ids
-    ), f"Expected {len(sink_ids)} sinks, but got {len(fetched_sinks)}."
+    assert len(fetched_sinks) == len(sink_ids), (
+        f"Expected {len(sink_ids)} sinks, but got {len(fetched_sinks)}."
+    )
 
     # Verify that each fetched sink matches the expected sinks
     for expected_sink in sinks_in_db:
@@ -180,9 +179,9 @@ def test_fetch_collection_of_sinks_from_db_by_id(mocked_clean_test_db_session):
             f"Expected external_id '{expected_sink.external_id}', "
             f"but got '{fetched_sink.external_id}'."
         )
-        assert (
-            fetched_sink.name == expected_sink.name
-        ), f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+        assert fetched_sink.name == expected_sink.name, (
+            f"Expected name '{expected_sink.name}', but got '{fetched_sink.name}'."
+        )
 
 
 @pytest.mark.usefixtures("_db_test_structure")

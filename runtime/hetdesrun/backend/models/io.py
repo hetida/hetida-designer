@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4  # noqa: A005
 
 from pydantic import BaseModel, Field, validator
 

@@ -259,9 +259,9 @@ def test_update_structure_two_root_nodes(mocked_clean_test_db_session):
 
     with mocked_clean_test_db_session() as session:
         updated_nodes = session.query(StructureServiceThingNodeDBModel).all()
-        assert len(updated_nodes) == len(
-            structure_with_two_root_nodes.thing_nodes
-        ), "Database update failed, node count does not match"
+        assert len(updated_nodes) == len(structure_with_two_root_nodes.thing_nodes), (
+            "Database update failed, node count does not match"
+        )
 
 
 def test_validate_source_sink_references(mocked_clean_test_db_session):

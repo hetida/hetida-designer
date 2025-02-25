@@ -311,10 +311,7 @@ async def obtain_or_refresh_token(
                     return await obtain_token_from_auth_provider(service_user_credentials)
                 except ServiceAuthenticationError as e2:
                     logger.error(
-                        (
-                            "After failed refresh also obtaining completely new"
-                            " tokens failed:\n%s."
-                        ),
+                        ("After failed refresh also obtaining completely new tokens failed:\n%s."),
                         str(e2),
                     )
                     raise e2

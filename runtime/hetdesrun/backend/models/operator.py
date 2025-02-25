@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID  # noqa: A005
 
 from pydantic import Field, root_validator
 

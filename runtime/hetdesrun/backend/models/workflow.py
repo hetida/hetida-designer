@@ -406,8 +406,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         if not (io.name is None or io.name == "") and io.constant:
             msg = (
-                f"If name is specified ({io.name}) "
-                f"constant must be false for input/output {io.id}"
+                f"If name is specified ({io.name}) constant must be false for input/output {io.id}"
             )
             raise ValueError(msg)
         if (io.name is None or io.name == "") and (

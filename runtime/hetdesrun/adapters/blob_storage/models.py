@@ -48,7 +48,7 @@ class IdString(ConstrainedStr):
     regex = re.compile(
         r"^[a-zA-Z0-9:+\-"
         rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
-        rf"(|({'|'.join(FILE_EXTENSION_SEPARATOR+ext.value for ext in FileExtension)}))$"
+        rf"(|({'|'.join(FILE_EXTENSION_SEPARATOR + ext.value for ext in FileExtension)}))$"
     )
 
 
@@ -128,7 +128,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string " "if the string is missing!"
+                "Cannot check if object key's time matches its string if the string is missing!"
             ) from error
 
         name_string = string.split(IDENTIFIER_SEPARATOR)[0]
@@ -142,7 +142,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string " "if the string is missing!"
+                "Cannot check if object key's time matches its string if the string is missing!"
             ) from error
 
         time_string = string.split(IDENTIFIER_SEPARATOR)[1]
@@ -166,7 +166,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string " "if the string is missing!"
+                "Cannot check if object key's time matches its string if the string is missing!"
             ) from error
 
         job_id_string = string.split(FILE_EXTENSION_SEPARATOR)[0].split(IDENTIFIER_SEPARATOR)[2]
@@ -182,7 +182,7 @@ class ObjectKey(BaseModel):
             string = values["string"]
         except KeyError as error:
             raise ValueError(
-                "Cannot check if object key's time matches its string " "if the string is missing!"
+                "Cannot check if object key's time matches its string if the string is missing!"
             ) from error
 
         file_extension_string = string.split(FILE_EXTENSION_SEPARATOR)[1]
@@ -527,7 +527,8 @@ class BlobStorageStructureSink(BaseModel):
 
         if not id.endswith(IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX):
             raise ValueError(
-                f"The sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+GENERIC_SINK_ID_SUFFIX}'!"
+                f"The sink id '{id}' must end with "
+                f"'{IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX}'!"
             )
         return id
 
