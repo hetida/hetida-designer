@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from hetdesrun.trafoutils.upgrade_operators import get_newest_released_revision
+from hetdesrun.trafoutils.versioning import get_newest_released_revision
 
 
 def test_get_newest():

@@ -1,12 +1,7 @@
-import datetime
-from functools import cmp_to_key
-from typing import Any
+import logging
 from uuid import UUID, uuid4
 
-import semver
-
 from hdutils import DataType
-from hetdesrun.persistence.dbservice.revision import get_multiple_transformation_revisions
 from hetdesrun.persistence.models.io import (
     InputType,
     OperatorInput,
@@ -21,8 +16,10 @@ from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.versioning import get_newest_released_trafo_rev
 from hetdesrun.utils import State, Type
+
+logger = logging.getLogger(__name__)
 
 
 def get_connector_end_y_positioning_by_operator_input_name(
@@ -216,7 +213,12 @@ def fix_path_start_y_positions(workflow: TransformationRevision, operator: Opera
 
 
 def fix_links_into_operator(workflow: TransformationRevision, operator: Operator) -> None:
-    """In-place fix links in workflow after operator inputs changed"""
+    """In-place fix links in workflow after operator inputs changed
+
+    Currently this means that only links are kept where all data_types
+    still fit strictly: This affects the case when something changes from/to DataType.Any.
+    The link is not edited to make it fit these generally allowed cases.
+    """
     operator_inputs_by_name = {op_inp.name: op_inp for op_inp in operator.inputs}
 
     workflow_content = workflow.content
@@ -229,9 +231,11 @@ def fix_links_into_operator(workflow: TransformationRevision, operator: Operator
             lnk.end.connector.id != operator.id  # keep all links into other operators
             or (
                 lnk.end.connector.name in operator_inputs_by_name
-                and lnk.start.connector.data_type is lnk.end.connector.data_type
-                and lnk.end.connector.data_type
-                is operator_inputs_by_name[lnk.end.connector.name].data_type
+                and (lnk.start.connector.data_type is lnk.end.connector.data_type)
+                and (
+                    lnk.end.connector.data_type
+                    is operator_inputs_by_name[lnk.end.connector.name].data_type
+                )
             )
         )
     ]
@@ -246,7 +250,12 @@ def fix_links_into_operator(workflow: TransformationRevision, operator: Operator
 
 
 def fix_links_outof_operator(workflow: TransformationRevision, operator: Operator) -> None:
-    """In-place fix links in workflow after operator outputs changed"""
+    """In-place fix links in workflow after operator outputs changed
+
+    Currently this means that only links are kept where all data_types
+    still fit strictly: This affects the case when something changes from/to DataType.Any.
+    The link is not edited to make it fit these generally allowed cases.
+    """
     operator_outputs_by_name = {op_outp.name: op_outp for op_outp in operator.outputs}
 
     workflow_content = workflow.content
@@ -355,7 +364,6 @@ def get_operators_to_check_for_upgrades(
 ) -> dict[UUID, Operator]:
     workflow_content = workflow.content
     assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 for mypy
-
     return {
         op.id: op
         for op in workflow_content.operators
@@ -363,98 +371,187 @@ def get_operators_to_check_for_upgrades(
     }
 
 
-def parse_semver_or_None(version_tag: str) -> semver.Version | None:
-    """Parses a version tag defaulting to None if it is not semver parsable"""
-    try:
-        ver = semver.Version.parse(version_tag)
-    except ValueError:
-        # not parsable
-        return None
-    return ver
+def handle_old_operator_inputs(
+    new_trafo_inputs_by_name: dict[str, TransformationInput], operator: Operator
+) -> tuple[dict[str, OperatorInput], dict[str, OperatorInput]]:
+    """Gathers what needs to be kept for existing operator inputs and what needs to be dropped"""
+
+    to_keep_operator_inputs = []
+    operator_inputs_to_remove_connections = {}
+
+    for op_inp in operator.inputs:
+        op_inp_name = op_inp.name
+        if op_inp_name is None:
+            continue
+        respective_trafo_inp = new_trafo_inputs_by_name.get(op_inp_name)  # default to None
+
+        if respective_trafo_inp is None:
+            # new trafo does not have an input of that name anymore!
+            # so we do not add it to the to_keep_operator_inputs
+            operator_inputs_to_remove_connections[op_inp_name] = op_inp
+            continue
+
+        if (
+            respective_trafo_inp.data_type is op_inp.data_type
+            or respective_trafo_inp.data_type is DataType.Any
+            # types of mapping into this input still fits
+        ):
+            # in every case make sure the new data_type is correct:
+            op_inp.data_type = respective_trafo_inp.data_type
+
+            if respective_trafo_inp.type is not op_inp.type:
+                # i.e. changes between REQUIRED / OPTIONAL
+                # This is a use case occuring often. links / connections should be
+                # preserved then as well if possible.
+
+                # So just update existing operator input and keep the updated operator:
+                op_inp.type = respective_trafo_inp.type
+                op_inp.exposed = True
+                op_inp.value = respective_trafo_inp.value
+
+            to_keep_operator_inputs.append(op_inp)
+
+        else:
+            operator_inputs_to_remove_connections[op_inp_name] = op_inp
+
+    to_keep_operator_inputs_by_name = {
+        op_inp.name: op_inp for op_inp in to_keep_operator_inputs if op_inp.name is not None
+    }
+    return to_keep_operator_inputs_by_name, operator_inputs_to_remove_connections
 
 
-def safe_compare(
-    item1: tuple[Any, semver.Version | None], item2: tuple[Any, semver.Version | None]
-):
-    val1 = item1[1]
-    val2 = item2[1]
+def handle_new_operator_inputs(
+    operator: Operator,
+    new_trafo: TransformationRevision,
+    to_keep_operator_inputs_by_name: dict[str, OperatorInput],
+) -> tuple[dict[str, OperatorInput], list[WorkflowContentDynamicInput], list[TransformationInput]]:
+    """Gathers changes implied by necessary new operator inputs"""
+    new_operator_inputs_by_name = {}
 
-    # Handle None cases
-    if val1 is None and val2 is None:
-        return 0
-    if val1 is None:
-        return -1  # None comes first
-    if val2 is None:
-        return 1
+    added_workflow_content_inputs: list[WorkflowContentDynamicInput] = []
+    added_workflow_inputs: list[TransformationInput] = []
 
-    # handle non-None case by defering to semvers comparison operators
-    return -1 if val1 < val2 else (1 if val2 < val1 else 0)
-
-
-def get_newest_by_semver(trafos: list[TransformationRevision]) -> TransformationRevision or None:
-    if len(trafos) == 0:
-        return None
-
-    trafos_by_id = {trafo.id: trafo for trafo in trafos}
-    trafo_versions_by_id = {trafo.id: parse_semver_or_None(trafo.version_tag) for trafo in trafos}
-
-    sorted_items = sorted(trafo_versions_by_id.items(), key=cmp_to_key(safe_compare))
-    winner_id, winner_version = sorted_items[-1]
-
-    if winner_version is None:
-        return None
-
-    return trafos_by_id[winner_id]
-
-
-def get_newest_released_revision(
-    trafos: list[TransformationRevision], use_release_date: bool = False
-) -> TransformationRevision | None:
-    """Among the given trafos, find the newest
-
-    Returns None if a newest cannot be found for whatever reason.
-
-    Defaults to using semver versioning, returning None if nothing is parsable as semver.
-
-    Uses released_date timestampt instead if use_release_date is True.
-    """
-
-    if len(trafos) == 0:
-        return None
-
-    if use_release_date:
-        return sorted(trafos, key=lambda x: x.released_timestamp or datetime.datetime.min)[-1]
-
-    return get_newest_by_semver(trafos)
-
-
-def get_newest_released_trafo_rev(
-    trafo_revision_group_ids: list[UUID], use_release_date: bool = False
-) -> dict[UUID, TransformationRevision | None]:
-    """Get possibly newest revision from db
-
-    If no newer, released (not DRAFT, not DISABLED) transformation is
-    found in the same transformation revision group, None is returned for
-    that trafo revision.
-
-    "Newer" can be chosen to be evaluated by using the release_timestamp. The
-    default uses semantic versioning.
-    """
-
-    newest_per_revision_group: dict[UUID, TransformationRevision | None] = {}
-    for rev_group_id in trafo_revision_group_ids:
-        released_trafos_in_revision_group = get_multiple_transformation_revisions(
-            FilterParams(
-                state=State.RELEASED,
-                revision_group_id=rev_group_id,
-                include_dependencies=False,
+    for trafo_inp in new_trafo.io_interface.inputs:
+        trafo_inp_name = trafo_inp.name
+        if trafo_inp_name is None:
+            continue
+        if not trafo_inp_name in to_keep_operator_inputs_by_name:
+            # add new operator input
+            new_inp_id = uuid4()
+            new_operator_inputs_by_name[trafo_inp_name] = OperatorInput(
+                # attributes from OperatorInput class:
+                exposed=not (trafo_inp.type is InputType.OPTIONAL),
+                # (new inputs are always not exposed if optional)
+                # from InputTypeMixin class:
+                type=trafo_inp.type,  # InputType (REQUIRED, OPTIONAL)
+                value=trafo_inp.value,  # possible default value if OPTIONAL, or None
+                # from IO class:
+                id=new_inp_id,
+                name=trafo_inp_name,
+                data_type=trafo_inp.data_type,
+                # from Connector class (only present in OperatorInput)
+                position=Position(x=0, y=0),
             )
-        )
-        newest_per_revision_group[rev_group_id] = get_newest_released_revision(
-            released_trafos_in_revision_group, use_release_date=use_release_date
-        )
 
-    return newest_per_revision_group
+            if trafo_inp.type is not InputType.OPTIONAL:
+                new_wf_content_input_id = uuid4()
+
+                new_wf_content_input = WorkflowContentDynamicInput(
+                    id=new_wf_content_input_id,
+                    type=trafo_inp.type,
+                    data_type=trafo_inp.data_type,
+                    value=trafo_inp.value,
+                    operator_id=operator.id,
+                    connector_id=new_inp_id,
+                    operator_name=operator.name,
+                    connector_name=trafo_inp_name,
+                )
+                added_workflow_content_inputs.append(new_wf_content_input)
+
+                added_workflow_inputs.append(new_wf_content_input.to_transformation_input())
+
+    return new_operator_inputs_by_name, added_workflow_content_inputs, added_workflow_inputs
+
+
+def handle_old_operator_outputs(
+    new_trafo_outputs_by_name: dict[str, TransformationOutput], operator: Operator
+) -> tuple[dict[str, OperatorOutput], dict[str, OperatorOutput]]:
+    """Gathers what needs to be kept for existing operator outputs and what needs to be dropped"""
+
+    to_keep_operator_outputs = []
+    operator_outputs_to_remove_connections = {}
+
+    for op_outp in operator.outputs:
+        op_outp_name = op_outp.name
+        if op_outp_name is None:
+            continue
+        respective_trafo_outp = new_trafo_outputs_by_name.get(op_outp_name)  # default to None
+
+        if respective_trafo_outp is None:
+            # new trafo does not have an input of that name anymore!
+            # so we do not add it to the to_keep_operator_inputs
+            operator_outputs_to_remove_connections[op_outp_name] = op_outp
+            continue
+
+        if (
+            respective_trafo_outp.data_type is op_outp.data_type
+            or respective_trafo_outp.data_type is DataType.Any
+            # types of mapping out of this output still fits
+        ):
+            # in every case make sure the new data_type is correct:
+            op_outp.data_type = respective_trafo_outp.data_type
+
+            to_keep_operator_outputs.append(op_outp)
+        else:
+            operator_outputs_to_remove_connections[op_outp_name] = op_outp
+
+    to_keep_operator_outputs_by_name = {
+        op_outp.name: op_outp for op_outp in to_keep_operator_outputs if op_outp.name is not None
+    }
+
+    return to_keep_operator_outputs_by_name, operator_outputs_to_remove_connections
+
+
+def handle_new_operator_outputs(
+    operator: Operator,
+    new_trafo: TransformationRevision,
+    to_keep_operator_outputs_by_name: dict[str, OperatorOutput],
+) -> tuple[dict[str, OperatorOutput], list[WorkflowContentOutput], list[TransformationOutput]]:
+    """Gathers changes implied by necessary new operator outputs"""
+
+    new_operator_outputs_by_name = {}
+
+    added_workflow_content_outputs: list[WorkflowContentOutput] = []
+    added_workflow_outputs: list[TransformationOutput] = []
+
+    for trafo_outp in new_trafo.io_interface.outputs:
+        trafo_outp_name = trafo_outp.name
+        if trafo_outp_name is None:
+            continue
+
+        if not trafo_outp_name in to_keep_operator_outputs_by_name:
+            # add new operator output
+            new_outp_id = uuid4()
+            new_operator_outputs_by_name[trafo_outp_name] = OperatorOutput(
+                id=new_outp_id,
+                name=trafo_outp_name,
+                data_type=trafo_outp.data_type,
+                position=Position(x=0, y=0),
+            )
+
+            new_wf_output_id = uuid4()
+            new_wf_content_output = WorkflowContentOutput(
+                id=new_wf_output_id,
+                data_type=trafo_outp.data_type,
+                operator_id=operator.id,
+                connector_id=new_outp_id,
+                operator_name=operator.name,
+                connector_name=trafo_outp_name,
+            )
+            added_workflow_content_outputs.append(new_wf_content_output)
+
+            added_workflow_outputs.append(new_wf_content_output.to_transformation_output())
+    return new_operator_outputs_by_name, added_workflow_content_outputs, added_workflow_outputs
 
 
 def upgrade_workflow_operator_in_place(
@@ -489,89 +586,20 @@ def upgrade_workflow_operator_in_place(
 
     # okay, so now the whole rest!
 
-    new_trafo_inputs_by_name = {inp.name: inp for inp in new_trafo.io_interface.inputs}
-    new_trafo_outputs_by_name = {outp.name: outp for outp in new_trafo.io_interface.outputs}
+    new_trafo_inputs_by_name = {
+        inp.name: inp for inp in new_trafo.io_interface.inputs if inp.name is not None
+    }
+    new_trafo_outputs_by_name = {
+        outp.name: outp for outp in new_trafo.io_interface.outputs if outp.name is not None
+    }
 
-    to_keep_operator_inputs = []
-    to_keep_operator_outputs = []
+    to_keep_operator_inputs_by_name, operator_inputs_to_remove_connections = (
+        handle_old_operator_inputs(new_trafo_inputs_by_name, operator)
+    )
 
-    operator_inputs_to_remove_connections = {}
-    operator_outputs_to_remove_connections = {}
-
-    for op_inp in operator.inputs:
-        respective_trafo_inp = new_trafo_inputs_by_name.get(op_inp.name, None)
-
-        if respective_trafo_inp is None:
-            # new trafo does not have an input of that name anymore!
-            # so we do not add it to the to_keep_operator_inputs
-            operator_inputs_to_remove_connections[op_inp.name] = op_inp
-            continue
-
-        if (
-            respective_trafo_inp.data_type is op_inp.data_type
-            or respective_trafo_inp.data_type is DataType.Any
-            # types of mapping into this input still fits
-        ):
-            # in every case make sure the new data_type is correct:
-            op_inp.data_type = respective_trafo_inp.data_type
-
-            if respective_trafo_inp.type is not op_inp.type:
-                # i.e. changes between REQUIRED / OPTIONAL
-                # This is a use case occuring often. links / connections should be
-                # preserved then as well if possible.
-
-                # So just update existing operator input and keep the updated operator:
-                op_inp.type = respective_trafo_inp.type
-                op_inp.exposed = True
-                op_inp.value = respective_trafo_inp.value
-
-            to_keep_operator_inputs.append(op_inp)
-
-        else:
-            operator_inputs_to_remove_connections[op_inp.name] = op_inp
-
-    to_keep_operator_inputs_by_name = {op_inp.name: op_inp for op_inp in to_keep_operator_inputs}
-
-    new_operator_inputs_by_name = {}
-
-    added_workflow_content_inputs: list[WorkflowContentDynamicInput] = []
-    added_workflow_inputs: list[TransformationInput] = []
-
-    for trafo_inp in new_trafo.io_interface.inputs:
-        if not trafo_inp.name in to_keep_operator_inputs_by_name:
-            # add new operator input
-            new_inp_id = uuid4()
-            new_operator_inputs_by_name[trafo_inp.name] = OperatorInput(
-                # attributes from OperatorInput class:
-                exposed=not (trafo_inp.type is InputType.OPTIONAL),
-                # (new inputs are always not exposed if optional)
-                # from InputTypeMixin class:
-                type=trafo_inp.type,  # InputType (REQUIRED, OPTIONAL)
-                value=trafo_inp.value,  # possible default value if OPTIONAL, or None
-                # from IO class:
-                id=new_inp_id,
-                name=trafo_inp.name,
-                data_type=trafo_inp.data_type,
-                # from Connector class (only present in OperatorInput)
-                position=Position(x=0, y=0),
-            )
-
-            if trafo_inp.type is not InputType.OPTIONAL:
-                new_wf_content_input_id = uuid4()
-
-                new_wf_content_input = WorkflowContentDynamicInput(
-                    id=new_wf_content_input_id,
-                    type=trafo_inp.type,
-                    data_type=trafo_inp.data_type,
-                    value=trafo_inp.value,
-                    operator_id=operator_id,
-                    connector_id=new_inp_id,
-                    operator_name=operator.name,
-                    connector_name=trafo_inp.name,
-                )
-                added_workflow_content_inputs.append(new_wf_content_input)
-
-                added_workflow_inputs.append(new_wf_content_input.to_transformation_input())
+    new_operator_inputs_by_name, added_workflow_content_inputs, added_workflow_inputs = (
+        handle_new_operator_inputs(operator, new_trafo, to_keep_operator_inputs_by_name)
+    )
 
     operator.inputs = order_operator_inputs(
         list(to_keep_operator_inputs_by_name.values()) + list(new_operator_inputs_by_name.values())
@@ -620,61 +648,15 @@ def upgrade_workflow_operator_in_place(
 
     fix_path_end_y_positions(workflow, operator)
 
-    # All the same for outputs
+    # OUTPUTS
 
-    for op_outp in operator.outputs:
-        respective_trafo_outp = new_trafo_outputs_by_name.get(op_outp.name, None)
+    to_keep_operator_outputs_by_name, operator_outputs_to_remove_connections = (
+        handle_old_operator_outputs(new_trafo_outputs_by_name, operator)
+    )
 
-        if respective_trafo_outp is None:
-            # new trafo does not have an input of that name anymore!
-            # so we do not add it to the to_keep_operator_inputs
-            operator_outputs_to_remove_connections[op_outp.name] = op_outp
-            continue
-
-        if (
-            respective_trafo_outp.data_type is op_outp.data_type
-            or respective_trafo_outp.data_type is DataType.Any
-            # types of mapping out of this output still fits
-        ):
-            # in every case make sure the new data_type is correct:
-            op_outp.data_type = respective_trafo_outp.data_type
-
-            to_keep_operator_outputs.append(op_outp)
-        else:
-            operator_outputs_to_remove_connections[op_outp.name] = op_outp
-
-    to_keep_operator_outputs_by_name = {
-        op_outp.name: op_outp for op_outp in to_keep_operator_outputs
-    }
-
-    new_operator_outputs_by_name = {}
-
-    added_workflow_content_outputs: list[WorkflowContentOutput] = []
-    added_workflow_outputs: list[TransformationOutput] = []
-
-    for trafo_outp in new_trafo.io_interface.outputs:
-        if not trafo_outp.name in to_keep_operator_outputs_by_name:
-            # add new operator output
-            new_outp_id = uuid4()
-            new_operator_outputs_by_name[trafo_outp.name] = OperatorOutput(
-                id=new_outp_id,
-                name=trafo_outp.name,
-                data_type=trafo_outp.data_type,
-                position=Position(x=0, y=0),
-            )
-
-            new_wf_output_id = uuid4()
-            new_wf_content_output = WorkflowContentOutput(
-                id=new_wf_output_id,
-                data_type=trafo_outp.data_type,
-                operator_id=operator_id,
-                connector_id=new_outp_id,
-                operator_name=operator.name,
-                connector_name=trafo_outp.name,
-            )
-            added_workflow_content_outputs.append(new_wf_content_output)
-
-            added_workflow_outputs.append(new_wf_content_output.to_transformation_output())
+    new_operator_outputs_by_name, added_workflow_content_outputs, added_workflow_outputs = (
+        handle_new_operator_outputs(operator, new_trafo, to_keep_operator_outputs_by_name)
+    )
 
     operator.outputs = list(to_keep_operator_outputs_by_name.values()) + list(
         new_operator_outputs_by_name.values()
@@ -726,9 +708,19 @@ def upgrade_operators_with_providided_revisions(
     workflow: TransformationRevision,
     possibly_newer: dict[
         UUID, TransformationRevision | None
-    ],  # { revision_group_id : newest_trafo }
+    ],  # of form: { revision_group_id : newest_trafo }
     only_check_deprecated: bool = True,
+    same_revision_no_op: bool = False,
 ) -> TransformationRevision:
+    """Upgrade operators with given possibly newer trafo rev per trafo rev group
+
+    If the possibly newer is equal to the current operator trafo rev, by default
+    the operator is still upgraded. This allows to fix broken operators after for example
+    some maintenance operation that changed released trafos' io interface.
+
+    This behaviout can be turned off by same_revision_no_op.
+    """
+
     new_workflow = workflow.copy(deep=True)
 
     operators_to_check = get_operators_to_check_for_upgrades(
@@ -738,9 +730,22 @@ def upgrade_operators_with_providided_revisions(
     for op_id, operator in operators_to_check.items():
         possibly_newer_trafo = possibly_newer[operator.revision_group_id]
 
-        # TODO: should we check if it is actually really newer? Could be equal released_date.
-        # Should equality lead to a no-op?
         if possibly_newer_trafo is not None:
+            if same_revision_no_op and possibly_newer_trafo.id == operator.transformation_id:
+                msg = (
+                    f"Not handling/upgrading operator {operator.name} ({operator.id}) since"
+                    " its transformation id {operator.transformation_id} agrees with the possibly"
+                    " newer trafo's id."
+                )
+                logger.debug(msg)
+                continue
+            msg = (
+                f"Upgrade operator {operator.name} ({operator.id}) with old trafo id"
+                f" {operator.transformation_id} to possibly newer trafo"
+                f" {possibly_newer_trafo.name} ({possibly_newer_trafo.version_tag})"
+                f" with id {possibly_newer_trafo.id}"
+            )
+            logger.debug(msg)
             upgrade_workflow_operator_in_place(new_workflow, op_id, operator, possibly_newer_trafo)
 
     return new_workflow
@@ -750,6 +755,7 @@ def upgrade_operators_in_workflow(
     trafo: TransformationRevision,
     only_check_deprecated: bool = True,
     use_release_date: bool = False,
+    same_revision_no_op: bool = False,
 ) -> TransformationRevision:
     if trafo.type is not Type.WORKFLOW:
         raise ValueError(
@@ -792,7 +798,10 @@ def upgrade_operators_in_workflow(
     )
 
     updated_trafo = upgrade_operators_with_providided_revisions(
-        trafo, newer_by_trafo_group_id, only_check_deprecated=only_check_deprecated
+        trafo,
+        newer_by_trafo_group_id,
+        only_check_deprecated=only_check_deprecated,
+        same_revision_no_op=same_revision_no_op,
     )
 
     return updated_trafo

@@ -178,6 +178,7 @@ class WorkflowConstructor:
         state: State = State.DRAFT,
         type: Literal[Type.WORKFLOW] = Type.WORKFLOW,  # noqa: A002
         documentation: str = "",
+        auto_release: bool = False,
     ):
         self.tc: TrafoCollection = trafo_collector
         self.autoarrange = autoarrange
@@ -205,6 +206,8 @@ class WorkflowConstructor:
         self.state = state
         self.type = type
         self.documentation = documentation
+
+        self.auto_release = auto_release
 
         self.current_operator_pos_x = 0.0
         self.current_operator_pos_y = 0.0
@@ -536,6 +539,9 @@ class WorkflowConstructor:
             test_wiring=WorkflowWiring(),
             release_wiring=None,
         )
+
+        if self.auto_release:
+            self.result.release()
 
         self.tc.add(self.result)
 

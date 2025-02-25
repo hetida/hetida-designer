@@ -56,4 +56,4 @@ async def test_workflow_construction(async_test_client, mocked_clean_test_db_ses
     assert resp.status_code == 200
 
     series_output_data_dict = resp.json()["output_results_by_output_name"]["second_op_output"]
-    assert series_output_data_dict["name"] == "the real name"
+    assert series_output_data_dict["__data__"]["name"] == "the real name"
