@@ -7,8 +7,7 @@
     <div class="menu-bar__expand-icon" (click)="isExpanded = !isExpanded">
       @if (isExpanded) {
         <mat-icon>expand_more</mat-icon>
-      }
-      @if (!isExpanded) {
+      } @else {
         <mat-icon>expand_less</mat-icon>
       }
     </div>
