@@ -32,7 +32,7 @@ for plant in ("plantA", "plantB"):
             store[f"root.{plant}.{unit}.{position}.anomaly_score"] = pd.DataFrame()
 
 
-store[f"root.plantC.picklingUnit.influx.anomaly_score"] = pd.DataFrame()
+store["root.plantC.picklingUnit.influx.anomaly_score"] = pd.DataFrame()
 
 # initialize leaf metadata sinks
 for plant in ("plantA", "plantB"):

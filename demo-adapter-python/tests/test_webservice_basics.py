@@ -200,8 +200,8 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
 
             if src.type.startswith("multitsframe"):
                 response = await client.get(
-                    f'/multitsframe?id={src.id}&from={quote("2020-01-01T00:00:00.000000000Z")}'
-                    f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
+                    f"/multitsframe?id={src.id}&from={quote('2020-01-01T00:00:00.000000000Z')}"
+                    f"&to={quote('2020-01-02T00:00:00.0000000Z')}"
                 )
                 assert response.status_code == 200
                 lines = response.text.splitlines()
@@ -212,8 +212,8 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
 
             if src.type.startswith("timeseries"):
                 response = await client.get(
-                    f'/timeseries?id={src.id}&from={quote("2020-01-01T00:00:00.000000000Z")}'
-                    f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
+                    f"/timeseries?id={src.id}&from={quote('2020-01-01T00:00:00.000000000Z')}"
+                    f"&to={quote('2020-01-02T00:00:00.0000000Z')}"
                 )
                 assert response.status_code == 200
                 lines = response.text.splitlines()
@@ -419,8 +419,8 @@ async def test_sending_attrs_via_get_multitsframe(
     async with async_test_client as client:
         response = await client.get(
             f"/multitsframe?id=root.plantA.anomalies"
-            f'&from={quote("2020-01-01T00:00:00.000000000Z")}'
-            f'&to={quote("2020-01-01T00:00:00.000000000Z")}'
+            f"&from={quote('2020-01-01T00:00:00.000000000Z')}"
+            f"&to={quote('2020-01-01T00:00:00.000000000Z')}"
         )
 
         assert response.status_code == 200
@@ -478,8 +478,8 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
 
         response = await client.get(
             f"/timeseries?id={ts_id}"
-            f'&from={quote("2020-01-01T00:00:00.000000000Z")}'
-            f'&to={quote("2020-01-01T00:00:00.000000000Z")}'
+            f"&from={quote('2020-01-01T00:00:00.000000000Z')}"
+            f"&to={quote('2020-01-01T00:00:00.000000000Z')}"
         )
 
         assert response.status_code == 200
