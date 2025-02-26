@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -17,6 +20,7 @@ describe('PopoverTransformationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
+      declarations: [PopoverTransformationComponent],
       imports: [
         MatIconModule,
         NgHetidaFlowchartModule,
@@ -26,10 +30,9 @@ describe('PopoverTransformationComponent', () => {
         ReactiveFormsModule,
         MatAutocompleteModule,
         StoreModule.forRoot(appReducers),
-        HttpClientModule,
         RouterModule.forRoot([])
       ],
-      declarations: [PopoverTransformationComponent]
+      providers: [provideHttpClient(withInterceptorsFromDi())]
     }).compileComponents();
   }));
 

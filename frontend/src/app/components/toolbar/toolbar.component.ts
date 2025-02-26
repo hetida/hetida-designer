@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
-import { of, timer } from 'rxjs';
+import { of, ReplaySubject, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -19,36 +20,27 @@ import { selectTransformationById } from '../../store/transformation/transformat
   styleUrls: ['./toolbar.component.scss']
 })
 export class ToolbarComponent implements OnInit {
+  public transformation: Transformation | undefined;
+  public incompleteFlag = false;
+
+  private readonly _transformationId$ = new ReplaySubject<string>();
+  private readonly _destroyRef = inject(DestroyRef);
+
+  @Input()
+  set transformationId(transformationId: string) {
+    this._transformationId$.next(transformationId);
+  }
+
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartService: NgHetidaFlowchartService,
     private readonly transformationActionService: TransformationActionService
   ) {}
 
-  @Input() transformationId: string;
-
-  transformation: Transformation | undefined;
-
-  get isWorkflow(): boolean {
-    return this.transformation.type === TransformationType.WORKFLOW;
-  }
-
-  get isComponent(): boolean {
-    return this.transformation.type === TransformationType.COMPONENT;
-  }
-
-  get isWorkflowWithoutIo(): boolean {
-    return (
-      isWorkflowTransformation(this.transformation) &&
-      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
-    );
-  }
-
-  incompleteFlag = false;
-
   ngOnInit() {
     timer(0, 100)
       .pipe(
+        takeUntilDestroyed(this._destroyRef),
         switchMap(() =>
           of(this.transformationActionService.isIncomplete(this.transformation))
         )
@@ -56,8 +48,16 @@ export class ToolbarComponent implements OnInit {
       .subscribe(isIncomplete => {
         this.incompleteFlag = isIncomplete;
       });
-    this.transformationStore
-      .select(selectTransformationById(this.transformationId))
+
+    this._transformationId$
+      .pipe(
+        takeUntilDestroyed(this._destroyRef),
+        switchMap(transformationId =>
+          this.transformationStore.select(
+            selectTransformationById(transformationId)
+          )
+        )
+      )
       .subscribe(transformation => {
         this.transformation = transformation;
       });
@@ -81,6 +81,21 @@ export class ToolbarComponent implements OnInit {
 
   async execute() {
     await this.transformationActionService.execute(this.transformation);
+  }
+
+  get isComponent(): boolean {
+    return this.transformation.type === TransformationType.COMPONENT;
+  }
+
+  get isWorkflow(): boolean {
+    return this.transformation.type === TransformationType.WORKFLOW;
+  }
+
+  get isWorkflowWithoutIo(): boolean {
+    return (
+      isWorkflowTransformation(this.transformation) &&
+      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
+    );
   }
 
   get publishTooltip(): string {

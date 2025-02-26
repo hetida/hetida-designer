@@ -1,11 +1,15 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ConfigService } from './config.service';
 
 describe('ConfigService', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
-      imports: [HttpClientModule]
+      imports: [],
+      providers: [provideHttpClient(withInterceptorsFromDi())]
     })
   );
 

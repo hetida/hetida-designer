@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { createSelector, Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
@@ -56,18 +57,20 @@ export const selectContentViewStoreState = createSelector(
   templateUrl: './content-view.component.html',
   styleUrls: ['./content-view.component.scss']
 })
-export class ContentViewComponent implements OnInit, OnDestroy {
-  // Constants
-  readonly _ItemType = TransformationType;
+export class ContentViewComponent implements OnInit {
+  public isComponentTransformation: typeof isComponentTransformation =
+    isComponentTransformation;
 
   // Component State
-  _selectedTabIndex = 0;
+  public _selectedTabIndex = 0;
 
   // ngrx State
-  _tabItems: TabItemWithTransformation[] = [];
+  public _tabItems: TabItemWithTransformation[] = [];
 
-  isComponentTransformation: typeof isComponentTransformation =
-    isComponentTransformation;
+  // Constants
+  public readonly _ItemType = TransformationType;
+
+  private readonly _destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly store: Store<IAppState>,
@@ -77,17 +80,10 @@ export class ContentViewComponent implements OnInit, OnDestroy {
     private readonly notificationService: NotificationService
   ) {}
 
-  private readonly _ngOnDestroyNotify = new Subject<void>();
-
-  ngOnDestroy(): void {
-    this._ngOnDestroyNotify.next();
-    this._ngOnDestroyNotify.complete();
-  }
-
   ngOnInit() {
     this.store
       .select(selectContentViewStoreState)
-      .pipe(takeUntil(this._ngOnDestroyNotify))
+      .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe(({ orderedTabItemsWithTransformation, activeTabItem }) => {
         this._tabItems = orderedTabItemsWithTransformation;
 

@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -14,16 +17,16 @@ describe('WorkflowEditorComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
+      declarations: [WorkflowEditorComponent],
       imports: [
         NgHetidaFlowchartModule,
         StoreModule.forRoot(appReducers),
         MatIconModule,
         MatDividerModule,
         MatSnackBarModule,
-        HttpClientModule,
         MatDialogModule
       ],
-      declarations: [WorkflowEditorComponent]
+      providers: [provideHttpClient(withInterceptorsFromDi())]
     }).compileComponents();
   }));
 
