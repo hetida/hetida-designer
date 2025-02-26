@@ -145,6 +145,19 @@ def main(*, series):
 }
 ```
 
+### Insufficient Data for Plotting
+For plotting components whose results are embedded in other Software it makes sense to raise a `InsufficientPlottingData` exception:
+
+```python
+from hdutils import InsufficientPlottingData
+
+...
+
+    raise InsufficientPlottingData("Not enough data for plotting.")
+```
+
+This allows the external software to handle this situation in its preferred way, for example by showing an adequate message instead of an empty plot.
+
 ## Not using the predefined classes
 To develop the component code independently of the hetdesrun library, exceptions that are handled similarly can be defined locally in the component code as follows.
 
