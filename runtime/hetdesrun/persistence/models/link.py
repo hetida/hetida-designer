@@ -78,6 +78,7 @@ class Link(BaseModel):
             or end.connector.data_type == DataType.Any
         ):
             raise ValueError("data types of both link ends must be the same!")
+
         return values
 
     @root_validator()

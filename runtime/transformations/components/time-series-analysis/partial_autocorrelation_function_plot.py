@@ -148,7 +148,7 @@ def create_pacf_plot(
         raise ComponentInputValidationException(
             (
                 "`lags` must be a positive integer of size smaller than half the length "
-                f"of the time series minus 1 ({len(series)/2 - 1})"
+                f"of the time series minus 1 ({len(series) / 2 - 1})"
             ),
             error_code=422,
             invalid_component_inputs=["lags", "series"],

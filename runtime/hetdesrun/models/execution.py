@@ -30,8 +30,7 @@ class ExecByIdInput(ExecByIdBase):
     job_id: UUID = Field(
         default_factory=uuid4,
         description=(
-            "Id to identify an individual execution job, "
-            "will be generated if it is not provided."
+            "Id to identify an individual execution job, will be generated if it is not provided."
         ),
     )
 

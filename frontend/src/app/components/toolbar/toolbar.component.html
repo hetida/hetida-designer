@@ -51,6 +51,16 @@
   <span>
     <mat-icon
       class="clickable unselectable"
+      title="{{ upgradeWorkflowOperatorsTooltip }}"
+      (click)="upgradeWorkflowOperators()"
+      *ngIf="isWorkflow"
+      [ngClass]="{ disabled: isReleased() }"
+    >
+      auto_awesome</mat-icon
+    >
+
+    <mat-icon
+      class="clickable unselectable"
       title="{{ updateExpandTooltip }}"
       (click)="updateExpand()"
       *ngIf="isComponent"
@@ -66,7 +76,7 @@
     >
       bug_report</mat-icon
     >
-    <mat-divider vertical *ngIf="isComponent"></mat-divider>
+    <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ publishTooltip }}"

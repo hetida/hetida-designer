@@ -110,7 +110,7 @@ async def receive_kafka_message(
             msg_object = parse_message(message.value, multi=multi)
         except ValidationError as e:
             msg = (
-                f'Error parsing/validating {"multi" if multi else "single"} value message '
+                f"Error parsing/validating {'multi' if multi else 'single'} value message "
                 f"{message_identifier} "
                 f"from Kafka with config key {kafka_config_key}"
                 f"from topic {topic}:\n{str(e)}:\n{str(e)}"

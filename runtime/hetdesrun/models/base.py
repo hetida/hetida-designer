@@ -1,11 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class Result(str, Enum):
-    OK: str = "ok"
-    FAILURE: str = "failure"
+class Result(StrEnum):
+    OK = "ok"
+    FAILURE = "failure"
 
 
 class AbstractNode(BaseModel):

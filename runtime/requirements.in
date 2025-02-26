@@ -6,10 +6,12 @@ asyncstdlib
 black
 boto3
 boto3-stubs[essential]
+datashader
 dateparser
 fastapi>=0.65.2
 fastparquet
 gekko
+geojson
 geopandas
 gunicorn
 h5py
@@ -40,6 +42,7 @@ regex!=2022.3.15 # bug in combination with dateparser "bad escape..."
 requests
 scikit-learn
 scipy
+semver
 shapely
 sqlalchemy[mypy]>=2.0,<3
 statsmodels

@@ -54,7 +54,7 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/bb8bdb47b718
 {
   config = {
     permittedInsecurePackages = [
-      "nodejs-14.21.3"
+      # "nodejs-14.21.3"
       # "openssl-1.1.1u"
     ];
   };

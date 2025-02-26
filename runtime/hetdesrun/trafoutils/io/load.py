@@ -82,14 +82,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
 
 
 def transformation_revision_from_python_code(code: str) -> TransformationRevision:  # noqa: PLR0915
-    """Get the TransformationRevision as a json-like object from just the Python code
-
-    This uses information from the register decorator or a global variable COMPONENT_INFO
-    and docstrings.
-
-    Note: This needs to import the provided code, which may have arbitrary side effects
-    and security implications.
-    """
+    """Get the TransformationRevision as a json-like object from just the Python code"""
     try:
         mod_docstring = get_module_doc_string(code) or ""
     except CodeParsingException as e:

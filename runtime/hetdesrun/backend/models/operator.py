@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID  # noqa: A005
 
 from pydantic import Field, root_validator
 
@@ -23,13 +23,13 @@ class WorkflowOperatorFrontendDto(BasicInformation):
             state = values["state"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if operator has state DRAFT if the attribute " "'state' is missing!"
+                "Cannot check if operator has state DRAFT if the attribute 'state' is missing!"
             ) from e
         if state == State.DRAFT:
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
-                f'Operator with id {values["id"]} of type {values["type"]}'
-                f' has state {values["state"]} '
+                f"Operator with id {values['id']} of type {values['type']}"
+                f" has state {values['state']} "
             )
         return values
 

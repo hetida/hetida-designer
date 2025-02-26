@@ -211,7 +211,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
 
         return validated_multi_ts_frame
 
-    msg = "Invalid source id structure. Cannot find or identify source." f"source id: {source_id}"
+    msg = f"Invalid source id structure. Cannot find or identify source.source id: {source_id}"
     logger.info(msg)
     raise AdapterHandlingException(msg)
 

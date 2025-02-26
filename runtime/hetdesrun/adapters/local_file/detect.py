@@ -50,7 +50,7 @@ def parse_settings_file(
     if settings_file_path is None:
         if data_file_path is None:
             raise ValueError(
-                "Exactly one of 'data_file_path' or 'settings_file_path'" " must be not None."
+                "Exactly one of 'data_file_path' or 'settings_file_path' must be not None."
             )
         settings_file_path = data_file_path + ".settings.json"
 

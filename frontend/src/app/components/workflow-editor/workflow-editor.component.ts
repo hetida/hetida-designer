@@ -41,8 +41,6 @@ import {
 } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { Connector } from 'src/app/model/connector';
-import { Utils } from 'src/app/utils/utils';
-import { Constant } from 'src/app/model/constant';
 import { OptionalFieldsDialogComponent } from '../optional-fields-dialog/optional-fields-dialog.component';
 
 interface IdentifiableEntity {
@@ -220,25 +218,6 @@ export class WorkflowEditorComponent implements OnInit {
   ): T[] {
     return sourceList.filter(
       identifiableEntity => identifiableEntity.id !== id
-    );
-  }
-
-  private _removeOperatorLinks(links: Link[], deletedOperator: Operator) {
-    return links.filter(
-      link =>
-        !(
-          link.start.operator === deletedOperator.id ||
-          link.end.operator === deletedOperator.id
-        )
-    );
-  }
-
-  private _removeOperatorConstants(
-    constants: Constant[],
-    deletedOperator: Operator
-  ) {
-    return constants.filter(
-      constant => constant.operator_id !== deletedOperator.id
     );
   }
 
@@ -463,31 +442,9 @@ export class WorkflowEditorComponent implements OnInit {
       if (data === undefined) {
         return;
       }
-      const replacementOperator = this._createNewOperator(
-        data,
-        operator.position.x,
-        operator.position.y
-      );
 
-      const copyOfCurrentWorkflow = Utils.deepCopy(this._currentWorkflow);
-
-      // update workflow
-      copyOfCurrentWorkflow.content.operators = this._removeById(
-        copyOfCurrentWorkflow.content.operators,
-        operator.id
-      );
-      copyOfCurrentWorkflow.content.links = this._removeOperatorLinks(
-        copyOfCurrentWorkflow.content.links,
-        operator
-      );
-      copyOfCurrentWorkflow.content.constants = this._removeOperatorConstants(
-        copyOfCurrentWorkflow.content.constants,
-        operator
-      );
-
-      copyOfCurrentWorkflow.content.operators.push(replacementOperator);
       this.transformationService
-        .updateTransformation(copyOfCurrentWorkflow)
+        .upgradeSingleOperator(this._currentWorkflow, operator.id, data.id)
         .subscribe();
     });
   }

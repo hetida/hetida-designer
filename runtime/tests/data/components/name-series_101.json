@@ -1,0 +1,71 @@
+{
+    "id": "530e54d4-8d1d-477c-a439-c746c37092f8",
+    "revision_group_id": "a4064897-66d3-9601-328e-5ae9036665c5",
+    "name": "Name Series",
+    "description": "Give a name to a series",
+    "category": "Connectors",
+    "version_tag": "1.0.1",
+    "released_timestamp": "2025-02-17T13:17:24.557843+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n",
+    "content": "\"\"\"Documentation for Name Series\n\n# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n        \"name\": {\"data_type\": \"STRING\", \"default_value\": \"default_name\"},\n        \"some_new_any_input\": {\"data_type\": \"ANY\"},\n        \"some_newstr_input\": {\"data_type\": \"STRING\"},\n        \"int_input_with_default\": {\"data_type\": \"ANY\", \"default_value\": 42},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"SERIES\"},\n        \"output_2\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Name Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Give a name to a series\",\n    \"version_tag\": \"1.0.1\",\n    \"id\": \"530e54d4-8d1d-477c-a439-c746c37092f8\",\n    \"revision_group_id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2025-02-17T12:17:24.557843+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(\n    *,\n    input,\n    some_new_any_input,\n    some_newstr_input,\n    name=\"default_name\",\n    int_input_with_default=parse_default_value(\n        COMPONENT_INFO, \"int_input_with_default\"\n    ),\n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    input.name = name\n    return {\"output\": input}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "e88e9198-7c10-436c-ae86-f96afcd4f2c7",
+                "name": "input",
+                "data_type": "SERIES",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "d1c214ae-0cb0-45d8-a576-7f305cb22f19",
+                "name": "name",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "default_name"
+            },
+            {
+                "id": "ea84d40b-ac70-403a-9745-6a084e7e581d",
+                "name": "some_new_any_input",
+                "data_type": "ANY",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "0fe30f03-3b8a-4dfc-9d92-d82b6b309017",
+                "name": "some_newstr_input",
+                "data_type": "STRING",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "9c7fa8ec-ffce-4176-a667-4e6562895c91",
+                "name": "int_input_with_default",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": "42"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "950ee434-9534-43b6-8a1b-548f580d21eb",
+                "name": "output",
+                "data_type": "SERIES"
+            },
+            {
+                "id": "8b7d6593-94c5-46f9-9e7f-a10f1b7e8e98",
+                "name": "output_2",
+                "data_type": "SERIES"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+        "dashboard_positionings": []
+    },
+    "release_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+        "dashboard_positionings": []
+    }
+}

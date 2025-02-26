@@ -1,3 +1,4 @@
+# noqa: A005
 import contextvars
 import datetime
 import json

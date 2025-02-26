@@ -48,19 +48,21 @@ def adjust_tr_inputs_to_not_matching_wf_inputs_and_remove_surplus_tr_inputs(
             wf_input = wf_inputs_by_id[tr_input.id]
         except KeyError:
             logger.warning(
-                "For the io interface input '%s' "
+                "For the io interface input '%s' %s "
                 "there is no workflow content input with the same id. "
                 "Thus, it will be removed from the io interface.",
                 str(tr_input.id),
+                str(tr_input.name),
             )
             remove_tr_inputs.append(tr_input)
             continue
         if not wf_input.matches_trafo_input(tr_input):
             logger.warning(
-                "For the io interface input '%s' "
+                "For the io interface input '%s' %s "
                 "the workflow content input with the same id does not match! "
                 "Thus, it will be adjusted in the io interface.",
                 str(tr_input.id),
+                str(tr_input.name),
             )
             tr_inputs[tr_inputs.index(tr_input)] = wf_input.to_transformation_input()
         del wf_inputs_by_id[tr_input.id]
@@ -92,19 +94,21 @@ def adjust_tr_outputs_to_not_matching_wf_outputs_and_remove_surplus_tr_outputs(
             wf_output = wf_outputs_by_id[tr_output.id]
         except KeyError:
             logger.warning(
-                "For the io interface output '%s' "
+                "For the io interface output '%s' %s "
                 "there is no workflow content output with the same id. "
                 "Thus, it will be removed from the io interface.",
-                str({tr_output.id}),
+                str(tr_output.id),
+                str(tr_output.name),
             )
             remove_tr_outputs.append(tr_output)
             continue
         if not wf_output.matches_trafo_output(tr_output):
             logger.warning(
-                "For the io interface output '%s' "
+                "For the io interface output '%s' %s "
                 "the workflow content output with the same id does not match! "
                 "Thus, it will be adjusted in the io interface.",
                 str(tr_output.id),
+                str(tr_output.name),
             )
             # TODO: Delete instead of adjust once the frontend has been updated
             tr_outputs[tr_outputs.index(tr_output)] = wf_output.to_transformation_output()
@@ -200,7 +204,7 @@ class TransformationRevision(BaseModel):
     content: str | WorkflowContent = Field(
         ...,
         description=(
-            "Code as string in case of type COMPONENT, " "WorkflowContent in case of type WORKFLOW."
+            "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
         ),
     )
 
@@ -511,10 +515,10 @@ class TransformationRevision(BaseModel):
             )
         return CodeModule(code=self.content, uuid=self.id)
 
-    def to_operator(self) -> Operator:
+    def to_operator(self, name: str | None = None) -> Operator:
         return Operator(
             revision_group_id=self.revision_group_id,
-            name=self.name,
+            name=self.name if name is None else name,
             description=self.description,
             type=self.type,
             state=State.RELEASED,

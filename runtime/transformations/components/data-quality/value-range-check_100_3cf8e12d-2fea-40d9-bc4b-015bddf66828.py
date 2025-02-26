@@ -256,7 +256,7 @@ def main(*, timeseries_data, value_range_dict):
             error_dict[range_name] = "Range names must not end with '_IS_BELOW' or '_IS_ABOVE'! "
         if range_name in ("_violates_all", "_violates_any", "_timestamp"):
             error_dict[range_name] = (
-                "Range names must not be '_violates_all', '_violates_any', or" " '_timestamp'!"
+                "Range names must not be '_violates_all', '_violates_any', or '_timestamp'!"
             )
         try:
             value_ranges[range_name] = ValueRange(**value_range)

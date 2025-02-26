@@ -18,9 +18,9 @@ kafka_messages: ContextVar[dict[str, None | KafkaSingleValueMessage | KafkaMulti
 )
 
 
-def _get_kafka_messages_context() -> (
-    dict[str, None | KafkaSingleValueMessage | KafkaMultiValueMessage]
-):
+def _get_kafka_messages_context() -> dict[
+    str, None | KafkaSingleValueMessage | KafkaMultiValueMessage
+]:
     try:
         return kafka_messages.get()
     except LookupError:

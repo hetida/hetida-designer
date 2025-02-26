@@ -121,8 +121,7 @@ def mocked_energy_charts_info_prices_api_call_response(resp_json):
     [
         {
             "license_info": (
-                "CC BY 4.0 (creativecommons.org/licenses/by/4.0)"
-                " from Bundesnetzagentur | SMARD.de"
+                "CC BY 4.0 (creativecommons.org/licenses/by/4.0) from Bundesnetzagentur | SMARD.de"
             ),
             "unix_seconds": [
                 1721268000,

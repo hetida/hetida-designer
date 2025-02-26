@@ -1,3 +1,4 @@
+# noqa: A005
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator

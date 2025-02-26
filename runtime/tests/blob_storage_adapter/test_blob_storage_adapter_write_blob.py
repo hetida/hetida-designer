@@ -315,7 +315,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
         ):
             thing_node_id = "i-ii/E"
             metadata_key = (
-                "E - 2001-02-03 04:05:06+00:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             await write_blob_to_storage(
                 data=struct.pack(">i", 23),
@@ -337,7 +337,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
 
             non_utc_metadata_key = (
-                "E - 2001-02-03 04:05:06+02:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+02:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             with pytest.raises(AdapterClientWiringInvalidError):
                 await write_blob_to_storage(

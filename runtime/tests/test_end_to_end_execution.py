@@ -338,7 +338,7 @@ def division_component_wf_exc_inp_replace(
     function_header: str | None = None,
 ) -> WorkflowExecutionInput:
     division_component_wf_exc_inp = gen_execution_input_from_single_component(
-        ("tests/data/components/" "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"),
+        ("tests/data/components/raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"),
         {"dividend": 1, "divisor": 0},
     )
 
@@ -420,13 +420,10 @@ class TestSctructuredErrors:
         assert result.error.process_stage == ProcessStage.PARSING_WORKFLOW
         assert result.error.type == "NodeFunctionLoadingError"  # cause: NameError
         assert result.error.error_code is None
-        assert (
-            result.error.message
-            == (  # cause: "name 'asdf' is not defined"
-                "Could not load node function "
-                "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
-                "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
-            )
+        assert result.error.message == (  # cause: "name 'asdf' is not defined"
+            "Could not load node function "
+            "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
+            "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
         )
         assert result.error.extra_information is None
         assert result.error.location is not None
