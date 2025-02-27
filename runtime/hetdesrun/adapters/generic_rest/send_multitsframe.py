@@ -61,14 +61,14 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have DatetimeTZDtype "
             "dtype index as expected for generic rest adapter multitsframe endpoints. "
-            f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            f"Got {str(df['timestamp'].dtype)} index dtype instead."
         )
 
     if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have UTC timezone "
             "but generic rest adapter only accepts UTC timeseries data. "
-            f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
+            f"Got {str(df['timestamp'].dt.tz)} timezone instead."
         )
 
     new_df = df.replace({np.nan: None})

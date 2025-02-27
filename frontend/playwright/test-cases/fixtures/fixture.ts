@@ -9,6 +9,7 @@ type HetidaDesignerFixture = {
 export const test = base.extend<HetidaDesignerFixture>({
   page: async ({ baseURL, page }, use) => {
     page.on('console', msg => {
+      // this is an error thrown by the monaco editor during e2e testing, we can safely ignore it
       const ignoreErrorMessages = ['Error: Canceled: Canceled'];
 
       if (msg.type() === 'error') {

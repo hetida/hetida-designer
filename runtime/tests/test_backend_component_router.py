@@ -412,11 +412,7 @@ async def test_execute_for_component_dto(async_test_client, mocked_clean_test_db
 async def test_execute_for_component_without_hetdesrun_imports(
     async_test_client, mocked_clean_test_db_session
 ):
-    path = (
-        "./tests/data/components/"
-        "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d"
-        ".json"
-    )
+    path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
     component_tr_json = load_json(path)
     wiring_json = {
         "id": "38f168ef-cb06-d89c-79b3-0cd823f32e9d",

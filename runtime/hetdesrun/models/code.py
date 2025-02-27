@@ -1,3 +1,4 @@
+# noqa: A005
 import re
 from uuid import UUID
 

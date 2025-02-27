@@ -105,6 +105,13 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
+  get upgradeWorkflowOperatorsTooltip(): string {
+    if (!this.isReleased()) {
+      return 'Upgrade workflow operators';
+    }
+    return 'Cannot upgrade operators for released workflows';
+  }
+
   get updateExpandTooltip(): string {
     if (!this.isReleased()) {
       return 'Update and Expand code (Wirings, Formatting, Documentation)';
@@ -118,6 +125,12 @@ export class ToolbarComponent implements OnInit {
 
   publish(): void {
     this.transformationActionService.publish(this.transformation);
+  }
+
+  upgradeWorkflowOperators(): void {
+    this.transformationActionService.upgradeWorkflowOperators(
+      this.transformation
+    );
   }
 
   updateExpand(): void {

@@ -1,3 +1,4 @@
+# noqa: A005
 """Code template generation
 
 This module contains functions for generating and updating component code modules

@@ -663,12 +663,12 @@ def timeseries_plot_including_predictions(
     annotations = []
     if p_value > confidence_level:
         conf_text = (
-            f"and the residuals are likely normal. Thus, the {int((1-confidence_level)*100)}% "
+            f"and the residuals are likely normal. Thus, the {int((1 - confidence_level) * 100)}% "
             "confidence interval does have a valid interpretation."
         )
     else:
         conf_text = (
-            f"and the residuals are likely not normal. Thus, the {int((1-confidence_level)*100)}% "
+            f"and the residuals are likely not normal. Thus, the {int((1 - confidence_level) * 100)}% "
             "confidence interval does not have a valid interpretation."
         )
 

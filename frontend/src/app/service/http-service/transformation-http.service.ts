@@ -41,6 +41,27 @@ export class TransformationHttpService {
     return this.httpClient.put<Transformation>(url, transformation);
   }
 
+  public upgradeWorkflowOperators(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators`;
+    return this.httpClient.put<Transformation>(url, transformation);
+  }
+
+  public upgradeSingleOperator(
+    transformation: Transformation,
+    operatorId: string,
+    newRevisionId: string
+  ): Observable<Transformation> {
+    let params = new HttpParams();
+    params = params.append(
+      'new_operator_transformation_revision_id',
+      newRevisionId
+    );
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators/${operatorId}`;
+    return this.httpClient.put<Transformation>(url, transformation, { params });
+  }
+
   public updateExpandComponent(
     transformation: Transformation
   ): Observable<Transformation> {

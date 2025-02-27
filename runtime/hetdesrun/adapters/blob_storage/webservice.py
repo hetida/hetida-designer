@@ -267,8 +267,7 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
         ) from not_found_error
     except MissingHierarchyError as error:
         msg = (
-            f"Could not get sink with id '{sinkId}' "
-            f"because the hierarchy json is missing:\n{error}"
+            f"Could not get sink with id '{sinkId}' because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
         raise HTTPException(

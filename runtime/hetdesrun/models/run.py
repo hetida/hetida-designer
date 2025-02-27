@@ -349,7 +349,7 @@ class WorkflowExecutionInfo(BaseModel):
 class WorkflowExecutionResult(WorkflowExecutionInfo):
     result: Result = Field(
         ...,
-        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
+        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),  # type: ignore
         example=Result.OK,
     )
     node_results: str | None = Field(

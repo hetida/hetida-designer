@@ -129,7 +129,7 @@ from hetdesrun.adapters.local_file.extensions import (  # noqa: E402
     FileSupportHandler,
     register_file_support,
 )
-from hetdesrun.adapters.local_file.handlers.csv import load_csv, write_csv  # noqa: E402
+from hetdesrun.adapters.local_file.handlers.csv_handling import load_csv, write_csv  # noqa: E402
 
 csv_file_support_handler = FileSupportHandler(
     associated_extensions=[
@@ -199,7 +199,7 @@ register_file_support(parquet_file_support_handler)
 
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType  # noqa: E402
-from hetdesrun.adapters.local_file.handlers.pickle import (  # noqa: E402
+from hetdesrun.adapters.local_file.handlers.pickle_handling import (  # noqa: E402
     load_pickle,
     write_pickle,
 )

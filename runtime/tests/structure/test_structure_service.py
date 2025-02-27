@@ -75,14 +75,14 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):  # noqa: PLR0915
 
     with mocked_clean_test_db_session() as session:
         element_types_in_db = fetch_element_types(session, expected_element_type_keys)
-        assert len(element_types_in_db) == len(
-            expected_data["element_types"]
-        ), "Mismatch in element types count"
+        assert len(element_types_in_db) == len(expected_data["element_types"]), (
+            "Mismatch in element types count"
+        )
 
         thing_nodes_in_db = fetch_thing_nodes(session, expected_thing_node_keys)
-        assert len(thing_nodes_in_db) == len(
-            expected_data["thing_nodes"]
-        ), "Mismatch in thing nodes count"
+        assert len(thing_nodes_in_db) == len(expected_data["thing_nodes"]), (
+            "Mismatch in thing nodes count"
+        )
 
         sources_in_db = fetch_sources(session, expected_source_keys)
         assert len(sources_in_db) == len(expected_data["sources"]), "Mismatch in sources count"
@@ -96,9 +96,9 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):  # noqa: PLR0915
             if thing_node.get("parent_external_node_id"):
                 parent_key = (thing_node["stakeholder_key"], thing_node["parent_external_node_id"])
                 assert parent_key in thing_nodes_in_db, f"Parent node {parent_key} not found in DB"
-                assert (
-                    thing_nodes_in_db[key].parent_node_id == thing_nodes_in_db[parent_key].id
-                ), f"{key} has incorrect parent ID"
+                assert thing_nodes_in_db[key].parent_node_id == thing_nodes_in_db[parent_key].id, (
+                    f"{key} has incorrect parent ID"
+                )
 
         # Verify associations for sources
         for source in expected_data["sources"]:
@@ -113,9 +113,9 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):  # noqa: PLR0915
             actual_associated_nodes = {
                 (tn.stakeholder_key, tn.external_id) for tn in sources_in_db[source_key].thing_nodes
             }
-            assert (
-                actual_associated_nodes == expected_associated_nodes
-            ), f"Incorrect associations for source {source_key}"
+            assert actual_associated_nodes == expected_associated_nodes, (
+                f"Incorrect associations for source {source_key}"
+            )
 
         # Verify associations for sinks
         for sink in expected_data["sinks"]:
@@ -130,9 +130,9 @@ def test_thing_node_hierarchy(mocked_clean_test_db_session):  # noqa: PLR0915
             actual_associated_nodes = {
                 (tn.stakeholder_key, tn.external_id) for tn in sinks_in_db[sink_key].thing_nodes
             }
-            assert (
-                actual_associated_nodes == expected_associated_nodes
-            ), f"Incorrect associations for sink {sink_key}"
+            assert actual_associated_nodes == expected_associated_nodes, (
+                f"Incorrect associations for sink {sink_key}"
+            )
 
 
 ### Structure Helper Functions
@@ -148,25 +148,25 @@ def test_complete_structure_object_creation():
     cs = CompleteStructure(**data)
 
     # Assert the lengths based on the JSON data
-    assert len(cs.thing_nodes) == len(
-        data["thing_nodes"]
-    ), f"Expected {len(data['thing_nodes'])} Thing Nodes, found {len(cs.thing_nodes)}"
-    assert len(cs.element_types) == len(
-        data["element_types"]
-    ), f"Expected {len(data['element_types'])} Element Types, found {len(cs.element_types)}"
-    assert len(cs.sources) == len(
-        data["sources"]
-    ), f"Expected {len(data['sources'])} Sources, found {len(cs.sources)}"
-    assert len(cs.sinks) == len(
-        data["sinks"]
-    ), f"Expected {len(data['sinks'])} Sinks, found {len(cs.sinks)}"
+    assert len(cs.thing_nodes) == len(data["thing_nodes"]), (
+        f"Expected {len(data['thing_nodes'])} Thing Nodes, found {len(cs.thing_nodes)}"
+    )
+    assert len(cs.element_types) == len(data["element_types"]), (
+        f"Expected {len(data['element_types'])} Element Types, found {len(cs.element_types)}"
+    )
+    assert len(cs.sources) == len(data["sources"]), (
+        f"Expected {len(data['sources'])} Sources, found {len(cs.sources)}"
+    )
+    assert len(cs.sinks) == len(data["sinks"]), (
+        f"Expected {len(data['sinks'])} Sinks, found {len(cs.sinks)}"
+    )
 
     # Check if all expected Thing Node names are present
     tn_names = {tn.name for tn in cs.thing_nodes}
     expected_tn_names = {tn["name"] for tn in data["thing_nodes"]}
-    assert (
-        tn_names == expected_tn_names
-    ), f"Mismatch in Thing Node names. Expected: {expected_tn_names}, found: {tn_names}"
+    assert tn_names == expected_tn_names, (
+        f"Mismatch in Thing Node names. Expected: {expected_tn_names}, found: {tn_names}"
+    )
 
 
 def test_load_structure_from_json_file(db_test_structure_file_path):
@@ -174,9 +174,9 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
     complete_structure = load_structure_from_json_file(db_test_structure_file_path)
 
     # Assert that the loaded structure is an instance of the CompleteStructure class
-    assert isinstance(
-        complete_structure, CompleteStructure
-    ), "Loaded structure is not an instance of CompleteStructure"
+    assert isinstance(complete_structure, CompleteStructure), (
+        "Loaded structure is not an instance of CompleteStructure"
+    )
 
     # Load the expected structure directly from the JSON file for comparison
     with open(db_test_structure_file_path) as file:
@@ -208,9 +208,9 @@ def test_load_structure_from_json_file(db_test_structure_file_path):
         expected.element_type_id = uniform_id
 
     # Assert that the entire loaded structure matches the expected structure
-    assert (
-        complete_structure == expected_structure
-    ), "Loaded structure does not match the expected structure"
+    assert complete_structure == expected_structure, (
+        "Loaded structure does not match the expected structure"
+    )
 
 
 def test_load_structure_from_invalid_json_file():
@@ -293,9 +293,9 @@ def verify_structure(session, structure_data):
     for model, data in model_data_pairs:
         actual_count = session.query(model).count()
         expected_count = len(data)
-        assert (
-            actual_count == expected_count
-        ), f"Expected {expected_count} entries for {model.__name__}, found {actual_count}"
+        assert actual_count == expected_count, (
+            f"Expected {expected_count} entries for {model.__name__}, found {actual_count}"
+        )
 
     # Check specific attributes based on JSON data
     for thing_node in structure_data["thing_nodes"]:
@@ -305,9 +305,9 @@ def verify_structure(session, structure_data):
             .one()
         )
         for key, value in thing_node.get("meta_data", {}).items():
-            assert (
-                tn_db.meta_data.get(key) == value
-            ), f"Mismatch in {key} for ThingNode '{tn_db.external_id}'"
+            assert tn_db.meta_data.get(key) == value, (
+                f"Mismatch in {key} for ThingNode '{tn_db.external_id}'"
+            )
 
 
 def test_update_structure(mocked_clean_test_db_session):
@@ -335,18 +335,18 @@ def test_update_structure(mocked_clean_test_db_session):
 
         # Verify that the number of ThingNodes in the database
         # matches the number in the JSON structure
-        assert len(thing_nodes) == len(
-            complete_structure.thing_nodes
-        ), "Mismatch in number of thing nodes"
+        assert len(thing_nodes) == len(complete_structure.thing_nodes), (
+            "Mismatch in number of thing nodes"
+        )
         # Verify that the number of Sources in the database matches the number in the JSON structure
         assert len(sources) == len(complete_structure.sources), "Mismatch in number of sources"
         # Verify that the number of Sinks in the database matches the number in the JSON structure
         assert len(sinks) == len(complete_structure.sinks), "Mismatch in number of sinks"
         # Verify that the number of ElementTypes in the database
         # matches the number in the JSON structure
-        assert len(element_types) == len(
-            complete_structure.element_types
-        ), "Mismatch in number of element types"
+        assert len(element_types) == len(complete_structure.element_types), (
+            "Mismatch in number of element types"
+        )
 
         # Validate that specific ThingNodes, Sources, and Sinks exist in the database
         # Check if the 'Waterworks 1' ThingNode was correctly inserted
@@ -359,9 +359,9 @@ def test_update_structure(mocked_clean_test_db_session):
             (s for s in sources if s.name == "Energy consumption of a single pump in Storage Tank"),
             None,
         )
-        assert (
-            source is not None
-        ), "Expected source 'Energy consumption of a single pump in Storage Tank' not found"
+        assert source is not None, (
+            "Expected source 'Energy consumption of a single pump in Storage Tank' not found"
+        )
 
         # Check if the 'Anomaly Score for the energy usage of the pump system in
         # Storage Tank' Sink was correctly inserted
@@ -418,9 +418,9 @@ def test_update_structure_from_file(mocked_clean_test_db_session):
         for model, data in model_data_map.items():
             actual_count = session.query(model).count()
             expected_count = len(data)
-            assert (
-                actual_count == expected_count
-            ), f"Expected {expected_count} entries for {model.__name__}, found {actual_count}"
+            assert actual_count == expected_count, (
+                f"Expected {expected_count} entries for {model.__name__}, found {actual_count}"
+            )
 
         # Verify attributes for each entry type
         for element_type in structure_data["element_types"]:
@@ -440,9 +440,9 @@ def test_update_structure_from_file(mocked_clean_test_db_session):
             )
             assert db_thing_node.name == thing_node["name"]
             for key, value in thing_node.get("meta_data", {}).items():
-                assert (
-                    db_thing_node.meta_data.get(key) == value
-                ), f"Mismatch in {key} for ThingNode '{db_thing_node.external_id}'"
+                assert db_thing_node.meta_data.get(key) == value, (
+                    f"Mismatch in {key} for ThingNode '{db_thing_node.external_id}'"
+                )
 
         for source in structure_data["sources"]:
             db_source = (
@@ -452,9 +452,9 @@ def test_update_structure_from_file(mocked_clean_test_db_session):
             )
             assert db_source.name == source["name"]
             for key, value in source.get("meta_data", {}).items():
-                assert (
-                    db_source.meta_data.get(key) == value
-                ), f"Mismatch in {key} for Source '{db_source.external_id}'"
+                assert db_source.meta_data.get(key) == value, (
+                    f"Mismatch in {key} for Source '{db_source.external_id}'"
+                )
 
         for sink in structure_data["sinks"]:
             db_sink = (
@@ -464,9 +464,9 @@ def test_update_structure_from_file(mocked_clean_test_db_session):
             )
             assert db_sink.name == sink["name"]
             for key, value in sink.get("meta_data", {}).items():
-                assert (
-                    db_sink.meta_data.get(key) == value
-                ), f"Mismatch in {key} for Sink '{db_sink.external_id}'"
+                assert db_sink.meta_data.get(key) == value, (
+                    f"Mismatch in {key} for Sink '{db_sink.external_id}'"
+                )
 
 
 @pytest.mark.usefixtures("_db_test_structure")
@@ -709,9 +709,9 @@ def test_sort_thing_nodes(mocked_clean_test_db_session):
 
         # Extract and compare actual order
         actual_order = [node.name for node in sorted_nodes]
-        assert (
-            actual_order == expected_order
-        ), f"Expected node order {expected_order}, but got {actual_order}"
+        assert actual_order == expected_order, (
+            f"Expected node order {expected_order}, but got {actual_order}"
+        )
 
         # Check that nodes with the same parent are sorted by external_id
         grouped_nodes = {}
@@ -720,9 +720,9 @@ def test_sort_thing_nodes(mocked_clean_test_db_session):
 
         for group in grouped_nodes.values():
             group_names = [node.name for node in sorted(group, key=lambda x: x.external_id)]
-            assert group_names == [
-                node.name for node in group
-            ], "Nodes should be sorted by external_id. "
+            assert group_names == [node.name for node in group], (
+                "Nodes should be sorted by external_id. "
+            )
             f"Expected {group_names}, got {[node.name for node in group]}"
 
         # Ensure the condition where a parent_node_id is not initially in existing_thing_nodes
@@ -743,9 +743,9 @@ def test_sort_thing_nodes(mocked_clean_test_db_session):
         sorted_nodes_with_orphan = sort_thing_nodes(thing_nodes_in_db)
 
         # Verify that the orphan node is not placed in the list
-        assert (
-            orphan_node not in sorted_nodes_with_orphan
-        ), "Orphan node should not be included in the sorted list"
+        assert orphan_node not in sorted_nodes_with_orphan, (
+            "Orphan node should not be included in the sorted list"
+        )
 
 
 def test_upsert_element_types_success(mocked_clean_test_db_session):
@@ -926,9 +926,9 @@ def verify_children(
     children: list[StructureServiceThingNode], expected_names: set, expected_count: int
 ):
     """Helper function to verify the children nodes."""
-    assert (
-        len(children) == expected_count
-    ), f"Expected {expected_count} children, found {len(children)}"
+    assert len(children) == expected_count, (
+        f"Expected {expected_count} children, found {len(children)}"
+    )
     children_names = {child.name for child in children}
     assert children_names == expected_names, f"Unexpected child names: {children_names}"
 
@@ -937,9 +937,9 @@ def verify_sources(
     sources: list[StructureServiceSource], expected_names: list, expected_count: int
 ):
     """Helper function to verify the sources."""
-    assert (
-        len(sources) == expected_count
-    ), f"Expected {expected_count} source(s), found {len(sources)}"
+    assert len(sources) == expected_count, (
+        f"Expected {expected_count} source(s), found {len(sources)}"
+    )
     actual_names = [source.name for source in sources]
     assert actual_names == expected_names, f"Unexpected source names: {actual_names}"
 

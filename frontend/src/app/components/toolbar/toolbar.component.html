@@ -25,25 +25,18 @@
     >
     @if (isWorkflow) {
       <mat-divider vertical></mat-divider>
-    }
-    @if (isWorkflow) {
       <mat-icon
         class="clickable unselectable"
         title="Show entire workflow"
         (click)="showWorkflow()"
+        >zoom_out_map</mat-icon
       >
-        zoom_out_map</mat-icon
-      >
-    }
-    @if (isWorkflow) {
       <mat-icon
         class="clickable unselectable"
         title="Zoom in"
         (click)="zoomIn()"
         >zoom_in</mat-icon
       >
-    }
-    @if (isWorkflow) {
       <mat-icon
         class="clickable unselectable"
         title="Zoom out"
@@ -56,6 +49,16 @@
     {{ transformation.state }}
   </span>
   <span>
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ upgradeWorkflowOperatorsTooltip }}"
+      (click)="upgradeWorkflowOperators()"
+      *ngIf="isWorkflow"
+      [ngClass]="{ disabled: isReleased() }"
+    >
+      auto_awesome</mat-icon
+    >
+
     <mat-icon
       class="clickable unselectable"
       title="{{ updateExpandTooltip }}"
@@ -73,7 +76,7 @@
     >
       bug_report</mat-icon
     >
-    <mat-divider vertical *ngIf="isComponent"></mat-divider>
+    <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ publishTooltip }}"
