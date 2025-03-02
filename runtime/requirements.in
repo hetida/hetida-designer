@@ -30,6 +30,7 @@ opencv-python-headless
 openpyxl
 ortools
 pandas
+pendulum
 pillow
 plotly==5.15.0
 psycopg2
