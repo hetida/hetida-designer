@@ -680,7 +680,13 @@ def parse_via_pydantic(
     return DynamicModel(  # type: ignore
         **{
             entry["name"]: (
-                entry["value"] if (not null_str_to_None or entry["value"] != "null") else None
+                entry["value"]
+                if (
+                    not null_str_to_None
+                    or not isinstance(entry["value"], str)
+                    or entry["value"] != "null"
+                )
+                else None
             )
             for entry in entries
         }
