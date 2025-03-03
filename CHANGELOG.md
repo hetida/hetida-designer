@@ -1,3 +1,6 @@
+## 0.10.2
+* fix buggy comparison to "null" string for optional input default values
+
 ## 0.10.1
 * fix buggy detection of async component main functions
 * add pendulum dependency for better datetime calculations in components
