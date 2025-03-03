@@ -1,3 +1,8 @@
+## 0.10.1
+* fix buggy detection of async component main functions
+* add pendulum dependency for better datetime calculations in components
+* dependency upgrades
+
 ## 0.10.0
 * add component adapter: Write components that acts as sources/sinks for the adapter system
 * improve workflow operator upgrading:
