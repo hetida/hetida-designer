@@ -562,6 +562,8 @@ def get_all_nested_transformation_revisions(
     with get_session()() as session, session.begin():
         descendants = find_all_nested_transformation_revisions(session, transformation_revision.id)
 
+    # TODO: should this happen in same session?
+
     nested_trafos_by_id = (
         read_multiple_transformation_revisions_by_id_with_possible_caching
         if allow_caching

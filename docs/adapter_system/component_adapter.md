@@ -25,7 +25,7 @@ Configuration can be set via an env file which must be configured via the `HD_CO
 
 Additionally environment variables can be set directly (overriding possible settings from an env file).
 
-Note that some configuration options have to be set for the hetida designer backend service, where the compinent adapter's webservice runs. Others have to be set for the hetida designer runtime service where the adapter data fetching/sending is actually invoked during execution.
+Note that some configuration options have to be set for the hetida designer backend service, where the component adapter's webservice runs. Others have to be set for the hetida designer runtime service where the adapter data fetching/sending is actually invoked during execution.
 
 ### Adapter Activation
 `COMPONENT_ADAPTER_ACTIVE` (default `true`) determines whether the adapter is active. In particular that activates its webservice as part of the hetida designer backend.
