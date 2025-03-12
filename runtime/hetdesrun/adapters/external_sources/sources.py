@@ -2,7 +2,7 @@ import functools
 import json
 import logging
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from httpx import AsyncClient, Response
@@ -24,7 +24,7 @@ source_load_functions: dict[str, Callable] = {}  # source_id -> load func
 
 
 class OpenMeteoParams(BaseModel):
-    query_params: dict[str, str]  # | tuple[tuple[str, str], ...]
+    query_params: dict[str, Any]  # | tuple[tuple[str, str], ...]
 
 
 # Open Meteo Source
