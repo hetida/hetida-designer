@@ -10,6 +10,20 @@ Use Case examples:
 
 This guide assumes the default docker-compose setup described in the project README.
 
+## Import via user interface
+
+On the home tab in the bottom left the user interface provides a import trafos button
+
+<img src="./assets/import_trafos_button.png" width=30 data-align="center">
+
+This button opens a dialog where workflow or component json (or component code) can be pasted into a text input and imported:
+
+<img src="./assets/import_trafos_dialog.png" width=300 data-align="center">
+
+You can enter a single transformation's json or a single component's code.
+
+It is also possible to enter a json array containing transformation jsons or json-serialized component code strings (i.e. a string containing the json escaped component code.)
+
 ## Export / Import via hdctl bash tool
 The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
 

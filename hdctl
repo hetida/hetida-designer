@@ -218,6 +218,65 @@ class InsufficientPlottingData(ComponentException):
     """
 
 
+class PlotTargetSettings(BaseModel):
+    """Settings that plot components can/should use
+
+    Some Plotly settings like locale or the timezone of timestamps must be set
+    by Python and cannot easily be set by plotly.js in a frontend.
+
+    They can be provided to execution endpoints as part of the ExecByIdBase payload,
+    are made accessible to components using the execution context.
+
+    hdutils provides helper functions to access them at runtime.
+    """
+
+    plot_target_timezone: str | None = Field(
+        None,
+        description=(
+            "The timezone plot components should use for datetime axes etc."
+            " Usually via s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)"
+        ),
+        exampels=["Europe/Berlin"],
+    )
+    plot_target_locale: str | None = Field(
+        None,
+        description=(
+            "Locale to set for plots, e.g. to write weekdays in the user's language."
+            " This has to be set in the config of the plotly figure dict and the plotly.js "
+            "must have the associated plotly local scripts loaded."
+        ),
+    )
+    target_darkmode: bool = Field(
+        False, description="Whether plots should be layouted/configured for darkmode"
+    )
+    datetime_tick_format: str | None = Field(
+        None, description="Tickformat to use for datetime axes", examples=["%H:%M<br>%d.%m.%Y"]
+    )
+    datetime_x_axes_range_start: datetime.datetime | None = Field(
+        None, description="datetime range start which plots should set as x axis range"
+    )
+
+    datetime_x_axes_range_end: datetime.datetime | None = Field(
+        None, description="datetime range end which plots should set as x axis range"
+    )
+
+
+def get_plot_target_settings() -> PlotTargetSettings:
+    """Obtain plot settings from runtime execution context.
+
+    If hetdesrun is not importable or this context field is not set,
+    return default values.
+    """
+    try:
+        from hetdesrun.runtime.context import get_runtime_exec_context
+
+        return get_runtime_exec_context().plot_target_settings
+    except ImportError:
+        logger.warning("Could not load runtime exec context, import failed! Switch to defaults.")
+        # return defaults if hetdesrun is not available as import
+        return PlotTargetSettings()
+
+
 class WrappedModelWithCustomObjects(BaseModel):
     model: Any
     custom_objects: dict[str, Any]
@@ -680,7 +739,13 @@ def parse_via_pydantic(
     return DynamicModel(  # type: ignore
         **{
             entry["name"]: (
-                entry["value"] if (not null_str_to_None or entry["value"] != "null") else None
+                entry["value"]
+                if (
+                    not null_str_to_None
+                    or not isinstance(entry["value"], str)
+                    or entry["value"] != "null"
+                )
+                else None
             )
             for entry in entries
         }
@@ -719,7 +784,9 @@ def parse_default_value(component_info: dict, input_name: str) -> Any:
     return parse_value(inp["default_value"], inp["data_type"], True)
 
 
-def plotly_fig_to_json_dict(fig: Figure) -> Any:
+def plotly_fig_to_json_dict(
+    fig: Figure, add_config_settings: bool = True, update_x_axes_tickformat: bool = True
+) -> Any:
     """Turn Plotly figure into a Python dict-like object
 
     This function can be used in visualization components to obtain the
@@ -728,10 +795,23 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
     See visualization components from the accompanying base components for
     examples on usage.
     """
+
+    plot_target_settings = get_plot_target_settings()
+
+    if update_x_axes_tickformat and plot_target_settings.datetime_tick_format is not None:
+        fig.update_xaxes(tickformat=plot_target_settings.datetime_tick_format)
+
+    fig_dict_obj = fig.to_plotly_json()
+    if not "config" in fig_dict_obj:
+        fig_dict_obj["config"] = {}
+
+    if add_config_settings and plot_target_settings.plot_target_locale is not None:
+        fig_dict_obj["config"]["locale"] = plot_target_settings.plot_target_locale
+
     # possibly quite inefficient (multiple serialisation / deserialization) but
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
-    return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
+    return json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
 
 
 def modify_timezone(
