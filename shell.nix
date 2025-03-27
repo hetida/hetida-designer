@@ -270,6 +270,7 @@ let
 
     echo "STARTING RUNTIME"
     PORT=8080 \
+    LOG_LEVEL=DEBUG \
     HD_USE_AUTH=false \
     HD_KAFKA_CONFIGS='
     {

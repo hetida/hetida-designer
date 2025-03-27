@@ -1,3 +1,5 @@
+import resource
+
 from fastapi.encoders import jsonable_encoder
 
 from hetdesrun.adapters import AdapterHandlingException
@@ -61,6 +63,14 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_logger.info(
         "WORKFLOW EXECUTION INPUT JSON:\n%s",
         model_to_pretty_json_str(runtime_input),
+    )
+
+    runtime_logger.debug(
+        "Memory usage at runtime service start (kb): %s (job_id: %s, trafo: %s (%s))",
+        str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss),
+        str(runtime_input.job_id),
+        runtime_input.workflow.tr_name,
+        runtime_input.workflow.tr_tag,
     )
 
     # Parse Workflow
@@ -280,6 +290,14 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_service_measured_step.stop()
 
     wf_exec_result.measured_steps.runtime_service_handling = runtime_service_measured_step
+
+    runtime_logger.debug(
+        "Memory usage at runtime service end (success) (kb): %s (job_id: %s, trafo: %s (%s))",
+        str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss),
+        str(runtime_input.job_id),
+        runtime_input.workflow.tr_name,
+        runtime_input.workflow.tr_tag,
+    )
 
     # TODO: avoid double serialization
     return wf_exec_result
