@@ -335,10 +335,14 @@ def update_code(
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****\n", 1)
 
     old_func_def_lines = old_func_def.split("\n")
-    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[-3].startswith(
-        "async def"
-    )
-    is_coroutine = use_async_def
+
+    is_coroutine = False
+
+    for line in old_func_def_lines:
+        if line.startswith("async def main("):
+            is_coroutine = True
+        elif line.startswith("def main("):
+            is_coroutine = False
 
     new_function_header = generate_function_header(tr, is_coroutine)
 

@@ -1,3 +1,5 @@
+import resource
+
 from fastapi.encoders import jsonable_encoder
 
 from hetdesrun.adapters import AdapterHandlingException
@@ -16,6 +18,7 @@ from hetdesrun.runtime import (
     runtime_logger,
 )
 from hetdesrun.runtime.configuration import execution_config
+from hetdesrun.runtime.context import set_runtime_exec_context
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,
@@ -49,6 +52,9 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     execution_context_filter.bind_context(
         current_code_modules=runtime_input.code_modules, current_components=runtime_input.components
     )
+    execution_context_filter.bind_context(plot_target_settings=runtime_input.plot_target_settings)
+    set_runtime_exec_context(runtime_input.runtime_execution_context)
+
     job_id_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,
@@ -57,6 +63,14 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_logger.info(
         "WORKFLOW EXECUTION INPUT JSON:\n%s",
         model_to_pretty_json_str(runtime_input),
+    )
+
+    runtime_logger.debug(
+        "Memory usage at runtime service start (kb): %s (job_id: %s, trafo: %s (%s))",
+        str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss),
+        str(runtime_input.job_id),
+        runtime_input.workflow.tr_name,
+        runtime_input.workflow.tr_tag,
     )
 
     # Parse Workflow
@@ -276,6 +290,14 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_service_measured_step.stop()
 
     wf_exec_result.measured_steps.runtime_service_handling = runtime_service_measured_step
+
+    runtime_logger.debug(
+        "Memory usage at runtime service end (success) (kb): %s (job_id: %s, trafo: %s (%s))",
+        str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss),
+        str(runtime_input.job_id),
+        runtime_input.workflow.tr_name,
+        runtime_input.workflow.tr_tag,
+    )
 
     # TODO: avoid double serialization
     return wf_exec_result

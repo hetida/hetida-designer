@@ -298,6 +298,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             ),
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
+            runtime_execution_context=exec_by_id_input.runtime_execution_context,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e
@@ -390,7 +391,10 @@ async def execute_transformation_revision(
     if exec_by_id_input.job_id is None:
         exec_by_id_input.job_id = uuid4()
 
-    execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+    execution_context_filter.bind_context(
+        job_id=exec_by_id_input.job_id,
+        runtime_execution_context=exec_by_id_input.runtime_execution_context,
+    )
 
     # Set the reproducibility reference context to the provided reference of the exec object
     repr_reference = deepcopy(exec_by_id_input.resolved_reproducibility_references)

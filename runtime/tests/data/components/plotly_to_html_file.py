@@ -30,9 +30,12 @@ def main(*, data, path):
     # ***** DO NOT EDIT LINES ABOVE *****
 
     # write your function code here.
+
+    config = data.pop("config", None) # removes config key from data dict
+
     fig = Figure(**data)
 
-    fig.write_html(path, include_plotlyjs="cdn")
+    fig.write_html(path, config=config, include_plotlyjs="cdn")
 
 
 # %%

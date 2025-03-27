@@ -661,6 +661,7 @@ async def test_workflow_with_plot_component_and_activated_exec_of_plot_operators
             "height": 200,
             "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
         },
+        "config": {},
     }
 
 

@@ -295,6 +295,98 @@ def test_check_parameter_names():
     assert not check_parameter_names(["1", "x"])
 
 
+def test_update_code_detects_async_def_main():
+    """Test detection of coroutine main function"""
+
+    example_code_async_def: str = """\
+
+
+# %%
+# ***** DO NOT EDIT LINES BELOW *****
+# These lines may be overwritten if component details or inputs/outputs change.
+COMPONENT_INFO = {
+    "inputs": {
+        "bzn": {"data_type": "STRING", "default_value": "DE-LU"},
+        "timestampFrom": {"data_type": "STRING"},
+        "timestampTo": {"data_type": "STRING"},
+        "existing_dayahead_prices": {"data_type": "SERIES", "default_value": []},
+    },
+    "outputs": {
+        "dayahead_prices": {"data_type": "SERIES"},
+    },
+    "name": "Dayahead Prices deduplicated",
+    "category": "Data Sources",
+    "description": "Get Dayahead Prices From Energyinfo",
+    "version_tag": "0.1.0",
+    "id": "30f0b4ab-4664-4012-a7d7-2f63d5ed7e1b",
+    "revision_group_id": "8f552cdc-db91-4c63-af2e-982f6ecea4e8",
+    "state": "DRAFT",
+}
+
+from hdutils import parse_default_value  # noqa: E402, F401
+
+
+async def main(
+    *,
+    timestampFrom,
+    timestampTo,
+    bzn="DE-LU",
+    existing_dayahead_prices=parse_default_value(
+        COMPONENT_INFO, "existing_dayahead_prices"
+    ),
+):
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+
+    # write your function code here.
+    filters = {
+        "bzn": bzn,
+        "timestampFrom": timestampFrom,
+        "timestampTo": timestampTo,
+    }
+    df = await load_energy_charts_info_prices(
+        source_id="Test",
+        filters=filters,
+    )
+    s = pd.Series(
+        data=df["value"].values,
+        index=df["timestamp"],
+        name="dayahead-prices-" + filters["bzn"],
+    )
+
+    df = pd.DataFrame({"old": existing_dayahead_prices, "new": s})
+    only_new = df[df["new"] != df["old"]]["new"].dropna()
+
+    return {"dayahead_prices": only_new}
+
+    """
+    component = TransformationRevision(
+        io_interface=IOInterface(inputs=[], outputs=[]),
+        name="Test Component",
+        description="A test component",
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="RELEASED",
+        type="COMPONENT",
+        released_timestamp="2019-12-01T12:00:00+00:00",
+        content=example_code_async_def,
+        test_wiring=[],
+    )
+
+    updated_code = update_code(component)
+
+    assert "async def main(" in updated_code
+
+    component.content = example_code_async_def.replace("async def main", "def main")
+
+    updated_code = update_code(component)
+
+    assert "async def main(" not in updated_code
+    assert "def main(" in updated_code
+
+
 def test_update_code_without_io():
     component = TransformationRevision(
         io_interface=IOInterface(inputs=[], outputs=[]),

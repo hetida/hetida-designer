@@ -1,3 +1,21 @@
+## 0.10.2
+* fix buggy comparison to "null" string for optional input default values
+
+## 0.10.1
+* fix buggy detection of async component main functions
+* add pendulum dependency for better datetime calculations in components
+* dependency upgrades
+
+## 0.10.0
+* add component adapter: Write components that acts as sources/sinks for the adapter system
+* improve workflow operator upgrading:
+  * upgrading keeps links into and out of the operator if possible (types agree)
+  * new button for auto-upgrading all operators in a DRAFT workflow with respect to released_timestamp of the respective transformation revisions
+* add import transformations button in frontend / home tab: Allows to import components and workflows by pasting json or component code directly in the user interface.
+* add component unit test button: Run component unit tests from designer frontend.
+* add component code cleanup button: formatting, test wiring, release wiring, add documentation as module docstring (if no docstring is present)
+* bugfixes and dependency upgrades
+
 ## 0.9.10
 * dependency upgrades / Docker image upgrades / security upgrades
 * fix Python demo adapter tests
