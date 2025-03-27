@@ -46,7 +46,7 @@
     "@ngrx/entity": "^18.1.1",
     "@ngrx/store": "^18.1.1",
     "angular-auth-oidc-client": "^18.0.2",
-    "angular-plotly.js": "^5.2.2",
+    "angular-plotly.js": "^6.0.0",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",
     "hd-wiring": "0.9.0",
@@ -58,7 +58,7 @@
     "monaco-editor": "^0.49.0",
     "ng-hetida-flowchart": "0.9.0",
     "ngx-monaco-editor-v2": "^18.0.1",
-    "plotly.js": "2.24.2",
+    "plotly.js": "^3.0.1",
     "rxjs": "^7.8.1",
     "zone.js": "^0.14.10"
   },
