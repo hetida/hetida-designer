@@ -25,6 +25,7 @@ export class ComponentEditorComponent implements OnInit {
   public codeCopy: string;
   public lastSavedCode: string;
 
+  private _isAutoSaved = false;
   private readonly _autoSave$ = new Subject<void>();
   private readonly _autoSaveTimer$ = this._autoSave$.pipe(
     debounceTime(environment.autosaveTimer)
@@ -43,8 +44,11 @@ export class ComponentEditorComponent implements OnInit {
     componentTransformation: ComponentTransformation
   ) {
     this._componentTransformation = componentTransformation;
-    this.code = this.componentTransformation.content;
-    this.lastSavedCode = this.componentTransformation.content;
+
+    if (!this._isAutoSaved) {
+      this.code = this.componentTransformation.content;
+      this.lastSavedCode = this.componentTransformation.content;
+    }
 
     if (this.componentTransformation.state !== RevisionState.DRAFT) {
       this.editorOptions = {
@@ -52,6 +56,9 @@ export class ComponentEditorComponent implements OnInit {
         readOnly: true
       };
     }
+
+    // Resetting _isAutoSaved.
+    this._isAutoSaved = false;
   }
 
   get componentTransformation(): ComponentTransformation {
@@ -77,6 +84,9 @@ export class ComponentEditorComponent implements OnInit {
       .pipe(
         switchMap(() => {
           if (this.lastSavedCode !== this.code) {
+            this._isAutoSaved = true;
+            this.lastSavedCode = this.code;
+
             return this.transformationService.updateTransformation({
               ...this.componentTransformation,
               content: this.code
