@@ -44,10 +44,10 @@ def test_parsing():
 
     assert result.z == 2.0
     assert len(result.any_object_new) == 3
-    assert len(result.dict()) == 3
+    assert len(result.model_dump()) == 3
 
     result = parse_dynamically_from_datatypes([])
-    assert result.dict() == {}
+    assert result.model_dump() == {}
 
 
 def test_series_parsing():

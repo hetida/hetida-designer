@@ -295,7 +295,7 @@ async def send_data(
             msg = (
                 "To use the BLOB storage adapter each filtered "
                 "sink must have 'ref_id' and 'ref_key' set!"
-                f"That is not the case for {filtered_sink.json()}"
+                f"That is not the case for {filtered_sink.model_dump_json()}"
             )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)

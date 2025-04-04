@@ -57,7 +57,9 @@ async def test_upgrade_workflow_operator_runs(
     )
 
     async with async_test_client as ac:
-        resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
 
         assert resp.status_code == 200
 
@@ -72,7 +74,7 @@ async def test_upgrade_workflow_operator_runs(
 
         resp = await ac.put(
             f"/api/transformations/{str(workflow_upgrade_operators.id)}/upgrade_operators/9706f684-77d0-4e24-8bba-ae960a3e9f2e/?new_operator_transformation_revision_id=530e54d4-8d1d-477c-a439-c746c37092f8",
-            json=json.loads(workflow_upgrade_operators.json()),
+            json=json.loads(workflow_upgrade_operators.model_dump_json()),
         )
 
         assert resp.status_code == 201

@@ -7,6 +7,7 @@ import pathlib
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -485,7 +486,9 @@ def load_import_source(
             filter_params=FilterParams(), update_config=MultipleTrafosUpdateConfig()
         )
     else:
-        import_config = ImportSourceConfig.parse_file(import_source.config_file)
+        import_config = ImportSourceConfig.model_validate_json(
+            Path(import_source.config_file).read_text()
+        )
 
     # Load trafo revisions
     if import_source.is_dir:

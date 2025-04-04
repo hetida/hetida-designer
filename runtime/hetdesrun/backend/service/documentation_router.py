@@ -57,7 +57,7 @@ async def get_component_revision_by_id(
     documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         transformation_revision
     )
-    logger.debug(documentation_dto.json())
+    logger.debug(documentation_dto.model_dump_json())
 
     return documentation_dto
 
@@ -107,7 +107,7 @@ async def update_documentation(
     persisted_documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_documentation_dto.json())
+    logger.debug(persisted_documentation_dto.model_dump_json())
 
     return persisted_documentation_dto
 

@@ -53,12 +53,14 @@ async def test_producing(two_kafka_configs, mocked_send_encoded_message):
     )
 
     received_encoded_message = mocked_send_encoded_message.call_args.kwargs["encoded_message"]
-    received_msg_object = KafkaSingleValueMessage.parse_raw(received_encoded_message.decode("utf8"))
+    received_msg_object = KafkaSingleValueMessage.model_validate_json(
+        received_encoded_message.decode("utf8")
+    )
     to_send_msg_object = create_message(msg_dict)
     to_send_msg_object.message_creation_timestamp = received_msg_object.message_creation_timestamp
 
     # compare after converting to json since DataFrames are not comparable by default:
-    assert received_msg_object.json() == to_send_msg_object.json()
+    assert received_msg_object.model_dump_json() == to_send_msg_object.model_dump_json()
 
 
 @pytest.mark.asyncio
@@ -109,7 +111,9 @@ async def test_kafka_adapter_producing_any_single_value_message_via_execution_en
     )
 
     received_encoded_message = mocked_send_encoded_message.call_args.kwargs["encoded_message"]
-    received_msg_object = KafkaSingleValueMessage.parse_raw(received_encoded_message.decode("utf8"))
+    received_msg_object = KafkaSingleValueMessage.model_validate_json(
+        received_encoded_message.decode("utf8")
+    )
 
     kf_msg_val = KafkaMessageValue(
         kafka_config_key="test_kafka_config2",
@@ -177,7 +181,9 @@ async def test_kafka_adapter_producing_any_multi_value_message_via_execution_end
     )
 
     received_encoded_message = mocked_send_encoded_message.call_args.kwargs["encoded_message"]
-    received_msg_object = KafkaMultiValueMessage.parse_raw(received_encoded_message.decode("utf8"))
+    received_msg_object = KafkaMultiValueMessage.model_validate_json(
+        received_encoded_message.decode("utf8")
+    )
 
     kf_msg_val = KafkaMessageValue(
         kafka_config_key="test_kafka_config2",

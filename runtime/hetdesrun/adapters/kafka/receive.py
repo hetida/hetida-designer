@@ -31,8 +31,8 @@ def parse_message(
     message_bytes: bytes, multi: bool = False
 ) -> KafkaMultiValueMessage | KafkaSingleValueMessage:
     if multi:
-        return KafkaMultiValueMessage.parse_raw(message_bytes.decode("utf8"))
-    return KafkaSingleValueMessage.parse_raw(message_bytes.decode("utf8"))
+        return KafkaMultiValueMessage.model_validate_json(message_bytes.decode("utf8"))
+    return KafkaSingleValueMessage.model_validate_json(message_bytes.decode("utf8"))
 
 
 async def receive_kafka_message(

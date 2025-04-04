@@ -91,7 +91,7 @@ async def create_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto
 
@@ -165,7 +165,7 @@ async def get_workflow_revision_by_id(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg)
 
     workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(transformation_revision)
-    logger.debug(workflow_dto.json())
+    logger.debug(workflow_dto.model_dump_json())
 
     return workflow_dto
 
@@ -245,7 +245,7 @@ async def update_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto
 
@@ -375,6 +375,6 @@ async def bind_wiring_to_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto

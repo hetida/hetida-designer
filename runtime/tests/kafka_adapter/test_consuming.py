@@ -24,7 +24,7 @@ def mocked_receive_kafka_message():
                 ),
                 type=ExternalType.METADATA_ANY,
             )
-            .json()
+            .model_dump_json()
             .encode("utf8")
         ),
     ) as mocked_receive:
@@ -45,7 +45,7 @@ def mocked_receive_multi_value_kafka_message():
                 },
                 type=ExternalType.METADATA_ANY,
             )
-            .json()
+            .model_dump_json()
             .encode("utf8")
         ),
     ) as mocked_receive:

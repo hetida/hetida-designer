@@ -130,7 +130,7 @@ exec_result_raw = r"""
 """
 
 
-exec_result = ExecutionResponseFrontendDto.parse_raw(exec_result_raw)
+exec_result = ExecutionResponseFrontendDto.model_validate_json(exec_result_raw)
 
 
 class MockKafkaConsumer:
@@ -216,7 +216,7 @@ async def test_consumer_successful_exec_by_id_input():
     mocked_producer.send_and_wait.assert_called_with(
         get_config().hd_kafka_response_topic,
         key=None,
-        value=exec_result.json().encode("utf8"),
+        value=exec_result.model_dump_json().encode("utf8"),
     )
 
 
@@ -235,7 +235,7 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
         mocked_producer.send_and_wait.assert_called_with(
             get_config().hd_kafka_response_topic,
             key=None,
-            value=exec_result.json().encode("utf8"),
+            value=exec_result.model_dump_json().encode("utf8"),
         )
 
 

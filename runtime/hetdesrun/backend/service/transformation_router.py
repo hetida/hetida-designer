@@ -153,7 +153,7 @@ async def create_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    logger.debug(persisted_transformation_revision.model_dump_json())
 
     return persisted_transformation_revision
 
@@ -164,7 +164,7 @@ def change_code(
     update_component_code: bool = False,
 ) -> str:
     """Handle desired code changes"""
-    tr_copy = tr.copy(deep=True)
+    tr_copy = tr.model_copy(deep=True)
     assert isinstance(tr_copy.content, str)  # for mypy # noqa: S101
 
     if update_component_code:
@@ -437,7 +437,7 @@ async def get_transformation_revision_by_id(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     return transformation_revision
 
@@ -803,7 +803,7 @@ async def upgrade_workflow_operator_with_new_rev(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    logger.debug(persisted_transformation_revision.model_dump_json())
 
     return persisted_transformation_revision
 
@@ -899,7 +899,7 @@ async def upgrade_workflow_operators(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    logger.debug(persisted_transformation_revision.model_dump_json())
 
     return persisted_transformation_revision
 
@@ -974,7 +974,7 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    logger.debug(persisted_transformation_revision.model_dump_json())
 
     return persisted_transformation_revision
 
@@ -1147,7 +1147,9 @@ async def test_transformation_revision(
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(unit_test_payload.json()),  # TODO: avoid double serialization.
+                    json=json.loads(
+                        unit_test_payload.model_dump_json()
+                    ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                     timeout=None,
@@ -1198,7 +1200,7 @@ async def send_result_to_callback_url(
             await client.post(
                 callback_url,
                 headers=headers,
-                json=json.loads(result.json()),  # TODO: avoid double serialization.
+                json=json.loads(result.model_dump_json()),  # TODO: avoid double serialization.
                 # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                 # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
             )
@@ -1453,7 +1455,7 @@ async def update_transformation_dashboard_positioning(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
 
 @dashboard_router.get(
@@ -1568,7 +1570,7 @@ async def transformation_dashboard(
         msg = f"Could not find transformation revision {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     # obtain test wiring
     wiring = (

@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timezone
 from enum import Enum
 from functools import cache, cached_property
+from pathlib import Path
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -892,7 +893,7 @@ class AdapterHierarchy(BaseModel):
         path: str = get_blob_adapter_config().adapter_hierarchy_location,
     ) -> "AdapterHierarchy":
         try:
-            return AdapterHierarchy.parse_file(path)
+            return AdapterHierarchy.model_validate_json(Path(path).read_text())
         except FileNotFoundError as error:
             raise MissingHierarchyError(
                 f"Could not find hierarchy json file at path '{path}':\n{str(error)}"

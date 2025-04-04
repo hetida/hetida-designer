@@ -239,7 +239,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             visible=self.visible,
             display_path=self.display_path,
             preset_filters=self.preset_filters,
-            passthrough_filters=[f.dict() for f in self.passthrough_filters]
+            passthrough_filters=[f.model_dump() for f in self.passthrough_filters]
             if self.passthrough_filters
             else None,
             adapter_key=self.adapter_key,
@@ -367,7 +367,7 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
             visible=self.visible,
             display_path=self.display_path,
             preset_filters=self.preset_filters,
-            passthrough_filters=[f.dict() for f in self.passthrough_filters]
+            passthrough_filters=[f.model_dump() for f in self.passthrough_filters]
             if self.passthrough_filters
             else None,
             adapter_key=self.adapter_key,
@@ -444,11 +444,12 @@ class CompleteStructure(BaseModel):
             )
         return v
 
-    @root_validator(skip_on_failure=True)
-    def validate_root_nodes_parent_ids_are_none(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def validate_root_nodes_parent_ids_are_none(self) -> Self:
         # Check if each parent_external_node_id exists in at least one other node
 
-        nodes = values.get("thing_nodes", [])
+        nodes = self.thing_nodes
+
         # Create a set of all external_ids in the thing_nodes list
         external_ids = {node.external_id for node in nodes}
 
@@ -461,11 +462,11 @@ class CompleteStructure(BaseModel):
                     f"parent_external_node_id '{parent_ext_id}' that does "
                     "not reference any existing StructureServiceThingNode."
                 )
-        return values
+        return self
 
-    @root_validator(skip_on_failure=True)
-    def check_for_duplicate_key_and_id_pairs(cls, values: dict[str, Any]) -> dict[str, Any]:
-        for element_name, element_list in values.items():
+    @model_validator(mode="after")
+    def check_for_duplicate_key_and_id_pairs(self) -> Self:
+        for element_name, element_list in dict(self).items():
             seen = set()
             for element in element_list:
                 stakeholder_key = element.stakeholder_key
@@ -479,13 +480,12 @@ class CompleteStructure(BaseModel):
                         "Each key-id pair must be unique within its list!"
                     )
                 seen.add(key_id_pair)
-        return values
 
-    @root_validator(skip_on_failure=True)
-    def check_for_duplicate_ids_in_thing_node_external_ids(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
-        for element_name, element_list in values.items():
+        return self
+
+    @model_validator(mode="after")
+    def check_for_duplicate_ids_in_thing_node_external_ids(self) -> Self:
+        for element_name, element_list in dict(self).items():
             if element_name in ("element_types", "thing_nodes"):
                 continue
 
@@ -502,13 +502,13 @@ class CompleteStructure(BaseModel):
                             "Each id within thing_node_external_ids must be unique!"
                         )
                     seen.add(parent_id)
-        return values
+        return self
 
-    @root_validator(skip_on_failure=True)
-    def check_stakeholder_key_consistency(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def check_stakeholder_key_consistency(self) -> Self:
         # Retrieve the list of thing_nodes from the input values.
         # If 'thing_nodes' is not provided, default to an empty list.
-        thing_nodes = values.get("thing_nodes", [])
+        thing_nodes = dict(self).get("thing_nodes", [])
 
         # Identify root nodes.
         # A root node is defined as a node without a parent (parent_external_node_id is None).
@@ -564,14 +564,17 @@ class CompleteStructure(BaseModel):
                 # Add all child nodes to the stack to continue the traversal.
                 stack.extend(child_nodes)
         # If all hierarchies have consistent stakeholder_keys, return the validated values.
-        return values
+        return self
 
-    @root_validator(skip_on_failure=True)
-    def check_for_circular_reference(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def check_for_circular_reference(self) -> Self:
         # Checks for circular references in the thing_nodes hierarchy
         # by recursively visiting parent nodes.
 
         # Create a dictionary mapping from external_id to the corresponding node for quick access.
+
+        values = dict(self)
+
         nodes_by_external_id = {node.external_id: node for node in values.get("thing_nodes", [])}
 
         # Set to keep track of nodes currently being visited to detect circular references.
@@ -605,12 +608,14 @@ class CompleteStructure(BaseModel):
                 visit(node)
 
         # If no circular references are detected, return the validated values.
-        return values
+        return self
 
-    @root_validator(skip_on_failure=True)
-    def validate_source_sink_references(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def validate_source_sink_references(self) -> Self:
         # Ensure that all sources and sinks reference valid thing_nodes by checking their
         # thing_node_external_ids against the set of known thing_node IDs.
+
+        values = dict(self)
 
         thing_node_ids = {node.external_id for node in values.get("thing_nodes", [])}
         for source in values.get("sources", []):
@@ -637,4 +642,4 @@ class CompleteStructure(BaseModel):
 
         # If all sources and sinks reference existing StructureServiceThingNodes,
         # return the validated values.
-        return values
+        return self

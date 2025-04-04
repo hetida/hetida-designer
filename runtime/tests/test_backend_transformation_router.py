@@ -1483,7 +1483,7 @@ async def test_execute_for_transformation_revision(async_test_client, mocked_cle
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
     assert response.status_code == 200
@@ -1518,7 +1518,7 @@ async def test_execute_for_transformation_revision_with_missing_input_wiring(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
     assert response.status_code == 422
@@ -1540,7 +1540,7 @@ async def test_execute_for_transformation_revision_without_job_id(
 
     exec_by_id_input_json = {
         "id": str(tr_workflow_2.id),
-        "wiring": json.loads(tr_workflow_2.test_wiring.json()),
+        "wiring": json.loads(tr_workflow_2.test_wiring.model_dump_json()),
     }
 
     assert hasattr(exec_by_id_input_json, "job_id") is False
@@ -1597,7 +1597,7 @@ async def test_execute_for_separate_runtime_container(
             async with async_test_client as ac:
                 response = await ac.post(
                     "/api/transformations/execute",
-                    json=json.loads(exec_by_id_input.json()),
+                    json=json.loads(exec_by_id_input.model_dump_json()),
                 )
 
             assert response.status_code == 200
@@ -1694,7 +1694,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
         async with async_test_client as ac:
             response = await ac.post(
                 "/api/transformations/execute-async",
-                json=json.loads(exec_by_id_input.json()),
+                json=json.loads(exec_by_id_input.model_dump_json()),
                 params={"callback_url": "http://callback-url.com/"},
             )
 
@@ -1733,7 +1733,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
             ):
                 await ac.post(
                     "/api/transformations/execute-async",
-                    json=json.loads(exec_by_id_input.json()),
+                    json=json.loads(exec_by_id_input.model_dump_json()),
                     params={"callback_url": "http://callback-url.com"},
                 )
 
@@ -1750,7 +1750,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
                 with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-async",
-                        json=json.loads(exec_by_id_input.json()),
+                        json=json.loads(exec_by_id_input.model_dump_json()),
                         params={"callback_url": "http://callback-url.com"},
                     )
 
@@ -1781,7 +1781,7 @@ async def test_execute_latest_for_transformation_revision_works(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input.json()),
+            json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
         )
 
     assert response.status_code == 200
@@ -1807,7 +1807,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input.json()),
+            json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
         )
 
     assert response.status_code == 404
@@ -1843,7 +1843,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
         async with async_test_client as ac:
             response = await ac.post(
                 "/api/transformations/execute-latest-async",
-                json=json.loads(exec_latest_by_group_id_input.json()),
+                json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                 params={"callback_url": "http://callback-url.com/"},
             )
 
@@ -1883,7 +1883,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
             ):
                 await ac.post(
                     "/api/transformations/execute-latest-async",
-                    json=json.loads(exec_latest_by_group_id_input.json()),
+                    json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                     params={"callback_url": "http://callback-url.com"},
                 )
 
@@ -1900,7 +1900,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                 with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-latest-async",
-                        json=json.loads(exec_latest_by_group_id_input.json()),
+                        json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                         params={"callback_url": "http://callback-url.com"},
                     )
 
@@ -1949,7 +1949,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
 
         response = await ac.put(
             "/api/transformations/" + str(component_id),
-            json=json.loads(updated_component.json(by_alias=True)),
+            json=json.loads(updated_component.model_dump_json(by_alias=True)),
         )
 
         # linear rul from last positive step
@@ -1960,7 +1960,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
 
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
         assert response.status_code == 200
@@ -2022,7 +2022,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
         exec_by_id_input_nat = ExecByIdInput(id=tr_id_series, wiring=wiring_nat)
         response_nan = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input_nan.json()),
+            json=json.loads(exec_by_id_input_nan.model_dump_json()),
         )
 
         assert response_nan.status_code == 200
@@ -2034,7 +2034,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
 
         response_nat = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input_nat.json()),
+            json=json.loads(exec_by_id_input_nat.model_dump_json()),
         )
 
         assert response_nat.status_code == 200
@@ -2056,7 +2056,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
         )
         response_latest_nan = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input_nan.json()),
+            json=json.loads(exec_latest_by_group_id_input_nan.model_dump_json()),
         )
 
         assert response_latest_nan.status_code == 200
@@ -2068,7 +2068,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
 
         response_latest_nat = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input_nat.json()),
+            json=json.loads(exec_latest_by_group_id_input_nat.model_dump_json()),
         )
 
         assert response_latest_nat.status_code == 200
@@ -2190,7 +2190,7 @@ async def test_put_releasing_drafts(async_test_client, mocked_clean_test_db_sess
         response = await ac.put(
             "/api/transformations/",
             params={"update_component_code": False, "release_drafts": True},
-            json=[json.loads(trafo.json())],
+            json=[json.loads(trafo.model_dump_json())],
         )
 
         assert response.status_code == 207

@@ -105,11 +105,12 @@ An example JSON input for a call of this component is:
 """
 
 import logging
+from typing import Self
 
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, ValidationError, model_validator
 
 from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
@@ -127,8 +128,9 @@ class ValueInterval(BaseModel):
     line_color: str | None
     display_name: str | None
 
-    @root_validator(skip_on_failure=True)
-    def verify_value_ranges(cls, values: dict) -> dict:
+    @model_validator
+    def verify_value_ranges(self) -> Self:
+        values = dict(self)
         min_value = values["min_value"]
         min_value_inclusive = values["min_value_inclusive"]
         max_value = values["max_value"]
@@ -146,7 +148,7 @@ class ValueInterval(BaseModel):
                 "To be valid, a value interval must be non-empty, i.e min_value must "
                 "be smaller than max_value."
             )
-        return values
+        return self
 
 
 def plot_series_and_ranges(

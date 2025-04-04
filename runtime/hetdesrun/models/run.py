@@ -446,7 +446,7 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         repr_reference = get_deepcopy_of_reproducibility_reference_context()
 
         return WorkflowExecutionResult(
-            **super().from_exception(exception, process_stage, job_id, cause).dict(),
+            **super().from_exception(exception, process_stage, job_id, cause).model_dump(),
             result="failure",
             node_results=node_results,
             resolved_reproducibility_references=repr_reference,

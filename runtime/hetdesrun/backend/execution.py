@@ -347,7 +347,9 @@ async def run_execution_input(
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(execution_input.json()),  # TODO: avoid double serialization.
+                    json=json.loads(
+                        execution_input.model_dump_json()
+                    ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                     timeout=None,
@@ -419,7 +421,7 @@ async def execute_transformation_revision(
             )
             logger.info(
                 "Reproducibility reference contents at time of wiring resolution: %s",
-                get_deepcopy_of_reproducibility_reference_context().dict(),
+                get_deepcopy_of_reproducibility_reference_context().model_dump(),
             )
             raise TrafoExecutionError() from exc
 

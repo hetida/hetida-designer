@@ -27,7 +27,7 @@ def split_metric_ids(metric_ids_string: str | None) -> list[str]:
     if metric_ids_string is None:
         return []
     try:
-        return MetricList.parse_raw(metric_ids_string).root
+        return MetricList.model_validate_json(metric_ids_string).root
     except ValidationError:
         # handle as comma separated string
         return [x.strip() for x in metric_ids_string.split(",") if x != ""]

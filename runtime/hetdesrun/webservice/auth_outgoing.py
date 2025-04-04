@@ -170,7 +170,7 @@ async def obtain_token_from_auth_provider(
     try:
         resp = await post_to_auth_provider(
             url=url,
-            data=service_user_credentials.grant_credentials.dict(exclude_none=True),
+            data=service_user_credentials.grant_credentials.model_dump(exclude_none=True),
             async_client_kwargs=service_user_credentials.post_client_kwargs,
             post_kwargs=service_user_credentials.post_kwargs,
         )
@@ -183,7 +183,7 @@ async def obtain_token_from_auth_provider(
     token_dict["issue_timestamp"] = now
 
     try:
-        token_response = TokenResponse.parse_obj(token_dict)
+        token_response = TokenResponse.model_validate(token_dict)
     except ValidationError as e:
         msg = (
             f"Could not understand answer to token request from auth provider at"
@@ -233,7 +233,7 @@ async def refresh_token_from_auth_provider(
     token_dict["issue_timestamp"] = now
 
     try:
-        token_response = TokenResponse.parse_obj(token_dict)
+        token_response = TokenResponse.model_validate(token_dict)
     except ValidationError as e:
         msg = (
             f"Could not understand answer to token refresh request from auth provider at"

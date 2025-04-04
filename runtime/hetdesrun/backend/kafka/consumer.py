@@ -155,10 +155,10 @@ async def consume_execution_trigger_message(
                 str(kafka_ctx.consumer.assignment()),
             )
             try:
-                exec_by_id_input = ExecByIdInput.parse_raw(msg.value.decode("utf8"))
+                exec_by_id_input = ExecByIdInput.model_validate_json(msg.value.decode("utf8"))
             except ValidationError as validate_exec_by_id_input_error:
                 try:
-                    exec_latest_by_group_id_input = ExecLatestByGroupIdInput.parse_raw(
+                    exec_latest_by_group_id_input = ExecLatestByGroupIdInput.model_validate_json(
                         msg.value.decode("utf8")
                     )
                 except ValidationError as validate_exec_latest_by_group_id_input_error:
@@ -232,7 +232,7 @@ async def producer_send_result_msg(
     kakfa_ctx: KafkaWorkerContext, exec_result: ExecutionResponseFrontendDto
 ) -> None:
     """Send an execution result message to Kafka result/response topic"""
-    message_value = exec_result.json().encode("utf8")
+    message_value = exec_result.model_dump_json().encode("utf8")
     logger.info(
         "Start sending result message to Kafka response topic for job_id=%s",
         str(exec_result.job_id),

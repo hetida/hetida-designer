@@ -65,7 +65,7 @@ async def get_sources_from_bucket(
                 bucket=bucket, object_key=object_key
             )
             src_list.append(source)
-            logger.debug("Created source:\n%s", source.json())
+            logger.debug("Created source:\n%s", source.model_dump_json())
     return src_list
 
 

@@ -218,7 +218,7 @@ class ComputationNode:
 
     async def _compute_result(self) -> dict[str, Any]:
         # set filter for contextualized logging
-        context_dict = self.context.dict()
+        context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
         runtime_execution_logger.info("Starting computation")
@@ -369,7 +369,7 @@ class Workflow:
         assert isinstance(self, Workflow)  # for mypy # noqa: S101
         self._wire_workflow_inputs()
 
-        context_dict = self.context.dict()
+        context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
         runtime_execution_logger.info("Starting computation")

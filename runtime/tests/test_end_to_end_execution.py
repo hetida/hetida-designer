@@ -91,7 +91,7 @@ async def execute_workflow_execution_input(
     open_async_test_client: AsyncClient,
 ) -> WorkflowExecutionResult:
     response = await open_async_test_client.post(
-        "engine/runtime", json=json.loads(workflow_execution_input.json())
+        "engine/runtime", json=json.loads(workflow_execution_input.model_dump_json())
     )
     if response.status_code != 200:
         raise HTTPException(response.status_code, detail=response.json()["detail"])
@@ -149,7 +149,7 @@ async def test_direct_provisioning_series_metadata(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {"test": 42},
             "__data__": {"name": None, "index": [0, 1, 2], "data": [2.3, 2.4, 2.5]},
@@ -177,7 +177,9 @@ async def test_direct_provisioning_dataframe_metadata(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["attributes"] == {"test": 43}
+        assert exec_result.model_dump()["output_results_by_output_name"]["attributes"] == {
+            "test": 43
+        }
 
         exec_result = await run_single_component(
             (
@@ -194,7 +196,7 @@ async def test_direct_provisioning_dataframe_metadata(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": {"test": 43},
             "__data__": {
@@ -225,7 +227,9 @@ async def test_direct_provisioning_multitsframe_metadata(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["attributes"] == {"test": 44}
+        assert exec_result.model_dump()["output_results_by_output_name"]["attributes"] == {
+            "test": 44
+        }
 
         exec_result = await run_single_component(
             (
@@ -243,7 +247,7 @@ async def test_direct_provisioning_multitsframe_metadata(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": {"test": 44},
             "__data__": {
@@ -268,7 +272,7 @@ async def test_null_values_pass_any_pass_through(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == (
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == (
             {"a": 1.5, "b": None}
         )
 
@@ -286,7 +290,7 @@ async def test_null_list_values_pass_any_pass_through(
             {"input": "[1.2, null]"},
             client,
         )
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == [1.2, None]
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == [1.2, None]
 
 
 @pytest.mark.asyncio
@@ -303,7 +307,7 @@ async def test_null_values_pass_series_pass_through(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {},
             "__data__": {
@@ -322,7 +326,7 @@ async def test_null_values_pass_series_pass_through(
             {"input": "[1.2, 2.5, null]"},
             client,
         )
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {},
             "__data__": {
@@ -348,7 +352,7 @@ async def test_all_null_values_pass_series_pass_through(
             client,
         )
 
-        assert exec_result.dict()["output_results_by_output_name"]["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {},
             "__data__": {

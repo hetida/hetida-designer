@@ -65,7 +65,7 @@ async def test_restricted_single_allowed(
     async with single_allowed_client as client:
         # correct id works
         response = await client.post(
-            "/api/transformations/execute", json=json.loads(exec_by_id_input.json())
+            "/api/transformations/execute", json=json.loads(exec_by_id_input.model_dump_json())
         )
         assert response.status_code == 200
 
@@ -76,7 +76,7 @@ async def test_restricted_single_allowed(
         exec_by_id_input.id = "aaaaaaaa-aaaa-bbbb-cccc-111111111111"
 
         response = await client.post(
-            "/api/transformations/execute", json=json.loads(exec_by_id_input.json())
+            "/api/transformations/execute", json=json.loads(exec_by_id_input.model_dump_json())
         )
 
         assert response.status_code == 403

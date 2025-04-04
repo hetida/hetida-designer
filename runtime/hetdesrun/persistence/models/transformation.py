@@ -573,13 +573,15 @@ class TransformationRevision(BaseModel):
             state=self.state,
             type=self.type,
             documentation=self.documentation,
-            workflow_content=cast(WorkflowContent, self.content).dict()
+            workflow_content=cast(WorkflowContent, self.content).model_dump()
             if self.type is Type.WORKFLOW
             else None,
             component_code=cast(str, self.content) if self.type is Type.COMPONENT else None,
-            io_interface=self.io_interface.dict(),
-            test_wiring=self.test_wiring.dict(),
-            release_wiring=self.release_wiring.dict() if self.release_wiring is not None else None,
+            io_interface=self.io_interface.model_dump(),
+            test_wiring=self.test_wiring.model_dump(),
+            release_wiring=self.release_wiring.model_dump()
+            if self.release_wiring is not None
+            else None,
             released_timestamp=self.released_timestamp,
             disabled_timestamp=self.disabled_timestamp,
         )

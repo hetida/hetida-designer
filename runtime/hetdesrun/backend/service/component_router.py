@@ -91,7 +91,7 @@ async def create_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto
 
@@ -134,7 +134,7 @@ async def get_component_revision_by_id(
     component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         transformation_revision
     )
-    logger.debug(component_dto.json())
+    logger.debug(component_dto.model_dump_json())
 
     return component_dto
 
@@ -214,7 +214,7 @@ async def update_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto
 
@@ -345,6 +345,6 @@ async def bind_wiring_to_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto

@@ -125,8 +125,10 @@ Expected output of the above call is:
 ```
 """
 
+from typing import Self
+
 import pandas as pd
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, ValidationError, model_validator
 
 from hdutils import ComponentInputValidationException
 
@@ -137,8 +139,10 @@ class ValueRange(BaseModel):
     max_value: float
     max_value_inclusive: bool = True
 
-    @root_validator(skip_on_failure=True)
-    def verify_value_ranges(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def verify_value_ranges(self) -> Self:
+        values = dict(self)
+
         try:
             min_value = values["min_value"]
             min_value_inclusive = values["min_value_inclusive"]
@@ -159,7 +163,7 @@ class ValueRange(BaseModel):
                 "To be valid, a value range must be non-empty, i.e min_value must "
                 "be smaller than max_value."
             )
-        return values
+        return self
 
 
 def check_value_ranges(

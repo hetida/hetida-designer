@@ -47,8 +47,8 @@ class TransformationRevisionFrontendDto(BasicInformation):
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[inp.to_io().dict() for inp in self.inputs],
-                outputs=[output.to_io().dict() for output in self.outputs],
+                inputs=[inp.to_io().model_dump() for inp in self.inputs],
+                outputs=[output.to_io().model_dump() for output in self.outputs],
             ),
             content="" if self.type == Type.COMPONENT else WorkflowContent(),
             test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),

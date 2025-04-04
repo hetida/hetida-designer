@@ -116,7 +116,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                     url=adapter_dto.url,
                     internalUrl=adapter_dto.internal_url,
                 )
-                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.parse_obj(
+                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.model_validate(
                     resp.json()
                 ).__root__
             ]

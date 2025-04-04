@@ -33,7 +33,7 @@ def upsert_element_types(
     element_dicts = [
         {
             key: value
-            for key, value in el.dict().items()
+            for key, value in el.model_dump().items()
             if key != "thing_nodes" and not isinstance(value, list)
         }
         for el in elements

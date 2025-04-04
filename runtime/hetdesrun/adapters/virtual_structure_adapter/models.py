@@ -51,7 +51,7 @@ class VirtualStructureAdapterSource(BaseModel):
             type=source.type,
             path=source.display_path,
             metadataKey=source.ref_key,
-            filters={f.internal_name: f.dict() for f in source.passthrough_filters}
+            filters={f.internal_name: f.model_dump() for f in source.passthrough_filters}
             if source.passthrough_filters
             else {},
         )

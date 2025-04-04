@@ -319,12 +319,12 @@ def update_wiring_from_query_parameters(
         wiring = WorkflowWiring()
 
     inp_wirings_by_name = {
-        inp_wiring.workflow_input_name: inp_wiring.copy(deep=True)
+        inp_wiring.workflow_input_name: inp_wiring.model_copy(deep=True)
         for inp_wiring in wiring.input_wirings
     }
 
     outp_wirings_by_name = {
-        outp_wiring.workflow_output_name: outp_wiring.copy(deep=True)
+        outp_wiring.workflow_output_name: outp_wiring.model_copy(deep=True)
         for outp_wiring in wiring.output_wirings
     }
 
@@ -362,10 +362,10 @@ def update_wiring_from_query_parameters(
 
     new_wiring = WorkflowWiring(
         # unpack to dict in order to trigger validation at all levels
-        input_wirings=[inp_wiring.dict() for inp_wiring in inp_wirings_by_name.values()],
-        output_wirings=[outp_wiring.dict() for outp_wiring in outp_wirings_by_name.values()],
+        input_wirings=[inp_wiring.model_dump() for inp_wiring in inp_wirings_by_name.values()],
+        output_wirings=[outp_wiring.model_dump() for outp_wiring in outp_wirings_by_name.values()],
         dashboard_positionings=[
-            dp.dict() for dp in dashboard_positionings_by_dashboard_id.values()
+            dp.model_dump() for dp in dashboard_positionings_by_dashboard_id.values()
         ],
     )
 

@@ -84,4 +84,4 @@ class WorkflowNode(AbstractNode):
     tr_tag: str
 
 
-WorkflowNode.update_forward_refs()
+WorkflowNode.model_rebuild()

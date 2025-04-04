@@ -145,7 +145,7 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
 
     For logging etc.
     """
-    return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
+    return json.dumps(json.loads(pydantic_model.model_dump_json()), indent=2, sort_keys=True)
 
 
 def cache_conditionally(condition_func: Callable) -> Callable:
