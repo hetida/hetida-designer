@@ -16,7 +16,7 @@ from posixpath import join as posix_urljoin
 from typing import Any, Literal
 
 from httpx import AsyncClient, HTTPError, Response
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class ServiceCredentials(BaseModel):
             "Additional keyword arguments for httpx AsyncClient against auth provider."
             " Affects both obtaining and refreshing requests."
         ),
-        example={"verify": False},
+        examples=[{"verify": False}],
     )
     post_kwargs: dict[str, Any] = Field(
         {},
@@ -71,7 +71,7 @@ class ServiceCredentials(BaseModel):
             "Additional keyword arguments for httpx post requests against auth provider."
             " Affects both obtaining and refreshing requests."
         ),
-        example={"timeout": 42.0},
+        examples=[{"timeout": 42.0}],
     )
 
 
@@ -120,9 +120,7 @@ class TokenResponse(BaseModel):
             " Is used to calculate expiration time estimates."
         ),
     )
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def json_parse_token_response(resp: Response) -> dict[str, Any]:

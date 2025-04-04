@@ -1,6 +1,7 @@
 import os
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class LocalFileAdapterConfig(BaseSettings):
@@ -13,7 +14,7 @@ class LocalFileAdapterConfig(BaseSettings):
             " These paths will be made available by the local file adapter."
             " Typically these are volume mounts in the runtime container."
         ),
-        env="RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES",
+        validation_alias="RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES",
     )
     allowed_origins: str = Field(
         (
@@ -21,18 +22,18 @@ class LocalFileAdapterConfig(BaseSettings):
             ",http://localhost,hetida-designer-runtime"
         ),
         description="Comma separated allowed origins (CORS)",
-        env="RUNTIME_LOCAL_FILE_ADAPTER_ALLOWED_ORIGINS",
-        example="http://exampledomain.com,http://anotherexampledomain.de",
+        validation_alias="RUNTIME_LOCAL_FILE_ADAPTER_ALLOWED_ORIGINS",
+        examples=["http://exampledomain.com,http://anotherexampledomain.de"],
     )
     generic_any_sink: bool = Field(
         True,
         description="Whether a generic sink of type ANY is offered in each directory",
-        env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS",
+        validation_alias="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS",
     )
     generic_dataframe_sink: bool = Field(
         True,
         description="Whether a generic sink of type DATAFRAME is offered in each directory",
-        env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_DATAFRAME_SINKS",
+        validation_alias="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_DATAFRAME_SINKS",
     )
 
 

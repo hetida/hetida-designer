@@ -1,9 +1,17 @@
 import logging
 import re
 from contextlib import suppress
+from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import ComponentNode, WorkflowNode
@@ -398,10 +406,16 @@ def outer_link_invalid_due_to_workflow_output(
 class WorkflowContent(BaseModel):
     operators: list[Operator] = []
     operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = Field(
-        {}, description="This field is only used for validation and removed afterwards."
+        {},
+        description="This field is only used for validation and removed afterwards.",
+        exclude=True,
+        validate_default=True,
     )
     operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = Field(
-        {}, description="This field is only used for validation and removed afterwards."
+        {},
+        description="This field is only used for validation and removed afterwards.",
+        exclude=True,
+        validate_default=True,
     )
     links: list[Link] = Field([], description="Links may not form loops.")
     links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = Field(
@@ -411,6 +425,8 @@ class WorkflowContent(BaseModel):
             "At dynamic workflow content inputs at most one link starts, "
             "but at operator outputs more than one link may start."
         ),
+        exclude=True,
+        validate_default=True,
     )
     link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = Field(
         {},
@@ -418,6 +434,8 @@ class WorkflowContent(BaseModel):
             "This field is only used for validation and removed afterwards. Both at workflow "
             "content outputs and operator inputs at most one link ends."
         ),
+        exclude=True,
+        validate_default=True,
     )
     constants: list[WorkflowContentConstantInput] = Field(
         [],
@@ -443,7 +461,8 @@ class WorkflowContent(BaseModel):
         ),
     )
 
-    @validator("operators", each_item=False)
+    @field_validator("operators")
+    @classmethod
     def operator_names_unique(cls, operators: list[Operator]) -> list[Operator]:
         """Ensure that operator names are unique.
 
@@ -487,15 +506,16 @@ class WorkflowContent(BaseModel):
 
         return operators
 
-    @validator("operator_output_by_id_tuple_dict", always=True)
+    @field_validator("operator_output_by_id_tuple_dict")
+    @classmethod
     def initialize_operator_output_by_id_tuple_dict(
         cls,
         operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput],
-        values: dict,
+        info: ValidationInfo,
     ) -> dict[tuple[UUID, UUID], OperatorOutput]:
         """Initialize operator output by operator and connector id tuple dictionary."""
         try:
-            operators: list[Operator] = values["operators"]
+            operators: list[Operator] = info.data["operators"]
         except KeyError as error:
             raise ValueError(
                 "Cannot initialize operator output by id tuple dict "
@@ -508,15 +528,16 @@ class WorkflowContent(BaseModel):
         }
         return operator_output_by_id_tuple_dict
 
-    @validator("operator_input_by_id_tuple_dict", always=True)
+    @field_validator("operator_input_by_id_tuple_dict")
+    @classmethod
     def initialize_operator_input_by_id_tuple_dict(
         cls,
         operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput],
-        values: dict,
+        info: ValidationInfo,
     ) -> dict[tuple[UUID, UUID], OperatorInput]:
         """Initialize operator input by operator and connector id tuple dictionary."""
         try:
-            operators: list[Operator] = values["operators"]
+            operators: list[Operator] = info.data["operators"]
         except KeyError as error:
             raise ValueError(
                 "Cannot initialize operator output by id tuple dict "
@@ -529,8 +550,11 @@ class WorkflowContent(BaseModel):
         }
         return operator_input_by_id_tuple_dict
 
-    @validator("links", each_item=False)
-    def link_connectors_match_operator_ios(cls, links: list[Link], values: dict) -> list[Link]:
+    @field_validator("links")
+    @classmethod
+    def link_connectors_match_operator_ios(
+        cls, links: list[Link], info: ValidationInfo
+    ) -> list[Link]:
         """Delete links with missing or not matching operator inputs or outputs.
 
         Delete links for which
@@ -541,10 +565,10 @@ class WorkflowContent(BaseModel):
         * the found operator input is not exposed.
         """
         try:
-            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = values[
+            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = info.data[
                 "operator_input_by_id_tuple_dict"
             ]
-            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = values[
+            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = info.data[
                 "operator_output_by_id_tuple_dict"
             ]
         except KeyError as error:
@@ -570,7 +594,8 @@ class WorkflowContent(BaseModel):
 
         return links
 
-    @validator("links", each_item=False)
+    @field_validator("links")
+    @classmethod
     def links_acyclic_directed_graph(cls, links: list[Link]) -> list[Link]:
         """Ensure the links correspond to an acylic directed graph.
 
@@ -628,15 +653,16 @@ class WorkflowContent(BaseModel):
 
         return links
 
-    @validator("links_by_start_id_tuple_dict", always=True)
+    @field_validator("links_by_start_id_tuple_dict")
+    @classmethod
     def initialize_links_by_start_id_tuple_dict(
         cls,
         links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]],
-        values: dict,
+        info: ValidationInfo,
     ) -> dict[tuple[UUID | None, UUID], list[Link]]:
         """Initialize link by start operator and connector id tuple dictionary."""
         try:
-            links: list[Link] = values["links"]
+            links: list[Link] = info.data["links"]
         except KeyError as error:
             raise ValueError(
                 "Cannot clean up unlinked inputs "
@@ -655,15 +681,16 @@ class WorkflowContent(BaseModel):
             )
         return links_by_start_id_tuple_dict
 
-    @validator("link_by_end_id_tuple_dict", always=True)
+    @field_validator("link_by_end_id_tuple_dict")
+    @classmethod
     def initialize_link_by_end_id_tuple_dict(
         cls,
         link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link],
-        values: dict,
+        info: ValidationInfo,
     ) -> dict[tuple[UUID | None, UUID], Link]:
         """Initialize link by end operator and connector id tuple dictionary."""
         try:
-            links: list[Link] = values["links"]
+            links: list[Link] = info.data["links"]
         except KeyError as error:
             raise ValueError(
                 "Cannot clean up unlinked inputs "
@@ -674,9 +701,10 @@ class WorkflowContent(BaseModel):
         }
         return link_by_end_id_tuple_dict
 
-    @validator("inputs", each_item=False)
+    @field_validator("inputs")
+    @classmethod
     def clean_up_workflow_content_inputs(
-        cls, inputs: list[WorkflowContentDynamicInput], values: dict
+        cls, inputs: list[WorkflowContentDynamicInput], info: ValidationInfo
     ) -> list[WorkflowContentDynamicInput]:
         """Cleanup unlinked (or wrongly linked named) dynamic workflow content inputs.
 
@@ -684,13 +712,13 @@ class WorkflowContent(BaseModel):
         Delete unnecessary named dynamic workflow content inputs based on the link starting at them.
         """
         try:
-            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = values[
+            operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = info.data[
                 "operator_input_by_id_tuple_dict"
             ]
-            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = info.data[
                 "links_by_start_id_tuple_dict"
             ]
-            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
+            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = info.data[
                 "link_by_end_id_tuple_dict"
             ]
         except KeyError as error:
@@ -721,9 +749,10 @@ class WorkflowContent(BaseModel):
 
         return inputs
 
-    @validator("inputs", each_item=False)
+    @field_validator("inputs")
+    @classmethod
     def add_workflow_content_inputs_for_unlinked_operator_inputs(
-        cls, inputs: list[WorkflowContentDynamicInput], values: dict
+        cls, inputs: list[WorkflowContentDynamicInput], info: ValidationInfo
     ) -> list[WorkflowContentDynamicInput]:
         """Add dynamic workflow content inputs for unlinked operator inputs.
 
@@ -731,9 +760,9 @@ class WorkflowContent(BaseModel):
         that has no link connected to it.
         """
         try:
-            operators: list[Operator] = values["operators"]
-            constants: list[WorkflowContentConstantInput] = values["constants"]
-            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
+            operators: list[Operator] = info.data["operators"]
+            constants: list[WorkflowContentConstantInput] = info.data["constants"]
+            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = info.data[
                 "link_by_end_id_tuple_dict"
             ]
         except KeyError as error:
@@ -799,9 +828,10 @@ class WorkflowContent(BaseModel):
 
         return inputs
 
-    @validator("outputs", each_item=False)
+    @field_validator("outputs")
+    @classmethod
     def clean_up_workflow_content_outputs(
-        cls, outputs: list[WorkflowContentOutput], values: dict
+        cls, outputs: list[WorkflowContentOutput], info: ValidationInfo
     ) -> list[WorkflowContentOutput]:
         """Cleanup unlinked (or wrongly linked named) workflow content outputs.
 
@@ -809,13 +839,13 @@ class WorkflowContent(BaseModel):
         Delete unnecessary named workflow content outputs based on the link ending at them.
         """
         try:
-            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = info.data[
                 "links_by_start_id_tuple_dict"
             ]
-            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
+            link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = info.data[
                 "link_by_end_id_tuple_dict"
             ]
-            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = values[
+            operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = info.data[
                 "operator_output_by_id_tuple_dict"
             ]
         except KeyError as error:
@@ -848,9 +878,10 @@ class WorkflowContent(BaseModel):
 
         return outputs
 
-    @validator("outputs", each_item=False)
+    @field_validator("outputs")
+    @classmethod
     def add_workflow_content_outputs_for_unlinked_operator_outputs(
-        cls, outputs: list[WorkflowContentOutput], values: dict
+        cls, outputs: list[WorkflowContentOutput], info: ValidationInfo
     ) -> list[WorkflowContentOutput]:
         """Add workflow content outputs for unlinked operator outputs.
 
@@ -858,8 +889,8 @@ class WorkflowContent(BaseModel):
         that has no link connected to it.
         """
         try:
-            operators: list[Operator] = values["operators"]
-            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = values[
+            operators: list[Operator] = info.data["operators"]
+            links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = info.data[
                 "links_by_start_id_tuple_dict"
             ]
         except KeyError as error:
@@ -916,7 +947,8 @@ class WorkflowContent(BaseModel):
                         outputs.append(wf_output)
         return outputs
 
-    @validator("inputs", "outputs", each_item=False)
+    @field_validator("inputs", "outputs")
+    @classmethod
     def workflow_content_io_names_empty_or_unique(
         cls, workflow_ios: list[WorkflowContentIO]
     ) -> list[WorkflowContentIO]:
@@ -936,8 +968,8 @@ class WorkflowContent(BaseModel):
 
         return workflow_ios
 
-    @root_validator()
-    def clean_up_outer_links(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def clean_up_outer_links(self) -> Self:
         """Clean up outer links.
 
         Delete links which are invalid due to the referenced workflow content input.
@@ -945,16 +977,10 @@ class WorkflowContent(BaseModel):
 
         New links for named inputs are added by the frontend before sending the PUT-request.
         """
-        try:
-            links: list[Link] = values["links"]
-            constants: list[WorkflowContentConstantInput] = values["constants"]
-            inputs: list[WorkflowContentDynamicInput] = values["inputs"]
-            outputs: list[WorkflowContentOutput] = values["outputs"]
-        except KeyError as error:
-            raise ValueError(
-                "Cannot clean up io links if any of the attributes "
-                "'operators', 'links', 'inputs' and 'outputs' is missing!"
-            ) from error
+        links: list[Link] = self.links
+        constants: list[WorkflowContentConstantInput] = self.constants
+        inputs: list[WorkflowContentDynamicInput] = self.inputs
+        outputs: list[WorkflowContentOutput] = self.outputs
 
         workflow_content_input_by_id_dict: dict[UUID, WorkflowContentIO] = {
             wf_input.id: wf_input for wf_input in inputs
@@ -988,18 +1014,20 @@ class WorkflowContent(BaseModel):
         for link in remove_links:
             links.remove(link)
 
-        return values
+        return self
 
-    @root_validator()
-    def clean_up_dicts(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def clean_up_dicts(self) -> Self:
         """Delete validation helper dictionaries."""
-        with suppress(KeyError):
-            values["operator_output_by_id_tuple_dict"] = {}
-            values["operator_input_by_id_tuple_dict"] = {}
-            values["links_by_start_id_tuple_dict"] = {}
-            values["link_by_end_id_tuple_dict"] = {}
 
-        return values
+        return self.model_copy(
+            update={
+                "operator_output_by_id_tuple_dict": {},
+                "operator_input_by_id_tuple_dict": {},
+                "links_by_start_id_tuple_dict": {},
+                "link_by_end_id_tuple_dict": {},
+            }
+        )
 
     def to_workflow_node(
         self,
@@ -1037,11 +1065,6 @@ class WorkflowContent(BaseModel):
             tr_tag=transformation_tag,
         )
 
-    class Config:
-        frozen = True
-        fields = {
-            "operator_output_by_id_tuple_dict": {"exclude": True},
-            "operator_input_by_id_tuple_dict": {"exclude": True},
-            "links_by_start_id_tuple_dict": {"exclude": True},
-            "link_by_end_id_tuple_dict": {"exclude": True},
-        }
+    model_config = ConfigDict(
+        frozen=True,
+    )

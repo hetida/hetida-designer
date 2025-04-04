@@ -5,7 +5,7 @@ import logging
 from collections.abc import Generator
 from enum import StrEnum
 from types import UnionType
-from typing import Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 from uuid import UUID
 
 import numpy as np
@@ -13,7 +13,20 @@ import pandas as pd
 import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
-from pydantic import BaseConfig, BaseModel, Field, ValidationError, create_model
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    PlainSerializer,
+    RootModel,
+    ValidationError,
+    WrapSerializer,
+    create_model,
+    model_serializer,
+    model_validator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +98,7 @@ class PlotTargetSettings(BaseModel):
             "The timezone plot components should use for datetime axes etc."
             " Usually via s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)"
         ),
-        exampels=["Europe/Berlin"],
+        examples=["Europe/Berlin"],
     )
     plot_target_locale: str | None = Field(
         None,
@@ -127,7 +140,7 @@ def get_plot_target_settings() -> PlotTargetSettings:
 
 
 class WrappedModelWithCustomObjects(BaseModel):
-    model: Any
+    model: Any = None
     custom_objects: dict[str, Any]
 
 
@@ -158,13 +171,15 @@ class MetaDataWrapped(BaseModel):
         ),
     )
 
+    model_config = ConfigDict(serialize_by_alias=True)
+
 
 def try_parse_wrapped(
     data: str | dict | list,
     hd_wrapped_data_object: Literal["SERIES", "DATAFRAME"],
 ) -> MetaDataWrapped:
     if isinstance(data, str):
-        wrapped_data = MetaDataWrapped.parse_raw(data)  # model_validate_json in pydantic 2.0
+        wrapped_data = MetaDataWrapped.model_validate_json(data)
 
         if wrapped_data.hd_wrapped_data_object__ != hd_wrapped_data_object:
             msg = (
@@ -174,7 +189,7 @@ def try_parse_wrapped(
             logger.warning(msg)
             raise TypeError(msg)
     else:
-        wrapped_data = MetaDataWrapped.parse_obj(data)  # model_validate in pydantic 2.0
+        wrapped_data = MetaDataWrapped.model_validate(data)
 
     return wrapped_data
 
@@ -251,7 +266,7 @@ class DataType(StrEnum):
     PlotlyJson = "PLOTLYJSON"
 
 
-class PydanticPandasSeries:
+def parse_pydantic_series(v: pd.Series | str | dict | list) -> pd.Series:
     """Custom pydantic Data Type for parsing Pandas Series
 
     Parses either a json string according to pandas.read_json
@@ -268,33 +283,49 @@ class PydanticPandasSeries:
         '[1.2, 3.5, 2.9]'
 
     """
+    if isinstance(v, pd.Series):
+        return v
 
-    @classmethod
-    def __get_validators__(cls) -> Generator:
-        yield cls.validate
+    if not isinstance(
+        v, str | dict | list
+    ):  # need to check at runtime since we get objects from user code
+        msg = f"Got unexpected type at runtime when parsing Series: {str(type(v))}"
+        logger.error(msg)
+        raise ValueError(msg)
 
-    @classmethod
-    def validate(  # noqa: PLR0911,PLR0912
-        cls, v: pd.Series | str | dict | list
-    ) -> pd.Series:
-        if isinstance(v, pd.Series):
-            return v
+    data_content, metadata, parsing_options = parse_wrapped_content(v, "SERIES")
 
-        if not isinstance(
-            v, str | dict | list
-        ):  # need to check at runtime since we get objects from user code
-            msg = f"Got unexpected type at runtime when parsing Series: {str(type(v))}"
-            logger.error(msg)
-            raise ValueError(msg)
-
-        data_content, metadata, parsing_options = parse_wrapped_content(v, "SERIES")
-
-        return wrap_metadata_as_attrs(
-            parse_pandas_data_content(data_content, "series", parsing_options), metadata
-        )
+    return wrap_metadata_as_attrs(
+        parse_pandas_data_content(data_content, "series", parsing_options), metadata
+    )
 
 
-class PydanticPandasDataFrame:
+def serialize_series(s: pd.Series) -> dict[str, Any]:
+    return {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": s.attrs,
+        "__data__": json.loads(
+            # double serialization7deserialization in order to serialize both NaN and NaT
+            # to null
+            s.to_json(
+                date_format="iso",
+                orient="split",
+                # orient="split" serialization is the only way pandas keeps duplicate index
+                #  (with possibly different values) entries for Series objects!
+            )
+        ),
+        "__data_parsing_options__": {"orient": "split"},
+    }
+
+
+PydanticPandasSeries = Annotated[
+    pd.Series,
+    PlainSerializer(serialize_series),
+    BeforeValidator(parse_pydantic_series),
+]
+
+
+def parse_pydantic_pandas_data_frame(v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
     """Custom pydantic Data Type for parsing Pandas DataFrames
 
     Parses either a json string according to pandas.read_json
@@ -306,112 +337,125 @@ class PydanticPandasDataFrame:
     and then is equipped with the provided metadata in the `attrs`
     attribute (https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.attrs.html
     """
+    if isinstance(v, pd.DataFrame):
+        return v
 
-    @classmethod
-    def __get_validators__(cls) -> Generator:
-        yield cls.validate
+    if not isinstance(
+        v, str | dict | list
+    ):  # need to check at runtime since we get objects from user code
+        msg = f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
+        logger.error(msg)
+        raise ValueError(msg)
 
-    @classmethod
-    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
-        if isinstance(v, pd.DataFrame):
-            return v
+    data_content, metadata, parsing_options = parse_wrapped_content(v, "DATAFRAME")
 
-        if not isinstance(
-            v, str | dict | list
-        ):  # need to check at runtime since we get objects from user code
-            msg = f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
-            logger.error(msg)
-            raise ValueError(msg)
+    return wrap_metadata_as_attrs(
+        parse_pandas_data_content(data_content, "frame", parsing_options), metadata
+    )
 
-        data_content, metadata, parsing_options = parse_wrapped_content(v, "DATAFRAME")
 
-        return wrap_metadata_as_attrs(
-            parse_pandas_data_content(data_content, "frame", parsing_options), metadata
+def serialize_dataframe(df: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": df.attrs,
+        "__data__": json.loads(
+            df.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
+        ),
+    }
+
+
+PydanticPandasDataFrame = Annotated[
+    pd.DataFrame,
+    PlainSerializer(serialize_dataframe),
+    BeforeValidator(parse_pydantic_pandas_data_frame),
+]
+
+
+def validate_multits_properties(  # noqa:PLR0912
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    if len(df.columns) == 0:
+        df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+
+    if len(df.columns) < 3:
+        raise ValueError(
+            "MultiTSFrame requires at least 3 columns: metric, timestamp"
+            f" and at least one additional columns. Only found {str(df.columns)}"
         )
 
-
-class PydanticMultiTimeseriesPandasDataFrame:
-    """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
-
-    Parses data as a dataframe similarly to PydanticPandasDataFrame but
-    additionally checks the column layout and types to match the conventions
-    for a multitsframe.
-    """
-
-    @classmethod
-    def __get_validators__(cls) -> Generator:
-        yield cls.validate_df
-        yield cls.validate_multits_properties
-
-    @classmethod
-    def validate_df(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
-        if isinstance(v, pd.DataFrame):
-            return v
-
-        if not isinstance(
-            v, str | dict | list
-        ):  # need to check at runtime since we get objects from user code
-            msg = f"Got unexpected type at runtime when parsing MultiTsFrame: {str(type(v))}"
-            logger.error(msg)
-            raise ValueError(msg)
-
-        data_content, metadata, parsing_options = parse_wrapped_content(v, "DATAFRAME")
-
-        return wrap_metadata_as_attrs(
-            parse_pandas_data_content(data_content, "frame", parsing_options), metadata
+    if not ({"metric", "timestamp"}.issubset(set(df.columns))):
+        column_names_string = ", ".join(df.columns)
+        raise ValueError(
+            f"The column names {column_names_string} don't contain required columns"
+            ' "timestamp" and "metric" for a MultiTSFrame.'
         )
 
-    @classmethod
-    def validate_multits_properties(  # noqa:PLR0912
-        cls, df: pd.DataFrame
-    ) -> pd.DataFrame:
-        if len(df.columns) == 0:
-            df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+    if df["metric"].isna().any():
+        raise ValueError("No null values are allowed for the column 'metric' of a MulitTSFrame.")
 
-        if len(df.columns) < 3:
-            raise ValueError(
-                "MultiTSFrame requires at least 3 columns: metric, timestamp"
-                f" and at least one additional columns. Only found {str(df.columns)}"
-            )
+    df["metric"] = df["metric"].astype("string")
 
-        if not ({"metric", "timestamp"}.issubset(set(df.columns))):
-            column_names_string = ", ".join(df.columns)
-            raise ValueError(
-                f"The column names {column_names_string} don't contain required columns"
-                ' "timestamp" and "metric" for a MultiTSFrame.'
-            )
+    if df["timestamp"].isna().any():
+        raise ValueError("No null values are allowed for the column 'timestamp' of a MulitTSFrame.")
 
-        if df["metric"].isna().any():
-            raise ValueError(
-                "No null values are allowed for the column 'metric' of a MulitTSFrame."
-            )
+    if len(df.index) == 0:
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
-        df["metric"] = df["metric"].astype("string")
+    if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
+        raise ValueError(
+            "Column 'timestamp' of MultiTSFrame does not have DatetimeTZDtype dtype. "
+            f"Got {str(df['timestamp'].dtype)} index dtype instead."
+        )
 
-        if df["timestamp"].isna().any():
-            raise ValueError(
-                "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
-            )
+    if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+        raise ValueError(
+            "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
+            f"Got {str(df['timestamp'].dt.tz)} timezone instead."
+        )
 
-        if len(df.index) == 0:
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-
-        if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
-            raise ValueError(
-                "Column 'timestamp' of MultiTSFrame does not have DatetimeTZDtype dtype. "
-                f"Got {str(df['timestamp'].dtype)} index dtype instead."
-            )
-
-        if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
-            raise ValueError(
-                "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
-                f"Got {str(df['timestamp'].dt.tz)} timezone instead."
-            )
-
-        return df.sort_values("timestamp")
+    return df.sort_values("timestamp")
 
 
-class ParsedAny:
+def parse_pydantic_multi_timeseries_pandas_data_frame(
+    v: pd.DataFrame | str | dict | list,
+) -> pd.DataFrame:
+    if isinstance(v, pd.DataFrame):
+        return v
+
+    if not isinstance(
+        v, str | dict | list
+    ):  # need to check at runtime since we get objects from user code
+        msg = f"Got unexpected type at runtime when parsing MultiTsFrame: {str(type(v))}"
+        logger.error(msg)
+        raise ValueError(msg)
+
+    data_content, metadata, parsing_options = parse_wrapped_content(v, "DATAFRAME")
+
+    new_df = wrap_metadata_as_attrs(
+        parse_pandas_data_content(data_content, "frame", parsing_options), metadata
+    )
+
+    return validate_multits_properties(new_df)
+
+
+def serialize_multitsframe(df: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": df.attrs,
+        "__data__": json.loads(
+            df.to_json(date_format="iso")
+        ),  # in order to serialize both NaN and NaT to null
+    }
+
+
+PydanticMultiTimeseriesPandasDataFrame = Annotated[
+    pd.DataFrame,
+    PlainSerializer(serialize_multitsframe),
+    BeforeValidator(parse_pydantic_multi_timeseries_pandas_data_frame),
+]
+
+
+def parse_any(v: Any) -> Any:
     """Tries to parse Any objects somehow intelligently
 
     Reason is that an object may be provided by the backend either as a proper json-object directly
@@ -432,40 +476,39 @@ class ParsedAny:
     a string is expected and not an ANY input. Likewise, adapters should offer string data as STRING
     data sources and not as ANY data sources.
     """
+    if isinstance(v, str):
+        # try to parse string as json
+        try:
+            parsed_json_object = json.loads(v)
+        except json.decoder.JSONDecodeError:
+            logger.info(
+                "Could not JSON-parse string %s in Any input."
+                " Therefore treating it as actual string value",
+                v[:30] + "..." if len(v) > 10 else v,
+            )
+            return v
 
-    @classmethod
-    def __get_validators__(cls) -> Generator:
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v: Any) -> Any:
-        if isinstance(v, str):
-            # try to parse string as json
+        if isinstance(
+            parsed_json_object, str
+        ):  # sometimes it even gets double-encoded for some reasons
             try:
-                parsed_json_object = json.loads(v)
+                parsed_json_object = json.loads(parsed_json_object)
             except json.decoder.JSONDecodeError:
                 logger.info(
-                    "Could not JSON-parse string %s in Any input."
+                    "Could not JSON-parse string %s in Any input. "
                     " Therefore treating it as actual string value",
-                    v[:30] + "..." if len(v) > 10 else v,
+                    parsed_json_object[:30] + "..." if len(v) > 10 else v,
                 )
-                return v
+                return parsed_json_object
 
-            if isinstance(
-                parsed_json_object, str
-            ):  # sometimes it even gets double-encoded for some reasons
-                try:
-                    parsed_json_object = json.loads(parsed_json_object)
-                except json.decoder.JSONDecodeError:
-                    logger.info(
-                        "Could not JSON-parse string %s in Any input. "
-                        " Therefore treating it as actual string value",
-                        parsed_json_object[:30] + "..." if len(v) > 10 else v,
-                    )
-                    return parsed_json_object
+        return parsed_json_object
+    return v
 
-            return parsed_json_object
-        return v
+
+ParsedAny = Annotated[
+    Any,
+    BeforeValidator(parse_any),
+]
 
 
 data_type_map: dict[DataType, type] = {
@@ -495,63 +538,84 @@ optional_data_type_map: dict[DataType, UnionType] = {
 }
 
 
-class AdvancedTypesOutputSerializationConfig(BaseConfig):
-    """Enable Pydantic Models to serialize Pandas obejcts with this config class"""
+serializer_funcs_by_type = {
+    pd.Series: lambda v: {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            # double serialization7deserialization in order to serialize both NaN and NaT
+            # to null
+            v.to_json(
+                date_format="iso",
+                orient="split",
+                # orient="split" serialization is the only way pandas keeps duplicate index
+                #  (with possibly different values) entries for Series objects!
+            )
+        ),
+        "__data_parsing_options__": {"orient": "split"},
+    },
+    pd.DataFrame: lambda v: {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
+        ),
+    },
+    PydanticPandasSeries: lambda v: {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            # double serialization7deserialization in order to serialize both NaN and NaT
+            # to null
+            v.to_json(
+                date_format="iso",
+                orient="split",
+                # orient="split" serialization is the only way pandas keeps duplicate index
+                #  (with possibly different values) entries for Series objects!
+            )
+        ),
+        "__data_parsing_options__": {"orient": "split"},
+    },
+    PydanticPandasDataFrame: lambda v: {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
+        ),
+    },
+    PydanticMultiTimeseriesPandasDataFrame: lambda v: {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            v.to_json(date_format="iso")
+        ),  # in order to serialize both NaN and NaT to null
+    },
+    np.ndarray: lambda v: v.tolist(),
+    datetime.datetime: lambda v: v.isoformat(),
+    UUID: lambda v: str(v),  # alternatively: v.hex
+    Figure: lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+}
 
-    # Unfortunately there is no good way to get None for NaN or NaT:
-    json_encoders = {
-        pd.Series: lambda v: {
-            "__hd_wrapped_data_object__": "SERIES",
-            "__metadata__": v.attrs,
-            "__data__": json.loads(
-                # double serialization7deserialization in order to serialize both NaN and NaT
-                # to null
-                v.to_json(
-                    date_format="iso",
-                    orient="split",
-                    # orient="split" serialization is the only way pandas keeps duplicate index
-                    #  (with possibly different values) entries for Series objects!
-                )
-            ),
-            "__data_parsing_options__": {"orient": "split"},
-        },
-        pd.DataFrame: lambda v: {
-            "__hd_wrapped_data_object__": "DATAFRAME",
-            "__metadata__": v.attrs,
-            "__data__": json.loads(
-                v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
-            ),
-        },
-        PydanticPandasSeries: lambda v: {
-            "__hd_wrapped_data_object__": "SERIES",
-            "__metadata__": v.attrs,
-            "__data__": v.to_dict(),
-        },
-        PydanticPandasDataFrame: lambda v: {
-            "__hd_wrapped_data_object__": "DATAFRAME",
-            "__metadata__": v.attrs,
-            "__data__": json.loads(
-                v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
-            ),
-        },
-        PydanticMultiTimeseriesPandasDataFrame: lambda v: {
-            "__hd_wrapped_data_object__": "DATAFRAME",
-            "__metadata__": v.attrs,
-            "__data__": json.loads(
-                v.to_json(date_format="iso")
-            ),  # in order to serialize both NaN and NaT to null
-        },
-        np.ndarray: lambda v: v.tolist(),
-        datetime.datetime: lambda v: v.isoformat(),
-        UUID: lambda v: str(v),  # alternatively: v.hex
-        Figure: lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
-    }
+
+def serialize_hd_obj(value: Any, handler, info) -> Any:
+    # Note that `handler` can actually help serialize the `value` for
+    # further custom serialization in case it's a subclass.
+
+    for typ in serializer_funcs_by_type:
+        if isinstance(value, typ):
+            return serializer_funcs_by_type[typ](value)
+
+    # fall back to default serialization
+    return handler(value, info)
+
+
+HdObj = Any  # Annotated[Any, WrapSerializer(serialize_hd_obj)]
 
 
 class NamedDataTypedValue(TypedDict):
     name: str
     type: DataType  # noqa: A003
-    value: Any
+    value: HdObj
 
 
 def parse_via_pydantic(
@@ -583,9 +647,13 @@ def parse_via_pydantic(
         for entry in entries
     }
 
-    DynamicModel = create_model("DynamicyModel", **type_dict)  # type: ignore
+    DynamicModel = create_model(
+        "DynamicyModel",
+        **type_dict,
+        __config__=ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True),
+    )  # type: ignore
 
-    return DynamicModel(  # type: ignore
+    dyn_obj = DynamicModel(  # type: ignore
         **{
             entry["name"]: (
                 entry["value"]
@@ -599,6 +667,7 @@ def parse_via_pydantic(
             for entry in entries
         }
     )
+    return dyn_obj
 
 
 def parse_dynamically_from_datatypes(
@@ -612,15 +681,37 @@ def parse_dynamically_from_datatypes(
 
 
 def parse_single_value_dynamically(
-    name: str, value: Any, data_type: DataType, nullable: bool
+    name: str, value: HdObj, data_type: DataType, nullable: bool
 ) -> Any:
-    return parse_dynamically_from_datatypes(
-        [{"name": name, "type": data_type, "value": value}], nullable
-    ).dict()[name]
+    return dict(
+        parse_dynamically_from_datatypes(
+            [{"name": name, "type": data_type, "value": value}], nullable
+        )
+    )[name]
 
 
-def parse_value(value: Any, data_type_str: str, nullable: bool) -> Any:
+def parse_value(value: HdObj, data_type_str: str, nullable: bool) -> Any:
     return parse_single_value_dynamically("some_value", value, DataType(data_type_str), nullable)
+
+
+def parse_obj_as_type(obj: Any, target_type: type) -> Any:
+    """Parse a type, e.g. Pydantic Custom Data Type
+
+    Unfortunately defining a Pydantic Custom Data Type using Annotated and a BeforeValidator
+    will only invoke this BeforeValidator if it is a field of another model. If you call
+    it directly on an input object like MyPydanticCustomDataTypeWithBeforeValidator("test"),
+    the BeforeValidator will never be called.
+
+    This function is a workaround to this problem
+    """
+
+    DynamicModel = create_model(
+        "DynamicyModel",
+        value=(target_type, ...),
+        __config__=ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True),
+    )
+
+    return DynamicModel(value=obj).value
 
 
 def parse_default_value(component_info: dict, input_name: str) -> Any:

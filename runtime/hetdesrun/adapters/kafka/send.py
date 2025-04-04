@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def serialize_message(
     msg_object: KafkaSingleValueMessage | KafkaMultiValueMessage,
 ) -> bytes:
-    return msg_object.json().encode("utf8")
+    return msg_object.model_dump_json().encode("utf8")
 
 
 async def send_encoded_message(

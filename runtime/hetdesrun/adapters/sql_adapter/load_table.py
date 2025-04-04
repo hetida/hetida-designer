@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import pandas as pd
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 from sqlalchemy.exc import OperationalError as SQLOpsError
 from sqlalchemy.sql import and_, column, select, table
 from sqlalchemy.sql.selectable import Select
@@ -20,17 +20,14 @@ from hetdesrun.adapters.sql_adapter.utils import (
 logger = logging.getLogger(__name__)
 
 
-class MetricList(BaseModel):
-    """List of timeseries metrics"""
-
-    __root__: list[str]
+MetricList = RootModel[list[str]]  # list of timeseries metrics
 
 
 def split_metric_ids(metric_ids_string: str | None) -> list[str]:
     if metric_ids_string is None:
         return []
     try:
-        return MetricList.parse_raw(metric_ids_string).__root__
+        return MetricList.parse_raw(metric_ids_string).root
     except ValidationError:
         # handle as comma separated string
         return [x.strip() for x in metric_ids_string.split(",") if x != ""]

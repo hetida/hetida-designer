@@ -1030,7 +1030,7 @@ async def handle_trafo_revision_execution_request(
         exec_response = await perf_measured_execute_trafo_rev(exec_by_id)
 
     except TrafoExecutionInputValidationError as err:
-        msg = f"Could not validate execution input\n{exec_by_id.json(indent=2)}:\n{str(err)}"
+        msg = f"Could not validate execution input\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
 

@@ -1,6 +1,7 @@
 import os
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 from hetdesrun.adapters.kafka.models import KafkaConfig
 
@@ -9,7 +10,7 @@ class KafkaAdapterConfig(BaseSettings):
     active: bool = Field(
         True,
         description="Whether Kafka adapter is started",
-        env="KAFKA_ADAPTER_ACTIVE",
+        validation_alias="KAFKA_ADAPTER_ACTIVE",
     )
 
     service_in_runtime: bool = Field(
@@ -18,14 +19,14 @@ class KafkaAdapterConfig(BaseSettings):
             "Whether the API part serving the hd frontend is started as part"
             " of the runtime API service as opposed to as part of the backend API."
         ),
-        env="KAFKA_ADAPTER_SERVICE_IN_RUNTIME",
+        validation_alias="KAFKA_ADAPTER_SERVICE_IN_RUNTIME",
     )
 
     kafka_configs: dict[str, KafkaConfig] = Field(
         {},
         description="Kafka configurations, from which "
         "sinks and sources are generated for the Kafka adapter",
-        env="HD_KAFKA_CONFIGS",
+        validation_alias="HD_KAFKA_CONFIGS",
     )
 
 

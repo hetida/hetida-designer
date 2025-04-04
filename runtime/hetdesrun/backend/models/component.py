@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import Literal
 
+from pydantic import ConfigDict
+
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
@@ -13,9 +15,7 @@ from hetdesrun.utils import State, Type
 class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
     type: Literal[Type.COMPONENT]  # noqa: A003
     code: str
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def to_transformation_revision(self, documentation: str = "") -> TransformationRevision:
         return TransformationRevision(
@@ -35,8 +35,8 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[inp.to_io() for inp in self.inputs],
-                outputs=[output.to_io() for output in self.outputs],
+                inputs=[inp.to_io().dict() for inp in self.inputs],
+                outputs=[output.to_io().dict() for output in self.outputs],
             ),
             content=self.code,
             test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),

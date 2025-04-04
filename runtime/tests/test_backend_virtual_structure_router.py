@@ -65,7 +65,7 @@ async def test_update_structure_with_formally_invalid_structure(
             "/api/structure/update/", json={**maintenance_payload, "new_structure": "'nf'"}
         )
     assert response.status_code == 422, f"Unexpected status code: {response.status_code}"
-    assert "value is not a valid dict" in response.json()["detail"][0]["msg"]
+    assert "Input should be a valid dictionary" in response.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -92,7 +92,7 @@ async def test_update_structure_with_invalid_structure(
             json={**maintenance_payload, "new_structure": json_with_type_mismatch},
         )
     assert response.status_code == 422, f"Unexpected status code: {response.status_code}"
-    assert "str type expected" in response.json()["detail"][0]["msg"]
+    assert "Input should be a valid string" in response.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio

@@ -370,8 +370,7 @@ async def run_execution_input(
                 raise TrafoExecutionResultValidationError(msg) from e
 
     execution_response = ExecutionResponseFrontendDto(
-        **execution_result.dict(),
-        output_types_by_output_name=output_types,
+        **dict(execution_result),
     )
 
     run_execution_input_measured_step.stop()

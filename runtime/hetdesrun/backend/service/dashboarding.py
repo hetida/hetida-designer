@@ -1029,7 +1029,7 @@ def generate_config_panel_div(
                 summary[f"""Test Wiring{" (used as base)" if not use_release_wiring else ""}"""],
                 div[
                     pre(style="width:100%;max-width:inherit")[
-                        transformation_revision.test_wiring.json(indent=2)
+                        transformation_revision.test_wiring.model_dump_json(indent=2)
                     ]
                 ],
             ],
@@ -1037,7 +1037,7 @@ def generate_config_panel_div(
                 summary[f"""Release Wiring{" (used as base)" if use_release_wiring else ""}"""],
                 div[
                     pre(style="width:100%;max-width:inherit")[
-                        transformation_revision.release_wiring.json(indent=2)
+                        transformation_revision.release_wiring.model_dump_json(indent=2)
                         if transformation_revision.release_wiring is not None
                         else "null"
                     ]
@@ -1045,7 +1045,11 @@ def generate_config_panel_div(
             ],
             details(style="margin-bottom: 6px")[
                 summary["Updated Wiring (actually used wiring)"],
-                div[pre(style="width:100%;max-width:inherit")[actually_used_wiring.json(indent=2)]],
+                div[
+                    pre(style="width:100%;max-width:inherit")[
+                        actually_used_wiring.model_dump_json(indent=2)
+                    ]
+                ],
             ],
             details(style="margin-bottom: 6px")[
                 summary["Import Transformation Revisions"],
@@ -1388,7 +1392,9 @@ def error_message_part(exec_resp: ExecutionResponseFrontendDto) -> Element:
                 br,
                 b["Complete Error Information:"],
                 br,
-                pre(style="width:100%;max-width:inherit")[exec_resp.error.json(indent=2)],
+                pre(style="width:100%;max-width:inherit")[
+                    exec_resp.error.model_dump_json(indent=2)
+                ],
             ]
         )
 

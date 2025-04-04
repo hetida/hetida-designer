@@ -1,10 +1,19 @@
 import re
 import uuid
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+    root_validator,
+)
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.persistence.structure_service_dbmodels import (
@@ -25,11 +34,13 @@ class Filter(BaseModel):
     internal_name: str = Field(
         default="",
         description="Name used to identify the filter in the input or output wiring",
+        validate_default=True,
     )
     type: FilterType = Field(..., description="Type of the filter")  # noqa: A003
     required: bool = Field(..., description="Indicates if the filter is required")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_not_empty_only_alphanum_underscores_spaces(cls, value: str) -> str:
         if not re.match(r"^[\w\s]+$", value) or not value.strip():
             raise ValueError(
@@ -38,7 +49,8 @@ class Filter(BaseModel):
             )
         return value
 
-    @validator("internal_name")
+    @field_validator("internal_name")
+    @classmethod
     def internal_name_only_alphanum_and_underscores(cls, value: str) -> str:
         if not re.match(r"^\w+$", value):
             raise ValueError(
@@ -47,14 +59,15 @@ class Filter(BaseModel):
             )
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode="before")
+    @classmethod
     def generate_internal_name_if_not_provided(cls, values: dict) -> dict:
         # Internally the designer requires an identifier for the filter
         # that has to be separated by underscores
         # Hence, an internal name is created for the wiring resoultion
         # performed by the virtual structure adapter
         # if no internal_name is provided by the user
-        if not values["internal_name"]:
+        if (not "internal_name" in values) or not values["internal_name"]:
             values["internal_name"] = "_".join(values["name"].strip().lower().split())
         return values
 
@@ -69,11 +82,12 @@ class StructureServiceCommonFieldsModel(BaseModel):
     stakeholder_key: str = Field(..., description="Stakeholder key for the entity")
     name: str = Field(..., description="Unique name of the entity")
 
-    @validator("external_id", "stakeholder_key", "name")
-    def check_not_empty(cls, v: str, field: Field) -> str:  # type: ignore
-        if not v:
-            raise ValueError(f"The field {field.name} cannot be empty.")  # type: ignore
-        return v
+    @field_validator("external_id", "stakeholder_key", "name", mode="after")
+    @classmethod
+    def check_not_empty(cls, value: str, info: ValidationInfo) -> str:  # type: ignore
+        if not value:
+            raise ValueError(f"The field {info.field_name} cannot be empty.")  # type: ignore
+        return value
 
 
 class StructureServiceElementType(StructureServiceCommonFieldsModel):
@@ -84,9 +98,7 @@ class StructureServiceElementType(StructureServiceCommonFieldsModel):
     description: str | None = Field(
         None, description="Description of the StructureServiceElementType"
     )
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     def to_orm_model(self) -> StructureServiceElementTypeDBModel:
         return StructureServiceElementTypeDBModel(
@@ -143,9 +155,7 @@ class StructureServiceThingNode(StructureServiceCommonFieldsModel):
     meta_data: dict[str, Any] | None = Field(
         None, description="Optional metadata for the Thing Node"
     )
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     def to_orm_model(self) -> StructureServiceThingNodeDBModel:
         return StructureServiceThingNodeDBModel(
@@ -217,9 +227,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
         None,
         description="List of externally provided unique identifiers for the thing nodes",
     )
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     def to_orm_model(self) -> StructureServiceSourceDBModel:
         return StructureServiceSourceDBModel(
@@ -264,7 +272,8 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("passthrough_filters")
+    @field_validator("passthrough_filters")
+    @classmethod
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
         if v is None:
             return v
@@ -280,14 +289,12 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
             seen.add(internal_name)
         return v
 
-    @root_validator(pre=False)
-    def check_for_filter_name_conflicts_with_timestamp_filters(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
+    @model_validator(mode="after")
+    def check_for_filter_name_conflicts_with_timestamp_filters(self) -> Self:
         # Read values
-        src_type = values.get("type")
-        preset_filters = values.get("preset_filters", {})
-        passthrough_filters = values.get("passthrough_filters", [])
+        src_type = self.type
+        preset_filters = self.preset_filters
+        passthrough_filters = self.passthrough_filters
 
         # Check if the source is a series or multitsframe
         if src_type and any(
@@ -314,7 +321,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
                         " Regardless of capitalization."
                     )
 
-        return values
+        return self
 
 
 class StructureServiceSink(StructureServiceCommonFieldsModel):
@@ -348,9 +355,7 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
         None,
         description="List of externally provided unique identifiers for the thing nodes",
     )
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     def to_orm_model(self) -> StructureServiceSinkDBModel:
         return StructureServiceSinkDBModel(
@@ -395,7 +400,8 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
             thing_node_external_ids=orm_model.thing_node_external_ids,
         )
 
-    @validator("passthrough_filters")
+    @field_validator("passthrough_filters")
+    @classmethod
     def passthrough_filters_no_duplicate_keys(cls, v: list[Filter]) -> list[Filter]:
         if v is None:
             return v
@@ -426,7 +432,8 @@ class CompleteStructure(BaseModel):
         default_factory=list, description="All sinks of the structure"
     )
 
-    @validator("element_types")
+    @field_validator("element_types")
+    @classmethod
     def check_element_types_not_empty(
         cls, v: list[StructureServiceElementType]
     ) -> list[StructureServiceElementType]:
@@ -437,7 +444,7 @@ class CompleteStructure(BaseModel):
             )
         return v
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_root_nodes_parent_ids_are_none(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Check if each parent_external_node_id exists in at least one other node
 
@@ -456,7 +463,7 @@ class CompleteStructure(BaseModel):
                 )
         return values
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_for_duplicate_key_and_id_pairs(cls, values: dict[str, Any]) -> dict[str, Any]:
         for element_name, element_list in values.items():
             seen = set()
@@ -474,7 +481,7 @@ class CompleteStructure(BaseModel):
                 seen.add(key_id_pair)
         return values
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_for_duplicate_ids_in_thing_node_external_ids(
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
@@ -497,7 +504,7 @@ class CompleteStructure(BaseModel):
                     seen.add(parent_id)
         return values
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_stakeholder_key_consistency(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Retrieve the list of thing_nodes from the input values.
         # If 'thing_nodes' is not provided, default to an empty list.
@@ -559,7 +566,7 @@ class CompleteStructure(BaseModel):
         # If all hierarchies have consistent stakeholder_keys, return the validated values.
         return values
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_for_circular_reference(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Checks for circular references in the thing_nodes hierarchy
         # by recursively visiting parent nodes.
@@ -600,7 +607,7 @@ class CompleteStructure(BaseModel):
         # If no circular references are detected, return the validated values.
         return values
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_source_sink_references(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Ensure that all sources and sinks reference valid thing_nodes by checking their
         # thing_node_external_ids against the set of known thing_node IDs.

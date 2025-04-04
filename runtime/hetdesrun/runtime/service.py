@@ -1,8 +1,10 @@
 import resource
 
 from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 
 from hetdesrun.adapters import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import external_type_to_datatype
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
     PerformanceMeasuredStep,
@@ -44,7 +46,6 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     This function is used by the runtime endpoint
     """
-
     runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin("RUNTIME_SERVICE")
 
     execution_config.set(runtime_input.configuration)
@@ -253,13 +254,28 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc, currently_executed_process_stage, runtime_input.job_id
         )
 
-    wf_exec_result = WorkflowExecutionResult(
-        result="ok",
-        node_results=node_results,
-        output_results_by_output_name=direct_return_data,
-        job_id=runtime_input.job_id,
-    )
+    currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
 
+    outp_name_to_datatype_map = {
+        wf_output.name: wf_output.type for wf_output in runtime_input.workflow.outputs
+    }
+    try:
+        wf_exec_result = WorkflowExecutionResult(
+            result="ok",
+            node_results=node_results,
+            output_types_by_output_name=outp_name_to_datatype_map,
+            output_results_by_output_name=direct_return_data,
+            job_id=runtime_input.job_id,
+        )
+    except ValidationError as exc:  # noqa: BLE001
+        runtime_logger.info(
+            "Pydantic Validation error during workflow execution result parsing/validation: %s",
+            str(exc),
+            exc_info=True,
+        )
+        return WorkflowExecutionResult.from_exception(
+            exc, currently_executed_process_stage, runtime_input.job_id
+        )
     # attach measured steps
     wf_exec_result.measured_steps.pure_execution = pure_execution_measured_step
     wf_exec_result.measured_steps.load_data = load_data_measured_step
@@ -272,7 +288,6 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     # catch arbitrary serialisation errors
     # (because user can produce arbitrary non-serializable objects)
-    currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
     try:
         jsonable_encoder(wf_exec_result)
     except Exception as exc:  # noqa: BLE001
@@ -299,7 +314,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         runtime_input.workflow.tr_tag,
     )
 
-    # TODO: avoid double serialization
+    # TODO: avoid double serialization (see use of jsonable_encoder above)
     return wf_exec_result
 
 

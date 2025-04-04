@@ -326,7 +326,8 @@ class Workflow:
     ) -> None:
         """Add a node with no inputs providing workflow input data"""
         try:
-            parsed_values = parse_dynamically_from_datatypes(values, optional).dict()
+            parsed_values = dict(parse_dynamically_from_datatypes(values, optional))
+
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "

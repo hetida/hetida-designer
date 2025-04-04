@@ -1,6 +1,15 @@
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    StrictStr,
+    ValidationInfo,
+    field_validator,
+    validator,
+)
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
@@ -19,13 +28,14 @@ class IoWiringFrontendDto(BaseModel):
     ref_key: str | None = None
     type: ExternalType | None = None  # noqa: A003
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def metadata_type_includes_additional_fields(
-        cls, v: ExternalType | None, values: dict
+        cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
         try:
-            ref_id_type = values["ref_id_type"]
-            ref_key = values["ref_key"]
+            ref_id_type = info.data["ref_id_type"]
+            ref_key = info.data["ref_key"]
         except KeyError as e:
             raise ValueError(
                 "Cannot check if metadata type includes additional fields if any of the attributes "
@@ -42,19 +52,20 @@ class IoWiringFrontendDto(BaseModel):
             )
         return v
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class OutputWiringFrontendDto(IoWiringFrontendDto):
     workflow_output_name: str
     adapter_id: StrictInt | StrictStr
 
-    @validator("workflow_output_name")
+    @field_validator("workflow_output_name")
+    @classmethod
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    @validator("adapter_id")
+    @field_validator("adapter_id")
+    @classmethod
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
             not v in SINK_ADAPTERS and not isinstance(v, str)
@@ -85,8 +96,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
             adapterId=output_wiring.adapter_id,
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class InputWiringFrontendDto(IoWiringFrontendDto):
@@ -95,11 +105,13 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     filters: dict = {}
     value: str | None = None
 
-    @validator("workflow_input_name")
+    @field_validator("workflow_input_name")
+    @classmethod
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    @validator("adapter_id")
+    @field_validator("adapter_id")
+    @classmethod
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
             not v in SOURCE_ADAPTERS and not isinstance(v, str)
@@ -132,8 +144,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
             filters=input_wiring.filters,
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class WiringFrontendDto(BaseModel):
@@ -142,7 +153,8 @@ class WiringFrontendDto(BaseModel):
     input_wirings: list[InputWiringFrontendDto]
     output_wirings: list[OutputWiringFrontendDto]
 
-    @validator("input_wirings", each_item=False)
+    @field_validator("input_wirings")
+    @classmethod
     def input_names_unique(
         cls, input_wirings: list[InputWiringFrontendDto]
     ) -> list[InputWiringFrontendDto]:
@@ -153,7 +165,8 @@ class WiringFrontendDto(BaseModel):
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    @validator("output_wirings", each_item=False)
+    @field_validator("output_wirings")
+    @classmethod
     def output_names_unique(
         cls, output_wirings: list[OutputWiringFrontendDto]
     ) -> list[OutputWiringFrontendDto]:
@@ -182,5 +195,4 @@ class WiringFrontendDto(BaseModel):
             ],
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)

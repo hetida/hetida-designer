@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class Metadatum(BaseModel):
     key: str
-    value: Any
+    value: Any = None
     dataType: ValueDataType | None = None
 
 

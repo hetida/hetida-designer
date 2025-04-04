@@ -187,7 +187,10 @@ async def test_get_all_base_items_with_specified_state(
     assert response_disabled.json()[0]["id"] == tr_dto_json_workflow_2["id"]
     assert response_disabled.json()[0]["state"] == "DISABLED"
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert (
+        """Input should be 'DRAFT', 'RELEASED' or 'DISABLED'"""
+        in response_foo.json()["detail"][0]["msg"]
+    )
 
 
 @pytest.mark.asyncio
@@ -229,7 +232,9 @@ async def test_get_all_base_items_with_specified_type(
     assert response_workflow.json()[0] == tr_dto_json_workflow_1
     assert response_workflow.json()[1] == tr_dto_json_workflow_2
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert (
+        """Input should be 'COMPONENT' or 'WORKFLOW'""" in response_foo.json()["detail"][0]["msg"]
+    )
 
 
 @pytest.mark.asyncio

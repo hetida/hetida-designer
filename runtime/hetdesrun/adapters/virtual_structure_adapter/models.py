@@ -37,7 +37,7 @@ class VirtualStructureAdapterSource(BaseModel):
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: str | None
+    metadataKey: str | None = None
     filters: dict[str, dict] | None = {}
 
     @classmethod
@@ -51,7 +51,7 @@ class VirtualStructureAdapterSource(BaseModel):
             type=source.type,
             path=source.display_path,
             metadataKey=source.ref_key,
-            filters={f.internal_name: f for f in source.passthrough_filters}
+            filters={f.internal_name: f.dict() for f in source.passthrough_filters}
             if source.passthrough_filters
             else {},
         )
@@ -66,7 +66,7 @@ class VirtualStructureAdapterSink(BaseModel):
     type: ExternalType  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: str | None
+    metadataKey: str | None = None
     filters: dict[str, dict] | None = {}
 
     @classmethod

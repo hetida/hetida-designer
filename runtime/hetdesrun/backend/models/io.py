@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4  # noqa: A005
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
@@ -25,7 +25,8 @@ class WorkflowIoFrontendDto(BaseModel):
     constant_value: dict | None = None
     constant: bool = False
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_valid_python_identifier(cls, name: str | None) -> str | None:
         if name is None or name == "":
             return name
@@ -97,18 +98,18 @@ class WorkflowIoFrontendDto(BaseModel):
             constantValue={"value": constant.value},
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class ConnectorFrontendDto(BaseModel):
     id: UUID = Field(default_factory=uuid4)  # noqa: A003
-    name: str | None
+    name: str | None = None
     pos_x: int = 0
     pos_y: int = 0
     type: DataType  # noqa: A003
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":
             return name
@@ -145,5 +146,4 @@ class ConnectorFrontendDto(BaseModel):
             type=io.data_type,
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)

@@ -1,21 +1,29 @@
 import re
 from enum import StrEnum
-from typing import Any
+from typing import Annotated
 
-from pydantic import BaseModel, ConstrainedStr, Field, StrictInt, StrictStr, validator
+from pydantic import (
+    BaseModel,
+    Field,
+    StrictInt,
+    StrictStr,
+    ValidationInfo,
+    field_validator,
+    validator,
+)
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
+from hetdesrun.datatypes import HdObj
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
 ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
 RESERVED_FILTER_KEYS = ["from", "to", "id"]
 
-
-class FilterKey(ConstrainedStr):
-    min_length = 1
-    regex = re.compile(r"^[a-zA-Z]\w+$", flags=re.ASCII)
+FilterKey = Annotated[
+    str, Field(min_length=1, pattern=re.compile(r"^[a-zA-Z]\w+$", flags=re.ASCII))
+]
 
 
 class OutputWiring(BaseModel):
@@ -46,7 +54,8 @@ class OutputWiring(BaseModel):
     )
     filters: dict[FilterKey, str | None] = {}
 
-    @validator("adapter_id")
+    @field_validator("adapter_id")
+    @classmethod
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
             not v in SINK_ADAPTERS and not isinstance(v, str)
@@ -56,18 +65,20 @@ class OutputWiring(BaseModel):
             )
         return v
 
-    @validator("workflow_output_name")
+    @field_validator("workflow_output_name")
+    @classmethod
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def metadata_type_includes_additional_fields(
-        cls, v: ExternalType | None, values: dict
+        cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
         if (
             v is not None
             and (GeneralType(v.general_type) == GeneralType.METADATA)
-            and (values["ref_id_type"] is None or values["ref_key"] is None)
+            and (info.data["ref_id_type"] is None or info.data["ref_key"] is None)
         ):
             raise ValueError(
                 "metadata datatype in OutputWiring requires additional fields "
@@ -75,13 +86,17 @@ class OutputWiring(BaseModel):
             )
         return v
 
-    @validator("ref_id")
-    def ref_id_set_for_non_direct_provisioning(cls, v: str | None, values: dict) -> str | None:
-        if values["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+    @field_validator("ref_id")
+    @classmethod
+    def ref_id_set_for_non_direct_provisioning(
+        cls, v: str | None, info: ValidationInfo
+    ) -> str | None:
+        if info.data["adapter_id"] not in {"direct_provisioning", 1} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning output wirings")
         return v
 
-    @validator("filters")
+    @field_validator("filters")
+    @classmethod
     def no_reserved_filter_keys(
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
@@ -90,7 +105,8 @@ class OutputWiring(BaseModel):
 
         return filters
 
-    @validator("filters")
+    @field_validator("filters")
+    @classmethod
     def none_filter_value_to_empty_string(
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
@@ -129,9 +145,10 @@ class InputWiring(BaseModel):
     # sinks need to get the actual value as Python object isntead of a str in order
     # to avoid unnecessary serializing/deserializing between trafo output and
     # component adapter sink execution.
-    filters: dict[FilterKey, str | Any | None] = {}
+    filters: dict[FilterKey, str | HdObj | None] = {}
 
-    @validator("adapter_id")
+    @field_validator("adapter_id")
+    @classmethod
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
             not v in SOURCE_ADAPTERS and not isinstance(v, str)
@@ -141,19 +158,21 @@ class InputWiring(BaseModel):
             )
         return v
 
-    @validator("workflow_input_name")
+    @field_validator("workflow_input_name")
+    @classmethod
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def metadata_type_includes_additional_fields(
-        cls, v: ExternalType | None, values: dict
+        cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
         if (
             v is not None
-            and values["adapter_id"] not in {"direct_provisioning", 1}
+            and info.data["adapter_id"] not in {"direct_provisioning", 1}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
-            and (values["ref_id_type"] is None or values["ref_key"] is None)
+            and (info.data["ref_id_type"] is None or info.data["ref_key"] is None)
         ):
             raise ValueError(
                 "metadata datatype in InputWiring requires additional fields "
@@ -161,13 +180,17 @@ class InputWiring(BaseModel):
             )
         return v
 
-    @validator("ref_id")
-    def ref_id_set_for_non_direct_provisioning(cls, v: str | None, values: dict) -> str | None:
-        if values["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+    @field_validator("ref_id")
+    @classmethod
+    def ref_id_set_for_non_direct_provisioning(
+        cls, v: str | None, info: ValidationInfo
+    ) -> str | None:
+        if info.data["adapter_id"] not in {"direct_provisioning", 1} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning input wirings")
         return v
 
-    @validator("filters")
+    @field_validator("filters")
+    @classmethod
     def no_reserved_filter_keys(
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
@@ -176,7 +199,8 @@ class InputWiring(BaseModel):
 
         return filters
 
-    @validator("filters")
+    @field_validator("filters")
+    @classmethod
     def none_filter_value_to_empty_string(
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
@@ -211,7 +235,8 @@ class WorkflowWiring(BaseModel):
     output_wirings: list[OutputWiring] = []
     dashboard_positionings: list[GridstackItemPositioning] = []
 
-    @validator("input_wirings", each_item=False)
+    @field_validator("input_wirings")
+    @classmethod
     def input_names_unique(cls, input_wirings: list[InputWiring]) -> list[InputWiring]:
         if len({iw.workflow_input_name for iw in input_wirings}) == len(input_wirings):
             return input_wirings
@@ -220,7 +245,8 @@ class WorkflowWiring(BaseModel):
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    @validator("output_wirings", each_item=False)
+    @field_validator("output_wirings")
+    @classmethod
     def output_names_unique(cls, output_wirings: list[OutputWiring]) -> list[OutputWiring]:
         if len({ow.workflow_output_name for ow in output_wirings}) == len(output_wirings):
             return output_wirings

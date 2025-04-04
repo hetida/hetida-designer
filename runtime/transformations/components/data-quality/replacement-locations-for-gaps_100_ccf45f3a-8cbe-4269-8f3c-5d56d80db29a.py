@@ -167,7 +167,7 @@ timeseries can be found in the documentation of the "Gap Detection Intervals" co
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, validator
 
 from hdutils import ComponentInputValidationException
 
@@ -206,19 +206,20 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     gap_intervals: pd.DataFrame
     timeseries: pd.Series | None
     interval_start_timestamp_str: str | None
-    interval_start_timestamp: pd.Timestamp | None = None
+    interval_start_timestamp: pd.Timestamp | None = Field(None, validate_default=True)
     interval_end_timestamp_str: str | None
-    interval_end_timestamp: pd.Timestamp | None = None
+    interval_end_timestamp: pd.Timestamp | None = Field(None, validate_default=True)
     auto_frequency_determination: bool
     percentile: float
     min_amount_datapoints: int
     expected_data_frequency_str: str | None
-    expected_data_frequency: pd.Timedelta | None = None
+    expected_data_frequency: pd.Timedelta | None = Field(None, validate_default=True)
     expected_data_frequency_offset_str: str | None = None
-    expected_data_frequency_offset: pd.Timedelta | None = None
+    expected_data_frequency_offset: pd.Timedelta | None = Field(None, validate_default=True)
     externally_determined_gap_timestamps: pd.Series | None
 
-    @validator("timeseries")
+    @field_validator("timeseries")
+    @classmethod
     def timeseries_index_has_datetime_dtype(cls, timeseries: pd.Series | None) -> pd.Series | None:
         if timeseries is None:
             return timeseries
@@ -235,49 +236,52 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return timeseries
 
-    @validator("interval_start_timestamp", always=True)
+    @field_validator("interval_start_timestamp")
+    @classmethod
     def get_interval_start_timestamp_from_interval_start_timestamp_str(
         cls,
-        interval_start_timestamp: pd.Timestamp | None,  # noqa: ARG002
-        values: dict,
+        interval_start_timestamp: pd.Timestamp | None,  # noqa: ARG003
+        info: ValidationInfo,
     ) -> pd.Timestamp | None:
-        if values["interval_start_timestamp_str"] is None:
+        if info.data["interval_start_timestamp_str"] is None:
             if (
-                "timeseries" in values
-                and values["timeseries"] is not None
-                and len(values["timeseries"]) > 0
+                "timeseries" in info.data
+                and info.data["timeseries"] is not None
+                and len(info.data["timeseries"]) > 0
             ):
-                return values["timeseries"].index[0]
+                return info.data["timeseries"].index[0]
             return None
 
         return timestamp_str_to_pd_timestamp(
-            values["interval_start_timestamp_str"], "interval_start_timestamp_str"
+            info.data["interval_start_timestamp_str"], "interval_start_timestamp_str"
         )
 
-    @validator("interval_end_timestamp", always=True)
+    @field_validator("interval_end_timestamp")
+    @classmethod
     def get_interval_end_timestamp_from_interval_end_timestamp_str(
         cls,
-        interval_end_timestamp: pd.Timestamp | None,  # noqa: ARG002
-        values: dict,
+        interval_end_timestamp: pd.Timestamp | None,  # noqa: ARG003
+        info: ValidationInfo,
     ) -> pd.Timestamp | None:
-        if values["interval_end_timestamp_str"] is None:
+        if info.data["interval_end_timestamp_str"] is None:
             if (
-                "timeseries" in values
-                and values["timeseries"] is not None
-                and len(values["timeseries"]) > 0
+                "timeseries" in info.data
+                and info.data["timeseries"] is not None
+                and len(info.data["timeseries"]) > 0
             ):
-                return values["timeseries"].index[-1]
+                return info.data["timeseries"].index[-1]
             return None
 
         return timestamp_str_to_pd_timestamp(
-            values["interval_end_timestamp_str"], "interval_end_timestamp_str"
+            info.data["interval_end_timestamp_str"], "interval_end_timestamp_str"
         )
 
-    @validator("interval_end_timestamp")
+    @field_validator("interval_end_timestamp")
+    @classmethod
     def check_interval_end_timestamp_later_than_interval_start_timestamp(
-        cls, interval_end_timestamp: pd.Timestamp | None, values: dict
+        cls, interval_end_timestamp: pd.Timestamp | None, info: ValidationInfo
     ) -> pd.Timestamp | None:
-        interval_start_timestamp = values["interval_start_timestamp"]
+        interval_start_timestamp = info.data["interval_start_timestamp"]
         if (
             None not in (interval_start_timestamp, interval_end_timestamp)
             and interval_start_timestamp > interval_end_timestamp
@@ -294,7 +298,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return interval_end_timestamp
 
-    @validator("percentile")
+    @field_validator("percentile")
+    @classmethod
     def check_percentile_in_allowed_range(cls, percentile: float) -> float:
         if (percentile < 0) or (percentile > 1):
             raise ComponentInputValidationException(
@@ -304,7 +309,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return percentile
 
-    @validator("min_amount_datapoints")
+    @field_validator("min_amount_datapoints")
+    @classmethod
     def check_min_amount_datapoints_non_negative(cls, min_amount_datapoints: int) -> int:
         if min_amount_datapoints < 0:
             raise ComponentInputValidationException(
@@ -314,11 +320,12 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return min_amount_datapoints
 
-    @validator("expected_data_frequency_str", always=True)
+    @field_validator("expected_data_frequency_str")
+    @classmethod
     def check_correct_input_param_combination_with_expected_data_frequency(
-        cls, expected_data_frequency_str: str, values: dict
+        cls, expected_data_frequency_str: str, info: ValidationInfo
     ) -> str:
-        auto_frequency_determination = values["auto_frequency_determination"]
+        auto_frequency_determination = info.data["auto_frequency_determination"]
         if auto_frequency_determination is False:
             if expected_data_frequency_str is None:
                 raise ComponentInputValidationException(
@@ -342,26 +349,27 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return expected_data_frequency_str
 
-    @validator("expected_data_frequency", always=True)
+    @field_validator("expected_data_frequency")
+    @classmethod
     def get_expected_data_frequency_from_expected_data_frequency_str(
         cls,
-        expected_data_frequency: pd.Timedelta | None,  # noqa: ARG002
-        values: dict,
+        expected_data_frequency: pd.Timedelta | None,  # noqa: ARG003
+        info: ValidationInfo,
     ) -> pd.Timedelta | None:
-        if values["expected_data_frequency_str"] is None:
+        if info.data["expected_data_frequency_str"] is None:
             return None
         return freqstr2timedelta(
-            values["expected_data_frequency_str"], "expected_data_frequency_str"
+            info.data["expected_data_frequency_str"], "expected_data_frequency_str"
         )
 
-    @validator("expected_data_frequency_offset_str")
+    @field_validator("expected_data_frequency_offset_str")
     def check_correct_input_param_combination_with_expected_data_frequency_offset(
-        cls, expected_data_frequency_offset_str: str, values: dict
+        cls, expected_data_frequency_offset_str: str, info: ValidationInfo
     ) -> str:
         if expected_data_frequency_offset_str is None:
             return None
-        auto_frequency_determination = values["auto_frequency_determination"]
-        expected_data_frequency_str = values["expected_data_frequency_str"]
+        auto_frequency_determination = info.data["auto_frequency_determination"]
+        expected_data_frequency_str = info.data["expected_data_frequency_str"]
         if auto_frequency_determination is True:
             raise ComponentInputValidationException(
                 "The expected_data_frequency_offset_str must not be set, "
@@ -384,26 +392,28 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return expected_data_frequency_offset_str
 
-    @validator("expected_data_frequency_offset", always=True)
+    @field_validator("expected_data_frequency_offset")
+    @classmethod
     def get_expected_data_frequency_offset_from_expected_data_frequency_offset_str(
         cls,
-        expected_data_frequency_offset: pd.Timedelta | None,  # noqa: ARG002
-        values: dict,
+        expected_data_frequency_offset: pd.Timedelta | None,  # noqa: ARG003
+        info: ValidationInfo,
     ) -> pd.Timedelta | None:
         if (
-            "expected_data_frequency_offset_str" not in values
-            or values["expected_data_frequency_offset_str"] is None
+            "expected_data_frequency_offset_str" not in info.data
+            or info.data["expected_data_frequency_offset_str"] is None
         ):
             return None
         return (
             freqstr2timedelta(
-                values["expected_data_frequency_offset_str"],
+                info.data["expected_data_frequency_offset_str"],
                 "expected_data_frequency_offset_str",
             )
-            % values["expected_data_frequency"]
+            % info.data["expected_data_frequency"]
         )
 
-    @validator("gap_intervals")
+    @field_validator("gap_intervals")
+    @classmethod
     def check_required_gap_intervals_columns_are_present(
         cls, gap_intervals: pd.DataFrame | None
     ) -> pd.DataFrame | None:
@@ -429,7 +439,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
 
         return gap_intervals
 
-    @validator("gap_intervals")
+    @field_validator("gap_intervals")
+    @classmethod
     def check_gap_intervals_columns_have_datetime_dtype(
         cls, gap_intervals: pd.DataFrame | None
     ) -> pd.DataFrame | None:
@@ -451,7 +462,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return gap_intervals
 
-    @validator("gap_intervals")
+    @field_validator("gap_intervals")
+    @classmethod
     def check_gap_intervals_start_before_end(
         cls, gap_intervals: pd.DataFrame | None
     ) -> pd.DataFrame | None:

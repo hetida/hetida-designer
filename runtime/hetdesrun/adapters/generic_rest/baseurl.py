@@ -5,7 +5,7 @@ import threading
 from posixpath import join as posix_urljoin
 
 import httpx
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
@@ -37,12 +37,9 @@ class BackendRegisteredGenericRestAdapter(BaseModel):
     internalUrl: str
 
 
-class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
-    __root__: list[AdapterFrontendDto]
+AdapterFrontendDtoRegisteredGenericRestAdapters = RootModel[list[AdapterFrontendDto]]
 
-
-class BackendRegisteredGenericRestAdapters(BaseModel):
-    __root__: list[BackendRegisteredGenericRestAdapter]
+BackendRegisteredGenericRestAdapters = RootModel[list[BackendRegisteredGenericRestAdapter]]
 
 
 async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestAdapter]:

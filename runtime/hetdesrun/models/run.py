@@ -3,13 +3,26 @@
 import datetime
 import traceback as tb
 from enum import Enum, StrEnum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
-from hdutils import PlotTargetSettings
-from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hdutils import (
+    DataType,
+    PlotTargetSettings,
+    data_type_map,
+    parse_obj_as_type,
+    serializer_funcs_by_type,
+)
+from hetdesrun.datatypes import HdObj
 from hetdesrun.models.base import Result
 from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
@@ -43,13 +56,15 @@ class PerformanceMeasuredStep(BaseModel):
         new_step.begin()
         return new_step
 
-    @validator("start")
+    @field_validator("start")
+    @classmethod
     def start_utc_datetime(cls, start):  # type: ignore
         if not check_explicit_utc(start):
             raise ValueError("start datetime for measurement must be explicit utc")
         return start
 
-    @validator("end")
+    @field_validator("end")
+    @classmethod
     def end_utc_datetime(cls, end):  # type: ignore
         if not check_explicit_utc(end):
             raise ValueError("end datetime for measurement must be explicit utc")
@@ -83,7 +98,7 @@ class ConfigurationInput(BaseModel):
     engine: ExecutionEngine = Field(
         ExecutionEngine.Plain,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(ExecutionEngine)]),
-        example=ExecutionEngine.Plain,
+        examples=[ExecutionEngine.Plain],
     )
     run_pure_plot_operators: bool = Field(
         True,
@@ -136,20 +151,22 @@ class WorkflowExecutionInput(BaseModel):
         description="General settings to influence aspects of workflow/component execution",
     )
 
-    @validator("components")
+    @field_validator("components")
+    @classmethod
     def components_unique(cls, components: list[ComponentRevision]) -> list[ComponentRevision]:
         if len({c.uuid for c in components}) != len(components):
             raise ValueError("Components not unique!")
         return components
 
-    @validator("code_modules")
+    @field_validator("code_modules")
+    @classmethod
     def code_modules_unique(cls, code_modules: list[CodeModule]) -> list[CodeModule]:
         if len({c.uuid for c in code_modules}) != len(code_modules):
             raise ValueError("Code Modules not unique!")
         return code_modules
 
-    @root_validator(skip_on_failure=True)
-    def check_wiring_complete(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def check_wiring_complete(self) -> Self:
         """Every (non-constant) required Workflow input/output must be wired
 
         Checks whether there is a wiring for every non-constant required workflow input
@@ -157,14 +174,8 @@ class WorkflowExecutionInput(BaseModel):
         input wiring and a workflow output for each output wiring.
         """
 
-        try:
-            wiring: WorkflowWiring = values["workflow_wiring"]
-            workflow: WorkflowNode = values["workflow"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check if wiring is complete if "
-                "one of the attributes 'wiring' or 'workflow' is missing!"
-            ) from e
+        wiring: WorkflowWiring = self.workflow_wiring
+        workflow: WorkflowNode = self.workflow
 
         # Check that every Workflow Input is wired:
         wired_input_names = {inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings}
@@ -210,9 +221,7 @@ class WorkflowExecutionInput(BaseModel):
                     f"Wiring does not match: There is no workflow output '{wired_output_name}'!"
                 )
 
-        return values
-
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+        return self
 
 
 class TransformationInfo(BaseModel):
@@ -304,16 +313,65 @@ def get_location_of_exception(exception: Exception | BaseException) -> ErrorLoca
     )
 
 
+def to_correct_obj_by_datatype(obj, data_type: DataType) -> Any:
+    if obj is None:
+        return None
+    if data_type is None or data_type is DataType.Any:
+        return obj
+
+    return parse_obj_as_type(obj, data_type_map[data_type])
+
+
 class WorkflowExecutionInfo(BaseModel):
     error: WorkflowExecutionError | None = Field(None, description="error string")
+    output_types_by_output_name: dict[str, DataType | None] = Field(
+        ..., description="types corresponding to results in output_results_by_output_name"
+    )
     output_results_by_output_name: dict[str, Any] = Field(
         ...,
         description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
+
     traceback: str | None = Field(None, description="traceback")
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+
+    @field_serializer("output_results_by_output_name")
+    def serialize_output_result_dict(
+        self, output_results_by_output_name: dict[str, Any]
+    ) -> dict[str, Any]:
+        output_datatypes_by_output_name = self.output_types_by_output_name
+        return {
+            outp_name: serializer_funcs_by_type.get(
+                data_type_map[output_datatypes_by_output_name[outp_name]], lambda x: x
+            )(obj)
+            for outp_name, obj in output_results_by_output_name.items()
+        }
+
+    @field_validator("output_results_by_output_name")
+    @classmethod
+    def correct_objects_according_to_output_types(
+        cls, output_results_by_output_name, info: ValidationInfo
+    ):
+        output_types_by_output_name = info.data.get("output_types_by_output_name")
+        if output_types_by_output_name is None:
+            raise ValueError(
+                "Missing output_types_by_output_name, cannot validate output_results_by_output_name"
+            )
+
+        # Validate; We have a datatype for each output result:
+        for outp_name in output_results_by_output_name:
+            if not outp_name in output_types_by_output_name:
+                raise ValueError(
+                    f"Output with name {outp_name} has no entry in output_types_by_output_name"
+                )
+        correct_objects = {
+            outp_name: to_correct_obj_by_datatype(obj, output_types_by_output_name[outp_name])
+            for outp_name, obj in output_results_by_output_name.items()
+        }
+
+        return correct_objects
 
     @classmethod
     def from_exception(
@@ -349,17 +407,16 @@ class WorkflowExecutionInfo(BaseModel):
             ),
             traceback=tb.format_exc(),
             output_results_by_output_name={},
+            output_types_by_output_name={},
             job_id=job_id,
         )
-
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 
 
 class WorkflowExecutionResult(WorkflowExecutionInfo):
     result: Result = Field(
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),  # type: ignore
-        example=Result.OK,
+        examples=[Result.OK],
     )
     node_results: str | None = Field(
         None,

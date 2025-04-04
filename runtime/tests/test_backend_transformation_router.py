@@ -769,7 +769,7 @@ async def test_get_all_transformation_revisions_with_specified_state(
     assert response_disabled.json()[0]["id"] == tr_json_workflow_2_with_named_io_for_operator["id"]
     assert response_disabled.json()[0]["state"] == "DISABLED"
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert "Input should be" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -803,7 +803,7 @@ async def test_get_all_transformation_revisions_with_specified_type(
     assert response_workflow.json()[0] == tr_json_workflow_1
     assert response_workflow.json()[1] == tr_json_workflow_2_with_named_io_for_operator
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert "Input should be" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -838,7 +838,7 @@ async def test_get_all_transformation_revisions_with_specified_category(
     assert len(response_aepfel.json()) == 1
     assert response_aepfel.json()[0] == tr_json_component_3
     assert response_single_quote.status_code == 422
-    assert "string does not match regex" in response_single_quote.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response_single_quote.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -875,7 +875,7 @@ async def test_get_all_transformation_revisions_with_specified_category_prefix(
     assert len(response_aepfel.json()) == 1
     assert response_aepfel.json()[0] == tr_json_component_3
     assert response_single_quote.status_code == 422
-    assert "string does not match regex" in response_single_quote.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response_single_quote.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -1241,7 +1241,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
 
     print(response.json())
     assert response.status_code == 422
-    assert "string does not match regex" in response.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response.json()["detail"][0]["msg"]
     assert "name" in response.json()["detail"][0]["loc"]
 
 
@@ -1706,7 +1706,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
         assert func_name == ""
         assert len(kwargs) == 0
         assert len(args) == 2
-        assert args[0] == "http://callback-url.com/"
+        assert str(args[0]) == "http://callback-url.com/"
         assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
         assert args[1].output_results_by_output_name == {"wf_output": 100}
         assert args[1].output_types_by_output_name == {"wf_output": "INT"}
@@ -1855,10 +1855,10 @@ async def test_execute_latest_async_for_transformation_revision_works(
         assert func_name == ""
         assert len(kwargs) == 0
         assert len(args) == 2
-        assert args[0] == "http://callback-url.com/"
+        assert str(args[0]) == "http://callback-url.com/"
 
         assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
-        assert args[1].output_results_by_output_name == {"operator_output": 100}
+        assert args[1].output_results_by_output_name == {"operator_output": "100"}
         assert args[1].output_types_by_output_name == {"operator_output": "STRING"}
         assert str(args[1].result) == "ok"
 

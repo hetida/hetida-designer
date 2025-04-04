@@ -2,10 +2,18 @@ import re
 from datetime import datetime, timezone
 from enum import Enum
 from functools import cache, cached_property
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    validator,
+)
 
 from hetdesrun.adapters.blob_storage import (
     BUCKET_NAME_DIR_SEPARATOR,
@@ -19,17 +27,16 @@ from hetdesrun.adapters.blob_storage import (
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 
+ThingNodeName = Annotated[
+    str, Field(min_length=1, max_length=63, pattern=re.compile(r"^[a-zA-Z0-9]+$"))
+]
 
-class ThingNodeName(ConstrainedStr):
-    min_length = 1
-    max_length = 63
-    regex = re.compile(r"^[a-zA-Z0-9]+$")
-
-
-class BucketName(ConstrainedStr):
-    min_length = 3
-    max_length = 63
-    regex = re.compile(rf"^[a-z0-9{BUCKET_NAME_DIR_SEPARATOR}]+$")
+BucketName = Annotated[
+    str,
+    Field(
+        min_length=3, max_length=63, pattern=re.compile(rf"^[a-z0-9{BUCKET_NAME_DIR_SEPARATOR}]+$")
+    ),
+]
 
 
 class FileExtension(str, Enum):
@@ -43,20 +50,22 @@ class FileExtension(str, Enum):
     CustomObjectsPkl = "custom_objects_pkl"
 
 
-class IdString(ConstrainedStr):
-    min_length = 1
-    regex = re.compile(
-        r"^[a-zA-Z0-9:+\-"
-        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
-        rf"(|({'|'.join(FILE_EXTENSION_SEPARATOR + ext.value for ext in FileExtension)}))$"
-    )
+IdString = Annotated[
+    str,
+    Field(
+        min_length=1,
+        pattern=re.compile(
+            r"^[a-zA-Z0-9:+\-"
+            rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
+            rf"(|({'|'.join(FILE_EXTENSION_SEPARATOR + ext.value for ext in FileExtension)}))$"
+        ),
+    ),
+]
 
 
 class StructureBucket(BaseModel):
     name: BucketName
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 def get_structure_bucket_and_object_key_prefix_from_id(
@@ -91,7 +100,8 @@ class ObjectKey(BaseModel):
     job_id: UUID
     file_extension: FileExtension
 
-    @validator("string")
+    @field_validator("string")
+    @classmethod
     def string_matches_pattern(cls, string: str) -> str:
         if string.count(FILE_EXTENSION_SEPARATOR) != 1:
             raise ValueError(
@@ -122,10 +132,11 @@ class ObjectKey(BaseModel):
 
         return string
 
-    @validator("name")
-    def name_matches_string(cls, name: str, values: dict) -> str:
+    @field_validator("name")
+    @classmethod
+    def name_matches_string(cls, name: str, info: ValidationInfo) -> str:
         try:
-            string = values["string"]
+            string = info.data["string"]
         except KeyError as error:
             raise ValueError(
                 "Cannot check if object key's time matches its string if the string is missing!"
@@ -136,10 +147,11 @@ class ObjectKey(BaseModel):
             raise ValueError(f"The object key's name '{name}' does not match its string {string}!")
         return name
 
-    @validator("time")
-    def time_matches_string(cls, time: datetime, values: dict) -> datetime:
+    @field_validator("time")
+    @classmethod
+    def time_matches_string(cls, time: datetime, info: dict) -> datetime:
         try:
-            string = values["string"]
+            string = info.data["string"]
         except KeyError as error:
             raise ValueError(
                 "Cannot check if object key's time matches its string if the string is missing!"
@@ -152,7 +164,8 @@ class ObjectKey(BaseModel):
             )
         return time
 
-    @validator("time")
+    @field_validator("time")
+    @classmethod
     def has_timezone_utc(cls, time: datetime) -> datetime:
         if time.tzinfo != timezone.utc:
             raise ValueError(
@@ -160,10 +173,11 @@ class ObjectKey(BaseModel):
             )
         return time
 
-    @validator("job_id")
-    def job_id_matches_string(cls, job_id: UUID, values: dict) -> UUID:
+    @field_validator("job_id")
+    @classmethod
+    def job_id_matches_string(cls, job_id: UUID, info: ValidationInfo) -> UUID:
         try:
-            string = values["string"]
+            string = info.data["string"]
         except KeyError as error:
             raise ValueError(
                 "Cannot check if object key's time matches its string if the string is missing!"
@@ -176,10 +190,11 @@ class ObjectKey(BaseModel):
             )
         return job_id
 
-    @validator("file_extension")
-    def file_extension_matches_string(cls, file_extension: str, values: dict) -> str:
+    @field_validator("file_extension")
+    @classmethod
+    def file_extension_matches_string(cls, file_extension: str, info: ValidationInfo) -> str:
         try:
-            string = values["string"]
+            string = info.data["string"]
         except KeyError as error:
             raise ValueError(
                 "Cannot check if object key's time matches its string if the string is missing!"
@@ -315,11 +330,14 @@ class StructureThingNode(BaseModel):
     name: ThingNodeName
     description: str
 
-    @validator("name")
-    def id_consists_of_parent_id_and_name(cls, name: ThingNodeName, values: dict) -> ThingNodeName:
+    @field_validator("name")
+    @classmethod
+    def id_consists_of_parent_id_and_name(
+        cls, name: ThingNodeName, info: ValidationInfo
+    ) -> ThingNodeName:
         try:
-            id = values["id"]  # noqa: A001
-            parent_id = values["parentId"]
+            id = info.data["id"]  # noqa: A001
+            parent_id = info.data["parentId"]
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if id consists of parent id and lowered name '{name}' "
@@ -359,7 +377,8 @@ class BlobStorageStructureSource(BaseModel):
     visible: Literal[True] = True
     filters: dict[str, StructureFilter] | None = {}
 
-    @validator("id")
+    @field_validator("id")
+    @classmethod
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
         _, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(id)
         try:
@@ -371,10 +390,11 @@ class BlobStorageStructureSource(BaseModel):
             ) from e
         return id
 
-    @validator("thingNodeId")
-    def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
+    @field_validator("thingNodeId")
+    @classmethod
+    def thing_node_id_matches_id(cls, thingNodeId: IdString, info: ValidationInfo) -> IdString:
         try:
-            id = values["id"]  # noqa: A001
+            id = info.data["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the source's thingNodeId '{thingNodeId}' matches its id "
@@ -388,10 +408,10 @@ class BlobStorageStructureSource(BaseModel):
             )
         return thingNodeId
 
-    @validator("name")
-    def name_matches_id(cls, name: str, values: dict) -> str:
+    @field_validator("name")
+    def name_matches_id(cls, name: str, info: ValidationInfo) -> str:
         try:
-            id = values["id"]  # noqa: A001
+            id = info.data["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the source's name '{name}' matches its id "
@@ -442,10 +462,11 @@ class BlobStorageStructureSource(BaseModel):
 
         return name
 
-    @validator("path")
-    def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
+    @field_validator("path")
+    @classmethod
+    def path_matches_thing_node_id(cls, path: str, info: ValidationInfo) -> str:
         try:
-            thingNodeId = values["thingNodeId"]
+            thingNodeId = info.data["thingNodeId"]
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if source's path '{path}' matches its thingNodeId "
@@ -460,10 +481,11 @@ class BlobStorageStructureSource(BaseModel):
 
         return path
 
-    @validator("metadataKey")
-    def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
+    @field_validator("metadataKey")
+    @classmethod
+    def metadata_key_matches_name(cls, metadataKey: str, info: ValidationInfo) -> str:
         try:
-            name = values["name"]
+            name = info.data["name"]
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if source's metadataKey '{metadataKey}' matches its name "
@@ -521,7 +543,8 @@ class BlobStorageStructureSink(BaseModel):
         )
     }
 
-    @validator("id")
+    @field_validator("id")
+    @classmethod
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
         bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(id)
 
@@ -532,10 +555,11 @@ class BlobStorageStructureSink(BaseModel):
             )
         return id
 
-    @validator("thingNodeId")
-    def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
+    @field_validator("thingNodeId")
+    @classmethod
+    def thing_node_id_matches_id(cls, thingNodeId: IdString, info: ValidationInfo) -> IdString:
         try:
-            id = values["id"]  # noqa: A001
+            id = info.data["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the sink's thingNodeId '{thingNodeId}' matches its id "
@@ -551,10 +575,11 @@ class BlobStorageStructureSink(BaseModel):
             )
         return thingNodeId
 
-    @validator("name")
-    def name_matches_id(cls, name: str, values: dict) -> str:
+    @field_validator("name")
+    @classmethod
+    def name_matches_id(cls, name: str, info: ValidationInfo) -> str:
         try:
-            id = values["id"]  # noqa: A001
+            id = info.data["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the sink's name '{name}' matches its id if the attribute 'id' "
@@ -580,10 +605,11 @@ class BlobStorageStructureSink(BaseModel):
 
         return name
 
-    @validator("path")
-    def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
+    @field_validator("path")
+    @classmethod
+    def path_matches_thing_node_id(cls, path: str, info: ValidationInfo) -> str:
         try:
-            thingNodeId = values["thingNodeId"]
+            thingNodeId = info.data["thingNodeId"]
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if sink's path '{path}' matches its thingNodeId "
@@ -598,10 +624,11 @@ class BlobStorageStructureSink(BaseModel):
 
         return path
 
-    @validator("metadataKey")
-    def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
+    @field_validator("metadataKey")
+    @classmethod
+    def metadata_key_matches_name(cls, metadataKey: str, info: ValidationInfo) -> str:
         try:
-            name = values["name"]
+            name = info.data["name"]
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if sink's metadataKey '{metadataKey}' matches its name "
@@ -658,9 +685,7 @@ class HierarchyNode(BaseModel):
     description: str
     substructure: tuple["HierarchyNode", ...] | None = None
     below_structure_defines_object_key: bool = False
-
-    class Config:
-        frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
+    model_config = ConfigDict(frozen=True)
 
     def get_depth(self) -> int:
         depth = 1
@@ -791,12 +816,9 @@ class AdapterHierarchy(BaseModel):
     """
 
     structure: tuple[HierarchyNode, ...]
-
-    class Config:
-        arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)  # cached_property currently not supported by pydantic
-        # https://github.com/pydantic/pydantic/issues/1241
-        frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, ignored_types=(cached_property,), frozen=True
+    )
 
     @cached_property
     def create_structure(
