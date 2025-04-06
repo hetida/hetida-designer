@@ -1,6 +1,6 @@
 import os
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from pydantic_settings import BaseSettings
 
 
@@ -36,8 +36,10 @@ class LocalFileAdapterConfig(BaseSettings):
         validation_alias="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_DATAFRAME_SINKS",
     )
 
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
 
-environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
+
+environment_file = os.environ.get("HD_LOCAL_FILE_ADAPTER_ENVIRONMENT_FILE", None)
 
 local_file_adapter_config = LocalFileAdapterConfig(
     _env_file=environment_file if environment_file else None  # type: ignore[call-arg]

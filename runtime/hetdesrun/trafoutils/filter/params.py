@@ -48,4 +48,4 @@ class FilterParams(BaseModel):
             "not contained in workflows that do not have the state DISABLED."
         ),
     )
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, validate_by_alias=True, validate_by_name=True)

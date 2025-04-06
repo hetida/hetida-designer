@@ -4,12 +4,12 @@ from typing import Annotated
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     StrictInt,
     StrictStr,
     ValidationInfo,
     field_validator,
-    validator,
 )
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
@@ -53,6 +53,8 @@ class OutputWiring(BaseModel):
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
     filters: dict[FilterKey, str | None] = {}
+
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("adapter_id")
     @classmethod
@@ -146,6 +148,8 @@ class InputWiring(BaseModel):
     # to avoid unnecessary serializing/deserializing between trafo output and
     # component adapter sink execution.
     filters: dict[FilterKey, str | HdObj | None] = {}
+
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("adapter_id")
     @classmethod

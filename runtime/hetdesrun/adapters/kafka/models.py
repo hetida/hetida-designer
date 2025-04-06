@@ -1,7 +1,7 @@
 import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_serializer, field_validator
 
 from hdutils import data_type_map, serializer_funcs_by_type
 from hetdesrun.adapters.generic_rest.external_types import (
@@ -242,3 +242,4 @@ class KafkaWrappedHdData(BaseModel):
         " Kafka messages from other sources that should be handled by hetida designer"
         " in order to trace job progress.",
     )
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)

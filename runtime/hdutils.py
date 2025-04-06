@@ -171,7 +171,9 @@ class MetaDataWrapped(BaseModel):
         ),
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(
+        serialize_by_alias=True, validate_by_alias=True, validate_by_name=True
+    )
 
 
 def try_parse_wrapped(

@@ -134,6 +134,8 @@ class SQLAdapterConfig(BaseSettings):
         [], validation_alias="SQL_ADAPTER_SQL_DATABASES"
     )
 
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
+
     @field_validator("sql_databases")
     @classmethod
     def unique_db_keys(cls, v: list[SQLAdapterDBConfig]) -> list[SQLAdapterDBConfig]:

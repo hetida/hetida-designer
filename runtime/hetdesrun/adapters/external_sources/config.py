@@ -1,6 +1,6 @@
 import os
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from pydantic_settings import BaseSettings
 
 
@@ -22,6 +22,7 @@ class ExternalSourcesAdapterConfig(BaseSettings):
     )
 
     openmeteo_api_key: str | None = Field(None, validation_alias="OPEN_METEO_API_KEY")
+    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
 
 
 environment_file = os.environ.get("HD_EXTERNAL_SOURCES_ADAPTER_ENVIRONMENT_FILE", None)
