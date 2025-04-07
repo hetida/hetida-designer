@@ -453,12 +453,8 @@ class TestSctructuredErrors:
         assert result.error.type == "NodeFunctionLoadingError"  # cause: NameError
         assert result.error.error_code is None
         assert (
-            result.error.message
-            == (  # cause: "name 'asdf' is not defined"
-                "Could not load node function "
-                "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
-                "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
-            )
+            "Could not load node function "
+            in result.error.message  # cause: "name 'asdf' is not defined"
         )
         assert result.error.extra_information is None
         assert result.error.location is not None

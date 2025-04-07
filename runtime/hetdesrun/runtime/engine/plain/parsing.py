@@ -94,6 +94,7 @@ def load_func(
         msg = (
             f"Could not load node function (Code module uuid: "
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
+            f" {component.name} ({str(component.tag)})) "
             f"function name: {component.function_name})"
         )
         runtime_logger.warning(msg)

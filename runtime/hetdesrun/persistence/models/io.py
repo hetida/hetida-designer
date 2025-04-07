@@ -98,8 +98,8 @@ class IOInterface(BaseModel):
 
 
 class Position(BaseModel):
-    x: int
-    y: int
+    x: float
+    y: float  # frontend actually uses half-values (0.5) occasionally
 
 
 class Connector(IO):

@@ -124,11 +124,11 @@ class ValueInterval(BaseModel):
     min_value_inclusive: bool = True
     max_value: float
     max_value_inclusive: bool = True
-    fill_color: str | None
-    line_color: str | None
-    display_name: str | None
+    fill_color: str | None = None
+    line_color: str | None = None
+    display_name: str | None = None
 
-    @model_validator
+    @model_validator(mode="after")
     def verify_value_ranges(self) -> Self:
         values = dict(self)
         min_value = values["min_value"]
