@@ -1,7 +1,7 @@
 import os
 
-from pydantic import ConfigDict, Field
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hetdesrun.models.code import ValidStr
 from hetdesrun.utils import State
@@ -42,7 +42,7 @@ class ComponentAdapterConfig(BaseSettings):
         validation_alias="COMPONENT_ADAPTER_ALLOWED_SINK_CATEGORIES",
     )
 
-    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
 
 environment_file = os.environ.get("HD_COMPONENT_ADAPTER_ENVIRONMENT_FILE", None)

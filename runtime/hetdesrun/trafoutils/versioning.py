@@ -73,7 +73,11 @@ def get_newest_released_revision(
         return None
 
     if use_release_date:
-        return sorted(trafos, key=lambda x: x.released_timestamp or datetime.datetime.min)[-1]
+        return sorted(
+            trafos,
+            key=lambda x: x.released_timestamp
+            or datetime.datetime.min.replace(tzinfo=datetime.UTC),
+        )[-1]
 
     return get_newest_by_semver(trafos)
 

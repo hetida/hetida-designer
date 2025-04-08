@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Any, Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.component import ComponentInput, ComponentOutput

@@ -118,7 +118,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                 )
                 for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.model_validate(
                     resp.json()
-                ).__root__
+                ).root
             ]
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)

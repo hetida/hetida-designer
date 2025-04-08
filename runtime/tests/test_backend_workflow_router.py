@@ -426,7 +426,7 @@ async def test_delete_multiple_inputs_of_wf_at_once(
         store_single_transformation_revision(TransformationRevision(**tr_json))
 
     with open(  # noqa: UP015
-        "./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8"
+        "./tests/data/workflows/iso_forest_wf_dto.json", encoding="utf8"
     ) as f:
         wf_dto_json = json.load(f)
 

@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from uuid import UUID
 
-from pydantic import Field, Json, SecretStr, ValidationInfo, field_validator, validator
+from pydantic import Field, Json, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
@@ -286,7 +286,8 @@ class RuntimeConfig(BaseSettings):
         examples=[
             (
                 '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
-                ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+                ' "grant_credentials": {"grant_type": "client_credentials",'
+                ' "client_id": "my-client",'
                 ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
                 ' "post_kwargs": {}}'
             )
@@ -309,7 +310,8 @@ class RuntimeConfig(BaseSettings):
         examples=[
             (
                 '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
-                ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+                ' "grant_credentials": {"grant_type": "client_credentials", "client_id":'
+                ' "my-client",'
                 ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
                 ' "post_kwargs": {}}'
             )

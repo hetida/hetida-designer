@@ -167,7 +167,7 @@ timeseries can be found in the documentation of the "Gap Detection Intervals" co
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field, ValidationInfo, field_validator, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from hdutils import ComponentInputValidationException
 

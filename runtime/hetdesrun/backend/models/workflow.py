@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import ConfigDict, ValidationInfo, field_validator, model_validator, validator
+from pydantic import ConfigDict, ValidationInfo, field_validator, model_validator
 
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto, WorkflowIoFrontendDto
@@ -406,14 +406,17 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     @field_validator("inputs", "outputs")
     @classmethod
     def name_or_constant_data_provided(
-        cls, ios: WorkflowIoFrontendDto, info: ValidationInfo
+        cls, ios: list[WorkflowIoFrontendDto], info: ValidationInfo
     ) -> list[WorkflowIoFrontendDto]:
         if info.data["state"] != State.RELEASED:
             return ios
 
         for io in ios:
             if not (io.name is None or io.name == "") and io.constant:
-                msg = f"If name is specified ({io.name}) constant must be false for input/output {io.id}"
+                msg = (
+                    f"If name is specified ({io.name}) constant must be false "
+                    f"for input/output {io.id}"
+                )
                 raise ValueError(msg)
             if (io.name is None or io.name == "") and (
                 not io.constant or io.constant_value is None or io.constant_value["value"] == ""

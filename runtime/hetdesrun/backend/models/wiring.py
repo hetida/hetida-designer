@@ -8,7 +8,6 @@ from pydantic import (
     StrictStr,
     ValidationInfo,
     field_validator,
-    validator,
 )
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS

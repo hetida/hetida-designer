@@ -1,7 +1,7 @@
 import os
 
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field, ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hetdesrun.structure.models import CompleteStructure
 
@@ -59,7 +59,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
         validation_alias="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
     )
 
-    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("structure_filepath_to_prepopulate_virtual_structure_adapter")
     @classmethod

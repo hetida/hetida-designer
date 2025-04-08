@@ -1030,7 +1030,10 @@ async def handle_trafo_revision_execution_request(
         exec_response = await perf_measured_execute_trafo_rev(exec_by_id)
 
     except TrafoExecutionInputValidationError as err:
-        msg = f"Could not validate execution input\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
+        msg = (
+            "Could not validate execution input"
+            f"\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
+        )
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
 
@@ -1198,7 +1201,7 @@ async def send_result_to_callback_url(
     ) as client:
         try:
             await client.post(
-                callback_url,
+                str(callback_url),
                 headers=headers,
                 json=json.loads(result.model_dump_json()),  # TODO: avoid double serialization.
                 # see https://github.com/samuelcolvin/pydantic/issues/1409 and

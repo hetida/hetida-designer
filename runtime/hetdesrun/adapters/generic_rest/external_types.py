@@ -253,7 +253,7 @@ external_type_to_datatype: dict[ExternalType, DataType] = {
 }
 
 
-def to_correct_obj(obj, external_type: ExternalType | None) -> Any:
+def to_correct_obj(obj: Any, external_type: ExternalType | None) -> Any:
     if obj is None:
         return None
     if external_type is None:

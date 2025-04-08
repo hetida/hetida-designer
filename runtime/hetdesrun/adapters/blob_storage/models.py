@@ -13,7 +13,6 @@ from pydantic import (
     ValidationError,
     ValidationInfo,
     field_validator,
-    validator,
 )
 
 from hetdesrun.adapters.blob_storage import (
@@ -150,7 +149,7 @@ class ObjectKey(BaseModel):
 
     @field_validator("time")
     @classmethod
-    def time_matches_string(cls, time: datetime, info: dict) -> datetime:
+    def time_matches_string(cls, time: datetime, info: ValidationInfo) -> datetime:
         try:
             string = info.data["string"]
         except KeyError as error:

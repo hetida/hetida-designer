@@ -2,9 +2,8 @@ import datetime
 import io
 import json
 import logging
-from collections.abc import Generator
 from enum import StrEnum
-from types import UnionType
+from types import NoneType, UnionType
 from typing import Annotated, Any, Literal, TypedDict
 from uuid import UUID
 
@@ -14,18 +13,13 @@ import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
 from pydantic import (
-    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
     Field,
     PlainSerializer,
-    RootModel,
     ValidationError,
-    WrapSerializer,
     create_model,
-    model_serializer,
-    model_validator,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,7 +90,8 @@ class PlotTargetSettings(BaseModel):
         None,
         description=(
             "The timezone plot components should use for datetime axes etc."
-            " Usually via s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)"
+            " Usually via"
+            " s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)"
         ),
         examples=["Europe/Berlin"],
     )
@@ -513,7 +508,7 @@ ParsedAny = Annotated[
 ]
 
 
-data_type_map: dict[DataType, type] = {
+data_type_map: dict[DataType | None, type] = {
     DataType.Integer: int,
     DataType.Float: float,
     DataType.String: str,
@@ -524,9 +519,10 @@ data_type_map: dict[DataType, type] = {
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
     DataType.Any: ParsedAny,
     DataType.PlotlyJson: dict,
+    None: NoneType,
 }
 
-optional_data_type_map: dict[DataType, UnionType] = {
+optional_data_type_map: dict[DataType | None, UnionType] = {
     DataType.Integer: int | None,
     DataType.Float: float | None,
     DataType.String: str | None,
@@ -537,6 +533,7 @@ optional_data_type_map: dict[DataType, UnionType] = {
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
     DataType.Any: ParsedAny | None,
     DataType.PlotlyJson: dict | None,
+    None: NoneType | None,
 }
 
 
@@ -596,35 +593,22 @@ serializer_funcs_by_type = {
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
     Figure: lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+    NoneType: lambda x: x,
+    None: lambda x: x,
 }
-
-
-def serialize_hd_obj(value: Any, handler, info) -> Any:
-    # Note that `handler` can actually help serialize the `value` for
-    # further custom serialization in case it's a subclass.
-
-    for typ in serializer_funcs_by_type:
-        if isinstance(value, typ):
-            return serializer_funcs_by_type[typ](value)
-
-    # fall back to default serialization
-    return handler(value, info)
-
-
-HdObj = Any  # Annotated[Any, WrapSerializer(serialize_hd_obj)]
 
 
 class NamedDataTypedValue(TypedDict):
     name: str
     type: DataType  # noqa: A003
-    value: HdObj
+    value: Any
 
 
 def parse_via_pydantic(
     entries: list[NamedDataTypedValue],
-    type_map: dict[DataType, type] | dict[DataType, UnionType] | None = None,
+    type_map: dict[DataType | None, type] | dict[DataType | None, UnionType] | None = None,
     null_str_to_None: bool = False,
-) -> BaseModel:
+) -> Any:
     """Parse data dynamically into a pydantic object
 
     Optionally a type_map can be specified which differs from the default data_type_map
@@ -674,7 +658,7 @@ def parse_via_pydantic(
 
 def parse_dynamically_from_datatypes(
     entries: list[NamedDataTypedValue], nullable: bool = False
-) -> BaseModel:
+) -> Any:
     return parse_via_pydantic(
         entries,
         type_map=data_type_map if nullable is False else optional_data_type_map,
@@ -683,7 +667,7 @@ def parse_dynamically_from_datatypes(
 
 
 def parse_single_value_dynamically(
-    name: str, value: HdObj, data_type: DataType, nullable: bool
+    name: str, value: Any, data_type: DataType, nullable: bool
 ) -> Any:
     return dict(
         parse_dynamically_from_datatypes(
@@ -692,7 +676,7 @@ def parse_single_value_dynamically(
     )[name]
 
 
-def parse_value(value: HdObj, data_type_str: str, nullable: bool) -> Any:
+def parse_value(value: Any, data_type_str: str, nullable: bool) -> Any:
     return parse_single_value_dynamically("some_value", value, DataType(data_type_str), nullable)
 
 
@@ -713,7 +697,7 @@ def parse_obj_as_type(obj: Any, target_type: type) -> Any:
         __config__=ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True),
     )
 
-    return DynamicModel(value=obj).value
+    return DynamicModel(value=obj).value  # type: ignore
 
 
 def parse_default_value(component_info: dict, input_name: str) -> Any:

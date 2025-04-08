@@ -22,7 +22,6 @@ from hdutils import (
     parse_obj_as_type,
     serializer_funcs_by_type,
 )
-from hetdesrun.datatypes import HdObj
 from hetdesrun.models.base import Result
 from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
@@ -313,7 +312,7 @@ def get_location_of_exception(exception: Exception | BaseException) -> ErrorLoca
     )
 
 
-def to_correct_obj_by_datatype(obj, data_type: DataType) -> Any:
+def to_correct_obj_by_datatype(obj: Any, data_type: DataType) -> Any:
     if obj is None:
         return None
     if data_type is None or data_type is DataType.Any:
@@ -352,8 +351,8 @@ class WorkflowExecutionInfo(BaseModel):
     @field_validator("output_results_by_output_name")
     @classmethod
     def correct_objects_according_to_output_types(
-        cls, output_results_by_output_name, info: ValidationInfo
-    ):
+        cls, output_results_by_output_name: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
         output_types_by_output_name = info.data.get("output_types_by_output_name")
         if output_types_by_output_name is None:
             raise ValueError(

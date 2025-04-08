@@ -4,7 +4,6 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 
 from hetdesrun.adapters import AdapterHandlingException
-from hetdesrun.adapters.generic_rest.external_types import external_type_to_datatype
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
     PerformanceMeasuredStep,

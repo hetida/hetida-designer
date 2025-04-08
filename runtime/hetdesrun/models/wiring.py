@@ -1,6 +1,6 @@
 import re
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import (
     BaseModel,
@@ -14,7 +14,6 @@ from pydantic import (
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
-from hetdesrun.datatypes import HdObj
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
@@ -147,7 +146,7 @@ class InputWiring(BaseModel):
     # sinks need to get the actual value as Python object isntead of a str in order
     # to avoid unnecessary serializing/deserializing between trafo output and
     # component adapter sink execution.
-    filters: dict[FilterKey, str | HdObj | None] = {}
+    filters: dict[FilterKey, str | Any | None] = {}
 
     model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
 

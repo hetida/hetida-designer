@@ -320,9 +320,6 @@ async def run_execution_input(
     run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
         "run_execution_input"
     )
-
-    output_types = {output.name: output.type for output in execution_input.workflow.outputs}
-
     execution_result: WorkflowExecutionResult
 
     if get_config().is_runtime_service:

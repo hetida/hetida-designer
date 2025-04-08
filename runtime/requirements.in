@@ -36,7 +36,7 @@ pillow
 plotly<7
 psycopg2
 pyarrow
-pydantic[dotenv]<3
+pydantic[dotenv]<3,>=2.11
 pydantic-settings
 pytest
 pytest-asyncio

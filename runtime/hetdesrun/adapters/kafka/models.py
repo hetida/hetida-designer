@@ -170,7 +170,7 @@ class KafkaMessageValueRepresentation(BaseModel):
         return to_correct_obj(value, info.data["data_type"])
 
     @field_serializer("value")
-    def serialize_value(self, value: Any) -> dict[str, Any]:
+    def serialize_value(self, value: Any) -> Any:
         external_type = self.data_type
 
         return serializer_funcs_by_type.get(

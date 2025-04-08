@@ -219,7 +219,7 @@ def html_str_to_gridstack_div(
                 div(
                     id=db_id,
                     style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
-                )[Markup(content)]
+                )[Markup(content)]  # noqa: S704
             ],
         ]
     ]
@@ -257,7 +257,7 @@ def dataframe_to_table_gridstack_div(
             style="width:100%;max-width:100%;height:100%;max-height:100%;overflow-y:none",
         ),
         script[
-            Markup(
+            Markup(  # noqa: S704
                 f"""
 
         create_and_register_tabulator_datatable(
@@ -1304,7 +1304,7 @@ def generate_login_dashboard_stub() -> str:
     dashboard_login_stub_html = html[
         script(src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"),
         script()[
-            Markup(
+            Markup(  # noqa: S704
                 r"""       const Keycloak = window["Keycloak"];
 
         function getCookie(name) {
@@ -1570,7 +1570,7 @@ def generate_dashboard_html(
     ]
 
     main_scripts = script[
-        Markup(
+        Markup(  # noqa: S704
             r"""
 
 

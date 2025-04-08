@@ -12,7 +12,6 @@ from pydantic import (
     ValidationInfo,
     field_validator,
     model_validator,
-    root_validator,
 )
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -203,11 +202,9 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
     display_path: str = Field(
         "", description="Displays all parent nodes in sequence in the designer frontend"
     )
-    preset_filters: dict[str, Any] = Field(
-        default_factory=dict, description="Preset filters for the source"
-    )
+    preset_filters: dict[str, Any] = Field({}, description="Preset filters for the source")
     passthrough_filters: list[Filter] | None = Field(
-        default_factory=list, description="Passthrough filters for the source"
+        [], description="Passthrough filters for the source"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     source_id: str = Field(..., description="Referenced HD StructureServiceSource identifier")
@@ -311,7 +308,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
                     )
 
             # Validate passthrough_filters
-            for pass_filter in passthrough_filters:
+            for pass_filter in passthrough_filters if passthrough_filters is not None else []:
                 if (
                     pass_filter.name.lower() in filter_names_to_avoid
                     or pass_filter.internal_name.lower() in filter_names_to_avoid
@@ -331,11 +328,9 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
     display_path: str = Field(
         "", description="Displays all parent nodes in sequence in the designer frontend"
     )
-    preset_filters: dict[str, Any] = Field(
-        default_factory=dict, description="Preset filters for the sink"
-    )
+    preset_filters: dict[str, Any] = Field({}, description="Preset filters for the sink")
     passthrough_filters: list[Filter] | None = Field(
-        default_factory=list, description="Passthrough filters for the sink"
+        [], description="Passthrough filters for the sink"
     )
     adapter_key: str = Field(..., description="Adapter key or identifier")
     sink_id: str = Field(..., description="Referenced HD StructureServiceSink identifier")

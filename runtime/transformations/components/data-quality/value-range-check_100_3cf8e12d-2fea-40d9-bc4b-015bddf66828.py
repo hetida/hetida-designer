@@ -180,7 +180,7 @@ def check_value_ranges(
        Contains value ranges that are used for checking the values in `timeseries_data`.
     """
 
-    is_included_default_values = {range_name: False for range_name in value_range_dict}
+    is_included_default_values = {range_name: False for range_name in value_range_dict}  # noqa: C420
     is_included_default_values["_violates_all"] = True
     is_included_default_values["_violates_any"] = False
 

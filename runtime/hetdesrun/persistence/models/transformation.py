@@ -171,8 +171,6 @@ class TransformationRevision(BaseModel):
     (possibly newer) released revisions from the the same revision group (i.e. same group id).
     """
 
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
     id: UUID  # noqa: A003
     revision_group_id: UUID
     name: NonEmptyValidStr

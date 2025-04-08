@@ -3,7 +3,6 @@ import os
 from typing import Any
 from uuid import uuid4
 
-import pandas as pd
 import pytest
 from fastapi import HTTPException
 from httpx import AsyncClient

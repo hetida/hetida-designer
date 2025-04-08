@@ -1,6 +1,5 @@
 import logging
 import re
-from contextlib import suppress
 from typing import Self
 from uuid import UUID
 

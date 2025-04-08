@@ -400,7 +400,10 @@ def test_jsonable_encoder():
 
 
 def test_string_series_parsing():
-    val = '{"2020-05-01T00:00:00.000Z":2.5340945967,"2020-05-01T01:00:00.000Z":2.5658768256,"2020-05-01T02:00:00.000Z":2.570679579}'
+    val = (
+        '{"2020-05-01T00:00:00.000Z":2.5340945967,"2020-05-01T01:00:00.000Z":2.5658768256,'
+        '"2020-05-01T02:00:00.000Z":2.570679579}'
+    )
     target_type = PydanticPandasSeries
     parsed_obj = parse_obj_as_type(val, target_type)
     assert isinstance(parsed_obj, pd.Series)

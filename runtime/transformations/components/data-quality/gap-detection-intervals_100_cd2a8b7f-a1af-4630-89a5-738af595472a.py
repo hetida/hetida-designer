@@ -517,7 +517,7 @@ which overlap with the time interval of interest:
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, ValidationInfo, field_validator, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from hdutils import ComponentInputValidationException
 

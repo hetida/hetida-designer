@@ -1,7 +1,7 @@
 from typing import Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.workflow import WorkflowConnection

@@ -3,7 +3,7 @@ from functools import cached_property
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
@@ -134,7 +134,7 @@ class SQLAdapterConfig(BaseSettings):
         [], validation_alias="SQL_ADAPTER_SQL_DATABASES"
     )
 
-    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("sql_databases")
     @classmethod

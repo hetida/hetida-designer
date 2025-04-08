@@ -48,7 +48,7 @@ class DocumentationFrontendDto(BaseModel):
 class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
     result: str
     output_results_by_output_name: dict[str, Any] = {}
-    output_types_by_output_name: dict[str, DataType] = {}
+    output_types_by_output_name: dict[str, DataType | None] = {}
     resolved_reproducibility_references: ReproducibilityReference = Field(
         default_factory=ReproducibilityReference,
         description="Resolved references to information needed to reproduce an execution result."

@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import pandas as pd
-from pydantic import BaseModel, RootModel, ValidationError
+from pydantic import RootModel, ValidationError
 from sqlalchemy.exc import OperationalError as SQLOpsError
 from sqlalchemy.sql import and_, column, select, table
 from sqlalchemy.sql.selectable import Select

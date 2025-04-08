@@ -1,8 +1,8 @@
 import os
 from typing import Literal
 
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field, ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class BlobStorageAdapterConfig(BaseSettings):
@@ -91,7 +91,7 @@ class BlobStorageAdapterConfig(BaseSettings):
         validation_alias="BLOB_STORAGE_CHECKSUM_ALGORITHM",
     )
 
-    model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("allow_bucket_creation")
     @classmethod
