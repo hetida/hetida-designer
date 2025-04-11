@@ -8,7 +8,7 @@ volumes:
 
 services:
   hetida-designer-frontend:
-    image: hetida/designer-frontend:0.10.2
+    image: hetida/designer-frontend:latest
     ports:
       - 80:8080
     depends_on:
@@ -19,7 +19,7 @@ services:
 
 
   hetida-designer-backend:
-    image: hetida/designer-backend:0.10.2
+    image: hetida/designer-backend:latest
     ports:
       - 8080:8090
     environment:
@@ -41,7 +41,7 @@ services:
 
 
   hetida-designer-runtime:
-    image: hetida/designer-runtime:0.10.2
+    image: hetida/designer-runtime:latest
     volumes:
       - designer_obj_repo:/mnt/obj_repo
       - ./runtime/demodata/local_files:/mnt/mounted_local_files
@@ -54,7 +54,7 @@ services:
       LOG_LEVEL: "INFO"
 
   hetida-designer-db:
-    image: postgres
+    image: postgres:latest
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:

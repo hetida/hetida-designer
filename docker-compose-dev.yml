@@ -62,7 +62,7 @@ services:
 
 
   hetida-designer-db:
-    image: postgres
+    image: postgres:latest
     ports:
       - 5430:5432
     volumes:
