@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     ValidationInfo,
     field_serializer,
@@ -49,6 +50,8 @@ class PerformanceMeasuredStep(BaseModel):
     end: datetime.datetime | None = None
     duration: datetime.timedelta | None = None
 
+    model_config = ConfigDict(ser_json_timedelta="float")  # seconds
+
     @classmethod
     def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
         new_step = cls(name=name)
@@ -79,6 +82,19 @@ class PerformanceMeasuredStep(BaseModel):
         self.end = datetime.datetime.now(datetime.timezone.utc)
         self.duration = self.end - self.start
 
+    def __enter__(self):
+        self.begin()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.stop()
+
+
+class RuntimeMemoryInfo(BaseModel):
+    kb_at_runtime_start: int
+    kb_at_runtime_end: int
+    kb_diff_end_minus_start: int
+
 
 class AllMeasuredSteps(BaseModel):
     internal_full: PerformanceMeasuredStep | None = None
@@ -88,6 +104,14 @@ class AllMeasuredSteps(BaseModel):
     pure_execution: PerformanceMeasuredStep | None = None
     load_data: PerformanceMeasuredStep | None = None
     send_data: PerformanceMeasuredStep | None = None
+    runtime_request_response_parsing: PerformanceMeasuredStep | None = None
+    pure_runtime_request: PerformanceMeasuredStep | None = None
+    start_and_wf_parsing: PerformanceMeasuredStep | None = None
+    pure_wf_parsing: PerformanceMeasuredStep | None = None
+    constant_providing_and_preps: PerformanceMeasuredStep | None = None
+    loaded_data_info: dict[str, dict[str, Any]] = {}
+    result_data_info: dict[str, dict[str, Any]] = {}
+    runtime_memory_info: RuntimeMemoryInfo | None = None
 
 
 class ConfigurationInput(BaseModel):
@@ -283,12 +307,14 @@ class ErrorLocation(BaseModel):
 
 
 class ProcessStage(StrEnum):
-    """ "Stages of the execution process."""
+    """Stages of the execution process."""
 
     PARSING_WORKFLOW = "PARSING_WORKFLOW"
     LOADING_DATA_FROM_ADAPTERS = "LOADING_DATA_FROM_ADAPTERS"
+    PARSE_AND_PROVIDE_DATA_AS_CONSTANTS = "PARSE_AND_PROVIDE_DATA_AS_CONSTANTS"
     PARSING_LOADED_DATA = "PARSING_LOADED_DATA"
     EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
+    ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE = "ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE"
     SENDING_DATA_TO_ADAPTERS = "SENDING_DATA_TO_ADAPTERS"
     ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
 
@@ -304,7 +330,10 @@ class WorkflowExecutionError(BaseModel):
 
 
 def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
-    last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    try:
+        last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    except IndexError:
+        return ErrorLocation(file="__UNKNOWN__", function_name="__UNKNOWN__", line_number=-1)
     return ErrorLocation(
         file=(last_trace.filename if last_trace.filename != "<string>" else "COMPONENT CODE"),
         function_name=last_trace.name,
@@ -333,6 +362,9 @@ class WorkflowExecutionInfo(BaseModel):
 
     traceback: str | None = Field(None, description="traceback")
     job_id: UUID
+    tr_tag: str
+    tr_name: str
+    tr_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
 
@@ -378,6 +410,9 @@ class WorkflowExecutionInfo(BaseModel):
         exception: Exception,
         process_stage: ProcessStage,
         job_id: UUID,
+        tr_name: str,
+        tr_tag: str,
+        tr_id: UUID,
         cause: BaseException | None,
     ) -> "WorkflowExecutionInfo":
         return WorkflowExecutionInfo(
@@ -408,6 +443,9 @@ class WorkflowExecutionInfo(BaseModel):
             output_results_by_output_name={},
             output_types_by_output_name={},
             job_id=job_id,
+            tr_name=tr_name,
+            tr_tag=tr_tag,
+            tr_id=tr_id,
         )
 
 
@@ -438,6 +476,9 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         exception: Exception,
         process_stage: ProcessStage,
         job_id: UUID,
+        tr_name: str,
+        tr_tag: str,
+        tr_id: UUID,
         cause: BaseException | None = None,
         node_results: str | None = None,
     ) -> "WorkflowExecutionResult":
@@ -445,7 +486,17 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         repr_reference = get_deepcopy_of_reproducibility_reference_context()
 
         return WorkflowExecutionResult(
-            **super().from_exception(exception, process_stage, job_id, cause).model_dump(),
+            **super()
+            .from_exception(
+                exception,
+                process_stage,
+                job_id,
+                tr_name=tr_name,
+                tr_tag=tr_tag,
+                tr_id=tr_id,
+                cause=cause,
+            )
+            .model_dump(),
             result="failure",
             node_results=node_results,
             resolved_reproducibility_references=repr_reference,

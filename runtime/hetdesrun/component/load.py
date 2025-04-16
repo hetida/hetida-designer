@@ -39,6 +39,9 @@ def import_func_from_code(
     func_name: str,
     raise_if_not_found: bool = False,
     register_module: bool = True,
+    component_name: str = "UNKNOWN COMPONENT NAME",
+    component_tag: str = "UNKNOWN COMPONENT VERSION TAG",
+    component_uuid_str: str = "UNKNOWN COMPONENT UUID",
 ) -> Callable | Coroutine:
     """Lazily loads a function from the given code and registers the imported module
 
@@ -58,9 +61,16 @@ def import_func_from_code(
     except ImportError as e:
         if raise_if_not_found:
             raise e
-        logger.info(
-            ("Function %s from code not yet imported once. Importing it from provided code."),
+        logger.debug(
+            (
+                "Function %s from code (%s (%s), uuid: %s) not yet imported once. "
+                "Importing it from provided code under module path %s."
+            ),
             func_name,
+            component_name,
+            component_tag,
+            component_uuid_str,
+            module_path,
         )
 
         mod = ModuleType(module_path)

@@ -22,6 +22,7 @@ from hetdesrun.runtime.exceptions import (
 )
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
 
 runtime_execution_logger.addFilter(execution_context_filter)
 
@@ -221,7 +222,11 @@ class ComputationNode:
         context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
-        runtime_execution_logger.info("Starting computation")
+        if (
+            get_config().log_technical_nodes
+            or self.context.currently_executed_transformation_id != "UNKNOWN"
+        ):
+            runtime_execution_logger.debug("Starting computation")
         self._in_computation = True
 
         self._check_inputs()
@@ -323,7 +328,7 @@ class Workflow:
         optional: bool = False,
         add_new_provider_node_to_workflow: bool = True,
         id_suffix: str = "",
-    ) -> None:
+    ) -> dict[str, Any]:
         """Add a node with no inputs providing workflow input data"""
         try:
             parsed_values = dict(parse_dynamically_from_datatypes(values, optional))
@@ -346,6 +351,8 @@ class Workflow:
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
         self.add_inputs({key: (Const_Node, key) for key in parsed_values})
+
+        return parsed_values
 
     def _wire_workflow_inputs(self) -> None:
         """Wire the current inputs via the current input mappings to the appropriate sub nodes"""
@@ -372,7 +379,7 @@ class Workflow:
         context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
-        runtime_execution_logger.info("Starting computation")
+        runtime_execution_logger.debug("Starting computation")
 
         # gather result from workflow operators
         results = {}

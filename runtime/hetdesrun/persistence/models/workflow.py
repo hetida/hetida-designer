@@ -1019,14 +1019,14 @@ class WorkflowContent(BaseModel):
     def clean_up_dicts(self) -> Self:
         """Delete validation helper dictionaries."""
 
-        return self.model_copy(
-            update={
-                "operator_output_by_id_tuple_dict": {},
-                "operator_input_by_id_tuple_dict": {},
-                "links_by_start_id_tuple_dict": {},
-                "link_by_end_id_tuple_dict": {},
-            }
-        )
+        # Despite being immutable/frozen, fields can be
+        # modified:
+        self.operator_output_by_id_tuple_dict.clear()
+        self.operator_input_by_id_tuple_dict.clear()
+        self.links_by_start_id_tuple_dict.clear()
+        self.link_by_end_id_tuple_dict.clear()
+
+        return self
 
     def to_workflow_node(
         self,

@@ -89,6 +89,9 @@ def load_func(
         component_func = import_func_from_code(
             code,
             component.function_name,
+            component_name=str(component.name),
+            component_tag=component.tag,
+            component_uuid_str=str(component.uuid),
         )
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
@@ -390,7 +393,7 @@ def recursively_parse_workflow_node(
                 if inp.name in optional_input_mappings  # does have a default value
             ],
             optional=True,
-            id_suffix="workflow_constant_values",
+            id_suffix="workflow_constant_values_optional",
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(

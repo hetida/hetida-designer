@@ -79,7 +79,14 @@ def configure_logging(
 main_logger = logging.getLogger(__name__)
 configure_logging(main_logger)
 
-main_logger.info("Logging setup complete.")
-
 configure_logging(logger, log_execution_context=True)
 configure_logging(job_logger, log_job_id_context=True)
+
+if get_config().log_httpx:
+    httpx_logger = logging.getLogger("httpx")
+    configure_logging(httpx_logger, log_job_id_context=True)
+
+    httpcore_logger = logging.getLogger("httpcore")
+    configure_logging(httpcore_logger, log_job_id_context=True)
+
+main_logger.info("Logging setup complete.")

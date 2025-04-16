@@ -28,6 +28,9 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
+      - MAX_WORKERS=1
+      - LOG_LEVEL=DEBUG
+      - LOG_HTTPX=true
 
     depends_on:
       hetida-designer-db:
@@ -53,6 +56,9 @@ services:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
+      MAX_WORKERS: 1
+      LOG_LEVEL: "DEBUG"
+      LOG_HTTPX: "true"
 
 
   hetida-designer-db:

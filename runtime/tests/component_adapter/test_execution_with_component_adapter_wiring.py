@@ -202,6 +202,7 @@ async def test_component_sink_wiring_plotly_executes_correctly(tmpdir):
     )
 
     exec_result = await execute_transformation_revision(exec_input)
+
     assert exec_result.error is None
     assert len(exec_result.output_results_by_output_name) == 0
 

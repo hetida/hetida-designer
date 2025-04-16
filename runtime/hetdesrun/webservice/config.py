@@ -50,6 +50,87 @@ class RuntimeConfig(BaseSettings):
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
 
+    log_httpx: bool = Field(
+        False,
+        description=(
+            "Whether httpx / httpcore request logging should be activated. "
+            "Note: This uses the same log level as cofigured via LOG_LEVEL. "
+            "Activating this you typically want to set LOG_LEVEL to DEBUG as well. "
+            "This setting may help to analyze inter service communication (runtime/backend) "
+            "as well as http requests to external data sources to identify performance / networking"
+            " bottlenecks."
+        ),
+        validation_alias="LOG_HTTPX",
+    )
+
+    log_technical_nodes: bool = Field(
+        False,
+        description=(
+            "Whether technical workflow nodes execution will be logged. "
+            "Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_TECHNICAL_NODES",
+    )
+
+    full_backend_exec_input_logging: bool = Field(
+        False,
+        description=(
+            "Whether full execution input (exec_by_id_input) should be logged. "
+            "Including complete wiring before virtual structure resolution. May include "
+            "lots of data for direct provisioning inputs. "
+            "Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_FULL_BACKEND_EXEC_INPUT",
+    )
+
+    full_execution_input_logging: bool = Field(
+        False,
+        description=(
+            "Whether full runtime execution input should be logged. "
+            "Including all code and complete wiring which may include "
+            "lots of data for direct provisioning inputs. "
+            "Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_FULL_EXEC_INPUT",
+    )
+
+    log_updated_trafo_revision: bool = Field(
+        False,
+        description=(
+            "When creating or updating, whether the persisted trafo revision should be fully"
+            " logged. Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_UPDATED_TRAFO_REVISION",
+    )
+
+    log_resolved_virtual_structure_wirings: bool = Field(
+        False,
+        description=(
+            "Whether the resulting wiring after resolving virtual structure"
+            " wirings should be logged"
+            " logged. Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_RESOLVED_VIRTUAL_STRUCTURE_WIRINGS",
+    )
+
+    log_nestings_and_descendants: bool = Field(
+        False,
+        description=(
+            "Whether nestings and descendants should be logged"
+            " Note that it only will be logged with log level DEBUG."
+        ),
+        validation_alias="LOG_NESTINGS_AND_DESCENDANTS",
+    )
+
+    log_direct_provisioning_outputs: bool = Field(
+        False,
+        description=(
+            "Whether the output_results_by_output_name field provided together with an"
+            " execution result response will be logged"
+        ),
+        validation_alias="LOG_DIRECT_PROVISIONING_OUTPUTS",
+    )
+
     advanced_performance_measurement_active: bool = Field(
         True,
         validation_alias="HD_ADVANCED_PERFORMANCE_MEASUREMENT_INFORMATION",

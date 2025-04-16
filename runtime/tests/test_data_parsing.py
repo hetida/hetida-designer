@@ -1,3 +1,4 @@
+import re
 from uuid import uuid4
 
 import numpy as np
@@ -5,7 +6,7 @@ import pandas as pd
 import pytest
 from fastapi.encoders import jsonable_encoder
 from pandas.api.types import is_bool_dtype, is_datetime64_any_dtype, is_float_dtype
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from hdutils import (
     MetaDataWrapped,
@@ -13,6 +14,7 @@ from hdutils import (
     parse_obj_as_type,
     parse_pandas_data_content,
     parse_wrapped_content,
+    parsing_not_identical,
     wrap_metadata_as_attrs,
 )
 from hetdesrun.datatypes import (
@@ -394,6 +396,9 @@ def test_jsonable_encoder():
         output_types_by_output_name=outp_name_to_datatype_map,
         output_results_by_output_name=direct_return_data,
         job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
     )
 
     jsonable_encoder(wf_exec_result)
@@ -407,3 +412,93 @@ def test_string_series_parsing():
     target_type = PydanticPandasSeries
     parsed_obj = parse_obj_as_type(val, target_type)
     assert isinstance(parsed_obj, pd.Series)
+
+
+def test_parsing_idempotency():
+    not_identical = parsing_not_identical(
+        {
+            "series": pd.Series([1, 2, 3]),
+            "dataframe": pd.DataFrame({"a": [1, 2, 3], "b": [0.5, 2, 6.7]}),
+            "multitsframe": pd.DataFrame(
+                {"timestamp": pd.to_datetime(["2025-01-01"]), "metric": ["a"], "value": [42.2]}
+            ),
+            "str": "some string",
+            "int": 42,
+            "float": 42.2,
+            "bool": True,
+            "any": {"c": {"a": 3, "b": [1, 2, 3]}},
+            "plotlyjson": {"data": {}, "layout": {}, "config": {}},
+        },
+        {
+            "series": DataType.Series,
+            "dataframe": DataType.DataFrame,
+            "multitsframe": DataType.MultiTSFrame,
+            "str": DataType.String,
+            "int": DataType.Integer,
+            "float": DataType.Float,
+            "bool": DataType.Boolean,
+            "any": DataType.Any,
+            "plotlyjson": DataType.PlotlyJson,
+        },
+    )
+    assert len(not_identical) == 0
+
+    pattern = re.compile(
+        r".*series.*dataframe.*multitsframe.*str.*int.*float.*bool.*plotlyjson.*", re.DOTALL
+    )
+    with pytest.raises(
+        ValidationError,
+        match=pattern,
+    ):
+        not_identical = parsing_not_identical(
+            {
+                "series": None,
+                "dataframe": None,
+                "multitsframe": None,
+                "str": None,
+                "int": None,
+                "float": None,
+                "bool": None,
+                "any": None,
+                "plotlyjson": None,
+            },
+            {
+                "series": DataType.Series,
+                "dataframe": DataType.DataFrame,
+                "multitsframe": DataType.MultiTSFrame,
+                "str": DataType.String,
+                "int": DataType.Integer,
+                "float": DataType.Float,
+                "bool": DataType.Boolean,
+                "any": DataType.Any,
+                "plotlyjson": DataType.PlotlyJson,
+            },
+            nullable=False,
+        )
+
+    not_identical = parsing_not_identical(
+        {
+            "series": None,
+            "dataframe": None,
+            "multitsframe": None,
+            "str": None,
+            "int": None,
+            "float": None,
+            "bool": None,
+            "any": None,
+            "plotlyjson": None,
+        },
+        {
+            "series": DataType.Series,
+            "dataframe": DataType.DataFrame,
+            "multitsframe": DataType.MultiTSFrame,
+            "str": DataType.String,
+            "int": DataType.Integer,
+            "float": DataType.Float,
+            "bool": DataType.Boolean,
+            "any": DataType.Any,
+            "plotlyjson": DataType.PlotlyJson,
+        },
+        nullable=True,
+    )
+    assert len(not_identical) == 0

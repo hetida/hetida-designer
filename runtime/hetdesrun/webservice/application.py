@@ -9,6 +9,7 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.routing import APIRoute
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -70,13 +71,14 @@ class AdditionalLoggingRoute(APIRoute):
 
 
 middleware = [
+    Middleware(GZipMiddleware, minimum_size=1000, compresslevel=5),
     Middleware(
         CORSMiddleware,
         allow_origins=get_config().allowed_origins.split(","),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["*"],
-    )
+    ),
 ]
 
 

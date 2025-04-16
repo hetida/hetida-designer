@@ -25,6 +25,12 @@ from hetdesrun import configure_logging
 logger = logging.getLogger(__name__)
 configure_logging(logger)
 
+httpx_logger = logging.getLogger("httpx")
+configure_logging(httpx_logger)
+
+httpcore_logger = logging.getLogger("httpcore")
+configure_logging(httpcore_logger)
+
 # must be after logging config:
 from hetdesrun.webservice import get_app
 from hetdesrun.webservice.config import get_config

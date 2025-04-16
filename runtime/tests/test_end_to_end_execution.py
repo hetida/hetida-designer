@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 from httpx import AsyncClient
 
+from hdutils import DataType
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.run import (
     ConfigurationInput,
@@ -718,6 +719,7 @@ class TestSctructuredErrors:
                 filters={},
             )
         ]
+        wf_exc_input.workflow.outputs[0].type = DataType.String
 
         async with async_test_client as client:
             result = await execute_workflow_execution_input(wf_exc_input, client)
@@ -761,20 +763,17 @@ class TestSctructuredErrors:
             result = await execute_workflow_execution_input(wf_exc_input, client)
 
         assert result.error is not None
-        assert result.error.process_stage == ProcessStage.SENDING_DATA_TO_ADAPTERS
-        assert result.error.type == "AdapterOutputDataError"
+        assert result.error.process_stage == ProcessStage.ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE
+        assert result.error.type == "ValueError"
         assert result.error.error_code is None
         assert result.error.message == (
-            "Did not receive Pandas Series as expected from workflow output. "
-            "Got <class 'str'> instead."
+            """Uncorrect types for outputs: {\'result\': ("<class \'str\'>", \'SERIES\')}"""
         )
         assert result.error.extra_information is None
         assert result.error.operator_info is None
         assert result.error.location is not None
-        assert result.error.location.file.endswith(
-            "/hetdesrun/adapters/generic_rest/send_ts_data.py"
-        )
-        assert result.error.location.function_name == "ts_to_list_of_dicts"
+        assert result.error.location.file.endswith("__UNKNOWN__")
+        assert result.error.location.function_name == "__UNKNOWN__"
 
     async def test_raise_workflow_result_validation_exception(
         self,
@@ -788,7 +787,7 @@ class TestSctructuredErrors:
             result = await execute_workflow_execution_input(wf_exc_input, client)
 
         assert result.error is not None
-        assert result.error.process_stage == ProcessStage.ENCODING_RESULTS_TO_JSON
+        assert result.error.process_stage == ProcessStage.ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE
         assert result.error.type == "ValidationError"
         assert result.error.error_code is None
         assert (

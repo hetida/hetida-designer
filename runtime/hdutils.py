@@ -11,14 +11,16 @@ import numpy as np
 import pandas as pd
 import pytz
 from plotly.graph_objects import Figure
-from plotly.utils import PlotlyJSONEncoder
 from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
     Field,
     PlainSerializer,
+    PlainValidator,
     ValidationError,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
     create_model,
 )
 
@@ -302,7 +304,7 @@ def serialize_series(s: pd.Series) -> dict[str, Any]:
         "__hd_wrapped_data_object__": "SERIES",
         "__metadata__": s.attrs,
         "__data__": json.loads(
-            # double serialization7deserialization in order to serialize both NaN and NaT
+            # double serialization/deserialization in order to serialize both NaN and NaT
             # to null
             s.to_json(
                 date_format="iso",
@@ -508,51 +510,91 @@ ParsedAny = Annotated[
 ]
 
 
+def parse_plotly_json_dict(v: dict) -> dict:
+    if isinstance(v, dict):
+        # TODO: check structure more thoroughly
+        return v
+
+    raise ValueError("Plotly JSON is not a dict object.")
+
+
+ParsedPlotly = Annotated[dict, PlainValidator(parse_plotly_json_dict)]
+
+
+def wrap_basic_type_parsing(value: Any, handler: ValidatorFunctionWrapHandler, basic_type: type):
+    pydantic_parsed_basic_type = handler(value)
+
+    if isinstance(value, basic_type) and value == pydantic_parsed_basic_type:
+        return value  # original value to preserve idempotency.
+    # Avoids pydantic attribute copying as well.
+
+    return pydantic_parsed_basic_type
+
+
+ParsedFloat = Annotated[
+    float,
+    WrapValidator(lambda value, handler: wrap_basic_type_parsing(value, handler, basic_type=float)),
+]
+
+ParsedInt = Annotated[
+    int,
+    WrapValidator(lambda value, handler: wrap_basic_type_parsing(value, handler, basic_type=int)),
+]
+
+ParsedBool = Annotated[
+    bool,
+    WrapValidator(lambda value, handler: wrap_basic_type_parsing(value, handler, basic_type=bool)),
+]
+
+ParsedStr = Annotated[
+    str,
+    WrapValidator(lambda value, handler: wrap_basic_type_parsing(value, handler, basic_type=str)),
+]
+
 data_type_map: dict[DataType | None, type] = {
-    DataType.Integer: int,
-    DataType.Float: float,
-    DataType.String: str,
+    DataType.Integer: ParsedInt,
+    DataType.Float: ParsedFloat,
+    DataType.String: ParsedStr,
     DataType.Series: PydanticPandasSeries,
     DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
-    DataType.Boolean: bool,
+    DataType.Boolean: ParsedBool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
     DataType.Any: ParsedAny,
-    DataType.PlotlyJson: dict,
+    DataType.PlotlyJson: ParsedPlotly,
     None: NoneType,
 }
 
 optional_data_type_map: dict[DataType | None, UnionType] = {
-    DataType.Integer: int | None,
-    DataType.Float: float | None,
-    DataType.String: str | None,
+    DataType.Integer: ParsedInt | None,
+    DataType.Float: ParsedFloat | None,
+    DataType.String: ParsedStr | None,
     DataType.Series: PydanticPandasSeries | None,
     DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame | None,
     DataType.DataFrame: PydanticPandasDataFrame | None,
-    DataType.Boolean: bool | None,
+    DataType.Boolean: ParsedBool | None,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
     DataType.Any: ParsedAny | None,
-    DataType.PlotlyJson: dict | None,
+    DataType.PlotlyJson: ParsedPlotly | None,
     None: NoneType | None,
 }
 
 
+def serialize_plotly_fig(v: dict[str, Any] | Figure) -> Any:
+    if isinstance(v, dict):
+        return v
+
+    # possibly quite inefficient (multiple serialisation / deserialization) but
+    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
+    # should be definitely compatible with the plotly javascript library:
+
+    # Whats the difference using json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
+    # or employing fig.to_plotly_json()
+    return json.loads(v.to_json())
+
+
 serializer_funcs_by_type = {
-    pd.Series: lambda v: {
-        "__hd_wrapped_data_object__": "SERIES",
-        "__metadata__": v.attrs,
-        "__data__": json.loads(
-            # double serialization7deserialization in order to serialize both NaN and NaT
-            # to null
-            v.to_json(
-                date_format="iso",
-                orient="split",
-                # orient="split" serialization is the only way pandas keeps duplicate index
-                #  (with possibly different values) entries for Series objects!
-            )
-        ),
-        "__data_parsing_options__": {"orient": "split"},
-    },
+    pd.Series: serialize_series,
     pd.DataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
         "__metadata__": v.attrs,
@@ -560,21 +602,7 @@ serializer_funcs_by_type = {
             v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
     },
-    PydanticPandasSeries: lambda v: {
-        "__hd_wrapped_data_object__": "SERIES",
-        "__metadata__": v.attrs,
-        "__data__": json.loads(
-            # double serialization7deserialization in order to serialize both NaN and NaT
-            # to null
-            v.to_json(
-                date_format="iso",
-                orient="split",
-                # orient="split" serialization is the only way pandas keeps duplicate index
-                #  (with possibly different values) entries for Series objects!
-            )
-        ),
-        "__data_parsing_options__": {"orient": "split"},
-    },
+    PydanticPandasSeries: serialize_series,
     PydanticPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
         "__metadata__": v.attrs,
@@ -592,7 +620,7 @@ serializer_funcs_by_type = {
     np.ndarray: lambda v: v.tolist(),
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
-    Figure: lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+    Figure: serialize_plotly_fig,  # lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
     NoneType: lambda x: x,
     None: lambda x: x,
 }
@@ -656,9 +684,61 @@ def parse_via_pydantic(
     return dyn_obj
 
 
+def parse_dict_using_data_type_dict(
+    data_obj_dict: dict[str, Any],
+    data_type_dict: dict[str, DataType],
+    nullable: bool = False,
+) -> dict[str, Any]:
+    entries = [
+        {"name": key, "type": data_type_dict.get(key), "value": data_obj}
+        for key, data_obj in data_obj_dict.items()
+    ]
+
+    parsed_objects = dict(
+        parse_via_pydantic(
+            entries,
+            type_map=data_type_map if nullable is False else optional_data_type_map,
+            null_str_to_None=nullable,  # interpretation of "null" string values as None
+        )
+    )
+
+    return parsed_objects
+
+
+def parsing_not_identical(
+    data_obj_dict: dict[str, Any],
+    data_type_dict: dict[str, DataType],
+    nullable: bool = False,
+) -> dict[str, tuple[str, str]]:
+    """Get keys for which parsed object is not identical to the input object
+
+    Parsing according to Datatypes should be idempotent. So if an object is already
+    correctly parsed, parsing should be the identity operation and preserve id(..).
+
+    For a dict of objects and corresponding dict of DataTypes this function returns a dict
+    containing those keys for which parsing is not the identity, and as value a tuple with first
+    entry the actual received object type as string and as second entry the expected hetida designer
+    DataType.
+
+    Therefore this function can be used to determine if user produced objects have the correct
+    type (i.e. the returned dict is empty!)
+
+    Raises pydantic.ValidationError if parsing fails!
+    """
+    parsed_objects = parse_dict_using_data_type_dict(data_obj_dict, data_type_dict, nullable)
+
+    not_identical = {
+        key: (str(type(data_obj_dict[key])), str(data_type_dict[key]))
+        for key, parsed_obj in parsed_objects.items()
+        if id(parsed_obj) != id(data_obj_dict[key])
+    }
+
+    return not_identical
+
+
 def parse_dynamically_from_datatypes(
     entries: list[NamedDataTypedValue], nullable: bool = False
-) -> Any:
+) -> dict[str, Any]:
     return parse_via_pydantic(
         entries,
         type_map=data_type_map if nullable is False else optional_data_type_map,
@@ -727,17 +807,15 @@ def plotly_fig_to_json_dict(
     if update_x_axes_tickformat and plot_target_settings.datetime_tick_format is not None:
         fig.update_xaxes(tickformat=plot_target_settings.datetime_tick_format)
 
-    fig_dict_obj = fig.to_plotly_json()
+    fig_dict_obj = serialize_plotly_fig(fig)
+
     if not "config" in fig_dict_obj:
         fig_dict_obj["config"] = {}
 
     if add_config_settings and plot_target_settings.plot_target_locale is not None:
         fig_dict_obj["config"]["locale"] = plot_target_settings.plot_target_locale
 
-    # possibly quite inefficient (multiple serialisation / deserialization) but
-    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
-    # should be definitely compatible with the plotly javascript library:
-    return json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
+    return fig_dict_obj
 
 
 def modify_timezone(

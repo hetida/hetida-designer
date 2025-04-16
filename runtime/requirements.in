@@ -24,6 +24,7 @@ kaleido
 keras
 libcst
 lightgbm
+msgspec
 numba!=0.56.2 # due to setuptools dependency resolution problems
 numpy
 odfpy

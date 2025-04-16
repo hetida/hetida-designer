@@ -152,8 +152,8 @@ async def create_transformation_revision(
         msg = f"Could not find transformation revision {transformation_revision.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.model_dump_json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -803,7 +803,7 @@ async def upgrade_workflow_operator_with_new_rev(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.model_dump_json())
+    logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -898,8 +898,8 @@ async def upgrade_workflow_operators(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.model_dump_json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -973,8 +973,10 @@ async def update_transformation_revision(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.model_dump_json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(
+            "Updated trafo:\n%s", persisted_transformation_revision.model_dump_json(indent=2)
+        )
 
     return persisted_transformation_revision
 

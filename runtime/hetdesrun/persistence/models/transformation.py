@@ -621,11 +621,13 @@ class TransformationRevision(BaseModel):
             disabled_timestamp=self.disabled_timestamp,
             state=self.state,
             type=Type.WORKFLOW,
-            content=WorkflowContent(
-                inputs=wf_inputs,
-                outputs=wf_outputs,
-                operators=[operator],
-                links=links,
+            content=WorkflowContent.model_validate(
+                {
+                    "inputs": wf_inputs,
+                    "outputs": wf_outputs,
+                    "operators": [operator],
+                    "links": links,
+                }
             ),
             io_interface=IOInterface(
                 inputs=[input_connector.to_transformation_input() for input_connector in wf_inputs],
