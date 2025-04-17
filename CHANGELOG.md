@@ -1,3 +1,17 @@
+## 0.10.3
+* **BREAKING CHANGE**: Pydantic V2 migration. 
+  * validation is more strict, in particular for component/workflow outputs
+  * components using Pydantic need to migrate as well
+    * **UPGRADE NOTE**: base components/workflows should be redeployed overwriting released trafos
+  * overhauling parsing and validation may result in minor differences
+* performance improvements through pydantic V2 and avoiding some innecessary serialization/desiralization
+* improved logging and execution results:
+  * Include information on loaded and sent data and memory usage. Additional steps are measured.
+  * Restructure execution logging and provide more hints on executed trafo. Make some details of execution logging configurable.
+* dependency / library upgrades. In particular plotly upgrade.
+* fix component editor cursor jumping
+* **BREAKING CHANGE**: New default of gunicorn MAX_WORKERS: 1
+
 ## 0.10.2
 * fix buggy comparison to "null" string for optional input default values
 

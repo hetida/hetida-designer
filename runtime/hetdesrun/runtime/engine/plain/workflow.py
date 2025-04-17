@@ -1,6 +1,7 @@
 from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
 from typing import Any, Protocol, TypeVar
+from uuid import UUID
 
 from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
@@ -260,7 +261,7 @@ class Workflow:
         sub_nodes: list[Node],
         input_mappings: dict[str, tuple[Node, str]],  # map wf input to sub_node
         output_mappings: dict[str, tuple[Node, str]],  # map sub_node outputs to wf outputs
-        tr_id: str,
+        tr_id: UUID,
         tr_name: str,
         tr_tag: str,
         inputs: dict[str, tuple[Node, str]] | None = None,
@@ -306,7 +307,7 @@ class Workflow:
         self.operator_hierarchical_name = operator_hierarchical_name
 
         self.context = ExecutionContext(
-            currently_executed_transformation_id=tr_id,
+            currently_executed_transformation_id=str(tr_id),
             currently_executed_transformation_name=tr_name,
             currently_executed_transformation_tag=tr_tag,
             currently_executed_transformation_type=Type.WORKFLOW,

@@ -90,3 +90,15 @@ if get_config().log_httpx:
     configure_logging(httpcore_logger, log_job_id_context=True)
 
 main_logger.info("Logging setup complete.")
+
+# preload frequently used ds libraries in order to avoid overhead
+# during first call in a worker process for many workflows/components
+# and mitigate distorting effect of imports for performance measurements
+if get_config().is_runtime_service:
+    import numpy as np  # noqa: F401
+    import pandas as pd  # noqa: F401
+    import plotly.express as px  # noqa: F401
+    import plotly.graph_objects as go  # noqa: F401
+    import plotly.io as pio  # noqa: F401
+    import scipy  # noqa: F401
+    from plotly.graph_objects import Figure  # noqa: F401

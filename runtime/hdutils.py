@@ -521,7 +521,9 @@ def parse_plotly_json_dict(v: dict) -> dict:
 ParsedPlotly = Annotated[dict, PlainValidator(parse_plotly_json_dict)]
 
 
-def wrap_basic_type_parsing(value: Any, handler: ValidatorFunctionWrapHandler, basic_type: type):
+def wrap_basic_type_parsing(
+    value: Any, handler: ValidatorFunctionWrapHandler, basic_type: type
+) -> Any:
     pydantic_parsed_basic_type = handler(value)
 
     if isinstance(value, basic_type) and value == pydantic_parsed_basic_type:
@@ -689,8 +691,8 @@ def parse_dict_using_data_type_dict(
     data_type_dict: dict[str, DataType],
     nullable: bool = False,
 ) -> dict[str, Any]:
-    entries = [
-        {"name": key, "type": data_type_dict.get(key), "value": data_obj}
+    entries: list[NamedDataTypedValue] = [
+        {"name": key, "type": data_type_dict[key], "value": data_obj}
         for key, data_obj in data_obj_dict.items()
     ]
 
@@ -738,7 +740,7 @@ def parsing_not_identical(
 
 def parse_dynamically_from_datatypes(
     entries: list[NamedDataTypedValue], nullable: bool = False
-) -> dict[str, Any]:
+) -> Any:
     return parse_via_pydantic(
         entries,
         type_map=data_type_map if nullable is False else optional_data_type_map,

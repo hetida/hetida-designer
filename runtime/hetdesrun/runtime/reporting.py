@@ -56,14 +56,14 @@ def get_data_info(
     """Get data info for loaded or output data"""
 
     info_by_name = {}
-    for inp_name, data_obj in data_by_name.items():
-        if inp_name is not None:
-            assert inp_name is not None  # noqa: S101, for mypy
-            data_type = data_types_by_name.get(inp_name)
+    for name, data_obj in data_by_name.items():
+        if name is not None:
+            assert name is not None  # noqa: S101, for mypy
+            data_type = data_types_by_name.get(name)
 
             if data_type is None:
-                raise AdapterHandlingException(f"Received data for unspecified input {inp_name}")
+                raise AdapterHandlingException(f"Received data for unspecified input {name}")
 
-            info_by_name[inp_name] = data_info_by_data_type(data_obj, data_type, optional=optional)
+            info_by_name[name] = data_info_by_data_type(data_obj, data_type, optional=optional)
 
     return info_by_name

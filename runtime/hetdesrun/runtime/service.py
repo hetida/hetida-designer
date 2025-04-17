@@ -1,12 +1,13 @@
 import resource
+from typing import cast
 
 from pydantic import ValidationError
 
-from hdutils import parsing_not_identical
+from hdutils import DataType, parsing_not_identical
 from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
-    PerformanceMeasuredStep,
+    AllMeasuredSteps,
     ProcessStage,
     RuntimeMemoryInfo,
     UnitTestResults,
@@ -26,7 +27,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,
     parse_workflow_input,
 )
-from hetdesrun.runtime.engine.plain.workflow import Workflow, obtain_all_nodes
+from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
 from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
 from hetdesrun.runtime.reporting import get_data_info
@@ -57,7 +58,34 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
     )
 
 
+def handle_runtime_exec_result_logging(
+    wf_exec_result: WorkflowExecutionResult, enforce_result_logging: bool = False
+) -> WorkflowExecutionResult:
+    # backend always logs the result. We only want to log in the runtime if
+    # runtime and backend are separate or in case of component adapter execution
+    # (i.e. explicitly enforced)
+    if enforce_result_logging or not get_config().is_backend_service:
+        runtime_logger.info(
+            "Execution Result Response:\n%s",
+            wf_exec_result.model_dump_json(
+                indent=2,
+                exclude={"output_results_by_output_name"}
+                if not get_config().log_direct_provisioning_outputs
+                else None,
+            ),
+        )
+    return wf_exec_result
+
+
 async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
+    runtime_input: WorkflowExecutionInput, enforce_result_logging: bool = False
+) -> WorkflowExecutionResult:
+    return handle_runtime_exec_result_logging(
+        await runtime_service_handling(runtime_input), enforce_result_logging=enforce_result_logging
+    )
+
+
+async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing, performance measurement etc.
@@ -66,11 +94,11 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     If the service is both backend and runtime, this function will be called directly.
     """
 
-    runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin("RUNTIME_SERVICE")
+    measured_steps = AllMeasuredSteps()
 
-    with PerformanceMeasuredStep(
-        name="RUNTIME_SERVICE_START"
-    ) as runtime_service_start_and_wf_parsing_step:
+    measured_steps.runtime_service_handling.begin()
+
+    with measured_steps.start_and_wf_parsing:
         prepare_runtime_context_bindings(runtime_input)
 
         # maps to data_types
@@ -92,7 +120,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         if get_config().full_execution_input_logging:
             runtime_logger.debug(
-                "FULL WORKFLOW EXECUTION INPUT JSON:\n%s",
+                "FULL RUNTIME WORKFLOW EXECUTION INPUT JSON:\n%s",
                 model_to_pretty_json_str(runtime_input),
             )
 
@@ -107,9 +135,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         currently_executed_process_stage = ProcessStage.PARSING_WORKFLOW
 
-        with PerformanceMeasuredStep(
-            name="RUNTIME_SERVICE_PURE_WF_PARSING"
-        ) as runtime_service_pure_wf_parsing_step:
+        with measured_steps.pure_wf_parsing:
             try:
                 parsed_wf = parse_workflow_input(
                     runtime_input.workflow, runtime_input.components, runtime_input.code_modules
@@ -126,6 +152,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
                     tr_name=runtime_input.workflow.tr_name,
                     tr_tag=runtime_input.workflow.tr_tag,
                     tr_id=runtime_input.workflow.tr_id,
+                    measured_steps=measured_steps,
+                    mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
                 )
             except WorkflowInputDataValidationError as exc:
                 runtime_logger.info(
@@ -139,14 +167,14 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
                     tr_name=runtime_input.workflow.tr_name,
                     tr_tag=runtime_input.workflow.tr_tag,
                     tr_id=runtime_input.workflow.tr_id,
+                    measured_steps=measured_steps,
+                    mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
                 )
 
     # Load data
     currently_executed_process_stage = ProcessStage.LOADING_DATA_FROM_ADAPTERS
 
-    with PerformanceMeasuredStep(
-        name=currently_executed_process_stage.value
-    ) as load_data_measured_step:
+    with measured_steps.load_data:
         try:
             loaded_data = await resolve_and_load_data_from_wiring(runtime_input.workflow_wiring)
 
@@ -162,15 +190,15 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
                 tr_name=runtime_input.workflow.tr_name,
                 tr_tag=runtime_input.workflow.tr_tag,
                 tr_id=runtime_input.workflow.tr_id,
+                measured_steps=measured_steps,
+                mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
             )
 
     # Provide data as constants
 
     currently_executed_process_stage = ProcessStage.PARSE_AND_PROVIDE_DATA_AS_CONSTANTS
 
-    with PerformanceMeasuredStep(
-        name="constant_providing_and_preps"
-    ) as runtime_service_constant_providing_and_preps_step:
+    with measured_steps.constant_providing_and_preps:
         wf_inputs_by_name = {inp.name: inp for inp in runtime_input.workflow.inputs}
 
         constant_providing_data = [
@@ -182,8 +210,9 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         currently_executed_process_stage = ProcessStage.PARSING_LOADED_DATA
         try:
-            # The `add_constant_providing_node` method also ensures that ultimately the corresponding
-            # ComputationNode knows that the input values are to be obtained from this node.
+            # The `add_constant_providing_node` method also ensures that ultimately the
+            # corresponding ComputationNode knows that the input values are to be obtained from
+            # this node.
             # Where applicable, the information from the previous addition of the node with the
             # id_suffix "workflow_default_values" is overwritten.
 
@@ -211,10 +240,12 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
                 tr_name=runtime_input.workflow.tr_name,
                 tr_tag=runtime_input.workflow.tr_tag,
                 tr_id=runtime_input.workflow.tr_id,
+                measured_steps=measured_steps,
+                mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
             )
 
         try:
-            data_infos = {
+            measured_steps.loaded_data_info = {
                 **get_data_info(parsed_non_optional_data, inp_name_to_datatype_map),
                 **get_data_info(parsed_optional_data, inp_name_to_datatype_map, optional=True),
             }
@@ -226,6 +257,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
                 tr_name=runtime_input.workflow.tr_name,
                 tr_tag=runtime_input.workflow.tr_tag,
                 tr_id=runtime_input.workflow.tr_id,
+                measured_steps=measured_steps,
+                mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
             )
 
     # run workflow
@@ -234,9 +267,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     all_nodes = obtain_all_nodes(parsed_wf)
 
     try:
-        with PerformanceMeasuredStep(
-            name=currently_executed_process_stage.value
-        ) as pure_execution_measured_step:
+        with measured_steps.pure_execution:
             workflow_result = await workflow_execution_plain(parsed_wf)
 
             # make sure every computation node result is requested at least once
@@ -265,6 +296,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
             cause=exc.__cause__,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
     except RuntimeExecutionError as exc:
@@ -280,6 +313,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
             cause=exc,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
     if runtime_input.configuration.return_individual_node_results:
@@ -304,8 +339,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     # Ensure result objects have type corresponding to workflow output and are serializable
 
     # Note: None is always implicitly allowed for every output, so outputs are implicitely nullable.
-    #    It is up to adapter implementations to handle None / null values. E.g. the direct provisioning
-    #    adapter simply returns them.
+    #    It is up to adapter implementations to handle None / null values. E.g. the
+    #    direct provisioning adapter simply returns them.
     currently_executed_process_stage = ProcessStage.ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE
 
     try:
@@ -325,6 +360,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_name=runtime_input.workflow.tr_name,
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
     if len(not_identical_result_data_python_types) > 0:
@@ -337,16 +374,18 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_name=runtime_input.workflow.tr_name,
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
-    result_data_infos = get_data_info(workflow_result, outp_name_to_datatype_map, optional=True)
+    measured_steps.result_data_info = get_data_info(
+        workflow_result, cast(dict[str | None, DataType], outp_name_to_datatype_map), optional=True
+    )
 
     # Send data via wiring to sinks and gather data for direct returning
     currently_executed_process_stage = ProcessStage.SENDING_DATA_TO_ADAPTERS
     try:
-        with PerformanceMeasuredStep(
-            name=currently_executed_process_stage.value
-        ) as send_data_measured_step:
+        with measured_steps.send_data:
             direct_return_data: dict = await resolve_and_send_data_from_wiring(
                 runtime_input.workflow_wiring, workflow_result
             )
@@ -366,6 +405,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_name=runtime_input.workflow.tr_name,
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
     currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
@@ -380,6 +421,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_name=runtime_input.workflow.tr_name,
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
+            measured_steps=measured_steps,
         )
     except ValidationError as exc:  # noqa: BLE001
         runtime_logger.info(
@@ -394,46 +436,27 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             tr_name=runtime_input.workflow.tr_name,
             tr_tag=runtime_input.workflow.tr_tag,
             tr_id=runtime_input.workflow.tr_id,
+            measured_steps=measured_steps,
+            mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
         )
 
-    # attach measured steps
-    wf_exec_result.measured_steps.pure_execution = pure_execution_measured_step
-    wf_exec_result.measured_steps.load_data = load_data_measured_step
-    wf_exec_result.measured_steps.send_data = send_data_measured_step
-    wf_exec_result.measured_steps.start_and_wf_parsing = runtime_service_start_and_wf_parsing_step
-    wf_exec_result.measured_steps.pure_wf_parsing = runtime_service_pure_wf_parsing_step
-    wf_exec_result.measured_steps.constant_providing_and_preps = (
-        runtime_service_constant_providing_and_preps_step
-    )
+    measured_steps.runtime_service_handling.stop()
 
-    wf_exec_result.measured_steps.loaded_data_info = data_infos
-    wf_exec_result.measured_steps.result_data_info = result_data_infos
+    mem_info = RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb)
 
-    runtime_service_measured_step.stop()
-
-    memory_at_runtime_service_end_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    memory_diff_runtime_service_end_minus_start_kb = (
-        memory_at_runtime_service_end_kb - memory_at_runtime_service_start_kb
-    )
     runtime_logger.debug(
         (
             "Memory usage at runtime service end (success), diff to start (kb, kb):"
             " %s, %s (job_id: %s, trafo: %s (%s))"
         ),
-        str(memory_at_runtime_service_end_kb),
-        str(memory_diff_runtime_service_end_minus_start_kb),
+        str(mem_info.kb_at_runtime_end),
+        str(mem_info.kb_diff_end_minus_start),
         str(runtime_input.job_id),
         runtime_input.workflow.tr_name,
         runtime_input.workflow.tr_tag,
     )
 
-    wf_exec_result.measured_steps.runtime_memory_info = RuntimeMemoryInfo(
-        kb_at_runtime_start=memory_at_runtime_service_start_kb,
-        kb_at_runtime_end=memory_at_runtime_service_end_kb,
-        kb_diff_end_minus_start=memory_diff_runtime_service_end_minus_start_kb,
-    )
-
-    wf_exec_result.measured_steps.runtime_service_handling = runtime_service_measured_step
+    wf_exec_result.measured_steps.runtime_memory_info = mem_info
 
     return wf_exec_result
 

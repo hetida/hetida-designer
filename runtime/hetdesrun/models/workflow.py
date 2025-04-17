@@ -1,4 +1,5 @@
 from typing import Any, Union
+from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
@@ -79,7 +80,7 @@ class WorkflowNode(AbstractNode):
     inputs: list[WorkflowInput]
     outputs: list[WorkflowOutput]
     name: str | None = Field(None, description="workflow node name")
-    tr_id: str
+    tr_id: UUID
     tr_name: str
     tr_tag: str
 

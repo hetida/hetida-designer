@@ -401,7 +401,11 @@ async def run_execution_input(
     return execution_response
 
 
-def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> None:
+def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> InputWiring:
+    """Truncates too long direct_provisioning value filters
+
+    Mutates InputWiring and returns it.
+    """
     if (
         inp_wiring.adapter_id in {"direct_provisioning", 1}
         and "value" in inp_wiring.filters
@@ -410,7 +414,7 @@ def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> None:
     ):
         inp_wiring.filters["value"] = (
             inp_wiring.filters["value"][:100]
-            + f'... ({str(len(inp_wiring.filters["value"]) - 200)} characters omitted) ...'
+            + f"... ({str(len(inp_wiring.filters['value']) - 200)} characters omitted) ..."
             + inp_wiring.filters["value"][-100:]
         )
 
@@ -419,6 +423,9 @@ def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> None:
 
 def exec_by_id_input_to_stub(exec_by_id_input: ExecByIdInput) -> ExecByIdInput:
     exec_by_id_input_stub = exec_by_id_input.model_copy(deep=True)
+
+    if exec_by_id_input_stub.wiring is None:
+        return exec_by_id_input_stub
 
     exec_by_id_input_stub.wiring.input_wirings = [
         possibly_truncate_filter_value_str(inp_wiring)

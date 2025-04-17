@@ -274,6 +274,7 @@ def recursively_parse_workflow_node(
     """
     node_name = node.name if node.name is not None else "UNKNOWN"
     new_sub_nodes: dict[str, Node] = {}
+
     for sub_input_node in node.sub_nodes:
         new_sub_node: Node
         if isinstance(sub_input_node, WorkflowNode):
@@ -288,6 +289,7 @@ def recursively_parse_workflow_node(
             assert isinstance(  # noqa: S101
                 sub_input_node, ComponentNode
             )  # hint for mypy
+
             new_sub_node = parse_component_node(
                 sub_input_node,
                 component_dict,
@@ -295,6 +297,7 @@ def recursively_parse_workflow_node(
                 name_prefix + node_name + HIERARCHY_SEPARATOR,
                 id_prefix + node.id + HIERARCHY_SEPARATOR,
             )
+
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
     connections: list[WorkflowConnection] = node.connections
