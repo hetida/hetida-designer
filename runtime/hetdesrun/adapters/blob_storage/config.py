@@ -1,7 +1,8 @@
 import os
 from typing import Literal
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class BlobStorageAdapterConfig(BaseSettings):
@@ -13,26 +14,26 @@ class BlobStorageAdapterConfig(BaseSettings):
             "Path to the adapter hierarchy json file. "
             "Must be set to enable the BLOB storage adapter REST API. "
         ),
-        env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
-        example="/mnt/blob_storage_adapter_hierarchy.json",
+        validation_alias="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
+        examples=["/mnt/blob_storage_adapter_hierarchy.json"],
     )
     anonymous: bool = Field(
         False,
         description="Skip requesting credentials via STS and make unsigned S3 requests",
-        env="BLOB_STORAGE_ADAPTER_ANONYMOUS",
+        validation_alias="BLOB_STORAGE_ADAPTER_ANONYMOUS",
     )
     allow_bucket_creation: bool = Field(
         True,
         description=(
             "Allow the creation of buckets which match the adapter hierarchy if they are missing"
         ),
-        env="BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION",
+        validation_alias="BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION",
     )
     endpoint_url: str = Field(
         "",
         description="URL under which the BLOB storage is accessible.",
-        env="BLOB_STORAGE_ENDPOINT_URL",
-        example="http://minio:9000",
+        validation_alias="BLOB_STORAGE_ENDPOINT_URL",
+        examples=["http://minio:9000"],
     )
     sts_params: dict = Field(
         {},
@@ -40,11 +41,13 @@ class BlobStorageAdapterConfig(BaseSettings):
             "Parameters needed for authentication at the STS client "
             "additionaly to Action and WebIdentityToken."
         ),
-        env="BLOB_STORAGE_STS_PARAMS",
-        example={
-            "DurationSeconds": 3600,
-            "Version": "2011-06-15",
-        },
+        validation_alias="BLOB_STORAGE_STS_PARAMS",
+        examples=[
+            {
+                "DurationSeconds": 3600,
+                "Version": "2011-06-15",
+            }
+        ],
     )
     region_name: Literal[
         "EU",
@@ -76,7 +79,7 @@ class BlobStorageAdapterConfig(BaseSettings):
     ] = Field(
         "eu-central-1",
         description="The name of the region associated with the S3 client.",
-        env="BLOB_STORAGE_REGION_NAME",
+        validation_alias="BLOB_STORAGE_REGION_NAME",
     )
     checksum_algorithm: Literal["SHA1", "SHA256", "CRC32", "CRC32C", ""] = Field(
         "SHA1",
@@ -85,12 +88,17 @@ class BlobStorageAdapterConfig(BaseSettings):
             "for writing or loading objects with checkums. Per defaul it is set to 'SHA1'. "
             "Set it to an empty string to deactivate the usage of checksums."
         ),
-        env="BLOB_STORAGE_CHECKSUM_ALGORITHM",
+        validation_alias="BLOB_STORAGE_CHECKSUM_ALGORITHM",
     )
 
-    @validator("allow_bucket_creation")
-    def no_anonymous_bucket_creation(cls, allow_bucket_creation: bool, values: dict) -> bool:
-        anonymous = values["anonymous"]
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
+
+    @field_validator("allow_bucket_creation")
+    @classmethod
+    def no_anonymous_bucket_creation(
+        cls, allow_bucket_creation: bool, info: ValidationInfo
+    ) -> bool:
+        anonymous = info.data["anonymous"]
         if anonymous is True:
             allow_bucket_creation = False  # noqa: F841
 

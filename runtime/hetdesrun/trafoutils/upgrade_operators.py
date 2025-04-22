@@ -240,7 +240,7 @@ def fix_links_into_operator(workflow: TransformationRevision, operator: Operator
         )
     ]
 
-    workflow.content = WorkflowContent.construct(
+    workflow.content = WorkflowContent.model_construct(
         operators=workflow_content.operators,
         links=all_links_to_keep,  # change only this
         constants=workflow_content.constants,
@@ -275,7 +275,7 @@ def fix_links_outof_operator(workflow: TransformationRevision, operator: Operato
         )
     ]
 
-    workflow.content = WorkflowContent.construct(
+    workflow.content = WorkflowContent.model_construct(
         operators=workflow_content.operators,
         links=all_links_to_keep,  # change only this
         constants=workflow_content.constants,
@@ -304,7 +304,7 @@ def fix_constants(workflow: TransformationRevision, operator: Operator) -> None:
         )
     ]
 
-    workflow.content = WorkflowContent.construct(
+    workflow.content = WorkflowContent.model_construct(
         operators=workflow_content.operators,
         links=workflow_content.links,
         constants=all_constants_to_keep,  # change only this
@@ -621,7 +621,7 @@ def upgrade_workflow_operator_in_place(
         or wf_content_input.connector_name in to_keep_operator_inputs_by_name
     ] + added_workflow_content_inputs  # those from new trafo inputs.
 
-    workflow.content = WorkflowContent.construct(
+    workflow.content = WorkflowContent.model_construct(
         operators=workflow_content.operators,
         links=workflow_content.links,
         constants=workflow_content.constants,
@@ -673,7 +673,7 @@ def upgrade_workflow_operator_in_place(
         or wf_content_output.connector_name in to_keep_operator_outputs_by_name
     ] + added_workflow_content_outputs  # those from new trafo outputs.
 
-    workflow.content = WorkflowContent.construct(
+    workflow.content = WorkflowContent.model_construct(
         operators=workflow.content.operators,
         links=workflow.content.links,
         constants=workflow.content.constants,
@@ -701,7 +701,7 @@ def upgrade_workflow_operator_in_place(
     fix_path_start_y_positions(workflow, operator)
 
     # revalidate:
-    TransformationRevision(**(workflow.dict()))
+    TransformationRevision(**(workflow.model_dump()))
 
 
 def upgrade_operators_with_providided_revisions(
@@ -721,7 +721,7 @@ def upgrade_operators_with_providided_revisions(
     This behaviout can be turned off by same_revision_no_op.
     """
 
-    new_workflow = workflow.copy(deep=True)
+    new_workflow = workflow.model_copy(deep=True)
 
     operators_to_check = get_operators_to_check_for_upgrades(
         new_workflow, only_check_deprecated=only_check_deprecated

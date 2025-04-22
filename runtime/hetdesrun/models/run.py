@@ -1,14 +1,30 @@
 """Models for runtime execution endpoint"""
 
 import datetime
+import resource
 import traceback as tb
 from enum import Enum, StrEnum
-from typing import Any
+from types import TracebackType
+from typing import Any, Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
-from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hdutils import (
+    DataType,
+    PlotTargetSettings,
+    data_type_map,
+    parse_obj_as_type,
+    serializer_funcs_by_type,
+)
 from hetdesrun.models.base import Result
 from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
@@ -18,6 +34,7 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.reference_context import (
     get_deepcopy_of_reproducibility_reference_context,
 )
+from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
 from hetdesrun.utils import Type, check_explicit_utc
 
@@ -35,21 +52,25 @@ class PerformanceMeasuredStep(BaseModel):
     end: datetime.datetime | None = None
     duration: datetime.timedelta | None = None
 
+    model_config = ConfigDict(ser_json_timedelta="float")  # seconds
+
     @classmethod
     def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
         new_step = cls(name=name)
         new_step.begin()
         return new_step
 
-    @validator("start")
+    @field_validator("start")
+    @classmethod
     def start_utc_datetime(cls, start):  # type: ignore
-        if not check_explicit_utc(start):
+        if start is not None and not check_explicit_utc(start):
             raise ValueError("start datetime for measurement must be explicit utc")
         return start
 
-    @validator("end")
+    @field_validator("end")
+    @classmethod
     def end_utc_datetime(cls, end):  # type: ignore
-        if not check_explicit_utc(end):
+        if end is not None and not check_explicit_utc(end):
             raise ValueError("end datetime for measurement must be explicit utc")
         return end
 
@@ -63,15 +84,72 @@ class PerformanceMeasuredStep(BaseModel):
         self.end = datetime.datetime.now(datetime.timezone.utc)
         self.duration = self.end - self.start
 
+    def __enter__(self) -> Self:
+        self.begin()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.stop()
+
+
+class RuntimeMemoryInfo(BaseModel):
+    kb_at_runtime_start: int
+    kb_at_runtime_end: int
+    kb_diff_end_minus_start: int
+
+    @classmethod
+    def complete_now(cls, kb_at_start: int) -> "RuntimeMemoryInfo":
+        memory_at_runtime_service_end_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_diff_runtime_service_end_minus_start_kb = (
+            memory_at_runtime_service_end_kb - kb_at_start
+        )
+        return cls(
+            kb_at_runtime_start=kb_at_start,
+            kb_at_runtime_end=memory_at_runtime_service_end_kb,
+            kb_diff_end_minus_start=memory_diff_runtime_service_end_minus_start_kb,
+        )
+
 
 class AllMeasuredSteps(BaseModel):
-    internal_full: PerformanceMeasuredStep | None = None
-    prepare_execution_input: PerformanceMeasuredStep | None = None
-    run_execution_input: PerformanceMeasuredStep | None = None
-    runtime_service_handling: PerformanceMeasuredStep | None = None
-    pure_execution: PerformanceMeasuredStep | None = None
-    load_data: PerformanceMeasuredStep | None = None
-    send_data: PerformanceMeasuredStep | None = None
+    internal_full: PerformanceMeasuredStep = PerformanceMeasuredStep(name="internal_full")
+    prepare_execution_input: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="prepare_execution_input"
+    )
+    run_execution_input: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="run_execution_input"
+    )
+    runtime_service_handling: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="RUNTIME_SERVICE"
+    )
+    pure_execution: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="EXECUTING_COMPONENT_CODE"
+    )
+    load_data: PerformanceMeasuredStep = PerformanceMeasuredStep(name="LOADING_DATA_FROM_ADAPTERS")
+    send_data: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="LOADING_DATA_FROM_SENDING_DATA_TO_ADAPTERSADAPTERS"
+    )
+    runtime_request_response_parsing: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="runtime_request_response_parsing"
+    )
+
+    pure_runtime_request: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="pure_runtime_request"
+    )
+    start_and_wf_parsing: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="RUNTIME_SERVICE_PURE_WF_PARSING"
+    )
+    pure_wf_parsing: PerformanceMeasuredStep = PerformanceMeasuredStep(name="pure_wf_parsing")
+    constant_providing_and_preps: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="constant_providing_and_preps"
+    )
+    loaded_data_info: dict[str, dict[str, Any]] = {}
+    result_data_info: dict[str, dict[str, Any]] = {}
+    runtime_memory_info: RuntimeMemoryInfo | None = None
 
 
 class ConfigurationInput(BaseModel):
@@ -81,7 +159,7 @@ class ConfigurationInput(BaseModel):
     engine: ExecutionEngine = Field(
         ExecutionEngine.Plain,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(ExecutionEngine)]),
-        example=ExecutionEngine.Plain,
+        examples=[ExecutionEngine.Plain],
     )
     run_pure_plot_operators: bool = Field(
         True,
@@ -126,21 +204,30 @@ class WorkflowExecutionInput(BaseModel):
             " used for logging and providing context information."
         ),
     )
+    plot_target_settings: PlotTargetSettings = Field(
+        default_factory=PlotTargetSettings, description="Settings that plot components should use"
+    )
+    runtime_execution_context: RuntimeExecutionContext = Field(
+        default_factory=RuntimeExecutionContext,
+        description="General settings to influence aspects of workflow/component execution",
+    )
 
-    @validator("components")
+    @field_validator("components")
+    @classmethod
     def components_unique(cls, components: list[ComponentRevision]) -> list[ComponentRevision]:
         if len({c.uuid for c in components}) != len(components):
             raise ValueError("Components not unique!")
         return components
 
-    @validator("code_modules")
+    @field_validator("code_modules")
+    @classmethod
     def code_modules_unique(cls, code_modules: list[CodeModule]) -> list[CodeModule]:
         if len({c.uuid for c in code_modules}) != len(code_modules):
             raise ValueError("Code Modules not unique!")
         return code_modules
 
-    @root_validator(skip_on_failure=True)
-    def check_wiring_complete(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def check_wiring_complete(self) -> Self:
         """Every (non-constant) required Workflow input/output must be wired
 
         Checks whether there is a wiring for every non-constant required workflow input
@@ -148,14 +235,8 @@ class WorkflowExecutionInput(BaseModel):
         input wiring and a workflow output for each output wiring.
         """
 
-        try:
-            wiring: WorkflowWiring = values["workflow_wiring"]
-            workflow: WorkflowNode = values["workflow"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check if wiring is complete if "
-                "one of the attributes 'wiring' or 'workflow' is missing!"
-            ) from e
+        wiring: WorkflowWiring = self.workflow_wiring
+        workflow: WorkflowNode = self.workflow
 
         # Check that every Workflow Input is wired:
         wired_input_names = {inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings}
@@ -201,9 +282,7 @@ class WorkflowExecutionInput(BaseModel):
                     f"Wiring does not match: There is no workflow output '{wired_output_name}'!"
                 )
 
-        return values
-
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+        return self
 
 
 class TransformationInfo(BaseModel):
@@ -266,14 +345,17 @@ class ErrorLocation(BaseModel):
 
 
 class ProcessStage(StrEnum):
-    """ "Stages of the execution process."""
+    """Stages of the execution process."""
 
     PARSING_WORKFLOW = "PARSING_WORKFLOW"
     LOADING_DATA_FROM_ADAPTERS = "LOADING_DATA_FROM_ADAPTERS"
+    PARSE_AND_PROVIDE_DATA_AS_CONSTANTS = "PARSE_AND_PROVIDE_DATA_AS_CONSTANTS"
     PARSING_LOADED_DATA = "PARSING_LOADED_DATA"
     EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
+    ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE = "ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE"
     SENDING_DATA_TO_ADAPTERS = "SENDING_DATA_TO_ADAPTERS"
     ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
+    SERIALIZING_EXEC_RESULT = "SERIALIZING_EXEC_RESULT"
 
 
 class WorkflowExecutionError(BaseModel):
@@ -287,7 +369,10 @@ class WorkflowExecutionError(BaseModel):
 
 
 def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
-    last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    try:
+        last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    except IndexError:
+        return ErrorLocation(file="__UNKNOWN__", function_name="__UNKNOWN__", line_number=-1)
     return ErrorLocation(
         file=(last_trace.filename if last_trace.filename != "<string>" else "COMPONENT CODE"),
         function_name=last_trace.name,
@@ -295,14 +380,30 @@ def get_location_of_exception(exception: Exception | BaseException) -> ErrorLoca
     )
 
 
+def to_correct_obj_by_datatype(obj: Any, data_type: DataType) -> Any:
+    if obj is None:
+        return None
+    if data_type is None or data_type is DataType.Any:
+        return obj
+
+    return parse_obj_as_type(obj, data_type_map[data_type])
+
+
 class WorkflowExecutionInfo(BaseModel):
     error: WorkflowExecutionError | None = Field(None, description="error string")
+    output_types_by_output_name: dict[str, DataType | None] = Field(
+        ..., description="types corresponding to results in output_results_by_output_name"
+    )
     output_results_by_output_name: dict[str, Any] = Field(
         ...,
         description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
+
     traceback: str | None = Field(None, description="traceback")
     job_id: UUID
+    tr_tag: str
+    tr_name: str
+    tr_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
 
@@ -312,8 +413,15 @@ class WorkflowExecutionInfo(BaseModel):
         exception: Exception,
         process_stage: ProcessStage,
         job_id: UUID,
-        cause: BaseException | None,
+        tr_name: str,
+        tr_tag: str,
+        tr_id: UUID,
+        cause: BaseException | None = None,
+        measured_steps: AllMeasuredSteps | None = None,
+        mem_info: RuntimeMemoryInfo | None = None,
     ) -> "WorkflowExecutionInfo":
+        if measured_steps is not None and mem_info is not None:
+            measured_steps.runtime_memory_info = mem_info
         return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
                 type=(type(exception).__name__ if cause is None else type(cause).__name__),
@@ -340,17 +448,56 @@ class WorkflowExecutionInfo(BaseModel):
             ),
             traceback=tb.format_exc(),
             output_results_by_output_name={},
+            output_types_by_output_name={},
             job_id=job_id,
+            tr_name=tr_name,
+            tr_tag=tr_tag,
+            tr_id=tr_id,
+            measured_steps=measured_steps if measured_steps is not None else AllMeasuredSteps(),
         )
 
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+    @field_serializer("output_results_by_output_name")
+    def serialize_output_result_dict(
+        self, output_results_by_output_name: dict[str, Any]
+    ) -> dict[str, Any]:
+        output_datatypes_by_output_name = self.output_types_by_output_name
+        return {
+            outp_name: serializer_funcs_by_type.get(
+                data_type_map[output_datatypes_by_output_name[outp_name]], lambda x: x
+            )(obj)
+            for outp_name, obj in output_results_by_output_name.items()
+        }
+
+    @field_validator("output_results_by_output_name")
+    @classmethod
+    def correct_objects_according_to_output_types(
+        cls, output_results_by_output_name: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
+        output_types_by_output_name = info.data.get("output_types_by_output_name")
+        if output_types_by_output_name is None:
+            raise ValueError(
+                "Missing output_types_by_output_name, cannot validate output_results_by_output_name"
+            )
+
+        # Validate; We have a datatype for each output result:
+        for outp_name in output_results_by_output_name:
+            if not outp_name in output_types_by_output_name:
+                raise ValueError(
+                    f"Output with name {outp_name} has no entry in output_types_by_output_name"
+                )
+        correct_objects = {
+            outp_name: to_correct_obj_by_datatype(obj, output_types_by_output_name[outp_name])
+            for outp_name, obj in output_results_by_output_name.items()
+        }
+
+        return correct_objects
 
 
 class WorkflowExecutionResult(WorkflowExecutionInfo):
     result: Result = Field(
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),  # type: ignore
-        example=Result.OK,
+        examples=[Result.OK],
     )
     node_results: str | None = Field(
         None,
@@ -373,14 +520,31 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         exception: Exception,
         process_stage: ProcessStage,
         job_id: UUID,
+        tr_name: str,
+        tr_tag: str,
+        tr_id: UUID,
         cause: BaseException | None = None,
+        measured_steps: AllMeasuredSteps | None = None,
+        mem_info: RuntimeMemoryInfo | None = None,
         node_results: str | None = None,
     ) -> "WorkflowExecutionResult":
         # Access the current context to retrieve resolved reproducibility references
         repr_reference = get_deepcopy_of_reproducibility_reference_context()
 
+        wf_exec_info = super().from_exception(
+            exception,
+            process_stage,
+            job_id,
+            tr_name=tr_name,
+            tr_tag=tr_tag,
+            tr_id=tr_id,
+            cause=cause,
+            measured_steps=measured_steps,
+            mem_info=mem_info,
+        )
+
         return WorkflowExecutionResult(
-            **super().from_exception(exception, process_stage, job_id, cause).dict(),
+            **wf_exec_info.model_dump(),
             result="failure",
             node_results=node_results,
             resolved_reproducibility_references=repr_reference,

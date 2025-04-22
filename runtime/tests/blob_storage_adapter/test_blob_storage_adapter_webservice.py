@@ -181,8 +181,11 @@ async def test_blob_adapter_webservice_filtered(
 
         assert source_response.status_code == 200
         assert source_response.json()["resultCount"] == 4
-        assert source_response.json()["sources"][:3] == mocked_blob_storage_sources[:3]
-        assert source_response.json()["sources"][3] == mocked_blob_storage_sources[5]
+
+        for ind, src_json_obj in enumerate(source_response.json()["sources"][:3]):
+            assert src_json_obj == mocked_blob_storage_sources[ind].model_dump()
+
+        assert source_response.json()["sources"][3] == mocked_blob_storage_sources[5].model_dump()
 
 
 @pytest.mark.asyncio

@@ -81,8 +81,10 @@ The expected output of the above call is:
 
 """
 
+from typing import Self
+
 import pandas as pd
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, ValidationError, model_validator
 
 from hdutils import ComponentInputValidationException
 
@@ -93,8 +95,9 @@ class TimeInterval(BaseModel):
     start_inclusive: bool = True
     end_inclusive: bool = True
 
-    @root_validator(skip_on_failure=True)
-    def verify_value_ranges(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def verify_value_ranges(self) -> Self:
+        values = dict(self)
         start = values["start"]
         start_inclusive = values["start_inclusive"]
         end = values["end"]

@@ -1,7 +1,6 @@
 from collections.abc import Callable
-from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
@@ -15,9 +14,10 @@ class FileSupportHandler(BaseModel):
         description="As which type the adapter should offer files.",
     )
 
-    @validator("write_handler_func", always=True)
-    def at_least_one_handler_func(cls, v: Any, values: dict[str, Any]) -> Callable | None:
-        if (values["read_handler_func"] is None) and (values["write_handler_func"] is None):
+    @field_validator("write_handler_func")
+    @classmethod
+    def at_least_one_handler_func(cls, v: Callable | None, info: ValidationInfo) -> Callable | None:
+        if (info.data["read_handler_func"] is None) and (v is None):
             raise ValueError(
                 "At least one of read_handler_func or write_handler_func must be provided."
             )

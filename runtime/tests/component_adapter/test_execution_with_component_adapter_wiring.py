@@ -85,7 +85,9 @@ async def test_component_source_wiring_executes_via_backend_webservice(async_tes
         True,
     ):
         async with async_test_client as ac:
-            resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+            resp = await ac.post(
+                "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+            )
 
     assert resp.status_code == 200
     assert resp.json()["error"] is None
@@ -157,7 +159,9 @@ async def test_component_sink_wiring_executes_via_backend_webendpoint(async_test
     )
 
     async with async_test_client as ac:
-        resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
 
     assert resp.status_code == 200
     assert resp.json()["error"] is None
@@ -198,6 +202,7 @@ async def test_component_sink_wiring_plotly_executes_correctly(tmpdir):
     )
 
     exec_result = await execute_transformation_revision(exec_input)
+
     assert exec_result.error is None
     assert len(exec_result.output_results_by_output_name) == 0
 

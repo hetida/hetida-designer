@@ -23,6 +23,8 @@ joblib
 kaleido
 keras
 libcst
+lightgbm
+msgspec
 numba!=0.56.2 # due to setuptools dependency resolution problems
 numpy
 odfpy
@@ -32,10 +34,11 @@ ortools
 pandas
 pendulum
 pillow
-plotly==5.15.0
+plotly<7
 psycopg2
 pyarrow
-pydantic[dotenv]>=1.8.2,<2
+pydantic[dotenv]<3,>=2.11
+pydantic-settings
 pytest
 pytest-asyncio
 python-jose[cryptography]
@@ -49,6 +52,7 @@ sqlalchemy[mypy]>=2.0,<3
 statsmodels
 tables
 typing-extensions
+u8darts[notorch]
 uvicorn>=0.17.2
 uvloop
 xlrd>=2.0

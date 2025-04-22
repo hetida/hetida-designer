@@ -106,7 +106,7 @@ for file_path in json_files:
     with open(root_path + file_path, encoding="utf8") as f:
         tr = TransformationRevision(**json.load(f))
         bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
-        bi_json = json.loads(bi.json())
+        bi_json = json.loads(bi.model_dump_json())
     bi_list.append(bi_json)
 
 

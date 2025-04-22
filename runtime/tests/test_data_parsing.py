@@ -1,19 +1,33 @@
+import re
+from uuid import uuid4
+
 import numpy as np
 import pandas as pd
 import pytest
+from fastapi.encoders import jsonable_encoder
 from pandas.api.types import is_bool_dtype, is_datetime64_any_dtype, is_float_dtype
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, ValidationError
 
+from hdutils import (
+    MetaDataWrapped,
+    PydanticPandasSeries,
+    parse_obj_as_type,
+    parse_pandas_data_content,
+    parse_wrapped_content,
+    parsing_not_identical,
+    wrap_metadata_as_attrs,
+)
 from hetdesrun.datatypes import (
     DataType,
     PydanticMultiTimeseriesPandasDataFrame,
     PydanticPandasDataFrame,
-    PydanticPandasSeries,
     parse_dynamically_from_datatypes,
 )
+from hetdesrun.models.run import WorkflowExecutionResult
 
 
 class ExampleObj(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     s: PydanticPandasSeries
 
 
@@ -32,15 +46,17 @@ def test_parsing():
 
     assert result.z == 2.0
     assert len(result.any_object_new) == 3
-    assert len(result.dict()) == 3
+    assert len(result.model_dump()) == 3
 
     result = parse_dynamically_from_datatypes([])
-    assert result.dict() == {}
+    assert result.model_dump() == {}
 
 
 def test_series_parsing():
     class MySeriesModel(BaseModel):
         s: PydanticPandasSeries
+
+        model_config = ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True)
 
     # test parsing of a string
     s1 = MySeriesModel(s='{"0":1.0,"1":2.1,"2":3.2}').s
@@ -58,6 +74,8 @@ def test_dataframe_parsing():
     class MyDfModel(BaseModel):
         df: PydanticPandasDataFrame
 
+        model_config = ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True)
+
     df1 = MyDfModel(df='{"a":{"0":1.0,"1":2.0,"2":null},"b":{"0":1,"1":2,"2":3}}').df
 
     assert len(df1) == 3
@@ -73,6 +91,7 @@ def test_dataframe_parsing():
 def test_multitsframe_parsing():
     class MyMultiTsFrameModel(BaseModel):
         mtsf: PydanticMultiTimeseriesPandasDataFrame
+        model_config = ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True)
 
     empty_df_mtsf = MyMultiTsFrameModel(mtsf=("""{}""")).mtsf
 
@@ -323,3 +342,163 @@ def test_any_parsing():
     assert len(result.list_object_double_string_encoded) == 3
 
     assert result.actual_str_as_any == "some_string"
+
+
+def test_pydantic_pandas_series_wrapped_metadata_parsing():
+    wrapped_series_dict = {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": {},
+        "__data__": {
+            "name": None,
+            "index": ["2020-05-01T00:00:00.000Z", "2020-05-01T02:00:00.000Z"],
+            "data": ["2020-05-01T01:00:00.000", None],
+        },
+        "__data_parsing_options__": {"orient": "split"},
+    }
+
+    wrapped = MetaDataWrapped(**wrapped_series_dict)
+    assert wrapped.data_parsing_options__ == {"orient": "split"}
+
+    data_content, metadata, parsing_options = parse_wrapped_content(wrapped_series_dict, "SERIES")
+
+    parsed_pandas_obj = parse_pandas_data_content(
+        data_content, "series", parsing_options=parsing_options
+    )
+
+    assert len(parsed_pandas_obj) == 2
+
+    metadata_wrapped_series = wrap_metadata_as_attrs(parsed_pandas_obj, metadata)
+    assert len(metadata_wrapped_series) == 2
+
+    s = parse_obj_as_type(wrapped_series_dict, PydanticPandasSeries)
+    assert len(s) == 2
+
+
+def test_jsonable_encoder():
+    direct_return_data = {
+        "output": {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": {},
+            "__data__": {
+                "name": None,
+                "index": ["2020-05-01T00:00:00.000Z", "2020-05-01T02:00:00.000Z"],
+                "data": ["2020-05-01T01:00:00.000", None],
+            },
+            "__data_parsing_options__": {"orient": "split"},
+        }
+    }
+
+    outp_name_to_datatype_map = {"output": DataType.Series}
+
+    wf_exec_result = WorkflowExecutionResult(
+        result="ok",
+        node_results=None,
+        output_types_by_output_name=outp_name_to_datatype_map,
+        output_results_by_output_name=direct_return_data,
+        job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
+    )
+
+    jsonable_encoder(wf_exec_result)
+
+
+def test_string_series_parsing():
+    val = (
+        '{"2020-05-01T00:00:00.000Z":2.5340945967,"2020-05-01T01:00:00.000Z":2.5658768256,'
+        '"2020-05-01T02:00:00.000Z":2.570679579}'
+    )
+    target_type = PydanticPandasSeries
+    parsed_obj = parse_obj_as_type(val, target_type)
+    assert isinstance(parsed_obj, pd.Series)
+
+
+def test_parsing_idempotency():
+    not_identical = parsing_not_identical(
+        {
+            "series": pd.Series([1, 2, 3]),
+            "dataframe": pd.DataFrame({"a": [1, 2, 3], "b": [0.5, 2, 6.7]}),
+            "multitsframe": pd.DataFrame(
+                {"timestamp": pd.to_datetime(["2025-01-01"]), "metric": ["a"], "value": [42.2]}
+            ),
+            "str": "some string",
+            "int": 42,
+            "float": 42.2,
+            "bool": True,
+            "any": {"c": {"a": 3, "b": [1, 2, 3]}},
+            "plotlyjson": {"data": {}, "layout": {}, "config": {}},
+        },
+        {
+            "series": DataType.Series,
+            "dataframe": DataType.DataFrame,
+            "multitsframe": DataType.MultiTSFrame,
+            "str": DataType.String,
+            "int": DataType.Integer,
+            "float": DataType.Float,
+            "bool": DataType.Boolean,
+            "any": DataType.Any,
+            "plotlyjson": DataType.PlotlyJson,
+        },
+    )
+    assert len(not_identical) == 0
+
+    pattern = re.compile(
+        r".*series.*dataframe.*multitsframe.*str.*int.*float.*bool.*plotlyjson.*", re.DOTALL
+    )
+    with pytest.raises(
+        ValidationError,
+        match=pattern,
+    ):
+        not_identical = parsing_not_identical(
+            {
+                "series": None,
+                "dataframe": None,
+                "multitsframe": None,
+                "str": None,
+                "int": None,
+                "float": None,
+                "bool": None,
+                "any": None,
+                "plotlyjson": None,
+            },
+            {
+                "series": DataType.Series,
+                "dataframe": DataType.DataFrame,
+                "multitsframe": DataType.MultiTSFrame,
+                "str": DataType.String,
+                "int": DataType.Integer,
+                "float": DataType.Float,
+                "bool": DataType.Boolean,
+                "any": DataType.Any,
+                "plotlyjson": DataType.PlotlyJson,
+            },
+            nullable=False,
+        )
+
+    not_identical = parsing_not_identical(
+        {
+            "series": None,
+            "dataframe": None,
+            "multitsframe": None,
+            "str": None,
+            "int": None,
+            "float": None,
+            "bool": None,
+            "any": None,
+            "plotlyjson": None,
+        },
+        {
+            "series": DataType.Series,
+            "dataframe": DataType.DataFrame,
+            "multitsframe": DataType.MultiTSFrame,
+            "str": DataType.String,
+            "int": DataType.Integer,
+            "float": DataType.Float,
+            "bool": DataType.Boolean,
+            "any": DataType.Any,
+            "plotlyjson": DataType.PlotlyJson,
+        },
+        nullable=True,
+    )
+    assert len(not_identical) == 0

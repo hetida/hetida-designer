@@ -35,8 +35,8 @@ def test_validator_filepath_must_be_set_when_populating_from_file():
         "if prepopulate_virtual_structure_adapter_via_file is set to True",
     ):
         _ = VirtualStructureAdapterConfig(
-            prepopulate_virtual_structure_adapter_at_designer_startup=True,
-            prepopulate_virtual_structure_adapter_via_file=True,
+            PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP=True,
+            PREPOPULATE_VST_ADAPTER_VIA_FILE=True,
         )
 
 
@@ -48,7 +48,7 @@ def test_validator_structure_must_be_provided_if_populating_from_env_var():
         "and you want to populate from an environment variable",
     ):
         _ = VirtualStructureAdapterConfig(
-            prepopulate_virtual_structure_adapter_at_designer_startup=True,
+            PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP=True,
         )
 
 
@@ -64,7 +64,7 @@ def test_validator_complete_structure_must_not_be_set_if_populating_from_file():
         "since you wish to populate from a file",
     ):
         _ = VirtualStructureAdapterConfig(
-            prepopulate_virtual_structure_adapter_via_file=True,
-            structure_filepath_to_prepopulate_virtual_structure_adapter="nf",
-            structure_to_prepopulate_virtual_structure_adapter=complete_structure,
+            PREPOPULATE_VST_ADAPTER_VIA_FILE=True,
+            STRUCTURE_FILEPATH_TO_PREPOPULATE_VST_ADAPTER="nf",
+            STRUCTURE_TO_PREPOPULATE_VST_ADAPTER=complete_structure,
         )

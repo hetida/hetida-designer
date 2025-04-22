@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
@@ -21,14 +21,14 @@ class BasicInformation(BaseModel):
     state: State
     tag: str = Field(..., max_length=20)
 
-    @validator("tag")
+    @field_validator("tag")
+    @classmethod
     def tag_not_latest(cls, tag: str) -> str:
         if tag != "latest":
             return tag
         raise ValueError("'latest' is a tag value for internal use only!")
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class DocumentationFrontendDto(BaseModel):
@@ -48,7 +48,7 @@ class DocumentationFrontendDto(BaseModel):
 class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
     result: str
     output_results_by_output_name: dict[str, Any] = {}
-    output_types_by_output_name: dict[str, DataType] = {}
+    output_types_by_output_name: dict[str, DataType | None] = {}
     resolved_reproducibility_references: ReproducibilityReference = Field(
         default_factory=ReproducibilityReference,
         description="Resolved references to information needed to reproduce an execution result."

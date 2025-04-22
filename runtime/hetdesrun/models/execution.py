@@ -7,6 +7,7 @@ from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.reference_context import (
     get_deepcopy_of_reproducibility_reference_context,
 )
+from hetdesrun.runtime.context import RuntimeExecutionContext
 
 
 class ExecByIdBase(BaseModel):
@@ -23,6 +24,13 @@ class ExecByIdBase(BaseModel):
     )
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
+    )
+    runtime_execution_context: RuntimeExecutionContext = Field(
+        default_factory=RuntimeExecutionContext,
+        description=(
+            "Settings provided by the execution request that may influence"
+            " execution and can be accessed in component code."
+        ),
     )
 
 

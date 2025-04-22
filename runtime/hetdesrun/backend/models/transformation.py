@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from pydantic import validator
+from pydantic import field_validator
 
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto
@@ -18,7 +18,8 @@ class TransformationRevisionFrontendDto(BasicInformation):
     outputs: list[ConnectorFrontendDto] = []
     wirings: list[WiringFrontendDto] = []
 
-    @validator("inputs", "outputs", each_item=False)
+    @field_validator("inputs", "outputs")
+    @classmethod
     def input_names_none_or_unique(
         cls, ios: list[ConnectorFrontendDto]
     ) -> list[ConnectorFrontendDto]:
@@ -46,8 +47,8 @@ class TransformationRevisionFrontendDto(BasicInformation):
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[inp.to_io() for inp in self.inputs],
-                outputs=[output.to_io() for output in self.outputs],
+                inputs=[inp.to_io().model_dump() for inp in self.inputs],
+                outputs=[output.to_io().model_dump() for output in self.outputs],
             ),
             content="" if self.type == Type.COMPONENT else WorkflowContent(),
             test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),

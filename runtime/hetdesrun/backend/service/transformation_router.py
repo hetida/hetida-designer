@@ -65,6 +65,10 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.runtime.service import unittest_service
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     Importable,
@@ -152,8 +156,8 @@ async def create_transformation_revision(
         msg = f"Could not find transformation revision {transformation_revision.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -164,7 +168,7 @@ def change_code(
     update_component_code: bool = False,
 ) -> str:
     """Handle desired code changes"""
-    tr_copy = tr.copy(deep=True)
+    tr_copy = tr.model_copy(deep=True)
     assert isinstance(tr_copy.content, str)  # for mypy # noqa: S101
 
     if update_component_code:
@@ -437,7 +441,7 @@ async def get_transformation_revision_by_id(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     return transformation_revision
 
@@ -803,7 +807,7 @@ async def upgrade_workflow_operator_with_new_rev(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -898,8 +902,8 @@ async def upgrade_workflow_operators(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
     return persisted_transformation_revision
 
@@ -973,8 +977,10 @@ async def update_transformation_revision(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(
+            "Updated trafo:\n%s", persisted_transformation_revision.model_dump_json(indent=2)
+        )
 
     return persisted_transformation_revision
 
@@ -1030,7 +1036,10 @@ async def handle_trafo_revision_execution_request(
         exec_response = await perf_measured_execute_trafo_rev(exec_by_id)
 
     except TrafoExecutionInputValidationError as err:
-        msg = f"Could not validate execution input\n{exec_by_id.json(indent=2)}:\n{str(err)}"
+        msg = (
+            "Could not validate execution input"
+            f"\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
+        )
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
 
@@ -1073,7 +1082,7 @@ async def handle_trafo_revision_execution_request(
 )
 async def execute_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision.
 
     The transformation will be loaded from the DB and executed with the wiring sent in the request
@@ -1081,7 +1090,11 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
-    return await handle_trafo_revision_execution_request(exec_by_id)
+
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
 
 @transformation_router.post(
@@ -1147,7 +1160,9 @@ async def test_transformation_revision(
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(unit_test_payload.json()),  # TODO: avoid double serialization.
+                    json=json.loads(
+                        unit_test_payload.model_dump_json()
+                    ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                     timeout=None,
@@ -1184,6 +1199,8 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(result)
+
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -1196,11 +1213,9 @@ async def send_result_to_callback_url(
     ) as client:
         try:
             await client.post(
-                callback_url,
+                str(callback_url),
                 headers=headers,
-                json=json.loads(result.json()),  # TODO: avoid double serialization.
-                # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                json=dict_like_obj,
             )
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)
@@ -1300,7 +1315,7 @@ async def handle_latest_trafo_revision_execution_request(
 )
 async def execute_latest_transformation_revision_endpoint(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute the latest transformation revision of a revision group.
 
     WARNING: Even when the input is not changed, the execution response might change if a new latest
@@ -1318,7 +1333,12 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    return await handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input)
+    exec_result = await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 async def execute_latest_and_post(
@@ -1453,7 +1473,7 @@ async def update_transformation_dashboard_positioning(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
 
 @dashboard_router.get(
@@ -1568,7 +1588,7 @@ async def transformation_dashboard(
         msg = f"Could not find transformation revision {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     # obtain test wiring
     wiring = (

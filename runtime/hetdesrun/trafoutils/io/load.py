@@ -3,14 +3,16 @@
 import json
 import logging
 import os
+import pathlib
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
-from pydantic import BaseModel, Field, StrictInt, StrictStr, parse_file_as
+from pydantic import BaseModel, Field, RootModel, StrictInt, StrictStr
 
 from hetdesrun.component.code_utils import (
     CodeParsingException,
@@ -31,6 +33,8 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import Type, get_uuid_from_seed
+
+TrafoList = RootModel[list[TransformationRevision]]
 
 logger = logging.getLogger(__name__)
 
@@ -296,14 +300,15 @@ def load_trafos_from_trafo_list_json_file(
     a file is a valid input for this function.
     """
 
-    trafo_revisions = parse_file_as(list[TransformationRevision], path)
+    json_string = pathlib.Path(path).read_text()
+    trafo_revisions = (TrafoList.model_validate_json(json_string)).root
     return trafo_revisions
 
 
 class ImportSource(BaseModel):
     path: str
     is_dir: bool
-    config_file: str | None
+    config_file: str | None = None
 
 
 class MultipleTrafosUpdateConfig(BaseModel):
@@ -481,7 +486,9 @@ def load_import_source(
             filter_params=FilterParams(), update_config=MultipleTrafosUpdateConfig()
         )
     else:
-        import_config = ImportSourceConfig.parse_file(import_source.config_file)
+        import_config = ImportSourceConfig.model_validate_json(
+            Path(import_source.config_file).read_text()
+        )
 
     # Load trafo revisions
     if import_source.is_dir:

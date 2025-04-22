@@ -9,6 +9,10 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 from hetdesrun.runtime.service import runtime_service, unittest_service
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_workflow_execution_dict_serialisation,
+)
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -24,8 +28,11 @@ runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
 )
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
-) -> WorkflowExecutionResult:
-    return await runtime_service(runtime_input)
+) -> MsgSpecJSONResponse:
+    result = await runtime_service(runtime_input)
+
+    dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
+    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
 
 @runtime_router.get("/info", response_model=VersionInfo)

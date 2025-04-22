@@ -66,7 +66,7 @@ def parse_settings_file(
         return SettingsFile()
 
     try:
-        parsed_settings = SettingsFile.parse_obj(loaded_json)
+        parsed_settings = SettingsFile.model_validate(loaded_json)
     except ValidationError as e:
         logger.warning("Settings File Validation Error: %s", str(e))
         return SettingsFile()

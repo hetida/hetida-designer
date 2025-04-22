@@ -1,6 +1,7 @@
+from typing import Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
@@ -12,9 +13,7 @@ class PointFrontendDto(BaseModel):
     id: UUID = Field(default_factory=uuid4)  # noqa: A003
     pos_x: int
     pos_y: int
-
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)
 
 
 class WorkflowLinkFrontendDto(BaseModel):
@@ -25,19 +24,14 @@ class WorkflowLinkFrontendDto(BaseModel):
     to_connector: UUID
     path: list[PointFrontendDto] = []
 
-    @root_validator()
-    def no_self_reference(cls, values: dict) -> dict:
-        try:
-            to_operator = values["to_operator"]
-            from_operator = values["from_operator"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check link for self reference if any of the attributes "
-                "'to_operators', 'from_operator' is missing!"
-            ) from e
+    @model_validator(mode="after")
+    def no_self_reference(self) -> Self:
+        to_operator = self.to_operator
+        from_operator = self.from_operator
+
         if to_operator == from_operator:
             raise ValueError("Start and end of a connection must differ from each other.")
-        return values
+        return self
 
     @classmethod
     def from_link(cls, link: Link, workflow_id: UUID) -> "WorkflowLinkFrontendDto":
@@ -69,5 +63,4 @@ class WorkflowLinkFrontendDto(BaseModel):
             path=[Position(x=point.pos_x, y=point.pos_y) for point in self.path],
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)

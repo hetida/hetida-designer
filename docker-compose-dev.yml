@@ -32,6 +32,9 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
+      - MAX_WORKERS=1
+      - LOG_LEVEL=DEBUG
+      - LOG_HTTPX=true      
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
       interval: 5s
@@ -58,7 +61,9 @@ services:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
+      MAX_WORKERS: 1
       LOG_LEVEL: "DEBUG"
+      LOG_HTTPX: "true"      
 
 
   hetida-designer-db:

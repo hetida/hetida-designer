@@ -1,5 +1,6 @@
 """Loading code and importing functions"""
 
+import datetime
 import hashlib
 import importlib
 import logging
@@ -39,6 +40,9 @@ def import_func_from_code(
     func_name: str,
     raise_if_not_found: bool = False,
     register_module: bool = True,
+    component_name: str = "UNKNOWN COMPONENT NAME",
+    component_tag: str = "UNKNOWN COMPONENT VERSION TAG",
+    component_uuid_str: str = "UNKNOWN COMPONENT UUID",
 ) -> Callable | Coroutine:
     """Lazily loads a function from the given code and registers the imported module
 
@@ -58,10 +62,8 @@ def import_func_from_code(
     except ImportError as e:
         if raise_if_not_found:
             raise e
-        logger.info(
-            ("Function %s from code not yet imported once. Importing it from provided code."),
-            func_name,
-        )
+
+        import_start = datetime.datetime.now(tz=datetime.timezone.utc)
 
         mod = ModuleType(module_path)
 
@@ -70,8 +72,11 @@ def import_func_from_code(
             exec(code, mod.__dict__)  # noqa: S102
         except SyntaxError as exec_syntax_exception:
             logger.info(
-                "Syntax Error during importing function %s",
+                "Syntax Error during importing function %s from code (%s (%s), uuid: %s)",
                 func_name,
+                component_name,
+                component_tag,
+                component_uuid_str,
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Syntax Errors"
@@ -79,8 +84,11 @@ def import_func_from_code(
 
         except Exception as exec_exception:  # noqa: BLE001
             logger.info(
-                "Exception during importing function %s: %s",
+                "Exception during importing function %s from code (%s (%s), uuid: %s): %s",
                 func_name,
+                component_name,
+                component_tag,
+                component_uuid_str,
                 str(exec_exception),
             )
             raise ComponentCodeImportError(
@@ -91,4 +99,17 @@ def import_func_from_code(
             sys.modules[module_path] = mod  # now reachable under the constructed module_path
 
         func = getattr(mod, func_name)
+
+        logger.debug(
+            (
+                "Function %s from code (%s (%s), uuid: %s) was not yet imported once. "
+                "Importing it from provided code under module path %s took %s."
+            ),
+            func_name,
+            component_name,
+            component_tag,
+            component_uuid_str,
+            module_path,
+            datetime.datetime.now(tz=datetime.timezone.utc) - import_start,
+        )
         return func
