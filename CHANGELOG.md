@@ -1,3 +1,6 @@
+## 0.11.1
+* include docker-compose changes
+
 ## 0.11.0
 * **BREAKING CHANGE**: Pydantic V2 migration. 
   * validation is more strict, in particular for component/workflow outputs
