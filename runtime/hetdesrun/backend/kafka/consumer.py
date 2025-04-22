@@ -5,6 +5,7 @@ from functools import cache
 from uuid import uuid4
 
 import aiokafka
+import msgspec
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import (
@@ -17,6 +18,7 @@ from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
     get_latest_revision_id,
 )
+from hetdesrun.service.serialization_helpers import handle_frontend_exec_response_dict_serialisation
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -232,7 +234,10 @@ async def producer_send_result_msg(
     kakfa_ctx: KafkaWorkerContext, exec_result: ExecutionResponseFrontendDto
 ) -> None:
     """Send an execution result message to Kafka result/response topic"""
-    message_value = exec_result.model_dump_json().encode("utf8")
+
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    message_value = msgspec.json.encode(dict_like_obj)
+
     logger.info(
         "Start sending result message to Kafka response topic for job_id=%s",
         str(exec_result.job_id),

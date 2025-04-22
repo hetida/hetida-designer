@@ -1,8 +1,4 @@
 import logging
-from typing import Any
-
-import msgspec
-from fastapi.responses import JSONResponse
 
 from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
@@ -13,17 +9,16 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 from hetdesrun.runtime.service import runtime_service, unittest_service
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_workflow_execution_dict_serialisation,
+)
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
-
-
-class MsgSpecJSONResponse(JSONResponse):
-    def render(self, content: Any) -> bytes:
-        return msgspec.json.encode(content)
 
 
 @runtime_router.post(
@@ -34,9 +29,10 @@ class MsgSpecJSONResponse(JSONResponse):
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
 ) -> MsgSpecJSONResponse:
-    return MsgSpecJSONResponse(
-        content=(await runtime_service(runtime_input)).model_dump(mode="json")
-    )
+    result = await runtime_service(runtime_input)
+
+    dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
+    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
 
 @runtime_router.get("/info", response_model=VersionInfo)

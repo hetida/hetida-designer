@@ -355,6 +355,7 @@ class ProcessStage(StrEnum):
     ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE = "ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE"
     SENDING_DATA_TO_ADAPTERS = "SENDING_DATA_TO_ADAPTERS"
     ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
+    SERIALIZING_EXEC_RESULT = "SERIALIZING_EXEC_RESULT"
 
 
 class WorkflowExecutionError(BaseModel):
@@ -415,7 +416,7 @@ class WorkflowExecutionInfo(BaseModel):
         tr_name: str,
         tr_tag: str,
         tr_id: UUID,
-        cause: BaseException | None,
+        cause: BaseException | None = None,
         measured_steps: AllMeasuredSteps | None = None,
         mem_info: RuntimeMemoryInfo | None = None,
     ) -> "WorkflowExecutionInfo":

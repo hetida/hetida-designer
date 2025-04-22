@@ -21,6 +21,10 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -297,7 +301,7 @@ async def execute_workflow_revision(
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
     job_id: UUID | None = None,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision of type workflow.
 
     This endpoint is deprecated and will be removed soon,
@@ -317,7 +321,9 @@ async def execute_workflow_revision(
             job_id=job_id,
         )
 
-    return await handle_trafo_revision_execution_request(exec_by_id)
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 @workflow_router.post(

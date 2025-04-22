@@ -7,6 +7,10 @@ from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
 )
 from hetdesrun.models.execution import ExecByIdInput
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -37,7 +41,7 @@ restricted_transformation_router = HandleTrailingSlashAPIRouter(
 )
 async def restricted_execute_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision in restrict_to_trafo_exec_service mode
 
     If allowed, the transformation will be loaded from the DB and executed with
@@ -56,4 +60,6 @@ async def restricted_execute_transformation_revision_endpoint(
 
     logger.debug("Restricted execution called with allowed trafo id %s.", str(exec_by_id.id))
 
-    return await handle_trafo_revision_execution_request(exec_by_id)
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    return MsgSpecJSONResponse(content=dict_like_obj)

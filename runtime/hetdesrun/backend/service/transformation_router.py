@@ -65,6 +65,10 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.runtime.service import unittest_service
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     Importable,
@@ -1078,7 +1082,7 @@ async def handle_trafo_revision_execution_request(
 )
 async def execute_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision.
 
     The transformation will be loaded from the DB and executed with the wiring sent in the request
@@ -1086,7 +1090,11 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
-    return await handle_trafo_revision_execution_request(exec_by_id)
+
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
 
 @transformation_router.post(
@@ -1191,6 +1199,8 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(result)
+
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -1205,9 +1215,7 @@ async def send_result_to_callback_url(
             await client.post(
                 str(callback_url),
                 headers=headers,
-                json=json.loads(result.model_dump_json()),  # TODO: avoid double serialization.
-                # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                json=dict_like_obj,
             )
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)
@@ -1307,7 +1315,7 @@ async def handle_latest_trafo_revision_execution_request(
 )
 async def execute_latest_transformation_revision_endpoint(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute the latest transformation revision of a revision group.
 
     WARNING: Even when the input is not changed, the execution response might change if a new latest
@@ -1325,7 +1333,12 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    return await handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input)
+    exec_result = await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 async def execute_latest_and_post(
