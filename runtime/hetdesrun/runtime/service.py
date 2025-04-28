@@ -49,7 +49,9 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
         current_code_modules=runtime_input.code_modules,
         current_components=runtime_input.components,
     )
-    execution_context_filter.bind_context(plot_target_settings=runtime_input.plot_target_settings)
+    execution_context_filter.bind_context(
+        plot_target_settings=runtime_input.runtime_execution_context.plot_target_settings
+    )
     set_runtime_exec_context(runtime_input.runtime_execution_context)
 
     job_id_context_filter.bind_context(

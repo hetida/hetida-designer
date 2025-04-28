@@ -20,7 +20,6 @@ from pydantic import (
 
 from hdutils import (
     DataType,
-    PlotTargetSettings,
     data_type_map,
     parse_obj_as_type,
     serializer_funcs_by_type,
@@ -204,9 +203,7 @@ class WorkflowExecutionInput(BaseModel):
             " used for logging and providing context information."
         ),
     )
-    plot_target_settings: PlotTargetSettings = Field(
-        default_factory=PlotTargetSettings, description="Settings that plot components should use"
-    )
+
     runtime_execution_context: RuntimeExecutionContext = Field(
         default_factory=RuntimeExecutionContext,
         description="General settings to influence aspects of workflow/component execution",
