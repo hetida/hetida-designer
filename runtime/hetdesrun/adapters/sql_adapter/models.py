@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Literal, cast
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
@@ -60,7 +60,8 @@ class WriteTable(BaseModel):
     write_mode: WriteTableMode
     table_name: str
 
-    @validator("db_key")
+    @field_validator("db_key")
+    @classmethod
     def db_key_is_configured(cls, v: str) -> str:
         if v not in get_configured_dbs_by_key():
             raise ValueError(f"DB key {v} is not configured in sql adapter configuration")

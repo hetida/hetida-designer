@@ -55,7 +55,7 @@ async def test_multi_operator_upgrading(mocked_clean_test_db_session):
             wf.output("any_out", any_op.o["output"])
             wf.output("series_out", series_op.o["output"])
 
-        base_workflow = wf.result.copy(deep=True)
+        base_workflow = wf.result.model_copy(deep=True)
 
         with wf:  # extend Workflow
             wf.id = UUID("82be1fc1-d5cf-4ad2-912e-05baacdaa963")
@@ -64,7 +64,7 @@ async def test_multi_operator_upgrading(mocked_clean_test_db_session):
             wf.input("string_in", string_op.i["input"])
             wf.output("string_out", string_op.o["output"])
 
-        upgraded_wf = wf.result.copy(deep=True)
+        upgraded_wf = wf.result.model_copy(deep=True)
 
         with WorkflowConstructor(
             trafo_collector=tc,

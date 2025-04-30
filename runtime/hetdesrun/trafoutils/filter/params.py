@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.utils import State, Type
@@ -48,6 +48,4 @@ class FilterParams(BaseModel):
             "not contained in workflows that do not have the state DISABLED."
         ),
     )
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True, validate_by_alias=True, validate_by_name=True)

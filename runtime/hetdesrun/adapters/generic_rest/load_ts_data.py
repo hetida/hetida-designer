@@ -129,6 +129,11 @@ async def load_grouped_timeseries_data_together(
             }
         )
 
+        if loaded_ts_data_from_adapter["timeseriesId"].isna().any():
+            raise AdapterHandlingException(
+                "Received timeseries records contain null / na timeseriesId(s)"
+            )
+
         try:
             received_ids = loaded_ts_data_from_adapter["timeseriesId"].unique()
         except KeyError as e:
@@ -142,7 +147,7 @@ async def load_grouped_timeseries_data_together(
             raise AdapterHandlingException(msg) from e
 
         queried_ids = [fs.ref_id for fs in grouped_source_dict.values()]
-
+        logger.debug("Received timeseries ids %s", str(received_ids))
         if not np.isin(received_ids, np.array(queried_ids)).all():
             msg = (
                 f"Found timeseries ids in received data that were not queried."

@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ReproducibilityReference(BaseModel):
@@ -10,7 +10,8 @@ class ReproducibilityReference(BaseModel):
 
     # TODO With Pydantic V2 this can probably be solved using AwareDatetime
     # instead of a custom validator
-    @validator("exec_start_timestamp")
+    @field_validator("exec_start_timestamp")
+    @classmethod
     def ensure_utc(cls, ts: datetime.datetime | None) -> datetime.datetime | None:
         if ts is not None:
             if ts.tzinfo is None:

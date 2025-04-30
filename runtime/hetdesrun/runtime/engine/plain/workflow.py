@@ -1,6 +1,7 @@
 from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
 from typing import Any, Protocol, TypeVar
+from uuid import UUID
 
 from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
@@ -22,6 +23,7 @@ from hetdesrun.runtime.exceptions import (
 )
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
 
 runtime_execution_logger.addFilter(execution_context_filter)
 
@@ -218,10 +220,14 @@ class ComputationNode:
 
     async def _compute_result(self) -> dict[str, Any]:
         # set filter for contextualized logging
-        context_dict = self.context.dict()
+        context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
-        runtime_execution_logger.info("Starting computation")
+        if (
+            get_config().log_technical_nodes
+            or self.context.currently_executed_transformation_id != "UNKNOWN"
+        ):
+            runtime_execution_logger.debug("Starting computation")
         self._in_computation = True
 
         self._check_inputs()
@@ -255,7 +261,7 @@ class Workflow:
         sub_nodes: list[Node],
         input_mappings: dict[str, tuple[Node, str]],  # map wf input to sub_node
         output_mappings: dict[str, tuple[Node, str]],  # map sub_node outputs to wf outputs
-        tr_id: str,
+        tr_id: UUID,
         tr_name: str,
         tr_tag: str,
         inputs: dict[str, tuple[Node, str]] | None = None,
@@ -301,7 +307,7 @@ class Workflow:
         self.operator_hierarchical_name = operator_hierarchical_name
 
         self.context = ExecutionContext(
-            currently_executed_transformation_id=tr_id,
+            currently_executed_transformation_id=str(tr_id),
             currently_executed_transformation_name=tr_name,
             currently_executed_transformation_tag=tr_tag,
             currently_executed_transformation_type=Type.WORKFLOW,
@@ -323,10 +329,11 @@ class Workflow:
         optional: bool = False,
         add_new_provider_node_to_workflow: bool = True,
         id_suffix: str = "",
-    ) -> None:
+    ) -> dict[str, Any]:
         """Add a node with no inputs providing workflow input data"""
         try:
-            parsed_values = parse_dynamically_from_datatypes(values, optional).dict()
+            parsed_values = dict(parse_dynamically_from_datatypes(values, optional))
+
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "
@@ -345,6 +352,8 @@ class Workflow:
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
         self.add_inputs({key: (Const_Node, key) for key in parsed_values})
+
+        return parsed_values
 
     def _wire_workflow_inputs(self) -> None:
         """Wire the current inputs via the current input mappings to the appropriate sub nodes"""
@@ -368,10 +377,10 @@ class Workflow:
         assert isinstance(self, Workflow)  # for mypy # noqa: S101
         self._wire_workflow_inputs()
 
-        context_dict = self.context.dict()
+        context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
-        runtime_execution_logger.info("Starting computation")
+        runtime_execution_logger.debug("Starting computation")
 
         # gather result from workflow operators
         results = {}

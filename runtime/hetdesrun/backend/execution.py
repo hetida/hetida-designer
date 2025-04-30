@@ -1,6 +1,5 @@
 """Handle execution of transformation revisions."""
 
-import json
 import logging
 import os
 from copy import deepcopy
@@ -27,7 +26,7 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
@@ -177,7 +176,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         transformation_revision = read_single_transformation_revision_with_caching(
             exec_by_id_input.id
         )
-        logger.info(
+        logger.debug(
             "found possibly cached transformation revision with id %s",
             str(exec_by_id_input.id),
         )
@@ -320,13 +319,11 @@ async def run_execution_input(
     run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
         "run_execution_input"
     )
-
-    output_types = {output.name: output.type for output in execution_input.workflow.outputs}
-
     execution_result: WorkflowExecutionResult
 
     if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
+        execution_response = ExecutionResponseFrontendDto.model_construct(**dict(execution_result))
     else:
         try:
             headers = await get_auth_headers(external=False)
@@ -338,20 +335,29 @@ async def run_execution_input(
             logger.info(msg)
             raise TrafoExecutionRuntimeConnectionError(msg) from e
 
+        headers["Accept-Encoding"] = "gzip"
+
         async with httpx.AsyncClient(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
             url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
+                pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
+                    "pure_runtime_request"
+                )
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(execution_input.json()),  # TODO: avoid double serialization.
-                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    json=execution_input.model_dump(mode="json"),
                     timeout=None,
                 )
+                logger.debug(
+                    "Runtime response content encoding: %s",
+                    str(response.headers.get("content-encoding", "n/a")),
+                )
+
+                pure_runtime_request_step.stop()
             except httpx.HTTPError as e:
                 # handles both request errors (connection problems)
                 # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
@@ -359,8 +365,15 @@ async def run_execution_input(
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e
             try:
+                runtime_request_response_parsing_step = PerformanceMeasuredStep.create_and_begin(
+                    "runtime_request_response_parsing"
+                )
+
                 json_obj = response.json()
-                execution_result = WorkflowExecutionResult(**json_obj)
+                execution_response = ExecutionResponseFrontendDto.parse_obj(json_obj)
+
+                runtime_request_response_parsing_step.stop()
+
             except ValidationError as e:
                 msg = (
                     f"Could not validate hd runtime result object. Exception:\n{str(e)}"
@@ -368,16 +381,58 @@ async def run_execution_input(
                 )
                 logger.info(msg)
                 raise TrafoExecutionResultValidationError(msg) from e
-
-    execution_response = ExecutionResponseFrontendDto(
-        **execution_result.dict(),
-        output_types_by_output_name=output_types,
-    )
+            execution_response.measured_steps.runtime_request_response_parsing = (
+                runtime_request_response_parsing_step
+            )
+            execution_response.measured_steps.pure_runtime_request = pure_runtime_request_step
 
     run_execution_input_measured_step.stop()
-
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
+
+    logger.info(
+        "Execution Result Response:\n%s",
+        execution_response.model_dump_json(
+            indent=2,
+            exclude={"output_results_by_output_name"}
+            if not get_config().log_direct_provisioning_outputs
+            else None,
+        ),
+    )
     return execution_response
+
+
+def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> InputWiring:
+    """Truncates too long direct_provisioning value filters
+
+    Mutates InputWiring and returns it.
+    """
+    if (
+        inp_wiring.adapter_id in {"direct_provisioning", 1}
+        and "value" in inp_wiring.filters
+        and isinstance(inp_wiring.filters["value"], str)
+        and len(inp_wiring.filters["value"]) > 201
+    ):
+        inp_wiring.filters["value"] = (
+            inp_wiring.filters["value"][:100]
+            + f"... ({str(len(inp_wiring.filters['value']) - 200)} characters omitted) ..."
+            + inp_wiring.filters["value"][-100:]
+        )
+
+    return inp_wiring
+
+
+def exec_by_id_input_to_stub(exec_by_id_input: ExecByIdInput) -> ExecByIdInput:
+    exec_by_id_input_stub = exec_by_id_input.model_copy(deep=True)
+
+    if exec_by_id_input_stub.wiring is None:
+        return exec_by_id_input_stub
+
+    exec_by_id_input_stub.wiring.input_wirings = [
+        possibly_truncate_filter_value_str(inp_wiring)
+        for inp_wiring in exec_by_id_input_stub.wiring.input_wirings
+    ]
+
+    return exec_by_id_input_stub
 
 
 async def execute_transformation_revision(
@@ -390,6 +445,14 @@ async def execute_transformation_revision(
 
     if exec_by_id_input.job_id is None:
         exec_by_id_input.job_id = uuid4()
+
+    if get_config().full_backend_exec_input_logging:
+        logger.debug("ExecByIdInput:\n%s", exec_by_id_input.model_dump_json(indent=2))
+    else:
+        logger.debug(
+            "ExecByIdInput Stub:\n%s",
+            exec_by_id_input_to_stub(exec_by_id_input).model_dump_json(indent=2),
+        )
 
     execution_context_filter.bind_context(
         job_id=exec_by_id_input.job_id,
@@ -407,10 +470,11 @@ async def execute_transformation_revision(
                 "resolve_virtual_wirings_if_contained"
             )
             resolve_virtual_structure_wirings(exec_by_id_input.wiring)
-            logger.debug(
-                "Resolved virtual structure wirings: \n%s",
-                exec_by_id_input.wiring,
-            )
+            if get_config().log_resolved_virtual_structure_wirings:
+                logger.debug(
+                    "Resolved virtual structure wirings: \n%s",
+                    exec_by_id_input.wiring,
+                )
 
             resolve_wirings_measured_step.stop()
         except AdapterHandlingException as exc:
@@ -420,7 +484,7 @@ async def execute_transformation_revision(
             )
             logger.info(
                 "Reproducibility reference contents at time of wiring resolution: %s",
-                get_deepcopy_of_reproducibility_reference_context().dict(),
+                get_deepcopy_of_reproducibility_reference_context().model_dump(),
             )
             raise TrafoExecutionError() from exc
 

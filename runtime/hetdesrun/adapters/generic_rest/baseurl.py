@@ -5,7 +5,7 @@ import threading
 from posixpath import join as posix_urljoin
 
 import httpx
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
@@ -37,12 +37,9 @@ class BackendRegisteredGenericRestAdapter(BaseModel):
     internalUrl: str
 
 
-class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
-    __root__: list[AdapterFrontendDto]
+AdapterFrontendDtoRegisteredGenericRestAdapters = RootModel[list[AdapterFrontendDto]]
 
-
-class BackendRegisteredGenericRestAdapters(BaseModel):
-    __root__: list[BackendRegisteredGenericRestAdapter]
+BackendRegisteredGenericRestAdapters = RootModel[list[BackendRegisteredGenericRestAdapter]]
 
 
 async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestAdapter]:
@@ -119,9 +116,9 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                     url=adapter_dto.url,
                     internalUrl=adapter_dto.internal_url,
                 )
-                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.parse_obj(
+                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.model_validate(
                     resp.json()
-                ).__root__
+                ).root
             ]
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)

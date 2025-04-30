@@ -35,8 +35,8 @@ class UpdateProcessStatus(str, Enum):
 class TrafoUpdateProcessSummary(BaseModel):
     status: UpdateProcessStatus
     msg: str = Field("", description="details / error messages")
-    name: str | None
-    version_tag: str | None
+    name: str | None = None
+    version_tag: str | None = None
 
 
 def import_importable(

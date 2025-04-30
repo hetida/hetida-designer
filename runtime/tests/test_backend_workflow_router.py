@@ -426,7 +426,7 @@ async def test_delete_multiple_inputs_of_wf_at_once(
         store_single_transformation_revision(TransformationRevision(**tr_json))
 
     with open(  # noqa: UP015
-        "./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8"
+        "./tests/data/workflows/iso_forest_wf_dto.json", encoding="utf8"
     ) as f:
         wf_dto_json = json.load(f)
 
@@ -549,7 +549,7 @@ async def test_execute_for_workflow_dto(async_test_client, mocked_clean_test_db_
         Link(
             start=Vertex(
                 operator=None,
-                connector=Connector(**tr_workflow_2.content.inputs[0].dict()),
+                connector=Connector(**tr_workflow_2.content.inputs[0].model_dump()),
             ),
             end=Vertex(
                 operator=tr_workflow_2.content.operators[0].id,
@@ -565,7 +565,7 @@ async def test_execute_for_workflow_dto(async_test_client, mocked_clean_test_db_
             ),
             end=Vertex(
                 operator=None,
-                connector=Connector(**tr_workflow_2.content.outputs[0].dict()),
+                connector=Connector(**tr_workflow_2.content.outputs[0].model_dump()),
             ),
         )
     )
@@ -625,7 +625,7 @@ async def test_execute_for_full_workflow_dto(async_test_client, mocked_clean_tes
 
         response = await ac.post(
             "/api/workflows/" + str(workflow_id) + "/execute",
-            json=json.loads(wiring_dto.json(by_alias=True)),
+            json=json.loads(wiring_dto.model_dump_json(by_alias=True)),
         )
 
         assert response.status_code == 200
@@ -685,7 +685,7 @@ async def test_execute_for_full_workflow_dto_with_nan(
 
         response = await ac.post(
             "/api/workflows/" + str(workflow_id) + "/execute",
-            json=json.loads(wiring_dto.json(by_alias=True)),
+            json=json.loads(wiring_dto.model_dump_json(by_alias=True)),
         )
 
         assert response.status_code == 200

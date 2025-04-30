@@ -33,7 +33,7 @@ async def test_workflow_construction(async_test_client, mocked_clean_test_db_ses
             wf.constant(op_1.i.name, value="FIRST NAME")
 
     assert wf.result
-    print(wf.result.json())
+    print(wf.result.model_dump_json())
 
     # okay, check that it actually is runnable:
 
@@ -51,7 +51,9 @@ async def test_workflow_construction(async_test_client, mocked_clean_test_db_ses
     )
 
     async with async_test_client as ac:
-        resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
 
     assert resp.status_code == 200
 

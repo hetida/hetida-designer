@@ -85,7 +85,7 @@ def save_transformation_into_directory(
         try:
             if file_extension == ".json":
                 json.dump(
-                    json.loads(transformation_revision.json(exclude_none=True)),
+                    json.loads(transformation_revision.model_dump_json(exclude_none=True)),
                     f,
                     indent=2,
                     sort_keys=True,

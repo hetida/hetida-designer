@@ -56,10 +56,19 @@ def test_default_factories():
         output_results_by_output_name={"nf": 23},
         output_types_by_output_name={"nf": DataType.Integer},
         job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
     )
     exec_by_id_obj = ExecByIdBase(id=uuid4())
     wf_result = WorkflowExecutionResult(
-        result="failure", output_results_by_output_name={"nf": 23}, job_id=uuid4()
+        result="failure",
+        output_results_by_output_name={"nf": 23},
+        output_types_by_output_name={"nf": DataType.Integer},
+        job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
     )
 
     # Check that at points where marshalling is done

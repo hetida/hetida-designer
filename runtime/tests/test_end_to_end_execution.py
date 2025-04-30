@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 from httpx import AsyncClient
 
+from hdutils import DataType
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.run import (
     ConfigurationInput,
@@ -90,7 +91,7 @@ async def execute_workflow_execution_input(
     open_async_test_client: AsyncClient,
 ) -> WorkflowExecutionResult:
     response = await open_async_test_client.post(
-        "engine/runtime", json=json.loads(workflow_execution_input.json())
+        "engine/runtime", json=json.loads(workflow_execution_input.model_dump_json())
     )
     if response.status_code != 200:
         raise HTTPException(response.status_code, detail=response.json()["detail"])
@@ -131,7 +132,7 @@ async def test_direct_provisioning_series_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["attributes"] == {"test": 42}
+        assert dict(exec_result)["output_results_by_output_name"]["attributes"] == {"test": 42}
 
         exec_result = await run_single_component(
             (
@@ -148,7 +149,7 @@ async def test_direct_provisioning_series_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": {"test": 42},
             "__data__": {"name": None, "index": [0, 1, 2], "data": [2.3, 2.4, 2.5]},
@@ -176,7 +177,9 @@ async def test_direct_provisioning_dataframe_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["attributes"] == {"test": 43}
+        assert exec_result.model_dump()["output_results_by_output_name"]["attributes"] == {
+            "test": 43
+        }
 
         exec_result = await run_single_component(
             (
@@ -193,7 +196,7 @@ async def test_direct_provisioning_dataframe_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": {"test": 43},
             "__data__": {
@@ -224,7 +227,9 @@ async def test_direct_provisioning_multitsframe_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["attributes"] == {"test": 44}
+        assert exec_result.model_dump()["output_results_by_output_name"]["attributes"] == {
+            "test": 44
+        }
 
         exec_result = await run_single_component(
             (
@@ -242,7 +247,7 @@ async def test_direct_provisioning_multitsframe_metadata(
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == {
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": {"test": 44},
             "__data__": {
@@ -263,11 +268,13 @@ async def test_null_values_pass_any_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": '{"a": 1.5, "b": None}'},
+            {"input": '{"a": 1.5, "b": null}'},
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == ('{"a": 1.5, "b": None}')
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == (
+            {"a": 1.5, "b": None}
+        )
 
 
 @pytest.mark.asyncio
@@ -280,10 +287,10 @@ async def test_null_list_values_pass_any_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": "[1.2, None]"},
+            {"input": "[1.2, null]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == "[1.2, None]"
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == [1.2, None]
 
 
 @pytest.mark.asyncio
@@ -294,24 +301,41 @@ async def test_null_values_pass_series_pass_through(
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+                "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
             ),
-            {"input": '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'},
+            {"input": '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": null}'},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == (
-            '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'
-        )
+
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": {},
+            "__data__": {
+                "name": None,
+                "index": ["2020-01-01T00:00:00.000Z", "2020-01-02T00:00:00.000Z"],
+                "data": [1.5, None],
+            },
+            "__data_parsing_options__": {"orient": "split"},
+        }
 
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+                "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
             ),
-            {"input": "[1.2, 2.5, None]"},
+            {"input": "[1.2, 2.5, null]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == "[1.2, 2.5, None]"
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": {},
+            "__data__": {
+                "name": None,
+                "index": [0, 1, 2],
+                "data": [1.2, 2.5, None],
+            },
+            "__data_parsing_options__": {"orient": "split"},
+        }
 
 
 @pytest.mark.asyncio
@@ -322,14 +346,22 @@ async def test_all_null_values_pass_series_pass_through(
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+                "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
             ),
-            {"input": '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'},
+            {"input": '{"2020-01-01T00:00:00Z": null, "2020-01-02T00:00:00Z": null}'},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == (
-            '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'
-        )
+
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": {},
+            "__data__": {
+                "name": None,
+                "index": ["2020-01-01T00:00:00.000Z", "2020-01-02T00:00:00.000Z"],
+                "data": [None, None],
+            },
+            "__data_parsing_options__": {"orient": "split"},
+        }
 
 
 def division_component_wf_exc_inp_replace(
@@ -420,10 +452,9 @@ class TestSctructuredErrors:
         assert result.error.process_stage == ProcessStage.PARSING_WORKFLOW
         assert result.error.type == "NodeFunctionLoadingError"  # cause: NameError
         assert result.error.error_code is None
-        assert result.error.message == (  # cause: "name 'asdf' is not defined"
+        assert (
             "Could not load node function "
-            "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
-            "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
+            in result.error.message  # cause: "name 'asdf' is not defined"
         )
         assert result.error.extra_information is None
         assert result.error.location is not None
@@ -688,6 +719,7 @@ class TestSctructuredErrors:
                 filters={},
             )
         ]
+        wf_exc_input.workflow.outputs[0].type = DataType.String
 
         async with async_test_client as client:
             result = await execute_workflow_execution_input(wf_exc_input, client)
@@ -731,22 +763,19 @@ class TestSctructuredErrors:
             result = await execute_workflow_execution_input(wf_exc_input, client)
 
         assert result.error is not None
-        assert result.error.process_stage == ProcessStage.SENDING_DATA_TO_ADAPTERS
-        assert result.error.type == "AdapterOutputDataError"
+        assert result.error.process_stage == ProcessStage.ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE
+        assert result.error.type == "ValueError"
         assert result.error.error_code is None
         assert result.error.message == (
-            "Did not receive Pandas Series as expected from workflow output. "
-            "Got <class 'str'> instead."
+            """Uncorrect types for outputs: {\'result\': ("<class \'str\'>", \'SERIES\')}"""
         )
         assert result.error.extra_information is None
         assert result.error.operator_info is None
         assert result.error.location is not None
-        assert result.error.location.file.endswith(
-            "/hetdesrun/adapters/generic_rest/send_ts_data.py"
-        )
-        assert result.error.location.function_name == "ts_to_list_of_dicts"
+        assert result.error.location.file.endswith("__UNKNOWN__")
+        assert result.error.location.function_name == "__UNKNOWN__"
 
-    async def test_raise_json_encoding_exception(
+    async def test_raise_workflow_result_validation_exception(
         self,
         async_test_client: AsyncClient,
     ) -> None:
@@ -758,19 +787,17 @@ class TestSctructuredErrors:
             result = await execute_workflow_execution_input(wf_exc_input, client)
 
         assert result.error is not None
-        assert result.error.process_stage == ProcessStage.ENCODING_RESULTS_TO_JSON
-        assert result.error.type == "ValueError"
+        assert result.error.process_stage == ProcessStage.ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE
+        assert result.error.type == "ValidationError"
         assert result.error.error_code is None
-        assert result.error.message == (
-            '[TypeError("'
-            "'builtin_function_or_method'"
-            ' object is not iterable"), '
-            "TypeError('vars() argument must have __dict__ attribute')]"
-        )
+        assert (
+            "Value error, Got unexpected type at runtime when parsing Series: <class 'type'>"
+            " [type=value_error, input_value=<class 'str'>, input_type=type]"
+        ) in result.error.message
         assert result.error.extra_information is None
         assert result.error.location is not None
-        assert result.error.location.file.endswith("fastapi/encoders.py")
-        assert result.error.location.function_name == "jsonable_encoder"
+        assert result.error.location.file.endswith("pydantic/main.py")
+        assert result.error.location.function_name == "__init__"
 
 
 @pytest.mark.asyncio
@@ -865,4 +892,4 @@ async def test_nested_optional_inputs_wf_execution(
         response_json["output_results_by_output_name"]["limit_violation_timestamp"]
         == "2020-06-25T16:33:23.934348+00:00"
     )
-    assert response_json["output_results_by_output_name"]["slope"] == [-3.700034733861136e-7]
+    assert response_json["output_results_by_output_name"]["slope"] == -3.700034733861136e-7

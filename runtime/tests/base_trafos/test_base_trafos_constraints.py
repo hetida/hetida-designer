@@ -81,7 +81,7 @@ def test_base_component_code_agrees_with_json(apply_fixes):
 
                 with open(path_dict[trafo_id], "w", encoding="utf8") as f:
                     json.dump(
-                        json.loads(trafo.json(exclude_none=True)),
+                        json.loads(trafo.model_dump_json(exclude_none=True)),
                         f,
                         indent=2,
                         sort_keys=True,
@@ -162,7 +162,7 @@ def test_released_base_trafos_have_a_release_wiring(apply_fixes):
                     elif path_dict[trafo_id].endswith(".json"):
                         with open(path_dict[trafo_id], "w", encoding="utf8") as f:
                             json.dump(
-                                json.loads(trafo.json(exclude_none=True)),
+                                json.loads(trafo.model_dump_json(exclude_none=True)),
                                 f,
                                 indent=2,
                                 sort_keys=True,
@@ -175,7 +175,7 @@ def test_released_base_trafos_have_a_release_wiring(apply_fixes):
                     assert path_dict[trafo_id].endswith(".json")
                     with open(path_dict[trafo_id], "w", encoding="utf8") as f:
                         json.dump(
-                            json.loads(trafo.json(exclude_none=True)),
+                            json.loads(trafo.model_dump_json(exclude_none=True)),
                             f,
                             indent=2,
                             sort_keys=True,

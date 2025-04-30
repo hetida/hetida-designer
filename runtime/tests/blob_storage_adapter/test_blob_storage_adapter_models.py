@@ -164,19 +164,19 @@ def test_blob_storage_class_structure_thing_node() -> None:
     StructureThingNode(id="i-ii", parentId="i", name="II", description="")
     StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
 
-    with pytest.raises(ValidationError, match="at least 1 characters"):
+    with pytest.raises(ValidationError, match="at least 1 character"):
         # ThingNodeName shorter than min_length
         StructureThingNode(id="i-ii/A", name="", description="")
 
-    with pytest.raises(ValidationError, match="at least 1 characters"):
+    with pytest.raises(ValidationError, match="at least 1 character"):
         # IdString shorter than min_length
         StructureThingNode(id="", name="A", description="")
 
-    with pytest.raises(ValidationError, match="does not match regex"):
+    with pytest.raises(ValidationError, match="should match pattern"):
         # ThingNodeName violates regex
         StructureThingNode(id="i-ii/A", name="ä", description="")
 
-    with pytest.raises(ValidationError, match="does not match regex"):
+    with pytest.raises(ValidationError, match="should match pattern"):
         # IdString violates regex
         StructureThingNode(id="~", name="A", description="")
 

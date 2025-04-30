@@ -10,16 +10,18 @@ from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
 def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> None:
-    logger.debug(
-        "add nesting of transformation revision %s in workflow %s",
-        str(nesting.nested_transformation_id),
-        str(nesting.workflow_id),
-    )
+    if get_config().log_nestings_and_descendants:
+        logger.debug(
+            "add nesting of transformation revision %s in workflow %s",
+            str(nesting.nested_transformation_id),
+            str(nesting.workflow_id),
+        )
     try:
         session.merge(nesting)
     except IntegrityError as e:
@@ -48,12 +50,13 @@ def find_all_nested_transformation_revisions(
         for row in result.all()
     ]
 
-    for descendant in descendants:
-        logger.debug(
-            "transformation revision %s is descendant of workflow %s",
-            str(descendant.transformation_id),
-            str(workflow_id),
-        )
+    if get_config().log_nestings_and_descendants:
+        for descendant in descendants:
+            logger.debug(
+                "transformation revision %s is descendant of workflow %s",
+                str(descendant.transformation_id),
+                str(workflow_id),
+            )
 
     return descendants
 
@@ -71,7 +74,8 @@ def find_all_nestings(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug("delete nestings of transformation revision %s if existing", str(workflow_id))
+    if get_config().log_nestings_and_descendants:
+        logger.debug("delete nestings of transformation revision %s if existing", str(workflow_id))
     session.execute(delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id))
 
 
@@ -95,7 +99,8 @@ def delete_single_nesting(
 def update_nesting(
     session: SQLAlchemySession, workflow_id: UUID, workflow_content: WorkflowContent
 ) -> None:
-    logger.debug("update nesting of workflow %s", str(workflow_id))
+    if get_config().log_nestings_and_descendants:
+        logger.debug("update nesting of workflow %s", str(workflow_id))
     # no need to deal with ancestors, workflow draft has none
     delete_own_nestings(session, workflow_id)
 

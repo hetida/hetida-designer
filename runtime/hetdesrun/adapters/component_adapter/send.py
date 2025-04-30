@@ -84,7 +84,9 @@ async def send_data(
                     ),
                 )
 
-                task = tg.create_task(runtime_service(runtime_input=wf_exec_input))
+                task = tg.create_task(
+                    runtime_service(runtime_input=wf_exec_input, enforce_result_logging=True)
+                )
                 fetch_tasks[outp_name] = task
 
         # tasks are awaited when leaving async with context of task group

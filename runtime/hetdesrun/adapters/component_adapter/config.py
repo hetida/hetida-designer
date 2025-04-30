@@ -1,6 +1,7 @@
 import os
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hetdesrun.models.code import ValidStr
 from hetdesrun.utils import State
@@ -10,7 +11,7 @@ class ComponentAdapterConfig(BaseSettings):
     active: bool = Field(
         True,
         description="Whether the adapter is active and should expose web endpoints",
-        env="COMPONENT_ADAPTER_ACTIVE",
+        validation_alias="COMPONENT_ADAPTER_ACTIVE",
     )
 
     allow_draft_components: bool = Field(
@@ -20,7 +21,7 @@ class ComponentAdapterConfig(BaseSettings):
             " sources or sinks for the component adapter. By default only "
             "released components are allowed."
         ),
-        env="COMPONENT_ADAPTER_ALLOW_DRAFT_COMPONENTS",
+        validation_alias="COMPONENT_ADAPTER_ALLOW_DRAFT_COMPONENTS",
     )
 
     allowed_source_categories: set[ValidStr] | None = Field(
@@ -29,7 +30,7 @@ class ComponentAdapterConfig(BaseSettings):
             "Which categories are components allowed to have if they are sources. "
             "Set to null to allow all."
         ),
-        env="COMPONENT_ADAPTER_ALLOWED_SOURCE_CATEGORIES",
+        validation_alias="COMPONENT_ADAPTER_ALLOWED_SOURCE_CATEGORIES",
     )
 
     allowed_sink_categories: set[ValidStr] | None = Field(
@@ -38,8 +39,10 @@ class ComponentAdapterConfig(BaseSettings):
             "Which categories are components allowed to have if they are sources. "
             "Set to null to allow all."
         ),
-        env="COMPONENT_ADAPTER_ALLOWED_SINK_CATEGORIES",
+        validation_alias="COMPONENT_ADAPTER_ALLOWED_SINK_CATEGORIES",
     )
+
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
 
 environment_file = os.environ.get("HD_COMPONENT_ADAPTER_ENVIRONMENT_FILE", None)

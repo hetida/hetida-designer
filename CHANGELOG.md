@@ -1,3 +1,24 @@
+## 0.11.1
+* include docker-compose changes
+
+## 0.11.0
+* **BREAKING CHANGE**: Pydantic V2 migration. 
+  * validation is more strict, in particular for component/workflow outputs
+  * serialization is less tolerant: If your workflow actually provides a string value for a float this will raise an Exception now
+  * components using Pydantic need to migrate as well
+    * **UPGRADE NOTE**: base components/workflows should be redeployed overwriting released trafos
+  * overhauling parsing and validation may result in minor differences generally. E.g.
+    serialization of UTC datetimes may use "Z" instead of "+00:00" to indicate the timezone.
+* performance improvements through pydantic V2 and avoiding some serialization/desiralization loops.
+* improved logging and execution results:
+  * Include information on loaded and sent data and memory usage.
+  * Additional steps of the execution process are measured.
+  * Restructure execution logging and provide more hints on executed trafo. Make some details of execution logging configurable.
+* dependency / library upgrades. In particular plotly upgrade.
+* fix component editor cursor jumping
+* improve docker-compose files
+* **BREAKING CHANGE**: New default of gunicorn MAX_WORKERS: 1
+
 ## 0.10.2
 * fix buggy comparison to "null" string for optional input default values
 

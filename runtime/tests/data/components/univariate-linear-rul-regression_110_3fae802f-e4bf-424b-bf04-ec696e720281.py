@@ -32,7 +32,7 @@ def rul_regression_linear(
         train_x_diffs.dt.total_seconds().to_numpy().reshape(-1, 1),
         train_series.to_numpy().reshape(-1, 1),
     )
-    intercept, slope = lg.intercept_[0], lg.coef_[0]
+    intercept, slope = lg.intercept_[0], lg.coef_[0].flat[0]
 
     max_timestamp_preds = max_timestamp + datetime.timedelta(
         days=num_pred_series_future_days
@@ -49,7 +49,7 @@ def rul_regression_linear(
     )
 
     limit_reached_secs_from_min_timestamp = (
-        ((limit - intercept) / slope)[0] if slope != 0 else None
+        ((limit - intercept) / slope) if slope != 0 else None
     )
 
     if limit_reached_secs_from_min_timestamp is not None:

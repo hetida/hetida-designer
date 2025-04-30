@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class Metadatum(BaseModel):
     key: str
-    value: Any
+    value: Any = None
     dataType: ValueDataType | None = None
 
 
@@ -67,7 +67,7 @@ async def load_single_metadatum_from_adapter(
         raise AdapterConnectionError(msg)
 
     try:
-        metadatum = Metadatum.parse_obj(resp.json())
+        metadatum = Metadatum.model_validate(resp.json())
     except ValidationError as e:
         msg = (
             f"Validation failure trying to parse received metadata from adapter"

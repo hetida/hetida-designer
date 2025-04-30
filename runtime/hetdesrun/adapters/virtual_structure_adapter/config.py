@@ -1,6 +1,7 @@
 import os
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hetdesrun.structure.models import CompleteStructure
 
@@ -9,7 +10,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
     active: bool = Field(
         True,
         description="Whether the adapter is active and should expose web endpoints",
-        env="VST_ADAPTER_ACTIVE",
+        validation_alias="VST_ADAPTER_ACTIVE",
     )
 
     prepopulate_virtual_structure_adapter_at_designer_startup: bool = Field(
@@ -17,7 +18,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
         description="Set this flag to True, if you wish to provide a structure "
         "for the virtual structure adapter "
         "via the field structure_to_prepopulate_virtual_structure_adapter.",
-        env="PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP",
+        validation_alias="PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP",
     )
 
     prepopulate_virtual_structure_adapter_via_file: bool = Field(
@@ -26,7 +27,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
         "for the virtual structure adapter "
         "via a filepath stored in the "
         "field structure_filepath_to_prepopulate_virtual_structure_adapter.",
-        env="PREPOPULATE_VST_ADAPTER_VIA_FILE",
+        validation_alias="PREPOPULATE_VST_ADAPTER_VIA_FILE",
     )
 
     completely_overwrite_an_existing_virtual_structure_at_hd_startup: bool = Field(
@@ -34,7 +35,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
         description="Determines whether a potentially existent virtual structure in the database "
         "is overwritten (if set to True) or updated (if set to False) "
         "at hetida designer backend startup.",
-        env="COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP",
+        validation_alias="COMPLETELY_OVERWRITE_EXISTING_VIRTUAL_STRUCTURE_AT_HD_STARTUP",
     )
 
     structure_filepath_to_prepopulate_virtual_structure_adapter: str | None = Field(
@@ -42,7 +43,7 @@ class VirtualStructureAdapterConfig(BaseSettings):
         description="A JSON-filepath, used to provide a structure "
         "for the virtual structure adapter at hetida designer backend startup. "
         "Used analogously to structure_to_prepopulate_virtual_structure_adapter.",
-        env="STRUCTURE_FILEPATH_TO_PREPOPULATE_VST_ADAPTER",
+        validation_alias="STRUCTURE_FILEPATH_TO_PREPOPULATE_VST_ADAPTER",
     )
 
     structure_to_prepopulate_virtual_structure_adapter: CompleteStructure | None = Field(
@@ -55,14 +56,17 @@ class VirtualStructureAdapterConfig(BaseSettings):
         "for each element of the hierarchy. "
         "The JSON should contain definitions for all thingnodes, sources, sinks and element types "
         "representing the users data.",
-        env="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
+        validation_alias="STRUCTURE_TO_PREPOPULATE_VST_ADAPTER",
     )
 
-    @validator("structure_filepath_to_prepopulate_virtual_structure_adapter")
+    model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
+
+    @field_validator("structure_filepath_to_prepopulate_virtual_structure_adapter")
+    @classmethod
     def filepath_must_be_set_when_populating_from_file(
-        cls, value: str | None, values: dict
+        cls, value: str | None, info: ValidationInfo
     ) -> str | None:
-        if values.get("prepopulate_virtual_structure_adapter_via_file") and (
+        if info.data.get("prepopulate_virtual_structure_adapter_via_file") and (
             value is None or value == ""
         ):
             raise ValueError(
@@ -71,13 +75,14 @@ class VirtualStructureAdapterConfig(BaseSettings):
             )
         return value
 
-    @validator("structure_to_prepopulate_virtual_structure_adapter")
+    @field_validator("structure_to_prepopulate_virtual_structure_adapter")
+    @classmethod
     def structure_must_be_provided_if_populating_from_env_var(
-        cls, value: CompleteStructure | None, values: dict
+        cls, value: CompleteStructure | None, info: ValidationInfo
     ) -> CompleteStructure | None:
         if (
-            values.get("prepopulate_virtual_structure_adapter_at_designer_startup")
-            and not values.get("prepopulate_virtual_structure_adapter_via_file")
+            info.data.get("prepopulate_virtual_structure_adapter_at_designer_startup")
+            and not info.data.get("prepopulate_virtual_structure_adapter_via_file")
             and value is None
         ):
             raise ValueError(
@@ -87,13 +92,14 @@ class VirtualStructureAdapterConfig(BaseSettings):
             )
         return value
 
-    @validator("structure_to_prepopulate_virtual_structure_adapter")
+    @field_validator("structure_to_prepopulate_virtual_structure_adapter")
+    @classmethod
     def complete_structure_must_not_be_set_if_populating_from_file(
-        cls, value: CompleteStructure | None, values: dict
+        cls, value: CompleteStructure | None, info: ValidationInfo
     ) -> CompleteStructure | None:
         if (
-            values.get("prepopulate_virtual_structure_adapter_via_file")
-            and values.get("structure_filepath_to_prepopulate_virtual_structure_adapter")
+            info.data.get("prepopulate_virtual_structure_adapter_via_file")
+            and info.data.get("structure_filepath_to_prepopulate_virtual_structure_adapter")
             and value is not None
         ):
             raise ValueError(

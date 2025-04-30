@@ -1,9 +1,9 @@
 import re
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import root_validator, validator
+from pydantic import ConfigDict, ValidationInfo, field_validator, model_validator
 
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto, WorkflowIoFrontendDto
@@ -217,7 +217,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     outputs: list[WorkflowIoFrontendDto] = []
     wirings: list[WiringFrontendDto] = []
 
-    @validator("operators", each_item=False)
+    @field_validator("operators")
+    @classmethod
     def operator_names_unique(
         cls, operators: list[WorkflowOperatorFrontendDto]
     ) -> list[WorkflowOperatorFrontendDto]:
@@ -240,13 +241,14 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return operators
 
-    @validator("links", each_item=False)
+    @field_validator("links")
+    @classmethod
     def reduce_to_valid_links(
-        cls, links: list[WorkflowLinkFrontendDto], values: dict
+        cls, links: list[WorkflowLinkFrontendDto], info: ValidationInfo
     ) -> list[WorkflowLinkFrontendDto]:
         try:
-            operators = values["operators"]
-            workflow_id = values["id"]
+            operators = info.data["operators"]
+            workflow_id = info.data["id"]
         except KeyError as e:
             raise ValueError(
                 "Cannot reduce to valid links if any of the attributes "
@@ -275,12 +277,13 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return updated_links
 
-    @validator("links", each_item=False)
+    @field_validator("links")
+    @classmethod
     def links_acyclic_directed_graph(
-        cls, links: list[WorkflowLinkFrontendDto], values: dict
+        cls, links: list[WorkflowLinkFrontendDto], info: ValidationInfo
     ) -> list[WorkflowLinkFrontendDto]:
         try:
-            workflow_id = values["id"]
+            workflow_id = info.data["id"]
         except KeyError as e:
             raise ValueError(
                 "Cannot check if links are acyclic if the attribute 'id' is missing!"
@@ -333,14 +336,15 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return links
 
-    @validator("inputs", each_item=False)
+    @field_validator("inputs")
+    @classmethod
     def determine_inputs_from_operators_and_links(
-        cls, inputs: list[WorkflowIoFrontendDto], values: dict
+        cls, inputs: list[WorkflowIoFrontendDto], info: ValidationInfo
     ) -> list[WorkflowIoFrontendDto]:
         try:
-            operators = values["operators"]
-            links = values["links"]
-            workflow_id = values["id"]
+            operators = info.data["operators"]
+            links = info.data["links"]
+            workflow_id = info.data["id"]
         except KeyError as e:
             raise ValueError(
                 "Cannot determine inputs if any of the attributes "
@@ -360,14 +364,15 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return updated_inputs
 
-    @validator("outputs", each_item=False)
+    @field_validator("outputs")
+    @classmethod
     def determine_outputs_from_operators_and_links(
-        cls, outputs: list[WorkflowIoFrontendDto], values: dict
+        cls, outputs: list[WorkflowIoFrontendDto], info: ValidationInfo
     ) -> list[WorkflowIoFrontendDto]:
         try:
-            operators = values["operators"]
-            links = values["links"]
-            workflow_id = values["id"]
+            operators = info.data["operators"]
+            links = info.data["links"]
+            workflow_id = info.data["id"]
         except KeyError as e:
             raise ValueError(
                 "Cannot determine outputs if any of the attributes "
@@ -387,7 +392,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return updated_outputs
 
-    @validator("inputs", "outputs", each_item=False)
+    @field_validator("inputs", "outputs")
+    @classmethod
     def io_names_none_or_unique(
         cls, ios: list[WorkflowIoFrontendDto]
     ) -> list[WorkflowIoFrontendDto]:
@@ -397,39 +403,36 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return ios
 
-    @validator("inputs", "outputs", each_item=True)
+    @field_validator("inputs", "outputs")
+    @classmethod
     def name_or_constant_data_provided(
-        cls, io: WorkflowIoFrontendDto, values: dict
-    ) -> WorkflowIoFrontendDto:
-        if values["state"] != State.RELEASED:
-            return io
+        cls, ios: list[WorkflowIoFrontendDto], info: ValidationInfo
+    ) -> list[WorkflowIoFrontendDto]:
+        if info.data["state"] != State.RELEASED:
+            return ios
 
-        if not (io.name is None or io.name == "") and io.constant:
-            msg = (
-                f"If name is specified ({io.name}) constant must be false for input/output {io.id}"
-            )
-            raise ValueError(msg)
-        if (io.name is None or io.name == "") and (
-            not io.constant or io.constant_value is None or io.constant_value["value"] == ""
-        ):
-            msg = "Either name or constant data must be provided for input/output {io.id}"
-            raise ValueError(msg)
+        for io in ios:
+            if not (io.name is None or io.name == "") and io.constant:
+                msg = (
+                    f"If name is specified ({io.name}) constant must be false "
+                    f"for input/output {io.id}"
+                )
+                raise ValueError(msg)
+            if (io.name is None or io.name == "") and (
+                not io.constant or io.constant_value is None or io.constant_value["value"] == ""
+            ):
+                msg = "Either name or constant data must be provided for input/output {io.id}"
+                raise ValueError(msg)
 
-        return io
+        return ios
 
-    @root_validator()
-    def clean_up_io_links(cls, values: dict) -> dict:
-        try:
-            operators = values["operators"]
-            links = values["links"]
-            inputs = values["inputs"]
-            outputs = values["outputs"]
-            workflow_id = values["id"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot clean up io links if any of the attributes "
-                "'operators', 'links', 'input', 'outputs', 'id' is missing!"
-            ) from e
+    @model_validator(mode="after")
+    def clean_up_io_links(self) -> Self:
+        operators = self.operators
+        links = self.links
+        inputs = self.inputs
+        outputs = self.outputs
+        workflow_id = self.id
 
         updated_links: list[WorkflowLinkFrontendDto] = []
 
@@ -469,9 +472,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         # frontend sends link in put-request if input/output is named
         # -> no need to create links
 
-        values["links"] = updated_links
+        self.links = updated_links
 
-        return values
+        return self
 
     def get_from_connector_for_link(
         self,
@@ -589,34 +592,46 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def to_workflow_content(self) -> WorkflowContent:
         return WorkflowContent(
             inputs=[
-                inp.to_workflow_content_io(
-                    *get_operator_and_connector_name(inp.operator, inp.connector, self.operators)
+                dict(
+                    inp.to_workflow_content_io(
+                        *get_operator_and_connector_name(
+                            inp.operator, inp.connector, self.operators
+                        )
+                    )
                 )
                 for inp in self.inputs
                 if not inp.constant and inp.name is not None
             ],
             constants=[
-                inp.to_constant(
-                    *get_operator_and_connector_name(inp.operator, inp.connector, self.operators)
+                dict(
+                    inp.to_constant(
+                        *get_operator_and_connector_name(
+                            inp.operator, inp.connector, self.operators
+                        )
+                    )
                 )
                 for inp in self.inputs
                 if inp.constant
             ],
             outputs=[
-                output.to_workflow_content_io(
-                    *get_operator_and_connector_name(
-                        output.operator, output.connector, self.operators
+                dict(
+                    output.to_workflow_content_io(
+                        *get_operator_and_connector_name(
+                            output.operator, output.connector, self.operators
+                        )
                     )
                 )
                 for output in self.outputs
                 if output.name is not None
             ],
-            operators=[operator.to_operator() for operator in self.operators],
+            operators=[dict(operator.to_operator()) for operator in self.operators],
             links=[
-                link.to_link(
-                    self.get_from_connector_for_link(link),
-                    self.get_to_connector_for_link(link),
-                    self.id,
+                dict(
+                    link.to_link(
+                        self.get_from_connector_for_link(link),
+                        self.get_to_connector_for_link(link),
+                        self.id,
+                    )
                 )
                 for link in self.links
             ]
@@ -643,8 +658,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[inp.to_io() for inp in self.inputs if not inp.constant],
-                outputs=[output.to_io() for output in self.outputs],
+                inputs=[inp.to_io().model_dump() for inp in self.inputs if not inp.constant],
+                outputs=[output.to_io().model_dump() for output in self.outputs],
             ),
             content=self.to_workflow_content(),
             test_wiring=self.wirings[0].to_wiring() if len(self.wirings) > 0 else WorkflowWiring(),
@@ -704,5 +719,4 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             else [],
         )
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

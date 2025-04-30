@@ -249,7 +249,7 @@ def upsert_sources(
     """
     if not sources:
         return
-    source_dicts = [src.dict() for src in sources]
+    source_dicts = [src.model_dump() for src in sources]
 
     try:
         engine: Engine | Connection = session.get_bind()
@@ -316,7 +316,7 @@ def upsert_sinks(
     """
     if not sinks:
         return
-    sink_dicts = [sink.dict() for sink in sinks]
+    sink_dicts = [sink.model_dump() for sink in sinks]
 
     try:
         engine: Engine | Connection = session.get_bind()

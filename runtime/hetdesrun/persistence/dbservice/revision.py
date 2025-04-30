@@ -300,7 +300,7 @@ def if_applicable_release_or_deprecate(
                 existing_transformation_revision.id,
             )
             updated_transformation_revision = TransformationRevision(
-                **existing_transformation_revision.dict()
+                **existing_transformation_revision.model_dump()
             )
             updated_transformation_revision.deprecate()
             # prevent overwriting content during deprecating

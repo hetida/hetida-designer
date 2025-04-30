@@ -50,7 +50,7 @@ def get_transformation_revisions(
             raise Exception(msg) from e
         get_response = requests.get(
             posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-            params=json.loads(params.json(exclude_none=True, by_alias=True)),
+            params=json.loads(params.model_dump_json(exclude_none=True, by_alias=True)),
             verify=get_config().hd_backend_verify_certs,
             auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
@@ -149,7 +149,7 @@ def update_or_create_transformation_revision(
                 "strip_wiring": strip_wiring,
             },
             verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.json()),  # TODO: avoid double serialization.
+            json=json.loads(tr.model_dump_json()),  # TODO: avoid double serialization.
             auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
