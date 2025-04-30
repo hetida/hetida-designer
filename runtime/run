@@ -77,6 +77,10 @@ check() {
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 
+export_api_html() {
+    python extract_openapi_html.py "${@}"
+}
+
 #----- Execution -----#
 
 if fn_exists "$COMMAND"; then
