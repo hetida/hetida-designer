@@ -43,7 +43,7 @@ shell() {
 }
 
 test() {
-    python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
+    python -m pytest --cov=hdhelpers --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing hdhelpers/tests tests "$@"
 }
 
 # test_components() {
@@ -51,29 +51,29 @@ test() {
 # }
 
 lint() {
-    ruff check hetdesrun transformations/components tests "${@}"
+    ruff check hdhelpers hetdesrun transformations/components tests "${@}"
 }
 
 imsort() {
-    ruff check --select I hetdesrun transformations/components tests --fix "${@}"
+    ruff check --select I hdhelpers hetdesrun transformations/components tests --fix "${@}"
 }
 
 typecheck() {
-    python3 -m mypy "${@}" hetdesrun
+    python3 -m mypy "${@}" hdhelpers hetdesrun
 }
 
 format() {
-    ruff check --select I hetdesrun transformations/components tests --fix "${@}" && echo "--> Ruff import sorting run."
-    ruff format hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
+    ruff check --select I hdhelpers hetdesrun transformations/components tests --fix "${@}" && echo "--> Ruff import sorting run."
+    ruff format hdhelpers hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
 }
 
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
-    echo "--> Running ruff format in check mode" && ruff format hetdesrun transformations/components tests --check &&
-        echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
-        echo "--> Running mypy" && mypy hetdesrun &&
-        echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&
+    echo "--> Running ruff format in check mode" && ruff format hdhelpers hetdesrun transformations/components tests --check &&
+        echo "--> Running tests" && python -m pytest --cov=hdhelpers --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing hdhelpers/tests tests &&
+        echo "--> Running mypy" && mypy hdhelpers hetdesrun &&
+        echo "--> Running ruff" && ruff check hdhelpers hetdesrun transformations/components tests &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 
