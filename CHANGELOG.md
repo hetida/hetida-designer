@@ -1,3 +1,6 @@
+## 0.11.2
+* Add pure uvicorn mode, allowing to circumvent usage of gunicorn for now.
+
 ## 0.11.1
 * include docker-compose changes
 
