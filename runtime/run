@@ -43,7 +43,8 @@ shell() {
 }
 
 test() {
-    python -m pytest --cov=hdhelpers --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing hdhelpers/tests tests "$@"
+    python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
+    python -m pytest --cov=hdhelpers --no-cov-on-fail --cov-report=term-missing hdhelpers -c hdhelpers/pytest.ini   
 }
 
 # test_components() {

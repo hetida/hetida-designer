@@ -1,4 +1,4 @@
-from hdhelpers.hdhelpers.plot_target_settings import plotly_fig_to_json_dict
+from hdhelpers.plot_target_settings import plotly_fig_to_json_dict
 
 
 def test_plotly_fig_to_json_dict():
