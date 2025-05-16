@@ -90,7 +90,7 @@ def get_title_with_unit(series: pd.Series, default_title: str = "", default_unit
 
 def get_period(
     series: pd.Series,
-    timezone: int | str | None = None,
+    timezone: str | None = None,
     start: str | None = None,
     start_padding: str | None = None,
     end: str | None = None,
@@ -133,6 +133,7 @@ def get_period(
                 end = series.iloc[0].index
 
     # Convert timezone
+    # TODO: Frequenz aus Metadaten und n ticks statt Zeitintervall padden
     start = convert_timezone(start, timezone)
     end = convert_timezone(end, timezone)
 
@@ -144,19 +145,19 @@ def get_period(
     return start, end
 
 
-def convert_timezone(series: pd.Series, timezone: int | str | None = None):
+def convert_timezone(date: int | str, timezone: str | None = None):
     # TODO: This should probably be absorbed by modify_timezone
     if timezone is None:
         plot_target_settings = get_plot_target_settings()
         # TODO: timezone = None problematisch? Unit Test!
         timezone = plot_target_settings.plot_target_timezone
 
-    if isinstance(timezone, int): # TODO: Das ist nicht die Zeitzone!!!
+    if isinstance(date, int):
         # It's usually "seconds till newyears 1970", but the default unit is ns.
-        series = pd.to_datetime(series, unit="s", utc=True).tz_convert(timezone)
+        date = pd.to_datetime(date, unit="s", utc=True).tz_convert(timezone)
     else:
         # String Timestamps can be converted with ns precision without issues
-        series = pd.to_datetime(series, utc=True).tz_convert(timezone)
+        date = pd.to_datetime(date, utc=True).tz_convert(timezone)
 
 
 def modify_timezone() -> None:

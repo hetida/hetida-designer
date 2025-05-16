@@ -61,5 +61,10 @@
     "demo-adapter-python/main.py"
   ],
   "editor.indentSize": "tabSize",
-  "editor.detectIndentation": false
+  "editor.detectIndentation": false,
+  "python.testing.pytestArgs": [
+    "./runtime/hdhelpers/tests", "-c", "./runtime/hdhelpers/pytest.ini"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

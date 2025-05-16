@@ -1,6 +1,6 @@
 import pandas as pd
 
-from hdhelpers.hdhelpers.helper_functions_for_component_code import (
+from hdhelpers.helper_functions_for_component_code import (
     _get_display_name,
     _get_unit,
     get_colors_from_plot_target_settings,

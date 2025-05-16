@@ -19,6 +19,7 @@ __pycache__
 hd-docker-compose-trafos
 runtime/**/lab
 runtime/**/venv
+runtime/**/testvenv
 runtime/**/nix_venv_*
 runtime/ruff_report.xml
 runtime/test_results.xml
