@@ -1,4 +1,5 @@
 import re
+from io import StringIO
 from uuid import uuid4
 
 import numpy as np
@@ -17,6 +18,7 @@ from hdutils import (
     parsing_not_identical,
     wrap_metadata_as_attrs,
 )
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.datatypes import (
     DataType,
     PydanticMultiTimeseriesPandasDataFrame,
@@ -24,6 +26,7 @@ from hetdesrun.datatypes import (
     parse_dynamically_from_datatypes,
 )
 from hetdesrun.models.run import WorkflowExecutionResult
+from hetdesrun.service.serialization_helpers import handle_frontend_exec_response_dict_serialisation
 
 
 class ExampleObj(BaseModel):
@@ -502,3 +505,85 @@ def test_parsing_idempotency():
         nullable=True,
     )
     assert len(not_identical) == 0
+
+
+def test_direct_provisioning_output_handling():
+    """Test parsing and serialization for direct provisioning results
+
+    Ensure that double serialization issues can be mitigated using the appropriate
+    Pydantic validation context / serialization context options or resp. the
+    corresponding handle_frontend_exec_response_dict_serialisation kwargs for
+    serialization
+    """
+
+    s = "2025-05-19T08:27:13+00:00"
+    series = pd.Series([s], index=[s])
+
+    assert series.dtype == object
+    assert series.index.dtype == object
+
+    round_trip_series = pd.read_json(StringIO(series.to_json()), typ="series")
+
+    # round trip is not identity
+    assert str(round_trip_series.dtype) == "datetime64[ns, UTC]"
+    assert str(round_trip_series.index.dtype) == "datetime64[ns, UTC]"
+
+    # So we have an example where a second serialization / deserialization
+    # would be harmful!
+
+    # Now fix tghis actively by setting some kwargs for read_json:
+    round_trip_series_without_inference = pd.read_json(
+        StringIO(series.to_json()), typ="series", convert_axes=False, convert_dates=False
+    )
+
+    assert round_trip_series_without_inference.dtype == object
+    assert round_trip_series_without_inference.index.dtype == object
+
+    assert round_trip_series_without_inference.iloc[0] == s
+    assert round_trip_series_without_inference.index[0] == s
+
+    assert len(round_trip_series_without_inference) == 1
+
+    # So this roundtrip is the identity
+
+    # However we cannot handle all those situations => Sometimes datetime parsing
+    # is wanted and we do not want to make everything explicit thereby
+    # deviating from Pandas default behaviour.
+
+    exec_response = ExecutionResponseFrontendDto(
+        result="success",
+        output_results_by_output_name={"s": series},
+        output_types_by_output_name={"s": "SERIES"},
+        job_id="a14a0d6d-1ea9-4a75-958f-9649173475b1",
+        tr_tag="1.0.0",
+        tr_name="TEST",
+        tr_id="a14a0d6d-1ea9-4a75-958f-9649173475b1",
+    )
+
+    serialized = handle_frontend_exec_response_dict_serialisation(exec_response)
+    output_series_rep = serialized["output_results_by_output_name"]["s"]
+    assert output_series_rep["__data__"]["data"][0] == s
+    assert output_series_rep["__data__"]["index"][0] == s
+
+    second_serialized = handle_frontend_exec_response_dict_serialisation(
+        ExecutionResponseFrontendDto.model_validate(serialized)
+    )
+    second_output_series_rep = second_serialized["output_results_by_output_name"]["s"]
+    assert second_output_series_rep["__data__"]["data"][0] != s
+    assert second_output_series_rep["__data__"]["index"][0] != s
+
+    with_untouched_output = ExecutionResponseFrontendDto.model_validate(
+        serialized,
+        context={"result_validation": False},  # do not touch output results
+    )
+
+    # output result now should not be a Series object, but only a dict-like rep
+    assert isinstance(with_untouched_output.output_results_by_output_name["s"], dict)
+
+    second_serialized_naive = handle_frontend_exec_response_dict_serialisation(
+        with_untouched_output,
+        enforce_naive_result_serialization=True,
+    )
+    second_output_series_rep_naive = second_serialized_naive["output_results_by_output_name"]["s"]
+    assert second_output_series_rep_naive["__data__"]["data"][0] == s
+    assert second_output_series_rep_naive["__data__"]["index"][0] == s

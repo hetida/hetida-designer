@@ -12,6 +12,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    SerializationInfo,
     ValidationInfo,
     field_serializer,
     field_validator,
@@ -455,9 +456,30 @@ class WorkflowExecutionInfo(BaseModel):
 
     @field_serializer("output_results_by_output_name")
     def serialize_output_result_dict(
-        self, output_results_by_output_name: dict[str, Any]
+        self, output_results_by_output_name: dict[str, Any], info: SerializationInfo
     ) -> dict[str, Any]:
+        """Correctly serialize the direct provisioning outputs
+
+        For example Pandas objects should be serialized together with their metadata in
+        .attrs field.
+
+        For cases where we know that the content output_results_by_output_name already went
+        through this process and is represented as a correct json-serializable dict-like object,
+        a serialization context dict can be set containing
+        "naive_result_serialization": True
+
+        In this case the complete output_results_by_output_name is taken as is.
+        """
+        naive_result_serialization = False
+        if isinstance(info.context, dict):
+            naive_result_serialization = info.context.get("naive_result_serialization", False)
+
+        if naive_result_serialization:
+            # return as is
+            return output_results_by_output_name
+
         output_datatypes_by_output_name = self.output_types_by_output_name
+
         return {
             outp_name: serializer_funcs_by_type.get(
                 data_type_map[output_datatypes_by_output_name[outp_name]], lambda x: x
@@ -470,24 +492,46 @@ class WorkflowExecutionInfo(BaseModel):
     def correct_objects_according_to_output_types(
         cls, output_results_by_output_name: dict[str, Any], info: ValidationInfo
     ) -> dict[str, Any]:
-        output_types_by_output_name = info.data.get("output_types_by_output_name")
-        if output_types_by_output_name is None:
-            raise ValueError(
-                "Missing output_types_by_output_name, cannot validate output_results_by_output_name"
-            )
+        """Parse direct_provisioning output results
 
-        # Validate; We have a datatype for each output result:
-        for outp_name in output_results_by_output_name:
-            if not outp_name in output_types_by_output_name:
+        E.g. Pandas objects are parsed from their json representation including metadata.
+
+        To leave the dict-like json data as-is it is possible to set a validation context
+        dictionary with key "result_validation": False.
+
+        This is helpful when the result data should not be processed internally but only
+        passed through as is the case when the backend responds the results it got from
+        an external runtime service. This
+        * avoids an unnecessary serialization / deserialization step
+        * ensures that Pandas automatic parsing does not lead to unexpected results / i.e.
+          changing the json representation the runtime provided of the object due to
+          e.g. automatic datetime inference for index or values.
+        """
+        result_validation = True
+        if isinstance(info.context, dict):
+            result_validation = info.context.get("result_validation", True)
+
+        if result_validation:
+            output_types_by_output_name = info.data.get("output_types_by_output_name")
+            if output_types_by_output_name is None:
                 raise ValueError(
-                    f"Output with name {outp_name} has no entry in output_types_by_output_name"
+                    "Missing output_types_by_output_name, "
+                    "cannot validate output_results_by_output_name"
                 )
-        correct_objects = {
-            outp_name: to_correct_obj_by_datatype(obj, output_types_by_output_name[outp_name])
-            for outp_name, obj in output_results_by_output_name.items()
-        }
 
-        return correct_objects
+            # Validate; We have a datatype for each output result:
+            for outp_name in output_results_by_output_name:
+                if not outp_name in output_types_by_output_name:
+                    raise ValueError(
+                        f"Output with name {outp_name} has no entry in output_types_by_output_name"
+                    )
+            correct_objects = {
+                outp_name: to_correct_obj_by_datatype(obj, output_types_by_output_name[outp_name])
+                for outp_name, obj in output_results_by_output_name.items()
+            }
+
+            return correct_objects
+        return output_results_by_output_name
 
 
 class WorkflowExecutionResult(WorkflowExecutionInfo):

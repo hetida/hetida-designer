@@ -370,7 +370,9 @@ async def run_execution_input(
                 )
 
                 json_obj = response.json()
-                execution_response = ExecutionResponseFrontendDto.parse_obj(json_obj)
+                execution_response = ExecutionResponseFrontendDto.model_validate(
+                    json_obj, context={"result_validation": False}
+                )
 
                 runtime_request_response_parsing_step.stop()
 
@@ -396,6 +398,7 @@ async def run_execution_input(
             exclude={"output_results_by_output_name"}
             if not get_config().log_direct_provisioning_outputs
             else None,
+            context={"naive_result_serialization": not get_config().is_runtime_service},
         ),
     )
     return execution_response
