@@ -1,5 +1,6 @@
 """Handle execution of transformation revisions."""
 
+import datetime
 import logging
 import os
 from copy import deepcopy
@@ -305,6 +306,21 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     return execution_input
 
 
+def add_runtime_request_response_reaction_times(
+    start_in_backend: datetime.datetime,
+    exec_result: ExecutionResponseFrontendDto | WorkflowExecutionResult,
+    response_received_time: datetime.datetime | None = None,
+) -> None:
+    if exec_result.measured_steps.runtime_sending_response_start.start is not None:
+        exec_result.measured_steps.runtime_sending_response_start.stop(end=response_received_time)
+    if exec_result.measured_steps.backend_calling_runtime_request_start.end is not None:
+        exec_result.measured_steps.backend_calling_runtime_request_start.start = start_in_backend
+        exec_result.measured_steps.backend_calling_runtime_request_start.duration = (
+            exec_result.measured_steps.backend_calling_runtime_request_start.end
+            - exec_result.measured_steps.backend_calling_runtime_request_start.start
+        )
+
+
 async def run_execution_input(
     execution_input: WorkflowExecutionInput,
 ) -> ExecutionResponseFrontendDto:
@@ -322,7 +338,13 @@ async def run_execution_input(
     execution_result: WorkflowExecutionResult
 
     if get_config().is_runtime_service:
+        start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
+
         execution_result = await runtime_service(execution_input)
+
+        # measure request / response delays
+        add_runtime_request_response_reaction_times(start_calling_runtime, execution_result)
+
         execution_response = ExecutionResponseFrontendDto.model_construct(**dict(execution_result))
     else:
         try:
@@ -346,12 +368,14 @@ async def run_execution_input(
                 pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
                     "pure_runtime_request"
                 )
+                start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
                 response = await client.post(
                     url,
                     headers=headers,
                     json=execution_input.model_dump(mode="json"),
                     timeout=None,
                 )
+                response_received_time = datetime.datetime.now(datetime.timezone.utc)
                 logger.debug(
                     "Runtime response content encoding: %s",
                     str(response.headers.get("content-encoding", "n/a")),
@@ -372,6 +396,11 @@ async def run_execution_input(
                 json_obj = response.json()
                 execution_response = ExecutionResponseFrontendDto.model_validate(
                     json_obj, context={"result_validation": False}
+                )
+                add_runtime_request_response_reaction_times(
+                    start_calling_runtime,
+                    execution_response,
+                    response_received_time=response_received_time,
                 )
 
                 runtime_request_response_parsing_step.stop()

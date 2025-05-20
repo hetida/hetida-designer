@@ -77,11 +77,11 @@ class PerformanceMeasuredStep(BaseModel):
     def begin(self) -> None:
         self.start = datetime.datetime.now(datetime.timezone.utc)
 
-    def stop(self) -> None:
+    def stop(self, end: datetime.datetime | None = None) -> None:
         if self.start is None:
             raise ValueError(f"Cannot stop measurement {self.name} if it was not started before!")
 
-        self.end = datetime.datetime.now(datetime.timezone.utc)
+        self.end = datetime.datetime.now(datetime.timezone.utc) if end is None else end
         self.duration = self.end - self.start
 
     def __enter__(self) -> Self:
@@ -147,6 +147,13 @@ class AllMeasuredSteps(BaseModel):
     constant_providing_and_preps: PerformanceMeasuredStep = PerformanceMeasuredStep(
         name="constant_providing_and_preps"
     )
+    backend_calling_runtime_request_start: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="backend_calling_runtime_request_start"
+    )
+    runtime_sending_response_start: PerformanceMeasuredStep = PerformanceMeasuredStep(
+        name="runtime_sending_response_start"
+    )
+
     loaded_data_info: dict[str, dict[str, Any]] = {}
     result_data_info: dict[str, dict[str, Any]] = {}
     runtime_memory_info: RuntimeMemoryInfo | None = None
