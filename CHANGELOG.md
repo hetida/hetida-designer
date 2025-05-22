@@ -1,3 +1,7 @@
+## 0.11.3
+* Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
+* Add additional request measurements for communication between backend and runtime
+
 ## 0.11.2
 * Add pure uvicorn mode, allowing to circumvent usage of gunicorn for now.
 
