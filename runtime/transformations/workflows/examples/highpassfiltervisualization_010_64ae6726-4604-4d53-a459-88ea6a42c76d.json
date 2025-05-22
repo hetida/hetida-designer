@@ -475,7 +475,7 @@
           },
           {
             "id": "db84c6b6-4e29-78ee-01de-45d029dbd90d",
-            "name": "frequency",
+            "name": "cutoff_frequency",
             "data_type": "FLOAT",
             "position": {
               "x": 0.0,
@@ -1096,7 +1096,7 @@
           "operator": "d57e585c-b382-41c1-871b-8f869aa15b02",
           "connector": {
             "id": "db84c6b6-4e29-78ee-01de-45d029dbd90d",
-            "name": "frequency",
+            "name": "cutoff_frequency",
             "data_type": "FLOAT",
             "position": {
               "x": 0.0,
@@ -1313,7 +1313,7 @@
         "operator_id": "d57e585c-b382-41c1-871b-8f869aa15b02",
         "connector_id": "db84c6b6-4e29-78ee-01de-45d029dbd90d",
         "operator_name": "Highpass Filter",
-        "connector_name": "frequency",
+        "connector_name": "cutoff_frequency",
         "type": "REQUIRED"
       },
       {
