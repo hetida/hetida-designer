@@ -45,9 +45,6 @@
     },
     "python.formatting.provider": "black",
     "ruff.importStrategy": "fromEnvironment",
-    "ruff.args": [
-        "--config=runtime/pyproject.toml"
-    ],
     "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python",
     "python.linting.mypyArgs": [
         "--config-file=runtime/mypy.ini"
@@ -63,7 +60,9 @@
     "editor.indentSize": "tabSize",
     "editor.detectIndentation": false,
     "python.testing.pytestArgs": [
-        "runtime/hdhelpers", "-c", "runtime/hdhelpers/pytest.ini"
+        "runtime/hdhelpers",
+        "-c",
+        "runtime/hdhelpers/pytest.ini"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true

@@ -16,21 +16,18 @@ class StatusColors(BaseModel):
     Unlike the other colors in PlotTargetSettings, these colors do not have a predefined use.
     Instead they should be used contextually, e.g. when displaying the sensor status of an asset.
     """
+
     success_color: str | None = Field(
-        None,
-        description="Color of markers that signal success as a hexcode"
+        None, description="Color of markers that signal success as a hexcode"
     )
     error_color: str | None = Field(
-        None,
-        description="Color of markers that signal errors as a hexcode"
+        None, description="Color of markers that signal errors as a hexcode"
     )
     warn_color: str | None = Field(
-        None,
-        description="Color of markers that signal warnings as a hexcode"
+        None, description="Color of markers that signal warnings as a hexcode"
     )
     info_color: str | None = Field(
-        None,
-        description="Color of markers that signal informativeness as a hexcode"
+        None, description="Color of markers that signal informativeness as a hexcode"
     )
 
 
@@ -68,24 +65,21 @@ class PlotTargetSettings(BaseModel):
         description=(
             "List of colors to be used for plot traces.",
             "Will be set as colorway by plotly_fig_to_json_dict,",
-            "so the colors are only applied where no explicit trace color is set"
-        )
+            "so the colors are only applied where no explicit trace color is set",
+        ),
     )
     background_color: str | None = Field(
-        None,
-        description="Color of the panel background as a hex code"
+        None, description="Color of the panel background as a hex code"
     )
     axes_label_color: str | None = Field(
-        None,
-        description="Color of the tick labels of all axes as a hex code"
+        None, description="Color of the tick labels of all axes as a hex code"
     )
     grid_color: str | None = Field(
-        None,
-        description="Color of the grid as a hex code that may be drawn into the background"
+        None, description="Color of the grid as a hex code that may be drawn into the background"
     )
-    status_colors: StatusColors | None = Field(
-        None,
-        description="Has the properties success_color, error_color, warn_color, info_color"
+    status_colors: StatusColors = Field(
+        StatusColors(),
+        description="Has the properties success_color, error_color, warn_color, info_color",
     )
     datetime_tick_format: str | None = Field(
         None, description="Tickformat to use for datetime axes", examples=["%H:%M<br>%d.%m.%Y"]
@@ -116,7 +110,7 @@ def get_plot_target_settings() -> PlotTargetSettings:
         return PlotTargetSettings()
 
 
-def plotly_fig_to_json_dict( # TODO: Teilweise in Helfer-Funktionen auslagern? *args oder **kwargs?
+def plotly_fig_to_json_dict(  # noqa: PLR0912
     fig: Figure,
     add_config_settings: bool = True,
     hide_legend: bool = True,
@@ -128,7 +122,7 @@ def plotly_fig_to_json_dict( # TODO: Teilweise in Helfer-Funktionen auslagern? *
     use_muplot_grid: bool = True,
     use_muplot_line_and_markers: bool = True,
     use_platform_background: bool = True,
-    use_simple_white_template: bool = True
+    use_simple_white_template: bool = True,
 ) -> Any:
     """Turn Plotly figure into a Python dict-like object
 
@@ -148,10 +142,12 @@ def plotly_fig_to_json_dict( # TODO: Teilweise in Helfer-Funktionen auslagern? *
         fig.update_layout({"template": "simple_white"})
 
     if use_platform_background and plot_target_settings.background_color is not None:
-        fig.update_layout({
-            "paper_bgcolor": plot_target_settings.background_color,
-            "plot_bgcolor": "rgba(0,0,0,0)"
-        })
+        fig.update_layout(
+            {
+                "paper_bgcolor": plot_target_settings.background_color,
+                "plot_bgcolor": "rgba(0,0,0,0)",
+            }
+        )
 
     if hide_legend:
         fig.update_layout(showlegend=False)
@@ -170,17 +166,19 @@ def plotly_fig_to_json_dict( # TODO: Teilweise in Helfer-Funktionen auslagern? *
         fig.update_yaxes(title_standoff=5)
 
     if use_muplot_line_and_markers:
-        fig.update_traces({
-            "marker": {"size": 3},
-            "line": {"width": 1},
-            "mode": "lines+markers",
-            "marker_symbol": "circle"
-        })
+        fig.update_traces(
+            {
+                "marker": {"size": 3},
+                "line": {"width": 1},
+                "mode": "lines+markers",
+                "marker_symbol": "circle",
+            }
+        )
 
     if use_minimum_margin:
-        fig.update_layout({
-            "marker": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}
-        })
+        fig.update_layout(
+            {"marker": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}}
+        )
 
     if use_muplot_grid and plot_target_settings.grid_color is not None:
         grid_dict = {
@@ -189,10 +187,7 @@ def plotly_fig_to_json_dict( # TODO: Teilweise in Helfer-Funktionen auslagern? *
             "zeroline": True,
             "zerolinecolor": plot_target_settings.grid_color,
         }
-        fig.update_layout({
-            "xaxis": grid_dict,
-            "yaxis": grid_dict
-        })
+        fig.update_layout({"xaxis": grid_dict, "yaxis": grid_dict})
 
     fig_dict_obj = fig.to_plotly_json()
     if not "config" in fig_dict_obj:

@@ -1,5 +1,13 @@
 {
+    "version": "0.2.0",
     "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
         {
             "type": "java",
             "name": "Spring Boot-HetidaDesignerBackendApplication<backend>",
@@ -8,7 +16,7 @@
             "console": "internalConsole",
             "mainClass": "org.hetida.designer.backend.HetidaDesignerBackendApplication",
             "projectName": "backend",
-            "args": "--spring.profiles.active=local",  
+            "args": "--spring.profiles.active=local",
         }
     ]
 }

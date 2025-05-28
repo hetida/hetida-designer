@@ -5,6 +5,6 @@ Summary: Add your description here
 License-Expression: MIT
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
-Requires-Dist: pandas==2.2.3
-Requires-Dist: plotly==6.0.1
-Requires-Dist: pydantic==2.11.2
+Requires-Dist: pandas<3,>=2
+Requires-Dist: plotly<7,>=6
+Requires-Dist: pydantic<3,>=2
