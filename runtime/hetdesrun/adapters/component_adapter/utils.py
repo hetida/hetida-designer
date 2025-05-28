@@ -166,7 +166,9 @@ def wf_exec_input_from_component_trafo_revision(
         tr_workflow.content, WorkflowContent
     )  # hint for mypy
 
-    nested_transformations = {tr_workflow.content.operators[0].id: component_trafo_rev}
+    nested_transformations = {
+        tr_workflow.content.operators[0].transformation_id: component_trafo_rev
+    }
     nested_components = {
         tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
     }

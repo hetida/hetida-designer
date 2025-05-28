@@ -234,7 +234,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
         if asyncio.iscoroutinefunction(func):
 
             @wraps(func)
-            async def async_cache_wrapper(keys: tuple[Any]) -> Any:
+            async def async_cache_wrapper(keys: tuple[Any], **kwargs: Any) -> Any:
                 # data already cached
                 cached_dict_part = {key: cache[key] for key in keys if key in cache}
 
@@ -242,7 +242,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
                 if len(keys_not_in_cache) == 0:
                     return MappingProxyType(cached_dict_part)
 
-                result_dict = await func(keys_not_in_cache)
+                result_dict = await func(keys_not_in_cache, **kwargs)
 
                 for key, val in result_dict.items():
                     if condition_func(val):
@@ -257,7 +257,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
         assert callable(func)  # for mypy # noqa: S101
 
         @wraps(func)  # type: ignore
-        def cache_wrapper(keys: tuple[Any]) -> Any:
+        def cache_wrapper(keys: tuple[Any], **kwargs: Any) -> Any:
             # data already cached
             cached_dict_part = {key: cache[key] for key in keys if key in cache}
 
@@ -266,7 +266,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
             if len(keys_not_in_cache) == 0:
                 return MappingProxyType(cached_dict_part)
 
-            result_dict = func(keys_not_in_cache)
+            result_dict = func(keys_not_in_cache, **kwargs)
 
             for key, val in result_dict.items():
                 if condition_func(val):

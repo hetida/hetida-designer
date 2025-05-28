@@ -77,9 +77,15 @@ def select_tr_by_id(
 
 
 def read_multiple_transformation_revisions_by_id(
-    ids: tuple[UUID, ...], log_error: bool = True
+    ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
-    with get_session()() as session, session.begin():
+    if session is None:
+        with get_session()() as new_session, new_session.begin():
+            return {
+                trafo_id: select_tr_by_id(new_session, trafo_id, log_error=log_error)
+                for trafo_id in ids
+            }
+    else:
         return {
             trafo_id: select_tr_by_id(session, trafo_id, log_error=log_error) for trafo_id in ids
         }
@@ -92,9 +98,9 @@ def read_multiple_transformation_revisions_by_id(
     )
 )
 def read_multiple_transformation_revisions_by_id_with_possible_caching(
-    ids: tuple[UUID, ...], log_error: bool = True
+    ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
-    return read_multiple_transformation_revisions_by_id(ids, log_error=log_error)
+    return read_multiple_transformation_revisions_by_id(ids, log_error=log_error, session=session)
 
 
 def read_single_transformation_revision(
@@ -527,14 +533,14 @@ def get_multiple_transformation_revisions(
 
     if params.include_dependencies:
         dependencies = []
-        tr_ids = {tr.id for tr in tr_list}
+        already_included_trafo_ids = {tr.id for tr in tr_list}
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
                 nested_tr_dict = get_all_nested_transformation_revisions(tr, allow_caching=False)
-                for nested_tr_id in nested_tr_dict:
-                    if nested_tr_id not in tr_ids:
-                        tr_ids.add(nested_tr_id)
-                        dependencies.append(nested_tr_dict[nested_tr_id])
+                for nested_trafo_id in nested_tr_dict:
+                    if nested_trafo_id not in already_included_trafo_ids:
+                        already_included_trafo_ids.add(nested_trafo_id)
+                        dependencies.append(nested_tr_dict[nested_trafo_id])
         tr_list = tr_list + dependencies
 
     return tr_list
@@ -551,6 +557,15 @@ def nof_db_entries() -> int:
 def get_all_nested_transformation_revisions(
     transformation_revision: TransformationRevision, allow_caching: bool = True
 ) -> dict[UUID, TransformationRevision]:
+    """Obtain nested (recursive) trafo revisions
+
+    transformation_revision is required to be of type WORKFLOW.
+
+    Returns a dict of form nested trafo id: nested_trafo.
+
+    "all" means that this recursively provides all trafo revs that occur from
+    possibly multiple nesting levels.
+    """
     if transformation_revision.type != Type.WORKFLOW:
         msg = (
             f"cannot get operators of transformation revision {transformation_revision.id} "
@@ -562,23 +577,16 @@ def get_all_nested_transformation_revisions(
     with get_session()() as session, session.begin():
         descendants = find_all_nested_transformation_revisions(session, transformation_revision.id)
 
-    # TODO: should this happen in same session?
-
-    nested_trafos_by_id = (
-        read_multiple_transformation_revisions_by_id_with_possible_caching
-        if allow_caching
-        else read_multiple_transformation_revisions_by_id
-    )(
-        tuple(descendant.transformation_id for descendant in descendants)  # noqa: UP034
-    )
-
-    nested_transformation_revisions_by_operator_id: dict[UUID, TransformationRevision] = {}
-    for descendant in descendants:
-        nested_transformation_revisions_by_operator_id[descendant.operator_id] = (
-            nested_trafos_by_id[descendant.transformation_id]
+        nested_trafos_by_id = (
+            read_multiple_transformation_revisions_by_id_with_possible_caching
+            if allow_caching
+            else read_multiple_transformation_revisions_by_id
+        )(
+            tuple(descendant.transformation_id for descendant in descendants),  # noqa: UP034
+            session=session,
         )
 
-    return nested_transformation_revisions_by_operator_id
+    return nested_trafos_by_id
 
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:

@@ -89,60 +89,103 @@ class TrafoExecutionResultValidationError(TrafoExecutionError):
     pass
 
 
+def get_direct_child_trafos_by_operator_id(
+    tr_workflow: TransformationRevision, all_nested_tr: dict[UUID, TransformationRevision]
+) -> dict[UUID, TransformationRevision]:
+    """Obtain only the direct children by operator id
+
+    all_nested_tr contains trafos by their id, at least of tr_workflow but
+    possibly of a higher workflow which at some depth contains an operator
+    with tr_workflow as transformation revision.
+    """
+    if tr_workflow.type != Type.WORKFLOW:
+        raise ValueError("Trafo Revision must be of type WORKFLOW to obtain child trafos.")
+
+    assert isinstance(  # noqa: S101
+        tr_workflow.content, WorkflowContent
+    )  # hint for mypy
+
+    direct_child_trafos_by_operator_id: dict[UUID, TransformationRevision] = {}
+    for operator in tr_workflow.content.operators:
+        if operator.transformation_id in all_nested_tr:
+            direct_child_trafos_by_operator_id[operator.id] = all_nested_tr[
+                operator.transformation_id
+            ]
+        else:
+            raise DBIntegrityError(
+                f"trafo {operator.transformation_id} for operator {operator.id} of"
+                f" transformation revision {tr_workflow.id}"
+                " not contained in result of get_all_nested_transformation_revisions"
+            )
+
+    return direct_child_trafos_by_operator_id
+
+
+def collect_child_nodes(
+    workflow: WorkflowContent,
+    direct_child_trafos_by_operator_id: dict[UUID, TransformationRevision],
+    all_nested_tr: dict[UUID, TransformationRevision],
+) -> list[ComponentNode | WorkflowNode]:
+    """Recursively build up subnodes
+
+    Returns list of direct subnodes of the WorkflowContent as proper subnodes,
+    i.e. each including its own subnodes as well and so on.
+    """
+    sub_nodes: list[ComponentNode | WorkflowNode] = []
+
+    for operator in workflow.operators:
+        if operator.type == Type.COMPONENT:
+            sub_nodes.append(
+                direct_child_trafos_by_operator_id[operator.id].to_component_node(
+                    operator.id, operator.name
+                )
+            )
+        if operator.type == Type.WORKFLOW:
+            current_workflow_tr = direct_child_trafos_by_operator_id[operator.id]
+            assert isinstance(  # noqa: S101
+                current_workflow_tr.content, WorkflowContent
+            )  # hint for mypy
+            current_child_trafos_by_operator_id = get_direct_child_trafos_by_operator_id(
+                current_workflow_tr, all_nested_tr
+            )
+
+            sub_nodes.append(
+                current_workflow_tr.content.to_workflow_node(
+                    transformation_id=all_nested_tr[operator.transformation_id].id,
+                    transformation_name=all_nested_tr[operator.transformation_id].name,
+                    transformation_tag=all_nested_tr[operator.transformation_id].version_tag,
+                    operator_id=operator.id,
+                    operator_name=operator.name,
+                    sub_nodes=collect_child_nodes(
+                        current_workflow_tr.content,
+                        current_child_trafos_by_operator_id,
+                        all_nested_tr,
+                    ),
+                )
+            )
+
+    return sub_nodes
+
+
 def nested_nodes(
     tr_workflow: TransformationRevision,
     all_nested_tr: dict[UUID, TransformationRevision],
 ) -> list[ComponentNode | WorkflowNode]:
+    """Get direct subnodes which contain their own subnodes recursively"""
     if tr_workflow.type != Type.WORKFLOW:
         raise ValueError
 
     assert isinstance(  # noqa: S101
         tr_workflow.content, WorkflowContent
     )  # hint for mypy
-    ancestor_operator_ids = [operator.id for operator in tr_workflow.content.operators]
-    ancestor_children: dict[UUID, TransformationRevision] = {}
-    for operator_id in ancestor_operator_ids:
-        if operator_id in all_nested_tr:
-            ancestor_children[operator_id] = all_nested_tr[operator_id]
-        else:
-            raise DBIntegrityError(
-                f"operator {operator_id} of transformation revision {tr_workflow.id} "
-                f"not contained in result of get_all_nested_transformation_revisions"
-            )
 
-    def children_nodes(
-        workflow: WorkflowContent, tr_operators: dict[UUID, TransformationRevision]
-    ) -> list[ComponentNode | WorkflowNode]:
-        sub_nodes: list[ComponentNode | WorkflowNode] = []
+    direct_child_trafos_by_operator_id = get_direct_child_trafos_by_operator_id(
+        tr_workflow, all_nested_tr
+    )
 
-        for operator in workflow.operators:
-            if operator.type == Type.COMPONENT:
-                sub_nodes.append(
-                    tr_operators[operator.id].to_component_node(operator.id, operator.name)
-                )
-            if operator.type == Type.WORKFLOW:
-                tr_workflow = tr_operators[operator.id]
-                assert isinstance(  # noqa: S101
-                    tr_workflow.content, WorkflowContent
-                )  # hint for mypy
-                operator_ids = [operator.id for operator in tr_workflow.content.operators]
-                tr_children = {
-                    id_: all_nested_tr[id_] for id_ in operator_ids if id_ in all_nested_tr
-                }
-                sub_nodes.append(
-                    tr_workflow.content.to_workflow_node(
-                        transformation_id=all_nested_tr[operator.id].id,
-                        transformation_name=all_nested_tr[operator.id].name,
-                        transformation_tag=all_nested_tr[operator.id].version_tag,
-                        operator_id=operator.id,
-                        operator_name=operator.name,
-                        sub_nodes=children_nodes(tr_workflow.content, tr_children),
-                    )
-                )
-
-        return sub_nodes
-
-    return children_nodes(tr_workflow.content, ancestor_children)
+    return collect_child_nodes(
+        tr_workflow.content, direct_child_trafos_by_operator_id, all_nested_tr
+    )
 
 
 def get_component_ids_from_component_adapter_wirings(
@@ -189,7 +232,9 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         assert isinstance(  # noqa: S101
             tr_workflow.content, WorkflowContent
         )  # hint for mypy
-        nested_transformations = {tr_workflow.content.operators[0].id: transformation_revision}
+        nested_transformations = {
+            tr_workflow.content.operators[0].transformation_id: transformation_revision
+        }
     else:
         tr_workflow = transformation_revision
         nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
