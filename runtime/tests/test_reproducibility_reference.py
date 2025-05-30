@@ -154,12 +154,12 @@ async def test_if_reference_in_response_after_exception(
     )
 
     # Execute a transformation revision that should cause a runtime execution error
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.ERROR):
         execution_response = await execute_transformation_revision(exec_by_id_input)
 
     # Test whether the execution failed as planned
     assert any(
-        record.levelname == "INFO" and "Runtime Execution Error" in record.message
+        record.levelname == "ERROR" and "Runtime Execution Error" in record.message
         for record in caplog.records
     )
     assert execution_response.result == "failure"
