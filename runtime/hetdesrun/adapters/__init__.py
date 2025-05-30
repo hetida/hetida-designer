@@ -231,11 +231,15 @@ async def load_data_from_adapter(
     except adapter["connection_error_classes"] as exc:
         if isinstance(exc, AdapterConnectionError):
             raise exc
-        raise AdapterConnectionError(f"Adapter Client specific connection error:\n{str(exc)}") from exc
+        raise AdapterConnectionError(
+            f"Adapter Client specific connection error:\n{str(exc)}"
+        ) from exc
     except adapter["output_data_error_classes"] as exc:
         if isinstance(exc, AdapterOutputDataError):
             raise exc
-        raise AdapterOutputDataError(f"Adapter Client specific output data error:\n{str(exc)}") from exc
+        raise AdapterOutputDataError(
+            f"Adapter Client specific output data error:\n{str(exc)}"
+        ) from exc
     except adapter["client_wiring_invalid_error_classes"] as exc:
         if isinstance(exc, AdapterClientWiringInvalidError):
             raise exc
