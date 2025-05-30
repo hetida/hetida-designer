@@ -556,9 +556,8 @@ async def execute_transformation_revision(
 
             resolve_wirings_measured_step.stop()
         except AdapterHandlingException as exc:
-            logger.error(
-                "Adapter Handling Exception during the resolution of the virtual wirings",
-                exc_info=True,
+            logger.exception(
+                "Adapter Handling Exception during the resolution of the virtual wirings"
             )
             logger.error(
                 "Reproducibility reference contents at time of wiring resolution: %s",
