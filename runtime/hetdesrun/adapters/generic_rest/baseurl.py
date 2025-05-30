@@ -71,7 +71,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)
 
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterHandlingException(msg) from e
     else:
         try:
@@ -81,7 +81,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                 "Failure trying to get auth headers for adapter base url request. Error was:\n"
                 + str(e)
             )
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterHandlingException(msg) from e
 
         url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
@@ -96,7 +96,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                 resp = await client.get(url, headers=headers)
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd backend adapters endpoint ({url}): " + str(e)
-                logger.info(msg)
+                logger.error(msg)
                 raise AdapterConnectionError(msg) from e
 
         if resp.status_code != 200:
@@ -105,7 +105,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                 f" Status code {str(resp.status_code)}. Response: {resp.text}"
             )
 
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterConnectionError(msg)
 
         try:
@@ -123,7 +123,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)
 
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterHandlingException(msg) from e
 
         logger.info("Finished getting Generic REST Adapter URLS from HD Backend url %s", url)
@@ -170,7 +170,7 @@ async def get_generic_rest_adapter_base_url(adapter_key: str, retry: bool = True
         return generic_rest_adapter_urls[adapter_key]
     except KeyError as e:
         if retry:
-            logger.info(
+            logger.error(
                 "Try updating cached generic REST adapter urls since key %s was not found",
                 adapter_key,
             )
@@ -183,5 +183,5 @@ async def get_generic_rest_adapter_base_url(adapter_key: str, retry: bool = True
             "Make sure the adapter with that key is properly registered"
             " in the designer backend."
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e

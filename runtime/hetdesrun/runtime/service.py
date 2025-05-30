@@ -67,7 +67,8 @@ def handle_runtime_exec_result_logging(
     # runtime and backend are separate or in case of component adapter execution
     # (i.e. explicitly enforced)
     if enforce_result_logging or not get_config().is_backend_service:
-        runtime_logger.info(
+        runtime_logger.info("Execution Result Response is returned.")
+        runtime_logger.debug(
             "Execution Result Response:\n%s",
             wf_exec_result.model_dump_json(
                 indent=2,
@@ -143,7 +144,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
                     runtime_input.workflow, runtime_input.components, runtime_input.code_modules
                 )
             except WorkflowParsingException as exc:
-                runtime_logger.info(
+                runtime_logger.error(
                     "Workflow Parsing Exception during workflow execution",
                     exc_info=True,
                 )
@@ -158,7 +159,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
                     mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
                 )
             except WorkflowInputDataValidationError as exc:
-                runtime_logger.info(
+                runtime_logger.error(
                     "Workflow Input Data Validation Exception during workflow execution",
                     exc_info=True,
                 )
@@ -181,7 +182,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             loaded_data = await resolve_and_load_data_from_wiring(runtime_input.workflow_wiring)
 
         except AdapterHandlingException as exc:
-            runtime_logger.info(
+            runtime_logger.error(
                 "Adapter Handling Exception during data loading",
                 exc_info=True,
             )
@@ -231,7 +232,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
                 id_suffix="dynamic_data_optional",
             )
         except WorkflowInputDataValidationError as exc:
-            runtime_logger.info(
+            runtime_logger.error(
                 "Input Data Validation Error during data provision",
                 exc_info=True,
             )
@@ -286,7 +287,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
                 )
 
     except (ComponentException, UnexpectedComponentException) as exc:
-        runtime_logger.info(
+        runtime_logger.error(
             "Component Error during workflow execution",
             exc_info=True,
         )
@@ -303,7 +304,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
         )
 
     except RuntimeExecutionError as exc:
-        runtime_logger.info(
+        runtime_logger.error(
             "Runtime Execution Error during workflow execution",
             exc_info=True,
         )
@@ -325,7 +326,8 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             [str(x.operator_hierarchical_id) + " " + str(await x.result) for x in all_nodes]
         )
 
-        runtime_logger.info(
+        runtime_logger.info(f"Execution Results with a length of {len(all_results_str)} are provided.")
+        runtime_logger.debug(
             "Execution Results:\n%s",
             (
                 all_results_str
@@ -350,7 +352,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             workflow_result, outp_name_to_datatype_map, nullable=True
         )
     except ValidationError as exc:
-        runtime_logger.info(
+        runtime_logger.error(
             ("Error during parsing results to ensure serializability of workflow result data:\n"),
             exc_info=True,
         )
@@ -368,7 +370,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
 
     if len(not_identical_result_data_python_types) > 0:
         msg = f"Uncorrect types for outputs: {str(not_identical_result_data_python_types)}"
-        runtime_logger.info(msg)
+        runtime_logger.error(msg)
         return WorkflowExecutionResult.from_exception(
             ValueError(msg),
             currently_executed_process_stage,
@@ -393,7 +395,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             )
 
     except AdapterHandlingException as exc:
-        runtime_logger.info(
+        runtime_logger.error(
             (
                 "Adapter Handling Exception during data sending. "
                 "Sending data to external sources may be partly done."
@@ -426,7 +428,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             measured_steps=measured_steps,
         )
     except ValidationError as exc:  # noqa: BLE001
-        runtime_logger.info(
+        runtime_logger.error(
             "Pydantic Validation error during workflow execution result parsing/validation: %s",
             str(exc),
             exc_info=True,

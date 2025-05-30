@@ -55,7 +55,7 @@ async def load_single_metadatum_from_adapter(
             f" failed with Exception: {str(e)}"
         )
 
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg) from e
 
     if resp.status_code != 200:
@@ -63,7 +63,7 @@ async def load_single_metadatum_from_adapter(
             f"Requesting metadata data from generic rest adapter endpoint {url} failed."
             f" Status code: {resp.status_code}. Text: {resp.text}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg)
 
     try:
@@ -74,7 +74,7 @@ async def load_single_metadatum_from_adapter(
             f"url {url}: {str(resp.json())}\nError is: " + str(e)
         )
 
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     logger.debug("Received metadata json from url %s:\n%s", url, str(resp.json()))
@@ -85,7 +85,7 @@ async def load_single_metadatum_from_adapter(
             f"(not the requested one {str(filtered_source.ref_key)})"
             f". Received metdatum is {str(metadatum)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg)
 
     value_datatype = ExternalType(filtered_source.type).value_datatype
@@ -97,7 +97,7 @@ async def load_single_metadatum_from_adapter(
             f"(not the requested one inside {str(filtered_source.type)})"
             f". Received metdatum is {str(metadatum)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg)
 
     try:
@@ -108,7 +108,7 @@ async def load_single_metadatum_from_adapter(
             f"url {url}: {str(metadatum)}\nError is: " + str(e)
         )
 
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
     return parsed_value  # type: ignore
 
@@ -123,7 +123,7 @@ async def load_multiple_metadata(
             "Failed to get auth headers for loading multiple metadata from adapter"
             f"with key {adapter_key}. Error was:\n{str(e)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     async with httpx.AsyncClient(

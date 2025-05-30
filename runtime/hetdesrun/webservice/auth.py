@@ -112,7 +112,7 @@ class BearerVerifier:
                 options=options,
             )
         except JOSEError as e:  # this is the base exception class of jose
-            logger.info("Failing to verify Bearer Token: %s\nError: %s", access_token, str(e))
+            logger.error("Failing to verify Bearer Token: %s\nError: %s", access_token, str(e))
             if not force_loading_keys:
                 logger.info("Trying to load current public key")
                 if self.verifier_options.reload_public_key and self.is_key_old():
@@ -144,25 +144,17 @@ class BearerVerifier:
         url = self.verifier_options.auth_url
         try:
             resp = httpx.get(url, verify=self.verifier_options.verify_ssl, timeout=15)
-        except httpx.HTTPError as e:
-            logger.info(
-                "Error trying to get public key from auth service.Request failed: %s",
-                str(e),
-            )
-            raise AuthentificationError(
-                "Error trying to get public key from auth service. Request failed."
-            ) from None
+        except httpx.HTTPError as exc:
+            msg = "Error trying to get public key from auth service. Request failed."
+            logger.error("%s: %s", msg, str(exc))
+            raise AuthentificationError(msg) from None
 
         try:
             key_data = resp.json()
-        except json.JSONDecodeError as e:
-            logger.info(
-                "Error trying to get public key from auth service. Failed to decode json: %s",
-                str(e),
-            )
-            raise AuthentificationError(
-                "Error trying to get public key from auth service. Failed to decode json."
-            ) from None
+        except json.JSONDecodeError as ecx:
+            msg = "Error trying to get public key from auth service. Failed to decode json"
+            logger.error("%s: %s",msg, str(ecx))
+            raise AuthentificationError(msg) from None
 
         with self._public_key_lock:
             self._public_key_data = key_data

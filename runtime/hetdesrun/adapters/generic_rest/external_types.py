@@ -97,12 +97,12 @@ class ValueDataType(str, Enum):
             # Only if that does not work we take that str literally
             try:  # try to json-parse str
                 parsed_json_obj = json.loads(obj)
-            except json.JSONDecodeError as e:  # handle as actual string
-                logger.info(
+            except json.JSONDecodeError as exc:  # handle as actual string
+                logger.error(
                     "Could not parse string received from metadata(any) as json. "
                     "Therefore we take it literally as a string object. "
                     "Exception was: %s.\nValue string was (first 250 chars): %s",
-                    str(e),
+                    str(exc),
                     obj[:250],
                 )
                 parsed_json_obj = obj

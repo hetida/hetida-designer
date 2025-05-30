@@ -85,7 +85,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
 
     common_data_type = filtered_sources[0].type
 
-    logger.info(
+    logger.debug(
         (
             "Requesting framelike data from generic rest adapter %s from endpoint %s:"
             " ids %s with additional params %s with common datatype %s"
@@ -103,7 +103,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
             "Failed to get auth headers for loading framelike data from adapter"
             f"with key {adapter_key}. Error was:\n{str(e)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     with requests.Session() as session:
@@ -148,7 +148,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
                     f"Requesting framelike data from generic rest adapter endpoint {url} failed."
                     f" Status code: {resp.status_code}. Text: {resp.text}"
                 )
-                logger.info(msg)
+                logger.error(msg)
                 raise AdapterConnectionError(msg)
             logger.info("Start reading in and parsing framelike data")
 
@@ -195,7 +195,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
                 f" failed with Exception {str(e)}"
             )
 
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterConnectionError(msg) from e
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
@@ -208,7 +208,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
         try:
             parsed_timestamps = pd.to_datetime(df["timestamp"])
         except ValueError as e:
-            logger.info(
+            logger.error(
                 "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
                 " not be set to index. Proceeding with default index. Error was: %s",
                 url,

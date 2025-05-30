@@ -78,7 +78,7 @@ async def send_single_metadatum_to_adapter(
             f"Posting metadata to generic rest adapter endpoint {url}"
             f" failed with Exception: {str(e)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg) from e
 
     if resp.status_code not in (200, 201):
@@ -86,7 +86,7 @@ async def send_single_metadatum_to_adapter(
             f"Posting metadata to generic rest adapter endpoint {url} failed."
             f" Status code: {resp.status_code}. Text: {resp.text}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg)
     logger.debug("Received Response for metadata posting from url %s:\n%s", url, str(resp.text))
 
@@ -103,7 +103,7 @@ async def send_multiple_metadata_to_adapter(
             "Failed to get auth headers for sending multiple metadata to adapter"
             f"with key {adapter_key}. Error was:\n{str(e)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg) from e
 
     async with httpx.AsyncClient(

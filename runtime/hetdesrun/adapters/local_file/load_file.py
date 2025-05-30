@@ -50,7 +50,7 @@ def load_file_from_id(source_id: str) -> Any:
             f"Failed to retrieve local file \n{str(possible_local_file)}\n with "
             f"file_support_handler \n{str(file_support_handler)}\nException was:\n{str(e)}."
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     logger.info(

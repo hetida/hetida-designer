@@ -394,13 +394,13 @@ async def run_execution_input(
     else:
         try:
             headers = await get_auth_headers(external=False)
-        except ServiceAuthenticationError as e:
+        except ServiceAuthenticationError as exc:
             msg = (
                 "Failed to get auth headers for internal runtime execution request."
-                f" Error was:\n{str(e)}"
+                f" Error was:\n{str(exc)}"
             )
-            logger.info(msg)
-            raise TrafoExecutionRuntimeConnectionError(msg) from e
+            logger.error(msg)
+            raise TrafoExecutionRuntimeConnectionError(msg) from exc
 
         headers["Accept-Encoding"] = "gzip"
 
@@ -431,7 +431,7 @@ async def run_execution_input(
                 # handles both request errors (connection problems)
                 # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
-                logger.info(msg)
+                logger.error(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e
             try:
                 runtime_request_response_parsing_step = PerformanceMeasuredStep.create_and_begin(
@@ -455,7 +455,7 @@ async def run_execution_input(
                     f"Could not validate hd runtime result object. Exception:\n{str(e)}"
                     f"\nJson Object is:\n{str(json_obj)}"
                 )
-                logger.info(msg)
+                logger.error(msg)
                 raise TrafoExecutionResultValidationError(msg) from e
             execution_response.measured_steps.runtime_request_response_parsing = (
                 runtime_request_response_parsing_step
@@ -465,7 +465,8 @@ async def run_execution_input(
     run_execution_input_measured_step.stop()
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
 
-    logger.info(
+    logger.info("Execution Result Response is returned")
+    logger.debug(
         "Execution Result Response:\n%s",
         execution_response.model_dump_json(
             indent=2,
@@ -555,11 +556,11 @@ async def execute_transformation_revision(
 
             resolve_wirings_measured_step.stop()
         except AdapterHandlingException as exc:
-            logger.info(
+            logger.error(
                 "Adapter Handling Exception during the resolution of the virtual wirings",
                 exc_info=True,
             )
-            logger.info(
+            logger.error(
                 "Reproducibility reference contents at time of wiring resolution: %s",
                 get_deepcopy_of_reproducibility_reference_context().model_dump(),
             )

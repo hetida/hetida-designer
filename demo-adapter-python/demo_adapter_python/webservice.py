@@ -100,10 +100,11 @@ class AdditionalLoggingRoute(APIRoute):
                 json_data = await request.json()
             except json.decoder.JSONDecodeError:
                 body = await request.body()
-                logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
+                logger.error("RECEIVED BODY (could not parse as json):\n%s", body.decode())
             else:
-                logger.info(
-                    "RECEIVED JSON BODY: \n%s",
+                logger.info("RECEIVED JSON BODY")
+                logger.debug(
+                    "RECEIVED JSON BODY is: \n%s",
                     json.dumps(json_data, indent=2, sort_keys=True),
                 )
             try:
@@ -111,7 +112,7 @@ class AdditionalLoggingRoute(APIRoute):
             except RequestValidationError as exc:
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
-                logger.info("Request Validation Error: %s", str(exc))
+                logger.error("Request Validation Error: %s", str(exc))
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
                 ) from exc
@@ -291,12 +292,12 @@ async def source(source_id: str) -> StructureSource:
     ]
     if len(requested_sources) > 1:
         msg = f"Error: Multiple sources with same id {str(requested_sources)}."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_sources) < 1:
         msg = f"Requested source with id {source_id} not found."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureSource.parse_obj(requested_sources[0])
 
@@ -374,12 +375,12 @@ async def sink(sink_id: str) -> StructureSink:
     requested_sinks = [snk for snk in get_sinks(include_sub_objects=True) if snk["id"] == sink_id]
     if len(requested_sinks) > 1:
         msg = f"Error: Multiple sinks with same id {str(requested_sinks)}."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_sinks) < 1:
         msg = f"Requested sink with id {sink_id} not found."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureSink.parse_obj(requested_sinks[0])
 
@@ -523,12 +524,12 @@ async def thing_node(
     ]
     if len(requested_thing_nodes) > 1:
         msg = f"Error: Multiple ThingNodes with same id {str(requested_thing_nodes)}."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_thing_nodes) < 1:
         msg = f"Requested ThingNode with id {id} not found."
-        logger.info(msg)
+        logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureThingNode.parse_obj(requested_thing_nodes[0])
 
@@ -670,7 +671,7 @@ async def post_timeseries(
     frequency: str = Query("", examples=["5min"]),
     data_attributes: str | None = Header(None),
 ) -> dict:
-    logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
+    logger.debug("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
         if "timestamp" not in df.columns:
@@ -693,7 +694,7 @@ async def post_timeseries(
             df.attrs = df_from_store.attrs
             df.attrs.update(decode_attributes(data_attributes))
         set_value_in_store(ts_id, df)
-        logger.info(
+        logger.debug(
             "stored timeseries %s in store: %s\n with columns %s",
             ts_id,
             str(df),

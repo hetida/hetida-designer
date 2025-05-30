@@ -66,7 +66,7 @@ def extract_one_channel_series_from_loaded_data(df: pd.DataFrame, ts_id: str) ->
             f"Missing keys in received timeseries records. Got columns {str(df.columns)}"
             f" with dataframe of shape {str(df.shape)}:\n{str(df)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     extracted_series.name = ts_id
@@ -143,7 +143,7 @@ async def load_grouped_timeseries_data_together(
                 f" with dataframe of shape {str(loaded_ts_data_from_adapter.shape)}:\n"
                 f"{str(loaded_ts_data_from_adapter)}"
             )
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterHandlingException(msg) from e
 
         queried_ids = [fs.ref_id for fs in grouped_source_dict.values()]

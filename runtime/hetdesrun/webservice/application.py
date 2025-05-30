@@ -53,10 +53,11 @@ class AdditionalLoggingRoute(APIRoute):
                 json_data = await request.json()
             except json.decoder.JSONDecodeError:
                 body = await request.body()
-                logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
+                logger.error("RECEIVED BODY (could not parse as json):\n%s", body.decode())
             else:
-                logger.info(
-                    "RECEIVED JSON BODY: \n%s",
+                logger.info("RECEIVED JSON BODY")
+                logger.debug(
+                    "RECEIVED JSON BODY is: \n%s",
                     json.dumps(json_data, indent=2, sort_keys=True),
                 )
             try:
@@ -64,7 +65,7 @@ class AdditionalLoggingRoute(APIRoute):
             except RequestValidationError as exc:
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
-                logger.info("Request Validation Error: %s", str(exc))
+                logger.error("Request Validation Error: %s", str(exc))
                 raise HTTPException(status_code=422, detail=detail) from exc
 
         return custom_route_handler
@@ -205,7 +206,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        logger.info("Request validation failed:\n%s", str(exc))
+        logger.error("Request validation failed:\n%s", str(exc))
         return await request_validation_exception_handler(request, exc)
 
     if get_config().is_runtime_service and len(get_config().restrict_to_trafo_exec_service) == 0:

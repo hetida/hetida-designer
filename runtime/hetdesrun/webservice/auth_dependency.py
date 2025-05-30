@@ -134,7 +134,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     """Validate access"""
 
     if credentials is None:
-        logger.info("Unauthorized: Could not obtain credentials from request")
+        logger.error("Unauthorized: Could not obtain credentials from request")
 
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -142,7 +142,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         )
 
     if credentials.scheme != "Bearer":  # type: ignore
-        logger.info("Unauthorized: No Bearer Schema")
+        logger.error("Unauthorized: No Bearer Schema")
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method")
 
     token = credentials.credentials  # type: ignore
@@ -158,10 +158,10 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
             not get_config().auth_allowed_role in payload[get_config().auth_role_key]
         ):
             # roles are expected in "groups" key in payload
-            logger.info("Unauthorized: Roles not allowed")
+            logger.error("Unauthorized: Roles not allowed")
             raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed")
     except KeyError:
-        logger.info("Unauthorized: No role information in token")
+        logger.error("Unauthorized: No role information in token")
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
         ) from None
@@ -201,7 +201,7 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
             return False
     else:  # noqa: PLR5501
         if access_token is None:
-            logger.info(
+            logger.error(
                 "Neither Authorization header and access_token cookie are provided."
                 " Neglecting access."
             )
@@ -226,16 +226,16 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
         try:
             roles = payload[get_config().auth_role_key]
         except KeyError:
-            logger.info("Unauthorized: No role information in token")
+            logger.error("Unauthorized: No role information in token")
             return False
 
         if not isinstance(roles, list):
-            logger.info("Unauthorized: Role field in token has wrong type. Must be array.")
+            logger.error("Unauthorized: Role field in token has wrong type. Must be array.")
             return False
 
         if not get_config().auth_allowed_role in roles:
             # roles are expected in "groups" key in payload
-            logger.info("Unauthorized: Roles not allowed")
+            logger.error("Unauthorized: Roles not allowed")
             return False
 
     # Passed all checks

@@ -68,10 +68,10 @@ def prepare_validate_multitsframe(
 def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     try:
         write_table = WriteTable.from_sink_id(sink_id)
-    except ValidationError as e:  # pragma: no cover
-        msg = f"Could not parse and validate sink id {sink_id}. Error was {str(e)}."
-        logger.info(msg)  # noqa: G003
-        raise AdapterHandlingException(msg) from e
+    except ValidationError as exc:  # pragma: no cover
+        msg = f"Could not parse and validate sink id {sink_id}. Error was {str(exc)}."
+        logger.error(msg)  # noqa: G003
+        raise AdapterHandlingException(msg) from exc
 
     data_to_send = data.copy()  # deep copy by default!
 
@@ -104,7 +104,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
                 index=False,
                 method="multi",
             )
-    except SQLOpsError as e:
-        msg = f"Sql adapter pandas to_sql writing error: {str(e)}"
-        logger.info(msg)
-        raise AdapterHandlingException(msg) from e
+    except SQLOpsError as exc:
+        msg = f"Sql adapter pandas to_sql writing error: {str(exc)}"
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from exc

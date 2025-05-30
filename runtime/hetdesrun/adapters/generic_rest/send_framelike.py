@@ -49,7 +49,7 @@ async def post_framelike_records(
             "Failed to get auth headers for posting framelike data to adapter"
             f"with key {adapter_key}. Error was:\n{str(e)}"
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg) from e
 
     if attributes is not None and len(attributes) != 0:
@@ -79,7 +79,7 @@ async def post_framelike_records(
         )
     except httpx.HTTPError as e:
         msg = f"Http error while posting framelike data to {url} for id {ref_id}: {str(e)}"
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterConnectionError(msg) from e
 
     if response.status_code not in (200, 201):

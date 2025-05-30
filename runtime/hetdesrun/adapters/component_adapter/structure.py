@@ -252,7 +252,7 @@ def get_thing_node_by_id(id: str) -> StructureThingNode | None:  # noqa: A002
                 f"provided thing node id to component adapter is not a ValidStr."
                 f" Exception was:\n{str(e)}"
             )
-            logger.info(msg)
+            logger.error(msg)
             return None
 
         return StructureThingNode(

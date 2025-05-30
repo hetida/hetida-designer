@@ -137,7 +137,7 @@ def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
             f"Failed to write local file \n{str(possible_local_file)}\n with "
             f"file_support_handler \n{str(file_support_handler)}\nException was:\n{str(e)}."
         )
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
     logger.info(

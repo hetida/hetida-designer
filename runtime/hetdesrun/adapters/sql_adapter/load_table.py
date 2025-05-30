@@ -150,7 +150,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
 
     if db_key not in configured_dbs_by_key or len(id_split) < 2:
         msg = f"Invalid source id requested from sql adapter: {source_id}"
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg)
 
     db_config = configured_dbs_by_key[db_key]
@@ -163,7 +163,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
                 f"Source id: {source_id}\n"
                 f"source filters: {str(source_filters)}"
             )
-            logger.info(msg)
+            logger.error(msg)
             raise AdapterHandlingException(msg)
         return load_sql_query(db_config, query)
 
@@ -209,7 +209,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
         return validated_multi_ts_frame
 
     msg = f"Invalid source id structure. Cannot find or identify source.source id: {source_id}"
-    logger.info(msg)
+    logger.error(msg)
     raise AdapterHandlingException(msg)
 
 
@@ -220,7 +220,7 @@ def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str) -> pd.DataFra
             result = pd.read_sql_table(table_name, engine)
     except SQLOpsError as e:
         msg = f"Sql adapter pandas sql reading error: {str(e)}"
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
     return result
 
@@ -232,6 +232,6 @@ def load_sql_query(db_config: SQLAdapterDBConfig, query: Select) -> pd.DataFrame
             result = pd.read_sql_query(query, engine)
     except SQLOpsError as e:
         msg = f"Sql adapter pandas sql query error: {str(e)}"
-        logger.info(msg)
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e
     return result

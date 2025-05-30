@@ -72,7 +72,7 @@ async def get_thingnode_metadata_endpoint(node_id: UUID) -> list:  # noqa: ARG00
 async def get_single_thingnode_endpoint(node_id: UUID) -> VirtualStructureAdapterThingNode:
     node = get_single_thingnode(node_id)
     if node is None:
-        logger.info("No ThingNode found for provided UUID: %s", node_id)
+        logger.error("No ThingNode found for provided UUID: %s", node_id)
         raise HTTPException(
             status_code=404, detail=f"No ThingNode found for provided UUID: {node_id}"
         )

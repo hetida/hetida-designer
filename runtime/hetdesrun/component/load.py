@@ -71,7 +71,7 @@ def import_func_from_code(
             # actually import the module;
             exec(code, mod.__dict__)  # noqa: S102
         except SyntaxError as exec_syntax_exception:
-            logger.info(
+            logger.error(
                 "Syntax Error during importing function %s from code (%s (%s), uuid: %s)",
                 func_name,
                 component_name,
@@ -83,7 +83,7 @@ def import_func_from_code(
             ) from exec_syntax_exception
 
         except Exception as exec_exception:  # noqa: BLE001
-            logger.info(
+            logger.error(
                 "Exception during importing function %s from code (%s (%s), uuid: %s): %s",
                 func_name,
                 component_name,

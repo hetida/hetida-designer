@@ -275,9 +275,9 @@ def get_sink_by_id(sink_id: str) -> SQLAdapterStructureSink | None:
     # Parse sink_id
     try:
         write_table = WriteTable.from_sink_id(sink_id)
-    except ValidationError as e:
-        msg = f"Could not parse and validate sink id {sink_id}. Error was {str(e)}."
-        logger.info(msg)  # noqa: G003
+    except ValidationError as exc:
+        msg = f"Could not parse and validate sink id {sink_id}. Error was {str(exc)}."
+        logger.error(msg)  # noqa: G003
         return None
 
     # Handle appendable ts tables

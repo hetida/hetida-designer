@@ -155,7 +155,7 @@ async def handle_message(
         job_id=new_job_id,
     )
 
-    logger.info(
+    logger.debug(
         f"Trigger execution of trafo {str(exec_input.id)} via Kakfa consumption mode from message "
         f"with message job id {str(msg_obj.job_id)} with job_id={str(new_job_id)}.\n"
         "Kafka message: "

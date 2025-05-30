@@ -58,7 +58,7 @@ def parse_settings_file(
         with open(settings_file_path, encoding="utf8") as f:
             loaded_json = json.load(f)
     except OSError:
-        logger.info("Settings File could not be found/opened.")
+        logger.error("Settings File could not be found/opened.")
         return SettingsFile()
 
     except json.JSONDecodeError:  # decoding error
