@@ -228,20 +228,20 @@ async def load_data_from_adapter(
             wf_input_name_to_filtered_source_mapping_dict, adapter_key=str(adapter_key)
         )
         return loaded_data
-    except adapter["connection_error_classes"] as e:
-        if isinstance(e, AdapterConnectionError):
-            raise e
-        raise AdapterConnectionError(f"Adapter Client specific connection error:\n{str(e)}") from e
-    except adapter["output_data_error_classes"] as e:
-        if isinstance(e, AdapterOutputDataError):
-            raise e
-        raise AdapterOutputDataError(f"Adapter Client specific output data error:\n{str(e)}") from e
-    except adapter["client_wiring_invalid_error_classes"] as e:
-        if isinstance(e, AdapterClientWiringInvalidError):
-            raise e
+    except adapter["connection_error_classes"] as exc:
+        if isinstance(exc, AdapterConnectionError):
+            raise exc
+        raise AdapterConnectionError(f"Adapter Client specific connection error:\n{str(exc)}") from exc
+    except adapter["output_data_error_classes"] as exc:
+        if isinstance(exc, AdapterOutputDataError):
+            raise exc
+        raise AdapterOutputDataError(f"Adapter Client specific output data error:\n{str(exc)}") from exc
+    except adapter["client_wiring_invalid_error_classes"] as exc:
+        if isinstance(exc, AdapterClientWiringInvalidError):
+            raise exc
         raise AdapterClientWiringInvalidError(
-            f"Adapter Client wiring invalid error:\n{str(e)}"
-        ) from e
+            f"Adapter Client wiring invalid error:\n{str(exc)}"
+        ) from exc
 
 
 async def send_data_with_adapter(
