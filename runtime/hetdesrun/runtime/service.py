@@ -326,7 +326,9 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             [str(x.operator_hierarchical_id) + " " + str(await x.result) for x in all_nodes]
         )
 
-        runtime_logger.info(f"Execution Results with a length of {len(all_results_str)} are provided.")
+        runtime_logger.info(
+            f"Execution Results with a length of {len(all_results_str)} are provided."
+        )
         runtime_logger.debug(
             "Execution Results:\n%s",
             (

@@ -153,7 +153,7 @@ class BearerVerifier:
             key_data = resp.json()
         except json.JSONDecodeError as ecx:
             msg = "Error trying to get public key from auth service. Failed to decode json"
-            logger.error("%s: %s",msg, str(ecx))
+            logger.error("%s: %s", msg, str(ecx))
             raise AuthentificationError(msg) from None
 
         with self._public_key_lock:
