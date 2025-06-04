@@ -3,13 +3,16 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from pytz import UnknownTimeZoneError
 
+from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions_for_component_code import (
     _convert_timezone,
     _get_display_name,
     _get_start_or_end_timestamp,
     _get_unit,
     _pad_start_or_end,
+    _to_datetime,
     get_and_pad_start_and_end_timestamp,
     get_colors_from_plot_target_settings,
     get_locale_from_plot_target_settings,
@@ -17,7 +20,6 @@ from hdhelpers.helper_functions_for_component_code import (
     modify_timezone,
 )
 from hdhelpers.plot_target_settings import StatusColors
-from hdutils import ComponentException
 
 
 @pytest.fixture
@@ -156,6 +158,12 @@ def test_get_and_pad_start_and_end_timestamp(start, end, start_padding, end_padd
     assert end >= start
 
 
+def test_get_and_pad_none():
+    start, end = get_and_pad_start_and_end_timestamp(pd.Series())
+    assert start is None
+    assert end is None
+
+
 @pytest.mark.parametrize(
     ("series", "attrs", "timestamp", "is_start", "kwargs"),
     [
@@ -219,7 +227,12 @@ def test_get_start_or_end_timestamp(
     if attrs is not None:
         series.attrs = attrs
     timestamp = _get_start_or_end_timestamp(series, timestamp, is_start)
-    assert isinstance(timestamp, pd.Timestamp)
+    assert isinstance(timestamp, pd.Timestamp | None)
+
+
+def test_get_start_or_end_none():
+    timestamp = _get_start_or_end_timestamp(pd.Series(), None)
+    assert timestamp is None
 
 
 def test_pad_start():
@@ -238,12 +251,30 @@ def test_pad_end():
 
 def test_pad_start_or_end_wrong_padding():
     timestamp = pd.to_datetime("2025-05-28T09:00:00+02:00")
-    with pytest.raises(ComponentException):
+    with pytest.raises(HelperException):
         _pad_start_or_end(timestamp, "foo")
 
 
-def test_convert_timezone():
-    timestamp = _convert_timezone()
+@pytest.mark.parametrize(
+    ("timezone", "kwargs"),
+    [("Europe/Berlin", {}), (None, {}), (None, {"plot_target_timezone": "Europe/Berlin"})],
+)
+def test_convert_timezone(setup_plot_target_settings, timezone, kwargs):
+    setup_plot_target_settings(**kwargs)
+    timestamp = _convert_timezone("2025-05-28T09:00:00+02:00", timezone)
+    assert isinstance(timestamp, pd.Timestamp)
+
+
+def test_convert_incorrect_timezone(setup_plot_target_settings):
+    setup_plot_target_settings(plot_target_timezone="Eurolin")
+    with pytest.raises(UnknownTimeZoneError):
+        _convert_timezone("2025-05-28T09:00:00+02:00")
+
+
+@pytest.mark.parametrize(("timestamp"), [("2025-05-28T09:00:00+02:00"), (1748415600)])
+def test_to_datetime(timestamp):
+    timestamp = _to_datetime(timestamp)
+    assert isinstance(timestamp, pd.Timestamp)
 
 
 def test_modify_timezone():

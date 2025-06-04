@@ -40,7 +40,7 @@ class PlotTargetSettings(BaseModel):
     They can be provided to execution endpoints as part of the ExecByIdBase payload,
     are made accessible to components using the execution context.
 
-    hdutils provides helper functions to access them at runtime.
+    hdhelpers provides helper functions to access them at runtime.
     """
 
     plot_target_timezone: str | None = Field(
@@ -93,7 +93,6 @@ class PlotTargetSettings(BaseModel):
     )
 
 
-# Sollte diese Funktion private sein oder ist Benutzung im Komponentencode beabsichtig?
 def get_plot_target_settings() -> PlotTargetSettings:
     """Obtain plot settings from runtime execution context.
 
@@ -101,7 +100,7 @@ def get_plot_target_settings() -> PlotTargetSettings:
     return default values.
     """
     try:
-        from hetdesrun.runtime.context import get_runtime_exec_context
+        from hdhelpers.context import get_runtime_exec_context
 
         return get_runtime_exec_context().plot_target_settings
     except ImportError:
@@ -113,15 +112,16 @@ def get_plot_target_settings() -> PlotTargetSettings:
 def plotly_fig_to_json_dict(  # noqa: PLR0912
     fig: Figure,
     add_config_settings: bool = True,
-    hide_legend: bool = True,
-    hide_x_title: bool = True,
-    update_x_axes_tickformat: bool = True,
-    use_default_standoff: bool = True,
+    hide_legend: bool = False,
+    hide_x_title: bool = False,
+    update_x_axes_tickformat: bool = False,
+    use_default_standoff: bool = False,
     use_minimum_margin: bool = True,
-    use_muplot_axes_color: bool = True,
-    use_muplot_grid: bool = True,
-    use_muplot_line_and_markers: bool = True,
-    use_platform_background: bool = True,
+    use_muplot_axes_color: bool = False,
+    use_muplot_grid: bool = False,
+    use_muplot_line_and_markers: bool = False,
+    use_platform_background: bool = False,
+    use_platform_defaults: bool = False,
     use_simple_white_template: bool = True,
 ) -> Any:
     """Turn Plotly figure into a Python dict-like object
@@ -132,6 +132,16 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
     See visualization components from the accompanying base components for
     examples on usage.
     """
+    if use_platform_defaults:
+        hide_legend = True
+        hide_x_title = True
+        update_x_axes_tickformat = True
+        use_default_standoff = True
+        use_muplot_axes_color = True
+        use_muplot_grid = True
+        use_muplot_line_and_markers = True
+        use_platform_background = True
+        # TODO: Wollen wir grundsätzlich use_simple_white_template = True oder nur hier?
 
     plot_target_settings = get_plot_target_settings()
 

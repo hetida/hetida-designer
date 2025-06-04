@@ -1,10 +1,11 @@
 import logging
 
 import pandas as pd
+import pytz
 from pandas.tseries.frequencies import to_offset
 
+from hdhelpers.exceptions import HelperException
 from hdhelpers.plot_target_settings import get_plot_target_settings
-from hdutils import ComponentException
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,12 @@ def _get_display_name(series: pd.Series, default_title: str = "") -> str:
         title = series.attrs["single_metric_metadata"]["structured_metadata"]["metric"][
             "short_display_name"
         ]
-    except (AttributeError, KeyError) as e:
+    except (TypeError, KeyError) as exc:
         msg = (
             'Expected attrs["single_metric_metadata"]["structured_metadata"]["metric"]',
             '["short_display_name"] but got incorrect keys',
         )
-        logger.warning(msg=msg, exc_info=e)
+        logger.warning(msg=msg, exc_info=exc)
         title = default_title
     return title
 
@@ -70,10 +71,10 @@ def _get_unit(series: pd.Series, default_unit: str = "") -> str:
     """
     try:
         unit = series.attrs["single_metric_metadata"]["structured_metadata"]["metric"]["unit"]
-    except (AttributeError, KeyError) as e:
+    except (TypeError, KeyError) as exc:
         msg = 'Expected attrs["single_metric_metadata"]["structured_metadata"]["metric"]["unit"'
         "] but got incorrect keys"
-        logger.warning(msg=msg, exc_info=e)
+        logger.warning(msg=msg, exc_info=exc)
         unit = default_unit
     return unit
 
@@ -120,7 +121,9 @@ def get_and_pad_start_and_end_timestamp(
     return start, end
 
 
-def _pad_start_or_end(timestamp: pd.Timestamp, padding: str | None, is_start: bool = True):
+def _pad_start_or_end(
+    timestamp: pd.Timestamp, padding: str | None, is_start: bool = True
+) -> pd.Timestamp | None:
     """Adds or subtracts padding from the timestamp
 
     That padding has to be formatted to be compatible with pandas.tseries.frequencies.to_offset().
@@ -131,11 +134,11 @@ def _pad_start_or_end(timestamp: pd.Timestamp, padding: str | None, is_start: bo
         if is_start:
             return timestamp - to_offset(padding)
         return timestamp + to_offset(padding)
-    except ValueError as e:
-        raise ComponentException(
+    except ValueError as exc:
+        raise HelperException(
             f"{padding} as padding value is an invalid frequency. "
             "Use something compatible with pandas.tseries.frequencies.to_offset()"
-        ) from e
+        ) from exc
 
 
 def _get_start_or_end_timestamp(
@@ -148,7 +151,7 @@ def _get_start_or_end_timestamp(
     If the series is also empty, None is returned.
     """
     if timestamp is not None:
-        return pd.to_datetime(timestamp)
+        return _to_datetime(timestamp)
 
     plot_target_settings = get_plot_target_settings()
 
@@ -164,40 +167,82 @@ def _get_start_or_end_timestamp(
     if timestamp is None:
         try:
             timestamp = series.attrs["single_metric_dataset_metadata"][key]
-        except (AttributeError, KeyError) as e:
-            msg = (
-                f'Expected attrs["single_metric_dataset_metadata"]["{key}"] but got incorrect keys'
-            )
-            logger.warning(msg=msg, exc_info=e)
+        except (AttributeError, KeyError) as exc:
+            msg = f"""Expected key structure not found:
+             attrs["single_metric_dataset_metadata"]["{key}"]"""
+            logger.warning(msg=msg, exc_info=exc)
             if len(series) > 0:
                 timestamp = series.index[idx]
 
-    return pd.to_datetime(timestamp)
+    return _to_datetime(timestamp)
 
 
-def _convert_timezone(timestamp: int | str, timezone: str | None = None):
+def _convert_timezone(timestamp: int | str, timezone: str | None = None) -> pd.Timestamp | None:
     # TODO: This should probably be absorbed by modify_timezone
     if timezone is None:
         plot_target_settings = get_plot_target_settings()
-        # TODO: timezone = None problematisch? Unit Test!
         timezone = plot_target_settings.plot_target_timezone
 
     if timezone is None:
         timezone = "utc"
-
-    if isinstance(timestamp, int):
-        # It's usually "seconds till newyears 1970", but the default unit is ns.
-        timestamp = pd.to_datetime(timestamp, unit="s", utc=True).tz_convert(timezone)
-    else:
-        # String Timestamps can be converted with ns precision without issues
-        timestamp = pd.to_datetime(timestamp, utc=True).tz_convert(timezone)
-
+    if timestamp is not None:
+        timestamp = _to_datetime(timestamp).tz_convert(timezone)
     return timestamp
 
 
-def modify_timezone() -> None:
+def _to_datetime(timestamp: str | int | None) -> pd.Timestamp | None:
+    """TODO: Doc-String fehlt noch!"""
+    if isinstance(timestamp, int):
+        # It's usually "seconds till newyears 1970", but the default unit is ns.
+        timestamp = pd.to_datetime(timestamp, unit="s", utc=True)
+    else:
+        # String Timestamps can be converted with ns precision without issues
+        timestamp = pd.to_datetime(timestamp, utc=True)
+    return timestamp
+
+
+def modify_timezone(
+    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str | None = None
+) -> pd.Series | pd.DataFrame:
     """Modifies timestamps to a certain timezone
 
-    TODO: modify_timezone is the last function to be overhauled; this is a placeholder
+    Keyword arguments:
+    object_to_convert -- pd.Series or pd.DataFrame where timezone in index or column is modified
+    to_timezone -- timezone into convert, e.g. for German time use Europe/Berlin. See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
+    column_name -- column_name to apply, default is index as pd.Series have timestamps in index
     """
     # TODO: Kein pytz verwenden!
+    if not isinstance(object_to_convert, pd.Series | pd.DataFrame):
+        raise TypeError(
+            f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame"
+        )
+
+    try:
+        if isinstance(object_to_convert, pd.Series):
+            new_object = object_to_convert.to_frame(name=object_to_convert.name)
+        else:
+            new_object = object_to_convert.copy(deep=True)
+
+        if column_name is None:
+            new_object.index = new_object.index.tz_convert(to_timezone)
+        else:
+            new_object[column_name] = new_object[column_name].dt.tz_convert(to_timezone)
+
+        if isinstance(object_to_convert, pd.Series):
+            new_object = pd.Series(
+                new_object[object_to_convert.name],
+                index=new_object.index,
+                name=object_to_convert.name,
+            )
+
+        return new_object
+
+    except pytz.exceptions.UnknownTimeZoneError as exc:
+        possible_timezone = pytz.all_timezones
+        raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from exc
+    except (TypeError, AttributeError) as exc:
+        raise TypeError("Entries to convert do not contain valid timestamps") from exc
+
+    except KeyError as exc:
+        exc.add_note(f"Column name {column_name} not in object_to_convert")
+        raise
