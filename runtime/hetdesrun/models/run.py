@@ -18,6 +18,7 @@ from pydantic import (
     model_validator,
 )
 
+from hdhelpers.context import RuntimeExecutionContext
 from hdutils import (
     DataType,
     data_type_map,
@@ -33,7 +34,6 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.reference_context import (
     get_deepcopy_of_reproducibility_reference_context,
 )
-from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
 from hetdesrun.utils import Type, check_explicit_utc
 

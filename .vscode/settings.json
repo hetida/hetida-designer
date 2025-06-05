@@ -59,11 +59,8 @@
     ],
     "editor.indentSize": "tabSize",
     "editor.detectIndentation": false,
-    "python.testing.pytestArgs": [
-        "runtime/hdhelpers",
-        "-c",
-        "runtime/hdhelpers/pytest.ini"
-    ],
+
+    "python.testing.cwd": "./runtime",
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
 }

@@ -483,7 +483,7 @@ plot_workflow_json = {
             "code": (
                 "from hetdesrun.component.registration import register\n"
                 "from hetdesrun.datatypes import DataType  # add your own imports here\n"
-                "from hdutils import plotly_fig_to_json_dict\n\n"
+                "from hdhelpers.plot_target_settings import plotly_fig_to_json_dict\n\n"
                 "import pandas as pd\n\nfrom plotly.graph_objects import Figure\n"
                 "import plotly.express as px\n\nimport plotly.io as pio\n\n"
                 "pio.templates.default = None\n\n\ndef timeseries_comparison_plot(\n"
@@ -637,32 +637,49 @@ async def test_workflow_with_plot_component_and_activated_exec_of_plot_operators
 
     assert output["result"] == "ok"
 
-    assert output["output_results_by_output_name"]["z"] == {
-        "data": [
-            {
-                "mode": "lines",
-                "name": "x",
-                "x": {"dtype": "i1", "bdata": "AAEC"},
-                "y": {"dtype": "f8", "bdata": "mpmZmZkZRUAzMzMzM7MyQGZmZmZm5jlA"},
-                "type": "scatter",
-            },
-            {
-                "mode": "lines",
-                "name": "y",
-                "x": {"dtype": "i1", "bdata": "AAEC"},
-                "y": {"dtype": "f8", "bdata": "mpmZmZkZRUAzMzMzM7MyQGZmZmZm5jlA"},
-                "type": "scatter",
-            },
-        ],
-        "layout": {
-            "xaxis": {"title": {"text": "Time"}, "automargin": True},
-            "yaxis": {"title": {"text": "Values"}, "automargin": True},
-            "autosize": True,
-            "height": 200,
-            "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
+    assert output["output_results_by_output_name"]["z"]["data"] == [
+        {
+            "mode": "lines",
+            "name": "x",
+            "x": {"dtype": "i1", "bdata": "AAEC"},
+            "y": {"dtype": "f8", "bdata": "mpmZmZkZRUAzMzMzM7MyQGZmZmZm5jlA"},
+            "type": "scatter",
         },
-        "config": {},
+        {
+            "mode": "lines",
+            "name": "y",
+            "x": {"dtype": "i1", "bdata": "AAEC"},
+            "y": {"dtype": "f8", "bdata": "mpmZmZkZRUAzMzMzM7MyQGZmZmZm5jlA"},
+            "type": "scatter",
+        },
+    ]
+
+    assert output["output_results_by_output_name"]["z"]["layout"]["xaxis"] == {
+        "title": {"text": "Time"},
+        "automargin": True,
     }
+
+    assert output["output_results_by_output_name"]["z"]["layout"]["yaxis"] == {
+        "title": {"text": "Values"},
+        "automargin": True,
+    }
+
+    assert output["output_results_by_output_name"]["z"]["layout"]["autosize"]
+
+    assert output["output_results_by_output_name"]["z"]["layout"]["height"] == 200
+
+    assert output["output_results_by_output_name"]["z"]["layout"]["margin"] == {
+        "l": 0,
+        "r": 0,
+        "b": 0,
+        "t": 0,
+        "pad": 0,
+        "autoexpand": True,
+    }
+
+    assert isinstance(output["output_results_by_output_name"]["z"]["layout"]["template"], dict)
+
+    assert output["output_results_by_output_name"]["z"]["config"] == {}
 
 
 @pytest.mark.asyncio

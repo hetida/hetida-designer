@@ -2,12 +2,12 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from hdhelpers.context import RuntimeExecutionContext
 from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.reference_context import (
     get_deepcopy_of_reproducibility_reference_context,
 )
-from hetdesrun.runtime.context import RuntimeExecutionContext
 
 
 class ExecByIdBase(BaseModel):

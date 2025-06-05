@@ -63,9 +63,9 @@ class PlotTargetSettings(BaseModel):
     line_colors: list[str] | None = Field(
         None,
         description=(
-            "List of colors to be used for plot traces.",
-            "Will be set as colorway by plotly_fig_to_json_dict,",
-            "so the colors are only applied where no explicit trace color is set",
+            "List of colors to be used for plot traces"
+            "Will be set as colorway by plotly_fig_to_json_dict"
+            "so the colors are only applied where no explicit trace color is set"
         ),
     )
     background_color: str | None = Field(
@@ -187,7 +187,7 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
 
     if use_minimum_margin:
         fig.update_layout(
-            {"marker": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}}
+            {"margin": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}}
         )
 
     if use_muplot_grid and plot_target_settings.grid_color is not None:

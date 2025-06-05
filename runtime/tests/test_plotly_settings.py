@@ -5,9 +5,9 @@ import os
 
 import pytest
 
-from hdutils import PlotTargetSettings
+from hdhelpers.context import RuntimeExecutionContext
+from hdhelpers.plot_target_settings import PlotTargetSettings
 from hetdesrun.models.execution import ExecByIdInput
-from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 
 

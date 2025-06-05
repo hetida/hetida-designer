@@ -108,11 +108,13 @@ def get_period(
 
     if start is None:
         try:
-            start = series.attrs["single_metric_dataset_metadata"]["ref_interval_start_timestamp"] # TODO: Konstante
+            start = series.attrs["single_metric_dataset_metadata"][
+                "ref_interval_start_timestamp"
+            ]  # TODO: Konstante
         except (AttributeError, KeyError):
             logger.exception(
                 'Expected attrs["single_metric_dataset_metadata"]["ref_interval_start_timestamp"] '
-                "but got incorrect keys" # TODO: %s String-Zeugs nachschauen (lazy formatting)
+                "but got incorrect keys"  # TODO: %s String-Zeugs nachschauen (lazy formatting)
             )
             start = series.iloc[0].index  # TODO: Was wenn series leer ist?
 
@@ -137,7 +139,7 @@ def get_period(
     end = pd.to_datetime(end, unit="s", utc=True).tz_convert(timezone)
 
     # Optionally add padding
-    start = start - pd.Timedelta(start_padding) # TODO: Offset vs Timedelta
+    start = start - pd.Timedelta(start_padding)  # TODO: Offset vs Timedelta
     end = end + pd.Timedelta(end_padding)
 
     return start, end
