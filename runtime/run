@@ -14,6 +14,7 @@ usage() {
     echo "  - typecheck       :    run mypy static type check"
     echo "  - format          :    run ruff format"
     echo "  - check           :    run format check, tests, typechecking"
+    echo "  - build_package   :    build hdhelpers package"
 }
 
 fn_exists() {
@@ -44,7 +45,7 @@ shell() {
 
 test() {
     python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
-    python -m pytest --cov=hdhelpers --no-cov-on-fail --cov-report=term-missing hdhelpers -c hdhelpers/pytest.ini   
+    python -m pytest --cov=hdhelpers --no-cov-on-fail --cov-report=term-missing hdhelpers -c hdhelpers/pytest.ini
 }
 
 # test_components() {
@@ -80,6 +81,11 @@ check() {
 
 export_api_html() {
     python extract_openapi_html.py "${@}"
+}
+
+build_package(){
+    uv build hdhelpers
+    find hdhelpers/dist -name "*.whl" | xargs pip install --no-cache-dir --force-reinstall --no-deps
 }
 
 #----- Execution -----#

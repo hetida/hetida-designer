@@ -10,7 +10,7 @@ lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE
 
 lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017", "ISC001"]
 
-extend-exclude = ["tests/data"]
+extend-exclude = ["tests/data", "hdhelpers/build"]
 
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"

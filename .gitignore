@@ -28,6 +28,7 @@ runtime/.coverage.xml
 runtime/**/writable_sqlite.db
 runtime/upload_settings/*
 runtime/settings/*
+runtime/hdhelpers/build/*
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
 demo-adapter-python/**/nix_venv_*

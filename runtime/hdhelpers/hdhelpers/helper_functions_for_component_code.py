@@ -208,7 +208,8 @@ def modify_timezone(
 
     Keyword arguments:
     object_to_convert -- pd.Series or pd.DataFrame where timezone in index or column is modified
-    to_timezone -- timezone into convert, e.g. for German time use Europe/Berlin. See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
+    to_timezone -- timezone into convert, e.g. for German time use Europe/Berlin.
+    See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
     column_name -- column_name to apply, default is index as pd.Series have timestamps in index
     """
     # TODO: Kein pytz verwenden!
