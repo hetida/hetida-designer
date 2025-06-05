@@ -45,28 +45,22 @@ class PlotTargetSettings(BaseModel):
 
     plot_target_timezone: str | None = Field(
         None,
-        description=(
-            "The timezone plot components should use for datetime axes etc."
-            " Usually via"
-            " s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)"
-        ),
+        description="""The timezone plot components should use for datetime axes etc.
+             Usually via
+             s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)""",
         examples=["Europe/Berlin"],
     )
     plot_target_locale: str | None = Field(
         None,
-        description=(
-            "Locale to set for plots, e.g. to write weekdays in the user's language."
-            " This has to be set in the config of the plotly figure dict and the plotly.js "
-            "must have the associated plotly local scripts loaded."
-        ),
+        description="""Locale to set for plots, e.g. to write weekdays in the user's language.
+             This has to be set in the config of the plotly figure dict and the plotly.js
+             must have the associated plotly local scripts loaded.""",
     )
     line_colors: list[str] | None = Field(
         None,
-        description=(
-            "List of colors to be used for plot traces"
-            "Will be set as colorway by plotly_fig_to_json_dict"
-            "so the colors are only applied where no explicit trace color is set"
-        ),
+        description="""List of colors to be used for plot traces.
+             Will be set as colorway by plotly_fig_to_json_dict,
+             so the colors are only applied where no explicit trace color is set""",
     )
     background_color: str | None = Field(
         None, description="Color of the panel background as a hex code"

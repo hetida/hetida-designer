@@ -5,6 +5,7 @@ hdhelpers/__init__.py
 hdhelpers/context.py
 hdhelpers/exceptions.py
 hdhelpers/helper_functions_for_component_code.py
+hdhelpers/parsing_and_wrapping.py
 hdhelpers/plot_target_settings.py
 hdhelpers.egg-info/PKG-INFO
 hdhelpers.egg-info/SOURCES.txt

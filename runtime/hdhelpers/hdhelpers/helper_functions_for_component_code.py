@@ -1,4 +1,5 @@
 import logging
+from typing import TypedDict
 
 import pandas as pd
 import pytz
@@ -10,7 +11,18 @@ from hdhelpers.plot_target_settings import get_plot_target_settings
 logger = logging.getLogger(__name__)
 
 
-def get_colors_from_plot_target_settings() -> dict[str, str | list[str]]:
+class Colors(TypedDict):
+    axes_label_color: str | None
+    background_color: str | None
+    error_color: str | None
+    grid_color: str | None
+    info_color: str | None
+    line_colors: list[str | None]
+    success_color: str | None
+    warn_color: str | None
+
+
+def get_colors_from_plot_target_settings() -> Colors:
     """Get thematically coherent colors for customizing plots
 
     Most color uses are already covered by the default settings of plotly_fig_to_json_dict().

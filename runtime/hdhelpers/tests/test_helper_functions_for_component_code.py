@@ -35,11 +35,9 @@ def setup_plot_target_settings():
         runtime_execution_context_var.plot_target_settings = PlotTargetSettings(**kwargs)
         return runtime_execution_context_var
 
-    hetdesrun_runtime_context = MagicMock()
-    hetdesrun_runtime_context.get_runtime_exec_context = MagicMock(
-        return_value=runtime_execution_context_var
-    )
-    with patch.dict(sys.modules, {"hdhelpers.context": hetdesrun_runtime_context}):
+    runtime_context = MagicMock()
+    runtime_context.get_runtime_exec_context = MagicMock(return_value=runtime_execution_context_var)
+    with patch.dict(sys.modules, {"hdhelpers.context": runtime_context}):
         yield insert_kwargs_into_plot_target_settings
 
 
