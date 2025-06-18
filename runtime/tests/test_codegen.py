@@ -479,6 +479,20 @@ def test_add_documentation_as_module_docstring():
     )
     assert 'test\n"""' in code_with_updated_module_doc_string
 
+    # Not adding if module docs already present:
+
+    component_tr.content = '"""Some docs"""' + "\n" + component_tr.content
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert "test" not in code_with_updated_module_doc_string
+
+    component_tr.content = 'r"""Some docs"""' + "\n" + component_tr.content
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert "test" not in code_with_updated_module_doc_string
+
 
 def test_add_test_wiring_dictionary():
     component_tr_path = "tests/data/components/reduced_code.json"
