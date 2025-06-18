@@ -38,7 +38,7 @@ class ComponentInputValidationException(ComponentException):
         )
 
 
-class HelperException(Exception):
+class HelperException(Exception):  # TODO: HdhelperException
     """Exception to re-raise exceptions with error code raised in the code of the hdhelpers
     package."""
 

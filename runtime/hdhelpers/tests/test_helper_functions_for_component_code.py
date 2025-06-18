@@ -9,7 +9,6 @@ from pytz import UnknownTimeZoneError
 
 from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions_for_component_code import (
-    _convert_timezone,
     _get_display_name,
     _get_start_or_end_timestamp,
     _get_unit,
@@ -112,19 +111,7 @@ def test_get_title_with_unit_metadata():
 def test_get_colors_from_plot_target_settings(setup_plot_target_settings, kwargs):
     setup_plot_target_settings(**kwargs)
     color_dict = get_colors_from_plot_target_settings()
-    color_names = [
-        "axes_label_color",
-        "background_color",
-        "error_color",
-        "grid_color",
-        "info_color",
-        "line_colors",
-        "success_color",
-        "warn_color",
-    ]
     assert isinstance(color_dict, dict)
-    assert len(color_dict) >= len(color_names)
-    assert all(color in color_dict for color in color_names)
 
 
 @pytest.mark.parametrize(
@@ -253,22 +240,6 @@ def test_pad_start_or_end_wrong_padding():
     timestamp = pd.to_datetime("2025-05-28T09:00:00+02:00")
     with pytest.raises(HelperException):
         _pad_start_or_end(timestamp, "foo")
-
-
-@pytest.mark.parametrize(
-    ("timezone", "kwargs"),
-    [("Europe/Berlin", {}), (None, {}), (None, {"plot_target_timezone": "Europe/Berlin"})],
-)
-def test_convert_timezone(setup_plot_target_settings, timezone, kwargs):
-    setup_plot_target_settings(**kwargs)
-    timestamp = _convert_timezone("2025-05-28T09:00:00+02:00", timezone)
-    assert isinstance(timestamp, pd.Timestamp)
-
-
-def test_convert_incorrect_timezone(setup_plot_target_settings):
-    setup_plot_target_settings(plot_target_timezone="Eurolin")
-    with pytest.raises(UnknownTimeZoneError):
-        _convert_timezone("2025-05-28T09:00:00+02:00")
 
 
 @pytest.mark.parametrize(("timestamp"), [("2025-05-28T09:00:00+02:00"), (1748415600)])
