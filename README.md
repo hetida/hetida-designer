@@ -30,7 +30,7 @@ necessary information in our [contribution guidelines](./CONTRIBUTING.md).
 
 #### Installing prerequisite dependencies
 
-You'll have to install a recent version of [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/).
+You'll have to install a recent version of [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), [docker](https://docs.docker.com/get-docker/) and [docker compose](https://docs.docker.com/compose/install/).
 The exact procedure depends on your operating system. Follow the links to find out more about how to install these dependencies on your machine.
 
 **Note for Windows Users**: On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy *Checkout as-is, commit Unix-style line endings*. In every case, make sure that these settings match.
@@ -58,10 +58,10 @@ git checkout release
 
 **Note:** By default [base component and worklfow deployment](./docs/base_component_deployment.md) will run automatically and fill the empty database.
 
-Once you have the source code, docker and docker-compose properly set up, run
+Once you have the source code, docker and docker compose properly set up, run
 
 ```shell
-docker-compose up -d
+docker compose up -d
 ```
 
 to start the application. 
@@ -184,11 +184,11 @@ development environment up and running quickly, as you'll only work locally on t
 submodule that you'd like to change.
 
 So first of all, follow the above instructions to set up a fully working local installation,
-either with [docker-compose](#gs-docker-compose) or with [standalone docker containers](#gs-docker-standalone). If using docker-compose, you should expose backend and runtime 
-ports in the docker-compose file, as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
+either with [docker compose](#gs-docker-compose) or with [standalone docker containers](#gs-docker-standalone). If using docker compose, you should expose backend and runtime 
+ports in the docker compose file, as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
 
 ```shell
-docker-compose -f docker-compose-dev.yml up -d
+docker compose -f docker-compose-dev.yml up -d
 ```
 
 **Note:** The dockerfiles assume a linux/amd64 platform/architexture, you may have to turn on / [configure emulation](https://github.com/docker/roadmap/issues/384#issuecomment-1377337935) if you are building on another architecture, for example on ARM based environments such as Apple M1 based systems.
@@ -225,7 +225,7 @@ Now a development web server using a sqlite in-memory db can be started via
 python main.py
 ```
 
-If you want to develop against the postgres db running in the docker-compose dev environment the command is
+If you want to develop against the postgres db running in the docker compose dev environment the command is
 ```shell
 HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
 ```
