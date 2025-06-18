@@ -43,7 +43,7 @@ To test availability of the xgboost library you may write a small component impo
 
 ## Example 2: Adding libraries with pip-compile and pip-sync
 
-Using pip-compile and pip-sync guarantees that the installed versions of your custom dependencies are compatible with the pre-installed dependencies.
+Using uv lock and uv sync guarantees that the installed versions of your custom dependencies are compatible with the pre-installed dependencies.
 
 To do this, start by creating a file `requirements-custom.in` (here in the runtime subdirectory of the repository) and enter
 
@@ -53,7 +53,7 @@ To do this, start by creating a file `requirements-custom.in` (here in the runti
 xgboost
 ```
 
-You may add additional libraries to the file and even specify version ranges. See the [pip-tools](https://github.com/jazzband/pip-tools/) documentation for further details.
+You may add additional libraries to the file and even specify version ranges. See the [uv](https://docs.astral.sh/uv/) documentation for further details.
 
 Next create a a new file Dockerfile `Dockerfile-runtime-custom-python-deps`with:
 
@@ -66,8 +66,8 @@ COPY ./runtime/requirements-custom.in /app/requirements-custom.in
 
 WORKDIR /app
 
-RUN pip-compile --generate-hashes ./requirements-custom.in
-RUN pip-sync ./requirements-base.txt ./requirements.txt ./requirements-custom.txt
+RUN uv pip compile --generate-hashes ./requirements-custom.in -o ./requirements-custom.txt
+RUN uv pip sync --system ./requirements-base.txt ./requirements.txt ./requirements-custom.txt
 
 USER hdrt_app
 ```
