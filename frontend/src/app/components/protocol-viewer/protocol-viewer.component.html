@@ -43,7 +43,7 @@
 }
 
 <ng-template #plotlyTemplate let-plotlyItem="transformation">
-  <span>{{ plotlyItem.key }}:</span>
+  <span class="mat-body-strong">{{ plotlyItem.key }}:</span>
   <br />
   <plotly-plot
     [useResizeHandler]="true"
@@ -59,15 +59,21 @@
 </ng-template>
 
 <ng-template #simpleTemplate let-someItem="transformation">
-  <span>{{ someItem.key }}:</span>
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
   <br />
-  <span class="mat-body-strong">{{ stringifyJson(someItem.value) }}</span>
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
+    }}</pre>
+  </span>
 </ng-template>
 
 <ng-template #stringTemplate let-someItem="transformation">
-  <span>{{ someItem.key }}:</span>
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
   <br />
   <span class="mat-body-strong">
-    <pre>{{ someItem.value }}</pre>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value ?? '(null)'
+    }}</pre>
   </span>
 </ng-template>

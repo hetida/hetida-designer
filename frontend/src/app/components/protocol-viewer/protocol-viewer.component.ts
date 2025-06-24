@@ -167,6 +167,6 @@ export class ProtocolViewerComponent implements AfterViewInit {
   }
 
   stringifyJson(value: any) {
-    return JSON.stringify(value);
+    return JSON.stringify(value, null, 2);
   }
 }
