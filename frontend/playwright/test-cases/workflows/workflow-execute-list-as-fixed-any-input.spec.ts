@@ -73,7 +73,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   const output = await page
     .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
     .innerText();
-  expect(output).toEqual(workflowInputData);
+  expect(output).toEqual(JSON.stringify(JSON.parse(workflowInputData), null, 2));
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
