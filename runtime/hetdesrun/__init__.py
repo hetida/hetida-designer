@@ -15,6 +15,34 @@ except FileNotFoundError:
     VERSION = "dev snapshot"
 
 
+def get_formatter(
+    log_execution_context: bool = False, log_job_id_context: bool = False
+) -> logging.Formatter:
+    return logging.Formatter(
+        "%(asctime)s %(process)d %(levelname)s: %(message)s "
+        "[in %(pathname)s:%(lineno)d"
+        + (
+            ", job_id=%(currently_executed_job_id)s"
+            if log_job_id_context or log_execution_context
+            else ""
+        )
+        + (
+            (
+                ",\n    tr type: %(currently_executed_transformation_type)s"
+                ", tr id: %(currently_executed_transformation_id)s"
+                ", tr name: %(currently_executed_transformation_name)s"
+                ", tr tag: %(currently_executed_transformation_tag)s"
+                ",\n    op id(s): %(currently_executed_operator_hierarchical_id)s"
+                ",\n    op name(s): %(currently_executed_operator_hierarchical_name)s"
+                "\n"
+            )
+            if log_execution_context
+            else ""
+        )
+        + "]"
+    )
+
+
 def configure_logging(
     the_logger: logging.Logger,
     log_execution_context: bool = False,
@@ -49,29 +77,7 @@ def configure_logging(
         logging_handler.addFilter(job_id_context_filter)
     if log_execution_context:
         logging_handler.addFilter(execution_context_filter)
-    formatter = logging.Formatter(
-        "%(asctime)s %(process)d %(levelname)s: %(message)s "
-        "[in %(pathname)s:%(lineno)d"
-        + (
-            ", job_id=%(currently_executed_job_id)s"
-            if log_job_id_context or log_execution_context
-            else ""
-        )
-        + (
-            (
-                ",\n    tr type: %(currently_executed_transformation_type)s"
-                ", tr id: %(currently_executed_transformation_id)s"
-                ", tr name: %(currently_executed_transformation_name)s"
-                ", tr tag: %(currently_executed_transformation_tag)s"
-                ",\n    op id(s): %(currently_executed_operator_hierarchical_id)s"
-                ",\n    op name(s): %(currently_executed_operator_hierarchical_name)s"
-                "\n"
-            )
-            if log_execution_context
-            else ""
-        )
-        + "]"
-    )
+    formatter = get_formatter(log_execution_context, log_job_id_context)
     logging_handler.setFormatter(formatter)
     the_logger.addHandler(logging_handler)
 

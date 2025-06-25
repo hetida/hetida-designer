@@ -219,21 +219,20 @@ class ComputationNode:
         return function_result
 
     async def _compute_result(self) -> dict[str, Any]:
+        self._in_computation = True
+        self._check_inputs()
+
+        # Gather data from input sources (detects cycles):
+        input_values = await self._gather_data_from_inputs()
+
         # set filter for contextualized logging
         context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
-
         if (
             get_config().log_technical_nodes
             or self.context.currently_executed_transformation_id != "UNKNOWN"
         ):
             runtime_execution_logger.debug("Starting computation")
-        self._in_computation = True
-
-        self._check_inputs()
-
-        # Gather data from input sources (detects cycles):
-        input_values = await self._gather_data_from_inputs()
 
         # Actual execution of current node
         function_result = await self._run_comp_func(input_values)

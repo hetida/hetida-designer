@@ -49,6 +49,8 @@ ValueError: 42
 
 The last line shows the value of the variable `interesting_value`, normally an error message would be displayed there. The second to last line shows in which line of your component code the error occurred.
 
+If you have access to the runtime logs you also can emit log messages in your component code. See [here](./execution/logging.md).
+
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
 If a workflow does not perform as expected or causes errors, additional information on intermediate variable values might be helpful.
