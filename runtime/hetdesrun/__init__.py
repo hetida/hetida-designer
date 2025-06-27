@@ -1,9 +1,14 @@
 import logging
 
 import hetdesrun_config  # noqa: F401
+from hetdesrun.runtime import internal_runtime_execution_logger
 from hetdesrun.runtime import runtime_execution_logger as logger
 from hetdesrun.runtime import runtime_logger as job_logger
-from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
+from hetdesrun.runtime.logging import (
+    ComponentCodeLogHandler,
+    execution_context_filter,
+    job_id_context_filter,
+)
 from hetdesrun.webservice.config import get_config
 
 migrations_invoked_from_py = False
@@ -86,6 +91,21 @@ main_logger = logging.getLogger(__name__)
 configure_logging(main_logger)
 
 configure_logging(logger, log_execution_context=True)
+
+configure_logging(internal_runtime_execution_logger, log_execution_context=True)
+
+# add component code handler to gather component code logs
+component_code_handler = ComponentCodeLogHandler()
+component_code_handler.addFilter(job_id_context_filter)
+component_code_handler.addFilter(execution_context_filter)
+logger.addHandler(ComponentCodeLogHandler())
+
+logger.setLevel(
+    get_config().user_component_code_log_level.value  # type: ignore
+    if get_config().user_component_code_log_level is not None
+    else get_config().log_level.value
+)
+
 configure_logging(job_logger, log_job_id_context=True)
 
 if get_config().log_httpx:

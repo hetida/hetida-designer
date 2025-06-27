@@ -36,6 +36,7 @@ from hetdesrun.reference_context import (
 )
 from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
+from hetdesrun.runtime.logging import SimplifiedLogRecord
 from hetdesrun.utils import Type, check_explicit_utc
 
 HIERARCHY_SEPARATOR = "\\"
@@ -561,6 +562,8 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         description="Resolved references to information needed to reproduce an execution result."
         "The provided data can be used to replace data that would usually be produced at runtime.",
     )
+
+    gathered_component_code_logs: list[SimplifiedLogRecord] = []
 
     @classmethod
     def from_exception(

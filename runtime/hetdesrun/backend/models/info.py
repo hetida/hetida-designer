@@ -8,6 +8,7 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.run import WorkflowExecutionInfo
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.runtime.logging import SimplifiedLogRecord
 from hetdesrun.utils import State, Type
 
 
@@ -61,3 +62,5 @@ class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
             "if advanced performance measuring is configured."
         ),
     )
+
+    gathered_component_code_logs: list[SimplifiedLogRecord] = []

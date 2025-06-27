@@ -11,6 +11,7 @@ from hetdesrun.component.load import base_module_path
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.runtime import runtime_execution_logger
+from hetdesrun.runtime.logging import ComponentCodeLogHandler
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 
 
@@ -48,16 +49,17 @@ def extract_single_record_with_msg_containing(
     log_records: list[logging.LogRecord], contained_str: str
 ) -> logging.LogRecord:
     filtered_records = [rec for rec in log_records if contained_str in rec.message]
-    assert len(filtered_records) == 1
+    assert len(filtered_records) > 0
     return filtered_records[0]
 
 
 @pytest.mark.asyncio
 async def test_logging_in_component(async_test_client, mocked_clean_test_db_session, caplog):
-    """Test that exec context information gets into log records
+    """Test that exec context information gets into log records and in exec response
 
-    Together with the test below that tests the formatter, this guarantees
-    that context informartion is actually logged.
+    Together with the test below that tests the formatter, this tests guarantees
+    about the infos being contained in log records ensures that
+    context information is actually logged.
     """
     with TrafoCollection(save_to_db=True) as tc:
         logging_component = tc.add_from_py_file(
@@ -93,6 +95,17 @@ async def test_logging_in_component(async_test_client, mocked_clean_test_db_sess
 
         assert resp.status_code == 200
 
+        resp_json = resp.json()
+
+        # Log messages occur in execution response
+        assert len(resp_json["gathered_component_code_logs"]) == 3
+
+        # tr id in log message in execution response
+        assert (
+            resp_json["gathered_component_code_logs"][0]["tr_id"]
+            == "abafbb92-3cdf-45a4-98ad-c72d9cf0b705"
+        )
+
         log_record = extract_single_record_with_msg_containing(
             caplog.records, "TEST LOGGING COMPONENT WITH COMPONENT MODULE LOGGER"
         )
@@ -122,9 +135,14 @@ def log_format_assertions(
     Together with the test above that tests the records, this guarantees
     that context informartion is actually logged.
     """
-    assert len(logger.handlers) == 1
 
-    handler = logger.handlers[0]
+    non_component_code_handlers = [
+        handler for handler in logger.handlers if not isinstance(handler, ComponentCodeLogHandler)
+    ]
+
+    assert len(non_component_code_handlers) == 1
+
+    handler = non_component_code_handlers[0]
     assert handler.formatter is not None
 
     formatter = handler.formatter

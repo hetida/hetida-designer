@@ -1,3 +1,6 @@
+## 0.11.4
+* Fix enriched use component code logging and make it part of execution responses. In particular it can be viewed in the test result display.
+
 ## 0.11.3
 * Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
 * Add additional request measurements for communication between backend and runtime

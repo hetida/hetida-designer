@@ -50,6 +50,17 @@ class RuntimeConfig(BaseSettings):
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
 
+    user_component_code_log_level: LogLevel | None = Field(
+        None,
+        validation_alias="USER_COMPONENT_CODE_LOG_LEVEL",
+        description=(
+            "Log level for logging in user component code. One of "
+            + ", ".join(['"' + x.value + '"' for x in list(LogLevel)])
+            + "or None"
+            " where None implies the same log level as the runtime's log level."
+        ),
+    )
+
     log_httpx: bool = Field(
         False,
         description=(

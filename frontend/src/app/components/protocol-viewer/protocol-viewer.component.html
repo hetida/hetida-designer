@@ -33,6 +33,22 @@
         </div>
         <mat-divider></mat-divider>
       }
+      @if (executionResponse.gathered_component_code_logs.length > 0) {
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">Component Code Log Messages</span>
+          <br />
+          @for (
+            item of executionResponse.gathered_component_code_logs;
+            track item
+          ) {
+            <pre class="protocol-content-verbatim"
+              >{{ item.timestamp }} {{ item.message }}</pre
+            >
+            <br />
+          }
+        </div>
+      }
     </div>
   }
   @if (displayRawValue) {
@@ -74,6 +90,16 @@
   <span class="mat-body-strong">
     <pre class="protocol-content-verbatim">{{
       someItem.value ?? '(null)'
+    }}</pre>
+  </span>
+</ng-template>
+
+<ng-template #ComponentCodeLogTemplate let-someItem="logentry">
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
+  <br />
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
     }}</pre>
   </span>
 </ng-template>

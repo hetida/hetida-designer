@@ -42,4 +42,4 @@ def main(*, new_input_1):
     hetdesrun_runtime_exec_logger.info("TEST LOGGING hetdesrun_runtime_exec_logger")
     runtime_execution_logger.info("TEST LOGGING runtime_execution_logger")
     getLogger("hetdesrun").info("TEST LOGGING hetdesrun module logger")
-    return {"exec_context": _get_execution_context(), "dunder_name": __name__, "logger_filters": logger.filters, "logger_name": logger.name}
+    return {"exec_context": None, "dunder_name": __name__, "logger_filters": logger.filters, "logger_name": logger.name}

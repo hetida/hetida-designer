@@ -29,7 +29,12 @@ from hetdesrun.runtime.engine.plain.parsing import (
 )
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
 from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
-from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
+from hetdesrun.runtime.logging import (
+    _get_execution_context,
+    execution_context_filter,
+    job_id_context_filter,
+    logrecord_to_simplified_log_record,
+)
 from hetdesrun.runtime.reporting import get_data_info
 from hetdesrun.runtime.unittesting import unittest_code
 from hetdesrun.utils import model_to_pretty_json_str
@@ -52,6 +57,7 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
     execution_context_filter.bind_context(
         plot_target_settings=runtime_input.runtime_execution_context.plot_target_settings
     )
+    execution_context_filter.bind_context(gathered_component_code_logs=[])
     set_runtime_exec_context(runtime_input.runtime_execution_context)
 
     job_id_context_filter.bind_context(
@@ -79,11 +85,28 @@ def handle_runtime_exec_result_logging(
     return wf_exec_result
 
 
+def enrich_with_component_code_logs(
+    wf_exec_result: WorkflowExecutionResult,
+) -> WorkflowExecutionResult:
+    exec_context = _get_execution_context()
+    if "gathered_component_code_logs" not in exec_context:
+        wf_exec_result.gathered_component_code_logs = []
+    else:
+        wf_exec_result.gathered_component_code_logs = [
+            logrecord_to_simplified_log_record(record)
+            for record in exec_context["gathered_component_code_logs"]
+        ]
+    return wf_exec_result
+
+
 async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput, enforce_result_logging: bool = False
 ) -> WorkflowExecutionResult:
-    return handle_runtime_exec_result_logging(
-        await runtime_service_handling(runtime_input), enforce_result_logging=enforce_result_logging
+    return enrich_with_component_code_logs(
+        handle_runtime_exec_result_logging(
+            await runtime_service_handling(runtime_input),
+            enforce_result_logging=enforce_result_logging,
+        )
     )
 
 
