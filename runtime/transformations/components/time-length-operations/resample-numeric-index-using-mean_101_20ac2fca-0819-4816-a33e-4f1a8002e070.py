@@ -42,7 +42,6 @@ The expected output is
 """
 
 import pandas as pd
-import numpy as np
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.

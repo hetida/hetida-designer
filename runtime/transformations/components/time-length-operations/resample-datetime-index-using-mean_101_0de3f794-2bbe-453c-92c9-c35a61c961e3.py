@@ -42,7 +42,6 @@ The expected output is
 """
 
 import pandas as pd
-import numpy as np
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -76,15 +75,15 @@ def main(*, data, t):
     try:
         data_date.index = pd.to_datetime(data_date.index)
     except (ValueError, TypeError):
-        raise TypeError("indices of data must be datetime")
+        raise TypeError("indices of data must be datetime") from None
 
     if not data.index.is_monotonic_increasing:
         raise ValueError("data must be sorted by its index")
 
     try:
         return {"resampled": data_date.resample(t).mean()}
-    except ValueError:
-        raise ValueError(f"t could not be parsed as frequency: {t}")
+    except ValueError as exc:
+        raise ValueError(f"t could not be parsed as frequency: {t}") from exc
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}

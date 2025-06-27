@@ -89,7 +89,6 @@ The expected output is
 ```
 """
 
-import pandas as pd
 import numpy as np
 
 # ***** DO NOT EDIT LINES BELOW *****

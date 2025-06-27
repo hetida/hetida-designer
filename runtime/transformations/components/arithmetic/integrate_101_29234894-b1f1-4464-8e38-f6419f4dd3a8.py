@@ -33,8 +33,8 @@ The expected output is
 ```
 """
 
+
 import pandas as pd
-import datetime
 from scipy import integrate
 
 # ***** DO NOT EDIT LINES BELOW *****
@@ -76,12 +76,12 @@ def main(*, data):
     else:
         try:
             data_dropna.index = pd.to_datetime(data_dropna.index)
-        except (TypeError, ValueError):
-            raise TypeError("indices of data must be numeric or datetime")
+        except (TypeError, ValueError) as exc:
+            raise TypeError("indices of data must be numeric or datetime") from exc
         data_dropna = data_dropna.sort_index()
         x = (data_dropna.index - data_dropna.index[0]).total_seconds()
 
-    y = data_dropna.values
+    y = data_dropna.to_numpy()
 
     return {"integral": integrate.trapezoid(y, x)}
 
