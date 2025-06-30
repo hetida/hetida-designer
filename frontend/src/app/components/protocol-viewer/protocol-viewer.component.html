@@ -3,7 +3,12 @@
 }
 @if (!(isLoading$ | async)) {
   <div class="menu-bar">
-    <span>execution protocol</span>
+    <span
+      >execution protocol
+      @if (displayRawValue) {
+        (raw json)
+      }
+    </span>
     <div class="menu-bar__expand-icon" (click)="isExpanded = !isExpanded">
       @if (isExpanded) {
         <mat-icon>expand_more</mat-icon>
@@ -12,7 +17,10 @@
       }
     </div>
     <div>
-      <mat-icon class="clickable" (click)="displayRawValue = !displayRawValue"
+      <mat-icon
+        class="clickable"
+        (click)="displayRawValue = !displayRawValue"
+        title="Switch between protocol and raw json view"
         >code</mat-icon
       >
       <mat-icon class="clickable" (click)="closeDialog()">close</mat-icon>

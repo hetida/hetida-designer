@@ -124,8 +124,13 @@ export class ProtocolViewerComponent implements AfterViewInit {
           'executionResponse is type string, could not parse as json'
         );
       } else {
-        this.displayRawValue = false;
         this.executionResponse = executionResponse;
+
+        if (executionResponse.error === null) {
+          this.displayRawValue = false;
+        } else {
+          this.displayRawValue = true;
+        }
       }
 
       this.changeDetector.markForCheck();
