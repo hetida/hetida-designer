@@ -61,6 +61,16 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    user_component_code_logs_max_len: int | None = Field(
+        None,
+        validation_alias="USER_COMPONENT_CODE_LOG_MAX_LEN",
+        description=(
+            "Maximal number of collected user component code logs."
+            " Limits how many log messages are collected and returned "
+            "as part of the execution response object. Set to None for no limits"
+        ),
+    )
+
     log_httpx: bool = Field(
         False,
         description=(

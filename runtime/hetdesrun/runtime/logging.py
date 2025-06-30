@@ -3,6 +3,7 @@ import contextvars
 import datetime
 import json
 import logging
+from collections import deque
 from typing import Any, Literal, TypedDict
 from uuid import UUID
 
@@ -11,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from hetdesrun.models.code import CodeModule
 from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
 
 
 class SimplifiedLogRecord(BaseModel):
@@ -31,7 +33,7 @@ ExecContextDict = TypedDict(  # noqa: UP013
     {
         "current_code_modules": list[CodeModule],
         "current_components": list[str],
-        "gathered_component_code_logs": list[logging.LogRecord],
+        "gathered_component_code_logs": deque[logging.LogRecord],
     },
 )
 
@@ -74,7 +76,9 @@ def _get_execution_context() -> ExecContextDict:
             {
                 "current_code_modules": [],
                 "current_components": [],
-                "gathered_component_code_logs": [],
+                "gathered_component_code_logs": deque(
+                    maxlen=get_config().user_component_code_logs_max_len
+                ),
             }
         )
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
@@ -111,7 +115,9 @@ class ExecutionContextFilter(logging.Filter):
                 {
                     "current_code_modules": [],
                     "current_components": [],
-                    "gathered_component_code_logs": [],
+                    "gathered_component_code_logs": deque(
+                        maxlen=get_config().user_component_code_logs_max_len
+                    ),
                 }
             )
         else:
@@ -170,7 +176,9 @@ class ComponentCodeLogHandler(logging.Handler):
 
         # initialize log record list if necessary:
         if "gathered_component_code_logs" not in exec_context:
-            exec_context["gathered_component_code_logs"] = []
+            exec_context["gathered_component_code_logs"] = deque(
+                maxlen=get_config().user_component_code_logs_max_len
+            )
 
     def emit(self, record: logging.LogRecord) -> None:
         """Append log to execution context"""
@@ -187,7 +195,7 @@ class ComponentCodeLogHandler(logging.Handler):
         exec_context = _get_execution_context()
         exec_context["gathered_component_code_logs"].clear()
 
-    def get_records(self) -> list[logging.LogRecord]:
+    def get_records(self) -> deque[logging.LogRecord]:
         """Get all stored records."""
 
         self.ensure_list_in_context()

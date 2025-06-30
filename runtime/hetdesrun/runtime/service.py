@@ -1,4 +1,5 @@
 import resource
+from collections import deque
 from typing import cast
 
 from pydantic import ValidationError
@@ -90,12 +91,17 @@ def enrich_with_component_code_logs(
 ) -> WorkflowExecutionResult:
     exec_context = _get_execution_context()
     if "gathered_component_code_logs" not in exec_context:
-        wf_exec_result.gathered_component_code_logs = []
+        wf_exec_result.gathered_component_code_logs = deque(
+            maxlen=get_config().user_component_code_logs_max_len
+        )
     else:
-        wf_exec_result.gathered_component_code_logs = [
-            logrecord_to_simplified_log_record(record)
-            for record in exec_context["gathered_component_code_logs"]
-        ]
+        wf_exec_result.gathered_component_code_logs = deque(
+            [
+                logrecord_to_simplified_log_record(record)
+                for record in exec_context["gathered_component_code_logs"]
+            ],
+            maxlen=get_config().user_component_code_logs_max_len,
+        )
     return wf_exec_result
 
 

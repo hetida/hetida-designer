@@ -3,6 +3,7 @@
 import datetime
 import resource
 import traceback as tb
+from collections import deque
 from enum import Enum, StrEnum
 from types import TracebackType
 from typing import Any, Self
@@ -38,6 +39,7 @@ from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
 from hetdesrun.runtime.logging import SimplifiedLogRecord
 from hetdesrun.utils import Type, check_explicit_utc
+from hetdesrun.webservice.config import get_config
 
 HIERARCHY_SEPARATOR = "\\"
 
@@ -563,7 +565,9 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         "The provided data can be used to replace data that would usually be produced at runtime.",
     )
 
-    gathered_component_code_logs: list[SimplifiedLogRecord] = []
+    gathered_component_code_logs: deque[SimplifiedLogRecord] = deque(
+        maxlen=get_config().user_component_code_logs_max_len
+    )
 
     @classmethod
     def from_exception(

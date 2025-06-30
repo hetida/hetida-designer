@@ -38,3 +38,5 @@ In addition to the log output of the runtime service, these logs can also be vie
 
 Note that by default the log level is filtered against the runtime service's log level
 but this can be configured separately through the runtime's environment variable `USER_COMPONENT_CODE_LOG_LEVEL`.
+
+Furthermore `USER_COMPONENT_CODE_LOG_MAX_LEN` can be configured to only display a limited subset of the most recent log messages.
