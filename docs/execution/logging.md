@@ -37,6 +37,10 @@ The hetida designer runtime enriches the logs with the execution context informa
 In addition to the log output of the runtime service, these logs can also be viewed in the test execution result display. If you switch to the raw response view you can also see the additional execution context information in the raw json response.
 
 Note that by default the log level is filtered against the runtime service's log level
-but this can be configured separately through the runtime's environment variable `USER_COMPONENT_CODE_LOG_LEVEL`.
+but this can be configured separately through the runtime's environment variable `USER_COMPONENT_CODE_LOG_LEVEL` (e.g. `DEBUG`, `INFO`, `WARNING`, `ERROR`).
 
 Furthermore `USER_COMPONENT_CODE_LOG_MAX_LEN` can be configured to only display a limited subset of the most recent log messages.
+
+# Logging settings
+
+hetida designer exposes several environment variables controlling logging details. See the [configuration code](../../runtime/hetdesrun/webservice/config.py) for details and descriptions.
