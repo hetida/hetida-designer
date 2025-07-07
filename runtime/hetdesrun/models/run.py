@@ -133,9 +133,7 @@ class AllMeasuredSteps(BaseModel):
         name="EXECUTING_COMPONENT_CODE"
     )
     load_data: PerformanceMeasuredStep = PerformanceMeasuredStep(name="LOADING_DATA_FROM_ADAPTERS")
-    send_data: PerformanceMeasuredStep = PerformanceMeasuredStep(
-        name="LOADING_DATA_FROM_SENDING_DATA_TO_ADAPTERSADAPTERS"
-    )
+    send_data: PerformanceMeasuredStep = PerformanceMeasuredStep(name="SENDING_DATA_TO_ADAPTERS")
     runtime_request_response_parsing: PerformanceMeasuredStep = PerformanceMeasuredStep(
         name="runtime_request_response_parsing"
     )

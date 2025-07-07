@@ -10,6 +10,7 @@ import json
 import logging
 from posixpath import join as posix_urljoin
 from typing import Any, Literal
+from uuid import UUID
 
 import httpx
 from httpx import AsyncClient
@@ -17,6 +18,7 @@ from httpx import AsyncClient
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,12 @@ async def post_framelike_records(
     client: AsyncClient,
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""
+
+    job_id: str | UUID | None = job_id_context_filter.get_value("currently_executed_job_id")
+
+    if job_id is not None:
+        additional_params.append(("job_id", str(job_id)))
+
     try:
         headers = await get_generic_rest_adapter_auth_headers(external=True)
     except ServiceAuthenticationError as e:

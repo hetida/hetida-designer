@@ -86,4 +86,4 @@ async def test_wiring_with_generic_rest_input(input_json_with_wiring_with_input,
                             kwargs["url"]
                             == "https://hetida.de/thingNodes/thing_node_id/metadata/limit"
                         )
-                        assert kwargs["params"] == {"filter_key": "filter_value"}
+                        assert ("filter_key", "filter_value") in kwargs["params"]

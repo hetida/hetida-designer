@@ -3,6 +3,7 @@ import logging
 import urllib
 from posixpath import join as posix_urljoin
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -12,6 +13,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
@@ -19,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 async def post_json_with_open_client(
-    open_client: httpx.AsyncClient, url: str, params: dict[str, str], json_payload: dict
+    open_client: httpx.AsyncClient, url: str, params: list[tuple[str, Any]], json_payload: dict
 ) -> httpx.Response:
     return await open_client.post(
         url,
@@ -49,6 +51,12 @@ async def send_single_metadatum_to_adapter(
         urllib.parse.quote(str(filtered_sink.ref_key)),
     )
 
+    params = list(filtered_sink.filters.items())
+    job_id: str | UUID | None = job_id_context_filter.get_value("currently_executed_job_id")
+
+    if job_id is not None:
+        params.append(("job_id", str(job_id)))
+
     value_datatype = ExternalType(filtered_sink.type).value_datatype
     assert value_datatype is not None  # for mypy   # noqa: S101
 
@@ -64,7 +72,7 @@ async def send_single_metadatum_to_adapter(
         resp = await post_json_with_open_client(
             open_client=client,
             url=url,
-            params=filtered_sink.filters,
+            params=params,
             json_payload=(
                 {
                     "key": filtered_sink.ref_key,
