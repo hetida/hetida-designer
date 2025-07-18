@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpParams,
+  HttpErrorResponse
+} from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
-import { Observable } from 'rxjs';
+import { catchError, throwError, Observable } from 'rxjs';
 import { Transformation, UnitTestResults } from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 type TrafoStringMixed = Transformation | string;
 @Injectable({
@@ -15,7 +20,8 @@ export class TransformationHttpService {
 
   constructor(
     private readonly httpClient: HttpClient,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    private readonly notificationService: NotificationService
   ) {
     this.config.getConfig().subscribe(runtimeConfig => {
       this.apiEndpoint = runtimeConfig.apiEndpoint;
@@ -38,7 +44,14 @@ export class TransformationHttpService {
     transformation: Transformation
   ): Observable<Transformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
-    return this.httpClient.put<Transformation>(url, transformation);
+    return this.httpClient.put<Transformation>(url, transformation).pipe(
+      catchError((error: HttpErrorResponse) => {
+        this.notificationService.error('Failed to update transformation!');
+
+        // Re-throw the error so subscribers can still handle it if needed
+        return throwError(() => error);
+      })
+    );
   }
 
   public upgradeWorkflowOperators(
