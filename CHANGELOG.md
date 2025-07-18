@@ -1,5 +1,12 @@
 ## 0.11.4
-* Fix enriched use component code logging and make it part of execution responses. In particular it can be viewed in the test result display.
+* Fix component code logging, enrich messages and make them part of execution responses. In particular it can be viewed in the test result display.
+* reduce autosave interval and provide some error message if updating trafos fails.
+* include job id to load/send requests against generic rest adapters to improve tracability of execution jobs
+* improve / clearify test execution result / protocol view
+* fix component adapter sink search backend endpoint
+* replace hyphens by underscore in hdctl. This allows to import component py files directly.
+* fix / improve some outdated docs
+* fix newline handling in String outputs or in json representation of ANY outputs leading to problems in the test execution result / protocol view.
 
 ## 0.11.3
 * Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
