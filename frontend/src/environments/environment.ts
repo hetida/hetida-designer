@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  autosaveTimer: 2000
+  autosaveTimer: 700
 };
 
 /*
