@@ -33,7 +33,6 @@ The expected output is
 ```
 """
 
-
 import pandas as pd
 from scipy import integrate
 

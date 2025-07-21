@@ -132,9 +132,9 @@ def main(*, data, level, hysteresis, edge_type):
 
     tolerance = hysteresis / 2
 
-    crossings = (data > (level + tolerance)).astype("int64") - (
-        data < (level - tolerance)
-    ).astype("int64")
+    crossings = (data > (level + tolerance)).astype("int64") - (data < (level - tolerance)).astype(
+        "int64"
+    )
     crossings = crossings[crossings != 0]
 
     crossings.values[1:] = np.diff(crossings) / 2

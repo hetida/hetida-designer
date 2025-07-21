@@ -76,15 +76,9 @@ def main(*, data, d):
         raise ValueError("data must be sorted by its index")
 
     data_reindex = data.copy()
-    data_reindex = data.reindex(
-        pd.RangeIndex(data.index[0], data.index[-1], d).union(data.index)
-    )
+    data_reindex = data.reindex(pd.RangeIndex(data.index[0], data.index[-1], d).union(data.index))
     data_reindex = data_reindex.rolling(d, min_periods=1, center=True).mean()
-    return {
-        "resampled": data_reindex.reindex(
-            pd.RangeIndex(data.index[0], data.index[-1] + 1, d)
-        )
-    }
+    return {"resampled": data_reindex.reindex(pd.RangeIndex(data.index[0], data.index[-1] + 1, d))}
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}
