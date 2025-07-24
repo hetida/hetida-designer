@@ -68,14 +68,16 @@ In order to enable OpenID Connect in the frontend, we create a `hetida_designer_
   "authConfig": {
     "authority": "http://localhost:8081/realms/hetida-designer",
     "clientId": "hetida-designer",
-    "userNameAttribute": "preferred_username"
+    "userNameAttribute": "preferred_username",
+    "renewTimeBeforeTokenExpiresInSeconds": 10
   }
 }
 
 ```
 
 `authority` and `clientId` have to be provided in order for the login to work.
-`userNameAttribute` is the name of the attribute in the id token which contains the username (needed to display the username in the UI).
+`userNameAttribute` is the name of the attribute in the id token which contains the username (needed to display the username in the UI). `renewTimeBeforeTokenExpiresInSeconds` controls how long before expiration the access token is automatically renewed (token refresh).
+
 For more configuration options see https://github.com/damienbod/angular-auth-oidc-client.
 
 Our setup uses a pre-configured keycloak realm named `hetida-designer` which is imported from `hetida-designer-realm.json` and has an example user with the following credentials:
