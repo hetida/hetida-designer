@@ -323,6 +323,14 @@ export class TransformationActionService {
       return;
     }
 
+    if (this.containsDraftOperators(transformation)) {
+      this.notificationService.warn(
+        `This ${transformation.type.toLowerCase()} contains DRAFT operators and cannot be published.
+        Consider upgrading operators to released trafos.`
+      );
+      return;
+    }
+
     if (transformation.state === RevisionState.DRAFT) {
       const dialogRef = this.dialog.open<
         ConfirmDialogComponent,
@@ -521,6 +529,18 @@ export class TransformationActionService {
         transformation.io_interface.outputs.length === 0;
     }
     return isIncomplete;
+  }
+
+  public containsDraftOperators(
+    transformation: Transformation | undefined
+  ): boolean {
+    if (isWorkflowTransformation(transformation)) {
+      const workflowContent = transformation.content;
+      return workflowContent.operators.some(operator => {
+        return operator.state === RevisionState.DRAFT;
+      });
+    }
+    return false;
   }
 
   public isWorkflowWithoutIo(

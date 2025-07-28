@@ -24,6 +24,7 @@ from hetdesrun.persistence.models.io import (
 )
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
+from hetdesrun.utils import State
 
 logger = logging.getLogger(__name__)
 
@@ -503,6 +504,16 @@ class WorkflowContent(BaseModel):
             else:
                 operator_group[0].name = NonEmptyValidStr(operator_name_seed)
 
+        return operators
+
+    @field_validator("operators")
+    @classmethod
+    def operator_names_represent_state(cls, operators: list[Operator]) -> list[Operator]:
+        for operator in operators:
+            if (operator.state is State.DRAFT) and not operator.name.startswith("(DRAFT) "):
+                operator.name = "(DRAFT) " + operator.name
+            if not operator.state is State.DRAFT:
+                operator.name = operator.name.removeprefix("(DRAFT) ")
         return operators
 
     @field_validator("operator_output_by_id_tuple_dict")

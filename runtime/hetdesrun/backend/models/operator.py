@@ -8,7 +8,7 @@ from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.persistence.models.io import Position
 from hetdesrun.persistence.models.operator import Operator
-from hetdesrun.utils import State
+from hetdesrun.utils import State, Type
 
 
 class WorkflowOperatorFrontendDto(BasicInformation):
@@ -21,11 +21,15 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     @model_validator(mode="after")
     def is_not_draft(self) -> Self:
         state = self.state
+        type_ = self.type
 
-        if state == State.DRAFT:
+        if state is State.DRAFT and type_ is not Type.COMPONENT:
+            operator_id = self.id
+
             raise ValueError(
-                f"Only released components/workflows can be dragged into a workflow! "
-                f"Operator with id {self.id} of type {self.type}"
+                f"Only released components/workflows or draft components"
+                " can be dragged into a workflow! "
+                f"Operator with id {operator_id} of type {type_}"
                 f" has state {state} "
             )
         return self

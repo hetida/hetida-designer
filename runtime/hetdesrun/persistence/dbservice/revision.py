@@ -127,6 +127,7 @@ def read_single_transformation_revision_with_caching(
 def update_tr(session: SQLAlchemySession, transformation_revision: TransformationRevision) -> None:
     try:
         db_model = transformation_revision.to_orm_model()
+
         session.execute(
             update(TransformationRevisionDBModel)
             .where(TransformationRevisionDBModel.id == db_model.id)

@@ -333,6 +333,45 @@ class TransformationRevision(BaseModel):
             )
         return v
 
+    @field_validator("content")
+    @classmethod
+    def content_operators_only_component_drafts_allowed_and_only_if_trafo_is_draft(
+        cls, v: str | WorkflowContent, info: ValidationInfo
+    ) -> str | WorkflowContent:
+        try:
+            type_ = info.data["type"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the content type is correct if the attribute 'type' is missing!"
+            ) from error
+        try:
+            state = info.data["state"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the workflow state allows for draft operators if"
+                " the attribute 'state' is missing!"
+            ) from error
+
+        if type_ is Type.WORKFLOW:
+            assert isinstance(v, WorkflowContent)  # for mypy # noqa: S101
+
+            for operator in v.operators:
+                if operator.state is State.DRAFT:
+                    if operator.type is not Type.COMPONENT:
+                        raise ValueError(
+                            "Operators can only instantiate components in state DRAFT, not"
+                            f" workflows. Operator {operator.id} with name {operator.name}"
+                            " violates this."
+                        )
+                    if state is not State.DRAFT:
+                        raise ValueError(
+                            "Only a DRAFT Workflow can contain operators instantiating a DRAFT "
+                            f"component. Operator {operator.id} with name {operator.name}"
+                            " violates this."
+                        )
+
+        return v
+
     @field_validator("io_interface")
     @classmethod
     def io_interface_fits_to_content(  # noqa: PLR0912

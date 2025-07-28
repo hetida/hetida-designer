@@ -48,8 +48,14 @@ def test_operator_accepted() -> None:
     Operator(**operator_dict)
 
 
-def test_operator_validator_is_not_draft() -> None:
+def test_operator_validator_for_draft_operators() -> None:
     draft_operator_dict = deepcopy(operator_dict)
     draft_operator_dict["state"] = "DRAFT"
+    draft_operator_dict["type"] = "COMPONENT"
+
+    # is allowed
+    Operator(**draft_operator_dict)
+
+    draft_operator_dict["type"] = "WORKFLOW"
     with pytest.raises(ValueError, match=r"Operator.* has state"):
         Operator(**draft_operator_dict)
