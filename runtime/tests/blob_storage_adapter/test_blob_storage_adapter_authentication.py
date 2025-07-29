@@ -30,7 +30,8 @@ def test_blob_storage_extract_namespace_from_root_tag() -> None:
 
 
 def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> None:
-    now = datetime.fromisoformat("2023-01-31T11:08:05+00:00")
+    now_str = "2023-01-31T11:08:04.958000+00:00"
+    now = datetime.fromisoformat(now_str)
     xml_response_text = """
     <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
         <AssumeRoleWithWebIdentityResult>
@@ -55,8 +56,8 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
         credential_info.credentials.secret_access_key == "secret_access_key"  # noqa: S105
     )
     assert credential_info.credentials.session_token == "session_token"  # noqa: S105
-    assert credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
-    assert credential_info.expiration_time_in_seconds == 3597
+    assert credential_info.issue_timestamp.isoformat() == now_str
+    assert credential_info.expiration_time_in_seconds == pytest.approx(3597.042)
 
     parse_error_response_text = "asdfasdf"
     with pytest.raises(StorageAuthenticationError) as exc_info:
