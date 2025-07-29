@@ -28,6 +28,58 @@ class SimplifiedLogRecord(BaseModel):
     operator_hierarchical_id: str | None = None
 
 
+class CustomAttributeProcessor:
+    """Processor that extracts custom attributes from the stdlib log record"""
+
+    WHITELISTED_ATTRS = get_config().custom_attributes_to_log
+
+    def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        # Get the record from the event_dict if it exists
+        if record := event_dict.get("_record"):
+            for key in self.WHITELISTED_ATTRS:
+                if hasattr(record, key):
+                    event_dict[key] = getattr(record, key)
+        return event_dict
+
+
+class FieldRenamer:
+    """Renames long field names in the logs to shorter aliases."""
+
+    FIELD_MAP = {
+        "currently_executed_job_id": "job_id",
+        "currently_executed_transformation_id": "tr_id",
+        "currently_executed_transformation_name": "tr_name",
+        "currently_executed_transformation_tag": "tr_tag",
+        "currently_executed_transformation_type": "tr_type",
+        "currently_executed_operator_hierarchical_id": "op_id",
+        "currently_executed_operator_hierarchical_name": "op_name",
+    }
+
+    def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        for long_name, short_name in self.FIELD_MAP.items():
+            if long_name in event_dict:
+                event_dict[short_name] = event_dict.pop(long_name)
+        return event_dict
+
+
+class AttributeSorter:
+    """Sorts log attributes for consistent output."""
+
+    def __init__(self, key_order: list[str]):
+        self.key_order = key_order
+
+    def __call__(self, logger: logging.Logger, name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        sorted_dict = {}
+        for key in self.key_order:
+            if key in event_dict:
+                sorted_dict[key] = event_dict.pop(key)
+
+        # Add any remaining keys (e.g. attributes added through structlog-native logging)
+        # in alphabetical order
+        sorted_dict.update(dict(sorted(event_dict.items())))
+        return sorted_dict
+
+
 ExecContextDict = TypedDict(  # noqa: UP013
     "ExecContextDict",
     {

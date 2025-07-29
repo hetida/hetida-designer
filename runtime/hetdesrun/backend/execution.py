@@ -466,14 +466,16 @@ async def run_execution_input(
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
 
     logger.info(
-        "Execution Result Response:\n%s",
-        execution_response.model_dump_json(
-            indent=2,
-            exclude={"output_results_by_output_name"}
-            if not get_config().log_direct_provisioning_outputs
-            else None,
-            context={"naive_result_serialization": not get_config().is_runtime_service},
-        ),
+        "Execution Result Response",
+        extra={
+            "execution_result_response": execution_response.model_dump(
+                mode="json",
+                exclude={"output_results_by_output_name"}
+                if not get_config().log_direct_provisioning_outputs
+                else None,
+                context={"naive_result_serialization": not get_config().is_runtime_service},
+            )
+        },
     )
     return execution_response
 
@@ -524,11 +526,17 @@ async def execute_transformation_revision(
         exec_by_id_input.job_id = uuid4()
 
     if get_config().full_backend_exec_input_logging:
-        logger.debug("ExecByIdInput:\n%s", exec_by_id_input.model_dump_json(indent=2))
+        logger.debug(
+            "ExecByIdInput:", extra={"exec_by_id_input": exec_by_id_input.model_dump(mode="json")}
+        )
     else:
         logger.debug(
-            "ExecByIdInput Stub:\n%s",
-            exec_by_id_input_to_stub(exec_by_id_input).model_dump_json(indent=2),
+            "ExecByIdInput Stub",
+            extra={
+                "exec_by_id_input_stub": exec_by_id_input_to_stub(exec_by_id_input).model_dump(
+                    mode="json"
+                )
+            },
         )
 
     execution_context_filter.bind_context(

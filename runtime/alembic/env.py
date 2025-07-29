@@ -46,9 +46,7 @@ def run_migrations_offline():
 
     from hetdesrun.webservice.config import get_config
 
-    url = (
-        get_config().sqlalchemy_connection_string
-    )  # config.get_main_option("sqlalchemy.url")
+    url = get_config().sqlalchemy_connection_string  # config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=get_target_metadata(),
@@ -78,27 +76,19 @@ def run_migrations_online():
 
     connectable = get_db_engine()
 
-    logger.info(
-        "Running online migrations with driver %s", connectable.url.get_driver_name()
-    )
+    logger.info("Running online migrations with driver %s", connectable.url.get_driver_name())
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=get_target_metadata())
         logger.info("Connected to db for migrations")
         with context.begin_transaction():
-            logger.info(
-                "Beginning transaction. Dialect name is %s", connection.dialect.name
-            )
+            logger.info("Beginning transaction. Dialect name is %s", connection.dialect.name)
             if connection.dialect.name == "postgresql":
                 logger.info("Detected postgresql driver. Ensuring versioning table")
                 # Make sure no two processed can migrate at the same time
                 context.get_context()._ensure_version_table()
-                logger.info(
-                    "Ensured versioning table. Now locking alembic version table"
-                )
-                connection.execute(
-                    text("LOCK TABLE alembic_version IN ACCESS EXCLUSIVE MODE")
-                )
+                logger.info("Ensured versioning table. Now locking alembic version table")
+                connection.execute(text("LOCK TABLE alembic_version IN ACCESS EXCLUSIVE MODE"))
                 # Postgres lock is released when transaction ends
             logger.info("actually starting to run migrations")
             context.run_migrations()

@@ -1,11 +1,18 @@
 import logging
 
+import structlog
+from structlog.types import Processor
+
 import hetdesrun_config  # noqa: F401
 from hetdesrun.runtime import internal_runtime_execution_logger
 from hetdesrun.runtime import runtime_execution_logger as logger
 from hetdesrun.runtime import runtime_logger as job_logger
 from hetdesrun.runtime.logging import (
+    AttributeSorter,
     ComponentCodeLogHandler,
+    CustomAttributeProcessor,
+    FieldRenamer,
+    MinimallyMoreCapableJsonEncoder,
     execution_context_filter,
     job_id_context_filter,
 )
@@ -20,31 +27,54 @@ except FileNotFoundError:
     VERSION = "dev snapshot"
 
 
+# Processors that should run on all stdlib logging entries
+SHARED_PROCESSORS: list[Processor] = [
+    structlog.processors.TimeStamper(fmt="iso", utc=True),
+    structlog.stdlib.add_log_level,
+    structlog.stdlib.add_logger_name,
+    structlog.processors.CallsiteParameterAdder(
+        {
+            structlog.processors.CallsiteParameter.FILENAME,
+            structlog.processors.CallsiteParameter.FUNC_NAME,
+            structlog.processors.CallsiteParameter.LINENO,
+        }
+    ),
+    structlog.processors.format_exc_info,
+    structlog.processors.StackInfoRenderer(),
+]
+
+# Configure structlog
+structlog.configure(
+    processors=SHARED_PROCESSORS
+    + [
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+
 def get_formatter(
-    log_execution_context: bool = False, log_job_id_context: bool = False
-) -> logging.Formatter:
-    return logging.Formatter(
-        "%(asctime)s %(process)d %(levelname)s: %(message)s "
-        "[in %(pathname)s:%(lineno)d"
-        + (
-            ", job_id=%(currently_executed_job_id)s"
-            if log_job_id_context or log_execution_context
-            else ""
-        )
-        + (
-            (
-                ",\n    tr type: %(currently_executed_transformation_type)s"
-                ", tr id: %(currently_executed_transformation_id)s"
-                ", tr name: %(currently_executed_transformation_name)s"
-                ", tr tag: %(currently_executed_transformation_tag)s"
-                ",\n    op id(s): %(currently_executed_operator_hierarchical_id)s"
-                ",\n    op name(s): %(currently_executed_operator_hierarchical_name)s"
-                "\n"
-            )
-            if log_execution_context
-            else ""
-        )
-        + "]"
+    processors: list[Processor] | None = None,
+) -> structlog.stdlib.ProcessorFormatter:
+    """Creates and returns a structlog formatter that bridges stdlib logging and structlog"""
+    return structlog.stdlib.ProcessorFormatter(
+        # Run only on entries foreign to structlog, stdlib logging in our case
+        foreign_pre_chain=SHARED_PROCESSORS,
+        # Run on all entries
+        processors=(
+            [
+                CustomAttributeProcessor(),
+                FieldRenamer(),
+                structlog.processors.EventRenamer(to="message"),
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                AttributeSorter(key_order=get_config().log_field_order),
+                structlog.processors.JSONRenderer(
+                    default=MinimallyMoreCapableJsonEncoder().default
+                ),
+            ]
+            + (processors or [])  # type: ignore
+        ),
     )
 
 
@@ -52,6 +82,7 @@ def configure_logging(
     the_logger: logging.Logger,
     log_execution_context: bool = False,
     log_job_id_context: bool = False,
+    additional_processors: list[Processor] | None = None,
 ) -> None:
     """Configure logging
 
@@ -59,8 +90,12 @@ def configure_logging(
         the_logger {Python logger} -- any logger
 
     Keyword Arguments:
-        log_execution_context {bool} -- whether runtime execution context should
+        log_execution_context {bool} -- Whether runtime execution context should
             be made available and logged (default: {False})
+        log_job_id_context {bool} -- Whether job ID should
+            be made available and logged (default: {False})
+        additional_processors {list[Processor]} -- List of processors to be added to the formatter
+            in addition to the default processors in get_formatter (default: {None})
 
     If log_execution_context is True a LoggingFilter will be attached to the
     LogHandler. Attaching to the handler (instead of the logger) guarantees that
@@ -82,7 +117,7 @@ def configure_logging(
         logging_handler.addFilter(job_id_context_filter)
     if log_execution_context:
         logging_handler.addFilter(execution_context_filter)
-    formatter = get_formatter(log_execution_context, log_job_id_context)
+    formatter = get_formatter(additional_processors)
     logging_handler.setFormatter(formatter)
     the_logger.addHandler(logging_handler)
 
@@ -94,7 +129,7 @@ configure_logging(logger, log_execution_context=True)
 
 configure_logging(internal_runtime_execution_logger, log_execution_context=True)
 
-# add component code handler to gather component code logs
+# Add component code handler to gather component code logs
 component_code_handler = ComponentCodeLogHandler()
 component_code_handler.addFilter(job_id_context_filter)
 component_code_handler.addFilter(execution_context_filter)
@@ -108,14 +143,22 @@ logger.setLevel(
 
 configure_logging(job_logger, log_job_id_context=True)
 
+
+def strip_handlers_from_loggers(logger_names: list[str]) -> None:
+    """Strip handlers from third-party loggers."""
+    for logger_name in logger_names:
+        third_party_logger = logging.getLogger(logger_name)
+        # Clear any default handlers they might have, to prevent duplicate output
+        third_party_logger.handlers.clear()
+        configure_logging(third_party_logger, log_job_id_context=True)
+
+
 if get_config().log_httpx:
-    httpx_logger = logging.getLogger("httpx")
-    configure_logging(httpx_logger, log_job_id_context=True)
+    strip_handlers_from_loggers(["httpx", "httpcore"])
 
-    httpcore_logger = logging.getLogger("httpcore")
-    configure_logging(httpcore_logger, log_job_id_context=True)
+strip_handlers_from_loggers(["uvicorn", "uvicorn.access"])
 
-main_logger.info("Logging setup complete.")
+main_logger.info("Logging setup complete.", extra={"version": VERSION})
 
 # preload frequently used ds libraries in order to avoid overhead
 # during first call in a worker process for many workflows/components

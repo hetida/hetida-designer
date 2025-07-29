@@ -71,6 +71,55 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    custom_attributes_to_log: set[str] = Field(
+        {
+            "currently_executed_transformation_id",
+            "currently_executed_transformation_name",
+            "currently_executed_transformation_tag",
+            "currently_executed_transformation_type",
+            "currently_executed_operator_hierarchical_id",
+            "currently_executed_operator_hierarchical_name",
+            "currently_executed_job_id",
+            "version",
+            "execution_result_response",
+            "exec_by_id_input",
+            "exec_by_id_input_stub",
+            "created_source",
+            "consumption_mode_exec",
+            "updated_trafo",
+        },
+        validation_alias="CUSTOM_ATTRIBUTES_TO_LOG",
+        description="Set of attributes that the CustomAttributeProcessor extracts from stdlib logs.",  # noqa: E501
+    )
+
+    log_field_order: list[str] = Field(
+        [
+            "timestamp",
+            "level",
+            "message",
+            "logger",
+            "func_name",
+            "filename",
+            "lineno",
+            "job_id",
+            "tr_id",
+            "tr_name",
+            "tr_tag",
+            "tr_type",
+            "op_id",
+            "op_name",
+            "exception",
+        ],
+        validation_alias="LOG_FIELD_ORDER",
+        description=(
+            "Order in which the main fields should appear in the log. "
+            "Any fields not contained in this list will be appended to the log entry "
+            "in alphabetical order. Provided they are either "
+            "part of the whitelist 'custom_attributes_to_log' "
+            "or come from structlog-native logging."
+        ),
+    )
+
     log_httpx: bool = Field(
         False,
         description=(
