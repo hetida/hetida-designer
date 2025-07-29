@@ -494,13 +494,14 @@ class WorkflowContent(BaseModel):
                         new_name = NonEmptyValidStr(
                             operator_name_seed + " (" + str(index + 1) + ")"
                         )
-                        logger.debug(
-                            "Rename operator '%s' from '%s' to '%s'",
-                            str(operator.id),
-                            operator.name,
-                            new_name,
-                        )
-                        operator.name = new_name
+                        if operator.name != new_name:
+                            logger.debug(
+                                "Rename operator '%s' from '%s' to '%s'",
+                                str(operator.id),
+                                operator.name,
+                                new_name,
+                            )
+                            operator.name = new_name
             else:
                 operator_group[0].name = NonEmptyValidStr(operator_name_seed)
 

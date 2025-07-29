@@ -1,8 +1,7 @@
 # noqa: A005
-from typing import Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.persistence.models.io import OperatorInput, OperatorOutput, Position
@@ -28,19 +27,3 @@ class Operator(BaseModel):
     inputs: list[OperatorInput]
     outputs: list[OperatorOutput]
     position: Position
-
-    @model_validator(mode="after")
-    def is_not_draft(self) -> Self:
-        state = self.state
-        type_ = self.type
-
-        if state is State.DRAFT and type_ is not Type.COMPONENT:
-            operator_id = self.id
-
-            raise ValueError(
-                f"Only released components/workflows or draft components"
-                " can be dragged into a workflow! "
-                f"Operator with id {operator_id} of type {type_}"
-                f" has state {state} "
-            )
-        return self

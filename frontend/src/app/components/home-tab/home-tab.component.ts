@@ -16,7 +16,6 @@ import { TransformationState } from 'src/app/store/transformation/transformation
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
-
 @Component({
   selector: 'hd-home-tab',
   templateUrl: './home-tab.component.html',

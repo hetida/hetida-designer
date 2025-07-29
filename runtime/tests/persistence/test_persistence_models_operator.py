@@ -1,7 +1,5 @@
 from copy import deepcopy
 
-import pytest
-
 from hetdesrun.persistence.models.operator import Operator
 
 operator_dict = {
@@ -57,5 +55,4 @@ def test_operator_validator_for_draft_operators() -> None:
     Operator(**draft_operator_dict)
 
     draft_operator_dict["type"] = "WORKFLOW"
-    with pytest.raises(ValueError, match=r"Operator.* has state"):
-        Operator(**draft_operator_dict)
+    Operator(**draft_operator_dict)

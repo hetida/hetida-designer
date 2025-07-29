@@ -326,7 +326,8 @@ export class TransformationActionService {
     if (this.containsDraftOperators(transformation)) {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} contains DRAFT operators and cannot be published.
-        Consider upgrading operators to released trafos.`
+        Consider releasing all used transformations and upgrading all operators via 
+        the respective toolbar button.`
       );
       return;
     }

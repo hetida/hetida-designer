@@ -107,7 +107,12 @@ export class ToolbarComponent implements OnInit {
 
   get upgradeWorkflowOperatorsTooltip(): string {
     if (!this.isReleased()) {
-      return 'Upgrade workflow operators';
+      return [
+        'Upgrade workflow operators',
+        // prettier-ignore
+        '-·DRAFT·operators·=>·update·to·revision\'s·current·state',
+        '- RELEASED / DISABLED operators => newest revision'
+      ].join('\n');
     }
     return 'Cannot upgrade operators for released workflows';
   }

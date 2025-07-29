@@ -6,7 +6,11 @@ import {
 } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { catchError, throwError, Observable } from 'rxjs';
-import { Transformation, UnitTestResults } from '../../model/transformation';
+import {
+  Transformation,
+  UpdatedTransformation,
+  UnitTestResults
+} from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
@@ -42,9 +46,9 @@ export class TransformationHttpService {
 
   public updateTransformation(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
-    return this.httpClient.put<Transformation>(url, transformation).pipe(
+    return this.httpClient.put<UpdatedTransformation>(url, transformation).pipe(
       catchError((error: HttpErrorResponse) => {
         this.notificationService.error('Failed to update transformation!');
 
@@ -56,23 +60,25 @@ export class TransformationHttpService {
 
   public upgradeWorkflowOperators(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators`;
-    return this.httpClient.put<Transformation>(url, transformation);
+    return this.httpClient.put<UpdatedTransformation>(url, transformation);
   }
 
   public upgradeSingleOperator(
     transformation: Transformation,
     operatorId: string,
     newRevisionId: string
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     let params = new HttpParams();
     params = params.append(
       'new_operator_transformation_revision_id',
       newRevisionId
     );
     const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators/${operatorId}`;
-    return this.httpClient.put<Transformation>(url, transformation, { params });
+    return this.httpClient.put<UpdatedTransformation>(url, transformation, {
+      params
+    });
   }
 
   public updateExpandComponent(

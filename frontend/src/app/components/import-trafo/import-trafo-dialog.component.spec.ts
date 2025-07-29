@@ -5,6 +5,7 @@ import { ImportDialogComponent } from './import-trafo-dialog.component';
 import { HttpClientModule } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { appReducers } from 'src/app/store/app.reducers';
+import { FormsModule } from '@angular/forms';
 
 describe('ConfirmImportTrafoDialog', () => {
   let component: ImportDialogComponent;
@@ -15,6 +16,7 @@ describe('ConfirmImportTrafoDialog', () => {
       imports: [
         BasicTestModule,
         HttpClientModule,
+        FormsModule,
         StoreModule.forRoot(appReducers)
       ],
       declarations: [ImportDialogComponent],

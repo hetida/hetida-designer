@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { BasicTestModule } from 'src/app/basic-test.module';
@@ -7,6 +8,8 @@ import { TransformationActionService } from 'src/app/service/transformation/tran
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { HomeTabComponent } from './home-tab.component';
 import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
+import { ImportTrafosButtonComponent } from '../import-trafo/import-trafos-button.component';
+import { ImportDialogComponent } from '../import-trafo/import-trafo-dialog.component';
 
 describe('HomeTabComponent', () => {
   let component: HomeTabComponent;
@@ -15,6 +18,7 @@ describe('HomeTabComponent', () => {
   const mockTransformationActionService = jasmine.createSpy();
   const mockTabItemService = jasmine.createSpy();
   const httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
+  const mockMatDialog = jasmine.createSpyObj('MatDialog', ['open']);
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -32,9 +36,17 @@ describe('HomeTabComponent', () => {
         {
           provide: HttpClient,
           useValue: httpClientSpy
+        },
+        {
+          provide: MatDialog,
+          useValue: mockMatDialog
         }
       ],
-      declarations: [HomeTabComponent]
+      declarations: [
+        HomeTabComponent,
+        ImportTrafosButtonComponent,
+        ImportDialogComponent
+      ]
     }).compileComponents();
   }));
 

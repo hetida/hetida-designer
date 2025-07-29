@@ -416,7 +416,7 @@ export class WorkflowEditorComponent implements OnInit {
 
         if (revisions.length === 0) {
           this.notificationService.info(
-            `This ${currentOperator.type.toLowerCase()} has no other revision.`
+            `This ${currentOperator.type.toLowerCase()} has no other RELEASED revision.`
           );
         } else {
           this._openRevisionChangeDialog(revisions, currentOperator);

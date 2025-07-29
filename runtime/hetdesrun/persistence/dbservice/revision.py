@@ -238,16 +238,17 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     assert isinstance(  # noqa: S101
         transformation_revision.content, WorkflowContent
     )  # hint for mypy
-    is_disabled = []
+    found_some_disabled: bool = False
     for operator in transformation_revision.content.operators:
-        logger.info(
-            "operator with transformation id %s has status %s",
-            str(operator.transformation_id),
-            operator.state,
-        )
-        is_disabled.append(operator.state == State.DISABLED)
+        if operator.state is State.DISABLED:
+            logger.debug(
+                "operator with transformation id %s has status %s",
+                str(operator.transformation_id),
+                operator.state,
+            )
+            found_some_disabled = True
 
-    return any(is_disabled)
+    return found_some_disabled
 
 
 def update_content(
