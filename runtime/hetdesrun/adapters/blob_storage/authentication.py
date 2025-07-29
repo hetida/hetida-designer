@@ -32,7 +32,7 @@ class CredentialInfo(BaseModel):
         ),
     )
 
-    expiration_time_in_seconds: int | float = Field(
+    expiration_time_in_seconds: float = Field(
         ..., description=("Timedelta from now in seconds during which the credentials are valid.")
     )
 
