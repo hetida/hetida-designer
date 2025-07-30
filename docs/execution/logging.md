@@ -1,18 +1,40 @@
 # Reading Log Messages of Workflow and Component Executions
 
 
-## Log messages by hetida designer
-Log messages issued by hetida designer during the execution of a component or workflow contain the corresponding job id at the end of the message.
+## Log entries by hetida designer
+Log records issued by hetida designer during the execution of a component or workflow are structured output.  
+They are made up of a JSON containing at least the following fields, in this order:
+* timestamp
+* level
+* message
+* logger (name of the logger)
+* func_name (name of the function the message originates from)
+* filename
+* lineno (line number)
+* job_id
 
-If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr type`), id (`tr id`), name (`tr name`), and tag (`tr tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op id(s)`) and names (`op name(s)`) are additionally specified. The former helps to find and open e.g. a component via the sidebar in order to search for the error in the code, the latter helps to recognize at which point in the workflow and thus also with which input the error arose.
+If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr_type`), id (`tr_id`), name (`tr_name`), and tag (`tr_tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op_id(s)`) and names (`op_name(s)`) are additionally specified. In the case of an error, an `exception` field is also specified. The transformation (`tr`) information helps to find and open e.g. a component via the sidebar in order to search for the error in the code, the operator (`op`) information helps to recognize at which point in the workflow and thus also with which input the error arose.
 
-Example:
-```
-2025-06-25 15:31:02,670 1913209 DEBUG: Starting computation [in /home/testinstance/runtime/hetdesrun/runtime/engine/plain/workflow.py:235, job_id=08729294-11cb-48c6-86f9-6ff5b74e7514,
-     tr type: COMPONENT, tr id: 7a1a818f-fa89-6062-1e0e-fc80539bbe0a, tr name: Pass Through (DataFrame), tr tag: 1.0.0,
-     op id(s): \9733454a-0dba-466a-a6ba-66d428247fb9\f56bc623-4d6a-45f8-a082-64ab6eee13a4\,
-     op name(s): \Test\Pass Through (DataFrame)\
- ]
+A log entry may contain additional fields, e.g. `execution_result_response`. Additional fields are appended to the entry in alphabetical order, after the last main field. This could be `job_id`, `op_name` or `exception`.
+
+Example log entry:
+```json
+{
+    "timestamp": "2025-07-30T11:45:55.704334Z",
+    "level": "debug",
+    "message": "Starting computation",
+    "logger": "internal_runtime_execution_logger",
+    "func_name": "result",
+    "filename": "workflow.py",
+    "lineno": 382,
+    "job_id": "861b3b9845c6428eb0814bd146013a41",
+    "tr_id": "704ebd70-e840-45fb-9053-4d383a8e91f0",
+    "tr_name": "COMPONENT EXECUTION WRAPPER WORKFLOW",
+    "tr_tag": "1.0.0",
+    "tr_type": "WORKFLOW",
+    "op_id": "\\d10ec25b-93f0-4244-856e-e337bfe02527\\",
+    "op_name": "\\COMPONENT EXECUTION WRAPPER WORKFLOW\\",
+}
 ```
 
 ## Logging in user / component code
@@ -32,7 +54,7 @@ def main(...):
 
 ```
 
-The hetida designer runtime enriches the logs with the execution context information (component name, version, id, operator information), just like the hetida designer log messages described above.
+The hetida designer runtime enriches the logs with the execution context information (component name, version, id, operator information) and transforms them into structured entries. These entries are equivalent to the hetida designer log entries described above.
 
 In addition to the log output of the runtime service, these logs can also be viewed in the test execution result display. If you switch to the raw response view you can also see the additional execution context information in the raw json response.
 
