@@ -180,12 +180,13 @@ def check_log_formatting(
     log_job_id_context: bool = False,
 ):
     """Test that the formatter attached to a given logging handler works correctly."""
-    structlog_handler = next(
-        (h for h in logger.handlers if isinstance(h.formatter, ProcessorFormatter)), None
-    )
-    assert structlog_handler is not None, "No handler with a ProcessorFormatter found"
 
-    formatter = structlog_handler.formatter
+    # This assumes that only one handler with a ProcessorFormatter is attached to each logger
+    structlog_handlers = [h for h in logger.handlers if isinstance(h.formatter, ProcessorFormatter)]
+    assert structlog_handlers, "No handler with a ProcessorFormatter found"
+    assert len(structlog_handlers) == 1, "More than one handler with a ProcessorFormatter found"
+
+    formatter = structlog_handlers[0].formatter
 
     # Fields that should always appear in the logs
     shared_fields = ("timestamp", "level", "logger", "filename", "lineno", "func_name", "message")
