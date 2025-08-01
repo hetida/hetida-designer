@@ -652,13 +652,22 @@ export class TransformationActionService {
               constant.operator_id === input.operator_id
           ) === undefined;
         let noValidNameAndLink = true;
-        const foundOperatorInput = workflowContent.operators
-          .find(operator => operator.id === input.operator_id)
-          .inputs.find(
-            operatorInput => operatorInput.id === input.connector_id
-          );
-        if (foundOperatorInput.exposed) {
-          noValidNameAndLink = hasValidNameAndLink(input.name, input.id);
+
+        try {
+          const foundOperatorInput = workflowContent.operators
+            .find(operator => operator.id === input.operator_id)
+            .inputs.find(
+              operatorInput => operatorInput.id === input.connector_id
+            );
+          if (foundOperatorInput.exposed) {
+            noValidNameAndLink = hasValidNameAndLink(input.name, input.id);
+          }
+        } catch (error) {
+          // Due to the hetida-flowchart component destroying / removing operators
+          // and links recursively this can race with the isIncomplete check and
+          // lead to inputs.find not being defined. In this case it is okay to return
+          // false for the short time where the workflow is in a "broken" state.
+          return false;
         }
         return isNotAConstant && noValidNameAndLink === false;
       }) ||
