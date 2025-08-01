@@ -62,24 +62,6 @@ class FieldRenamer:
         return event_dict
 
 
-class AttributeSorter:
-    """Sorts log attributes for consistent output."""
-
-    def __init__(self, key_order: list[str]):
-        self.key_order = key_order
-
-    def __call__(self, logger: logging.Logger, name: str, event_dict: dict) -> dict:  # noqa: ARG002
-        sorted_dict = {}
-        for key in self.key_order:
-            if key in event_dict:
-                sorted_dict[key] = event_dict.pop(key)
-
-        # Add any remaining keys (e.g. attributes added through structlog-native logging)
-        # in alphabetical order
-        sorted_dict.update(dict(sorted(event_dict.items())))
-        return sorted_dict
-
-
 ExecContextDict = TypedDict(  # noqa: UP013
     "ExecContextDict",
     {

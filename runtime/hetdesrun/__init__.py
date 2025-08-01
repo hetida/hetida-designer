@@ -8,7 +8,6 @@ from hetdesrun.runtime import internal_runtime_execution_logger
 from hetdesrun.runtime import runtime_execution_logger as logger
 from hetdesrun.runtime import runtime_logger as job_logger
 from hetdesrun.runtime.logging import (
-    AttributeSorter,
     ComponentCodeLogHandler,
     CustomAttributeProcessor,
     FieldRenamer,
@@ -68,7 +67,6 @@ def get_formatter(
                 FieldRenamer(),
                 structlog.processors.EventRenamer(to="message"),
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                AttributeSorter(key_order=get_config().log_field_order),
                 structlog.processors.JSONRenderer(
                     default=MinimallyMoreCapableJsonEncoder().default
                 ),
