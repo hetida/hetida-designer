@@ -84,6 +84,15 @@ class RuntimeConfig(BaseSettings):
         validation_alias="LOG_HTTPX",
     )
 
+    log_uvicorn: bool = Field(
+        True,
+        description=(
+            "Whether uvicorn / uvicorn.access logging should be activated. "
+            "Note: This uses the same log level as cofigured via LOG_LEVEL. "
+        ),
+        validation_alias="LOG_UVICORN",
+    )
+
     log_technical_nodes: bool = Field(
         False,
         description=(

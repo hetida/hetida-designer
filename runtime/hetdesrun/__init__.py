@@ -142,19 +142,26 @@ logger.setLevel(
 configure_logging(job_logger, log_job_id_context=True)
 
 
-def strip_handlers_from_loggers(logger_names: list[str]) -> None:
-    """Strip handlers from third-party loggers."""
+def setup_third_party_loggers(
+    logger_names: list[str],
+    configure: bool = False,
+    log_job_id_context: bool = False,
+) -> None:
+    """Strip handlers from third-party loggers and optionally configure them."""
     for logger_name in logger_names:
         third_party_logger = logging.getLogger(logger_name)
-        # Clear any default handlers they might have, to prevent duplicate output
         third_party_logger.handlers.clear()
-        configure_logging(third_party_logger, log_job_id_context=True)
+        if configure:
+            configure_logging(third_party_logger, log_job_id_context=log_job_id_context)
 
 
 if get_config().log_httpx:
-    strip_handlers_from_loggers(["httpx", "httpcore"])
+    setup_third_party_loggers(["httpx", "httpcore"], configure=True, log_job_id_context=True)
 
-strip_handlers_from_loggers(["uvicorn", "uvicorn.access"])
+# Always strip handlers from uvicorn loggers as they are enabled by default
+setup_third_party_loggers(
+    ["uvicorn", "uvicorn.access"], configure=get_config().log_uvicorn, log_job_id_context=True
+)
 
 main_logger.info("Logging setup complete.", extra={"version": VERSION})
 
