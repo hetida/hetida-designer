@@ -31,14 +31,38 @@ class SimplifiedLogRecord(BaseModel):
 class CustomAttributeProcessor:
     """Processor that extracts custom attributes from the stdlib log record"""
 
-    WHITELISTED_ATTRS = get_config().custom_attributes_to_log
+    _STANDARD_LOG_RECORD_ATTRS = {
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "getMessage",
+        "taskName",
+        "_record",
+    }
 
     def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
-        # Get the record from the event_dict if it exists
         if record := event_dict.get("_record"):
-            for key in self.WHITELISTED_ATTRS:
-                if hasattr(record, key):
-                    event_dict[key] = getattr(record, key)
+            for key, value in record.__dict__.items():
+                if key not in self._STANDARD_LOG_RECORD_ATTRS and not key.startswith("_"):
+                    event_dict[key] = value
         return event_dict
 
 

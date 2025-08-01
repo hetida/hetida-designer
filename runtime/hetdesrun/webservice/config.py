@@ -71,27 +71,6 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
-    custom_attributes_to_log: set[str] = Field(
-        {
-            "currently_executed_transformation_id",
-            "currently_executed_transformation_name",
-            "currently_executed_transformation_tag",
-            "currently_executed_transformation_type",
-            "currently_executed_operator_hierarchical_id",
-            "currently_executed_operator_hierarchical_name",
-            "currently_executed_job_id",
-            "version",
-            "execution_result_response",
-            "exec_by_id_input",
-            "exec_by_id_input_stub",
-            "created_source",
-            "consumption_mode_exec",
-            "updated_trafo",
-        },
-        validation_alias="CUSTOM_ATTRIBUTES_TO_LOG",
-        description="Set of attributes that the CustomAttributeProcessor extracts from stdlib logs.",  # noqa: E501
-    )
-
     log_httpx: bool = Field(
         False,
         description=(
