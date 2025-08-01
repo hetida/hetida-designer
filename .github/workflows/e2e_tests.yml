@@ -52,9 +52,7 @@ jobs:
           echo "PREPARE PLAYWRIGHT"
           export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/playwright_browsers"
           cd "$GITHUB_WORKSPACE/frontend"
-          rm -rf node_modules
-          npm cache clean --force
-          npm install
+
           npx playwright install
           npx playwright install-deps
 
