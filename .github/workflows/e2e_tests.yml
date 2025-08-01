@@ -50,7 +50,7 @@ jobs:
         run: |
           set -e
           echo "PREPARE PLAYWRIGHT"
-
+          export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/playwright_browsers"
           cd "$GITHUB_WORKSPACE/frontend"
           npm install
           npx playwright install
@@ -103,6 +103,7 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE/frontend"
+          export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/playwright_browsers"
           
           echo "RUN PLAYWRIGHT TESTS"
           DEBUG=pw:browser,pw:api,pw:webserver PLAYWRIGHT_TARGET_URL="http://localhost:4200" npm run e2e-all
