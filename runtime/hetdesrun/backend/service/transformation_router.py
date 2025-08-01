@@ -85,6 +85,7 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
     transformation_revision_from_python_code,
 )
+from hetdesrun.trafoutils.nestings import MissingReferencedTransformation, NestingLevelCycleDetected
 from hetdesrun.trafoutils.upgrade_operators import (
     upgrade_operators_in_workflow,
     upgrade_workflow_operator_in_place,
@@ -678,7 +679,19 @@ async def update_transformation_revisions(
         ),
     )
 
-    success_per_trafo = import_importable(importable)
+    try:
+        success_per_trafo = import_importable(importable)
+    except NestingLevelCycleDetected as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Dependency cycle detected in filtered trafos:\nstr(e)",
+        ) from e
+    except MissingReferencedTransformation as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing dependency in provided transformations\nstr(e)",
+        ) from e
+
     for msg, ccs in broken_component_codes:
         success_per_trafo[ccs] = TrafoUpdateProcessSummary(
             status=UpdateProcessStatus.FAILED,
@@ -822,7 +835,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
         try:
-            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
                 read_single_transformation_revision(id),
                 update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
             )
@@ -944,7 +957,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
         msg = f"Cycle detected when trying to upgrade operators in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
         try:
-            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
                 read_single_transformation_revision(id),
                 update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
             )
@@ -1036,7 +1049,7 @@ async def update_transformation_revision(
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
         try:
-            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
                 read_single_transformation_revision(id),
                 update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
             )

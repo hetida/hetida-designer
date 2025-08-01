@@ -477,13 +477,24 @@ class TransformationRevision(BaseModel):
         return io_interface
 
     def release(self) -> None:
+        """Release a transformation revision
+
+        Updates the respective attributes of the instance. Validates the result
+        which may raise Pydantic validation error.
+        """
         self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.release_wiring = self.test_wiring
         self.state = State.RELEASED
 
+        # may raise validation error:
+        TransformationRevision.model_validate(self.model_dump())
+
     def deprecate(self) -> None:
         self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
+
+        # may raise validation error:
+        TransformationRevision.model_validate(self.model_dump())
 
     def strip_wirings(
         self,
@@ -621,7 +632,7 @@ class TransformationRevision(BaseModel):
             name=self.name if name is None else name,
             description=self.description,
             type=self.type,
-            state=State.RELEASED,
+            state=self.state,
             version_tag=self.version_tag,
             transformation_id=self.id,
             inputs=[

@@ -1322,6 +1322,8 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
     del put_response_json_without_io_ids["content"]["outputs"][0]["id"]
 
     expected_put_response_json_without_io_ids = deepcopy(tr_json_workflow_2_added_io_for_operator)
+    expected_put_response_json_without_io_ids["update_state"] = "SUCCESS"
+
     del expected_put_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
     del expected_put_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
     del expected_put_response_json_without_io_ids["content"]["inputs"][0]["id"]
@@ -1331,7 +1333,10 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
 
     assert get_response.status_code == 200
 
-    assert get_response.json() == put_response.json()
+    put_response_dict = put_response.json()
+    put_response_dict.pop("update_state", None)
+
+    assert get_response.json() == put_response_dict
 
 
 @pytest.mark.asyncio
