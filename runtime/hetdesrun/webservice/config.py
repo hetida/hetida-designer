@@ -93,6 +93,22 @@ class RuntimeConfig(BaseSettings):
         validation_alias="LOG_UVICORN",
     )
 
+    log_fields_to_rename: dict[str, str] = Field(
+        {
+            "currently_executed_job_id": "job_id",
+            "currently_executed_transformation_id": "tr_id",
+            "currently_executed_transformation_name": "tr_name",
+            "currently_executed_transformation_tag": "tr_tag",
+            "currently_executed_transformation_type": "tr_type",
+            "currently_executed_operator_hierarchical_id": "op_id",
+            "currently_executed_operator_hierarchical_name": "op_name",
+            "event": "message",
+        },
+        description="Dict of log field names to be renamed, before the log is rendered as a JSON. "
+        "Keys are looked up in the event dict and replaced with the corresponding value.",
+        validation_alias="LOG_FIELDS_TO_RENAME",
+    )
+
     log_technical_nodes: bool = Field(
         False,
         description=(

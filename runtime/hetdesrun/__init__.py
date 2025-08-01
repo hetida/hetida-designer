@@ -64,9 +64,8 @@ def get_formatter(
         processors=(
             [
                 CustomAttributeProcessor(),
-                FieldRenamer(),
-                structlog.processors.EventRenamer(to="message"),
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                FieldRenamer(),
                 structlog.processors.JSONRenderer(
                     default=MinimallyMoreCapableJsonEncoder().default
                 ),

@@ -67,22 +67,14 @@ class CustomAttributeProcessor:
 
 
 class FieldRenamer:
-    """Renames long field names in the logs to shorter aliases."""
+    """Renames configured field names in the logs to corresponding aliases."""
 
-    FIELD_MAP = {
-        "currently_executed_job_id": "job_id",
-        "currently_executed_transformation_id": "tr_id",
-        "currently_executed_transformation_name": "tr_name",
-        "currently_executed_transformation_tag": "tr_tag",
-        "currently_executed_transformation_type": "tr_type",
-        "currently_executed_operator_hierarchical_id": "op_id",
-        "currently_executed_operator_hierarchical_name": "op_name",
-    }
+    _FIELD_MAP = get_config().log_fields_to_rename
 
     def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
-        for long_name, short_name in self.FIELD_MAP.items():
-            if long_name in event_dict:
-                event_dict[short_name] = event_dict.pop(long_name)
+        for orig_name, new_name in self._FIELD_MAP.items():
+            if orig_name in event_dict:
+                event_dict[new_name] = event_dict.pop(orig_name)
         return event_dict
 
 
