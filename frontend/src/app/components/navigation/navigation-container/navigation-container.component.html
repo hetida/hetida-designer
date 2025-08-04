@@ -53,7 +53,7 @@
 <div class="navigation-container__scrollable">
   @for (
     item of transformationsByCategory | keyvalue: sortByCategoryAlphabetically;
-    track $index
+    track item.key
   ) {
     <hd-navigation-category
       [transformations]="item.value"
