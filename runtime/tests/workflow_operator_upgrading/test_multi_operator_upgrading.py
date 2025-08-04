@@ -8,11 +8,6 @@ from hetdesrun.trafoutils.upgrade_operators import upgrade_operators_in_workflow
 from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 
 
-@pytest.fixture
-def workflow_upgrade():
-    raise NotImplementedError
-
-
 @pytest.mark.asyncio
 async def test_multi_operator_upgrading(mocked_clean_test_db_session):
     with TrafoCollection(save_to_db=True) as tc:

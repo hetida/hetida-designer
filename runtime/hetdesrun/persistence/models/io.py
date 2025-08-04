@@ -197,8 +197,8 @@ class WorkflowContentIO(Connector):
             "Is displayed in the IO dialog."
         ),
     )  # not needed in FE/BE/RT, kept for readability of jsons only
-    connector_name: str = Field(
-        ...,
+    connector_name: str | None = Field(
+        None,
         description=(
             "Name of the connector of the operator to which this IOConnector is connected. "
             "Is displayed in the IO dialog."

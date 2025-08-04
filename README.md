@@ -273,7 +273,7 @@ Some Notes:
 
 * You can also drag Workflows from the Workflow sidebar as operators into a workflow (this can be nested!). For example, consider a workflow containing a data preparation pipeline that you want to use in an arbitrary amount of modeling workflows.
 
-* You can only drag *released* components/workflows onto the workflow pane. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. This way, workflow executions can be reproduced at all points in time. To edit a released component/workflow a new revision has to be created.
+* You can drag *draft* components/workflows onto the workflow pane, but you can only release a workflow if all contained operators refer to released revisions. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. This way, workflow executions can be reproduced at all points in time. To edit a released component/workflow a new revision has to be created.
 
 Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. This is a point where hetida designer significantly differs from some similar-looking graphical analytics tools you may know: Data ingestion (and data egestion) is decoupled from the analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
 
@@ -328,7 +328,7 @@ This opens the component editor
 
 ![component_editor](./docs/assets/first_workflow/component_editor.png)
 
-Note that this component revision is "released" (remember that you can only use released component revisions in a workflow). Therefore, the code editor does not allow to edit the code and you cannot change anything in the input / output configuration dialog either. You need to either create a new revision or a copy via one of the following buttons:
+Note that this component revision is "released" (remember that you should use released component revisions in a workflow to be able to later release it). Therefore, the code editor does not allow to edit the code and you cannot change anything in the input / output configuration dialog either. You need to either create a new revision or a copy via one of the following buttons:
 
 ![new_revision_and_copy_button](./docs/assets/first_workflow/new_revision_and_copy_button.png)
 
@@ -408,7 +408,7 @@ resulting in a visualisation of "what it learned":
 
 #### Releasing components
 
-To be able to actually use your component in workflows it must be "released".  "Releasing" puts the component revision from "Draft Mode" to "Released Mode". A component revision in draft mode can be edited ad libitum but can not be used in workflows. A released component revision can not be edited anymore but can be used in workflows. One has to create a new revision of a released component if one wants to change how it works.
+To be able to actually use your component in workflows and release them the component must be "released". "Releasing" puts the component revision from "Draft Mode" to "Released Mode". A component revision in draft mode can be edited ad libitum but if it is used in a workflow that prohibits releasing of the workflow. A released component revision can not be edited anymore but allows to release workflows where it is used. One has to create a new revision of a released component if one wants to change how it works.
 
 To release a component revision click on the "Publish" button
 
@@ -464,7 +464,7 @@ Hetida designer allows to execute arbitrary Python code. The included plain exec
 * **IO Config**: workflow and component revisions have an input/output configuration consisting of pairs of name and type for inputs and outputs. This is basically the interface that is employed when they are run or used as operators.
 * **Wiring**: To run a workflow revision a wiring is necessary. A wiring maps data sources / data sinks via adapters to the inputs/outputs of the workflow revision IO config.
 * **Adapter**: A small piece of software that provides access to data sources or data sinks in order to make them available for execution of workflow revisions. Typically, adapters connect to databases (SQL, NoSQL (e.g. timeseries databases). The base installation comes with some demo adapters and a local file adapter. You can of course [write your own adapter implementations](#adapter-system).
-* **Draft Mode /  Released Mode**: Workflow and component revisions can be in either of these modes. They are only editable in Draft Mode. Through **Publishing** they are switched to Release Mode. They can only be used as operators when in Released Mode. This guarantees trackable execution runs. You can of course create a new revision to make further edits.
-  **Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operators as deprecated and invites to update to another revision.
-  **Delete**: Component and Workflow revisions in Draft Mode can be deleted.
-  **Documentation**: To every workflow and component revision a markdown documentation can be written and used.
+* **Draft Mode /  Released Mode**: Workflow and component revisions can be in either of these modes. They are only editable in Draft Mode. Through **Publishing** they are switched to Release Mode. A workflow can only be released if all operators refer to released workflows/components. This guarantees trackable execution runs for released workflows/components. You can of course create a new revision to make further edits.
+* **Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operators as deprecated and invites to update to another revision.
+* **Delete**: Component and Workflow revisions in Draft Mode can be deleted.
+* **Documentation**: To every workflow and component revision a markdown documentation can be written and used.

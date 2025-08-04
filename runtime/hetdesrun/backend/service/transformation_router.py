@@ -52,7 +52,12 @@ from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.run import UnitTestPayload, UnitTestResults
 from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import DBError, DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBError,
+    DBIntegrityError,
+    DBNestingCycleDetected,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
@@ -62,7 +67,11 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
-from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.transformation import (
+    TrafoUpdateState,
+    TransformationRevision,
+    UpdatedTransformationRevision,
+)
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.runtime.service import unittest_service
 from hetdesrun.service.serialization_helpers import (
@@ -76,6 +85,7 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
     transformation_revision_from_python_code,
 )
+from hetdesrun.trafoutils.nestings import MissingReferencedTransformation, NestingLevelCycleDetected
 from hetdesrun.trafoutils.upgrade_operators import (
     upgrade_operators_in_workflow,
     upgrade_workflow_operator_in_place,
@@ -147,6 +157,12 @@ async def create_transformation_revision(
         msg = f"Could not store transformation revision {transformation_revision.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = (
+            f"Cycle detected when trying to store {transformation_revision.id}:\n{str(err)}."
+            " Resetting."
+        )
+        logger.warning(msg)
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
@@ -666,7 +682,19 @@ async def update_transformation_revisions(
         ),
     )
 
-    success_per_trafo = import_importable(importable)
+    try:
+        success_per_trafo = import_importable(importable)
+    except NestingLevelCycleDetected as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Dependency cycle detected in filtered trafos:\nstr(e)",
+        ) from e
+    except MissingReferencedTransformation as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing dependency in provided transformations\nstr(e)",
+        ) from e
+
     for msg, ccs in broken_component_codes:
         success_per_trafo[ccs] = TrafoUpdateProcessSummary(
             status=UpdateProcessStatus.FAILED,
@@ -682,7 +710,7 @@ async def update_transformation_revisions(
 
 @transformation_router.put(
     "/{id}/upgrade_operators/{operator_id}",
-    response_model=TransformationRevision,
+    response_model=UpdatedTransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary=(
@@ -701,7 +729,7 @@ async def update_transformation_revisions(
         },
     },
 )
-async def upgrade_workflow_operator_with_new_rev(
+async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
     id: UUID,  # noqa: A002
     operator_id: UUID,
     updated_transformation_revision: TransformationRevision,
@@ -712,7 +740,7 @@ async def upgrade_workflow_operator_with_new_rev(
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
-) -> TransformationRevision:
+) -> UpdatedTransformationRevision:
     logger.info(
         "Upgrade workflow operator %s in workflow %s with trafo revision %s",
         operator_id,
@@ -789,18 +817,35 @@ async def upgrade_workflow_operator_with_new_rev(
     )
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision,
-            allow_overwrite_released=allow_overwrite_released,
-            update_component_code=update_component_code,
-            expand_component_code=expand_component_code,
-            strip_wiring=strip_wiring,
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    updated_transformation_revision,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as err:
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     except DBNotFoundError as err:
         msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
@@ -817,7 +862,7 @@ async def upgrade_workflow_operator_with_new_rev(
 
 @transformation_router.put(
     "/{id}/upgrade_operators",
-    response_model=TransformationRevision,
+    response_model=UpdatedTransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Upgrade operators in a DRAFT workflow transformation revision.",
@@ -834,14 +879,14 @@ async def upgrade_workflow_operator_with_new_rev(
         },
     },
 )
-async def upgrade_workflow_operators(
+async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
     id: UUID,  # noqa: A002
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
-) -> TransformationRevision:
+) -> UpdatedTransformationRevision:
     logger.info("Upgrade workflow %s operators", id)
 
     if updated_transformation_revision.type is not Type.WORKFLOW:
@@ -879,24 +924,50 @@ async def upgrade_workflow_operators(
         msg = f"Integrity error in DB when upgrading operators for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operators in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            upgraded_operators_trafo_rev = read_single_transformation_revision(id)
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     except DBNotFoundError as err:
         msg = f"Not found error in DB when upgrading operators for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            upgraded_operators_trafo_rev,
-            allow_overwrite_released=allow_overwrite_released,
-            update_component_code=update_component_code,
-            expand_component_code=expand_component_code,
-            strip_wiring=strip_wiring,
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    upgraded_operators_trafo_rev,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as err:
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operators in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     except DBNotFoundError as err:
         msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
@@ -916,7 +987,7 @@ async def upgrade_workflow_operators(
 
 @transformation_router.put(
     "/{id}",
-    response_model=TransformationRevision,
+    response_model=UpdatedTransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Updates a transformation revision.",
@@ -940,7 +1011,7 @@ async def update_transformation_revision(
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
-) -> TransformationRevision:
+) -> UpdatedTransformationRevision:
     """Update or store a transformation revision in the database.
 
     If no DB entry with the provided id is found, it will be created.
@@ -963,18 +1034,35 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision,
-            allow_overwrite_released=allow_overwrite_released,
-            update_component_code=update_component_code,
-            expand_component_code=expand_component_code,
-            strip_wiring=strip_wiring,
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    updated_transformation_revision,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as err:
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     except DBNotFoundError as err:
         msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)

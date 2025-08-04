@@ -16,7 +16,10 @@ from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.trafoutils.versioning import get_newest_released_trafo_rev
+from hetdesrun.trafoutils.versioning import (
+    get_current_revision_for_drafts,
+    get_newest_released_trafo_rev,
+)
 from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)
@@ -367,7 +370,7 @@ def get_operators_to_check_for_upgrades(
     return {
         op.id: op
         for op in workflow_content.operators
-        if (not only_check_deprecated or op.state is State.DISABLED)
+        if ((not only_check_deprecated or op.state is State.DISABLED) or op.state is State.DRAFT)
     }
 
 
@@ -706,19 +709,29 @@ def upgrade_workflow_operator_in_place(
 
 def upgrade_operators_with_providided_revisions(
     workflow: TransformationRevision,
-    possibly_newer: dict[
+    possibly_newer_released_trafos_by_trafo_rev_group_id: dict[
         UUID, TransformationRevision | None
     ],  # of form: { revision_group_id : newest_trafo }
+    current_revisions_for_draft_operators_by_trafo_id: dict[UUID, TransformationRevision],
     only_check_deprecated: bool = True,
     same_revision_no_op: bool = False,
 ) -> TransformationRevision:
-    """Upgrade operators with given possibly newer trafo rev per trafo rev group
+    """Upgrade operators with provided trafo revisions
 
-    If the possibly newer is equal to the current operator trafo rev, by default
-    the operator is still upgraded. This allows to fix broken operators after for example
-    some maintenance operation that changed released trafos' io interface.
-
-    This behaviout can be turned off by same_revision_no_op.
+    * released/disabled operators are upgraded with given possibly newer trafo
+      rev per trafo rev group (possibly_newer_released_trafos_by_trafo_rev_group_id)
+      * If the possibly newer is equal to the current operator trafo rev, by default
+        the operator is still upgraded. This allows to fix broken operators after
+        for example some maintenance operation that changed released trafos' io interface.
+        * This behaviout can be turned off by same_revision_no_op.
+    * draft operators are upgraded with the current state of the trafo.
+      * If the underlying trafo is still a draft, the operator will be upgraded to
+        its current state (current_revisions_for_draft_operators_by_trafo_id),
+        applying possible changes.
+      * If the underlying trafo is now released, the operator will be upgraded to
+        its now released state. NOTE: It will not be upgraded to a possibly newer released
+        version in the same revision group in this case. To achieve this a second upgrade
+        is necessary!
     """
 
     new_workflow = workflow.model_copy(deep=True)
@@ -728,10 +741,21 @@ def upgrade_operators_with_providided_revisions(
     )
 
     for op_id, operator in operators_to_check.items():
-        possibly_newer_trafo = possibly_newer[operator.revision_group_id]
+        if operator.state is State.DRAFT:
+            possibly_newer_trafo = current_revisions_for_draft_operators_by_trafo_id.get(
+                operator.transformation_id
+            )
+        else:
+            possibly_newer_trafo = possibly_newer_released_trafos_by_trafo_rev_group_id[
+                operator.revision_group_id
+            ]
 
         if possibly_newer_trafo is not None:
-            if same_revision_no_op and possibly_newer_trafo.id == operator.transformation_id:
+            if (
+                same_revision_no_op
+                and possibly_newer_trafo.id == operator.transformation_id
+                and not operator.state is State.DRAFT  # always upgrade draft operators!
+            ):
                 msg = (
                     f"Not handling/upgrading operator {operator.name} ({operator.id}) since"
                     " its transformation id {operator.transformation_id} agrees with the possibly"
@@ -740,7 +764,8 @@ def upgrade_operators_with_providided_revisions(
                 logger.debug(msg)
                 continue
             msg = (
-                f"Upgrade operator {operator.name} ({operator.id}) with old trafo id"
+                f"Upgrade operator {operator.name} ({operator.id}) with state {operator.state})"
+                " with old trafo id"
                 f" {operator.transformation_id} to possibly newer trafo"
                 f" {possibly_newer_trafo.name} ({possibly_newer_trafo.version_tag})"
                 f" with id {possibly_newer_trafo.id}"
@@ -757,6 +782,16 @@ def upgrade_operators_in_workflow(
     use_release_date: bool = False,
     same_revision_no_op: bool = False,
 ) -> TransformationRevision:
+    """Upgrades operators in workflow
+
+    This gathers the necessary transformation revisions for both draft operators
+    and released operators and then upgrades them according to the rules described
+    in the docstring of upgrade_operators_with_providided_revisions.
+
+    Basically draft operators are upgraded to the current draft state (same revision)
+    and released operators are upgraded to the "newest" revision of their trafo rev group.
+    """
+
     if trafo.type is not Type.WORKFLOW:
         raise ValueError(
             f"Transformation {trafo.name} ({trafo.version_tag}) with id {trafo.id} is"
@@ -775,7 +810,11 @@ def upgrade_operators_in_workflow(
     # map revision_group_id to trafo_rev ids that are requested to be found a newer rev
     trafo_revision_group_ids_to_check_for_newer_released_revs: dict[UUID, list[UUID]] = {}
 
+    draft_trafo_ids = []
+
     for op in operators_to_check.values():
+        if op.state is State.DRAFT:
+            draft_trafo_ids.append(op.transformation_id)
         if (
             trafo_revision_group_ids_to_check_for_newer_released_revs.get(
                 op.transformation_id, None
@@ -797,9 +836,14 @@ def upgrade_operators_in_workflow(
         use_release_date=use_release_date,
     )
 
+    current_revisions_for_draft_operators_by_trafo_id = get_current_revision_for_drafts(
+        set(draft_trafo_ids)
+    )
+
     updated_trafo = upgrade_operators_with_providided_revisions(
         trafo,
         newer_by_trafo_group_id,
+        current_revisions_for_draft_operators_by_trafo_id,
         only_check_deprecated=only_check_deprecated,
         same_revision_no_op=same_revision_no_op,
     )

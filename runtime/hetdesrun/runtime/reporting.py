@@ -28,7 +28,7 @@ def data_info_by_data_type(
             }
         case DataType.String:
             info_dict = {
-                "len": len(data_obj),
+                "length": len(data_obj),
                 "value": data_obj if len(data_obj) < 200 else data_obj[:200] + "...",
             }
         case DataType.Float | DataType.Integer | DataType.Boolean:

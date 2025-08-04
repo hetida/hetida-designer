@@ -402,7 +402,7 @@ pkgs.mkShell rec {
         echo "    and restart nix shell."
     else
         current_dir=$(pwd)
-        cd ./frontend && npm ci
+        cd ./frontend && rm -rf node_modules && npm ci
         # npm-ci = sync with package-lock.json. Could be improved:
         # Does not intelligently check by using
         # hashes

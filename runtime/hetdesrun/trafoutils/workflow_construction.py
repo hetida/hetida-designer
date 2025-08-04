@@ -122,11 +122,12 @@ class OperatorOutputInfos:
 class OperatorInfo:
     def __init__(self, op: Operator):
         self.operator = op
-        self.operator_input_infos_by_name = {
-            op_inp.name: OperatorInputInfo(op, op_inp)
-            for op_inp in op.inputs
-            if op_inp.name is not None
-        }
+
+        self.operator_input_infos_by_name: dict[str, OperatorInputInfo] = {}
+        for op_inp in op.inputs:
+            if op_inp.name is not None:
+                self.operator_input_infos_by_name[op_inp.name] = OperatorInputInfo(op, op_inp)
+
         self.i = OperatorInputInfos(self.operator_input_infos_by_name)
         self.operator_output_infos_by_name = {
             op_outp.name: OperatorOutputInfo(op, op_outp)
@@ -495,22 +496,23 @@ class WorkflowConstructor:
 
         for wf_content_inp in self.content_inputs:
             op_info = self._operator_infos_by_id[wf_content_inp.operator_id]
-            op_inp_info = op_info.operator_input_infos_by_name[wf_content_inp.connector_name]
+            if wf_content_inp.connector_name is not None:
+                op_inp_info = op_info.operator_input_infos_by_name[wf_content_inp.connector_name]
 
-            wf_content_inp.position = Position(
-                x=op_inp_info.operator.position.x - 270,  # note: operator box has 360 width
-                y=(  # will be upper edge
-                    op_inp_info.operator.position.y
-                    + self.operator_box_header_height  # height header of operator box (black part)
-                    + self.operator_content_vertical_free_space_base_height
-                    # (height light-gray part up to first output)
-                    + (
-                        self.operator_output_rect_height
+                wf_content_inp.position = Position(
+                    x=op_inp_info.operator.position.x - 270,  # note: operator box has 360 width
+                    y=(  # will be upper edge
+                        op_inp_info.operator.position.y
+                        + self.operator_box_header_height  # height header of op. box (black part)
                         + self.operator_content_vertical_free_space_base_height
-                    )  # vertical distance between two outputs
-                    * op_inp_info.position_index
-                ),
-            )
+                        # (height light-gray part up to first output)
+                        + (
+                            self.operator_output_rect_height
+                            + self.operator_content_vertical_free_space_base_height
+                        )  # vertical distance between two outputs
+                        * op_inp_info.position_index
+                    ),
+                )
 
         # Note: We heavily rely on validations of TransformationRevision which
         # adds missing WorkflowContent.inputs, WorkflowContent.outputs, WorkflowContent.links

@@ -18,7 +18,10 @@ Here you can find some guidance for common issues that might occur:
 ## <a name="debugging-components"></a> Debugging component revisions
 
 To understand why and how an error occurred it is often necessary to understand which value a variable has at certain steps of running the code.
-One way to achieve this in components is to temporarily add a line that raises an exception like a `ValueError` and pass the the variable converted to a string as error message to the ValueError object. Example:
+
+The recommended way is to use logging: See [here](./execution/logging.md). Logs are shown in the execution result view / protocoll.
+
+Another way to achieve this in components is to temporarily add a line that raises an exception like a `ValueError` and pass the the variable converted to a string as error message to the ValueError object. Example:
 
 ```
 ...
@@ -48,8 +51,6 @@ ValueError: 42
 ```
 
 The last line shows the value of the variable `interesting_value`, normally an error message would be displayed there. The second to last line shows in which line of your component code the error occurred.
-
-If you have access to the runtime logs you also can emit log messages in your component code. See [here](./execution/logging.md).
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 

@@ -31,7 +31,10 @@ class CredentialInfo(BaseModel):
             " Is used to calculate expiration time estimates."
         ),
     )
-    expiration_time_in_seconds: int
+
+    expiration_time_in_seconds: float = Field(
+        ..., description=("Timedelta from now in seconds during which the credentials are valid.")
+    )
 
 
 def extract_namespace_from_root_tag(root_tag: str) -> str:

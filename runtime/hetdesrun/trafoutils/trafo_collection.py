@@ -1,7 +1,8 @@
 import logging
 from types import TracebackType
+from uuid import UUID
 
-from hetdesrun.exportimport.importing import import_importable
+from hetdesrun.exportimport.importing import TrafoUpdateProcessSummary, import_importable
 from hetdesrun.persistence.models.transformation import (
     TransformationRevision,
 )
@@ -72,7 +73,7 @@ class TrafoCollection:
             f"Trafo Collection add_path got file path with unknown file extension: {path}"
         )
 
-    def _save_to_db(self) -> None:
+    def _save_to_db(self) -> dict[UUID | str, TrafoUpdateProcessSummary]:
         # TODO: expose more options from FilterParams or MultipleTrafosUpdateConfig?
         importable = Importable(
             transformation_revisions=self.registered_trafos,
@@ -83,6 +84,7 @@ class TrafoCollection:
 
         success_per_trafo = import_importable(importable)
         logger.info("Result of Trafo Collection saving:\n%s", success_per_trafo)
+        return success_per_trafo
 
     def _store_into_directory(self) -> None:
         raise NotImplementedError

@@ -1,8 +1,8 @@
 from logging import getLogger
-from hetdesrun import logger as hetdesrun_runtime_exec_logger
 
-from hetdesrun.runtime.logging import _get_execution_context
+from hetdesrun import logger as hetdesrun_runtime_exec_logger
 from hetdesrun.runtime import runtime_execution_logger
+from hetdesrun.runtime.logging import _get_execution_context
 
 logger = getLogger(__name__)
 

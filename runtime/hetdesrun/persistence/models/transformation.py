@@ -1,6 +1,7 @@
 import datetime
 import logging
-from typing import Annotated, cast
+from enum import StrEnum
+from typing import Annotated, Self, cast
 from uuid import UUID, uuid4
 
 from pydantic import (
@@ -42,6 +43,13 @@ from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
 
 IsoformatDatetime = Annotated[datetime.datetime, PlainSerializer(lambda dt: dt.isoformat())]
+
+
+class TrafoUpdateState(StrEnum):
+    SUCCESS = "SUCCESS"
+    RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED = (
+        "RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED"
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -333,6 +341,72 @@ class TransformationRevision(BaseModel):
             )
         return v
 
+    @field_validator("content")
+    @classmethod
+    def content_operators_only_drafts_allowed_in_draft_workflows(
+        cls, v: str | WorkflowContent, info: ValidationInfo
+    ) -> str | WorkflowContent:
+        try:
+            type_ = info.data["type"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the content type is correct if the attribute 'type' is missing!"
+            ) from error
+        try:
+            state = info.data["state"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the workflow state allows for draft operators if"
+                " the attribute 'state' is missing!"
+            ) from error
+
+        if type_ is Type.WORKFLOW:
+            assert isinstance(v, WorkflowContent)  # for mypy # noqa: S101
+
+            for operator in v.operators:
+                if operator.state is State.DRAFT and state is not State.DRAFT:
+                    raise ValueError(
+                        "Only a DRAFT Workflow can contain operators instantiating a DRAFT "
+                        f"transformation. Operator {operator.id} with name {operator.name}"
+                        " violates this."
+                    )
+        return v
+
+    @field_validator("content")
+    @classmethod
+    def filter_unnamed_operator_inputs_and_outputs(
+        cls, v: str | WorkflowContent, info: ValidationInfo
+    ) -> str | WorkflowContent:
+        """Actively filters unnamed operator inputs and unnamed operator outputs
+
+        Unnamed operator inputs/outputs can happen for Operators from DRAFT Workflows
+        where the inserted DRAFT workflow has not yet configured io for a input or
+        output.
+        """
+        try:
+            type_ = info.data["type"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the content type is correct if the attribute 'type' is missing!"
+            ) from error
+
+        if type_ is Type.WORKFLOW:
+            assert isinstance(v, WorkflowContent)  # for mypy # noqa: S101
+
+            for operator in v.operators:
+                operator.inputs = [
+                    op_inp
+                    for op_inp in operator.inputs
+                    if op_inp.name is not None and op_inp.name != ""
+                ]
+                operator.outputs = [
+                    op_outp
+                    for op_outp in operator.outputs
+                    if op_outp.name is not None and op_outp.name != ""
+                ]
+
+        return v
+
     @field_validator("io_interface")
     @classmethod
     def io_interface_fits_to_content(  # noqa: PLR0912
@@ -403,13 +477,24 @@ class TransformationRevision(BaseModel):
         return io_interface
 
     def release(self) -> None:
+        """Release a transformation revision
+
+        Updates the respective attributes of the instance. Validates the result
+        which may raise Pydantic validation error.
+        """
         self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.release_wiring = self.test_wiring
         self.state = State.RELEASED
 
+        # may raise validation error:
+        TransformationRevision.model_validate(self.model_dump())
+
     def deprecate(self) -> None:
         self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
+
+        # may raise validation error:
+        TransformationRevision.model_validate(self.model_dump())
 
     def strip_wirings(
         self,
@@ -547,7 +632,7 @@ class TransformationRevision(BaseModel):
             name=self.name if name is None else name,
             description=self.description,
             type=self.type,
-            state=State.RELEASED,
+            state=self.state,
             version_tag=self.version_tag,
             transformation_id=self.id,
             inputs=[
@@ -677,3 +762,15 @@ class TransformationRevision(BaseModel):
             raise DBIntegrityError(msg) from error
 
     model_config = ConfigDict(validate_assignment=True)
+
+
+class UpdatedTransformationRevision(TransformationRevision):
+    update_state: TrafoUpdateState = Field(
+        TrafoUpdateState.SUCCESS, description="Indicates some relevant info on the update process"
+    )
+
+    @classmethod
+    def from_transformation_revision(
+        cls, trafo: TransformationRevision, update_state: TrafoUpdateState
+    ) -> Self:
+        return cls(**trafo.model_dump(), update_state=update_state)

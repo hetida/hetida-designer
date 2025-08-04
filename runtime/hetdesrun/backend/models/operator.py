@@ -1,14 +1,12 @@
-from typing import Self
 from uuid import UUID  # noqa: A005
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field
 
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.persistence.models.io import Position
 from hetdesrun.persistence.models.operator import Operator
-from hetdesrun.utils import State
 
 
 class WorkflowOperatorFrontendDto(BasicInformation):
@@ -17,18 +15,6 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     outputs: list[ConnectorFrontendDto] = []
     pos_x: int = 0
     pos_y: int = 0
-
-    @model_validator(mode="after")
-    def is_not_draft(self) -> Self:
-        state = self.state
-
-        if state == State.DRAFT:
-            raise ValueError(
-                f"Only released components/workflows can be dragged into a workflow! "
-                f"Operator with id {self.id} of type {self.type}"
-                f" has state {state} "
-            )
-        return self
 
     def to_operator(self) -> Operator:
         return Operator(
