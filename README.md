@@ -2,11 +2,25 @@
 
 ## What is hetida designer?
 
-hetida designer is a graphical composition tool for analytical workflows based on the Python data science stack.
+hetida designer is a scalable, production analytics engine for Python Data Science with a focus on timeseries data.
 
-It aims to unify graphical composition of analytical methods on an equal footing with Python-based self-development in one user interface. To give an example: You can write your complete own visualization components on [plotly](https://plotly.com/python/) basis.
+It manages (versioning, lifecycle), exposes (Rest, Kafka) and runs Python Data Science artifacts (code/components, workflows) while abstracting model / data access and result extraction (adapter system).
 
-Another goal is to make the created workflows available for production use (e.g. as a web service) immediately without the need for further deployment steps. This includes a flexible adapter system for connecting to arbitrary data sources and sinks.![workflow editor](./docs/assets/screenshot-composition.png)
+hetida designer is not
+- a scheduler / job automation engine
+- a low-code / no-code graphical programming environment
+- a database
+- a data platform
+
+hetida designer typically runs on Kubernetes
+* to enable appropriate scaling.
+* as part of a larger (timeseries) platform setup
+
+A docker-compose setup is provided for small installations and trying out hetida designer.
+
+hetida designer comes with a UI, a backend / API, a runtime, a Bash CLI Tool (hdctl) for maintenance tasks like import/export/sync, several built-in adapters for its adapter system and a set of base / example components / workflows. Additionally some experimental dashboarding based on workflows is available.
+
+![workflow editor](./docs/assets/screenshot-composition.png)
 
 ## Getting Started with hetida designer
 
