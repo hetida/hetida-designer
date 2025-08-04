@@ -110,8 +110,8 @@ export class ToolbarComponent implements OnInit {
       return [
         'Upgrade workflow operators',
         // prettier-ignore
-        '-·DRAFT·operators·=>·update·to·revision\'s·current·state',
-        '- RELEASED / DISABLED operators => newest revision'
+        '- DRAFT operators => update to revision\'s current state',
+        '- RELEASED / DISABLED operators => newest revision in revision group'
       ].join('\n');
     }
     return 'Cannot upgrade operators for released workflows';

@@ -665,9 +665,10 @@ export class TransformationActionService {
         } catch (error) {
           // Due to the hetida-flowchart component destroying / removing operators
           // and links recursively this can race with the isIncomplete check and
-          // lead to inputs.find not being defined. In this case it is okay to return
-          // false for the short time where the workflow is in a "broken" state.
-          return false;
+          // lead to inputs.find not being defined. In this case it is okay to consider
+          // the workflow as incomplete for the short time where the workflow is
+          // in this "broken" state.
+          return true;
         }
         return isNotAConstant && noValidNameAndLink === false;
       }) ||
