@@ -2,8 +2,8 @@
 
 
 ## Log entries by hetida designer
-Log records issued by hetida designer during the execution of a component or workflow are structured output.  
-They are made up of a JSON containing at least the following fields, in this order:
+During the execution of a component or workflow, hetida designer emits structured log records.  
+These records are logged as a JSON, containing at least the following fields:
 * timestamp
 * level
 * message
@@ -13,9 +13,9 @@ They are made up of a JSON containing at least the following fields, in this ord
 * lineno (line number)
 * job_id
 
-If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr_type`), id (`tr_id`), name (`tr_name`), and tag (`tr_tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op_id(s)`) and names (`op_name(s)`) are additionally specified. In the case of an error, an `exception` field is also specified. The transformation (`tr`) information helps to find and open e.g. a component via the sidebar in order to search for the error in the code, the operator (`op`) information helps to recognize at which point in the workflow and thus also with which input the error arose.
+If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr_type`), id (`tr_id`), name (`tr_name`), and tag (`tr_tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op_id(s)`) and names (`op_name(s)`) are additionally provided. In the case of an error, an `exception` field is also provided. The fields prefixed with `tr` help to find and open e.g. a component via the sidebar in order to search for the error in the code, the fields prefixed with `op` help to recognize at which point in the workflow the error arose.
 
-A log entry may contain additional fields, e.g. `execution_result_response`. Additional fields are appended to the entry in alphabetical order, after the last main field. This could be `job_id`, `op_name` or `exception`.
+A log entry may contain additional fields, e.g. `execution_result_response`.
 
 Example log entry:
 ```json
@@ -54,7 +54,7 @@ def main(...):
 
 ```
 
-The hetida designer runtime enriches the logs with the execution context information (component name, version, id, operator information) and transforms them into structured entries. These entries are equivalent to the hetida designer log entries described above.
+The hetida designer runtime enriches the logs with execution context information (component name, version, id, operator information) as described for system-generated logs above.
 
 In addition to the log output of the runtime service, these logs can also be viewed in the test execution result display. If you switch to the raw response view you can also see the additional execution context information in the raw json response.
 
