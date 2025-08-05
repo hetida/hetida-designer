@@ -70,6 +70,6 @@ async def update_wiring(
     persisted_wiring_dto = WiringFrontendDto.from_wiring(
         persisted_transformation_revision.test_wiring, transformation_revision.id
     )
-    logger.debug(persisted_wiring_dto.json())
+    logger.debug(persisted_wiring_dto.model_dump_json())
 
     return persisted_wiring_dto

@@ -8,7 +8,7 @@
 # with live reload / restart functionality enabling fast-paced development without docker.
 # This includes the main hetida designer application submodules (frontend, backend, runtime) and
 # a postgres database. It uses overmind to orchestrate/manage the services instead of
-# docker-compose.
+# docker compose.
 #
 # Prerequisites:
 #     * Linux OS with a proper Bash. MacOS may work but has not been tested so far.
@@ -402,7 +402,7 @@ pkgs.mkShell rec {
         echo "    and restart nix shell."
     else
         current_dir=$(pwd)
-        cd ./frontend && npm ci
+        cd ./frontend && rm -rf node_modules && npm ci
         # npm-ci = sync with package-lock.json. Could be improved:
         # Does not intelligently check by using
         # hashes

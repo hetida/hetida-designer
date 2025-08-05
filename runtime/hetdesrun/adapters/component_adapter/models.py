@@ -55,4 +55,4 @@ class MultipleSourcesResponse(BaseModel):
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
-    sources: list[ComponentAdapterStructureSink]
+    sinks: list[ComponentAdapterStructureSink]

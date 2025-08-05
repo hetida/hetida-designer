@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Any
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
+from hetdesrun.adapters.generic_rest.external_types import to_correct_obj
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import WorkflowWiring
 
@@ -40,6 +41,7 @@ async def resolve_and_load_data_from_wiring(
         )
 
         loaded_data.update(loaded_data_from_adapter)
+
     return loaded_data
 
 
@@ -77,4 +79,13 @@ async def resolve_and_send_data_from_wiring(
 
         if data_not_send_by_adapter is not None:
             all_data_not_send_by_adapter.update(data_not_send_by_adapter)
-    return all_data_not_send_by_adapter
+
+    external_type_by_outp_name = {
+        output_wiring.workflow_output_name: output_wiring.type
+        for output_wiring in workflow_wiring.output_wirings
+    }
+
+    return {
+        outp_name: to_correct_obj(outp_val, external_type_by_outp_name[outp_name])
+        for outp_name, outp_val in all_data_not_send_by_adapter.items()
+    }

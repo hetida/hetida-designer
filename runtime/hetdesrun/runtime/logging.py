@@ -3,15 +3,38 @@ import contextvars
 import datetime
 import json
 import logging
+from collections import deque
 from typing import Any, Literal, TypedDict
 from uuid import UUID
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 from hetdesrun.models.code import CodeModule
+from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
+
+
+class SimplifiedLogRecord(BaseModel):
+    timestamp: datetime.datetime = Field(..., description="log timestamp (UTC)")
+    log_level: str = Field(..., description="Log level as string")
+    lineno: int = Field(..., description="line number in component code module")
+    message: str = Field(..., description="Simple Formatted message")
+    tr_id: UUID | None = Field(None, description="Transformation id")
+    tr_name: str | None = Field(None, description="Transformation name")
+    tr_tag: str | None = Field(None, description="Transformation version tag")
+    tr_type: Type | None = Field(None, description="Type of transformation.")
+    operator_hierarchical_name: str | None = None
+    operator_hierarchical_id: str | None = None
+
 
 ExecContextDict = TypedDict(  # noqa: UP013
-    "ExecContextDict", {"current_code_modules": list[CodeModule], "current_components": list[str]}
+    "ExecContextDict",
+    {
+        "current_code_modules": list[CodeModule],
+        "current_components": list[str],
+        "gathered_component_code_logs": deque[logging.LogRecord],
+    },
 )
 
 _WF_EXEC_LOGGING_CONTEXT_VAR: contextvars.ContextVar[ExecContextDict] = contextvars.ContextVar(
@@ -49,7 +72,15 @@ def _get_execution_context() -> ExecContextDict:
     try:
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
     except LookupError:
-        _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
+        _WF_EXEC_LOGGING_CONTEXT_VAR.set(
+            {
+                "current_code_modules": [],
+                "current_components": [],
+                "gathered_component_code_logs": deque(
+                    maxlen=get_config().user_component_code_logs_max_len
+                ),
+            }
+        )
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
 
 
@@ -80,7 +111,15 @@ class ExecutionContextFilter(logging.Filter):
     def clear_context(self, keys: list[str] | None = None) -> None:
         if keys is None:
             # reset / empty everything
-            _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
+            _WF_EXEC_LOGGING_CONTEXT_VAR.set(
+                {
+                    "current_code_modules": [],
+                    "current_components": [],
+                    "gathered_component_code_logs": deque(
+                        maxlen=get_config().user_component_code_logs_max_len
+                    ),
+                }
+            )
         else:
             context_dict = _WF_EXEC_LOGGING_CONTEXT_VAR.get()
             for key in keys:
@@ -119,6 +158,50 @@ class ExecutionContextFilter(logging.Filter):
 
 
 execution_context_filter = ExecutionContextFilter()
+
+
+class ComponentCodeLogHandler(logging.Handler):
+    """Gathering of user component code logs
+
+    A logging handler that appends to a list in the key "gathered_component_code_logs"
+    in the execution context.
+
+    This handler is assumed to be applied to the logger at base_module_path.
+
+    The gathered logs will be send back in execution response objects.
+    """
+
+    def ensure_list_in_context(self) -> None:
+        exec_context = _get_execution_context()
+
+        # initialize log record list if necessary:
+        if "gathered_component_code_logs" not in exec_context:
+            exec_context["gathered_component_code_logs"] = deque(
+                maxlen=get_config().user_component_code_logs_max_len
+            )
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Append log to execution context"""
+
+        self.ensure_list_in_context()
+        exec_context = _get_execution_context()
+        exec_context["gathered_component_code_logs"].append(record)
+
+    def clear(self) -> None:
+        """Clear all stored records."""
+
+        self.ensure_list_in_context()
+
+        exec_context = _get_execution_context()
+        exec_context["gathered_component_code_logs"].clear()
+
+    def get_records(self) -> deque[logging.LogRecord]:
+        """Get all stored records."""
+
+        self.ensure_list_in_context()
+        exec_context = _get_execution_context()
+
+        return exec_context["gathered_component_code_logs"]
 
 
 def _get_job_id_context() -> dict[str, str | None | UUID]:
@@ -162,3 +245,59 @@ class JobIdContextFilter(logging.Filter):
 
 
 job_id_context_filter = JobIdContextFilter()
+
+
+def logrecord_to_simplified_log_record(record: logging.LogRecord) -> SimplifiedLogRecord:
+    dt_created = datetime.datetime.fromtimestamp(record.created, tz=datetime.timezone.utc)
+
+    log_level = record.levelname or str(record.levelno)
+    line_no = record.lineno
+
+    # applies formatting args:
+    message = record.getMessage() if hasattr(record, "getMessage") else str(record.msg)
+
+    tr_id = (
+        UUID(record.currently_executed_transformation_id)
+        if hasattr(record, "currently_executed_transformation_id")
+        else None
+    )
+    tr_name = (
+        record.currently_executed_transformation_name
+        if hasattr(record, "currently_executed_transformation_name")
+        else None
+    )
+    tr_tag = (
+        record.currently_executed_transformation_tag
+        if hasattr(record, "currently_executed_transformation_tag")
+        else None
+    )
+
+    tr_type = (
+        record.currently_executed_transformation_type
+        if hasattr(record, "currently_executed_transformation_type")
+        else None
+    )
+
+    operator_hierarchical_name = (
+        record.currently_executed_operator_hierarchical_name
+        if hasattr(record, "currently_executed_operator_hierarchical_name")
+        else None
+    )
+    operator_hierarchical_id = (
+        record.currently_executed_operator_hierarchical_id
+        if hasattr(record, "currently_executed_operator_hierarchical_id")
+        else None
+    )
+
+    return SimplifiedLogRecord(
+        timestamp=dt_created,
+        log_level=log_level,
+        lineno=line_no,
+        message=message,
+        tr_id=tr_id,
+        tr_name=tr_name,
+        tr_tag=tr_tag,
+        tr_type=tr_type,
+        operator_hierarchical_name=operator_hierarchical_name,
+        operator_hierarchical_id=operator_hierarchical_id,
+    )

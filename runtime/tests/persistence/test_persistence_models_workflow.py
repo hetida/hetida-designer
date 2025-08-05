@@ -265,7 +265,7 @@ def workflow_content_dict() -> dict:
 
 def test_workflow_content_accepted(workflow_content_dict: dict) -> None:
     workflow_content = WorkflowContent(**workflow_content_dict)
-    assert json.loads(workflow_content.json()) == workflow_content_dict
+    assert json.loads(workflow_content.model_dump_json()) == workflow_content_dict
 
 
 def test_workflow_content_validator_operator_names_unique(

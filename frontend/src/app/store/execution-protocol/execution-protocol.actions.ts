@@ -6,7 +6,7 @@ export const setExecutionProtocol = createAction(
   '[ExecutionProtocol] Set ExecutionProtocol',
   (payload?: ExecutionResponse | Transformation | string) => {
     if (payload !== undefined) {
-      payload = JSON.stringify(payload, null, '\t').replace('\\n', '\n');
+      payload = JSON.stringify(payload, null, '\t'); //.replace('\\n', '\n');
     } else {
       payload = undefined;
     }

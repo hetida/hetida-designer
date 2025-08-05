@@ -21,6 +21,10 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -91,7 +95,7 @@ async def create_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto
 
@@ -165,7 +169,7 @@ async def get_workflow_revision_by_id(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg)
 
     workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(transformation_revision)
-    logger.debug(workflow_dto.json())
+    logger.debug(workflow_dto.model_dump_json())
 
     return workflow_dto
 
@@ -245,7 +249,7 @@ async def update_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto
 
@@ -297,7 +301,7 @@ async def execute_workflow_revision(
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
     job_id: UUID | None = None,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision of type workflow.
 
     This endpoint is deprecated and will be removed soon,
@@ -317,7 +321,9 @@ async def execute_workflow_revision(
             job_id=job_id,
         )
 
-    return await handle_trafo_revision_execution_request(exec_by_id)
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 @workflow_router.post(
@@ -375,6 +381,6 @@ async def bind_wiring_to_workflow_revision(
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_workflow_dto.json())
+    logger.debug(persisted_workflow_dto.model_dump_json())
 
     return persisted_workflow_dto

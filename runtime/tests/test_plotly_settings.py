@@ -34,7 +34,9 @@ async def test_plot_target_settings_reach_component(
     )
 
     async with async_test_client as ac:
-        resp = await ac.post("/api/transformations/execute", json=json.loads(exec_input.json()))
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
         assert resp.status_code == 200
         resp_json = resp.json()
         assert resp_json["error"] is None

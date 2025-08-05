@@ -8,7 +8,7 @@ Use Case examples:
 * [Syncing and hybrid working](./sync.md); I.e. export some trafos => work on them locally => import them, overwriting the existing trafos (Note: This has some [pitfalls concerning reproducibility and deserializability](./repr_pitfalls.md))
 * transfer a subset of components/workflows from one hetida designer instance to another, e.g. from a test environment to a production environment.
 
-This guide assumes the default docker-compose setup described in the project README.
+This guide assumes the default docker compose setup described in the project README.
 
 ## Import via user interface
 

@@ -18,7 +18,7 @@ from hetdesrun.webservice.config import get_config
 async def test_base_url_fetching_internally():
     """Test the case when backend and runtime are served from the same service"""
     get_all_adapters_response_mock = [
-        AdapterFrontendDto.parse_obj(
+        AdapterFrontendDto.model_validate(
             {
                 "id": "test_adapter_key",
                 "url": "http://hetida.de",

@@ -36,7 +36,7 @@ def test_function_header_no_params():
         state="DRAFT",
         type="COMPONENT",
         content="",
-        test_wiring=[],
+        test_wiring={},
     )
     func_header = generate_function_header(component)
     assert (
@@ -80,7 +80,7 @@ def test_function_header_description_line_too_long():
         state="DRAFT",
         type="COMPONENT",
         content="",
-        test_wiring=[],
+        test_wiring={},
     )
     func_header = generate_function_header(component)
     assert "# noqa: E501" in func_header
@@ -104,7 +104,7 @@ def test_function_header_multiple_inputs():
         state="DRAFT",
         type="COMPONENT",
         content="",
-        test_wiring=[],
+        test_wiring={},
     )
     func_header = generate_function_header(component)
     assert "main(*, x, okay)" in func_header
@@ -223,7 +223,7 @@ def test_function_header_optional_inputs():
         state="DRAFT",
         type="COMPONENT",
         content="",
-        test_wiring=[],
+        test_wiring={},
     )
     func_header = generate_function_header(component)
     assert '"default_value": False' in func_header
@@ -281,7 +281,7 @@ def test_function_header_optional_inputs():
         state="DRAFT",
         type="COMPONENT",
         content="",
-        test_wiring=[],
+        test_wiring={},
     )
     with pytest.raises(
         TypeError,
@@ -372,7 +372,7 @@ async def main(
         type="COMPONENT",
         released_timestamp="2019-12-01T12:00:00+00:00",
         content=example_code_async_def,
-        test_wiring=[],
+        test_wiring={},
     )
 
     updated_code = update_code(component)
@@ -400,7 +400,7 @@ def test_update_code_without_io():
         type="COMPONENT",
         released_timestamp="2019-12-01T12:00:00+00:00",
         content=example_code,
-        test_wiring=[],
+        test_wiring={},
     )
     updated_component = TransformationRevision(
         io_interface=IOInterface(inputs=[], outputs=[]),
@@ -413,7 +413,7 @@ def test_update_code_without_io():
         state="DRAFT",
         type="COMPONENT",
         content=example_code,
-        test_wiring=[],
+        test_wiring={},
     )
     new_code = update_code(updated_component)
     assert """return {"z": x+y}""" in new_code
@@ -478,6 +478,20 @@ def test_add_documentation_as_module_docstring():
         component_tr.content, component_tr
     )
     assert 'test\n"""' in code_with_updated_module_doc_string
+
+    # Not adding if module docs already present:
+
+    component_tr.content = '"""Some docs"""' + "\n" + component_tr.content
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert "test" not in code_with_updated_module_doc_string
+
+    component_tr.content = 'r"""Some docs"""' + "\n" + component_tr.content
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert "test" not in code_with_updated_module_doc_string
 
 
 def test_add_test_wiring_dictionary():

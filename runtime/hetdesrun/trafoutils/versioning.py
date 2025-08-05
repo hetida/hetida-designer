@@ -73,7 +73,11 @@ def get_newest_released_revision(
         return None
 
     if use_release_date:
-        return sorted(trafos, key=lambda x: x.released_timestamp or datetime.datetime.min)[-1]
+        return sorted(
+            trafos,
+            key=lambda x: x.released_timestamp
+            or datetime.datetime.min.replace(tzinfo=datetime.UTC),
+        )[-1]
 
     return get_newest_by_semver(trafos)
 
@@ -105,3 +109,13 @@ def get_newest_released_trafo_rev(
         )
 
     return newest_per_revision_group
+
+
+def get_current_revision_for_drafts(trafo_ids: set[UUID]) -> dict[UUID, TransformationRevision]:
+    draft_trafos = get_multiple_transformation_revisions(
+        FilterParams(
+            ids=list(trafo_ids),
+            include_dependencies=False,
+        )
+    )
+    return {trafo.id: trafo for trafo in draft_trafos}

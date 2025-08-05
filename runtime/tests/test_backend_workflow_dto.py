@@ -886,16 +886,6 @@ def test_operator_validators_accept_valid_operator():
     WorkflowOperatorFrontendDto(**valid_operator)
 
 
-def test_operator_validator_is_released_identifies_state_other_than_released():
-    operator_with_invalid_state = deepcopy(valid_operator)
-    operator_with_invalid_state["state"] = "DRAFT"
-
-    with pytest.raises(ValueError) as exc:  # noqa: PT011
-        WorkflowOperatorFrontendDto(**operator_with_invalid_state)
-
-    assert "released" in str(exc.value)
-
-
 valid_link_json = valid_workflow_example_iso_forest["links"][0]
 
 

@@ -21,6 +21,10 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -91,7 +95,7 @@ async def create_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto
 
@@ -134,7 +138,7 @@ async def get_component_revision_by_id(
     component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         transformation_revision
     )
-    logger.debug(component_dto.json())
+    logger.debug(component_dto.model_dump_json())
 
     return component_dto
 
@@ -214,7 +218,7 @@ async def update_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto
 
@@ -266,7 +270,7 @@ async def execute_component_revision(
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
     job_id: UUID | None = None,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision of type component.
 
     This endpoint is deprecated and will be removed soon,
@@ -287,7 +291,9 @@ async def execute_component_revision(
             job_id=job_id,
         )
 
-    return await handle_trafo_revision_execution_request(exec_by_id)
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 @component_router.post(
@@ -345,6 +351,6 @@ async def bind_wiring_to_component_revision(
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_component_dto.json())
+    logger.debug(persisted_component_dto.model_dump_json())
 
     return persisted_component_dto

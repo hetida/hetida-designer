@@ -14,7 +14,7 @@ def test_blob_storage_adapter_config_default_values() -> None:
 
 
 def test_blob_storage_adapter_config_validator_no_anonymous_bucket_creation() -> None:
-    anonymous_config = BlobStorageAdapterConfig(anonymous=True)
+    anonymous_config = BlobStorageAdapterConfig(BLOB_STORAGE_ADAPTER_ANONYMOUS=True)
 
     assert anonymous_config.anonymous is True
     assert anonymous_config.allow_bucket_creation is False

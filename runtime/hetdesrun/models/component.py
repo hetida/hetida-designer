@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.base import AbstractNode
@@ -20,7 +20,7 @@ class UnnamedInput(BaseModel):
     type: DataType = Field(  # noqa: A003
         ...,
         description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
-        example=DataType.Float,
+        examples=[DataType.Float],
     )
 
 
@@ -30,14 +30,15 @@ class ComponentInput(UnnamedInput):
     Represents an input of a Component.
     """
 
-    name: str = Field(..., example="x", description="must be a valid Python identifier")
+    name: str = Field(..., examples=["x"], description="must be a valid Python identifier")
     default: bool = Field(False, description="Whether this input has a default value")
     default_value: Any = Field(
         None,
         description=("The default value for this input if default is True."),
     )
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
 
@@ -45,14 +46,15 @@ class ComponentInput(UnnamedInput):
 class ComponentOutput(BaseModel):
     id: UUID  # noqa: A003
 
-    name: str = Field(..., example="z", description="must be a valid Python identifier")
+    name: str = Field(..., examples=["z"], description="must be a valid Python identifier")
     type: DataType = Field(  # noqa: A003
         ...,
         description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
-        example=DataType.Integer,
+        examples=[DataType.Integer],
     )
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
 
@@ -71,7 +73,7 @@ class ComponentRevision(BaseModel):
     )
     function_name: str = Field(
         ...,
-        example="main",
+        examples=["main"],
         title="Entry point function name",
         description="The name of the function in the provided code module"
         "which is the entrypoint for this component",
@@ -80,15 +82,18 @@ class ComponentRevision(BaseModel):
     inputs: list[ComponentInput]
     outputs: list[ComponentOutput]
 
-    @validator("function_name")
+    @field_validator("function_name")
+    @classmethod
     def function_name_valid_python_identifier(cls, function_name: str) -> str:
         return valid_python_identifier(cls, function_name)
 
-    @validator("inputs", each_item=False)
+    @field_validator("inputs")
+    @classmethod
     def input_names_unique(cls, inputs: list[ComponentInput]) -> list[ComponentInput]:
         return names_unique(cls, inputs)
 
-    @validator("outputs", each_item=False)
+    @field_validator("outputs")
+    @classmethod
     def output_names_unique(cls, outputs: list[ComponentOutput]) -> list[ComponentOutput]:
         return names_unique(cls, outputs)
 

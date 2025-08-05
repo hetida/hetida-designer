@@ -147,8 +147,8 @@ to explicitly activate only the sql adapter and no other adapters.
 After having made adaptions to the configuration described above you need to (re)start with
 
 ```bash
-docker-compose -f docker-compose-sql-example.yml stop
-docker-compose -f docker-compose-sql-example.yml up
+docker compose -f docker-compose-sql-example.yml stop
+docker compose -f docker-compose-sql-example.yml up
 ```
 
 In the execution dialog, you should now be able to select "SQL Adapter" for inputs and outputs of type DATAFRAME.

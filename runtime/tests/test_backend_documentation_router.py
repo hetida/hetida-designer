@@ -74,7 +74,7 @@ async def test_update_documentation_of_component_dto_with_unmatching_ids(
         id=get_uuid_from_seed("documentation"), document="new documentation"
     )
 
-    json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
+    json_of_new_documentation = json.loads(new_documentation.model_dump_json(by_alias=True))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -96,7 +96,7 @@ async def test_update_documentation_of_component_dto(
         id=get_uuid_from_seed("component 1"), document="new documentation"
     )
 
-    json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
+    json_of_new_documentation = json.loads(new_documentation.model_dump_json(by_alias=True))
 
     async with async_test_client as ac:
         response = await ac.put(

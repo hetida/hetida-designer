@@ -17,7 +17,7 @@ class MockKafkaConsumer:
     """
 
     def __init__(self, topic, msg_object):
-        self.exec_msg_str = msg_object.json()
+        self.exec_msg_str = msg_object.model_dump_json()
         self.topic = topic
 
     def __aiter__(self):

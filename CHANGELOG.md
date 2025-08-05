@@ -1,3 +1,43 @@
+## 0.11.4
+* Fix component code logging, enrich messages and make them part of execution responses. In particular it can be viewed in the test result display.
+* reduce autosave interval and provide some error message if updating trafos fails.
+* include job id to load/send requests against generic rest adapters to improve tracability of execution jobs
+* improve / clearify test execution result / protocol view
+* fix component adapter sink search backend endpoint
+* replace hyphens by underscore in hdctl. This allows to import component py files directly.
+* fix / improve some outdated docs
+* fix newline handling in String outputs or in json representation of ANY outputs leading to problems in the test execution result / protocol view.
+
+## 0.11.3
+* Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
+* Add additional request measurements for communication between backend and runtime
+* Fix auth role checking resulting in 403 when role checking is deactivated but some roles are present in the default role key.
+* Fix getting dependant trafos / nested trafos
+
+## 0.11.2
+* Add pure uvicorn mode, allowing to circumvent usage of gunicorn for now.
+
+## 0.11.1
+* include docker-compose changes
+
+## 0.11.0
+* **BREAKING CHANGE**: Pydantic V2 migration. 
+  * validation is more strict, in particular for component/workflow outputs
+  * serialization is less tolerant: If your workflow actually provides a string value for a float this will raise an Exception now
+  * components using Pydantic need to migrate as well
+    * **UPGRADE NOTE**: base components/workflows should be redeployed overwriting released trafos
+  * overhauling parsing and validation may result in minor differences generally. E.g.
+    serialization of UTC datetimes may use "Z" instead of "+00:00" to indicate the timezone.
+* performance improvements through pydantic V2 and avoiding some serialization/desiralization loops.
+* improved logging and execution results:
+  * Include information on loaded and sent data and memory usage.
+  * Additional steps of the execution process are measured.
+  * Restructure execution logging and provide more hints on executed trafo. Make some details of execution logging configurable.
+* dependency / library upgrades. In particular plotly upgrade.
+* fix component editor cursor jumping
+* improve docker-compose files
+* **BREAKING CHANGE**: New default of gunicorn MAX_WORKERS: 1
+
 ## 0.10.2
 * fix buggy comparison to "null" string for optional input default values
 

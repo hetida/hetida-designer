@@ -25,7 +25,7 @@ def main():
     # ***** DO NOT EDIT LINES ABOVE *****
 
     # write your function code here.
-    return {"context_info": get_plot_target_settings().dict()}
+    return {"context_info": get_plot_target_settings().model_dump()}
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {}

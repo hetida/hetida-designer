@@ -184,7 +184,7 @@ async def handle_message(
     ) + (
         f"topic={kafka_msg.topic}:partition={kafka_msg.partition:d}:offset={kafka_msg.offset:d}: key={kafka_msg.key} timestamp={kafka_msg.timestamp}"  # noqa: E501, ISC003
         + "\nExecution Result:\n"
-        + exec_response.json(indent=2)
+        + exec_response.model_dump_json(indent=2)
     )
 
     logger.info(result_msg)
@@ -220,7 +220,7 @@ async def start_consumption_mode() -> None:
         "consumption mode exec:\n%s",
         relevant_kafka_config_key,
         str(multi),
-        consumption_mode_exec_base.json(indent=2),
+        consumption_mode_exec_base.model_dump_json(indent=2),
     )
     await consumer.start()
 

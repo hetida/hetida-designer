@@ -351,7 +351,7 @@ def update_code(
 
 def add_documentation_as_module_doc_string(code: str, tr: TransformationRevision) -> str:
     current_trafo_doc_stripped = tr.documentation.strip()
-    if code.startswith('"""') or current_trafo_doc_stripped == "":
+    if code.startswith(('"""', 'r"""')) or current_trafo_doc_stripped == "":
         return code
 
     mod_doc_string = (
@@ -366,7 +366,9 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         expanded_code = update_module_level_variable(
             code=code,
             variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
-            value=json.loads(tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)),
+            value=json.loads(
+                tr.test_wiring.model_dump_json(exclude_unset=True, exclude_defaults=True)
+            ),
         )
     except CodeParsingException as e:
         msg = (
@@ -384,7 +386,7 @@ def add_release_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
             code=code,
             variable_name="RELEASE_WIRING",
             value=json.loads(
-                tr.release_wiring.json(exclude_unset=True, exclude_defaults=True)
+                tr.release_wiring.model_dump_json(exclude_unset=True, exclude_defaults=True)
                 if tr.release_wiring is not None
                 else "null"
             ),

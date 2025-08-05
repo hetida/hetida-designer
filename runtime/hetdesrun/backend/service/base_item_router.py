@@ -113,7 +113,7 @@ async def get_transformation_revision_by_id(
     transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
         transformation_revision
     )
-    logger.debug(transformation_revision_dto.json())
+    logger.debug(transformation_revision_dto.model_dump_json())
 
     return transformation_revision_dto
 
@@ -171,7 +171,7 @@ async def create_transformation_revision(
     persisted_transformation_dto = TransformationRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_transformation_dto.json())
+    logger.debug(persisted_transformation_dto.model_dump_json())
 
     return persisted_transformation_dto
 
@@ -254,6 +254,6 @@ async def update_transformation_revision(
     persisted_transformation_dto = TransformationRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
     )
-    logger.debug(persisted_transformation_dto.json())
+    logger.debug(persisted_transformation_dto.model_dump_json())
 
     return persisted_transformation_dto

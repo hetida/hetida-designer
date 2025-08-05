@@ -66,7 +66,9 @@ def test_get_transformation_revisions(caplog):
     ) as mocked_get_from_db:
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.json = mock.Mock(return_value=[json.loads(tr.json()) for tr in tr_list])
+        resp_mock.json = mock.Mock(
+            return_value=[json.loads(tr.model_dump_json()) for tr in tr_list]
+        )
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
@@ -377,7 +379,7 @@ def test_deprecate_all_but_latest_in_group():
     stored_wf = TransformationRevision(**stored_wf_json)
     deprecated_version_of_stored_wf = deepcopy(stored_wf)
     deprecated_version_of_stored_wf.deprecate()
-    deprecated_stored_json = json.loads(deprecated_version_of_stored_wf.json())
+    deprecated_stored_json = json.loads(deprecated_version_of_stored_wf.model_dump_json())
 
     with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.utils.get_transformation_revisions",
@@ -394,7 +396,7 @@ def test_deprecate_all_but_latest_in_group():
             assert patched_update.call_count == 1
             _, args, _ = patched_update.mock_calls[0]
             update_tr = args[0]
-            update_json = json.loads(update_tr.json())
+            update_json = json.loads(update_tr.model_dump_json())
             del update_json["disabled_timestamp"]
             del deprecated_stored_json["disabled_timestamp"]
             assert update_json == deprecated_stored_json

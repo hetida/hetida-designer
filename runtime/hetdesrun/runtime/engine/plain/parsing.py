@@ -89,11 +89,15 @@ def load_func(
         component_func = import_func_from_code(
             code,
             component.function_name,
+            component_name=str(component.name),
+            component_tag=component.tag,
+            component_uuid_str=str(component.uuid),
         )
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
             f"Could not load node function (Code module uuid: "
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
+            f" {component.name} ({str(component.tag)})) "
             f"function name: {component.function_name})"
         )
         runtime_logger.warning(msg)
@@ -270,6 +274,7 @@ def recursively_parse_workflow_node(
     """
     node_name = node.name if node.name is not None else "UNKNOWN"
     new_sub_nodes: dict[str, Node] = {}
+
     for sub_input_node in node.sub_nodes:
         new_sub_node: Node
         if isinstance(sub_input_node, WorkflowNode):
@@ -284,6 +289,7 @@ def recursively_parse_workflow_node(
             assert isinstance(  # noqa: S101
                 sub_input_node, ComponentNode
             )  # hint for mypy
+
             new_sub_node = parse_component_node(
                 sub_input_node,
                 component_dict,
@@ -291,6 +297,7 @@ def recursively_parse_workflow_node(
                 name_prefix + node_name + HIERARCHY_SEPARATOR,
                 id_prefix + node.id + HIERARCHY_SEPARATOR,
             )
+
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
     connections: list[WorkflowConnection] = node.connections
@@ -389,7 +396,7 @@ def recursively_parse_workflow_node(
                 if inp.name in optional_input_mappings  # does have a default value
             ],
             optional=True,
-            id_suffix="workflow_constant_values",
+            id_suffix="workflow_constant_values_optional",
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(

@@ -24,6 +24,7 @@ kaleido
 keras
 libcst
 lightgbm
+msgspec
 numba!=0.56.2 # due to setuptools dependency resolution problems
 numpy
 odfpy
@@ -33,10 +34,11 @@ ortools
 pandas
 pendulum
 pillow
-plotly<6
+plotly<7
 psycopg2
 pyarrow
-pydantic[dotenv]>=1.8.2,<2
+pydantic[dotenv]<3,>=2.11
+pydantic-settings
 pytest
 pytest-asyncio
 python-jose[cryptography]

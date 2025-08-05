@@ -86,8 +86,8 @@ def upsert_thing_nodes(
             )
             continue
 
-        # Use node.dict() and add/override specific fields
-        node_dict = node.dict()
+        # Use node.model_dump() and add/override specific fields
+        node_dict = node.model_dump()
         node_dict.update(
             {
                 "element_type_id": element_type.id,  # Add foreign key

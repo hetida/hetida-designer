@@ -25,6 +25,7 @@ from hetdesrun import configure_logging
 logger = logging.getLogger(__name__)
 configure_logging(logger)
 
+
 # must be after logging config:
 from hetdesrun.webservice import get_app
 from hetdesrun.webservice.config import get_config

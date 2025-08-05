@@ -138,7 +138,7 @@ async def load_data(
             msg = (
                 "To use the BLOB storage adapter each filtered "
                 "source must have 'ref_id' and 'ref_key' set!\n"
-                f"That is not the case for {filtered_source.json()}"
+                f"That is not the case for {filtered_source.model_dump_json()}"
             )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)

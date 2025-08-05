@@ -9,6 +9,7 @@ import { IAppState } from '../../store/app.state';
 import {
   ComponentTransformation,
   Transformation,
+  TrafoUpdateState,
   WorkflowTransformation,
   UnitTestResults
 } from '../../model/transformation';
@@ -28,6 +29,7 @@ import {
 } from 'src/app/store/execution-protocol/execution-protocol.actions';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { Utils } from 'src/app/utils/utils';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +38,8 @@ export class TransformationService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
     private readonly localStorageService: LocalStorageService,
-    private readonly store: Store<IAppState>
+    private readonly store: Store<IAppState>,
+    private readonly notificationService: NotificationService
   ) {}
 
   createTransformation(transformation: Transformation): Observable<never> {
@@ -58,6 +61,14 @@ export class TransformationService {
       .updateTransformation(transformation)
       .pipe(
         tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
@@ -70,6 +81,14 @@ export class TransformationService {
       .upgradeWorkflowOperators(transformation)
       .pipe(
         tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
@@ -84,6 +103,14 @@ export class TransformationService {
       .upgradeSingleOperator(transformation, operatorId, newRevisionId)
       .pipe(
         tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );

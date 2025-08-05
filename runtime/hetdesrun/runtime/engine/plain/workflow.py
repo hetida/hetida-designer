@@ -1,13 +1,14 @@
 from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
 from typing import Any, Protocol, TypeVar
+from uuid import UUID
 
 from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.models.run import HIERARCHY_SEPARATOR, ConfigurationInput
-from hetdesrun.runtime import runtime_execution_logger
+from hetdesrun.runtime import internal_runtime_execution_logger, runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.context import ExecutionContext
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
@@ -22,6 +23,7 @@ from hetdesrun.runtime.exceptions import (
 )
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
+from hetdesrun.webservice.config import get_config
 
 runtime_execution_logger.addFilter(execution_context_filter)
 
@@ -144,7 +146,7 @@ class ComputationNode:
     def _check_inputs(self) -> None:
         """Check and handle missing inputs"""
         if not self.all_required_inputs_set():
-            runtime_execution_logger.warning(
+            internal_runtime_execution_logger.warning(
                 "Computation node execution failed due to missing input source"
             )
             raise MissingInputSource(
@@ -165,14 +167,14 @@ class ComputationNode:
                     f"Circular Dependency detected whith input '{input_name}' pointing to "
                     f"output '{output_name}' of operator {another_node.operator_hierarchical_id}"
                 )
-                runtime_execution_logger.warning(msg)
+                internal_runtime_execution_logger.warning(msg)
                 raise CircularDependency(msg).set_context(self.context)
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
             except KeyError as exc:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_execution_logger.warning(
+                internal_runtime_execution_logger.warning(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
@@ -192,7 +194,7 @@ class ComputationNode:
             function_result = function_result if function_result is not None else {}
         except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
             if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(exc, "error_code"):
-                runtime_execution_logger.warning(
+                internal_runtime_execution_logger.warning(
                     "User raised a hetida designer exception in component code.",
                     exc_info=True,
                 )
@@ -204,30 +206,33 @@ class ComputationNode:
                     else None,
                 ).set_context(self.context) from exc
             msg = "Unexpected error from user code."
-            runtime_execution_logger.warning(msg, exc_info=True)
+            internal_runtime_execution_logger.warning(msg, exc_info=True)
             raise UnexpectedComponentException(msg).set_context(self.context) from exc
 
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
             msg = "Component did not return an output dict."
-            runtime_execution_logger.warning(msg, exc_info=True)
+            internal_runtime_execution_logger.warning(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
 
     async def _compute_result(self) -> dict[str, Any]:
-        # set filter for contextualized logging
-        context_dict = self.context.dict()
-        execution_context_filter.bind_context(**context_dict)
-
-        runtime_execution_logger.info("Starting computation")
         self._in_computation = True
-
         self._check_inputs()
 
         # Gather data from input sources (detects cycles):
         input_values = await self._gather_data_from_inputs()
+
+        # set filter for contextualized logging
+        context_dict = self.context.model_dump()
+        execution_context_filter.bind_context(**context_dict)
+        if (
+            get_config().log_technical_nodes
+            or self.context.currently_executed_transformation_id != "UNKNOWN"
+        ):
+            internal_runtime_execution_logger.debug("Starting computation")
 
         # Actual execution of current node
         function_result = await self._run_comp_func(input_values)
@@ -255,7 +260,7 @@ class Workflow:
         sub_nodes: list[Node],
         input_mappings: dict[str, tuple[Node, str]],  # map wf input to sub_node
         output_mappings: dict[str, tuple[Node, str]],  # map sub_node outputs to wf outputs
-        tr_id: str,
+        tr_id: UUID,
         tr_name: str,
         tr_tag: str,
         inputs: dict[str, tuple[Node, str]] | None = None,
@@ -301,7 +306,7 @@ class Workflow:
         self.operator_hierarchical_name = operator_hierarchical_name
 
         self.context = ExecutionContext(
-            currently_executed_transformation_id=tr_id,
+            currently_executed_transformation_id=str(tr_id),
             currently_executed_transformation_name=tr_name,
             currently_executed_transformation_tag=tr_tag,
             currently_executed_transformation_type=Type.WORKFLOW,
@@ -323,10 +328,11 @@ class Workflow:
         optional: bool = False,
         add_new_provider_node_to_workflow: bool = True,
         id_suffix: str = "",
-    ) -> None:
+    ) -> dict[str, Any]:
         """Add a node with no inputs providing workflow input data"""
         try:
-            parsed_values = parse_dynamically_from_datatypes(values, optional).dict()
+            parsed_values = dict(parse_dynamically_from_datatypes(values, optional))
+
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "
@@ -345,6 +351,8 @@ class Workflow:
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
         self.add_inputs({key: (Const_Node, key) for key in parsed_values})
+
+        return parsed_values
 
     def _wire_workflow_inputs(self) -> None:
         """Wire the current inputs via the current input mappings to the appropriate sub nodes"""
@@ -368,10 +376,10 @@ class Workflow:
         assert isinstance(self, Workflow)  # for mypy # noqa: S101
         self._wire_workflow_inputs()
 
-        context_dict = self.context.dict()
+        context_dict = self.context.model_dump()
         execution_context_filter.bind_context(**context_dict)
 
-        runtime_execution_logger.info("Starting computation")
+        internal_runtime_execution_logger.debug("Starting computation")
 
         # gather result from workflow operators
         results = {}
@@ -399,7 +407,7 @@ class Workflow:
                     f"Declared output '{sub_node_output_name}' "
                     "not contained in returned dictionary."
                 )
-                runtime_execution_logger.warning(msg, exc_info=True)
+                internal_runtime_execution_logger.warning(msg, exc_info=True)
                 raise MissingOutputException(msg).set_context(sub_node.context) from e
             except RuntimeExecutionError as e:
                 raise e

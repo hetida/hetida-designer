@@ -514,7 +514,7 @@ async def test_execute_for_component_with_nan_and_nat_input(
 
         response_nan = await ac.post(
             "/api/components/" + str(component_id_any) + "/execute",
-            json=json.loads(wiring_dto_nan.json(by_alias=True)),
+            json=json.loads(wiring_dto_nan.model_dump_json(by_alias=True)),
         )
 
         assert response_nan.status_code == 200
@@ -526,7 +526,7 @@ async def test_execute_for_component_with_nan_and_nat_input(
 
         response_nat = await ac.post(
             "/api/components/" + str(component_id_series) + "/execute",
-            json=json.loads(wiring_dto_nat.json(by_alias=True)),
+            json=json.loads(wiring_dto_nat.model_dump_json(by_alias=True)),
         )
 
         assert response_nat.status_code == 200

@@ -1,13 +1,12 @@
 from uuid import UUID  # noqa: A005
 
-from pydantic import Field, root_validator
+from pydantic import ConfigDict, Field
 
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.persistence.models.io import Position
 from hetdesrun.persistence.models.operator import Operator
-from hetdesrun.utils import State
 
 
 class WorkflowOperatorFrontendDto(BasicInformation):
@@ -16,22 +15,6 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     outputs: list[ConnectorFrontendDto] = []
     pos_x: int = 0
     pos_y: int = 0
-
-    @root_validator()
-    def is_not_draft(cls, values: dict) -> dict:
-        try:
-            state = values["state"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check if operator has state DRAFT if the attribute 'state' is missing!"
-            ) from e
-        if state == State.DRAFT:
-            raise ValueError(
-                f"Only released components/workflows can be dragged into a workflow! "
-                f"Operator with id {values['id']} of type {values['type']}"
-                f" has state {values['state']} "
-            )
-        return values
 
     def to_operator(self) -> Operator:
         return Operator(
@@ -44,8 +27,8 @@ class WorkflowOperatorFrontendDto(BasicInformation):
             state=self.state,
             version_tag=self.tag,
             transformation_id=self.transformation_id,
-            inputs=[connector.to_connector() for connector in self.inputs],
-            outputs=[connector.to_connector() for connector in self.outputs],
+            inputs=[dict(connector.to_connector()) for connector in self.inputs],
+            outputs=[dict(connector.to_connector()) for connector in self.outputs],
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
@@ -73,5 +56,4 @@ class WorkflowOperatorFrontendDto(BasicInformation):
             posY=operator.position.y,
         )
 
-    class Config:
-        alias_generator = to_camel
+    model_config = ConfigDict(alias_generator=to_camel)

@@ -10,7 +10,11 @@ from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     update_or_create_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBIntegrityError,
+    DBNestingCycleDetected,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
@@ -35,8 +39,8 @@ class UpdateProcessStatus(str, Enum):
 class TrafoUpdateProcessSummary(BaseModel):
     status: UpdateProcessStatus
     msg: str = Field("", description="details / error messages")
-    name: str | None
-    version_tag: str | None
+    name: str | None = None
+    version_tag: str | None = None
 
 
 def import_importable(
@@ -110,6 +114,7 @@ def import_importable(
 
         except (
             DBIntegrityError,
+            DBNestingCycleDetected,
             DBNotFoundError,
             ModelConstraintViolation,
         ) as e:

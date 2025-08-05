@@ -319,7 +319,7 @@ def test_wrap_component_in_tr_workflow():
 def test_to_workflow_node():
     tr_component = TransformationRevision(**valid_component_tr_dict)
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
-    nested_transformations = {tr_workflow.content.operators[0].id: tr_component}
+    nested_transformations = {tr_workflow.content.operators[0].transformation_id: tr_component}
 
     workflow_node = tr_workflow.to_workflow_node(
         uuid4(), nested_nodes(tr_workflow, nested_transformations)
