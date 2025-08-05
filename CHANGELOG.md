@@ -1,3 +1,15 @@
+## 0.12.0
+* new feature: draft operators: workflows in draft state can now contain operators in draft state
+  * releasing requires that all operators are released
+  * the toolbar button for upgrading operators now also upgrades draft operators to the current state of the draft revision.
+  * detects / prevents cycles 
+* fixed crushed workflow icon
+* fixed bug in blob storage adapter
+* structured logging
+* some updates to base components
+* improve auth token refresh option documentation
+* several smaller fixes
+
 ## 0.11.4
 * Fix component code logging, enrich messages and make them part of execution responses. In particular it can be viewed in the test result display.
 * reduce autosave interval and provide some error message if updating trafos fails.
