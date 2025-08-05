@@ -12,6 +12,7 @@ pytest-random-order
 pytest-xdist
 rope
 ruff
+structlog
 types-pytz
 types-requests
 watchfiles

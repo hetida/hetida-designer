@@ -173,7 +173,10 @@ async def create_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     if get_config().log_updated_trafo_revision:
-        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
+        logger.debug(
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
+        )
 
     return persisted_transformation_revision
 
@@ -974,7 +977,10 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
     if get_config().log_updated_trafo_revision:
-        logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
+        logger.debug(
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
+        )
 
     return persisted_transformation_revision
 
@@ -1067,7 +1073,8 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
     if get_config().log_updated_trafo_revision:
         logger.debug(
-            "Updated trafo:\n%s", persisted_transformation_revision.model_dump_json(indent=2)
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
         )
 
     return persisted_transformation_revision

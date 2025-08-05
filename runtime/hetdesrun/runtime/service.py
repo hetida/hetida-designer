@@ -75,13 +75,15 @@ def handle_runtime_exec_result_logging(
     # (i.e. explicitly enforced)
     if enforce_result_logging or not get_config().is_backend_service:
         runtime_logger.info(
-            "Execution Result Response:\n%s",
-            wf_exec_result.model_dump_json(
-                indent=2,
-                exclude={"output_results_by_output_name"}
-                if not get_config().log_direct_provisioning_outputs
-                else None,
-            ),
+            "Execution Result Response",
+            extra={
+                "execution_result_response": wf_exec_result.model_dump(
+                    mode="json",
+                    exclude={"output_results_by_output_name"}
+                    if not get_config().log_direct_provisioning_outputs
+                    else None,
+                )
+            },
         )
     return wf_exec_result
 

@@ -28,6 +28,56 @@ class SimplifiedLogRecord(BaseModel):
     operator_hierarchical_id: str | None = None
 
 
+class CustomAttributeProcessor:
+    """Processor that extracts custom attributes from the stdlib log record"""
+
+    _STANDARD_LOG_RECORD_ATTRS = {
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "getMessage",
+        "taskName",
+        "_record",
+    }
+
+    def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        if record := event_dict.get("_record"):
+            for key, value in record.__dict__.items():
+                if key not in self._STANDARD_LOG_RECORD_ATTRS and not key.startswith("_"):
+                    event_dict[key] = value
+        return event_dict
+
+
+class FieldRenamer:
+    """Renames configured field names in the logs to corresponding aliases."""
+
+    _FIELD_MAP = get_config().log_fields_to_rename
+
+    def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        for orig_name, new_name in self._FIELD_MAP.items():
+            if orig_name in event_dict:
+                event_dict[new_name] = event_dict.pop(orig_name)
+        return event_dict
+
+
 ExecContextDict = TypedDict(  # noqa: UP013
     "ExecContextDict",
     {
