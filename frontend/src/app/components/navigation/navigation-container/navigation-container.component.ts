@@ -15,81 +15,89 @@ import { KeyValue } from '@angular/common';
 import { Utils } from '../../../utils/utils';
 
 @Component({
-  selector: 'hd-navigation-container',
-  templateUrl: './navigation-container.component.html',
-  styleUrls: ['./navigation-container.component.scss']
+    selector: 'hd-navigation-container',
+    templateUrl: './navigation-container.component.html',
+    styleUrls: ['./navigation-container.component.scss']
 })
 export class NavigationContainerComponent implements OnInit {
-  constructor(
-    private readonly transformationStore: Store<TransformationState>,
-    private readonly transformationService: TransformationService,
-    private readonly popoverService: PopoverService,
-    private readonly transformationActionService: TransformationActionService,
-    private readonly authService: AuthService
-  ) {}
+    constructor(
+        private readonly transformationStore: Store<TransformationState>,
+        private readonly transformationService: TransformationService,
+        private readonly popoverService: PopoverService,
+        private readonly transformationActionService: TransformationActionService,
+        private readonly authService: AuthService
+    ) { }
 
-  readonly searchFilter = new FormControl('');
-  readonly typeFilter = new FormControl(TransformationType.WORKFLOW);
+    readonly searchFilter = new FormControl('');
+    readonly typeFilter = new FormControl(TransformationType.WORKFLOW);
 
-  transformationsByCategory: { [category: string]: Transformation[] };
+    readonly showDeprecatedFilter = new FormControl(false);
 
-  getFilterState(type: string): boolean {
-    return (this.typeFilter.value as string) === type;
-  }
+    transformationsByCategory: { [category: string]: Transformation[] };
 
-  get filterChanges(): Observable<TransformationType> {
-    return this.typeFilter.valueChanges;
-  }
+    getFilterState(type: string): boolean {
+        return (this.typeFilter.value as string) === type;
+    }
 
-  get searchFilterChanges(): Observable<string> {
-    return this.searchFilter.valueChanges;
-  }
+    get filterChanges(): Observable<TransformationType> {
+        return this.typeFilter.valueChanges;
+    }
 
-  trackCategory(_index: number, category: any) {
-    return category.key;
-  }
+    get searchFilterChanges(): Observable<string> {
+        return this.searchFilter.valueChanges;
+    }
 
-  ngOnInit(): void {
-    this.authService.isAuthenticated$().subscribe(() => {
-      this.transformationService.fetchAllTransformations();
-    });
+    get deprecatedFilterChanges(): Observable<boolean> {
+        return this.showDeprecatedFilter.valueChanges;
+    }
 
-    combineLatest([this.filterChanges, this.searchFilterChanges])
-      .pipe(
-        switchMap(([transformationType, searchString]) =>
-          this.transformationStore.select(
-            selectTransformationsByCategoryAndName(
-              transformationType,
-              searchString
+    trackCategory(_index: number, category: any) {
+        return category.key;
+    }
+
+    ngOnInit(): void {
+        this.authService.isAuthenticated$().subscribe(() => {
+            this.transformationService.fetchAllTransformations();
+        });
+
+        combineLatest([this.filterChanges, this.searchFilterChanges, this.deprecatedFilterChanges])
+            .pipe(
+                switchMap(([transformationType, searchString, showDeprecated]) =>
+                    this.transformationStore.select(
+                        selectTransformationsByCategoryAndName(
+                            transformationType,
+                            searchString,
+                            showDeprecated
+                        )
+                    )
+                )
             )
-          )
-        )
-      )
-      .subscribe(filteredTransformations => {
-        this.transformationsByCategory = filteredTransformations;
-      });
+            .subscribe(filteredTransformations => {
+                this.transformationsByCategory = filteredTransformations;
+            });
 
-    this.filterChanges.subscribe(() => this.popoverService.closePopover());
-    this.typeFilter.updateValueAndValidity({ emitEvent: true });
-    this.searchFilter.updateValueAndValidity({ emitEvent: true });
-  }
+        this.filterChanges.subscribe(() => this.popoverService.closePopover());
+        this.typeFilter.updateValueAndValidity({ emitEvent: true });
+        this.searchFilter.updateValueAndValidity({ emitEvent: true });
+        this.showDeprecatedFilter.updateValueAndValidity({ emitEvent: true });
+    }
 
-  newWorkflow(): void {
-    this.transformationActionService.newWorkflow();
-  }
+    newWorkflow(): void {
+        this.transformationActionService.newWorkflow();
+    }
 
-  newComponent(): void {
-    this.transformationActionService.newComponent();
-  }
+    newComponent(): void {
+        this.transformationActionService.newComponent();
+    }
 
-  closePopover(): void {
-    this.popoverService.closePopover();
-  }
+    closePopover(): void {
+        this.popoverService.closePopover();
+    }
 
-  sortByCategoryAlphabetically(
-    categoryA: KeyValue<string, Transformation[]>,
-    categoryB: KeyValue<string, Transformation[]>
-  ): number {
-    return Utils.string.compare(categoryA.key, categoryB.key);
-  }
+    sortByCategoryAlphabetically(
+        categoryA: KeyValue<string, Transformation[]>,
+        categoryB: KeyValue<string, Transformation[]>
+    ): number {
+        return Utils.string.compare(categoryA.key, categoryB.key);
+    }
 }
