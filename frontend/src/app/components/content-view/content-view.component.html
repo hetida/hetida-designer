@@ -39,13 +39,31 @@
         <ng-template mat-tab-label>
           <span class="d-flex">
             @if (tabItem.transformation.type === _ItemType.COMPONENT) {
-              <mat-icon
-                svgIcon="icon-component"
-                class="mat-icon-svg"
-              ></mat-icon>
+              @if (tabItem.transformation.state === 'DISABLED') {
+                <mat-icon
+                  svgIcon="icon-component"
+                  class="mat-icon-svg-disabled"
+                ></mat-icon>
+              } @else {
+                <mat-icon
+                  svgIcon="icon-component"
+                  class="mat-icon-svg"
+                ></mat-icon>
+              }
             }
+
             @if (tabItem.transformation.type === _ItemType.WORKFLOW) {
-              <mat-icon svgIcon="icon-workflow" class="mat-icon-svg"></mat-icon>
+              @if (tabItem.transformation.state === 'DISABLED') {
+                <mat-icon
+                  svgIcon="icon-workflow"
+                  class="mat-icon-svg-disabled"
+                ></mat-icon>
+              } @else {
+                <mat-icon
+                  svgIcon="icon-workflow"
+                  class="mat-icon-svg"
+                ></mat-icon>
+              }
             }
           </span>
           <div class="tab-item__title">
