@@ -183,6 +183,10 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.state === RevisionState.RELEASED;
   }
 
+  isDeprecated() {
+    return this.transformation.state === RevisionState.DISABLED;
+  }
+
   get executeTooltip(): string {
     if (this.incompleteFlag === true) {
       return `Cannot execute, because the ${this.transformation.type.toLowerCase()} is incomplete.`;
@@ -191,7 +195,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   get deleteTooltip(): string {
-    if (this.isReleased()) {
+    if (this.isReleased() || this.isDeprecated()) {
       return `Cannot delete this ${this.transformation.type.toLowerCase()}, because it is already released`;
     }
     return 'Delete';

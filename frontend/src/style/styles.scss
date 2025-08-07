@@ -5,3 +5,9 @@
 @import 'typography';
 @import 'utilities';
 @import '@danielmoncada/angular-datetime-picker/assets/style/picker.min.css';
+
+.mat-icon-svg-disabled {
+  .cls-1 {
+    fill: red;
+  }
+}
