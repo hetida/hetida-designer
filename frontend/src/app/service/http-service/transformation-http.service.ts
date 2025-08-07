@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import {
   HttpClient,
   HttpParams,
-  HttpErrorResponse
+  HttpErrorResponse,
+  HttpResponse
 } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
-import { catchError, throwError, Observable } from 'rxjs';
+import { catchError, throwError, Observable, of, map } from 'rxjs';
 import {
   Transformation,
   UpdatedTransformation,
@@ -14,6 +15,12 @@ import {
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
+
+export interface DeleteResult {
+  success: boolean;
+  status: number;
+  error?: string;
+}
 
 type TrafoStringMixed = Transformation | string;
 @Injectable({
@@ -136,10 +143,23 @@ export class TransformationHttpService {
     return this.httpClient.put<Response>(url, importObj, { params });
   }
 
-  public deleteTransformation(id: string): Observable<void> {
+  public deleteTransformation(id: string): Observable<DeleteResult> {
     const url = `${this.apiEndpoint}/transformations/${id}`;
     // eslint-disable-next-line
-    return this.httpClient.delete<void>(url);
+
+    return this.httpClient.delete<void>(url, { observe: 'response' }).pipe(
+      map((response: HttpResponse<void>) => ({
+        success: true,
+        status: response.status
+      })),
+      catchError((error: HttpErrorResponse) => {
+        return of({
+          success: false,
+          status: error.status,
+          error: error.message
+        });
+      })
+    );
   }
 
   public executeTransformation(
