@@ -28,10 +28,10 @@
           ? 'Published - Released'
           : transformation.state === RevisionState.DRAFT
             ? 'Draft - Work in progress'
-            : 'Deprecated - Disabled'
+            : 'Deprecated - Disabled trafos cannot be dragged into workflows'
       }}"
       [ngClass]="{
-        'draggable-mat-icon': transformation.state !== RevisionState.DISABLED,
+        'draggable-mat-icon': transformation.state === RevisionState.DISABLED,
         'mat-icon-svg--draft': transformation.state === RevisionState.DRAFT
       }"
     >

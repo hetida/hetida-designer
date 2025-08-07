@@ -59,11 +59,13 @@ export class NavigationItemComponent {
   }
 
   public get svgIcon(): string {
-    if (this.transformation.state === RevisionState.RELEASED) {
-      return this.transformation.type === TransformationType.WORKFLOW
-        ? 'icon-published-workflow'
-        : 'icon-published-component';
-    }
+    /*
+        if (this.transformation.state === RevisionState.RELEASED) {
+          return this.transformation.type === TransformationType.WORKFLOW
+            ? 'icon-published-workflow'
+            : 'icon-published-component';
+        }
+        */
     return this.transformation.type === TransformationType.WORKFLOW
       ? 'icon-workflow'
       : 'icon-component';

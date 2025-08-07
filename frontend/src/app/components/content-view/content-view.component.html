@@ -44,10 +44,15 @@
                   svgIcon="icon-component"
                   class="mat-icon-svg-disabled"
                 ></mat-icon>
+              } @else if (tabItem.transformation.state === 'DRAFT') {
+                <mat-icon
+                  svgIcon="icon-component"
+                  class="mat-icon-svg-draft"
+                ></mat-icon>
               } @else {
                 <mat-icon
                   svgIcon="icon-component"
-                  class="mat-icon-svg"
+                  class="mat-icon-svg-released"
                 ></mat-icon>
               }
             }
@@ -58,10 +63,15 @@
                   svgIcon="icon-workflow"
                   class="mat-icon-svg-disabled"
                 ></mat-icon>
+              } @else if (tabItem.transformation.state === 'DRAFT') {
+                <mat-icon
+                  svgIcon="icon-workflow"
+                  class="mat-icon-svg-draft"
+                ></mat-icon>
               } @else {
                 <mat-icon
                   svgIcon="icon-workflow"
-                  class="mat-icon-svg"
+                  class="mat-icon-svg-released"
                 ></mat-icon>
               }
             }

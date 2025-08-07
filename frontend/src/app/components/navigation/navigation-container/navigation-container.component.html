@@ -36,9 +36,11 @@
       <span>Add component</span>
     </div>
   }
-  <mat-slide-toggle [formControl]="showDeprecatedFilter">
-    show deprecated
-  </mat-slide-toggle>
+  <div class="right-aligned-toggle mr-1">
+    <mat-slide-toggle [formControl]="showDeprecatedFilter">
+      Show deprecated
+    </mat-slide-toggle>
+  </div>
 </div>
 
 <mat-divider></mat-divider>
