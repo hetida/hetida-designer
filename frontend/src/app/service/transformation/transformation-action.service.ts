@@ -44,7 +44,10 @@ import { ExecutionResponse } from '../../components/protocol-viewer/protocol-vie
 import { IOConnector } from 'src/app/model/io-connector';
 import { Link } from 'src/app/model/link';
 import { Constant } from 'src/app/model/constant';
-import { TransformationHttpService } from '../http-service/transformation-http.service';
+import {
+  DeleteResult,
+  TransformationHttpService
+} from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
@@ -556,10 +559,22 @@ export class TransformationActionService {
 
   public doDeleteTransformation(
     transformation: Transformation
-  ): Observable<void> {
+  ): Observable<DeleteResult> {
     this.tabItemService.deselectActiveTabItem();
+
     this.queryParameterService.deleteQueryParameter(transformation.id);
-    return this.transformationService.deleteTransformation(transformation.id);
+    return this.transformationService
+      .deleteTransformation(transformation.id)
+      .pipe(
+        tap(result => {
+          if (result.success) {
+            // prettier-ignore
+            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
+            console.info('Successfully deleted transformation.');
+          }
+        })
+      );
   }
 
   // Visible for testing
