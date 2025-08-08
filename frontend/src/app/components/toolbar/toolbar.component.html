@@ -46,7 +46,9 @@
     }
   </span>
   <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
-    {{ transformation.state }}
+    {{
+      transformation.state === 'DISABLED' ? 'DEPRECATED' : transformation.state
+    }}
   </span>
   <span>
     <mat-icon
