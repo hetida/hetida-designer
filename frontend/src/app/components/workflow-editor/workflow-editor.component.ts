@@ -576,7 +576,8 @@ export class WorkflowEditorComponent implements OnInit {
   private _updateWorkflowIfNecessary(): void {
     if (
       !this._hasChanges ||
-      this._currentWorkflow.state === RevisionState.RELEASED
+      this._currentWorkflow.state === RevisionState.RELEASED ||
+      this._currentWorkflow.state === RevisionState.DISABLED
     ) {
       return;
     }
@@ -586,7 +587,10 @@ export class WorkflowEditorComponent implements OnInit {
   }
 
   private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
-    if (workflow.state === RevisionState.RELEASED) {
+    if (
+      workflow.state === RevisionState.RELEASED ||
+      workflow.state === RevisionState.DISABLED
+    ) {
       this.flowchartManipulatorConfiguration = createReadOnlyConfig(
         this.flowchartManipulatorConfiguration
       );

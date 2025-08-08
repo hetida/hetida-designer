@@ -149,7 +149,7 @@ export class TransformationActionService {
   }
 
   public editDetails(transformation: Transformation): void {
-    const isReleased = this.isReleased(transformation);
+    const isReleasedOrDisabled = this.isReleasedOrDisabled(transformation);
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
       TransformationDialogData,
@@ -167,10 +167,10 @@ export class TransformationActionService {
         showDeleteButton: transformation.state === RevisionState.DRAFT,
         transformation: Utils.deepCopy(transformation),
         disabledState: {
-          name: isReleased,
-          category: isReleased,
-          tag: isReleased,
-          description: isReleased
+          name: isReleasedOrDisabled,
+          category: isReleasedOrDisabled,
+          tag: isReleasedOrDisabled,
+          description: isReleasedOrDisabled
         }
       }
     });
@@ -200,7 +200,7 @@ export class TransformationActionService {
   }
 
   public newRevision(transformation: Transformation): void {
-    if (!this.isReleased(transformation)) {
+    if (!this.isReleasedOrDisabled(transformation)) {
       return;
     }
     const newId = uuid().toString();
@@ -238,7 +238,7 @@ export class TransformationActionService {
   }
 
   public delete(transformation: Transformation): Observable<boolean> {
-    if (this.isReleased(transformation)) {
+    if (this.isReleasedOrDisabled(transformation)) {
       return of(false);
     }
 
@@ -270,8 +270,11 @@ export class TransformationActionService {
     );
   }
 
-  public isReleased(transformation: Transformation) {
-    return transformation.state === RevisionState.RELEASED;
+  public isReleasedOrDisabled(transformation: Transformation) {
+    return (
+      transformation.state === RevisionState.RELEASED ||
+      transformation.state === RevisionState.DISABLED
+    );
   }
 
   public upgradeWorkflowOperators(transformation: Transformation): void {
@@ -708,7 +711,7 @@ export class TransformationActionService {
     const componentIoDialogData: ComponentIoDialogData = {
       // TODO: Check whether the item is being mutated and if so remove the mutations.
       componentTransformation: Utils.deepCopy(componentTransformation),
-      editMode: componentTransformation.state !== RevisionState.RELEASED,
+      editMode: componentTransformation.state === RevisionState.DRAFT,
       actionOk: 'Save',
       actionCancel: 'Cancel'
     };
@@ -763,7 +766,7 @@ export class TransformationActionService {
             workflowTransformation: Utils.deepCopy(
               selectedTransformation
             ) as WorkflowTransformation,
-            editMode: selectedTransformation.state !== RevisionState.RELEASED,
+            editMode: selectedTransformation.state === RevisionState.DRAFT,
             actionOk: 'Save',
             actionCancel: 'Cancel'
           }
