@@ -8,6 +8,18 @@
 
 .mat-icon-svg-disabled {
   .cls-1 {
-    fill: red;
+    fill: $hd-red;
+  }
+}
+
+.mat-icon-svg-released {
+  .cls-1 {
+    fill: $hd-yellow;
+  }
+}
+
+.mat-icon-svg-draft {
+  .cls-1 {
+    fill: $hd-black;
   }
 }
