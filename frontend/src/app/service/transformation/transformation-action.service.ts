@@ -389,7 +389,7 @@ export class TransformationActionService {
     >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
-        title: `Copy ${type} ${copyOfTransformation.name} ${copyOfTransformation.version_tag}`,
+        title: `Copy ${type} ${transformation.name} ${transformation.version_tag}`,
         actionOk: `Copy ${type}`,
         actionCancel: 'Cancel',
         transformation: copyOfTransformation,
@@ -596,6 +596,9 @@ export class TransformationActionService {
         revision_group_id: groupId,
         version_tag: `${transformation.version_tag} ${suffix}`,
         state: RevisionState.DRAFT,
+        released_timestamp: null,
+        disabled_timestamp: null,
+        release_wiring: null,
         // io_interface is generated in the backend for workflows, so we just send empty arrays
         io_interface: {
           inputs: [],
@@ -609,6 +612,9 @@ export class TransformationActionService {
         revision_group_id: groupId,
         version_tag: `${transformation.version_tag} ${suffix}`,
         state: RevisionState.DRAFT,
+        released_timestamp: null,
+        disabled_timestamp: null,
+        release_wiring: null,
         // io_interface will copied for components, with new ids
         io_interface: {
           inputs: transformation.io_interface.inputs.map(input => ({
