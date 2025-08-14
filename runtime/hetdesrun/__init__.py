@@ -28,9 +28,9 @@ except FileNotFoundError:
 
 # Processors that should run on all stdlib logging entries
 SHARED_PROCESSORS: list[Processor] = [
-    structlog.processors.TimeStamper(fmt="iso", utc=True),
-    structlog.stdlib.add_log_level,
-    structlog.stdlib.add_logger_name,
+    structlog.processors.TimeStamper(fmt="iso", utc=True),  # timestamp hinzu
+    structlog.stdlib.add_log_level,  # log level
+    structlog.stdlib.add_logger_name,  # logger name
     structlog.processors.CallsiteParameterAdder(
         {
             structlog.processors.CallsiteParameter.FILENAME,
@@ -38,7 +38,10 @@ SHARED_PROCESSORS: list[Processor] = [
             structlog.processors.CallsiteParameter.LINENO,
         }
     ),
-    structlog.processors.format_exc_info,
+    structlog.processors.format_exc_info,  # for exception propagation
+    CustomAttributeProcessor(),  # to get added fields from logging.filters in records
+    structlog.stdlib.ProcessorFormatter.remove_processors_meta,  # removes unneccesary information
+    FieldRenamer(),  # renames fields
     structlog.processors.StackInfoRenderer(),
 ]
 
@@ -63,9 +66,6 @@ def get_formatter(
         # Run on all entries
         processors=(
             [
-                CustomAttributeProcessor(),
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                FieldRenamer(),
                 structlog.processors.JSONRenderer(
                     default=MinimallyMoreCapableJsonEncoder().default
                 ),

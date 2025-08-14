@@ -34,10 +34,13 @@ services:
       - HD_USE_AUTH=false
       - MAX_WORKERS=1
       - LOG_LEVEL=DEBUG
-      - LOG_HTTPX=true      
+      - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
       - LOG_DIRECT_PROVISIONING_OUTPUTS=true
-
+      - OTEL_SERVICE_NAME=hd_backend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://opentelemetry-service:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
       interval: 5s
@@ -47,7 +50,7 @@ services:
     depends_on:
       hetida-designer-db:
         condition: service_healthy
-      hetida-designer-runtime: 
+      hetida-designer-runtime:
         condition: service_started
 
   hetida-designer-runtime:
@@ -67,8 +70,12 @@ services:
       MAX_WORKERS: 1
       LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
-      HETIDA_DESIGNER_PURE_UVICORN: "true"     
-      LOG_DIRECT_PROVISIONING_OUTPUTS: "true" 
+      HETIDA_DESIGNER_PURE_UVICORN: "true"
+      LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
+      OTEL_SERVICE_NAME: "hd_runtime"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-service:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
 
 
   hetida-designer-db:
@@ -95,6 +102,25 @@ services:
     image: hetida/designer-demo-adapter-python
     ports:
       - 8092:8092
+
+  opentelemetry-service:
+    image: grafana/otel-lgtm:0.11.7
+    ports:
+      - 4317:4317
+      - 4318:4318
+      - 3000:3000
+    environment:
+      - ENABLE_LOGS_LOKI=true
+      - OTEL_METRIC_EXPORT_INTERVAL=500
+      - GF_PATHS_DATA=/data/grafana
+    healthcheck:
+      test: cat /tmp/ready
+      interval: 1m
+      timeout: 10s
+      retries: 10
+      start_period: 1m
+      start_interval: 10s
+
 
 networks:
   default:

@@ -291,6 +291,9 @@ class JobIdContextFilter(logging.Filter):
         record.currently_executed_job_id = context_dict.get(  # type: ignore
             "currently_executed_job_id", None
         )
+        record.currently_executed_job_id = (
+            str(record.currently_executed_job_id) if record.currently_executed_job_id else None
+        )
         return True
 
 

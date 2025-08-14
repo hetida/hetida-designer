@@ -36,16 +36,30 @@ fi
 _is_pure_uvicorn="${HETIDA_DESIGNER_PURE_UVICORN,,}" # to lower case
 
 if [[ -n "$HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE" ]]; then
-    python main.py
+    if [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ] && [ -n "$OTEL_EXPORTER_OTLP_PROTOCOL" ]; then
+        echo "Enabling opentelemtry."
+        opentelemetry-instrument python main.py
+    else
+        python main.py
+    fi
 else
     if [[ "$_is_pure_uvicorn" == $_true_equiv ]]; then
         # Pure uvicorn mode
         echo "Starting in pure uvicorn mode!"
-        exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" "$APP_MODULE"
+        if [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ] && [ -n "$OTEL_EXPORTER_OTLP_PROTOCOL" ]; then
+            echo "Enabling opentelemtry."
+            exec opentelemetry-instrument uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" "$APP_MODULE"
+        else
+            exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" "$APP_MODULE"
+        fi
     else
         # Start Gunicorn
         echo "Starting in gunicorn mode!"
-        exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
+        if [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ] && [ -n "$OTEL_EXPORTER_OTLP_PROTOCOL" ]; then
+            echo "Enabling opentelemtry."
+            exec opentelemetry-instrument gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
+        else
+            exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
+        fi
     fi
-
 fi

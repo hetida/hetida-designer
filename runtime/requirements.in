@@ -30,6 +30,14 @@ numpy
 odfpy
 opencv-python-headless
 openpyxl
+opentelemetry-distro[otlp]
+opentelemetry-instrumentation-asyncio
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-httpx
+opentelemetry-instrumentation-logging
+opentelemetry-instrumentation-requests
+opentelemetry-instrumentation-sqlalchemy
+opentelemetry-instrumentation-system-metrics
 ortools
 pandas
 pendulum

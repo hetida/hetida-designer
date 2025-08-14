@@ -3,6 +3,12 @@ FROM --platform=linux/amd64 python:3.12.8-slim-bookworm AS base
 
 ENV TIMEOUT=900
 
+# otel envs that are probably not modified
+ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+ENV OTEL_LOGS_EXPORTER=otlp
+ENV OTEL_METRICS_EXPORTER=otlp
+ENV OTEL_SERVICE_NAME=hetida_designer
+
 # Copy relevant files
 COPY ./runtime/pipt_locks.env /app/pipt_locks.env
 COPY ./runtime/pipt_config.env /app/pipt_config.env
