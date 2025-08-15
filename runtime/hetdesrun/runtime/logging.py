@@ -206,8 +206,8 @@ class ExecutionContextFilter(logging.Filter):
         )
 
         # UUID to str
-        record.currently_executed_job_id = (
-            str(record.currently_executed_job_id) if record.currently_executed_job_id else None
+        record.currently_executed_job_id = (  # type: ignore
+            str(record.currently_executed_job_id) if record.currently_executed_job_id else None  # type: ignore
         )
 
         return True
@@ -299,8 +299,8 @@ class JobIdContextFilter(logging.Filter):
         )
 
         # UUID to str
-        record.currently_executed_job_id = (
-            str(record.currently_executed_job_id) if record.currently_executed_job_id else None
+        record.currently_executed_job_id = (  # type: ignore
+            str(record.currently_executed_job_id) if record.currently_executed_job_id else None  # type: ignore
         )
         return True
 

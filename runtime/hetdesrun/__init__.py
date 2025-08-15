@@ -39,9 +39,9 @@ SHARED_PROCESSORS: list[Processor] = [
         }
     ),
     structlog.processors.format_exc_info,  # for exception propagation
-    CustomAttributeProcessor(),  # to get added fields from logging.filters in records
+    CustomAttributeProcessor(), # to get added fields from logging.filters in records # type: ignore[list-item]
     structlog.stdlib.ProcessorFormatter.remove_processors_meta,  # removes unneccesary information
-    FieldRenamer(),  # renames fields
+    FieldRenamer(),  # renames fields # type: ignore[list-item]
     structlog.processors.StackInfoRenderer(),
 ]
 
