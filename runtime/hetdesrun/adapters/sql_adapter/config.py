@@ -17,11 +17,17 @@ class TimeseriesTableConfig(BaseModel):
         " Note that this is setting does not provide write protection. This has to be ensured "
         "on the database via its security / access management features if necessary.",
     )
-    allow_deletion_in_interval: bool = Field(
+    allow_invalidation: bool = Field(
         False,
-        description="Whether deleting a given time interval before writing is allowed."
-        " If True, metadata on a multitsframe can specify an interval to be deleted"
-        " before the new data is written.",
+        description="Whether invalidating data (before writing) is allowed."
+        " If True, metadata on a multitsframe can specify data to be invalidated"
+        " (before the new data is written).",
+    )
+    allow_deletion: bool = Field(
+        False,
+        description="Whether deleting data (before writing) is allowed."
+        " If True, metadata on a multitsframe can specify data to be deleted"
+        " (before the new data is written).",
     )
     metric_col_name: str = "metric"
     timestamp_col_name: str = "timestamp"
