@@ -229,11 +229,11 @@ def export_transformations(
         )
 
     """
-    import hetdesrun.models.wiring
+    import hetdesrun.models.wiring  # noqa: PLC0415
 
     hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
-    import hetdesrun.backend.models.wiring
+    import hetdesrun.backend.models.wiring  # noqa: PLC0415
 
     hetdesrun.backend.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 

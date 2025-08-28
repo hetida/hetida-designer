@@ -211,7 +211,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
                         else InputType.REQUIRED
                     ),
                 )
-                for input_name, input_info in component_info_dict["inputs"].items()
+                for input_name, input_info in component_info_dict["inputs"].items()  # type: ignore
             ],
             outputs=[
                 TransformationOutput(
@@ -225,7 +225,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype
                 )
-                for output_name, output_info in component_info_dict["outputs"].items()
+                for output_name, output_info in component_info_dict["outputs"].items()  # type: ignore
             ],
         ),
         content=code,

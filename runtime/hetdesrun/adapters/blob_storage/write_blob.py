@@ -185,7 +185,7 @@ async def write_blob_to_storage(
     is_keras_model = False
     is_keras_model_with_custom_objects = False
     try:
-        import tensorflow as tf
+        import tensorflow as tf  # noqa: PLC0415
     except ModuleNotFoundError:
         logger.debug("To store a keras model, add tensorflow to the runtime dependencies.")
     else:

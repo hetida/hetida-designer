@@ -34,6 +34,7 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
 "**/tests/auth/test_outgoing_auth.py" = ["S106"]
 "**/transformations/components/*/*.py" = ["INP001", "E501"]
+"**/webservice/application.py" = ["PLC0415"]
 
 
 [tool.ruff.lint.isort]

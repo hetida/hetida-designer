@@ -86,7 +86,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
 
     if object_key.file_extension == FileExtension.H5:
         try:
-            import tensorflow as tf
+            import tensorflow as tf  # noqa: PLC0415
         except ModuleNotFoundError as error:
             msg = (
                 "To load a model from a BLOB in the hdf5 format, "

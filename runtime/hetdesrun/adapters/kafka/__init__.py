@@ -65,13 +65,13 @@ def gather_messages(
             by_kafka_config_by_message[kafka_config_key] = kafka_key_message_dict
 
         message_value_dict: dict[str | None, KafkaMessageValue] | None = kafka_key_message_dict.get(
-            message_identifier, None
+            message_identifier
         )
         if message_value_dict is None:
             message_value_dict = {}
             kafka_key_message_dict[message_identifier] = message_value_dict
 
-        if message_value_dict.get(message_value_key, None) is not None:
+        if message_value_dict.get(message_value_key) is not None:
             # duplicate message_value_key!
             msg = (
                 f"Kafka adapter received a duplicate message_value_key {message_value_key} "
@@ -177,13 +177,13 @@ def gather_receive_recipes(
             by_kafka_config_by_message[kafka_config_key] = kafka_key_message_dict
 
         message_value_dict: dict[str | None, KafkaReceiveValue] | None = kafka_key_message_dict.get(
-            message_identifier, None
+            message_identifier
         )
         if message_value_dict is None:
             message_value_dict = {}
             kafka_key_message_dict[message_identifier] = message_value_dict
 
-        if message_value_dict.get(message_value_key, None) is not None:
+        if message_value_dict.get(message_value_key) is not None:
             # duplicate message_value_key!
             msg = (
                 f"Kafka adapter received a duplicate message_value_key {message_value_key} "

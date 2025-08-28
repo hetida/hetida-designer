@@ -90,7 +90,7 @@ def validate_type_and_ref_id(
 FilteredSourceSink = TypeVar("FilteredSourceSink", FilteredSource, FilteredSink)
 
 
-def validate_metadatum_filtered_source_sink(
+def validate_metadatum_filtered_source_sink(  # noqa: UP047
     filtered_source_sink: FilteredSourceSink,
 ) -> FilteredSourceSink:
     if filtered_source_sink.ref_id_type is None:
