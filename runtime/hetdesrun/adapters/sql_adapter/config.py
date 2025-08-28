@@ -146,6 +146,13 @@ class SQLAdapterConfig(BaseSettings):
         [], validation_alias="SQL_ADAPTER_SQL_DATABASES"
     )
 
+    deletion_batch_size_for_discrete_data_points: int = Field(
+        500,
+        description="Number of data points to include in a delete query. "
+        "In case the adapter performs a deletion of discrete data points in a timeseries table",
+        validation_alias="DELETION_BATCH_SIZE_FOR_DISCRETE_DATA_POINTS",
+    )
+
     model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("sql_databases")

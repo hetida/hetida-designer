@@ -1,6 +1,8 @@
 import os
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 from fastapi import FastAPI
@@ -81,6 +83,22 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
         index=False,
     )
 
+    # Create deletion test table
+    start = datetime(1949, 5, 23, tzinfo=timezone.utc)
+    num_test_entries = 30
+
+    dates = [(start + timedelta(days=i)).isoformat() for i in range(num_test_entries)]
+
+    del_test_df = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(dates),
+            "metric": ["nf" for _ in range(num_test_entries)],
+            "value": [np.random.random_sample() for _ in range(num_test_entries)],
+        }
+    )
+
+    del_test_df.to_sql("deletion_test_table", engine, if_exists="replace", index=False)
+
     return temporary_sqlite_file_path_ts_db
 
 
@@ -152,6 +170,9 @@ def three_sqlite_dbs_configured(
                             "timestamp": "datetime",
                             "value": "measurement_val",
                         },
+                    ),
+                    "deletion_test_table": TimeseriesTableConfig(
+                        appendable=True, allow_invalidation=True, allow_deletion=True
                     ),
                 },
             ),
