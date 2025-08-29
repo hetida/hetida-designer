@@ -27,8 +27,16 @@ def temporary_sqlite_file_path_ts_db(tmpdir):
     return os.path.join(tmpdir, "temporary_sqlite_ts_db.db")
 
 
+@pytest.fixture()
+def deletion_test_table_size() -> int:
+    """Num of rows written to deletion_test_table in temporary_prefilled_sqlite_ts_db fixture."""
+    return 30
+
+
 @pytest.fixture(scope="function")  # noqa: PT003
-def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
+def temporary_prefilled_sqlite_ts_db(
+    temporary_sqlite_file_path_ts_db, deletion_test_table_size: int
+):
     ts_df = pd.DataFrame(
         {
             "value": [1.2, 1.3, 2, 2.2],
@@ -85,15 +93,14 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
 
     # Create deletion test table
     start = datetime(1949, 5, 23, tzinfo=timezone.utc)
-    num_test_entries = 30
 
-    dates = [(start + timedelta(days=i)).isoformat() for i in range(num_test_entries)]
+    dates = [(start + timedelta(days=i)).isoformat() for i in range(deletion_test_table_size)]
 
     del_test_df = pd.DataFrame(
         {
             "timestamp": pd.to_datetime(dates),
-            "metric": ["nf" for _ in range(num_test_entries)],
-            "value": [np.random.random_sample() for _ in range(num_test_entries)],
+            "metric": ["nf" for _ in range(deletion_test_table_size)],
+            "value": [np.random.random_sample() for _ in range(deletion_test_table_size)],
         }
     )
 
