@@ -229,7 +229,11 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     engine = db_config.engine
     try:
         with engine.begin() as connection:
-            if ts_table_config is not None:
+            if (
+                ts_table_config is not None
+                and ts_table_config.allow_invalidation
+                and ts_table_config.allow_deletion
+            ):
                 _handle_deletion(
                     connection,
                     metadata,
@@ -237,6 +241,12 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
                     metrics,
                     ts_table_config,
                     write_table.table_name,
+                )
+            elif metadata.invalidate_dataset and not metadata.delete_invalidated is False:
+                logger.warning(
+                    "According to dataset_metadata deletion should happen, "
+                    "but according to the table configuration, deletion is not allowed. "
+                    "Hence, no deletion took place."
                 )
 
             if metadata.only_invalidate:
