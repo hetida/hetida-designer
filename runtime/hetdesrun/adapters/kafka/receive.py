@@ -91,6 +91,7 @@ async def receive_kafka_message(
         try:
             message = await receive_encoded_message(consumer)
         except Exception as e:  # noqa: BLE001
+            await consumer.stop()
             msg = (
                 f"Error consuming message {message_identifier} from Kafka with "
                 f"config key {kafka_config_key}"
@@ -98,6 +99,7 @@ async def receive_kafka_message(
             )
             logger.error(msg)
             raise AdapterHandlingException(msg) from e
+        await consumer.stop()
 
         logger.debug(
             "Finished consuming message %s from Kafka with config key %s from topic %s",

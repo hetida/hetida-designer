@@ -109,6 +109,10 @@ class SQLAdapterDBConfig(BaseModel):
     def engine(self) -> Engine:
         return create_engine(self.connection_url, **self.create_engine_kwargs)  # type: ignore
 
+    def __del__(self) -> None:
+        if self.engine is not None:
+            self.engine.dispose()
+
     model_config = ConfigDict(arbitrary_types_allowed=True, ignored_types=(cached_property,))
 
 

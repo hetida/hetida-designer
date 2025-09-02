@@ -47,7 +47,6 @@ def detect_in_memory_db() -> bool:
         (database is None) or database.lower() in (":memory:",)
     ):
         return True
-
     return False
 
 

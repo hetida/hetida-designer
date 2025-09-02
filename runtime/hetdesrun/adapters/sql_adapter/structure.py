@@ -26,7 +26,10 @@ logger = logging.getLogger(__name__)
 def get_table_names(uri: str) -> list[str]:
     engine = create_engine(uri)
     inspection = inspect(engine)
-    return inspection.get_table_names()
+    table_names = inspection.get_table_names()
+    engine.dispose()
+
+    return table_names
 
 
 def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:

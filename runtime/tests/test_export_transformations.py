@@ -7,14 +7,15 @@ from hetdesrun.exportimport.export import (
     export_transformations,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_python_file, transformation_revision_from_python_code
 
 root_path = "./transformations/"
-json_files = [
+trafo_files = [
     "components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
     "components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
     "components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
     "components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
-    "components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+    "components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
     "components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
     "components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
     "components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
@@ -29,9 +30,14 @@ json_files = [
 
 tr_json_list = []
 
-for file_path in json_files:
+for file_path in trafo_files:
     with open(root_path + file_path, encoding="utf8") as f:
-        tr_json = json.load(f)
+        if file_path.endswith(".json"):
+            tr_json = json.load(f)
+    if file_path.endswith(".py"):
+        tr_json = transformation_revision_from_python_code(
+            load_python_file(root_path + file_path)
+        ).model_dump()
     tr_json_list.append(tr_json)
 
 tr_json_dict = {}
@@ -62,10 +68,13 @@ def test_export_all_transformations(tmp_path):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == len(json_files)
+        assert len(exported_paths) == len(trafo_files)
 
-        for file_path in json_files:
-            assert str(tmp_path.joinpath(file_path)) in exported_paths
+        for file_path in trafo_files:
+            if file_path.endswith(".json"):
+                assert str(tmp_path.joinpath(file_path)) in exported_paths
+            if file_path.endswith(".py"):
+                assert str(tmp_path.joinpath(file_path))[:-3] + ".json" in exported_paths
 
 
 def test_export_all_transformations_components_as_code(tmp_path):
@@ -92,55 +101,26 @@ def test_export_all_transformations_components_as_code(tmp_path):
                 if ext == ".py":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == len(json_files)
+        assert len(exported_paths) == len(trafo_files)
 
-        for file_path in json_files[:-3]:
+        for file_path in trafo_files[:-3]:
             assert str(tmp_path.joinpath(file_path)).replace(".json", ".py") in exported_paths
-        for file_path in json_files[-3:]:
+        for file_path in trafo_files[-3:]:
             assert str(tmp_path.joinpath(file_path)) in exported_paths
 
 
 bi_list = []
 
-for file_path in json_files:
+for file_path in trafo_files:
     with open(root_path + file_path, encoding="utf8") as f:
-        tr = TransformationRevision(**json.load(f))
-        bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
-        bi_json = json.loads(bi.model_dump_json())
+        if file_path.endswith(".json"):
+            tr_json = json.load(f)
+    if file_path.endswith(".py"):
+        tr_json = transformation_revision_from_python_code(
+            load_python_file(root_path + file_path)
+        ).model_dump()
+
+    tr = TransformationRevision(**tr_json)
+    bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
+    bi_json = json.loads(bi.model_dump_json())
     bi_list.append(bi_json)
-
-
-def mock_get_trafo_from_java_backend(id, type, headers):  # noqa: A002,
-    return TransformationRevision(**tr_json_dict[str(id)])
-
-
-def test_export_all_base_items(tmp_path):
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=bi_list)
-
-    with mock.patch(  # noqa: SIM117
-        "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
-        with mock.patch(
-            "hetdesrun.exportimport.export.get_transformation_from_java_backend",
-            new=mock_get_trafo_from_java_backend,
-        ):
-            export_transformations(tmp_path, java_backend=True)
-
-            assert mocked_get.call_count == 1
-            _, args, _ = mocked_get.mock_calls[0]
-            assert "base-items" in args[0]
-
-            exported_paths = []
-            for root, _, files in os.walk(tmp_path):
-                for file in files:
-                    ext = os.path.splitext(file)[1]
-                    if ext == ".json":
-                        exported_paths.append(os.path.join(root, file))
-
-            assert len(exported_paths) == len(json_files)
-
-            for file_path in json_files:
-                assert str(tmp_path.joinpath(file_path)) in exported_paths

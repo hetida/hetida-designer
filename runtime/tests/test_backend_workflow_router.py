@@ -20,7 +20,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.io import Connector
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.trafoutils.io.load import load_json
+from hetdesrun.trafoutils.io.load import load_json, load_python_file
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -599,25 +599,24 @@ async def test_execute_for_full_workflow_dto(async_test_client, mocked_clean_tes
             "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
             "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
             "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
-            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
             "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
             "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
             "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
             "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
         ]
 
-        for file in json_files:
-            tr_json = load_json(file)
+        tr_list = [
+            load_json(file) if file.endswith(".json") else load_python_file(file)
+            for file in json_files
+        ]
 
-            response = await ac.put(
-                posix_urljoin(
-                    get_config().hd_backend_api_url,
-                    "transformations",
-                    tr_json["id"],
-                ),
-                params={"allow_overwrite_released": True},
-                json=tr_json,
-            )
+        response = await ac.put(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={"allow_overwrite_released": True},
+            json=tr_list,
+        )
+        assert response.status_code == 207
 
         workflow_id = UUID("3d504361-e351-4d52-8734-391aa47e8f24")
         tr_workflow = read_single_transformation_revision(workflow_id)
@@ -642,24 +641,23 @@ async def test_execute_for_full_workflow_dto_with_nan(
             "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
             "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
             "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
-            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
             "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
             "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
             "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
         ]
 
-        for file in json_files:
-            tr_json = load_json(file)
+        tr_list = [
+            load_json(file) if file.endswith(".json") else load_python_file(file)
+            for file in json_files
+        ]
 
-            response = await ac.put(
-                posix_urljoin(
-                    get_config().hd_backend_api_url,
-                    "transformations",
-                    tr_json["id"],
-                ),
-                params={"allow_overwrite_released": True},
-                json=tr_json,
-            )
+        response = await ac.put(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={"allow_overwrite_released": True},
+            json=tr_list,
+        )
+        assert response.status_code == 207
 
         workflow_id = UUID("2cbb87e7-ea99-4404-abe1-be550f22763f")
         wiring_dto = WiringFrontendDto.from_wiring(

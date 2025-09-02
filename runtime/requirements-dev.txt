@@ -708,9 +708,7 @@ pyyaml==6.0.2 \
     --hash=sha256:efdca5630322a10774e8e98e1af481aad470dd62c3170801852d752aa7a783ba \
     --hash=sha256:f753120cb8181e736c57ef7636e83f31b9c0d1722c516f7e86cf15b7aa57ff12 \
     --hash=sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4
-    # via
-    #   -c ./requirements.txt
-    #   responses
+    # via responses
 pyzmq==27.0.2 \
     --hash=sha256:05288947797dcd6724702db2056972dceef9963a83041eb734aea504416094ec \
     --hash=sha256:063845960df76599ad4fad69fa4d884b3ba38304272104fdcd7e3af33faeeb1d \
@@ -909,7 +907,6 @@ typing-extensions==4.15.0 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
     # via
     #   -c ./requirements.txt
-    #   anyio
     #   mypy
 urllib3==2.5.0 \
     --hash=sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760 \
