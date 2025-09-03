@@ -6,6 +6,7 @@ from pydantic_core import PydanticSerializationError, PydanticSerializationUnexp
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.run import ProcessStage, WorkflowExecutionResult
+from hetdesrun.webservice.config import get_config
 
 
 class MsgSpecJSONResponse(JSONResponse):
@@ -46,6 +47,8 @@ def handle_workflow_execution_dict_serialisation(wf_exec_result: WorkflowExecuti
 
 def handle_frontend_exec_response_dict_serialisation(
     exec_resp_frontend_dto: ExecutionResponseFrontendDto,
+    enforce_naive_result_serialization: bool = False,
+    infer_naive_result_serialization: bool = True,
 ) -> dict:
     """Handling of dict conversion that cannot guarantee exception-free serialziation
 
@@ -58,10 +61,36 @@ def handle_frontend_exec_response_dict_serialisation(
 
     This needs to be handled for the ExecutionResponseFrontendDto as well for
     running runtime and backend in same container/service.
+
+    Furthermore this function handles the case of possibly second serialization
+    of direct_provisioning output results:
+    * If coming from a separate runtime service, the dict of output results
+      has already undergone a serialization / deserialization step. It is now
+      a correct json dict-like object, in particular Pandas results have the
+      correct form. In particular the Pandas objects do not need to be parsed
+      and serialized again!
+    * Parsing the pandas object representations could lead to potentially unwanted
+      effects as they are parsed via Pandas' read_json function which does for
+      example datetime inference on strings.
+
+    To mitigate these possibly unwanted effects this function infers from the setup
+    whether parsing / serialization is necessary for the direct output data if
+    infer_naive_result_serialization is True. naive result serialization can
+    be enforced by setting enforce_naive_result_serialization to True.
     """
 
+    use_naive_result_serialization = False  # default to ordinary serialization
+
+    if infer_naive_result_serialization:
+        use_naive_result_serialization = not get_config().is_runtime_service
+
+    if enforce_naive_result_serialization:
+        use_naive_result_serialization = True
+
     try:
-        dict_like_json_serializable_obj = exec_resp_frontend_dto.model_dump(mode="json")
+        dict_like_json_serializable_obj = exec_resp_frontend_dto.model_dump(
+            mode="json", context={"naive_result_serialization": use_naive_result_serialization}
+        )
     except (PydanticSerializationError, PydanticSerializationUnexpectedValue) as exc:
         exec_resp_frontend_dto_with_serialization_errors = (
             ExecutionResponseFrontendDto.from_exception(

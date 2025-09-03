@@ -50,6 +50,27 @@ class RuntimeConfig(BaseSettings):
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
 
+    user_component_code_log_level: LogLevel | None = Field(
+        None,
+        validation_alias="USER_COMPONENT_CODE_LOG_LEVEL",
+        description=(
+            "Log level for logging in user component code. One of "
+            + ", ".join(['"' + x.value + '"' for x in list(LogLevel)])
+            + "or None"
+            " where None implies the same log level as the runtime's log level."
+        ),
+    )
+
+    user_component_code_logs_max_len: int | None = Field(
+        None,
+        validation_alias="USER_COMPONENT_CODE_LOG_MAX_LEN",
+        description=(
+            "Maximal number of collected user component code logs."
+            " Limits how many log messages are collected and returned "
+            "as part of the execution response object. Set to None for no limits"
+        ),
+    )
+
     log_httpx: bool = Field(
         False,
         description=(
@@ -61,6 +82,31 @@ class RuntimeConfig(BaseSettings):
             " bottlenecks."
         ),
         validation_alias="LOG_HTTPX",
+    )
+
+    log_uvicorn: bool = Field(
+        True,
+        description=(
+            "Whether uvicorn / uvicorn.access logging should be activated. "
+            "Note: This uses the same log level as cofigured via LOG_LEVEL. "
+        ),
+        validation_alias="LOG_UVICORN",
+    )
+
+    log_fields_to_rename: dict[str, str] = Field(
+        {
+            "currently_executed_job_id": "job_id",
+            "currently_executed_transformation_id": "tr_id",
+            "currently_executed_transformation_name": "tr_name",
+            "currently_executed_transformation_tag": "tr_tag",
+            "currently_executed_transformation_type": "tr_type",
+            "currently_executed_operator_hierarchical_id": "op_id",
+            "currently_executed_operator_hierarchical_name": "op_name",
+            "event": "message",
+        },
+        description="Dict of log field names to be renamed, before the log is rendered as a JSON. "
+        "Keys are looked up in the event dict and replaced with the corresponding value.",
+        validation_alias="LOG_FIELDS_TO_RENAME",
     )
 
     log_technical_nodes: bool = Field(

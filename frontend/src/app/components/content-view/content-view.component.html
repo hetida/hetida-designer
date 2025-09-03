@@ -41,11 +41,29 @@
             @if (tabItem.transformation.type === _ItemType.COMPONENT) {
               <mat-icon
                 svgIcon="icon-component"
-                class="mat-icon-svg"
+                [ngClass]="{
+                  'mat-icon-svg-disabled':
+                    tabItem.transformation.state === 'DISABLED',
+                  'mat-icon-svg-draft':
+                    tabItem.transformation.state === 'DRAFT',
+                  'mat-icon-svg-released':
+                    tabItem.transformation.state === 'RELEASED'
+                }"
               ></mat-icon>
             }
+
             @if (tabItem.transformation.type === _ItemType.WORKFLOW) {
-              <mat-icon svgIcon="icon-workflow" class="mat-icon-svg"></mat-icon>
+              <mat-icon
+                svgIcon="icon-workflow"
+                [ngClass]="{
+                  'mat-icon-svg-disabled':
+                    tabItem.transformation.state === 'DISABLED',
+                  'mat-icon-svg-draft':
+                    tabItem.transformation.state === 'DRAFT',
+                  'mat-icon-svg-released':
+                    tabItem.transformation.state === 'RELEASED'
+                }"
+              ></mat-icon>
             }
           </span>
           <div class="tab-item__title">

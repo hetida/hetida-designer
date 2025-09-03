@@ -103,7 +103,7 @@ async def get_sinks_endpoint(
     found_sinks = get_sinks(filter_str=filter_str)
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
-        sources=found_sinks,
+        sinks=found_sinks,
     )
 
 

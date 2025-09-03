@@ -36,6 +36,14 @@ services:
       - LOG_LEVEL=DEBUG
       - LOG_HTTPX=true      
       - HETIDA_DESIGNER_PURE_UVICORN=true
+      - LOG_DIRECT_PROVISIONING_OUTPUTS=true
+
+    healthcheck:
+      test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
     depends_on:
       hetida-designer-db:
         condition: service_healthy
@@ -59,7 +67,8 @@ services:
       MAX_WORKERS: 1
       LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
-      HETIDA_DESIGNER_PURE_UVICORN: "true"      
+      HETIDA_DESIGNER_PURE_UVICORN: "true"     
+      LOG_DIRECT_PROVISIONING_OUTPUTS: "true" 
 
 
   hetida-designer-db:

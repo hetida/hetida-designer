@@ -16,7 +16,7 @@ The experimental dashboards are backend-generated and reachable via the url:
 URL_TO_BACKEND-API/transformations/<id>/dashboard
 ```
 
-The id is the corresponding transformation revision id which you can find in the "Edit Details" dialog of a component / workflow. E.g. http://localhost/hdapi/transformations/28120522-a6a5-418f-a658-ab19d5beefe2/dashboard is the url of the multitsframe plot component's dashboard when working with the default docker-compose setup.
+The id is the corresponding transformation revision id which you can find in the "Edit Details" dialog of a component / workflow. E.g. http://localhost/hdapi/transformations/28120522-a6a5-418f-a658-ab19d5beefe2/dashboard is the url of the multitsframe plot component's dashboard when working with the default docker compose setup.
 
 This link to the dashboard can always be found in the details dialog of your transformation in the frontend:
 

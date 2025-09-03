@@ -99,21 +99,26 @@ export class ToolbarComponent implements OnInit {
   }
 
   get publishTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return 'Publish';
     }
     return 'Already published';
   }
 
   get upgradeWorkflowOperatorsTooltip(): string {
-    if (!this.isReleased()) {
-      return 'Upgrade workflow operators';
+    if (!this.isReleasedOrDeprecated()) {
+      return [
+        'Upgrade workflow operators',
+        // prettier-ignore
+        '- DRAFT operators => update to revision\'s current state',
+        '- RELEASED / DISABLED operators => newest revision in revision group'
+      ].join('\n');
     }
     return 'Cannot upgrade operators for released workflows';
   }
 
   get updateExpandTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return 'Update and Expand code (Wirings, Formatting, Documentation)';
     }
     return 'Cannot change code for released component';
@@ -164,7 +169,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   get newRevisionTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return `New revision is disabled, because the ${this.transformation.type.toLowerCase()} is not released.`;
     }
     return 'New revision';
@@ -178,6 +183,17 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.state === RevisionState.RELEASED;
   }
 
+  isDeprecated() {
+    return this.transformation.state === RevisionState.DISABLED;
+  }
+
+  isReleasedOrDeprecated() {
+    return (
+      this.transformation.state === RevisionState.RELEASED ||
+      this.transformation.state === RevisionState.DISABLED
+    );
+  }
+
   get executeTooltip(): string {
     if (this.incompleteFlag === true) {
       return `Cannot execute, because the ${this.transformation.type.toLowerCase()} is incomplete.`;
@@ -186,7 +202,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   get deleteTooltip(): string {
-    if (this.isReleased()) {
+    if (this.isReleasedOrDeprecated()) {
       return `Cannot delete this ${this.transformation.type.toLowerCase()}, because it is already released`;
     }
     return 'Delete';

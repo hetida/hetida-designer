@@ -50,8 +50,7 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
             )
             return {"Authorization": "Bearer " + possible_fixed_token}
         logger.debug(
-            "No stored auth token and no explititely fixed configured token."
-            " Not setting auth header"
+            "No stored auth token and no explicitly fixed configured token. Not setting auth header"
         )
         return {}
     logger.debug("Found stored auth token. Setting Authorization header with schema Bearer")
@@ -222,16 +221,21 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
         return False
 
     # Check role
-    try:
-        if get_config().auth_allowed_role is not None and (
-            not get_config().auth_allowed_role in payload[get_config().auth_role_key]
-        ):
+    if get_config().auth_allowed_role is not None:
+        try:
+            roles = payload[get_config().auth_role_key]
+        except KeyError:
+            logger.info("Unauthorized: No role information in token")
+            return False
+
+        if not isinstance(roles, list):
+            logger.info("Unauthorized: Role field in token has wrong type. Must be array.")
+            return False
+
+        if not get_config().auth_allowed_role in roles:
             # roles are expected in "groups" key in payload
             logger.info("Unauthorized: Roles not allowed")
             return False
-    except KeyError:
-        logger.info("Unauthorized: No role information in token")
-        return False
 
     # Passed all checks
     auth_context_dict = {"token": access_token_to_check, "creds": None}

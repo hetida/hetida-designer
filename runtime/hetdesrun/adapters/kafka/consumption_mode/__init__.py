@@ -214,13 +214,10 @@ async def start_consumption_mode() -> None:
     assert consumption_mode_exec_base is not None  # noqa: S101 # for mypy
 
     logger.info(
-        "Start consuming in kafka adapter consumption mode.\n"
-        "kafka config key: "
-        "%s\nMulti: %s\n"
-        "consumption mode exec:\n%s",
+        "Start consuming in kafka adapter consumption mode.\nkafka config key: %s\nMulti: %s\n",
         relevant_kafka_config_key,
         str(multi),
-        consumption_mode_exec_base.model_dump_json(indent=2),
+        extra={"consumption_mode_exec": consumption_mode_exec_base.model_dump(mode="json")},
     )
     await consumer.start()
 

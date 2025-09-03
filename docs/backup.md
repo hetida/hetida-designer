@@ -2,7 +2,7 @@
 
 All components and workflows, their current wirings and documentation reside in the Postgres database of your hetida designer installation. So usually you want to backup this database.
 
-For the default, local docker-compose setup this is a Postgres instance running as service **hetida-designer-db** in a Docker container.
+For the default, local docker compose setup this is a Postgres instance running as service **hetida-designer-db** in a Docker container.
 
 The following commands run a simple postgres backup / restore for this setup using the pg_dump and pg_restore tools.
 

@@ -3,17 +3,19 @@
   height: 100%;
 
   .mat-sidenav {
-    width: 300px;
+    width: 320px;
     font-size: 13px;
 
     .nav-wrapper {
       display: flex;
       flex-direction: column;
       height: 100%;
+
       .nav-content {
         flex: 1 1 auto;
         overflow: hidden;
       }
+
       .app-config {
         justify-content: space-between;
         overflow: hidden;

@@ -93,6 +93,7 @@ export const tabItemReducers = createReducer(
   }),
   on(updateTransformation, (state, action) => {
     if (action.payload.state === RevisionState.DISABLED) {
+      return state;
       const transformationIdToRemove = action.payload.id;
       return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
     }

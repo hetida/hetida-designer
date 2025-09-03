@@ -45,6 +45,9 @@
     },
     "python.formatting.provider": "black",
     "ruff.importStrategy": "fromEnvironment",
+    "ruff.args": [
+        "--config=runtime/pyproject.toml"
+    ],
     "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python",
     "python.linting.mypyArgs": [
         "--config-file=runtime/mypy.ini"
@@ -65,5 +68,6 @@
         "runtime/hdhelpers/pytest.ini"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "python.languageServer": "Default"
 }

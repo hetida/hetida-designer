@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNestingCycleDetected
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type
@@ -101,8 +101,9 @@ def update_nesting(
 ) -> None:
     if get_config().log_nestings_and_descendants:
         logger.debug("update nesting of workflow %s", str(workflow_id))
-    # no need to deal with ancestors, workflow draft has none
     delete_own_nestings(session, workflow_id)
+
+    disallowed_ancestors: set[UUID] = {workflow_id}
 
     for child in workflow_content.operators:
         add_single_nesting(
@@ -116,6 +117,10 @@ def update_nesting(
                 nested_operator_id=child.id,
             ),
         )
+        if child.transformation_id == workflow_id:
+            raise DBNestingCycleDetected(
+                f"Direct cycle detected: Trying to insert workflow {workflow_id} into itself"
+            )
 
         if child.type == Type.WORKFLOW:
             descendants = find_all_nested_transformation_revisions(session, child.transformation_id)
@@ -131,6 +136,20 @@ def update_nesting(
                         nested_operator_id=descendant.operator_id,
                     ),
                 )
+                disallowed_ancestors.add(descendant.transformation_id)
+
+    # check ancestors to disallow possible introduction of cycles
+
+    sup_nestings = find_all_nestings(session, workflow_id)
+    for ancestor in sup_nestings:
+        if ancestor.workflow_id in disallowed_ancestors:
+            raise DBNestingCycleDetected(
+                f"Cycle detected: This workflow {ancestor.nested_transformation.name}"
+                f" ({ancestor.nested_transformation.version_tag})) with id {workflow_id} depends"
+                f" on {ancestor.workflow.name} ({ancestor.workflow.version_tag}) with id"
+                f" {ancestor.workflow_id}"
+                f" but occurs as a dependency of it as well!"
+            )
 
 
 def update_or_create_nesting(transformation_revision: TransformationRevision) -> None:

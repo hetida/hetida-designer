@@ -275,6 +275,13 @@ On the other side these endpoints directly return metadata values and are access
 
 **Note:** If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
 
+#### Query parameters for metadata endpoints
+Metadata endpoint may get the following metadata
+
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `filter_key=filter_value`: The runtime provides filter values from wirings for metadata sources/sinks as query parameters when requesting them during execution.
+
+
 #### /sources/{id}/metadata/ (GET)
 
 Get all metadata attached to a specific source. `id` is the source's id.
@@ -358,6 +365,7 @@ Query parameters:
 * `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
 * `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -403,6 +411,7 @@ This endpoint accepts a single timeseries per POST request.
 Query parameters:
 
 * `timeseriesId`: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload (List of timeseries records):
 
@@ -428,6 +437,7 @@ It is up to your adapter implementation what you do with that metadata.
 Query parameters:
 
 * `id`: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -461,6 +471,7 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 Query parameters:
 
 * `id`: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload:
 
@@ -488,6 +499,7 @@ Query parameters:
 * `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
 * `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -531,6 +543,7 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 Query parameters:
 
 * `id`: required exactly once: This is a sink id of a multitsframe sink occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload:
 

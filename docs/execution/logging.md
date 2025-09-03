@@ -1,13 +1,68 @@
 # Reading Log Messages of Workflow and Component Executions
 
-All log messages issued during the execution of a component or workflow contain the corresponding job id at the end of the message.
 
-If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr type`), id (`tr id`), name (`tr name`), and tag (`tr tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op id(s)`) and names (`op name(s)`) are additionally specified. The former helps to find and open e.g. a component via the sidebar in order to search for the error in the code, the latter helps to recognize at which point in the workflow and thus also with which input the error arose. 
+## Log entries by hetida designer
+During the execution of a component or workflow, hetida designer emits structured log records.  
+These records are logged as a JSON, containing at least the following fields:
+* timestamp
+* level
+* message
+* logger (name of the logger)
+* func_name (name of the function the message originates from)
+* filename
+* lineno (line number)
+* job_id
+
+If the calculation of the output of a certain operator within a workflow is started and especially if an error occurs, the type (`tr_type`), id (`tr_id`), name (`tr_name`), and tag (`tr_tag`) of the transformation as well as the hierarchical nesting succession of the operator ids (`op_id(s)`) and names (`op_name(s)`) are additionally provided. In the case of an error, an `exception` field is also provided. The fields prefixed with `tr` help to find and open e.g. a component via the sidebar in order to search for the error in the code, the fields prefixed with `op` help to recognize at which point in the workflow the error arose.
+
+A log entry may contain additional fields, e.g. `execution_result_response`.
+
+Example log entry:
+```json
+{
+    "timestamp": "2025-07-30T11:45:55.704334Z",
+    "level": "debug",
+    "message": "Starting computation",
+    "logger": "internal_runtime_execution_logger",
+    "func_name": "result",
+    "filename": "workflow.py",
+    "lineno": 382,
+    "job_id": "861b3b9845c6428eb0814bd146013a41",
+    "tr_id": "704ebd70-e840-45fb-9053-4d383a8e91f0",
+    "tr_name": "COMPONENT EXECUTION WRAPPER WORKFLOW",
+    "tr_tag": "1.0.0",
+    "tr_type": "WORKFLOW",
+    "op_id": "\\d10ec25b-93f0-4244-856e-e337bfe02527\\",
+    "op_name": "\\COMPONENT EXECUTION WRAPPER WORKFLOW\\",
+}
+```
+
+## Logging in user / component code
+When writing component code you can use logging in the usual and recommended way of the Python stdlib logging module:
+
+```python
+...
+
+import logging
+logger = logging.getLogger(__name__)
+
+...
+
+def main(...):
+    ...
+    logger.info("My log message")
 
 ```
-2022-08-31 14:29:38,642 21583 INFO: Starting computation [in /home/mkuemmel/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py:224, job id: 22fa6638-7df9-4f01-ab59-3d950f9942d6,
-    tr type: COMPONENT, tr id: bfa27afc-dea8-b8aa-4b15-94402f0739b6, tr name: Pass Through (Series), tr tag: 1.0.0,
-    op id(s): \56b74da9-2318-4707-b134-650048b0e61e\244973af-0daa-4d4e-9a6f-570642162b7f\4f1b4f7b-2f09-479f-961d-f79ae337b2ec\,
-    op name(s): \Linear RUL from last positive Step\Data From Last Positive Step\Pass Through (Series) (2)\
-]
-```
+
+The hetida designer runtime enriches the logs with execution context information (component name, version, id, operator information) as described for system-generated logs above.
+
+In addition to the log output of the runtime service, these logs can also be viewed in the test execution result display. If you switch to the raw response view you can also see the additional execution context information in the raw json response.
+
+Note that by default the log level is filtered against the runtime service's log level
+but this can be configured separately through the runtime's environment variable `USER_COMPONENT_CODE_LOG_LEVEL` (e.g. `DEBUG`, `INFO`, `WARNING`, `ERROR`).
+
+Furthermore `USER_COMPONENT_CODE_LOG_MAX_LEN` can be configured to only display a limited subset of the most recent log messages.
+
+# Logging settings
+
+hetida designer exposes several environment variables controlling logging details. See the [configuration code](../../runtime/hetdesrun/webservice/config.py) for details and descriptions.

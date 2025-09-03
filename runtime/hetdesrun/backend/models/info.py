@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -8,7 +9,9 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.run import WorkflowExecutionInfo
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.runtime.logging import SimplifiedLogRecord
 from hetdesrun.utils import State, Type
+from hetdesrun.webservice.config import get_config
 
 
 class BasicInformation(BaseModel):
@@ -60,4 +63,8 @@ class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
             "Process Id (PID) of the process handling the request, "
             "if advanced performance measuring is configured."
         ),
+    )
+
+    gathered_component_code_logs: deque[SimplifiedLogRecord] = deque(
+        maxlen=get_config().user_component_code_logs_max_len
     )

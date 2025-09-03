@@ -31,6 +31,8 @@ export class NavigationContainerComponent implements OnInit {
   readonly searchFilter = new FormControl('');
   readonly typeFilter = new FormControl(TransformationType.WORKFLOW);
 
+  readonly showDeprecatedFilter = new FormControl(false);
+
   transformationsByCategory: { [category: string]: Transformation[] };
 
   getFilterState(type: string): boolean {
@@ -45,6 +47,10 @@ export class NavigationContainerComponent implements OnInit {
     return this.searchFilter.valueChanges;
   }
 
+  get deprecatedFilterChanges(): Observable<boolean> {
+    return this.showDeprecatedFilter.valueChanges;
+  }
+
   trackCategory(_index: number, category: any) {
     return category.key;
   }
@@ -54,13 +60,18 @@ export class NavigationContainerComponent implements OnInit {
       this.transformationService.fetchAllTransformations();
     });
 
-    combineLatest([this.filterChanges, this.searchFilterChanges])
+    combineLatest([
+      this.filterChanges,
+      this.searchFilterChanges,
+      this.deprecatedFilterChanges
+    ])
       .pipe(
-        switchMap(([transformationType, searchString]) =>
+        switchMap(([transformationType, searchString, showDeprecated]) =>
           this.transformationStore.select(
             selectTransformationsByCategoryAndName(
               transformationType,
-              searchString
+              searchString,
+              showDeprecated
             )
           )
         )
@@ -72,6 +83,7 @@ export class NavigationContainerComponent implements OnInit {
     this.filterChanges.subscribe(() => this.popoverService.closePopover());
     this.typeFilter.updateValueAndValidity({ emitEvent: true });
     this.searchFilter.updateValueAndValidity({ emitEvent: true });
+    this.showDeprecatedFilter.updateValueAndValidity({ emitEvent: true });
   }
 
   newWorkflow(): void {

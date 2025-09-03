@@ -19,7 +19,7 @@ export const selectAllTransformations = createSelector(
   (state: TransformationState) =>
     selectAll(state).filter(
       transformationRevision =>
-        transformationRevision.state !== RevisionState.DISABLED
+        transformationRevision.state !== RevisionState.DISABLED || true
     )
 );
 
@@ -53,7 +53,8 @@ function filterByName(transformation: Transformation, name: string) {
  */
 export const selectTransformationsByCategoryAndName = (
   transformationType: TransformationType,
-  name?: string
+  name?: string,
+  includeDeprecated: boolean = false
 ) => {
   return createSelector(
     selectTransformationState,
@@ -61,7 +62,8 @@ export const selectTransformationsByCategoryAndName = (
       return Object.values(state.entities)
         .filter(transformation => transformation.type === transformationType)
         .filter(
-          transformation => transformation.state !== RevisionState.DISABLED
+          transformation =>
+            transformation.state !== RevisionState.DISABLED || includeDeprecated
         )
         .filter(transformation => filterByName(transformation, name))
         .reduce(

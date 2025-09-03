@@ -8,6 +8,18 @@
   margin-right: 10px;
 }
 
+.mat-icon-svg-disabled {
+  margin-right: 10px;
+}
+
+.mat-icon-svg-draft {
+  margin-right: 10px;
+}
+
+.mat-icon-svg-released {
+  margin-right: 10px;
+}
+
 .draggable-mat-icon {
   cursor: move;
 }
@@ -90,6 +102,7 @@ hd-copy-transformation-dialog {
     padding: 0;
     min-width: 240px;
     flex-grow: 0 !important;
+
     &[aria-posinset='1'] {
       min-width: 80px;
     }

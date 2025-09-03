@@ -96,3 +96,36 @@ async def test_upgrade_workflow_operator_runs(
         for record in caplog.records:
             assert record.levelname != "WARNING"
             assert record.levelname != "WARN"
+
+
+@pytest.mark.asyncio
+async def test_upgrade_workflow_operator_nestings_are_updated(
+    workflow_upgrade_operators, async_test_client, caplog
+):
+    async with async_test_client as ac:
+        # Check new trafo not included
+        resp = await ac.get(
+            "/api/transformations",
+            params={"id": str(workflow_upgrade_operators.id), "include_dependencies": True},
+        )
+        assert resp.status_code == 200
+        assert not "530e54d4-8d1d-477c-a439-c746c37092f8" in [x["id"] for x in resp.json()]
+
+        # Now upgrade
+        resp = await ac.put(
+            f"/api/transformations/{str(workflow_upgrade_operators.id)}/upgrade_operators/9706f684-77d0-4e24-8bba-ae960a3e9f2e/?new_operator_transformation_revision_id=530e54d4-8d1d-477c-a439-c746c37092f8",
+            json=json.loads(workflow_upgrade_operators.model_dump_json()),
+        )
+
+        assert resp.status_code == 201
+
+        TransformationRevision(**(resp.json()))  # validates correctly
+
+        # check again
+        resp = await ac.get(
+            "/api/transformations",
+            params={"id": str(workflow_upgrade_operators.id), "include_dependencies": True},
+        )
+        assert resp.status_code == 200
+
+        assert "530e54d4-8d1d-477c-a439-c746c37092f8" in [x["id"] for x in resp.json()]

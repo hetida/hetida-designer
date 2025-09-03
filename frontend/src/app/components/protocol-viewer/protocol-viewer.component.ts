@@ -49,6 +49,8 @@ export class ProtocolViewerComponent implements AfterViewInit {
   plotlyTemplate: TemplateRef<any>;
   @ViewChild('simpleTemplate', { static: true })
   simpleTemplate: TemplateRef<any>;
+  @ViewChild('stringTemplate', { static: true })
+  stringTemplate: TemplateRef<any>;
 
   @HostBinding('style.height') hostHeight = this.HOST_HEIGHT_SHRINKED;
   @HostBinding('class.visible') get visible() {
@@ -102,10 +104,11 @@ export class ProtocolViewerComponent implements AfterViewInit {
             : (this.visible = true)
         ),
         filter(protocol => protocol !== undefined),
-        map(protocol => protocol.replace(/\\n/gm, '\n')),
+        //map(protocol => protocol.replace(/\\n/gm, '\n')),
         tap(protocol => (this.executionResponseRaw = protocol)),
         map(protocol => JSON.parse(protocol) as ExecutionResponse),
         catchError(() => {
+          console.error('Parsing execution response error.');
           return of(this.executionResponseRaw);
         }),
         onErrorResumeNext()
@@ -117,9 +120,17 @@ export class ProtocolViewerComponent implements AfterViewInit {
     this.lastProtocol$.subscribe(executionResponse => {
       if (typeof executionResponse === 'string') {
         this.displayRawValue = true;
+        console.error(
+          'executionResponse is type string, could not parse as json'
+        );
       } else {
-        this.displayRawValue = false;
         this.executionResponse = executionResponse;
+
+        if (executionResponse.error === null) {
+          this.displayRawValue = false;
+        } else {
+          this.displayRawValue = true;
+        }
       }
 
       this.changeDetector.markForCheck();
@@ -131,6 +142,8 @@ export class ProtocolViewerComponent implements AfterViewInit {
 
     if (this.outputIsPlotlyJson(outputKey)) {
       template = this.plotlyTemplate;
+    } else if (this.outputIsString(outputKey)) {
+      template = this.stringTemplate;
     } else {
       template = this.simpleTemplate;
     }
@@ -151,7 +164,14 @@ export class ProtocolViewerComponent implements AfterViewInit {
     return resultType === IOType.PLOTLYJSON;
   }
 
+  outputIsString(outputKey: string): boolean {
+    const resultType =
+      this.executionResponse.output_types_by_output_name[outputKey];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    return resultType === IOType.STRING;
+  }
+
   stringifyJson(value: any) {
-    return JSON.stringify(value);
+    return JSON.stringify(value, null, 2);
   }
 }

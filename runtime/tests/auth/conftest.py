@@ -220,6 +220,13 @@ def valid_access_token(key_pair):
 
 
 @pytest.fixture()
+def valid_access_token_with_role(key_pair):
+    return generate_token(
+        algorithm="RS256", key=key_pair[0], payload={"some_roles": ["allowed_hd_user"]}
+    )
+
+
+@pytest.fixture()
 def second_valid_access_token(key_pair):
     return generate_token(payload={"sub": "second"}, algorithm="RS256", key=key_pair[0])
 

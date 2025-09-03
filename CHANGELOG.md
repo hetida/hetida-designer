@@ -1,3 +1,31 @@
+## 0.12.0
+* new feature: draft operators: workflows in draft state can now contain operators in draft state
+  * releasing requires that all operators are released
+  * the toolbar button for upgrading operators now also upgrades draft operators to the current state of the draft revision.
+  * detects / prevents cycles 
+* fixed crushed workflow icon
+* fixed bug in blob storage adapter
+* structured logging
+* some updates to base components
+* improve auth token refresh option documentation
+* several smaller fixes
+
+## 0.11.4
+* Fix component code logging, enrich messages and make them part of execution responses. In particular it can be viewed in the test result display.
+* reduce autosave interval and provide some error message if updating trafos fails.
+* include job id to load/send requests against generic rest adapters to improve tracability of execution jobs
+* improve / clearify test execution result / protocol view
+* fix component adapter sink search backend endpoint
+* replace hyphens by underscore in hdctl. This allows to import component py files directly.
+* fix / improve some outdated docs
+* fix newline handling in String outputs or in json representation of ANY outputs leading to problems in the test execution result / protocol view.
+
+## 0.11.3
+* Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
+* Add additional request measurements for communication between backend and runtime
+* Fix auth role checking resulting in 403 when role checking is deactivated but some roles are present in the default role key.
+* Fix getting dependant trafos / nested trafos
+
 ## 0.11.2
 * Add pure uvicorn mode, allowing to circumvent usage of gunicorn for now.
 

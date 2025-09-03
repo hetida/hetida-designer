@@ -26,10 +26,12 @@
       >
         <mat-icon
           svgIcon="icon-workflow"
-          class="mat-icon-svg"
-          [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
-        >
-        </mat-icon>
+          [ngClass]="{
+            'mat-icon-svg-disabled': item.state === 'DISABLED',
+            'mat-icon-svg-draft': item.state === 'DRAFT',
+            'mat-icon-svg-released': item.state === 'RELEASED'
+          }"
+        ></mat-icon>
         <span class="text-ellipsis"
           >{{ item.name }} ({{ item.version_tag }})</span
         >
@@ -56,10 +58,12 @@
       >
         <mat-icon
           svgIcon="icon-component"
-          class="mat-icon-svg"
-          [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
-        >
-        </mat-icon>
+          [ngClass]="{
+            'mat-icon-svg-disabled': item.state === 'DISABLED',
+            'mat-icon-svg-draft': item.state === 'DRAFT',
+            'mat-icon-svg-released': item.state === 'RELEASED'
+          }"
+        ></mat-icon>
         <span class="text-ellipsis"
           >{{ item.name }} ({{ item.version_tag }})</span
         >
@@ -78,4 +82,4 @@
     </li>
   </ul>
 </nav>
-<app-import-button></app-import-button>
+<hd-import-trafos-button></hd-import-trafos-button>

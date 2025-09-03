@@ -30,12 +30,48 @@
               }
             }
 
+            .mat-icon-svg-released {
+              .cls-1 {
+                fill: $hd-yellow-dark;
+              }
+            }
+
+            .mat-icon-svg-draft {
+              .cls-1 {
+                fill: $hd-grey-dark;
+              }
+            }
+
+            .mat-icon-svg-disabled {
+              .cls-1 {
+                fill: $hd-red-dark;
+              }
+            }
+
             &.active {
               background-color: map-get($secondary, 500);
 
               .mat-icon-svg {
                 .cls-1 {
                   fill: $hd-yellow;
+                }
+              }
+
+              .mat-icon-svg-released {
+                .cls-1 {
+                  fill: $hd-yellow;
+                }
+              }
+
+              .mat-icon-svg-draft {
+                .cls-1 {
+                  fill: map_get($primary, 700);
+                }
+              }
+
+              .mat-icon-svg-disabled {
+                .cls-1 {
+                  fill: $hd-red;
                 }
               }
             }

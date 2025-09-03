@@ -351,7 +351,7 @@ def update_code(
 
 def add_documentation_as_module_doc_string(code: str, tr: TransformationRevision) -> str:
     current_trafo_doc_stripped = tr.documentation.strip()
-    if code.startswith('"""') or current_trafo_doc_stripped == "":
+    if code.startswith(('"""', 'r"""')) or current_trafo_doc_stripped == "":
         return code
 
     mod_doc_string = (

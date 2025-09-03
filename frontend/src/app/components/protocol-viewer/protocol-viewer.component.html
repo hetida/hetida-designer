@@ -3,7 +3,12 @@
 }
 @if (!(isLoading$ | async)) {
   <div class="menu-bar">
-    <span>execution protocol</span>
+    <span
+      >execution protocol
+      @if (displayRawValue) {
+        (raw json)
+      }
+    </span>
     <div class="menu-bar__expand-icon" (click)="isExpanded = !isExpanded">
       @if (isExpanded) {
         <mat-icon>expand_more</mat-icon>
@@ -12,7 +17,10 @@
       }
     </div>
     <div>
-      <mat-icon class="clickable" (click)="displayRawValue = !displayRawValue"
+      <mat-icon
+        class="clickable"
+        (click)="displayRawValue = !displayRawValue"
+        title="Switch between protocol and raw json view"
         >code</mat-icon
       >
       <mat-icon class="clickable" (click)="closeDialog()">close</mat-icon>
@@ -33,6 +41,21 @@
         </div>
         <mat-divider></mat-divider>
       }
+      @if (executionResponse.gathered_component_code_logs.length > 0) {
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">Component Code Log Messages</span>
+          <br />
+          @for (
+            item of executionResponse.gathered_component_code_logs;
+            track item
+          ) {
+            <pre class="protocol-content-verbatim"
+              >{{ item.timestamp }} {{ item.message }}</pre
+            >
+          }
+        </div>
+      }
     </div>
   }
   @if (displayRawValue) {
@@ -43,7 +66,7 @@
 }
 
 <ng-template #plotlyTemplate let-plotlyItem="transformation">
-  <span>{{ plotlyItem.key }}:</span>
+  <span class="mat-body-strong">{{ plotlyItem.key }}:</span>
   <br />
   <plotly-plot
     [useResizeHandler]="true"
@@ -59,7 +82,31 @@
 </ng-template>
 
 <ng-template #simpleTemplate let-someItem="transformation">
-  <span>{{ someItem.key }}:</span>
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
   <br />
-  <span class="mat-body-strong">{{ stringifyJson(someItem.value) }}</span>
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
+    }}</pre>
+  </span>
+</ng-template>
+
+<ng-template #stringTemplate let-someItem="transformation">
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
+  <br />
+  <span class="mat-body-strong">
+    <pre class="protocol-content-verbatim">{{
+      someItem.value ?? '(null)'
+    }}</pre>
+  </span>
+</ng-template>
+
+<ng-template #ComponentCodeLogTemplate let-someItem="logentry">
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
+  <br />
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
+    }}</pre>
+  </span>
 </ng-template>

@@ -1,10 +1,26 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpParams,
+  HttpErrorResponse,
+  HttpResponse
+} from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
-import { Observable } from 'rxjs';
-import { Transformation, UnitTestResults } from '../../model/transformation';
+import { catchError, throwError, Observable, of, map } from 'rxjs';
+import {
+  Transformation,
+  UpdatedTransformation,
+  UnitTestResults
+} from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
+
+export interface DeleteResult {
+  success: boolean;
+  status: number;
+  error?: string;
+}
 
 type TrafoStringMixed = Transformation | string;
 @Injectable({
@@ -15,7 +31,8 @@ export class TransformationHttpService {
 
   constructor(
     private readonly httpClient: HttpClient,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    private readonly notificationService: NotificationService
   ) {
     this.config.getConfig().subscribe(runtimeConfig => {
       this.apiEndpoint = runtimeConfig.apiEndpoint;
@@ -36,30 +53,39 @@ export class TransformationHttpService {
 
   public updateTransformation(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
-    return this.httpClient.put<Transformation>(url, transformation);
+    return this.httpClient.put<UpdatedTransformation>(url, transformation).pipe(
+      catchError((error: HttpErrorResponse) => {
+        this.notificationService.error('Failed to update transformation!');
+
+        // Re-throw the error so subscribers can still handle it if needed
+        return throwError(() => error);
+      })
+    );
   }
 
   public upgradeWorkflowOperators(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators`;
-    return this.httpClient.put<Transformation>(url, transformation);
+    return this.httpClient.put<UpdatedTransformation>(url, transformation);
   }
 
   public upgradeSingleOperator(
     transformation: Transformation,
     operatorId: string,
     newRevisionId: string
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     let params = new HttpParams();
     params = params.append(
       'new_operator_transformation_revision_id',
       newRevisionId
     );
     const url = `${this.apiEndpoint}/transformations/${transformation.id}/upgrade_operators/${operatorId}`;
-    return this.httpClient.put<Transformation>(url, transformation, { params });
+    return this.httpClient.put<UpdatedTransformation>(url, transformation, {
+      params
+    });
   }
 
   public updateExpandComponent(
@@ -117,10 +143,23 @@ export class TransformationHttpService {
     return this.httpClient.put<Response>(url, importObj, { params });
   }
 
-  public deleteTransformation(id: string): Observable<void> {
+  public deleteTransformation(id: string): Observable<DeleteResult> {
     const url = `${this.apiEndpoint}/transformations/${id}`;
     // eslint-disable-next-line
-    return this.httpClient.delete<void>(url);
+
+    return this.httpClient.delete<void>(url, { observe: 'response' }).pipe(
+      map((response: HttpResponse<void>) => ({
+        success: true,
+        status: response.status
+      })),
+      catchError((error: HttpErrorResponse) => {
+        return of({
+          success: false,
+          status: error.status,
+          error: error.message
+        });
+      })
+    );
   }
 
   public executeTransformation(

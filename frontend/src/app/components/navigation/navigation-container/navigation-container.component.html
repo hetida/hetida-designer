@@ -36,6 +36,11 @@
       <span>Add component</span>
     </div>
   }
+  <div class="right-aligned-toggle mr-1">
+    <mat-slide-toggle [formControl]="showDeprecatedFilter">
+      Show deprecated
+    </mat-slide-toggle>
+  </div>
 </div>
 
 <mat-divider></mat-divider>
@@ -53,7 +58,7 @@
 <div class="navigation-container__scrollable">
   @for (
     item of transformationsByCategory | keyvalue: sortByCategoryAlphabetically;
-    track $index
+    track item.key
   ) {
     <hd-navigation-category
       [transformations]="item.value"
