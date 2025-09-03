@@ -1,3 +1,0 @@
-pandas<3,>=2
-plotly<7,>=6
-pydantic<3,>=2

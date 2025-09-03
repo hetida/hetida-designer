@@ -10,9 +10,11 @@ from pytz import UnknownTimeZoneError
 from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions_for_component_code import (
     _get_display_name,
-    _get_start_or_end_timestamp,
+    _get_end_timestamp,
+    _get_start_timestamp,
     _get_unit,
-    _pad_start_or_end,
+    _pad_end,
+    _pad_start,
     _to_datetime,
     get_and_pad_start_and_end_timestamp,
     get_colors_from_plot_target_settings,
@@ -152,23 +154,15 @@ def test_get_and_pad_none():
 
 
 @pytest.mark.parametrize(
-    ("series", "attrs", "timestamp", "is_start", "kwargs"),
+    ("series", "attrs", "timestamp", "kwargs"),
     [
-        (pd.Series(), None, "2025-05-28T09:00:00+02:00", True, {}),  # given explicit timestamp
+        (pd.Series(), None, "2025-05-28T09:00:00+02:00", {}),  # given explicit timestamp
         (
             pd.Series(),
             None,
             None,
-            True,
             {"datetime_x_axes_range_start": "2025-05-28T09:00:00+02:00"},
         ),  # start in PlotTargetSettings
-        (
-            pd.Series(),
-            None,
-            None,
-            False,
-            {"datetime_x_axes_range_end": "2025-05-28T18:00:00+02:00"},
-        ),  # end in PlotTargetSettings
         (
             pd.Series(),
             {
@@ -177,9 +171,34 @@ def test_get_and_pad_none():
                 }
             },
             None,
-            True,
             {},
         ),  # start in metadata
+        (
+            pd.Series({"2025-05-28T09:00:00+02:00": 1, "2025-05-28T18:00:00+02:00": 2}),
+            None,
+            None,
+            {},
+        ),  # start is first value
+    ],
+)
+def test_get_start_timestamp(setup_plot_target_settings, series, attrs, timestamp, kwargs):
+    setup_plot_target_settings(**kwargs)
+    if attrs is not None:
+        series.attrs = attrs
+    timestamp = _get_start_timestamp(series, timestamp)
+    assert isinstance(timestamp, pd.Timestamp | None)
+
+
+@pytest.mark.parametrize(
+    ("series", "attrs", "timestamp", "kwargs"),
+    [
+        (pd.Series(), None, "2025-05-28T09:00:00+02:00", {}),  # given explicit timestamp
+        (
+            pd.Series(),
+            None,
+            None,
+            {"datetime_x_axes_range_end": "2025-05-28T18:00:00+02:00"},
+        ),  # end in PlotTargetSettings
         (
             pd.Series(),
             {
@@ -188,58 +207,58 @@ def test_get_and_pad_none():
                 }
             },
             None,
-            False,
             {},
         ),  # end in metadata
         (
             pd.Series({"2025-05-28T09:00:00+02:00": 1, "2025-05-28T18:00:00+02:00": 2}),
             None,
             None,
-            True,
-            {},
-        ),  # start is first value
-        (
-            pd.Series({"2025-05-28T09:00:00+02:00": 1, "2025-05-28T18:00:00+02:00": 2}),
-            None,
-            None,
-            False,
             {},
         ),  # end is last value
     ],
 )
-def test_get_start_or_end_timestamp(
-    setup_plot_target_settings, series, attrs, timestamp, is_start, kwargs
-):
+def test_get_end_timestamp(setup_plot_target_settings, series, attrs, timestamp, kwargs):
     setup_plot_target_settings(**kwargs)
     if attrs is not None:
         series.attrs = attrs
-    timestamp = _get_start_or_end_timestamp(series, timestamp, is_start)
+    timestamp = _get_end_timestamp(series, timestamp)
     assert isinstance(timestamp, pd.Timestamp | None)
 
 
-def test_get_start_or_end_none():
-    timestamp = _get_start_or_end_timestamp(pd.Series(), None)
+def test_get_end_none():
+    timestamp = _get_end_timestamp(pd.Series(), None)
+    assert timestamp is None
+
+
+def test_get_start_none():
+    timestamp = _get_start_timestamp(pd.Series(), None)
     assert timestamp is None
 
 
 def test_pad_start():
     start = pd.to_datetime("2025-05-28T09:00:00+02:00")
-    padded_start = _pad_start_or_end(start, "1h")
+    padded_start = _pad_start(start, "1h")
     assert isinstance(padded_start, pd.Timestamp)
     assert padded_start < start
 
 
 def test_pad_end():
     end = pd.to_datetime("2025-05-28T18:00:00+02:00")
-    padded_end = _pad_start_or_end(end, "1h", False)
+    padded_end = _pad_end(end, "1h")
     assert isinstance(padded_end, pd.Timestamp)
     assert padded_end > end
 
 
-def test_pad_start_or_end_wrong_padding():
+def test_pad_start_wrong_padding():
     timestamp = pd.to_datetime("2025-05-28T09:00:00+02:00")
     with pytest.raises(HelperException):
-        _pad_start_or_end(timestamp, "foo")
+        _pad_start(timestamp, "foo")
+
+
+def test_pad_end_wrong_padding():
+    timestamp = pd.to_datetime("2025-05-28T09:00:00+02:00")
+    with pytest.raises(HelperException):
+        _pad_end(timestamp, "foo")
 
 
 @pytest.mark.parametrize(("timestamp"), [("2025-05-28T09:00:00+02:00"), (1748415600)])

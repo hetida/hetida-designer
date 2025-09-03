@@ -1,19 +1,42 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
 [project]
 name = "hdhelpers"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
     "pandas>=2,<3",
     "plotly>=6,<7",
     "pydantic>=2,<3"
 ]
-requires-python = ">=3.12"
 license = "MIT"
 
-[build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+[dependency-groups]
+dev = [
+    "mypy>=1.16.1",
+    "pandas-stubs>=2.2.3.250527",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.1",
+    "sqlalchemy>=2.0.43",
+]
 
-[tool.setuptools.packages]
-find = {}
+[tool.ruff]
+
+# allow longer lines than the default (88, same as black)
+line-length = 100
+
+# Assume python312
+target-version = "py312"
+
+lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
+
+lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017", "ISC001"]
+
+[tool.ruff.lint.per-file-ignores]
+"/**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]
+

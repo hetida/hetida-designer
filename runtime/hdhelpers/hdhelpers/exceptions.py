@@ -20,25 +20,7 @@ class ComponentException(Exception):
         super().__init__(*args, **kwargs)
 
 
-class ComponentInputValidationException(ComponentException):
-    """In code input validation failures"""
-
-    def __init__(
-        self,
-        *args: Any,
-        invalid_component_inputs: list[str],
-        error_code: int | str = "",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            *args,
-            error_code=error_code,
-            extra_information={"invalid_component_inputs": invalid_component_inputs},
-            **kwargs,
-        )
-
-
-class HelperException(Exception):  # TODO: HdhelperException
+class HelperException(Exception):
     """Exception to re-raise exceptions with error code raised in the code of the hdhelpers
     package."""
 

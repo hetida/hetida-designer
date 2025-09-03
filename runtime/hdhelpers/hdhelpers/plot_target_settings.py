@@ -31,6 +31,28 @@ class StatusColors(BaseModel):
     )
 
 
+class PlotTargetStyle(BaseModel):
+    axes_label_color: str | None = Field(
+        None, description="Color of the tick labels of all axes as a hex code"
+    )
+    background_color: str | None = Field(
+        None, description="Color of the panel background as a hex code"
+    )
+    grid_color: str | None = Field(
+        None, description="Color of the grid as a hex code that may be drawn into the background"
+    )
+    line_colors: list[str] | None = Field(
+        None,
+        description="""List of colors to be used for plot traces.
+            Will be set as colorway by plotly_fig_to_json_dict,
+            so the colors are only applied where no explicit trace color is set""",
+    )
+    status_colors: StatusColors = Field(
+        StatusColors(),
+        description="Has the properties success_color, error_color, warn_color, info_color",
+    )
+
+
 class PlotTargetSettings(BaseModel):
     """Settings that plot components can/should use
 
@@ -56,24 +78,9 @@ class PlotTargetSettings(BaseModel):
              This has to be set in the config of the plotly figure dict and the plotly.js
              must have the associated plotly local scripts loaded.""",
     )
-    line_colors: list[str] | None = Field(
-        None,
-        description="""List of colors to be used for plot traces.
-             Will be set as colorway by plotly_fig_to_json_dict,
-             so the colors are only applied where no explicit trace color is set""",
-    )
-    background_color: str | None = Field(
-        None, description="Color of the panel background as a hex code"
-    )
-    axes_label_color: str | None = Field(
-        None, description="Color of the tick labels of all axes as a hex code"
-    )
-    grid_color: str | None = Field(
-        None, description="Color of the grid as a hex code that may be drawn into the background"
-    )
-    status_colors: StatusColors = Field(
-        StatusColors(),
-        description="Has the properties success_color, error_color, warn_color, info_color",
+    plot_target_style: PlotTargetStyle = Field(
+        PlotTargetStyle(),
+        description="Colors to use in the plot",
     )
     datetime_tick_format: str | None = Field(
         None, description="Tickformat to use for datetime axes", examples=["%H:%M<br>%d.%m.%Y"]
@@ -94,7 +101,7 @@ def get_plot_target_settings() -> PlotTargetSettings:
     return default values.
     """
     try:
-        from hdhelpers.context import get_runtime_exec_context
+        from hetdesrun.runtime.context import get_runtime_exec_context
 
         return get_runtime_exec_context().plot_target_settings
     except ImportError:
@@ -135,7 +142,6 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
         use_muplot_grid = True
         use_muplot_line_and_markers = True
         use_platform_background = True
-        # TODO: Wollen wir grundsätzlich use_simple_white_template = True oder nur hier?
 
     plot_target_settings = get_plot_target_settings()
 
