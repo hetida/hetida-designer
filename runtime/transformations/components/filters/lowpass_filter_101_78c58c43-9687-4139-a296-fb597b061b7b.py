@@ -1,24 +1,31 @@
 """Documentation for Lowpass Filter
 
-# Lowpass FIlter
+# Lowpass Filter
 
 ## Description
-This component is a digital first-order lowpass-filter.
+Butterworth low-pass filter for uniformly sampled time series (exactly constant spacing) with zero-phase option.
 
 ## Inputs
-* **data** (Pandas Series): The indices must be datetimes with constant differences, the values must be numeric.
-* **cutoff_frequency** (Float): Cut-off frequency, that is period duration per time unit. The time unit is given by **frequency_as_periods_per_unit** and defaults to seconds, thus cut-off frequency should be in Hz in the default case Caveat: The cutoff frequency must be in between 0 and the Nyquist frequency of the **data**, that is 1/2 of the input series' sampling rate.
-* **frequency_as_periods_per_unit** (String): The unit of the **cutoff_frequency**. Must be in {"s", "m", "h", "d"} for seconds, minutes hours, days respectively. Default: "s".
-* **order** (Int): The filter order of the butterworth filter, default: 1.
-* **forward_backward**: Determines whether the filter is applied in forward and backward direction (True) or only in backward direction (False). Default: True.
+- **data** (Pandas Series):
+    Time series with DatetimeIndex, strictly increasing, unique, and exactly constant spacing; values numeric and finite.
+- **cutoff_frequency** (Float):
+    Cut-off frequency in periods per given unit; must be > 0 and below the Nyquist frequency.
+- **frequency_as_periods_per_unit** (String, default value: "s"):
+    Unit for cutoff_frequency; one of "s", "m", "h", "d".
+- **order** (Integer, default value: 1):
+    Butterworth filter order; positive integer (>= 1).
+- **forward_backward** (Boolean, default value: True):
+    Apply zero-phase filtering (forward and backward) if True; single-pass filtering if False.
 
 ## Outputs
-* **filtered** (Pandas Series): The filtered data.
+- **filtered** (Pandas Series):
+    The filtered data with the original index.
 
 ## Details
-The component fuses a Butterworth Filter to filter a series Pandas Series with a given cut-off frequency. The result is a Pandas Series, containing only frequencies smaller than the cut-off frequency.
-
-See also the Test Wiring. The below series is a composite signal of two signals, one high frequency (aperiod duration 1 second, that is 1 Hz) and one low frequency (period duration 10 seconds, that is 0.1 Hz). The cut-off frequency is thus chosen in between as 0.25 Hz.
+Notes:
+- Requires an exactly constant sampling interval (DatetimeIndex; strictly increasing and unique) and numeric, finite values.
+- cutoff_frequency is given in periods per unit (Hz for unit "s"); the normalized cutoff must be within (0, 1) relative to Nyquist.
+- With forward_backward=True, zero-phase filtering is applied (filtfilt). SciPy requires a minimum series length depending on the filter order.
 
 {
     "2025-01-01 00:00:00.000Z": 0.0,
@@ -326,6 +333,7 @@ See also the Test Wiring. The below series is a composite signal of two signals,
 """
 
 import pandas as pd
+import numpy as np
 from scipy.signal import butter, filtfilt, lfilter
 
 from hdutils import ComponentInputValidationException
@@ -358,12 +366,12 @@ from hdutils import parse_default_value  # noqa: E402, F401
 
 def main(
     *,
-    data,
-    cutoff_frequency,
-    frequency_as_periods_per_unit="s",
-    order=1,
-    forward_backward=True,
-):
+    data: pd.Series,
+    cutoff_frequency: float,
+    frequency_as_periods_per_unit: str = "s",
+    order: int = 1,
+    forward_backward: bool = True,
+) -> dict[str, pd.Series]:
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
 
@@ -380,11 +388,93 @@ def main(
     if frequency_as_periods_per_unit == "d":
         cutoff_frequency *= 1 / (24 * 60 * 60)
 
-    nyq = 0.5 * data.size / ((data.index[-1] - data.index[0]).total_seconds())
+    # Validate input series
+    if not isinstance(data, pd.Series):
+        raise ComponentInputValidationException(
+            'Input "data" must be a pandas Series.',
+            invalid_component_inputs=["data"],
+        )
+
+    if data.empty or data.size < 2:
+        raise ComponentInputValidationException(
+            'Input "data" must contain at least 2 samples.',
+            invalid_component_inputs=["data"],
+        )
+
+    # Check datetime index properties
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ComponentInputValidationException(
+            'Index of "data" must be a DatetimeIndex.',
+            invalid_component_inputs=["data"],
+        )
+
+    if not data.index.is_monotonic_increasing:
+        raise ComponentInputValidationException(
+            'Index of "data" must be strictly increasing (sorted ascending).',
+            invalid_component_inputs=["data"],
+        )
+
+    if not data.index.is_unique:
+        raise ComponentInputValidationException(
+            'Index of "data" must not contain duplicate timestamps.',
+            invalid_component_inputs=["data"],
+        )
+
+    # Validate values: numeric and finite
+    if not pd.api.types.is_numeric_dtype(data.dtype):
+        raise ComponentInputValidationException(
+            'Values of "data" must be numeric.',
+            invalid_component_inputs=["data"],
+        )
+
+    values = data.to_numpy()
+    if not np.isfinite(values).all():
+        raise ComponentInputValidationException(
+            'Values of "data" must be finite (no NaN/Inf).',
+            invalid_component_inputs=["data"],
+        )
+
+    # Check for constant sampling interval
+    idx = data.index
+    diffs_ns = (
+        (idx[1:] - idx[:-1]).astype("timedelta64[ns]").astype(np.int64)
+    )  # nanoseconds
+    if not np.all(diffs_ns == diffs_ns[0]):
+        raise ComponentInputValidationException(
+            'Index of "data" must have exactly constant spacing (no tolerance).',
+            invalid_component_inputs=["data"],
+        )
+
+    # Validate order
+    if not isinstance(order, int) or order < 1:
+        raise ComponentInputValidationException(
+            '"order" must be a positive integer (>= 1).',
+            invalid_component_inputs=["order"],
+        )
+
+    # Validate cutoff > 0
+    if not (isinstance(cutoff_frequency, (int, float)) and cutoff_frequency > 0):
+        raise ComponentInputValidationException(
+            '"cutoff_frequency" must be a positive number.',
+            invalid_component_inputs=["cutoff_frequency"],
+        )
+
+    # Compute Nyquist from exact constant step (no off-by-one bias)
+    dt_seconds = float(diffs_ns[0]) / 1e9
+    nyq = 0.5 / dt_seconds
     normal_frequency = cutoff_frequency / nyq
 
+    # Validate cutoff relative to Nyquist
+    if not (0 < normal_frequency < 1):
+        raise ComponentInputValidationException(
+            f'"cutoff_frequency" must be between 0 and Nyquist ({nyq:.6g} Hz).',
+            invalid_component_inputs=["cutoff_frequency"],
+        )
+
     b, a = butter(order, normal_frequency, btype="low", analog=False)
-    filtered = filtfilt(b, a, data) if forward_backward else lfilter(b, a, data)
+
+    x = data.to_numpy(dtype=float)
+    filtered = filtfilt(b, a, x) if forward_backward else lfilter(b, a, x)
 
     return {"filtered": pd.Series(filtered, index=data.index)}
 
