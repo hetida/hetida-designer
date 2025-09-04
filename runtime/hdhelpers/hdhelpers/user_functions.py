@@ -1,8 +1,12 @@
+import json
 import logging
+from typing import Any
 from warnings import warn
 
 import pandas as pd
 import pytz
+from plotly.graph_objects import Figure
+from plotly.utils import PlotlyJSONEncoder
 
 from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions import (
@@ -24,7 +28,7 @@ def get_colors_from_plot_target_settings() -> PlotTargetStyle:
     Most color uses are already covered by the default settings of plotly_fig_to_json_dict().
     They are still included here in case coloring other plot elements in the same color is desired.
     Each color is given as a hex code, line_colors is a list of such, as specified in
-    PlotTargetSettings.
+    PlotTargetStyle.
     """
     plot_target_settings = get_plot_target_settings()
 
@@ -89,7 +93,7 @@ def get_and_pad_start_and_end_timestamp(
     return start, end
 
 
-def modify_timezone(
+def modify_timezone(  # noqa: PLR0912
     object_to_convert: pd.Timestamp | pd.Series | pd.DataFrame,
     to_timezone: str,
     column_name: str | None = None,
@@ -176,3 +180,111 @@ def modify_timezone(
     except KeyError as exc:
         exc.add_note(f"Column name {column_name} not in object_to_convert")
         raise
+
+
+def plotly_fig_to_json_dict(  # noqa: PLR0912
+    fig: Figure,
+    add_config_settings: bool = True,
+    hide_legend: bool = False,
+    hide_x_title: bool = False,
+    update_x_axes_tickformat: bool = False,
+    use_default_standoff: bool = False,
+    use_minimum_margin: bool = True,
+    use_muplot_axes_color: bool = False,
+    use_muplot_grid: bool = False,
+    use_muplot_line_and_markers: bool = False,
+    use_platform_background: bool = False,
+    use_platform_defaults: bool = False,
+    use_simple_white_template: bool = True,
+) -> Any:
+    """Turn Plotly figure into a Python dict-like object
+
+    This function can be used in visualization components to obtain the
+    correct plotly json-like object from a Plotly Figure object.
+
+    See visualization components from the accompanying base components for
+    examples on usage.
+    """
+    if use_platform_defaults:
+        hide_legend = True
+        hide_x_title = True
+        update_x_axes_tickformat = True
+        use_default_standoff = True
+        use_muplot_axes_color = True
+        use_muplot_grid = True
+        use_muplot_line_and_markers = True
+        use_platform_background = True
+
+    plot_target_settings = get_plot_target_settings()
+
+    if plot_target_settings.plot_target_style.line_colors is not None:
+        fig.update_layout(colorway=plot_target_settings.plot_target_style.line_colors)
+
+    if use_simple_white_template:
+        fig.update_layout({"template": "simple_white"})
+
+    if (
+        use_platform_background
+        and plot_target_settings.plot_target_style.background_color is not None
+    ):
+        fig.update_layout(
+            {
+                "paper_bgcolor": plot_target_settings.plot_target_style.background_color,
+                "plot_bgcolor": "rgba(0,0,0,0)",
+            }
+        )
+
+    if hide_legend:
+        fig.update_layout(showlegend=False)
+
+    if hide_x_title:
+        fig.update_xaxes(title_text="")
+
+    if update_x_axes_tickformat and plot_target_settings.datetime_tick_format is not None:
+        fig.update_xaxes(tickformat=plot_target_settings.datetime_tick_format)
+
+    if (
+        use_muplot_axes_color
+        and plot_target_settings.plot_target_style.axes_label_color is not None
+    ):
+        fig.update_xaxes(color=plot_target_settings.plot_target_style.axes_label_color)
+        fig.update_yaxes(color=plot_target_settings.plot_target_style.axes_label_color)
+
+    if use_default_standoff:
+        fig.update_yaxes(title_standoff=5)
+
+    if use_muplot_line_and_markers:
+        fig.update_traces(
+            {
+                "marker": {"size": 3},
+                "line": {"width": 1},
+                "mode": "lines+markers",
+                "marker_symbol": "circle",
+            }
+        )
+
+    if use_minimum_margin:
+        fig.update_layout(
+            {"margin": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}}
+        )
+
+    if use_muplot_grid and plot_target_settings.plot_target_style.grid_color is not None:
+        grid_dict = {
+            "showgrid": True,
+            "gridcolor": plot_target_settings.plot_target_style.grid_color,
+            "zeroline": True,
+            "zerolinecolor": plot_target_settings.plot_target_style.grid_color,
+        }
+        fig.update_layout({"xaxis": grid_dict, "yaxis": grid_dict})
+
+    fig_dict_obj = fig.to_plotly_json()
+    if not "config" in fig_dict_obj:
+        fig_dict_obj["config"] = {}
+
+    if add_config_settings and plot_target_settings.plot_target_locale is not None:
+        fig_dict_obj["config"]["locale"] = plot_target_settings.plot_target_locale
+
+    # possibly quite inefficient (multiple serialisation / deserialization) but
+    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
+    # should be definitely compatible with the plotly javascript library:
+    return json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))

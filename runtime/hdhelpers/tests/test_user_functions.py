@@ -3,16 +3,22 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import pytest
 
 from hdhelpers.exceptions import HelperException
-from hdhelpers.plot_target_settings import PlotTargetSettings, PlotTargetStyle, StatusColors
+from hdhelpers.plot_target_settings import (
+    PlotTargetSettings,
+    PlotTargetStyle,
+    StatusColors,
+)
 from hdhelpers.user_functions import (
     get_and_pad_start_and_end_timestamp,
     get_colors_from_plot_target_settings,
     get_locale_from_plot_target_settings,
     get_title_with_unit,
     modify_timezone,
+    plotly_fig_to_json_dict,
 )
 
 
@@ -316,3 +322,52 @@ def test_modify_timezone_multicolumn_dataframe_without_index(multicolumn_frame):
     assert local_summertime.iloc[1, timestamp_id].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.iloc[1, timestamp_id_2].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.index[1].utcoffset() == datetime.timedelta(seconds=0)
+
+
+def test_plotly_fig_to_json_dict_defaults():
+    plotly_fig = go.Figure()
+    plotly_fig.add_trace(
+        go.Scatter(
+            x=[1, 2, 3],
+            y=[9, 8, 7],
+            name="Foo",
+        )
+    )
+    json_dict = plotly_fig_to_json_dict(plotly_fig)
+    assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
+    assert json_dict.get("layout", {}).get("margin", {})["autoexpand"]
+    assert json_dict.get("layout", {}).get("margin", {})["l"] == 0
+    assert json_dict.get("layout", {}).get("margin", {})["r"] == 0
+    assert json_dict.get("layout", {}).get("margin", {})["b"] == 0
+    assert json_dict.get("layout", {}).get("margin", {})["t"] == 0
+    assert json_dict.get("layout", {}).get("margin", {})["pad"] == 0
+
+
+def test_plotly_fig_to_json_dict_set_everything():
+    plotly_fig = go.Figure()
+    plotly_fig.add_trace(
+        go.Scatter(
+            x=[1, 2, 3],
+            y=[9, 8, 7],
+            name="Foo",
+        )
+    )
+    json_dict = plotly_fig_to_json_dict(
+        fig=plotly_fig,
+        add_config_settings=False,
+        hide_legend=True,
+        hide_x_title=True,
+        update_x_axes_tickformat=True,
+        use_default_standoff=True,
+        use_minimum_margin=False,
+        use_muplot_axes_color=True,
+        use_muplot_grid=True,
+        use_muplot_line_and_markers=True,
+        use_platform_background=True,
+        use_platform_defaults=True,
+        use_simple_white_template=False,
+    )
+    assert isinstance(json_dict, dict)
+
+    assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
+    assert json_dict.get("layout", {}).get("margin", {}) == {}
