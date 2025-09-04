@@ -138,7 +138,7 @@ def modify_timezone(
                 DeprecationWarning,
                 stacklevel=2,
             )
-            new_object[column_name] = pd.to_datetime(new_object[column_name]).tz_convert(
+            new_object[column_name] = pd.to_datetime(new_object[column_name]).dt.tz_convert(
                 to_timezone
             )
             column_names.append(column_name)
@@ -149,7 +149,7 @@ def modify_timezone(
                 msg = f"Converted index to datetime starting with {object_to_convert.index[0]}"
                 logger.debug(msg=msg)
             elif isinstance(new_object, pd.DataFrame) and "timestamp" in new_object.columns:
-                new_object["timestamp"] = pd.to_datetime(new_object["timestamp"]).tz_convert(
+                new_object["timestamp"] = pd.to_datetime(new_object["timestamp"]).dt.tz_convert(
                     to_timezone
                 )
                 msg = f"""Converted column "timestamp" to datetime starting with
@@ -157,7 +157,7 @@ def modify_timezone(
                 logger.debug(msg=msg)
         if len(column_names) > 0:
             for column in column_names:
-                new_object[column] = pd.to_datetime(new_object[column]).tz_convert(to_timezone)
+                new_object[column] = pd.to_datetime(new_object[column]).dt.tz_convert(to_timezone)
 
         if isinstance(object_to_convert, pd.Series):
             new_object = pd.Series(
@@ -168,13 +168,11 @@ def modify_timezone(
 
         return new_object
 
-    # TODO: Exceptions gründlich unit-testen
     except pytz.exceptions.UnknownTimeZoneError as exc:
         possible_timezone = pytz.all_timezones
         raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from exc
     except (TypeError, AttributeError) as exc:
         raise TypeError("Entries to convert do not contain valid timestamps") from exc
-
     except KeyError as exc:
         exc.add_note(f"Column name {column_name} not in object_to_convert")
         raise

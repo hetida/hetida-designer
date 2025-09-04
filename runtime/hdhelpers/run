@@ -41,7 +41,7 @@ format() {
 
 test() {
     if (( ${#} == 0 )) ; then
-        echo "Testing sdk package code ..."
+        echo "Testing hdhelpers package code ..."
         uv run -m pytest tests -c pytest.ini \
         --cov=hdhelpers --no-cov-on-fail \
         --ignore=*/__init__.py

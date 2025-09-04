@@ -101,7 +101,9 @@ def get_plot_target_settings() -> PlotTargetSettings:
     return default values.
     """
     try:
-        from hetdesrun.runtime.context import get_runtime_exec_context
+        from hetdesrun.runtime.context import (  # noqa: PLC0415 # pyright: ignore[reportMissingImports]
+            get_runtime_exec_context,
+        )
 
         return get_runtime_exec_context().plot_target_settings
     except ImportError:
@@ -145,16 +147,19 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
 
     plot_target_settings = get_plot_target_settings()
 
-    if plot_target_settings.line_colors is not None:
-        fig.update_layout(colorway=plot_target_settings.line_colors)
+    if plot_target_settings.plot_target_style.line_colors is not None:
+        fig.update_layout(colorway=plot_target_settings.plot_target_style.line_colors)
 
     if use_simple_white_template:
         fig.update_layout({"template": "simple_white"})
 
-    if use_platform_background and plot_target_settings.background_color is not None:
+    if (
+        use_platform_background
+        and plot_target_settings.plot_target_style.background_color is not None
+    ):
         fig.update_layout(
             {
-                "paper_bgcolor": plot_target_settings.background_color,
+                "paper_bgcolor": plot_target_settings.plot_target_style.background_color,
                 "plot_bgcolor": "rgba(0,0,0,0)",
             }
         )
@@ -168,9 +173,12 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
     if update_x_axes_tickformat and plot_target_settings.datetime_tick_format is not None:
         fig.update_xaxes(tickformat=plot_target_settings.datetime_tick_format)
 
-    if use_muplot_axes_color and plot_target_settings.axes_label_color is not None:
-        fig.update_xaxes(color=plot_target_settings.axes_label_color)
-        fig.update_yaxes(color=plot_target_settings.axes_label_color)
+    if (
+        use_muplot_axes_color
+        and plot_target_settings.plot_target_style.axes_label_color is not None
+    ):
+        fig.update_xaxes(color=plot_target_settings.plot_target_style.axes_label_color)
+        fig.update_yaxes(color=plot_target_settings.plot_target_style.axes_label_color)
 
     if use_default_standoff:
         fig.update_yaxes(title_standoff=5)
@@ -190,12 +198,12 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
             {"margin": {"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}}
         )
 
-    if use_muplot_grid and plot_target_settings.grid_color is not None:
+    if use_muplot_grid and plot_target_settings.plot_target_style.grid_color is not None:
         grid_dict = {
             "showgrid": True,
-            "gridcolor": plot_target_settings.grid_color,
+            "gridcolor": plot_target_settings.plot_target_style.grid_color,
             "zeroline": True,
-            "zerolinecolor": plot_target_settings.grid_color,
+            "zerolinecolor": plot_target_settings.plot_target_style.grid_color,
         }
         fig.update_layout({"xaxis": grid_dict, "yaxis": grid_dict})
 

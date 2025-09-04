@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import pandas as pd
@@ -96,9 +97,9 @@ def _get_start_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timesta
     plot_target_settings = get_plot_target_settings()
 
     timestamp = plot_target_settings.datetime_x_axes_range_start
-    key = "ref_interval_start_timestamp"
 
     if timestamp is None:
+        key = "ref_interval_start_timestamp"
         try:
             timestamp = series.attrs.get("single_metric_dataset_metadata", {})[key]
         except KeyError as exc:
@@ -124,9 +125,9 @@ def _get_end_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timestamp
     plot_target_settings = get_plot_target_settings()
 
     timestamp = plot_target_settings.datetime_x_axes_range_end
-    key = "ref_interval_end_timestamp"
 
     if timestamp is None:
+        key = "ref_interval_end_timestamp"
         try:
             timestamp = series.attrs.get("single_metric_dataset_metadata", {})[key]
         except KeyError as exc:
@@ -139,7 +140,7 @@ def _get_end_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timestamp
     return _to_datetime(timestamp)
 
 
-def _to_datetime(timestamp: str | int | None) -> pd.Timestamp | None:
+def _to_datetime(timestamp: datetime.datetime | str | int | None) -> pd.Timestamp | None:
     """Turn datetime string or integer into a pandas timestamp
 
     Integer values are interpreted as epoch in seconds.
@@ -150,7 +151,7 @@ def _to_datetime(timestamp: str | int | None) -> pd.Timestamp | None:
         return None
     if isinstance(timestamp, int):
         timestamp = pd.to_datetime(timestamp, unit="s", utc=True)
-    elif isinstance(timestamp, str):
+    elif isinstance(timestamp, str | datetime.datetime):
         timestamp = pd.to_datetime(timestamp, utc=True)
     else:
         raise HelperException("Unexpected timestamp type, please use str or int!")
