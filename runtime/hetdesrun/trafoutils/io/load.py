@@ -246,13 +246,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
         for file in files:
             path = os.path.join(root, file)
             ext = os.path.splitext(path)[1]
-            if ext not in (".py", ".json"):
-                logger.warning(
-                    "Invalid file extension '%s' to load transformation revision from: %s",
-                    ext,
-                    path,
-                )
-                continue
+
             if ext == ".py":
                 logger.info("Loading transformation from python file %s", path)
                 python_code = load_python_file(path)
@@ -268,7 +262,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                         )
                         continue
 
-            if ext == ".json":
+            elif ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
                 try:
@@ -276,6 +270,14 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 except ValueError as err:
                     logger.error("ValueError for json from path %s:\n%s", download_path, str(err))
                     continue
+            else:
+                if ext != ".pyc":
+                    logger.warning(
+                        "Invalid file extension '%s' to load transformation revision from: %s",
+                        ext,
+                        path,
+                    )
+                continue
             transformation_dict[transformation.id] = transformation
             if ext == ".py":
                 if transform_py_to_json:
