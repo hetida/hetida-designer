@@ -219,11 +219,9 @@ def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str) -> pd.DataFra
         with engine.begin():
             result = pd.read_sql_table(table_name, engine)
     except SQLOpsError as e:
-        engine.dispose()
         msg = f"Sql adapter pandas sql reading error: {str(e)}"
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
-    engine.dispose()
     return result
 
 
@@ -233,9 +231,7 @@ def load_sql_query(db_config: SQLAdapterDBConfig, query: Select) -> pd.DataFrame
         with engine.begin():
             result = pd.read_sql_query(query, engine)
     except SQLOpsError as e:
-        engine.dispose()
         msg = f"Sql adapter pandas sql query error: {str(e)}"
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
-    engine.dispose()
     return result

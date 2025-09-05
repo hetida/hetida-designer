@@ -105,8 +105,6 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
                 method="multi",
             )
     except SQLOpsError as e:
-        engine.dispose()
         msg = f"Sql adapter pandas to_sql writing error: {str(e)}"
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
-    engine.dispose()
