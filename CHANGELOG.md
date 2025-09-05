@@ -1,5 +1,6 @@
 
 * dependency upgrades and upgrade to Python 3.13
+* **BREAKING CHANGE**: removed u8darts from runtime image due to non-maintained transitive dependencies
 
 ## 0.12.0
 * new feature: draft operators: workflows in draft state can now contain operators in draft state
