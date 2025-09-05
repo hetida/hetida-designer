@@ -1,5 +1,5 @@
 import logging
-import pickle
+import pickle  # nosec: B403
 from io import BytesIO
 from typing import Any, cast
 from uuid import UUID

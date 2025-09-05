@@ -74,7 +74,7 @@ def import_func_from_code(
         try:
             # actually import the module;
             compiled_code = compile(code, filename=mod_display_filename_for_tracebacks, mode="exec")
-            exec(compiled_code, mod.__dict__)  # noqa: S102
+            exec(compiled_code, mod.__dict__)  # noqa: S102 # nosec B102
         except SyntaxError as exec_syntax_exception:
             logger.info(
                 "Syntax Error during importing function %s from code (%s (%s), uuid: %s)",

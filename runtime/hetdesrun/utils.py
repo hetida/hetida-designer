@@ -50,8 +50,8 @@ def get_uuid_from_seed(seed_str: str) -> UUID:
     This may be used to get reproducible UUIDs from human-readable strings in scripts
     and tests. Should not be used anywhere else for security reasons.
     """
-    random.seed(seed_str)
-    return UUID(int=random.getrandbits(128))
+    random.seed(seed_str)  # nosec B311
+    return UUID(int=random.getrandbits(128))  # nosec B311
 
 
 def load_data(

@@ -8,6 +8,10 @@ asttokens==3.0.0 \
     --hash=sha256:0dcd8baa8d62b0c1d118b399b2ddba3c4aff271d0d7a9e0d4c1681c79035bbc7 \
     --hash=sha256:e3078351a059199dd5138cb1c706e6430c05eff2ff136af5eb4790f9d28932e2
     # via stack-data
+bandit==1.8.6 \
+    --hash=sha256:3348e934d736fcdb68b6aa4030487097e23a501adf3e7827b63658df464dddd0 \
+    --hash=sha256:dbfe9c25fc6961c2078593de55fd19f2559f9e45b99f1272341f5b95dea4e56b
+    # via -r ./requirements-dev.in
 boto3==1.40.24 \
     --hash=sha256:24a19e275d33e918afc22a78c6a1e20c14d02cc00e2f786b05e2a4a32191457e \
     --hash=sha256:cc147ad13e8edf7ec69cbb4df8fe60f187f8b2c9ab8befa0fd1fbcfa4fc80b1f
@@ -409,6 +413,12 @@ jupyter-core==5.8.1 \
     # via
     #   ipykernel
     #   jupyter-client
+markdown-it-py==4.0.0 \
+    --hash=sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147 \
+    --hash=sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3
+    # via
+    #   -c ./requirements.txt
+    #   rich
 markupsafe==3.0.2 \
     --hash=sha256:0bff5e0ae4ef2e1ae4fdf2dfd5b76c75e5c2fa4132d05fc1b0dabcd20c7e28c4 \
     --hash=sha256:0f4ca02bea9a23221c0182836703cbf8930c5e9454bacce27e767509fa286a30 \
@@ -481,6 +491,12 @@ matplotlib-inline==0.1.7 \
     # via
     #   ipykernel
     #   ipython
+mdurl==0.1.2 \
+    --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
+    --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
+    # via
+    #   -c ./requirements.txt
+    #   markdown-it-py
 moto==5.1.11 \
     --hash=sha256:1330b6d9b91088e971469dfb67f297595541914b364e0b49047bb82622975ec7 \
     --hash=sha256:d09429ed5f67f8568637700cd525997d6abe7f91439a6f900b4f98a9fe4ecac9
@@ -614,6 +630,7 @@ pygments==2.19.2 \
     #   ipython
     #   ipython-pygments-lexers
     #   pytest
+    #   rich
 pytest==8.4.2 \
     --hash=sha256:86c0d0b93306b961d58d62a4db4879f27fe25513d4b969df351abdddb3c30e01 \
     --hash=sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79
@@ -708,7 +725,9 @@ pyyaml==6.0.2 \
     --hash=sha256:efdca5630322a10774e8e98e1af481aad470dd62c3170801852d752aa7a783ba \
     --hash=sha256:f753120cb8181e736c57ef7636e83f31b9c0d1722c516f7e86cf15b7aa57ff12 \
     --hash=sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4
-    # via responses
+    # via
+    #   bandit
+    #   responses
 pyzmq==27.0.2 \
     --hash=sha256:05288947797dcd6724702db2056972dceef9963a83041eb734aea504416094ec \
     --hash=sha256:063845960df76599ad4fad69fa4d884b3ba38304272104fdcd7e3af33faeeb1d \
@@ -816,6 +835,12 @@ responses==0.25.8 \
     --hash=sha256:0c710af92def29c8352ceadff0c3fe340ace27cf5af1bbe46fb71275bcd2831c \
     --hash=sha256:9374d047a575c8f781b94454db5cab590b6029505f488d12899ddb10a4af1cf4
     # via moto
+rich==14.1.0 \
+    --hash=sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f \
+    --hash=sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8
+    # via
+    #   -c ./requirements.txt
+    #   bandit
 rope==1.14.0 \
     --hash=sha256:00a7ea8c0c376fc0b053b2f2f8ef3bfb8b50fecf1ebf3eb80e4f8bd7f1941918 \
     --hash=sha256:8803e3b667315044f6270b0c69a10c0679f9f322ed8efe6245a93ceb7658da69
@@ -863,6 +888,10 @@ stack-data==0.6.3 \
     --hash=sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9 \
     --hash=sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695
     # via ipython
+stevedore==5.5.0 \
+    --hash=sha256:18363d4d268181e8e8452e71a38cd77630f345b2ef6b4a8d5614dac5ee0d18cf \
+    --hash=sha256:d31496a4f4df9825e1a1e4f1f74d19abb0154aff311c3b376fcc89dae8fccd73
+    # via bandit
 structlog==25.4.0 \
     --hash=sha256:186cd1b0a8ae762e29417095664adf1d6a31702160a46dacb7796ea82f7409e4 \
     --hash=sha256:fe809ff5c27e557d14e613f45ca441aabda051d119ee5a0102aaba6ce40eed2c

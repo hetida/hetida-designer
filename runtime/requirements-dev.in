@@ -1,5 +1,6 @@
 -c requirements.txt
 -c requirements-base.txt
+bandit
 coverage
 ipykernel
 moto
