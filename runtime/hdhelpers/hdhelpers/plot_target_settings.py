@@ -101,8 +101,12 @@ def get_plot_target_settings() -> PlotTargetSettings:
             get_runtime_exec_context,
         )
 
-        return get_runtime_exec_context().plot_target_settings
-    except ImportError:
+        plot_target_settings = get_runtime_exec_context().plot_target_settings
+        if not isinstance(plot_target_settings, PlotTargetSettings):
+            raise TypeError("plot_target_settings must be instance of PlotTargetSettings")
+
+        return plot_target_settings
+    except (ImportError, TypeError):
         logger.warning("Could not load runtime exec context, import failed! Switch to defaults.")
         # return defaults if hetdesrun is not available as import
         return PlotTargetSettings()

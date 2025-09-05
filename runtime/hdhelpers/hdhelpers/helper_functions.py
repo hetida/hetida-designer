@@ -1,5 +1,5 @@
-import datetime
 import logging
+from datetime import datetime
 
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
@@ -22,7 +22,9 @@ def _get_display_name(series: pd.Series, default_title: str = "") -> str:
             .get("structured_metadata", {})
             .get("metric", {})["short_display_name"]
         )
-    except KeyError as exc:
+        if not isinstance(title, str):
+            raise HelperException("Expected short_display_name to be a string, but it is not!")
+    except (KeyError, HelperException) as exc:
         msg = (
             'Expected attrs["single_metric_metadata"]["structured_metadata"]["metric"]',
             '["short_display_name"] but got incorrect keys',
@@ -44,7 +46,9 @@ def _get_unit(series: pd.Series, default_unit: str = "") -> str:
             .get("structured_metadata", {})
             .get("metric", {})["unit"]
         )
-    except KeyError as exc:
+        if not isinstance(unit, str):
+            raise HelperException("Expected unit to be a string, but it is not!")
+    except (KeyError, HelperException) as exc:
         msg = 'Expected attrs["single_metric_metadata"]["structured_metadata"]["metric"]["unit"'
         "] but got incorrect keys"
         logger.warning(msg=msg, exc_info=exc)
@@ -52,7 +56,7 @@ def _get_unit(series: pd.Series, default_unit: str = "") -> str:
     return unit
 
 
-def _pad_start(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp | None:
+def _pad_start(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp:
     """Subtracts padding from the timestamp
 
     That padding has to be formatted to be compatible with pandas.tseries.frequencies.to_offset().
@@ -68,7 +72,7 @@ def _pad_start(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp | N
         ) from exc
 
 
-def _pad_end(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp | None:
+def _pad_end(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp:
     """Adds padding to the timestamp
 
     That padding has to be formatted to be compatible with pandas.tseries.frequencies.to_offset().
@@ -84,7 +88,9 @@ def _pad_end(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp | Non
         ) from exc
 
 
-def _get_start_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timestamp | None:
+def _get_start_timestamp(
+    series: pd.Series, timestamp: datetime | str | None
+) -> pd.Timestamp | None:
     """Get the start timestamp  hierarchically
 
     Will check for an explicit input timestamp first, then check PlotTargetSettings, then the series
@@ -112,7 +118,7 @@ def _get_start_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timesta
     return _to_datetime(timestamp)
 
 
-def _get_end_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timestamp | None:
+def _get_end_timestamp(series: pd.Series, timestamp: datetime | str | None) -> pd.Timestamp | None:
     """Get the end timestamp hierarchically
 
     Will check for an explicit input timestamp first, then check PlotTargetSettings, then the series
@@ -140,7 +146,7 @@ def _get_end_timestamp(series: pd.Series, timestamp: str | None) -> pd.Timestamp
     return _to_datetime(timestamp)
 
 
-def _to_datetime(timestamp: datetime.datetime | str | int | None) -> pd.Timestamp | None:
+def _to_datetime(timestamp: datetime | str | int | None) -> pd.Timestamp | None:
     """Turn datetime string or integer into a pandas timestamp
 
     Integer values are interpreted as epoch in seconds.
@@ -151,7 +157,7 @@ def _to_datetime(timestamp: datetime.datetime | str | int | None) -> pd.Timestam
         return None
     if isinstance(timestamp, int):
         timestamp = pd.to_datetime(timestamp, unit="s", utc=True)
-    elif isinstance(timestamp, str | datetime.datetime):
+    elif isinstance(timestamp, str | datetime):
         timestamp = pd.to_datetime(timestamp, utc=True)
     else:
         raise HelperException("Unexpected timestamp type, please use str or int!")

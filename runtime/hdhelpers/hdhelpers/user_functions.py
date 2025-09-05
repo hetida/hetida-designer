@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from typing import Any
 from warnings import warn
 
@@ -61,9 +62,9 @@ def get_title_with_unit(series: pd.Series, default_title: str = "", default_unit
 def get_and_pad_start_and_end_timestamp(
     series: pd.Series,
     timezone: str | None = None,
-    start: str | None = None,
+    start: datetime | str | None = None,
     start_padding: str | None = None,
-    end: str | None = None,
+    end: datetime | str | None = None,
     end_padding: str | None = None,
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Get time period displayed on the x-axis
@@ -79,27 +80,33 @@ def get_and_pad_start_and_end_timestamp(
 
     if start is None:
         raise HelperException("No start timestamp found!")
+    start_timestamp = start
     if end is None:
         raise HelperException("No end timestamp found!")
+    end_timestamp = end
 
     # Convert timezone
-    start = modify_timezone(start, timezone)
-    end = modify_timezone(end, timezone)
+    if timezone is not None:
+        start_with_timezone = modify_timezone(start_timestamp, timezone)
+        end_with_timezone = modify_timezone(end_timestamp, timezone)
+    else:
+        start_with_timezone = start_timestamp
+        end_with_timezone = end_timestamp
 
     # Optionally add padding
-    start = _pad_start(start, start_padding)
-    end = _pad_end(end, end_padding)
+    start_padded = _pad_start(start_with_timezone, start_padding)
+    end_padded = _pad_end(end_with_timezone, end_padding)
 
-    return start, end
+    return start_padded, end_padded
 
 
-def modify_timezone(  # noqa: PLR0912
-    object_to_convert: pd.Timestamp | pd.Series | pd.DataFrame,
+def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR0912
+    object_to_convert: T,
     to_timezone: str,
     column_name: str | None = None,
     column_names: list[str] | None = None,
     convert_index: bool = True,
-) -> pd.Timestamp | pd.Series | pd.DataFrame:
+) -> T:
     """Modifies timestamps to a certain timezone
 
     Keyword arguments:
@@ -163,14 +170,16 @@ def modify_timezone(  # noqa: PLR0912
             for column in column_names:
                 new_object[column] = pd.to_datetime(new_object[column]).dt.tz_convert(to_timezone)
 
-        if isinstance(object_to_convert, pd.Series):
-            new_object = pd.Series(
-                new_object[object_to_convert.name],
-                index=new_object.index,
-                name=object_to_convert.name,
-            )
+        if not isinstance(object_to_convert, pd.Series):
+            return new_object
 
-        return new_object
+        series_object = pd.Series(
+            new_object[object_to_convert.name],
+            index=new_object.index,
+            name=object_to_convert.name,
+        )
+
+        return series_object
 
     except pytz.exceptions.UnknownTimeZoneError as exc:
         possible_timezone = pytz.all_timezones

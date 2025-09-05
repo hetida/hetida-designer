@@ -371,3 +371,19 @@ def test_plotly_fig_to_json_dict_set_everything():
 
     assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
     assert json_dict.get("layout", {}).get("margin", {}) == {}
+
+
+def test_plot_target_timezone(series_summer):
+    plot_target_settings_mock = MagicMock(
+        return_value=PlotTargetSettings(plot_target_timezone="Europe/Berlin")
+    )
+    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
+        modified_data = modify_timezone(series_summer, "plot_target_timezone")
+        assert modified_data.index[1].utcoffset() == datetime.timedelta(seconds=3600)
+
+
+def test_modify_timestamp():
+    modified_timestamp = modify_timezone(
+        pd.to_datetime("2023-03-25 23:00", utc=True), to_timezone="Europe/Berlin"
+    )
+    assert modified_timestamp.utcoffset() == datetime.timedelta(seconds=3600)
