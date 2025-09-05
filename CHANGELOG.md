@@ -1,3 +1,6 @@
+
+* dependency upgrades and upgrade to Python 3.13
+
 ## 0.12.0
 * new feature: draft operators: workflows in draft state can now contain operators in draft state
   * releasing requires that all operators are released
