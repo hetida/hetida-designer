@@ -30,6 +30,9 @@ imports_template: str = """\
 # add your own imports here, e.g.
 # import pandas as pd
 # import numpy as np
+# import logging
+
+# logger = logging.getLogger(__name__)
 
 
 """
