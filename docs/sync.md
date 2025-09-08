@@ -65,6 +65,8 @@ export directory configured for my-hd-instance as source / target.
 
 ## Frequently used parameters and settings
 
+**Note**: A full description of available parameters / settings can be viewed in [openapi.json](../runtime/openapi.json) (use an API viewer!).
+
 Typically filter settings are configured for pulling only and pushing just pushes everything
 available as local file to the hd instance. Let's start with an example in the .hd-instance file
 
