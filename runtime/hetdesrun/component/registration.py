@@ -4,12 +4,7 @@ import asyncio
 import functools
 from collections.abc import Callable
 
-from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.datatypes import DataType
-
-
-class ComponentEntryPointRegistrationError(ComponentCodeImportError):
-    pass
 
 
 def register(
@@ -28,6 +23,9 @@ def register(
     is_pure_plot_component: bool | None = None,  # noqa: ARG001
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
+
+    WARNING: DEPRECATED!
+    Use COMPONENT_INFO global variable instead!
 
     This decorator can be used to provide additional features for component entrypoint
     functions which may depend on datatype infos on the inputs and outputs.

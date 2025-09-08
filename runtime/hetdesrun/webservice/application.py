@@ -21,14 +21,9 @@ from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
-from hetdesrun.backend.service.base_item_router import base_item_router
-from hetdesrun.backend.service.component_router import component_router
-from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
-from hetdesrun.backend.service.wiring_router import wiring_router
-from hetdesrun.backend.service.workflow_router import workflow_router
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.config import get_config
 
@@ -259,12 +254,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(virtual_structure_adapter_router)
 
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(info_router, prefix="/api")  # reachable without authorization
-        app.include_router(component_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(workflow_router, prefix="/api", dependencies=get_auth_deps())
-        app.include_router(wiring_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(transformation_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             dashboard_router,

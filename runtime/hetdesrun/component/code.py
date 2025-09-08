@@ -275,8 +275,6 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
         )
         return function_header
 
-    return format_code_with_black(function_header)
-
 
 def generate_complete_component_module(
     component: TransformationRevision, is_coroutine: bool = False

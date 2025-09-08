@@ -31,10 +31,6 @@ class NodeFunctionLoadingError(WorkflowParsingException):
     pass
 
 
-class NodeDoesNotExistError(WorkflowParsingException):
-    pass
-
-
 class ComponentRevisionDoesNotExist(WorkflowParsingException):
     pass
 
