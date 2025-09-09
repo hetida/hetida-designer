@@ -238,7 +238,7 @@ async def test_column_mapping(three_sqlite_dbs_configured):
     assert {"timestamp", "metric", "value"} == set(received_data["inp"].columns)
 
 
-def create_timeseries_mtsf(
+def _create_timeseries_mtsf(
     attrs: dict,
     days: int,
     metric: str = "nf",
@@ -338,7 +338,7 @@ async def test_deletion(
         num_days (int): Determines how many days/values are in the test mtsf
         log_message (str): Expected message to be logged during deletion process
     """
-    df = create_timeseries_mtsf(attrs=attrs, days=num_days)
+    df = _create_timeseries_mtsf(attrs=attrs, days=num_days)
 
     # Check that table has the correct number of entries
     received_data = await load_data(
@@ -404,7 +404,7 @@ async def test_deletion_with_write(
         },
         "by_metric": {"nf": "dn"},
     }
-    df = create_timeseries_mtsf(attrs=metadata, days=num_days)
+    df = _create_timeseries_mtsf(attrs=metadata, days=num_days)
 
     # Check that table has the correct number of entries
     received_data = await load_data(
