@@ -153,6 +153,14 @@ class SQLAdapterConfig(BaseSettings):
         validation_alias="DELETION_BATCH_SIZE_FOR_DISCRETE_DATA_POINTS",
     )
 
+    build_metrics_from_metric_column_for_deletion_if_not_present: bool = Field(
+        False,
+        description="If set to True, the metrics to be deleted are built "
+        "from the metric column of the respective multitsframe. "
+        "Only if 'by_metric' and 'ref_metrics' are not set in the mutlitsframes attrs.",
+        validation_alias="BUILD_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT",
+    )
+
     model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)
 
     @field_validator("sql_databases")

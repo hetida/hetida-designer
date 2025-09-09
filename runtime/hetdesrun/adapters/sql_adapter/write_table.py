@@ -190,6 +190,18 @@ def _handle_deletion(
         execute_delete(where_clause)
 
 
+def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
+    if metrics := list(data.attrs.get("by_metric", {}).keys()):
+        return metrics
+    # Legacy code might use the old convention of ref_metrics
+    if metrics := data.attrs.get("ref_metrics", []):
+        return metrics
+    # Fallback to building metrics from data
+    if get_sql_adapter_config().build_metrics_from_metric_column_for_deletion_if_not_present:
+        return data["metric"].unique().tolist()
+    return []
+
+
 def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     try:
         write_table = WriteTable.from_sink_id(sink_id)
@@ -222,7 +234,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
 
     try:
         metadata = get_dataset_metadata(data)
-        metrics = list(data.attrs.get("by_metric", {}).keys())
+        metrics = _retrieve_metrics(data)
     except ValueError as e:
         raise AdapterHandlingException(f"Error processing metadata for sink {sink_id}: {e}") from e
 
