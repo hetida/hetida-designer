@@ -4,7 +4,6 @@ from typing import cast
 
 from pydantic import ValidationError
 
-from hdhelpers.context import set_runtime_exec_context
 from hdutils import DataType, parsing_not_identical
 from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
@@ -23,6 +22,7 @@ from hetdesrun.runtime import (
     runtime_logger,
 )
 from hetdesrun.runtime.configuration import execution_config
+from hetdesrun.runtime.context import set_runtime_exec_context
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,

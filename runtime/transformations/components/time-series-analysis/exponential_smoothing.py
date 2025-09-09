@@ -94,7 +94,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from hdhelpers.plot_target_settings import plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
 from hdutils import ComponentInputValidationException
 
 

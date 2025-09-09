@@ -112,7 +112,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from pydantic import BaseModel, ValidationError, model_validator
 
-from hdhelpers.plot_target_settings import plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
 from hdutils import ComponentInputValidationException
 
 pio.templates.default = None

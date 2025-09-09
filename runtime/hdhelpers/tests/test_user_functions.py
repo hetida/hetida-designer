@@ -142,6 +142,7 @@ def series_winter() -> pd.Series:
             utc=True,
         ),
     )
+    winter.attrs["foo"] = "bar"
 
     return winter
 
@@ -156,6 +157,7 @@ def series_summer() -> pd.Series:
             utc=True,
         ),
     )
+    summer.attrs["foo"] = "bar"
     return summer
 
 
@@ -172,6 +174,7 @@ def dataframe() -> pd.DataFrame:
     ).tz_localize("UTC")
 
     ts_df = pd.DataFrame({"timestamp": timestamps, "value": values})
+    ts_df.attrs["foo"] = "bar"
 
     return ts_df
 
@@ -207,6 +210,7 @@ def multicolumn_frame() -> pd.DataFrame:
     ts_df = pd.DataFrame(
         {"timestamp": timestamps, "values": values, "more_timestamps": more_timestamps}, index=index
     )
+    ts_df.attrs["foo"] = "bar"
 
     return ts_df
 
@@ -220,6 +224,7 @@ def test_modify_timezone_good_dataframe(dataframe):
     timestamp_id = local_summertime.columns.get_loc("timestamp")
     assert local_summertime.iloc[1, timestamp_id].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.iloc[2, timestamp_id].utcoffset() == datetime.timedelta(seconds=7200)
+    assert "foo" in local_summertime.attrs
 
 
 def test_modify_timezone_good_series(series_summer, series_winter):
@@ -231,10 +236,12 @@ def test_modify_timezone_good_series(series_summer, series_winter):
     # German summer time starts in last Sunday in March at 2 am. --> UTC 1am
     assert local_summertime.index[1].utcoffset() == datetime.timedelta(seconds=3600)
     assert local_summertime.index[2].utcoffset() == datetime.timedelta(seconds=7200)
+    assert "foo" in local_summertime.attrs
 
     # German winter time starts in last Sunday in October at 3 am. --> UTC: 1am
     assert local_wintertime.index[0].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_wintertime.index[1].utcoffset() == datetime.timedelta(seconds=3600)
+    assert "foo" in local_wintertime.attrs
 
     # cet is equal to German winter time
     assert local_wintertime.index[1] == cet.index[1]
@@ -259,8 +266,10 @@ def test_modify_timezone_wrong_tzname(series_summer):
 def test_named_series(series_summer):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
+    data.attrs = series_summer.attrs
     modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name="timestamp")
     assert modified_data[1].utcoffset() == datetime.timedelta(seconds=3600)
+    assert "foo" in modified_data.attrs
 
 
 def test_named_series_using_index(series_summer):
@@ -268,6 +277,7 @@ def test_named_series_using_index(series_summer):
     data.name = "timestamp"
     modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name=None)
     assert modified_data.index[0].utcoffset() == datetime.timedelta(seconds=3600)
+    assert "foo" in modified_data.attrs
 
 
 def test_column_not_known(series_summer, dataframe):
@@ -306,6 +316,7 @@ def test_modify_timezone_multicolumn_dataframe(multicolumn_frame):
     assert local_summertime.iloc[1, timestamp_id].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.iloc[1, timestamp_id_2].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.index[1].utcoffset() == datetime.timedelta(seconds=7200)
+    assert "foo" in local_summertime.attrs
 
 
 def test_modify_timezone_multicolumn_dataframe_without_index(multicolumn_frame):
@@ -322,6 +333,23 @@ def test_modify_timezone_multicolumn_dataframe_without_index(multicolumn_frame):
     assert local_summertime.iloc[1, timestamp_id].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.iloc[1, timestamp_id_2].utcoffset() == datetime.timedelta(seconds=7200)
     assert local_summertime.index[1].utcoffset() == datetime.timedelta(seconds=0)
+    assert "foo" in local_summertime.attrs
+
+
+def test_plot_target_timezone(series_summer):
+    plot_target_settings_mock = MagicMock(
+        return_value=PlotTargetSettings(plot_target_timezone="Europe/Berlin")
+    )
+    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
+        modified_data = modify_timezone(series_summer, "plot_target_timezone")
+        assert modified_data.index[1].utcoffset() == datetime.timedelta(seconds=3600)
+
+
+def test_modify_timestamp():
+    modified_timestamp = modify_timezone(
+        pd.to_datetime("2023-03-25 23:00", utc=True), to_timezone="Europe/Berlin"
+    )
+    assert modified_timestamp.utcoffset() == datetime.timedelta(seconds=3600)
 
 
 def test_plotly_fig_to_json_dict_defaults():
@@ -371,19 +399,3 @@ def test_plotly_fig_to_json_dict_set_everything():
 
     assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
     assert json_dict.get("layout", {}).get("margin", {}) == {}
-
-
-def test_plot_target_timezone(series_summer):
-    plot_target_settings_mock = MagicMock(
-        return_value=PlotTargetSettings(plot_target_timezone="Europe/Berlin")
-    )
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        modified_data = modify_timezone(series_summer, "plot_target_timezone")
-        assert modified_data.index[1].utcoffset() == datetime.timedelta(seconds=3600)
-
-
-def test_modify_timestamp():
-    modified_timestamp = modify_timezone(
-        pd.to_datetime("2023-03-25 23:00", utc=True), to_timezone="Europe/Berlin"
-    )
-    assert modified_timestamp.utcoffset() == datetime.timedelta(seconds=3600)

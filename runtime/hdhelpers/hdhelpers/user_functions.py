@@ -171,6 +171,7 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
                 new_object[column] = pd.to_datetime(new_object[column]).dt.tz_convert(to_timezone)
 
         if not isinstance(object_to_convert, pd.Series):
+            new_object.attrs = object_to_convert.attrs
             return new_object
 
         series_object = pd.Series(
@@ -178,6 +179,7 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
             index=new_object.index,
             name=object_to_convert.name,
         )
+        series_object.attrs = object_to_convert.attrs
 
         return series_object
 
@@ -210,6 +212,10 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
 
     This function can be used in visualization components to obtain the
     correct plotly json-like object from a Plotly Figure object.
+
+    Additionally, this function has a dozen boolean parameters that can be
+    set to standardize certain aspects of the plot styling in accordance
+    with the hetida platform.
 
     See visualization components from the accompanying base components for
     examples on usage.

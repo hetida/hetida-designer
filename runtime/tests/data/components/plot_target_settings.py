@@ -1,4 +1,4 @@
-from hdhelpers.plot_target_settings import get_plot_target_settings
+from hdhelpers import get_plot_target_settings
 
 # %%
 # ***** DO NOT EDIT LINES BELOW *****

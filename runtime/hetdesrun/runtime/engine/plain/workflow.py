@@ -6,11 +6,11 @@ from uuid import UUID
 from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
-from hdhelpers.context import ExecutionContext
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.models.run import HIERARCHY_SEPARATOR, ConfigurationInput
 from hetdesrun.runtime import internal_runtime_execution_logger, runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
+from hetdesrun.runtime.context import ExecutionContext
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,

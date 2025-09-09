@@ -30,7 +30,7 @@ The json input of a typical call of this component is
 import plotly.graph_objects as go
 import plotly.io as pio
 
-from hdhelpers.plot_target_settings import plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
 
 pio.templates.default = None
 

@@ -11,7 +11,6 @@ COPY ./runtime/requirements.txt /app/requirements.txt
 COPY ./runtime/requirements-dev.txt /app/requirements-dev.txt
 COPY ./runtime/pipt /app/pipt
 COPY ./hdctl /hdctl
-COPY ./runtime/hdhelpers /app/local_packages/hdhelpers
 
 RUN apt-get -y update && apt-get -y install curl libpq-dev gcc libsnappy-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -20,16 +19,12 @@ ENV PIPT_PIP_INSTALL_ARGS="--no-cache-dir"
 ENV PIPT_PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
 RUN ./pipt sync-system --prod
 
-# install local package to be available in runtime
-RUN pip install build
-RUN python3 -m build /app/local_packages/hdhelpers
-RUN find /app/local_packages/hdhelpers/dist -name "*.whl" | xargs pip install --no-cache-dir
-
+# install hdhelpers from TestPyPI with dependencies
+RUN pip install -U --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ hdhelpers
 
 # ##### Intermediate stage with actual application content
 FROM base AS application_base
 COPY ./runtime /app
-RUN rm -r /app/hdhelpers
 COPY ./VERSION /app/VERSION
 RUN chmod +x /app/start.sh
 

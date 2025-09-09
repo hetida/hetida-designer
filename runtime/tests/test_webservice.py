@@ -483,7 +483,7 @@ plot_workflow_json = {
             "code": (
                 "from hetdesrun.component.registration import register\n"
                 "from hetdesrun.datatypes import DataType  # add your own imports here\n"
-                "from hdhelpers.plot_target_settings import plotly_fig_to_json_dict\n\n"
+                "from hdhelpers import plotly_fig_to_json_dict\n\n"
                 "import pandas as pd\n\nfrom plotly.graph_objects import Figure\n"
                 "import plotly.express as px\n\nimport plotly.io as pio\n\n"
                 "pio.templates.default = None\n\n\ndef timeseries_comparison_plot(\n"
