@@ -195,10 +195,10 @@ def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
         return metrics
     # Legacy code might use the old convention of ref_metrics
     if metrics := data.attrs.get("ref_metrics", []):
-        return metrics
+        return metrics  # type: ignore[no-any-return]
     # Fallback to building metrics from data
     if get_sql_adapter_config().build_metrics_from_metric_column_for_deletion_if_not_present:
-        return data["metric"].unique().tolist()
+        return [str(metric) for metric in data["metric"].unique().tolist()]
     return []
 
 
