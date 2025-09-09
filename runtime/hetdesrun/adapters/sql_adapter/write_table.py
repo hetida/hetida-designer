@@ -154,7 +154,7 @@ def _handle_deletion(
         batch_size = get_sql_adapter_config().deletion_batch_size_for_discrete_data_points
 
         # Batch the deletion process as there could be a large number of data points
-        for batch in batched(data_points_to_delete, batch_size):
+        for batch in batched(data_points_to_delete, batch_size, strict=False):
             where_clause = tuple_(timestamp_col, metric_col).in_(batch)
             execute_delete(where_clause)
         return
