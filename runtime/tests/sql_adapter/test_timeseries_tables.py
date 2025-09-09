@@ -71,10 +71,12 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
 
     # metadata there?
     assert received_data["inp"].attrs == {
-        "ref_interval_end_timestamp": "2023-08-29T11:58:02+00:00",
-        "ref_interval_start_timestamp": "2023-08-01T11:58:02+00:00",
-        "ref_interval_type": "closed",
-        "ref_metrics": ["a"],
+        "dataset_metadata": {
+            "ref_interval_end_timestamp": "2023-08-29T11:58:02+00:00",
+            "ref_interval_start_timestamp": "2023-08-01T11:58:02+00:00",
+            "ref_interval_type": "closed",
+        },
+        "by_metric": {"a": {}},
     }
 
     # metrics as comma separated list

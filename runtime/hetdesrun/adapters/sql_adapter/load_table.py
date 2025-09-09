@@ -133,11 +133,16 @@ def prepare_validate_loaded_raw_multitsframe(
 
     # setting meta data (attrs)
     validated_multi_ts_frame.attrs = {
-        "ref_interval_start_timestamp": from_datetime.isoformat(),
-        "ref_interval_end_timestamp": to_datetime.isoformat(),
-        "ref_interval_type": "closed",
-        "ref_metrics": metrics_list,
+        "dataset_metadata": {
+            "ref_interval_start_timestamp": from_datetime.isoformat(),
+            "ref_interval_end_timestamp": to_datetime.isoformat(),
+            "ref_interval_type": "closed",
+        },
     }
+    if metrics_list:
+        validated_multi_ts_frame.attrs.update(
+            {"by_metric": {metric: {} for metric in metrics_list}}
+        )
 
     return validated_multi_ts_frame
 
