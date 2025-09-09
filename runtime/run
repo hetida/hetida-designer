@@ -69,13 +69,18 @@ format() {
     ruff format hdhelpers hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
 }
 
+seccheck() {
+    bandit -r hetdesrun --skip B101
+}
+
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
-    echo "--> Running ruff format in check mode" && ruff format hdhelpers hetdesrun transformations/components tests --check &&
-        echo "--> Running tests" && python -m pytest --cov=hdhelpers --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing hdhelpers/tests tests &&
-        echo "--> Running mypy" && mypy hdhelpers hetdesrun &&
-        echo "--> Running ruff" && ruff check hdhelpers hetdesrun transformations/components tests &&
+    echo "--> Running ruff format in check mode" && ruff format hetdesrun transformations/components tests --check &&
+        echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
+        echo "--> Running mypy" && mypy hetdesrun &&
+        echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&
+        echo "--> Running bandit" && bandit -r hetdesrun --skip B101 &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 

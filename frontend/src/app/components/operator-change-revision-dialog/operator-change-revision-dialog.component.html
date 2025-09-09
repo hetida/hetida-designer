@@ -5,7 +5,9 @@
     <mat-select [(value)]="selectedRevision">
       @for (rev of data.revisions; track rev.id) {
         <mat-option [value]="rev">
-          {{ rev.name }} ({{ rev.version_tag }})
+          {{ rev.state === 'DRAFT' ? '(DRAFT)' : '' }} {{ rev.name }} ({{
+            rev.version_tag
+          }})
         </mat-option>
       }
     </mat-select>

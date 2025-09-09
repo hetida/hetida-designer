@@ -768,7 +768,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
     if id != updated_transformation_revision.id:
         msg = (
             f"The id {id} does not match the id of the provided "
-            f"transformation revision DTO {updated_transformation_revision.id}"
+            f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
@@ -910,7 +910,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
     if id != updated_transformation_revision.id:
         msg = (
             f"The id {id} does not match the id of the provided "
-            f"transformation revision DTO {updated_transformation_revision.id}"
+            f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
@@ -1028,7 +1028,7 @@ async def update_transformation_revision(
     if id != updated_transformation_revision.id:
         msg = (
             f"The id {id} does not match the id of the provided "
-            f"transformation revision DTO {updated_transformation_revision.id}"
+            f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)

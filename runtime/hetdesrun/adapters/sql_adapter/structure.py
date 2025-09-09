@@ -2,7 +2,8 @@ import logging
 from collections.abc import Iterable
 
 from pydantic import ValidationError
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import inspect
+from sqlalchemy.engine import Engine
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -23,10 +24,10 @@ from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 logger = logging.getLogger(__name__)
 
 
-def get_table_names(uri: str) -> list[str]:
-    engine = create_engine(uri)
+def get_table_names(engine: Engine) -> list[str]:
     inspection = inspect(engine)
-    return inspection.get_table_names()
+    table_names = inspection.get_table_names()
+    return table_names
 
 
 def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:
@@ -40,7 +41,7 @@ def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBCo
 def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[str]:
     return [
         table_name
-        for table_name in get_table_names(db_config.connection_url)
+        for table_name in get_table_names(db_config.engine)
         if is_allowed_dataframe_source_table(table_name, db_config)
     ]
 

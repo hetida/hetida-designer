@@ -39,6 +39,8 @@ def mocked_clean_test_db_session(clean_test_db_engine):
     ) as _fixture:
         yield _fixture
 
+    clean_test_db_engine.dispose()
+
 
 # Fixture to determine whether to use an in-memory database, based on pytest options
 @pytest.fixture(scope="session")

@@ -20,9 +20,15 @@ This button opens a dialog where workflow or component json (or component code) 
 
 <img src="./assets/import_trafos_dialog.png" width=300 data-align="center">
 
-You can enter a single transformation's json or a single component's code.
+You can enter a single transformation's json or a single component's code. E.g. component code can be simply copy-pasted from the component editor, e.g. from antoher installation, and pasted here.
 
 It is also possible to enter a json array containing transformation jsons or json-serialized component code strings (i.e. a string containing the json escaped component code.)
+
+## Export / Import via hetida designer backend API
+
+The hetida designer backend API exposes a GET and a PUT endpoint for transformations, see [openapi.json](../runtime/openapi.json) (use an API viewer!). This endpoints provide fine-granular filter functionality and hence can be used for exporting / importing.
+
+Note that the hdctl cli tool and the docker based export / import how-to below basically access these endpoints / the same functions exposed by these endpoints.
 
 ## Export / Import via hdctl bash tool
 The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 

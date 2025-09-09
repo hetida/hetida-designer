@@ -1,10 +1,10 @@
-import pickle
+import pickle  # nosec: B403
 from typing import Any
 
 
 def load_pickle(path: str, **kwargs: Any) -> Any:
     with open(path, "rb") as f:
-        return pickle.load(f, **kwargs)  # noqa: S301
+        return pickle.load(f, **kwargs)  # noqa: S301 # nosec: B301
 
 
 def write_pickle(pickle_serializable_object: Any, path: str, **kwargs: Any) -> None:

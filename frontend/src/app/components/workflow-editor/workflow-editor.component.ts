@@ -411,7 +411,9 @@ export class WorkflowEditorComponent implements OnInit {
             transformation.revision_group_id ===
               currentOperator.revision_group_id &&
             transformation.id !== currentOperator.transformation_id &&
-            transformation.state === RevisionState.RELEASED
+            (transformation.state === RevisionState.RELEASED ||
+              (transformation.state === RevisionState.DRAFT &&
+                this._currentWorkflow.state === RevisionState.DRAFT))
         );
 
         if (revisions.length === 0) {

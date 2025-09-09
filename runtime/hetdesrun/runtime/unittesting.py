@@ -1,6 +1,6 @@
 import inspect
 import os
-import subprocess
+import subprocess  # nosec: B404
 import tempfile
 
 import hdutils
@@ -21,7 +21,7 @@ def unittest_code(component_code: str) -> UnitTestResults:
         # since we are in a different directory, we cannot import from hetdesrun.
         # maybe components should not do that in every case?
 
-        completed_process = subprocess.run(  # noqa: S603
+        completed_process = subprocess.run(  # noqa: S603 # nosec B603 B607
             ["pytest", "--doctest-modules", "."],  # noqa: S607
             cwd=tmp_dir,
             capture_output=True,

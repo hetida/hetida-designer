@@ -13,7 +13,7 @@ class WriteTableMode(str, Enum):
     REPLACE = "REPLACE"
     TIMSERIES_APPEND = "TIMESERIES_APPEND"
 
-    @classmethod
+    @classmethod  # noqa: RET503
     def from_table_type_str(
         cls, table_type: Literal["append_table", "replace_table", "appendable_ts_table"]
     ) -> "WriteTableMode":

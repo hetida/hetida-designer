@@ -1,5 +1,5 @@
 import logging
-import pickle
+import pickle  # nosec: B403
 from io import BytesIO
 from typing import Any
 
@@ -86,7 +86,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
 
     if object_key.file_extension == FileExtension.H5:
         try:
-            import tensorflow as tf
+            import tensorflow as tf  # noqa: PLC0415
         except ModuleNotFoundError as error:
             msg = (
                 "To load a model from a BLOB in the hdf5 format, "
@@ -108,13 +108,13 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             except s3_client.exceptions.NoSuchKey:
                 pass
             else:
-                custom_objects = pickle.load(  # noqa: S301
+                custom_objects = pickle.load(  # noqa: S301 # nosec: B301
                     custom_objects_response["Body"]
                 )
             with h5py.File(file_object, "r") as f:
                 data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
     else:
-        data = pickle.load(response["Body"])  # noqa: S301
+        data = pickle.load(response["Body"])  # noqa: S301 # nosec: B301
 
     return data
 

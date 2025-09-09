@@ -41,6 +41,29 @@
         </div>
         <mat-divider></mat-divider>
       }
+      @if (executionResponse.error) {
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">ERROR</span>
+          <br />
+          An error occured in {{ executionResponse.error.location.file }} in
+          function {{ executionResponse.error.location.function_name }} in line
+          {{ executionResponse.error.location.line_number }}:
+          <br />
+          <pre class="protocol-content-verbatim">{{
+            executionResponse.error.message
+          }}</pre>
+        </div>
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">Component Code Traceback</span>
+          <br />
+
+          <pre class="protocol-content-verbatim">{{
+            executionResponse.traceback
+          }}</pre>
+        </div>
+      }
       @if (executionResponse.gathered_component_code_logs.length > 0) {
         <mat-divider></mat-divider>
         <div style="padding-bottom: 10px; padding-left: 15px">

@@ -13,7 +13,7 @@ from hetdesrun.adapters.blob_storage.models import (
 from hetdesrun.webservice.application import init_app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def mock_adapter_hierarchy_location_in_config() -> Generator:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.config.get_blob_adapter_config",
@@ -137,7 +137,7 @@ def _mocked_source_and_structure(
         yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def app_without_auth_with_blob_storage_adapter(
     mock_adapter_hierarchy_location_in_config,
 ) -> FastAPI:
