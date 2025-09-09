@@ -1,0 +1,1311 @@
+{
+    "id": "6345d10e-2921-4541-b717-51b8c4ebd6de",
+    "revision_group_id": "8143721f-9974-4912-910c-89c03a2b526b",
+    "name": "Time Series Filters - Lowpass and Highpass",
+    "description": "The component compares lowpass and highpass filters on some time series data",
+    "category": "Examples",
+    "version_tag": "1.0.0",
+    "state": "RELEASED",
+    "released_timestamp": "2025-09-09T12:00:00+00:00",
+    "type": "WORKFLOW",
+    "documentation": "# Time Series Filters - Lowpass and Highpass\n\n## Description\nApplies lowpass and highpass filters to a uniformly sampled time series and visualizes original and filtered series on separate y axes using a Plotly chart.\n\n## Inputs\n- **input_data** (Pandas Series):\n    Time series with DatetimeIndex, strictly increasing and exactly constant spacing; values numeric and finite.\n- **cutoff_frequency** (Float):\n    Cut off frequency in periods per unit; must be greater than 0 and below the Nyquist frequency.\n- **legend_lowpass** (String):\n    Legend label for the lowpass trace.\n- **legend_highpass** (String):\n    Legend label for the highpass trace.\n- **legend_original** (String):\n    Legend label for the original trace.\n- **frequency_as_periods_per_unit** (String, default value: \"s\"):\n    Unit for cutoff_frequency; one of \"s\", \"m\", \"h\", \"d\".\n- **order** (Integer, default value: 1):\n    Butterworth filter order; positive integer (>= 1).\n- **forward_backward** (Boolean, default value: true):\n    Apply zero-phase filtering if true; single-pass if false.\n\n## Outputs\n- **plot** (Plotly JSON):\n    Multi axis chart comparing original lowpass and highpass series.\n\n\n## Examples\nThe json input of a typical call of this workflow is\n```json\n{\n  \"cutoff_frequency\": 0.25,\n  \"legend_lowpass\": \"Lowpass Filtered\",\n  \"legend_highpass\": \"Highpass Filtered\",\n  \"legend_original\": \"Original Data\",\n  \"input_data\": {\n    \"2025-01-01 00:00:00.000Z\": 0.0,\n    \"2025-01-01 00:00:00.100Z\": 0.776,\n    \"2025-01-01 00:00:00.200Z\": 1.327,\n    \"2025-01-01 00:00:00.300Z\": 1.513,\n    \"2025-01-01 00:00:00.400Z\": 1.334,\n    \"2025-01-01 00:00:00.500Z\": 0.927,\n    \"2025-01-01 00:00:00.600Z\": 0.517,\n    \"2025-01-01 00:00:00.700Z\": 0.326,\n    \"2025-01-01 00:00:00.800Z\": 0.494,\n    \"2025-01-01 00:00:00.900Z\": 1.02,\n    \"2025-01-01 00:00:01.000Z\": 1.763,\n    \"2025-01-01 00:00:01.100Z\": 2.5,\n    \"2025-01-01 00:00:01.200Z\": 3.005,\n    \"2025-01-01 00:00:01.300Z\": 3.138,\n    \"2025-01-01 00:00:01.400Z\": 2.899,\n    \"2025-01-01 00:00:01.500Z\": 2.427,\n    \"2025-01-01 00:00:01.600Z\": 1.945,\n    \"2025-01-01 00:00:01.700Z\": 1.678,\n    \"2025-01-01 00:00:01.800Z\": 1.763,\n    \"2025-01-01 00:00:01.900Z\": 2.202,\n    \"2025-01-01 00:00:02.000Z\": 2.853,\n    \"2025-01-01 00:00:02.100Z\": 3.494,\n    \"2025-01-01 00:00:02.200Z\": 3.898,\n    \"2025-01-01 00:00:02.300Z\": 3.927,\n    \"2025-01-01 00:00:02.400Z\": 3.582,\n    \"2025-01-01 00:00:02.500Z\": 3.0\n  }\n}\n```\n",
+    "content": {
+        "operators": [
+            {
+                "id": "26f3eb76-c960-493b-91d9-6efdd3e0ce98",
+                "revision_group_id": "d6d755bc-ad63-44b5-804e-66af97947b91",
+                "name": "Lowpass Filter",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.1",
+                "transformation_id": "78c58c43-9687-4139-a296-fb597b061b7b",
+                "inputs": [
+                    {
+                        "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+                        "name": "data",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "367d862e-aa18-4b83-5e71-532028450b1e",
+                        "name": "cutoff_frequency",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "f7808ceb-ab15-4b32-6e38-de0d416c718c",
+                        "name": "frequency_as_periods_per_unit",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "s",
+                        "exposed": false
+                    },
+                    {
+                        "id": "89b66bfd-52fc-3299-5538-cc0a1c1303f9",
+                        "name": "order",
+                        "data_type": "INT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "1",
+                        "exposed": false
+                    },
+                    {
+                        "id": "b72a8868-741e-7297-ee70-d0b330f2db5d",
+                        "name": "forward_backward",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "true",
+                        "exposed": false
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "4cc89f2a-92ef-3179-2d16-8b16db89a817",
+                        "name": "filtered",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 310,
+                    "y": -5
+                }
+            },
+            {
+                "id": "16d3eaf8-13bc-42a1-a15f-3f456c4cd7f3",
+                "revision_group_id": "ea7b4c4d-8d1e-4dc3-8234-c4de128b52cc",
+                "name": "Highpass Filter",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.1",
+                "transformation_id": "dd49e8eb-b4fe-4786-ad29-faf3c88d84e6",
+                "inputs": [
+                    {
+                        "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+                        "name": "data",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "367d862e-aa18-4b83-5e71-532028450b1e",
+                        "name": "cutoff_frequency",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "f7808ceb-ab15-4b32-6e38-de0d416c718c",
+                        "name": "frequency_as_periods_per_unit",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "s",
+                        "exposed": false
+                    },
+                    {
+                        "id": "89b66bfd-52fc-3299-5538-cc0a1c1303f9",
+                        "name": "order",
+                        "data_type": "INT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "1",
+                        "exposed": false
+                    },
+                    {
+                        "id": "b72a8868-741e-7297-ee70-d0b330f2db5d",
+                        "name": "forward_backward",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "true",
+                        "exposed": false
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "4cc89f2a-92ef-3179-2d16-8b16db89a817",
+                        "name": "filtered",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 300,
+                    "y": 685
+                }
+            },
+            {
+                "id": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+                "name": "Pass Through (Series)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+                "inputs": [
+                    {
+                        "id": "f103c395-92b6-444d-320a-93950ed6d857",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": -740,
+                    "y": 272.5
+                }
+            },
+            {
+                "id": "76115c4d-528b-45b6-9d6a-6a42dc5a4369",
+                "revision_group_id": "2f511674-f766-748d-2de3-ad5e62e10a1a",
+                "name": "Pass Through (Float)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "2f511674-f766-748d-2de3-ad5e62e10a1a",
+                "inputs": [
+                    {
+                        "id": "c57127e7-6b84-03f8-6ef1-dcd7232bf3bf",
+                        "name": "input",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "9cef5ade-69f0-3cdb-4279-3d49fc9914fc",
+                        "name": "output",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": -335,
+                    "y": 502.5
+                }
+            },
+            {
+                "id": "9cc81baa-f8c0-4688-b79c-f6beb101c180",
+                "revision_group_id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
+                "name": "Convert Series to DataFrame",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
+                "inputs": [
+                    {
+                        "id": "8fc109c3-fba1-25c4-d657-fca92afc1769",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "f1ae0ae9-f189-173b-8e3d-bec0efd3393a",
+                        "name": "output",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 190,
+                    "y": 282.5
+                }
+            },
+            {
+                "id": "dd96a0d0-c5fb-4f1a-95dc-ec926e02ca27",
+                "revision_group_id": "175f432d-0efd-499c-bf62-85aa42761de9",
+                "name": "Index to Column",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.1",
+                "transformation_id": "0f24fedc-a38f-4123-a487-989d7a8037d7",
+                "inputs": [
+                    {
+                        "id": "65abda0a-fab7-1424-cd51-42ab77775f64",
+                        "name": "df",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "05f84f43-0a7f-c59d-37ab-07cfe894978f",
+                        "name": "index_name",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "timestamp",
+                        "exposed": false
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "5e12c311-95e0-f1c7-80b1-09abdac5eb3f",
+                        "name": "df_with_reset_index",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 640,
+                    "y": 282.5
+                }
+            },
+            {
+                "id": "ee6c7d55-9048-45a7-8b7d-69378f9ba1d5",
+                "revision_group_id": "e1dda214-a6d0-4a03-93db-4eae4670b5ca",
+                "name": "to Long Format",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "604e7c09-209e-4381-b230-ade4262f7c9a",
+                "inputs": [
+                    {
+                        "id": "cec67aa7-0717-e837-786c-b79d672cf330",
+                        "name": "wide_format_timeseries_dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "bad53f1e-ae27-c3ab-899c-13c0dd32c598",
+                        "name": "handle_multiple_value_columns_per_metric",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "drop",
+                        "exposed": false
+                    },
+                    {
+                        "id": "e0c44e8d-70bb-0beb-e365-145b72c9aaa6",
+                        "name": "flattening_delimiter",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": ".",
+                        "exposed": false
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "06f9530b-821a-719d-aea7-1dd3c1f63db9",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 1075,
+                    "y": 282.5
+                }
+            },
+            {
+                "id": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                "revision_group_id": "96c469cb-ffa1-4891-a747-cc8dc65561b9",
+                "name": "Add Timeseries to MultiTSFrame",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e",
+                "inputs": [
+                    {
+                        "id": "c0af645e-5460-45e3-b593-5f2281498a24",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "6de5af22-b27a-4768-8e14-572146d5a7db",
+                        "name": "timeseries_to_add",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                        "name": "metric_of_timeseries",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "18d61bf2-f190-4252-9f53-9405270016d5",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 1620,
+                    "y": 182.5
+                }
+            },
+            {
+                "id": "b55453c5-e271-45df-95aa-072e65396a06",
+                "revision_group_id": "96c469cb-ffa1-4891-a747-cc8dc65561b9",
+                "name": "Add Timeseries to MultiTSFrame (2)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e",
+                "inputs": [
+                    {
+                        "id": "c0af645e-5460-45e3-b593-5f2281498a24",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "6de5af22-b27a-4768-8e14-572146d5a7db",
+                        "name": "timeseries_to_add",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                        "name": "metric_of_timeseries",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "18d61bf2-f190-4252-9f53-9405270016d5",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 2140,
+                    "y": 432.5
+                }
+            },
+            {
+                "id": "d8beefb0-aaa6-48ef-bb06-7841e7cdd434",
+                "revision_group_id": "a274d0ff-21f1-4f35-82af-6779c7d88b85",
+                "name": "MultiTsFrame Plot with multiple Y Axes",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "28120522-a6a5-418f-a658-ab19d5beefe2",
+                "inputs": [
+                    {
+                        "id": "0c0bfc30-aa11-43f4-b043-f71534cbe0b2",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "02c6ac12-8315-4bf7-af71-cb699f5213f8",
+                        "name": "plot",
+                        "data_type": "PLOTLYJSON",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 2665,
+                    "y": 437.5
+                }
+            },
+            {
+                "id": "aa5db511-233b-4ba1-8846-c85a482e5fe4",
+                "revision_group_id": "a4064897-66d3-9601-328e-5ae9036665c5",
+                "name": "Name Series",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "a4064897-66d3-9601-328e-5ae9036665c5",
+                "inputs": [
+                    {
+                        "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+                        "name": "name",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": -255,
+                    "y": 280
+                }
+            }
+        ],
+        "links": [
+            {
+                "id": "3c95c32a-8af9-4b9d-bba7-391312e3f614",
+                "start": {
+                    "operator": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                    "connector": {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "26f3eb76-c960-493b-91d9-6efdd3e0ce98",
+                    "connector": {
+                        "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+                        "name": "data",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "86fff952-fead-4761-a1ef-bbf8721ee1cf",
+                "start": {
+                    "operator": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                    "connector": {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "16d3eaf8-13bc-42a1-a15f-3f456c4cd7f3",
+                    "connector": {
+                        "id": "5934ab27-c275-f39b-53e6-fe3bc49db2d1",
+                        "name": "data",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "0fd95f9e-5b01-4da3-9dab-097f8cf3a8c4",
+                "start": {
+                    "operator": "76115c4d-528b-45b6-9d6a-6a42dc5a4369",
+                    "connector": {
+                        "id": "9cef5ade-69f0-3cdb-4279-3d49fc9914fc",
+                        "name": "output",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "26f3eb76-c960-493b-91d9-6efdd3e0ce98",
+                    "connector": {
+                        "id": "367d862e-aa18-4b83-5e71-532028450b1e",
+                        "name": "cutoff_frequency",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "15f00d2b-1590-4d41-a8a2-29dcd94cc1a4",
+                "start": {
+                    "operator": "76115c4d-528b-45b6-9d6a-6a42dc5a4369",
+                    "connector": {
+                        "id": "9cef5ade-69f0-3cdb-4279-3d49fc9914fc",
+                        "name": "output",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "16d3eaf8-13bc-42a1-a15f-3f456c4cd7f3",
+                    "connector": {
+                        "id": "367d862e-aa18-4b83-5e71-532028450b1e",
+                        "name": "cutoff_frequency",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "f6d6fe42-fc2a-4d5a-aa16-da7795ec835a",
+                "start": {
+                    "operator": "9cc81baa-f8c0-4688-b79c-f6beb101c180",
+                    "connector": {
+                        "id": "f1ae0ae9-f189-173b-8e3d-bec0efd3393a",
+                        "name": "output",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "dd96a0d0-c5fb-4f1a-95dc-ec926e02ca27",
+                    "connector": {
+                        "id": "65abda0a-fab7-1424-cd51-42ab77775f64",
+                        "name": "df",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "058ec050-5b66-4f54-9791-489ebca3a0b4",
+                "start": {
+                    "operator": "dd96a0d0-c5fb-4f1a-95dc-ec926e02ca27",
+                    "connector": {
+                        "id": "5e12c311-95e0-f1c7-80b1-09abdac5eb3f",
+                        "name": "df_with_reset_index",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "ee6c7d55-9048-45a7-8b7d-69378f9ba1d5",
+                    "connector": {
+                        "id": "cec67aa7-0717-e837-786c-b79d672cf330",
+                        "name": "wide_format_timeseries_dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "bae285eb-5954-4ef6-8fa3-15603e0178ef",
+                "start": {
+                    "operator": "ee6c7d55-9048-45a7-8b7d-69378f9ba1d5",
+                    "connector": {
+                        "id": "06f9530b-821a-719d-aea7-1dd3c1f63db9",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                    "connector": {
+                        "id": "c0af645e-5460-45e3-b593-5f2281498a24",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "91b4f6f3-55b8-4215-8311-e316c208fcd6",
+                "start": {
+                    "operator": "26f3eb76-c960-493b-91d9-6efdd3e0ce98",
+                    "connector": {
+                        "id": "4cc89f2a-92ef-3179-2d16-8b16db89a817",
+                        "name": "filtered",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                    "connector": {
+                        "id": "6de5af22-b27a-4768-8e14-572146d5a7db",
+                        "name": "timeseries_to_add",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "3b490af7-a5e4-485d-84c8-a06814cb07ff",
+                "start": {
+                    "operator": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                    "connector": {
+                        "id": "18d61bf2-f190-4252-9f53-9405270016d5",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "b55453c5-e271-45df-95aa-072e65396a06",
+                    "connector": {
+                        "id": "c0af645e-5460-45e3-b593-5f2281498a24",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "d85177db-798c-406f-9cc1-acc86140b96c",
+                "start": {
+                    "operator": "16d3eaf8-13bc-42a1-a15f-3f456c4cd7f3",
+                    "connector": {
+                        "id": "4cc89f2a-92ef-3179-2d16-8b16db89a817",
+                        "name": "filtered",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "b55453c5-e271-45df-95aa-072e65396a06",
+                    "connector": {
+                        "id": "6de5af22-b27a-4768-8e14-572146d5a7db",
+                        "name": "timeseries_to_add",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "f934a213-bcd9-493a-9388-33ea3bb4801d",
+                "start": {
+                    "operator": "b55453c5-e271-45df-95aa-072e65396a06",
+                    "connector": {
+                        "id": "18d61bf2-f190-4252-9f53-9405270016d5",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "d8beefb0-aaa6-48ef-bb06-7841e7cdd434",
+                    "connector": {
+                        "id": "0c0bfc30-aa11-43f4-b043-f71534cbe0b2",
+                        "name": "multitsframe",
+                        "data_type": "MULTITSFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "2f73068e-7563-4422-8f38-a3bce21bef3f",
+                "start": {
+                    "operator": "aa5db511-233b-4ba1-8846-c85a482e5fe4",
+                    "connector": {
+                        "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "9cc81baa-f8c0-4688-b79c-f6beb101c180",
+                    "connector": {
+                        "id": "8fc109c3-fba1-25c4-d657-fca92afc1769",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "cc8d912e-34bc-4f80-81cf-6c1b3baf752c",
+                "start": {
+                    "operator": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                    "connector": {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "aa5db511-233b-4ba1-8846-c85a482e5fe4",
+                    "connector": {
+                        "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "60d0234e-24d1-43c3-95ac-d1a08d21a7cc",
+                "start": {
+                    "connector": {
+                        "id": "2cd3c17b-c10f-4b02-9628-c0fb27a161d0",
+                        "name": "input_data",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": -990,
+                            "y": 332.5
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                    "connector": {
+                        "id": "f103c395-92b6-444d-320a-93950ed6d857",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "c551d2f9-8f7f-4880-a5c5-77e11ad9fba8",
+                "start": {
+                    "connector": {
+                        "id": "3e7502b3-d3c1-4bd2-9be9-db098806d335",
+                        "name": "cutoff_frequency",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": -585,
+                            "y": 562.5
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "76115c4d-528b-45b6-9d6a-6a42dc5a4369",
+                    "connector": {
+                        "id": "c57127e7-6b84-03f8-6ef1-dcd7232bf3bf",
+                        "name": "input",
+                        "data_type": "FLOAT",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "f3140d64-c0c1-4e1b-99db-5e61c2545edb",
+                "start": {
+                    "connector": {
+                        "id": "fb896e5c-e855-4654-bf8c-dd9caff7ae0e",
+                        "name": "legend_lowpass",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 1370,
+                            "y": 302.5
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                    "connector": {
+                        "id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                        "name": "metric_of_timeseries",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "4d3ac135-3ad1-4564-bb91-312aee001cae",
+                "start": {
+                    "connector": {
+                        "id": "314dd770-6ab5-4b46-ba3f-86cd02de276c",
+                        "name": "legend_highpass",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 1890,
+                            "y": 552.5
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "b55453c5-e271-45df-95aa-072e65396a06",
+                    "connector": {
+                        "id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                        "name": "metric_of_timeseries",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "96b7619e-b8b9-43fd-8cb1-746a957e996e",
+                "start": {
+                    "connector": {
+                        "id": "44d12bc2-3962-4b1b-b3f9-13c651d3660e",
+                        "name": "legend_original",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": -505,
+                            "y": 370
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "aa5db511-233b-4ba1-8846-c85a482e5fe4",
+                    "connector": {
+                        "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+                        "name": "name",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "0375e0f5-8169-4cb4-96c0-186b85bf2314",
+                "start": {
+                    "operator": "d8beefb0-aaa6-48ef-bb06-7841e7cdd434",
+                    "connector": {
+                        "id": "02c6ac12-8315-4bf7-af71-cb699f5213f8",
+                        "name": "plot",
+                        "data_type": "PLOTLYJSON",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "connector": {
+                        "id": "d7e339ee-2e7c-4e73-b726-85795c5d3bb9",
+                        "name": "plot",
+                        "data_type": "PLOTLYJSON",
+                        "position": {
+                            "x": 3115,
+                            "y": 497.5
+                        }
+                    }
+                },
+                "path": []
+            }
+        ],
+        "constants": [],
+        "inputs": [
+            {
+                "id": "2cd3c17b-c10f-4b02-9628-c0fb27a161d0",
+                "name": "input_data",
+                "data_type": "SERIES",
+                "position": {
+                    "x": -990,
+                    "y": 332.5
+                },
+                "operator_id": "78ed94f2-acfa-4e27-a608-4fee3496cb9c",
+                "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+                "operator_name": "Pass Through (Series)",
+                "connector_name": "input",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "3e7502b3-d3c1-4bd2-9be9-db098806d335",
+                "name": "cutoff_frequency",
+                "data_type": "FLOAT",
+                "position": {
+                    "x": -585,
+                    "y": 562.5
+                },
+                "operator_id": "76115c4d-528b-45b6-9d6a-6a42dc5a4369",
+                "connector_id": "c57127e7-6b84-03f8-6ef1-dcd7232bf3bf",
+                "operator_name": "Pass Through (Float)",
+                "connector_name": "input",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "fb896e5c-e855-4654-bf8c-dd9caff7ae0e",
+                "name": "legend_lowpass",
+                "data_type": "STRING",
+                "position": {
+                    "x": 1370,
+                    "y": 302.5
+                },
+                "operator_id": "690e45c4-0073-4fd8-be83-ada7a0e5d1de",
+                "connector_id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                "operator_name": "Add Timeseries to MultiTSFrame",
+                "connector_name": "metric_of_timeseries",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "314dd770-6ab5-4b46-ba3f-86cd02de276c",
+                "name": "legend_highpass",
+                "data_type": "STRING",
+                "position": {
+                    "x": 1890,
+                    "y": 552.5
+                },
+                "operator_id": "b55453c5-e271-45df-95aa-072e65396a06",
+                "connector_id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+                "operator_name": "Add Timeseries to MultiTSFrame (2)",
+                "connector_name": "metric_of_timeseries",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "44d12bc2-3962-4b1b-b3f9-13c651d3660e",
+                "name": "legend_original",
+                "data_type": "STRING",
+                "position": {
+                    "x": -505,
+                    "y": 370
+                },
+                "operator_id": "aa5db511-233b-4ba1-8846-c85a482e5fe4",
+                "connector_id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+                "operator_name": "Name Series",
+                "connector_name": "name",
+                "type": "REQUIRED"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "d7e339ee-2e7c-4e73-b726-85795c5d3bb9",
+                "name": "plot",
+                "data_type": "PLOTLYJSON",
+                "position": {
+                    "x": 3115,
+                    "y": 497.5
+                },
+                "operator_id": "d8beefb0-aaa6-48ef-bb06-7841e7cdd434",
+                "connector_id": "02c6ac12-8315-4bf7-af71-cb699f5213f8",
+                "operator_name": "MultiTsFrame Plot with multiple Y Axes",
+                "connector_name": "plot"
+            }
+        ]
+    },
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "2cd3c17b-c10f-4b02-9628-c0fb27a161d0",
+                "name": "input_data",
+                "data_type": "SERIES",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "3e7502b3-d3c1-4bd2-9be9-db098806d335",
+                "name": "cutoff_frequency",
+                "data_type": "FLOAT",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "fb896e5c-e855-4654-bf8c-dd9caff7ae0e",
+                "name": "legend_lowpass",
+                "data_type": "STRING",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "314dd770-6ab5-4b46-ba3f-86cd02de276c",
+                "name": "legend_highpass",
+                "data_type": "STRING",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "44d12bc2-3962-4b1b-b3f9-13c651d3660e",
+                "name": "legend_original",
+                "data_type": "STRING",
+                "type": "REQUIRED"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "d7e339ee-2e7c-4e73-b726-85795c5d3bb9",
+                "name": "plot",
+                "data_type": "PLOTLYJSON"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "input_data",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "{\n    \"2025-01-01 00:00:00.000Z\": 0.0,\n    \"2025-01-01 00:00:00.100Z\": 0.776,\n    \"2025-01-01 00:00:00.200Z\": 1.327,\n    \"2025-01-01 00:00:00.300Z\": 1.513,\n    \"2025-01-01 00:00:00.400Z\": 1.334,\n    \"2025-01-01 00:00:00.500Z\": 0.927,\n    \"2025-01-01 00:00:00.600Z\": 0.517,\n    \"2025-01-01 00:00:00.700Z\": 0.326,\n    \"2025-01-01 00:00:00.800Z\": 0.494,\n    \"2025-01-01 00:00:00.900Z\": 1.02,\n    \"2025-01-01 00:00:01.000Z\": 1.763,\n    \"2025-01-01 00:00:01.100Z\": 2.5,\n    \"2025-01-01 00:00:01.200Z\": 3.005,\n    \"2025-01-01 00:00:01.300Z\": 3.138,\n    \"2025-01-01 00:00:01.400Z\": 2.899,\n    \"2025-01-01 00:00:01.500Z\": 2.427,\n    \"2025-01-01 00:00:01.600Z\": 1.945,\n    \"2025-01-01 00:00:01.700Z\": 1.678,\n    \"2025-01-01 00:00:01.800Z\": 1.763,\n    \"2025-01-01 00:00:01.900Z\": 2.202,\n    \"2025-01-01 00:00:02.000Z\": 2.853,\n    \"2025-01-01 00:00:02.100Z\": 3.494,\n    \"2025-01-01 00:00:02.200Z\": 3.898,\n    \"2025-01-01 00:00:02.300Z\": 3.927,\n    \"2025-01-01 00:00:02.400Z\": 3.582,\n    \"2025-01-01 00:00:02.500Z\": 3.0,\n    \"2025-01-01 00:00:02.600Z\": 2.406,\n    \"2025-01-01 00:00:02.700Z\": 2.025,\n    \"2025-01-01 00:00:02.800Z\": 1.996,\n    \"2025-01-01 00:00:02.900Z\": 2.318,\n    \"2025-01-01 00:00:03.000Z\": 2.853,\n    \"2025-01-01 00:00:03.100Z\": 3.377,\n    \"2025-01-01 00:00:03.200Z\": 3.666,\n    \"2025-01-01 00:00:03.300Z\": 3.58,\n    \"2025-01-01 00:00:03.400Z\": 3.121,\n    \"2025-01-01 00:00:03.500Z\": 2.427,\n    \"2025-01-01 00:00:03.600Z\": 1.724,\n    \"2025-01-01 00:00:03.700Z\": 1.236,\n    \"2025-01-01 00:00:03.800Z\": 1.103,\n    \"2025-01-01 00:00:03.900Z\": 1.324,\n    \"2025-01-01 00:00:04.000Z\": 1.763,\n    \"2025-01-01 00:00:04.100Z\": 2.195,\n    \"2025-01-01 00:00:04.200Z\": 2.396,\n    \"2025-01-01 00:00:04.300Z\": 2.228,\n    \"2025-01-01 00:00:04.400Z\": 1.692,\n    \"2025-01-01 00:00:04.500Z\": 0.927,\n    \"2025-01-01 00:00:04.600Z\": 0.158,\n    \"2025-01-01 00:00:04.700Z\": -0.389,\n    \"2025-01-01 00:00:04.800Z\": -0.575,\n    \"2025-01-01 00:00:04.900Z\": -0.399,\n    \"2025-01-01 00:00:05.000Z\": -0.0,\n    \"2025-01-01 00:00:05.100Z\": 0.399,\n    \"2025-01-01 00:00:05.200Z\": 0.575,\n    \"2025-01-01 00:00:05.300Z\": 0.389,\n    \"2025-01-01 00:00:05.400Z\": -0.158,\n    \"2025-01-01 00:00:05.500Z\": -0.927,\n    \"2025-01-01 00:00:05.600Z\": -1.692,\n    \"2025-01-01 00:00:05.700Z\": -2.228,\n    \"2025-01-01 00:00:05.800Z\": -2.396,\n    \"2025-01-01 00:00:05.900Z\": -2.195,\n    \"2025-01-01 00:00:06.000Z\": -1.763,\n    \"2025-01-01 00:00:06.100Z\": -1.324,\n    \"2025-01-01 00:00:06.200Z\": -1.103,\n    \"2025-01-01 00:00:06.300Z\": -1.236,\n    \"2025-01-01 00:00:06.400Z\": -1.724,\n    \"2025-01-01 00:00:06.500Z\": -2.427,\n    \"2025-01-01 00:00:06.600Z\": -3.121,\n    \"2025-01-01 00:00:06.700Z\": -3.58,\n    \"2025-01-01 00:00:06.800Z\": -3.666,\n    \"2025-01-01 00:00:06.900Z\": -3.377,\n    \"2025-01-01 00:00:07.000Z\": -2.853,\n    \"2025-01-01 00:00:07.100Z\": -2.318,\n    \"2025-01-01 00:00:07.200Z\": -1.996,\n    \"2025-01-01 00:00:07.300Z\": -2.025,\n    \"2025-01-01 00:00:07.400Z\": -2.406,\n    \"2025-01-01 00:00:07.500Z\": -3.0,\n    \"2025-01-01 00:00:07.600Z\": -3.582,\n    \"2025-01-01 00:00:07.700Z\": -3.927,\n    \"2025-01-01 00:00:07.800Z\": -3.898,\n    \"2025-01-01 00:00:07.900Z\": -3.494,\n    \"2025-01-01 00:00:08.000Z\": -2.853,\n    \"2025-01-01 00:00:08.100Z\": -2.202,\n    \"2025-01-01 00:00:08.200Z\": -1.763,\n    \"2025-01-01 00:00:08.300Z\": -1.678,\n    \"2025-01-01 00:00:08.400Z\": -1.945,\n    \"2025-01-01 00:00:08.500Z\": -2.427,\n    \"2025-01-01 00:00:08.600Z\": -2.899,\n    \"2025-01-01 00:00:08.700Z\": -3.138,\n    \"2025-01-01 00:00:08.800Z\": -3.005,\n    \"2025-01-01 00:00:08.900Z\": -2.5,\n    \"2025-01-01 00:00:09.000Z\": -1.763,\n    \"2025-01-01 00:00:09.100Z\": -1.02,\n    \"2025-01-01 00:00:09.200Z\": -0.494,\n    \"2025-01-01 00:00:09.300Z\": -0.326,\n    \"2025-01-01 00:00:09.400Z\": -0.517,\n    \"2025-01-01 00:00:09.500Z\": -0.927,\n    \"2025-01-01 00:00:09.600Z\": -1.334,\n    \"2025-01-01 00:00:09.700Z\": -1.513,\n    \"2025-01-01 00:00:09.800Z\": -1.327,\n    \"2025-01-01 00:00:09.900Z\": -0.776,\n    \"2025-01-01 00:00:10.000Z\": -0.0,\n    \"2025-01-01 00:00:10.100Z\": 0.776,\n    \"2025-01-01 00:00:10.200Z\": 1.327,\n    \"2025-01-01 00:00:10.300Z\": 1.513,\n    \"2025-01-01 00:00:10.400Z\": 1.334,\n    \"2025-01-01 00:00:10.500Z\": 0.927,\n    \"2025-01-01 00:00:10.600Z\": 0.517,\n    \"2025-01-01 00:00:10.700Z\": 0.326,\n    \"2025-01-01 00:00:10.800Z\": 0.494,\n    \"2025-01-01 00:00:10.900Z\": 1.02,\n    \"2025-01-01 00:00:11.000Z\": 1.763,\n    \"2025-01-01 00:00:11.100Z\": 2.5,\n    \"2025-01-01 00:00:11.200Z\": 3.005,\n    \"2025-01-01 00:00:11.300Z\": 3.138,\n    \"2025-01-01 00:00:11.400Z\": 2.899,\n    \"2025-01-01 00:00:11.500Z\": 2.427,\n    \"2025-01-01 00:00:11.600Z\": 1.945,\n    \"2025-01-01 00:00:11.700Z\": 1.678,\n    \"2025-01-01 00:00:11.800Z\": 1.763,\n    \"2025-01-01 00:00:11.900Z\": 2.202,\n    \"2025-01-01 00:00:12.000Z\": 2.853,\n    \"2025-01-01 00:00:12.100Z\": 3.494,\n    \"2025-01-01 00:00:12.200Z\": 3.898,\n    \"2025-01-01 00:00:12.300Z\": 3.927,\n    \"2025-01-01 00:00:12.400Z\": 3.582,\n    \"2025-01-01 00:00:12.500Z\": 3.0,\n    \"2025-01-01 00:00:12.600Z\": 2.406,\n    \"2025-01-01 00:00:12.700Z\": 2.025,\n    \"2025-01-01 00:00:12.800Z\": 1.996,\n    \"2025-01-01 00:00:12.900Z\": 2.318,\n    \"2025-01-01 00:00:13.000Z\": 2.853,\n    \"2025-01-01 00:00:13.100Z\": 3.377,\n    \"2025-01-01 00:00:13.200Z\": 3.666,\n    \"2025-01-01 00:00:13.300Z\": 3.58,\n    \"2025-01-01 00:00:13.400Z\": 3.121,\n    \"2025-01-01 00:00:13.500Z\": 2.427,\n    \"2025-01-01 00:00:13.600Z\": 1.724,\n    \"2025-01-01 00:00:13.700Z\": 1.236,\n    \"2025-01-01 00:00:13.800Z\": 1.103,\n    \"2025-01-01 00:00:13.900Z\": 1.324,\n    \"2025-01-01 00:00:14.000Z\": 1.763,\n    \"2025-01-01 00:00:14.100Z\": 2.195,\n    \"2025-01-01 00:00:14.200Z\": 2.396,\n    \"2025-01-01 00:00:14.300Z\": 2.228,\n    \"2025-01-01 00:00:14.400Z\": 1.692,\n    \"2025-01-01 00:00:14.500Z\": 0.927,\n    \"2025-01-01 00:00:14.600Z\": 0.158,\n    \"2025-01-01 00:00:14.700Z\": -0.389,\n    \"2025-01-01 00:00:14.800Z\": -0.575,\n    \"2025-01-01 00:00:14.900Z\": -0.399,\n    \"2025-01-01 00:00:15.000Z\": -0.0,\n    \"2025-01-01 00:00:15.100Z\": 0.399,\n    \"2025-01-01 00:00:15.200Z\": 0.575,\n    \"2025-01-01 00:00:15.300Z\": 0.389,\n    \"2025-01-01 00:00:15.400Z\": -0.158,\n    \"2025-01-01 00:00:15.500Z\": -0.927,\n    \"2025-01-01 00:00:15.600Z\": -1.692,\n    \"2025-01-01 00:00:15.700Z\": -2.228,\n    \"2025-01-01 00:00:15.800Z\": -2.396,\n    \"2025-01-01 00:00:15.900Z\": -2.195,\n    \"2025-01-01 00:00:16.000Z\": -1.763,\n    \"2025-01-01 00:00:16.100Z\": -1.324,\n    \"2025-01-01 00:00:16.200Z\": -1.103,\n    \"2025-01-01 00:00:16.300Z\": -1.236,\n    \"2025-01-01 00:00:16.400Z\": -1.724,\n    \"2025-01-01 00:00:16.500Z\": -2.427,\n    \"2025-01-01 00:00:16.600Z\": -3.121,\n    \"2025-01-01 00:00:16.700Z\": -3.58,\n    \"2025-01-01 00:00:16.800Z\": -3.666,\n    \"2025-01-01 00:00:16.900Z\": -3.377,\n    \"2025-01-01 00:00:17.000Z\": -2.853,\n    \"2025-01-01 00:00:17.100Z\": -2.318,\n    \"2025-01-01 00:00:17.200Z\": -1.996,\n    \"2025-01-01 00:00:17.300Z\": -2.025,\n    \"2025-01-01 00:00:17.400Z\": -2.406,\n    \"2025-01-01 00:00:17.500Z\": -3.0,\n    \"2025-01-01 00:00:17.600Z\": -3.582,\n    \"2025-01-01 00:00:17.700Z\": -3.927,\n    \"2025-01-01 00:00:17.800Z\": -3.898,\n    \"2025-01-01 00:00:17.900Z\": -3.494,\n    \"2025-01-01 00:00:18.000Z\": -2.853,\n    \"2025-01-01 00:00:18.100Z\": -2.202,\n    \"2025-01-01 00:00:18.200Z\": -1.763,\n    \"2025-01-01 00:00:18.300Z\": -1.678,\n    \"2025-01-01 00:00:18.400Z\": -1.945,\n    \"2025-01-01 00:00:18.500Z\": -2.427,\n    \"2025-01-01 00:00:18.600Z\": -2.899,\n    \"2025-01-01 00:00:18.700Z\": -3.138,\n    \"2025-01-01 00:00:18.800Z\": -3.005,\n    \"2025-01-01 00:00:18.900Z\": -2.5,\n    \"2025-01-01 00:00:19.000Z\": -1.763,\n    \"2025-01-01 00:00:19.100Z\": -1.02,\n    \"2025-01-01 00:00:19.200Z\": -0.494,\n    \"2025-01-01 00:00:19.300Z\": -0.326,\n    \"2025-01-01 00:00:19.400Z\": -0.517,\n    \"2025-01-01 00:00:19.500Z\": -0.927,\n    \"2025-01-01 00:00:19.600Z\": -1.334,\n    \"2025-01-01 00:00:19.700Z\": -1.513,\n    \"2025-01-01 00:00:19.800Z\": -1.327,\n    \"2025-01-01 00:00:19.900Z\": -0.776,\n    \"2025-01-01 00:00:20.000Z\": -0.0,\n    \"2025-01-01 00:00:20.100Z\": 0.776,\n    \"2025-01-01 00:00:20.200Z\": 1.327,\n    \"2025-01-01 00:00:20.300Z\": 1.513,\n    \"2025-01-01 00:00:20.400Z\": 1.334,\n    \"2025-01-01 00:00:20.500Z\": 0.927,\n    \"2025-01-01 00:00:20.600Z\": 0.517,\n    \"2025-01-01 00:00:20.700Z\": 0.326,\n    \"2025-01-01 00:00:20.800Z\": 0.494,\n    \"2025-01-01 00:00:20.900Z\": 1.02,\n    \"2025-01-01 00:00:21.000Z\": 1.763,\n    \"2025-01-01 00:00:21.100Z\": 2.5,\n    \"2025-01-01 00:00:21.200Z\": 3.005,\n    \"2025-01-01 00:00:21.300Z\": 3.138,\n    \"2025-01-01 00:00:21.400Z\": 2.899,\n    \"2025-01-01 00:00:21.500Z\": 2.427,\n    \"2025-01-01 00:00:21.600Z\": 1.945,\n    \"2025-01-01 00:00:21.700Z\": 1.678,\n    \"2025-01-01 00:00:21.800Z\": 1.763,\n    \"2025-01-01 00:00:21.900Z\": 2.202,\n    \"2025-01-01 00:00:22.000Z\": 2.853,\n    \"2025-01-01 00:00:22.100Z\": 3.494,\n    \"2025-01-01 00:00:22.200Z\": 3.898,\n    \"2025-01-01 00:00:22.300Z\": 3.927,\n    \"2025-01-01 00:00:22.400Z\": 3.582,\n    \"2025-01-01 00:00:22.500Z\": 3.0,\n    \"2025-01-01 00:00:22.600Z\": 2.406,\n    \"2025-01-01 00:00:22.700Z\": 2.025,\n    \"2025-01-01 00:00:22.800Z\": 1.996,\n    \"2025-01-01 00:00:22.900Z\": 2.318,\n    \"2025-01-01 00:00:23.000Z\": 2.853,\n    \"2025-01-01 00:00:23.100Z\": 3.377,\n    \"2025-01-01 00:00:23.200Z\": 3.666,\n    \"2025-01-01 00:00:23.300Z\": 3.58,\n    \"2025-01-01 00:00:23.400Z\": 3.121,\n    \"2025-01-01 00:00:23.500Z\": 2.427,\n    \"2025-01-01 00:00:23.600Z\": 1.724,\n    \"2025-01-01 00:00:23.700Z\": 1.236,\n    \"2025-01-01 00:00:23.800Z\": 1.103,\n    \"2025-01-01 00:00:23.900Z\": 1.324,\n    \"2025-01-01 00:00:24.000Z\": 1.763,\n    \"2025-01-01 00:00:24.100Z\": 2.195,\n    \"2025-01-01 00:00:24.200Z\": 2.396,\n    \"2025-01-01 00:00:24.300Z\": 2.228,\n    \"2025-01-01 00:00:24.400Z\": 1.692,\n    \"2025-01-01 00:00:24.500Z\": 0.927,\n    \"2025-01-01 00:00:24.600Z\": 0.158,\n    \"2025-01-01 00:00:24.700Z\": -0.389,\n    \"2025-01-01 00:00:24.800Z\": -0.575,\n    \"2025-01-01 00:00:24.900Z\": -0.399,\n    \"2025-01-01 00:00:25.000Z\": 0.0,\n    \"2025-01-01 00:00:25.100Z\": 0.399,\n    \"2025-01-01 00:00:25.200Z\": 0.575,\n    \"2025-01-01 00:00:25.300Z\": 0.389,\n    \"2025-01-01 00:00:25.400Z\": -0.158,\n    \"2025-01-01 00:00:25.500Z\": -0.927,\n    \"2025-01-01 00:00:25.600Z\": -1.692,\n    \"2025-01-01 00:00:25.700Z\": -2.228,\n    \"2025-01-01 00:00:25.800Z\": -2.396,\n    \"2025-01-01 00:00:25.900Z\": -2.195,\n    \"2025-01-01 00:00:26.000Z\": -1.763,\n    \"2025-01-01 00:00:26.100Z\": -1.324,\n    \"2025-01-01 00:00:26.200Z\": -1.103,\n    \"2025-01-01 00:00:26.300Z\": -1.236,\n    \"2025-01-01 00:00:26.400Z\": -1.724,\n    \"2025-01-01 00:00:26.500Z\": -2.427,\n    \"2025-01-01 00:00:26.600Z\": -3.121,\n    \"2025-01-01 00:00:26.700Z\": -3.58,\n    \"2025-01-01 00:00:26.800Z\": -3.666,\n    \"2025-01-01 00:00:26.900Z\": -3.377,\n    \"2025-01-01 00:00:27.000Z\": -2.853,\n    \"2025-01-01 00:00:27.100Z\": -2.318,\n    \"2025-01-01 00:00:27.200Z\": -1.996,\n    \"2025-01-01 00:00:27.300Z\": -2.025,\n    \"2025-01-01 00:00:27.400Z\": -2.406,\n    \"2025-01-01 00:00:27.500Z\": -3.0,\n    \"2025-01-01 00:00:27.600Z\": -3.582,\n    \"2025-01-01 00:00:27.700Z\": -3.927,\n    \"2025-01-01 00:00:27.800Z\": -3.898,\n    \"2025-01-01 00:00:27.900Z\": -3.494,\n    \"2025-01-01 00:00:28.000Z\": -2.853,\n    \"2025-01-01 00:00:28.100Z\": -2.202,\n    \"2025-01-01 00:00:28.200Z\": -1.763,\n    \"2025-01-01 00:00:28.300Z\": -1.678,\n    \"2025-01-01 00:00:28.400Z\": -1.945,\n    \"2025-01-01 00:00:28.500Z\": -2.427,\n    \"2025-01-01 00:00:28.600Z\": -2.899,\n    \"2025-01-01 00:00:28.700Z\": -3.138,\n    \"2025-01-01 00:00:28.800Z\": -3.005,\n    \"2025-01-01 00:00:28.900Z\": -2.5,\n    \"2025-01-01 00:00:29.000Z\": -1.763,\n    \"2025-01-01 00:00:29.100Z\": -1.02,\n    \"2025-01-01 00:00:29.200Z\": -0.494,\n    \"2025-01-01 00:00:29.300Z\": -0.326,\n    \"2025-01-01 00:00:29.400Z\": -0.517,\n    \"2025-01-01 00:00:29.500Z\": -0.927,\n    \"2025-01-01 00:00:29.600Z\": -1.334,\n    \"2025-01-01 00:00:29.700Z\": -1.513,\n    \"2025-01-01 00:00:29.800Z\": -1.327,\n    \"2025-01-01 00:00:29.900Z\": -0.776,\n    \"2025-01-01 00:00:30.000Z\": -0.0\n}"
+                }
+            },
+            {
+                "workflow_input_name": "cutoff_frequency",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "0.25"
+                }
+            },
+            {
+                "workflow_input_name": "legend_lowpass",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "Lowpass Filtered"
+                }
+            },
+            {
+                "workflow_input_name": "legend_highpass",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "Highpass Filtered"
+                }
+            },
+            {
+                "workflow_input_name": "legend_original",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "Original Data"
+                }
+            }
+        ],
+        "output_wirings": [],
+        "dashboard_positionings": []
+    }
+}

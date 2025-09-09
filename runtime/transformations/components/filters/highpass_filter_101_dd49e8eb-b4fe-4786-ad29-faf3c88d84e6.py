@@ -21,13 +21,16 @@ Butterworth high-pass filter for uniformly sampled time series (exactly constant
 - **filtered** (Pandas Series):
     The filtered data with the original index.
 
-## Details
-Notes:
+## Remarks
 - Requires an exactly constant sampling interval (DatetimeIndex; strictly increasing and unique) and numeric, finite values.
 - cutoff_frequency is given in periods per unit (Hz for unit "s"); the normalized cutoff must be within (0, 1) relative to Nyquist.
 - With forward_backward=True, zero-phase filtering is applied (filtfilt). SciPy requires a minimum series length depending on the filter order.
 
+## Examples
+The json input of a typical call of this component is
+```json
 {
+  "data": {
     "2025-01-01 00:00:00.000Z": 0.0,
     "2025-01-01 00:00:00.100Z": 0.776,
     "2025-01-01 00:00:00.200Z": 1.327,
@@ -329,7 +332,13 @@ Notes:
     "2025-01-01 00:00:29.800Z": -1.327,
     "2025-01-01 00:00:29.900Z": -0.776,
     "2025-01-01 00:00:30.000Z": -0.0
+  },
+  "cutoff_frequency": 0.25,
+  "frequency_as_periods_per_unit": "s",
+  "order": 1,
+  "forward_backward": true
 }
+```
 """
 
 import pandas as pd
