@@ -125,12 +125,7 @@ export class ProtocolViewerComponent implements AfterViewInit {
         );
       } else {
         this.executionResponse = executionResponse;
-
-        if (executionResponse.error === null) {
-          this.displayRawValue = false;
-        } else {
-          this.displayRawValue = true;
-        }
+        this.displayRawValue = false;
       }
 
       this.changeDetector.markForCheck();

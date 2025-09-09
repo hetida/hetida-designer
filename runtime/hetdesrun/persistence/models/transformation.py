@@ -195,12 +195,12 @@ class TransformationRevision(BaseModel):
         description=(
             "If the revision is DISABLED then this should be disable/deprecation timestamp."
         ),
-        examples=[datetime.datetime.now(datetime.timezone.utc)],
+        examples=["2025-09-05T13:06:59.760469Z"],
     )
     released_timestamp: IsoformatDatetime | None = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp.",
-        examples=[datetime.datetime.now(datetime.timezone.utc)],
+        examples=["2025-09-05T13:06:59.760469Z"],
         validate_default=True,
     )
     state: State = Field(

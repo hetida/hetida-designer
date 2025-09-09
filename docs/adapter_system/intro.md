@@ -55,9 +55,9 @@ When automating workflows in production scenarios this adapter is typically used
 
 #### Demo adapters
 
-There are two demo adapters, a Java one and a Python one, that demonstrate the capabilities of the adapter system and how to write your own adapters.
+There is a Python demo adapter, that demonstrate the capabilities of the adapter system and how to write your own adapter.
 
-They are **generic Rest adapters**, a certain kind of custom adapters that is easy to write and provides and receives data through web service endpoints (see below for details).
+It is a **generic Rest adapter**, a certain kind of custom adapters that is easy to write and provides and receives data through web service endpoints (see below for details).
 
 #### Local File Adapter
 

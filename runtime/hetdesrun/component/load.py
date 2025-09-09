@@ -67,9 +67,14 @@ def import_func_from_code(
 
         mod = ModuleType(module_path)
 
+        mod_display_filename_for_tracebacks = (
+            f"CODE OF COMPONENT {component_name} ({component_tag}) UUID {component_uuid_str}"
+        )
+
         try:
             # actually import the module;
-            exec(code, mod.__dict__)  # noqa: S102
+            compiled_code = compile(code, filename=mod_display_filename_for_tracebacks, mode="exec")
+            exec(compiled_code, mod.__dict__)  # noqa: S102 # nosec B102
         except SyntaxError as exec_syntax_exception:
             logger.info(
                 "Syntax Error during importing function %s from code (%s (%s), uuid: %s)",

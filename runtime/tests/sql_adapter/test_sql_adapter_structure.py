@@ -12,7 +12,7 @@ def test_config_works(two_sqlite_dbs_configured):
     assert len(get_sql_adapter_config().sql_databases) == 2
 
 
-def test_sql_adapter_structure(two_sqlite_dbs_configured):
+def test_sql_adapter_structure_functions(two_sqlite_dbs_configured):
     structure_results = get_structure()
     assert len(structure_results.thingNodes) == 2
     assert len(structure_results.sources) == 0

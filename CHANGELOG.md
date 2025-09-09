@@ -1,3 +1,12 @@
+* remove deprecated web endpoints for base-items, components, workflows, wirings and documentation
+* remove exporting capabilities for exporting from the pre 0.7 Java backend
+* allow to change single operator revision to a DRAFT revision
+
+## 0.12.1
+* dependency upgrades and upgrade to Python 3.13
+* **BREAKING CHANGE**: removed u8darts from runtime image due to non-maintained transitive dependencies
+* improve traceback presentation on errors.
+
 ## 0.12.0
 * new feature: draft operators: workflows in draft state can now contain operators in draft state
   * releasing requires that all operators are released

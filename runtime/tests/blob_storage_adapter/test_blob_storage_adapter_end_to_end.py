@@ -9,7 +9,7 @@ from unittest import mock
 import boto3
 import pytest
 from httpx import AsyncClient
-from moto import mock_s3
+from moto import mock_aws
 
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -27,7 +27,7 @@ async def run_workflow_with_client(
 async def test_load_object_with_self_defined_class(
     async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         client_mock.create_bucket(Bucket="i-i")
         client_mock.create_bucket(
@@ -121,7 +121,7 @@ async def test_load_object_with_self_defined_class(
 async def test_store_object_under_key_which_already_exists(
     async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         client_mock.create_bucket(Bucket="i-i")
         client_mock.create_bucket(

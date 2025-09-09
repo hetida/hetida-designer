@@ -101,7 +101,7 @@ def fetch_collection_of_sources_from_db_by_id(
         src_ids,
     )
     with get_session()() as session:
-        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size)):
+        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSourceDBModel).filter(
                 StructureServiceSourceDBModel.id.in_(id_batch)
             )
@@ -138,7 +138,7 @@ def fetch_collection_of_sinks_from_db_by_id(
         sink_ids,
     )
     with get_session()() as session:
-        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size)):
+        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSinkDBModel).filter(
                 StructureServiceSinkDBModel.id.in_(id_batch)
             )

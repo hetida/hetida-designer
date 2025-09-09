@@ -24,6 +24,9 @@ def mocked_clean_test_db_session_for_vst_router(clean_test_db_engine_for_vst_rou
     ) as _fixture:
         yield _fixture
 
+    # Clean up any remaining connections after the test
+    clean_test_db_engine_for_vst_router.dispose()
+
 
 @pytest.fixture()
 def maintenance_secret_set_for_vst_router():

@@ -68,6 +68,7 @@ async def send_kafka_message(message_dict: dict[str | None, KafkaMessageValue]) 
             producer=producer, topic=topic, encoded_message=encoded_message, key=None
         )
     except Exception as e:  # noqa: BLE001
+        await producer.stop()
         msg = (
             f"Error producing message {message_identifier} to Kafka with "
             f"config key {kafka_config_key}"
@@ -75,6 +76,7 @@ async def send_kafka_message(message_dict: dict[str | None, KafkaMessageValue]) 
         )
         logger.error(msg)
         raise AdapterHandlingException(msg) from e
+    await producer.stop()
 
     logger.debug(
         "Finished producing message %s to Kafka with config key %s to topic %s",

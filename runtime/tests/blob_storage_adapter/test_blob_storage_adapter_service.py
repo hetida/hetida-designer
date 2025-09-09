@@ -2,7 +2,7 @@ from unittest import mock
 
 import boto3
 import pytest
-from moto import mock_s3
+from moto import mock_aws
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
 from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
@@ -27,7 +27,7 @@ async def test_blob_storage_service_get_session() -> None:
                 session_token="some_token",  # noqa: S106
             ),
         ),
-        mock_s3(),
+        mock_aws(),
     ):
         session = await get_session()
         boto3_credentials = session.get_credentials()
@@ -40,7 +40,7 @@ async def test_blob_storage_service_get_session() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_service_get_s3_client() -> None:
     with (
-        mock_s3(),
+        mock_aws(),
         mock.patch(
             "hetdesrun.adapters.blob_storage.service.get_session",
             return_value=boto3.Session(
@@ -70,7 +70,7 @@ async def test_blob_storage_service_get_s3_client() -> None:
 
 @pytest.mark.asyncio
 async def test_ensure_bucket_exists() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         with mock.patch(
             "hetdesrun.adapters.blob_storage.service.get_s3_client",
@@ -96,7 +96,7 @@ async def test_ensure_bucket_exists() -> None:
 
 @pytest.mark.asyncio
 async def test_blob_storage_service_get_object_key_strings_in_bucket() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="eu-central-1")
         client_mock.create_bucket(
             Bucket="bucket-without-objects-name",

@@ -380,7 +380,7 @@ def get_location_of_exception(exception: Exception | BaseException) -> ErrorLoca
     except IndexError:
         return ErrorLocation(file="__UNKNOWN__", function_name="__UNKNOWN__", line_number=-1)
     return ErrorLocation(
-        file=(last_trace.filename if last_trace.filename != "<string>" else "COMPONENT CODE"),
+        file=last_trace.filename,
         function_name=last_trace.name,
         line_number=last_trace.lineno,
     )
