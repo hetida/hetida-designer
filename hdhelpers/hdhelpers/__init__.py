@@ -18,7 +18,7 @@ from hdhelpers.user_functions import (
     get_and_pad_start_and_end_timestamp,
     get_colors_from_plot_target_settings,
     get_locale_from_plot_target_settings,
-    get_title_with_unit,
+    get_y_axis_label,
     modify_timezone,
     plotly_fig_to_json_dict,
 )
@@ -41,7 +41,7 @@ __all__ = [
     "get_colors_from_plot_target_settings",
     "get_locale_from_plot_target_settings",
     "get_plot_target_settings",
-    "get_title_with_unit",
+    "get_y_axis_label",
     "modify_timezone",
     "plotly_fig_to_json_dict",
 ]

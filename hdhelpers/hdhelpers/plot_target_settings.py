@@ -44,7 +44,7 @@ class PlotTargetStyle(BaseModel):
             so the colors are only applied where no explicit trace color is set""",
     )
     status_colors: StatusColors = Field(
-        StatusColors(),
+        StatusColors(),  # type: ignore
         description="Has the properties success_color, error_color, warn_color, info_color",
     )
 
@@ -75,7 +75,7 @@ class PlotTargetSettings(BaseModel):
              must have the associated plotly local scripts loaded.""",
     )
     plot_target_style: PlotTargetStyle = Field(
-        PlotTargetStyle(),
+        PlotTargetStyle(),  # type: ignore
         description="Colors to use in the plot",
     )
     datetime_tick_format: str | None = Field(
@@ -97,7 +97,7 @@ def get_plot_target_settings() -> PlotTargetSettings:
     return default values.
     """
     try:
-        from hetdesrun.runtime.context import (  # noqa: PLC0415 # pyright: ignore[reportMissingImports]
+        from hetdesrun.runtime.context import (  # type: ignore  # noqa: PLC0415
             get_runtime_exec_context,
         )
 
@@ -109,4 +109,4 @@ def get_plot_target_settings() -> PlotTargetSettings:
     except (ImportError, TypeError):
         logger.warning("Could not load runtime exec context, import failed! Switch to defaults.")
         # return defaults if hetdesrun is not available as import
-        return PlotTargetSettings()
+        return PlotTargetSettings()  # type: ignore

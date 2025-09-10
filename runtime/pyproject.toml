@@ -10,7 +10,7 @@ lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE
 
 lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017", "ISC001"]
 
-extend-exclude = ["tests/data", "hdhelpers/build"]
+extend-exclude = ["tests/data"]
 
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -29,7 +29,6 @@ src = [".", "runtime", "demo-adapter-python"]
 # Note: We need the beginning "**" since vscode extension calls ruff from the project
 # main dir, while manual invocations from the runtime subdir should also work.
 # (see https://docs.rs/globset/latest/globset/#syntax for glob syntax.)
-"**/hdhelpers/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]
 "**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
@@ -41,4 +40,4 @@ src = [".", "runtime", "demo-adapter-python"]
 [tool.ruff.lint.isort]
 # explicitely add known first party names for import sorting
 # (somehow duplicating the src setting above??)
-known-first-party = ["hdhelpers", "hetdesrun", "demo_adapter_python"]
+known-first-party = ["hetdesrun", "demo_adapter_python"]

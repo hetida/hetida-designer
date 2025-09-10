@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
@@ -8,6 +9,19 @@ from hdhelpers.exceptions import HelperException
 from hdhelpers.plot_target_settings import get_plot_target_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _convert_to_optional_timezone(object_to_convert: Any, to_timezone: str | None) -> Any:
+    """Convert object_to_convert to to_timezone if not None,
+    or to its own timezone if aware
+    or to UTC otherwise"""
+    if to_timezone is None:
+        if object_to_convert.tz is None:
+            return object_to_convert.tz_localize("UTC")
+        return object_to_convert
+    if object_to_convert.tz is None:
+        return object_to_convert.tz_localize(to_timezone)
+    return object_to_convert.tz_convert(to_timezone)
 
 
 def _get_display_name(series: pd.Series, default_title: str = "") -> str:

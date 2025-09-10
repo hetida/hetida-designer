@@ -14,7 +14,6 @@ usage() {
     echo "  - typecheck       :    run mypy static type check"
     echo "  - format          :    run ruff format"
     echo "  - check           :    run format check, tests, typechecking"
-    echo "  - build_package   :    build hdhelpers package"
 }
 
 fn_exists() {
@@ -45,7 +44,6 @@ shell() {
 
 test() {
     python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
-    python -m pytest --cov=hdhelpers --no-cov-on-fail --cov-report=term-missing hdhelpers -c hdhelpers/pytest.ini
 }
 
 # test_components() {
@@ -53,20 +51,20 @@ test() {
 # }
 
 lint() {
-    ruff check hdhelpers hetdesrun transformations/components tests "${@}"
+    ruff check hetdesrun transformations/components tests "${@}"
 }
 
 imsort() {
-    ruff check --select I hdhelpers hetdesrun transformations/components tests --fix "${@}"
+    ruff check --select I hetdesrun transformations/components tests --fix "${@}"
 }
 
 typecheck() {
-    python3 -m mypy "${@}" hdhelpers hetdesrun
+    python3 -m mypy "${@}" hetdesrun
 }
 
 format() {
-    ruff check --select I hdhelpers hetdesrun transformations/components tests --fix "${@}" && echo "--> Ruff import sorting run."
-    ruff format hdhelpers hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
+    ruff check --select I hetdesrun transformations/components tests --fix "${@}" && echo "--> Ruff import sorting run."
+    ruff format hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
 }
 
 seccheck() {
@@ -86,11 +84,6 @@ check() {
 
 export_api_html() {
     python extract_openapi_html.py "${@}"
-}
-
-build_package(){
-    uv build hdhelpers
-    find hdhelpers/dist -name "*.whl" | xargs pip install --no-cache-dir --force-reinstall --no-deps
 }
 
 #----- Execution -----#

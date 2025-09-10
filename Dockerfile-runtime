@@ -19,9 +19,6 @@ ENV PIPT_PIP_INSTALL_ARGS="--no-cache-dir"
 ENV PIPT_PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
 RUN ./pipt sync-system --prod
 
-# install hdhelpers from TestPyPI with dependencies
-RUN pip install -U --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ hdhelpers
-
 # ##### Intermediate stage with actual application content
 FROM base AS application_base
 COPY ./runtime /app
@@ -43,7 +40,6 @@ USER hd_app
 ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
-# CMD ["/bin/sh"]
 
 # ##### Test stage
 FROM application_base AS test

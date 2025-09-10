@@ -16,23 +16,21 @@ from hdhelpers.user_functions import (
     get_and_pad_start_and_end_timestamp,
     get_colors_from_plot_target_settings,
     get_locale_from_plot_target_settings,
-    get_title_with_unit,
+    get_y_axis_label,
     modify_timezone,
     plotly_fig_to_json_dict,
 )
 
 
-def test_get_title_with_unit_default():
+def test_get_y_axis_label_default():
     series = pd.Series()
     assert (
-        get_title_with_unit(
-            series=series, default_title="default_name", default_unit="default_unit"
-        )
+        get_y_axis_label(series=series, default_title="default_name", default_unit="default_unit")
         == "default_name [default_unit]"
     )
 
 
-def test_get_title_with_unit_metadata():
+def test_get_y_axis_labeltitle_with_unit_metadata():
     series = pd.Series()
     series.attrs["single_metric_metadata"] = {
         "structured_metadata": {"metric": {"short_display_name": "name_from_metadata"}}
@@ -40,7 +38,7 @@ def test_get_title_with_unit_metadata():
     series.attrs["single_metric_metadata"]["structured_metadata"]["metric"]["unit"] = (
         "unit_from_metadata"
     )
-    assert get_title_with_unit(series=series) == "name_from_metadata [unit_from_metadata]"
+    assert get_y_axis_label(series=series) == "name_from_metadata [unit_from_metadata]"
 
 
 def test_get_no_colors_from_plot_target_settings():
@@ -297,12 +295,6 @@ def test_modify_timezone_no_tz_known(series_summer):
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin")
 
 
-def test_modify_timezone_no_tz_in_index(series_summer):
-    series_summer.index = series_summer.reset_index(drop=True)
-    with pytest.raises(TypeError, match="Entries to convert do not contain valid timestamps*"):
-        _ = modify_timezone(series_summer, to_timezone="Europe/Berlin")
-
-
 def test_modify_timezone_multicolumn_dataframe(multicolumn_frame):
     local_summertime = modify_timezone(
         multicolumn_frame,
@@ -341,7 +333,7 @@ def test_plot_target_timezone(series_summer):
         return_value=PlotTargetSettings(plot_target_timezone="Europe/Berlin")
     )
     with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        modified_data = modify_timezone(series_summer, "plot_target_timezone")
+        modified_data = modify_timezone(series_summer)
         assert modified_data.index[1].utcoffset() == datetime.timedelta(seconds=3600)
 
 

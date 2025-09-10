@@ -6,11 +6,12 @@ from warnings import warn
 
 import pandas as pd
 import pytz
-from plotly.graph_objects import Figure
-from plotly.utils import PlotlyJSONEncoder
+from plotly.graph_objects import Figure  # type: ignore
+from plotly.utils import PlotlyJSONEncoder  # type: ignore
 
 from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions import (
+    _convert_to_optional_timezone,
     _get_display_name,
     _get_end_timestamp,
     _get_start_timestamp,
@@ -47,7 +48,7 @@ def get_locale_from_plot_target_settings() -> str | None:
     return plot_target_settings.plot_target_locale
 
 
-def get_title_with_unit(series: pd.Series, default_title: str = "", default_unit: str = "") -> str:
+def get_y_axis_label(series: pd.Series, default_title: str = "", default_unit: str = "") -> str:
     """Get full y-axis label from metadata
 
     Combines the title and unit provided by _get_display_name and _get_unit.
@@ -102,7 +103,7 @@ def get_and_pad_start_and_end_timestamp(
 
 def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR0912
     object_to_convert: T,
-    to_timezone: str,
+    to_timezone: str | None = None,
     column_name: str | None = None,
     column_names: list[str] | None = None,
     convert_index: bool = True,
@@ -123,15 +124,13 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
         column_names = []
 
     try:
-        if "plot_target" in to_timezone:
+        if to_timezone is None:
             plot_target_settings = get_plot_target_settings()
-            if plot_target_settings.plot_target_timezone is None:
-                raise HelperException("Missing timezone in PlotTargetSettings.plot_target_timezone")
             if plot_target_settings.plot_target_timezone is not None:
                 to_timezone = plot_target_settings.plot_target_timezone
 
         if isinstance(object_to_convert, pd.Timestamp):
-            return object_to_convert.tz_convert(to_timezone)
+            return _convert_to_optional_timezone(object_to_convert, to_timezone)
 
         if isinstance(object_to_convert, pd.Series):
             new_object = object_to_convert.to_frame(name=object_to_convert.name)
@@ -141,7 +140,9 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
         # Both column_name branches exist purely for backwards compatibility,
         # only convert_index should stay.
         if column_name is None and convert_index:
-            new_object.index = pd.to_datetime(new_object.index).tz_convert(to_timezone)
+            new_object.index = _convert_to_optional_timezone(
+                pd.to_datetime(new_object.index), to_timezone
+            )
         if column_name is not None:
             warn(
                 """The parameter 'column_name' will soon be deprecated in favor of
@@ -149,26 +150,30 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
                 DeprecationWarning,
                 stacklevel=2,
             )
-            new_object[column_name] = pd.to_datetime(new_object[column_name]).dt.tz_convert(
-                to_timezone
+            new_object[column_name] = _convert_to_optional_timezone(
+                pd.to_datetime(new_object[column_name]).dt, to_timezone
             )
             column_names.append(column_name)
 
         if len(column_names) == 0:
             if isinstance(object_to_convert, pd.Series):
-                new_object.index = pd.to_datetime(new_object.index).tz_convert(to_timezone)
+                new_object.index = _convert_to_optional_timezone(
+                    pd.to_datetime(new_object.index), to_timezone
+                )
                 msg = f"Converted index to datetime starting with {object_to_convert.index[0]}"
                 logger.debug(msg=msg)
             elif isinstance(new_object, pd.DataFrame) and "timestamp" in new_object.columns:
-                new_object["timestamp"] = pd.to_datetime(new_object["timestamp"]).dt.tz_convert(
-                    to_timezone
+                new_object["timestamp"] = _convert_to_optional_timezone(
+                    pd.to_datetime(new_object["timestamp"]).dt, to_timezone
                 )
                 msg = f"""Converted column "timestamp" to datetime starting with
                 {object_to_convert["timestamp"][0]}"""
                 logger.debug(msg=msg)
         if len(column_names) > 0:
             for column in column_names:
-                new_object[column] = pd.to_datetime(new_object[column]).dt.tz_convert(to_timezone)
+                new_object[column] = _convert_to_optional_timezone(
+                    pd.to_datetime(new_object[column]).dt, to_timezone
+                )
 
         if not isinstance(object_to_convert, pd.Series):
             new_object.attrs = object_to_convert.attrs
@@ -186,28 +191,29 @@ def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR091
     except pytz.exceptions.UnknownTimeZoneError as exc:
         possible_timezone = pytz.all_timezones
         raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from exc
-    except (TypeError, AttributeError) as exc:
+    except (AttributeError, pytz.exceptions.NonExistentTimeError) as exc:
         raise TypeError("Entries to convert do not contain valid timestamps") from exc
     except KeyError as exc:
         exc.add_note(f"Column name {column_name} not in object_to_convert")
         raise
 
 
-def plotly_fig_to_json_dict(  # noqa: PLR0912
+def plotly_fig_to_json_dict(  # noqa: PLR0912, PLR0915
     fig: Figure,
     add_config_settings: bool = True,
-    hide_legend: bool = False,
-    hide_x_title: bool = False,
-    remove_plotly_bar: bool = True,
+    hide_legend: bool | None = None,
+    hide_x_title: bool | None = None,
+    remove_plotly_bar: bool | None = None,
     remove_plotly_icon: bool = True,
-    update_x_axes_tickformat: bool = False,
+    update_x_axes_tickformat: bool | None = None,
     use_default_standoff: bool = False,
     use_minimum_margin: bool = True,
-    use_muplot_axes_color: bool = False,
-    use_muplot_grid: bool = False,
-    use_muplot_line_and_markers: bool = False,
-    use_platform_background: bool = False,
-    use_platform_defaults: bool = False,
+    use_muplot_axes_color: bool | None = None,
+    use_muplot_grid: bool | None = None,
+    use_muplot_line_and_markers: bool | None = None,
+    use_platform_background: bool | None = None,
+    use_platform_colorway: bool = True,
+    use_platform_defaults: bool = True,
     use_simple_white_template: bool = True,
 ) -> Any:
     """Turn Plotly figure into a Python dict-like object
@@ -223,18 +229,47 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
     examples on usage.
     """
     if use_platform_defaults:
-        hide_legend = True
-        hide_x_title = True
-        update_x_axes_tickformat = True
-        use_default_standoff = True
-        use_muplot_axes_color = True
-        use_muplot_grid = True
-        use_muplot_line_and_markers = True
-        use_platform_background = True
+        if hide_legend is None:
+            hide_legend = True
+        if hide_x_title is None:
+            hide_x_title = True
+        if remove_plotly_bar is None:
+            remove_plotly_bar = True
+        if update_x_axes_tickformat is None:
+            update_x_axes_tickformat = True
+        if use_default_standoff is None:
+            use_default_standoff = True
+        if use_muplot_axes_color is None:
+            use_muplot_axes_color = True
+        if use_muplot_grid is None:
+            use_muplot_grid = True
+        if use_muplot_line_and_markers is None:
+            use_muplot_line_and_markers = True
+        if use_platform_background is None:
+            use_platform_background = True
+    else:
+        if hide_legend is None:
+            hide_legend = False
+        if hide_x_title is None:
+            hide_x_title = False
+        if remove_plotly_bar is None:
+            remove_plotly_bar = False
+        if update_x_axes_tickformat is None:
+            update_x_axes_tickformat = False
+        if use_default_standoff is None:
+            use_default_standoff = False
+        if use_muplot_axes_color is None:
+            use_muplot_axes_color = False
+        if use_muplot_grid is None:
+            use_muplot_grid = False
+        if use_muplot_line_and_markers is None:
+            use_muplot_line_and_markers = False
+        if use_platform_background is None:
+            use_platform_background = False
 
     plot_target_settings = get_plot_target_settings()
 
-    if plot_target_settings.plot_target_style.line_colors is not None:
+    if use_platform_colorway and plot_target_settings.plot_target_style.line_colors is not None:
         fig.update_layout(colorway=plot_target_settings.plot_target_style.line_colors)
 
     if use_simple_white_template:

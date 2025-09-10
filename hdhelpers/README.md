@@ -28,11 +28,11 @@ Finally, in case you need to add a new dependency, do so via `uv add <new_depend
 ### Deploying Your Code
 Once you are done writing your code, including unit tests, use `./run check` to see if your code quality is sufficient.
 
-Before you build the package, delete any `.tar.gz` and `.whl` files that are currently in the `dist` subdirectory, then set an appropriate [version number](https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning) in `pyproject.toml`.
+Before you build the package, , then set an appropriate [version number](https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning) in `pyproject.toml`.
 
-To build the package, execute `uv build`. [Hatchling](https://pypi.org/project/hatchling/), the build backend specified in `pyproject.toml`, will build a new sdist and wheel in the `dist` subdirectory.
+To build the package and delete any files that are currently in the `dist` subdirectory, execute `rm -r dist && uv build`. [Hatchling](https://pypi.org/project/hatchling/), the build backend specified in `pyproject.toml`, will build a new sdist and wheel in the `dist` subdirectory.
 
-The hedita designer docker compose dev setup installs hdhelpers from [TestPyPI](https://packaging.python.org/en/latest/guides/using-testpypi/) using the following command in the `Dockerfile-runtime`:
+The hetida designer docker compose dev setup installs hdhelpers from [TestPyPI](https://packaging.python.org/en/latest/guides/using-testpypi/) using the following command in the `Dockerfile-runtime`:
 ```
 RUN pip install -U --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ hdhelpers
 ```

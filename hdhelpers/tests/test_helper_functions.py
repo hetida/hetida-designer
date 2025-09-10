@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -5,6 +6,7 @@ import pytest
 
 from hdhelpers.exceptions import HelperException
 from hdhelpers.helper_functions import (
+    _convert_to_optional_timezone,
     _get_display_name,
     _get_end_timestamp,
     _get_start_timestamp,
@@ -14,6 +16,33 @@ from hdhelpers.helper_functions import (
     _to_datetime,
 )
 from hdhelpers.plot_target_settings import PlotTargetSettings
+
+
+def test_convert_to_optional_timezone_naive_none():
+    assert (
+        _convert_to_optional_timezone(pd.to_datetime("2025-01-01T01:00:00"), None).tz
+        == datetime.timezone.utc
+    )
+
+
+def test_convert_to_optional_timezone_aware_none():
+    assert _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00+05:00"), None
+    ).tz == datetime.timezone(datetime.timedelta(seconds=18000))
+
+
+def test_convert_to_optional_timezone_naive_given():
+    timestamp = _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00"), "Europe/Berlin"
+    )
+    assert timestamp.utcoffset() == datetime.timedelta(seconds=3600)
+
+
+def test_convert_to_optional_timezone_aware_given():
+    timestamp = _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00+05:00"), "Europe/Berlin"
+    )
+    assert timestamp.utcoffset() == datetime.timedelta(seconds=3600)
 
 
 def test_get_display_name_default():
