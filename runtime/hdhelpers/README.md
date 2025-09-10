@@ -120,8 +120,10 @@ As a result we get the following plot:
 ```
 * `use_platform_background` sets the plotly layout parameter `paper_bgcolor` to the `background_color` property the hetida platform writes into the hetida designer's `plot_target_settings` context variable (unless the property is `None`) and it sets `plot_bgcolor=rgba(0,0,0,0)` so the "paper background" is visible through the "plot background"
 
-`plotly_fig_to_json_dict` has three more boolean parameters:
+`plotly_fig_to_json_dict` has five more boolean parameters:
 * `add_config_settings` sets the plotly figure's locale to the `plot_target_locale` property the hetida platform writes into the hetida designer's `plot_target_settings` context variable (unless the property is `None`)
+* `remove_plotly_bar` sets the plotly figure's `displayModeBar` setting to `False` to remove the plotly bar from the plot
+* `remove_plotly_icon` sets the plotly figure's `displaylogo` setting to `False` to remove the plotly logo from the plot
 * `use_minimum_margin` sets the plotly layout parameter `margin={"autoexpand": True, "l": 0, "r": 0, "b": 0, "t": 0, "pad": 0}` to minimize the plot's margins
 * `use_simple_white_template` sets the plotly layout parameter `template=simple_white`
 

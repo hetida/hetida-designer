@@ -369,6 +369,8 @@ def test_plotly_fig_to_json_dict_defaults():
     assert json_dict.get("layout", {}).get("margin", {})["b"] == 0
     assert json_dict.get("layout", {}).get("margin", {})["t"] == 0
     assert json_dict.get("layout", {}).get("margin", {})["pad"] == 0
+    assert not json_dict.get("config", {})["displaylogo"]
+    assert not json_dict.get("config", {})["displayModeBar"]
 
 
 def test_plotly_fig_to_json_dict_set_everything():
@@ -385,6 +387,8 @@ def test_plotly_fig_to_json_dict_set_everything():
         add_config_settings=False,
         hide_legend=True,
         hide_x_title=True,
+        remove_plotly_bar=False,
+        remove_plotly_icon=False,
         update_x_axes_tickformat=True,
         use_default_standoff=True,
         use_minimum_margin=False,
@@ -399,3 +403,5 @@ def test_plotly_fig_to_json_dict_set_everything():
 
     assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
     assert json_dict.get("layout", {}).get("margin", {}) == {}
+    assert "displaylogo" not in json_dict.get("config", {})
+    assert "displayModeBar" not in json_dict.get("config", {})

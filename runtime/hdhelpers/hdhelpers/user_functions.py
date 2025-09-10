@@ -198,6 +198,8 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
     add_config_settings: bool = True,
     hide_legend: bool = False,
     hide_x_title: bool = False,
+    remove_plotly_bar: bool = True,
+    remove_plotly_icon: bool = True,
     update_x_axes_tickformat: bool = False,
     use_default_standoff: bool = False,
     use_minimum_margin: bool = True,
@@ -298,6 +300,12 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912
 
     if add_config_settings and plot_target_settings.plot_target_locale is not None:
         fig_dict_obj["config"]["locale"] = plot_target_settings.plot_target_locale
+
+    if remove_plotly_bar:
+        fig_dict_obj["config"]["displayModeBar"] = False
+
+    if remove_plotly_icon:
+        fig_dict_obj["config"]["displaylogo"] = False
 
     # possibly quite inefficient (multiple serialisation / deserialization) but
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
