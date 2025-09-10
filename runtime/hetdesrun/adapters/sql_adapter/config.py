@@ -150,19 +150,12 @@ class SQLAdapterConfig(BaseSettings):
         [], validation_alias="SQL_ADAPTER_SQL_DATABASES"
     )
 
-    deletion_batch_size_for_discrete_data_points: int = Field(
-        500,
-        description="Number of data points to include in a delete query. "
-        "In case the adapter performs a deletion of discrete data points in a timeseries table",
-        validation_alias="DELETION_BATCH_SIZE_FOR_DISCRETE_DATA_POINTS",
-    )
-
-    build_metrics_from_metric_column_for_deletion_if_not_present: bool = Field(
+    infer_metrics_from_metric_column_for_deletion_if_not_present: bool = Field(
         False,
-        description="If set to True, the metrics to be deleted are built "
+        description="If set to True, the metrics to be deleted are inferred "
         "from the metric column of the respective multitsframe. "
         "Only if 'by_metric' and 'ref_metrics' are not set in the mutlitsframes attrs.",
-        validation_alias="BUILD_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT",
+        validation_alias="INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT",
     )
 
     model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)

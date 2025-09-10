@@ -1,6 +1,5 @@
 import logging
 import operator
-from itertools import batched
 
 import pandas as pd
 from pydantic import ValidationError
@@ -151,13 +150,7 @@ def _handle_deletion(
             zip(filtered_df["timestamp"], filtered_df["metric"], strict=True)
         )
 
-        batch_size = get_sql_adapter_config().deletion_batch_size_for_discrete_data_points
-
-        # Batch the deletion process as there could be a large number of data points
-        for batch in batched(data_points_to_delete, batch_size, strict=False):
-            where_clause = tuple_(timestamp_col, metric_col).in_(batch)
-            execute_delete(where_clause)
-        return
+        where_clause = tuple_(timestamp_col, metric_col).in_(data_points_to_delete)
 
     # Ref interval is set
     elif metadata.ref_interval_start_timestamp and metadata.ref_interval_end_timestamp:
@@ -197,7 +190,7 @@ def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
     if metrics := data.attrs.get("ref_metrics", []):
         return metrics  # type: ignore[no-any-return]
     # Fallback to building metrics from data
-    if get_sql_adapter_config().build_metrics_from_metric_column_for_deletion_if_not_present:
+    if get_sql_adapter_config().infer_metrics_from_metric_column_for_deletion_if_not_present:
         return [str(metric) for metric in data["metric"].unique().tolist()]
     return []
 
