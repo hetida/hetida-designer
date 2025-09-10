@@ -38,7 +38,7 @@ RUN pip install -U --index-url https://test.pypi.org/simple/ --extra-index-url h
 ```
 **Note: TestPyPI occasionally deletes projects to free up disk space. If your hetida designer docker compose dev setup cannot find hdhelpers, make sure the project is still on TestPyPI before following other debugging approaches!**
 
-To publish the build from the `dist` subdirectory to TestPyPI, use `uv publish --index testpypi --username __token__`. To do so, you need a TestPyPI account with a token to enter in the command line as password.
+To publish the build from the `dist` subdirectory to TestPyPI, use `uv publish --index testpypi`. To do so, you need a TestPyPI account with a token to enter in the command line as password following the username "\_\_token__".
 
 Next time your hetida designer docker compose dev setup builds the runtime container, it will install the hdhelpers version that you just deployed.
 

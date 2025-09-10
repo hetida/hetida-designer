@@ -25,6 +25,7 @@ runtime/ruff_report.xml
 runtime/test_results.xml
 runtime/.coverage*
 runtime/.coverage.xml
+runtime/hdhelpers/coverage.xml
 runtime/**/writable_sqlite.db
 runtime/upload_settings/*
 runtime/settings/*
