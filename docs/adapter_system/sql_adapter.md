@@ -46,6 +46,12 @@ Timeseries tables can be configured to allow deletion of rows. Refer to [Metadat
 
 Note that tables will be created and columns added automatically depending on the data sent to these sinks.
 
+By default, the API serving the hetida designer frontend is part of the runtime.  
+This can be changed by setting `SQL_ADAPTER_SERVICE_IN_RUNTIME` to `false`. Then the API is part of the backend.
+
+`INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT` controls whether the metrics to delete are inferred from the data of the MULTITSFRAME, if no metric is specified in the metadata.  
+This inference is disabled by default.
+
 Here we give an example configuration for mounting and accessing two sqlite databases and additionally access to hetida designer's own postgres db (only for demonstration, do not do this in a real setup!):
 
 ```yaml
