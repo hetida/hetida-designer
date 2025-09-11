@@ -354,6 +354,7 @@ pkgs.mkShell rec {
     # Postgres
 
     postgresql
+    postgresql.pg_config
     postgresql.lib
     # Node
     nodejs_22
