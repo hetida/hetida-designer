@@ -30,9 +30,9 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = https://fuseki.com/data-science/hetida-designer/
-documentation = https://github.com/hetida/hetida-designer/tree/release/docs
-repository = https://github.com/hetida/hetida-designer
+homepage = "https://fuseki.com/data-science/hetida-designer/"
+documentation = "https://github.com/hetida/hetida-designer/tree/release/docs"
+repository = "https://github.com/hetida/hetida-designer"
 
 [dependency-groups]
 dev = [
