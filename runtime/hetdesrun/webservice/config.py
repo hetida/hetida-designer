@@ -285,7 +285,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     sqlalchemy_db_drivername: str = Field(
-        "postgresql+psycopg2", validation_alias="HD_DB_DRIVERNAME", examples=["postgresql+psycopg2"]
+        "postgresql+psycopg", validation_alias="HD_DB_DRIVERNAME", examples=["postgresql+psycopg"]
     )
 
     sqlalchemy_db_user: str = Field("hetida_designer_dbuser", validation_alias="HD_DB_USER")
@@ -304,7 +304,7 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HD_DATABASE_URL",
         examples=[
             (
-                "postgresql+psycopg2://hetida_designer_dbuser:"
+                "postgresql+psycopg://hetida_designer_dbuser:"
                 "hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db"
             )
         ],

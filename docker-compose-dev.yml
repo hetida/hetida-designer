@@ -28,7 +28,7 @@ services:
     ports:
       - 8080:8090
     environment:
-      - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
+      - HD_DATABASE_URL=postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false

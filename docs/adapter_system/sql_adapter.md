@@ -6,7 +6,7 @@ More specifically, it enables
 * Writing dataframes to tables, either replacing the complete target table or appending to it. Tables are created in both cases if necessary.
 * Reading and writing timeseries data from sql databases (e.g. timescale db).
 
-Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../custom_python_dependencies.md). Sqlite support as well as postgres support via [psycopg2](https://pypi.org/project/psycopg2/) are preinstalled.
+Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../custom_python_dependencies.md). Sqlite support as well as postgres support via [psycopg3](https://pypi.org/project/psycopg/) are preinstalled.
 
 ## Limitations
 Under the hood this adapter simply invokes Pandas' built-in [read_sql_table](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_table.html), [read_sql_query](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_query.html) and [to_sql](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html) methods. In particular access is sequential and configurability of some possibly relevant aspects like connection management is limited. Additionally, parsing of data types is handled by Pandas automatically and cannot be configured in detail.
@@ -102,7 +102,7 @@ Here we give an example configuration for mounting and accessing two sqlite data
           {
             "name": "hd postgres",
             "key": "hd_postgres_db",
-            "connection_url": "postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db",
+            "connection_url": "postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db",
             "append_tables": [],
             "replace_tables" : []
           }
