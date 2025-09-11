@@ -5,15 +5,34 @@ build-backend = "hatchling.build"
 [project]
 name = "hdhelpers"
 version = "0.1.2"
-description = "Add your description here"
+description = "Streamlines plotting and timezone handling in hetida designer components"
 readme = "README.md"
+authors = [
+    {name = "Christoph Dingel", email = "cdingel@fuseki.com"},
+    {name = "Steffen Wittkamp", email = "swittkamp@fuseki.com"}
+]
 requires-python = ">=3.13"
 dependencies = [
     "pandas>=2,<3",
     "plotly>=6,<7",
     "pydantic>=2,<3"
 ]
-license = "MIT"
+license = {file = "LICENSE"}
+
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: Unix',
+    'Programming Language :: Python :: 3.13',
+    'Topic :: Scientific/Engineering'
+]
+
+[project.urls]
+homepage = https://fuseki.com/data-science/hetida-designer/
+documentation = https://github.com/hetida/hetida-designer/tree/release/docs
+repository = https://github.com/hetida/hetida-designer
 
 [dependency-groups]
 dev = [
