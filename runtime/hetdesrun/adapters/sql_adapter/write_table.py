@@ -233,7 +233,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
 
     engine = db_config.engine
     try:
-        with engine.begin() as connection:
+        with engine.begin() as connection:  # Transactional / roll back in case of exceptions
             if (
                 ts_table_config is not None
                 and ts_table_config.allow_invalidation
@@ -275,4 +275,5 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
             )
     except SQLOpsError as e:
         msg = f"Sql adapter pandas to_sql writing error for sink {sink_id}: {str(e)}"
+        logger.error(msg)
         raise AdapterHandlingException(msg) from e

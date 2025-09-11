@@ -71,8 +71,8 @@ class DatasetMetadata(BaseModel):
 
 def get_dataset_metadata(df: pd.DataFrame) -> DatasetMetadata:
     """Extract and validate dataset_metadata from DataFrame.attrs."""
-    ds_metadata = df.attrs.get("dataset_metadata", {})
+    dataset_metadata = df.attrs.get("dataset_metadata", {})
     try:
-        return DatasetMetadata(**ds_metadata)
+        return DatasetMetadata(**dataset_metadata)
     except ValidationError as e:
         raise ValueError(f"Invalid dataset_metadata in DataFrame.attrs: {e}") from e
