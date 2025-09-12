@@ -15,6 +15,7 @@ geojson
 geopandas
 gunicorn
 h5py
+hdhelpers
 holidays
 htpy
 httptools

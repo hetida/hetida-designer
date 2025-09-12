@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hdhelpers"
-version = "0.1.2"
+version = "0.0.1"
 description = "Streamlines plotting and timezone handling in hetida designer components"
 readme = "README.md"
 authors = [
@@ -43,12 +43,6 @@ dev = [
     "ruff>=0.12.1",
     "sqlalchemy>=2.0.43",
 ]
-
-[[tool.uv.index]]
-name = "testpypi"
-url = "https://test.pypi.org/simple/"
-publish-url = "https://test.pypi.org/legacy/"
-explicit = true
 
 [tool.ruff]
 
