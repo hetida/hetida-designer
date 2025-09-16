@@ -86,6 +86,19 @@ INTERVAL_OPERATORS = {
 }
 
 
+def _execute_delete(
+    connection: Connection, clause: ColumnElement, table: Table, table_name: str
+) -> None:
+    try:
+        delete_statement = delete(table).where(clause)
+        result = connection.execute(delete_statement)
+        logger.info("Deleted %s rows from table %s.", result.rowcount, table_name)
+    except SQLAlchemyError as e:
+        msg = f"Error during deletion from table {table_name}: {e}"
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from e
+
+
 def _handle_deletion(
     connection: Connection,
     metadata: DatasetMetadata,
@@ -114,16 +127,6 @@ def _handle_deletion(
     table_obj = Table(table_name, metadata_obj, autoload_with=connection)
     timestamp_col = getattr(table_obj.c, ts_table_config.timestamp_col_name)
     metric_col = getattr(table_obj.c, ts_table_config.metric_col_name)
-
-    def execute_delete(clause: ColumnElement) -> None:
-        try:
-            delete_statement = delete(table_obj).where(clause)
-            result = connection.execute(delete_statement)
-            logger.info("Deleted %s rows from table %s.", result.rowcount, table_name)
-        except SQLAlchemyError as e:
-            msg = f"Error during deletion from table {table_name}: {e}"
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
 
     where_clause = None
 
@@ -192,7 +195,7 @@ def _handle_deletion(
         return
 
     if where_clause is not None:
-        execute_delete(where_clause)
+        _execute_delete(connection, where_clause, table_obj, table_name)
 
 
 def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
