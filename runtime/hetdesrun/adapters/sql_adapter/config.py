@@ -21,13 +21,15 @@ class TimeseriesTableConfig(BaseModel):
         False,
         description="Whether invalidating data (before writing) is allowed."
         " If True, metadata on a multitsframe can specify data to be invalidated"
-        " (before the new data is written).",
+        " (before the new data is written)."
+        " Note that invalidation without deletion is not supported yet.",
     )
-    allow_deletion: bool = Field(
+    delete_invalidated: bool = Field(
         False,
-        description="Whether deleting data (before writing) is allowed."
+        description="Whether invalidated data should be deleted (before writing)."
         " If True, metadata on a multitsframe can specify data to be deleted"
-        " (before the new data is written).",
+        " (before the new data is written)."
+        " allow_invalidation must be True for deletion to happen.",
     )
     metric_col_name: str = "metric"
     timestamp_col_name: str = "timestamp"

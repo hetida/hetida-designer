@@ -184,7 +184,7 @@ def three_sqlite_dbs_configured(
                         },
                     ),
                     "deletion_test_table": TimeseriesTableConfig(
-                        appendable=True, allow_invalidation=True, allow_deletion=True
+                        appendable=True, allow_invalidation=True, delete_invalidated=True
                     ),
                 },
             ),

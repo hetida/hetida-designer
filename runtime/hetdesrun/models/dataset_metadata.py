@@ -38,28 +38,30 @@ class DatasetMetadata(BaseModel):
         if self.only_invalidate and not self.invalidate_dataset:
             raise ValueError("only_invalidate can only be true if invalidate_dataset is also true.")
 
-        # Check ref interval validity
+        # Check ref interval validity; "^" is bitwise XOR
         if (self.ref_interval_start_timestamp is None) ^ (self.ref_interval_end_timestamp is None):
             raise ValueError(
                 "ref_interval_start_timestamp and ref_interval_end_timestamp must be set together."
             )
 
         if (
-            self.ref_interval_start_timestamp and self.ref_interval_end_timestamp
+            self.ref_interval_start_timestamp is not None
+            or self.ref_interval_end_timestamp is not None
         ) and self.ref_interval_type is None:
             raise ValueError(
                 "ref_interval_type must be set "
                 "if ref_interval_start_timestamp or ref_interval_end_timestamp is set."
             )
 
-        # Check invalidation interval validity
+        # Check invalidation interval validity; "^" is bitwise XOR
         if (self.invalidation_interval_start is None) ^ (self.invalidation_interval_end is None):
             raise ValueError(
                 "invalidation_interval_start and invalidation_interval_end must be set together."
             )
 
         if (
-            self.invalidation_interval_start or self.invalidation_interval_end
+            self.invalidation_interval_start is not None
+            or self.invalidation_interval_end is not None
         ) and self.invalidation_interval_type is None:
             raise ValueError(
                 "invalidation_interval_type must be set "
@@ -69,8 +71,7 @@ class DatasetMetadata(BaseModel):
         return self
 
 
-def get_dataset_metadata(df: pd.DataFrame) -> DatasetMetadata:
-    """Extract and validate dataset_metadata from DataFrame.attrs."""
+def get_dataset_metadata_from_attrs(df: pd.DataFrame) -> DatasetMetadata:
     dataset_metadata = df.attrs.get("dataset_metadata", {})
     try:
         return DatasetMetadata(**dataset_metadata)

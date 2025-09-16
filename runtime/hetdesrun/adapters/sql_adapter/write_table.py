@@ -16,7 +16,7 @@ from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
     validate_multits_frame,
 )
-from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata
+from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata_from_attrs
 
 logger = logging.getLogger(__name__)
 
@@ -226,7 +226,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
         )
 
     try:
-        metadata = get_dataset_metadata(data)
+        metadata = get_dataset_metadata_from_attrs(data)
         metrics = _retrieve_metrics(data)
     except ValueError as e:
         raise AdapterHandlingException(f"Error processing metadata for sink {sink_id}: {e}") from e
@@ -237,7 +237,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
             if (
                 ts_table_config is not None
                 and ts_table_config.allow_invalidation
-                and ts_table_config.allow_deletion
+                and ts_table_config.delete_invalidated
             ):
                 _handle_deletion(
                     connection,
@@ -275,5 +275,5 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
             )
     except SQLOpsError as e:
         msg = f"Sql adapter pandas to_sql writing error for sink {sink_id}: {str(e)}"
-        logger.error(msg)
+        logger.info(msg)
         raise AdapterHandlingException(msg) from e
