@@ -1,10 +1,17 @@
 from datetime import datetime
-from typing import Literal
+from enum import Enum
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
 
-IntervalType = Literal["closed", "left_closed", "right_closed", "open", "left_open", "right_open"]
+
+class IntervalType(str, Enum):
+    CLOSED = "closed"
+    LEFT_CLOSED = "left_closed"
+    RIGHT_CLOSED = "right_closed"
+    OPEN = "open"
+    LEFT_OPEN = "left_open"
+    RIGHT_OPEN = "right_open"
 
 
 class DatasetMetadata(BaseModel):
@@ -14,7 +21,7 @@ class DatasetMetadata(BaseModel):
     # Ref interval
     ref_interval_start_timestamp: datetime | None = None
     ref_interval_end_timestamp: datetime | None = None
-    ref_interval_type: IntervalType | None = "closed"
+    ref_interval_type: IntervalType | None = IntervalType.CLOSED
 
     # Metric + frequency
     ref_metric: str | None = None
@@ -24,7 +31,7 @@ class DatasetMetadata(BaseModel):
     # Invalidation interval
     invalidation_interval_start: datetime | None = None
     invalidation_interval_end: datetime | None = None
-    invalidation_interval_type: IntervalType | None = "closed"
+    invalidation_interval_type: IntervalType | None = IntervalType.CLOSED
 
     # Invalidation flags
     invalidate_dataset: bool = True

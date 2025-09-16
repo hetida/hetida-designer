@@ -16,7 +16,11 @@ from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
     validate_multits_frame,
 )
-from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata_from_attrs
+from hetdesrun.models.dataset_metadata import (
+    DatasetMetadata,
+    IntervalType,
+    get_dataset_metadata_from_attrs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,12 +77,12 @@ def prepare_validate_multitsframe(
 
 # Interval type to operator mapping for deletion process
 INTERVAL_OPERATORS = {
-    "closed": (operator.ge, operator.le),  # >=, <=
-    "left_closed": (operator.ge, operator.lt),  # >=, <
-    "right_closed": (operator.gt, operator.le),  # >, <=
-    "open": (operator.gt, operator.lt),  # >, <
-    "left_open": (operator.gt, operator.le),  # Same as right_closed
-    "right_open": (operator.ge, operator.lt),  # Same as left_closed
+    IntervalType.CLOSED: (operator.ge, operator.le),  # >=, <=
+    IntervalType.LEFT_CLOSED: (operator.ge, operator.lt),  # >=, <
+    IntervalType.RIGHT_CLOSED: (operator.gt, operator.le),  # >, <=
+    IntervalType.OPEN: (operator.gt, operator.lt),  # >, <
+    IntervalType.LEFT_OPEN: (operator.gt, operator.le),  # Same as right_closed
+    IntervalType.RIGHT_OPEN: (operator.ge, operator.lt),  # Same as left_closed
 }
 
 
@@ -124,9 +128,13 @@ def _handle_deletion(
     where_clause = None
 
     # Invalidation interval is set
-    if metadata.invalidation_interval_start and metadata.invalidation_interval_end:
+    if (
+        metadata.invalidation_interval_start is not None
+        and metadata.invalidation_interval_end is not None
+        and metadata.invalidation_interval_type is not None
+    ):
         logger.info("Deletion based on invalidation dataset.")
-        start_op, end_op = INTERVAL_OPERATORS[str(metadata.invalidation_interval_type)]
+        start_op, end_op = INTERVAL_OPERATORS[metadata.invalidation_interval_type]
         where_clause = and_(
             start_op(timestamp_col, metadata.invalidation_interval_start),
             end_op(timestamp_col, metadata.invalidation_interval_end),
@@ -153,9 +161,13 @@ def _handle_deletion(
         where_clause = tuple_(timestamp_col, metric_col).in_(data_points_to_delete)
 
     # Ref interval is set
-    elif metadata.ref_interval_start_timestamp and metadata.ref_interval_end_timestamp:
+    elif (
+        metadata.ref_interval_start_timestamp is not None
+        and metadata.ref_interval_end_timestamp is not None
+        and metadata.ref_interval_type is not None
+    ):
         logger.info("Deletion based on reference dataset.")
-        start_op, end_op = INTERVAL_OPERATORS[str(metadata.ref_interval_type)]
+        start_op, end_op = INTERVAL_OPERATORS[metadata.ref_interval_type]
         where_clause = and_(
             start_op(timestamp_col, metadata.ref_interval_start_timestamp),
             end_op(timestamp_col, metadata.ref_interval_end_timestamp),
@@ -167,7 +179,7 @@ def _handle_deletion(
         min_ts = df["timestamp"].min()
         max_ts = df["timestamp"].max()
         logger.info("Deletion based on inferred interval from data: %s to %s", min_ts, max_ts)
-        start_op, end_op = INTERVAL_OPERATORS["closed"]
+        start_op, end_op = INTERVAL_OPERATORS[IntervalType.CLOSED]
         where_clause = and_(
             start_op(timestamp_col, min_ts),
             end_op(timestamp_col, max_ts),
