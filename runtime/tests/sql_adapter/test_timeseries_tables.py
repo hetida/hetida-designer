@@ -1,10 +1,13 @@
 import copy
 import logging
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from sqlalchemy.exc import OperationalError as SQLOpsError
 
+from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.sql_adapter import load_data, send_data
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.adapters.sql_adapter.structure import (
@@ -243,7 +246,7 @@ def _create_timeseries_mtsf(
     days: int,
     metric: str = "nf",
 ) -> pd.DataFrame:
-    """Helper for deletion test"""
+    """Helper for deletion tests"""
     start = datetime(1949, 5, 23, tzinfo=timezone.utc)
     dates = [(start + timedelta(days=i)).isoformat() for i in range(days)]
     values = list(range(days))
@@ -258,6 +261,27 @@ def _create_timeseries_mtsf(
 
     df.attrs = copy.deepcopy(attrs)
     return df
+
+
+async def _get_size_of_deletion_test_table_for_daterange(
+    metrics="nf", ts_from="1949-05-01T11:58:02+00:00", ts_to="1949-07-01T11:58:02+00:00"
+):
+    """Helper for deletion tests"""
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/deletion_test_table",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": metrics,
+                    "timestampFrom": ts_from,
+                    "timestampTo": ts_to,
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    return len(received_data["inp"])
 
 
 DELETION_ONLY_TEST_CASES = [
@@ -341,21 +365,8 @@ async def test_deletion(
     df = _create_timeseries_mtsf(attrs=attrs, days=num_days)
 
     # Check that table has the correct number of entries
-    received_data = await load_data(
-        {
-            "inp": FilteredSource(
-                ref_id="read_only_timeseries_sqlite_database/ts_table/deletion_test_table",
-                ref_id_type="SOURCE",
-                filters={
-                    "metrics": "nf",
-                    "timestampFrom": "1949-05-01T11:58:02+00:00",
-                    "timestampTo": "1949-07-01T11:58:02+00:00",
-                },
-            )
-        },
-        adapter_key="sql-adapter",
-    )
-    assert len(received_data["inp"]) == deletion_test_table_size
+    table_size = await _get_size_of_deletion_test_table_for_daterange()
+    assert table_size == deletion_test_table_size
 
     # Perform send that triggers deletion
     # Check that the deletion dataset was constructed the right way
@@ -374,22 +385,8 @@ async def test_deletion(
         assert log_message in caplog.text
 
     # Check whether the correct number of entries was deleted
-    received_data = await load_data(
-        {
-            "inp": FilteredSource(
-                ref_id="read_only_timeseries_sqlite_database/ts_table/deletion_test_table",
-                ref_id_type="SOURCE",
-                filters={
-                    "metrics": "nf",
-                    "timestampFrom": "1949-05-01T11:58:02+00:00",
-                    "timestampTo": "1949-07-01T11:58:02+00:00",
-                },
-            )
-        },
-        adapter_key="sql-adapter",
-    )
-
-    assert len(received_data["inp"]) == deletion_test_table_size - num_days
+    table_size = await _get_size_of_deletion_test_table_for_daterange()
+    assert table_size == deletion_test_table_size - num_days
 
 
 @pytest.mark.asyncio
@@ -407,21 +404,8 @@ async def test_deletion_with_write(
     df = _create_timeseries_mtsf(attrs=metadata, days=num_days)
 
     # Check that table has the correct number of entries
-    received_data = await load_data(
-        {
-            "inp": FilteredSource(
-                ref_id="read_only_timeseries_sqlite_database/ts_table/deletion_test_table",
-                ref_id_type="SOURCE",
-                filters={
-                    "metrics": "nf",
-                    "timestampFrom": "1949-05-01T11:58:02+00:00",
-                    "timestampTo": "1949-07-01T11:58:02+00:00",
-                },
-            )
-        },
-        adapter_key="sql-adapter",
-    )
-    assert len(received_data["inp"]) == deletion_test_table_size
+    table_size = await _get_size_of_deletion_test_table_for_daterange()
+    assert table_size == deletion_test_table_size
 
     # Perform send that triggers deletion
     with caplog.at_level(logging.INFO):
@@ -455,3 +439,52 @@ async def test_deletion_with_write(
     )
 
     assert received_data["inp"]["value"].to_list() == list(range(num_days))
+
+
+@pytest.mark.asyncio
+async def test_transaction_rollback_on_write_error(
+    caplog, three_sqlite_dbs_configured, deletion_test_table_size: int
+):
+    """Test that a transaction is rolled back if an error occurs."""
+
+    num_rows_to_delete = 5
+    metadata = {
+        "dataset_metadata": {
+            "invalidation_interval_start": "1949-05-23T00:00:00+00:00",
+            "invalidation_interval_end": "1949-05-27T00:00:00+00:00",
+        },
+        "by_metric": {"nf": "dn"},
+    }
+
+    df_to_send = _create_timeseries_mtsf(attrs=metadata, days=num_rows_to_delete)
+
+    # Check that table has the correct number of entries
+    table_size = await _get_size_of_deletion_test_table_for_daterange()
+    assert table_size == deletion_test_table_size
+
+    # Mock the to_sql method to simulate a write failure after deletion.
+    dummy_error = Exception("Mocked to_sql failure!")
+    mocked_error = SQLOpsError("DUMMY SQL STATEMENT", {"param": 1}, dummy_error)
+
+    with (
+        patch("pandas.DataFrame.to_sql", side_effect=mocked_error),
+        pytest.raises(AdapterHandlingException) as exc_info,
+    ):
+        await send_data(
+            {
+                "outp": FilteredSink(
+                    ref_id="read_only_timeseries_sqlite_database/appendable_ts_table/deletion_test_table",
+                    ref_id_type="SINK",
+                )
+            },
+            {"outp": df_to_send},
+            adapter_key="sql-adapter",
+        )
+
+    # Check that the correct exception was raised and logged
+    assert "Mocked to_sql failure!" in str(exc_info.value)
+    assert "Sql adapter pandas to_sql writing error" in caplog.text
+
+    # Verify that the data still exists after the failed transaction, confirming the rollback.
+    table_size = await _get_size_of_deletion_test_table_for_daterange()
+    assert table_size == deletion_test_table_size

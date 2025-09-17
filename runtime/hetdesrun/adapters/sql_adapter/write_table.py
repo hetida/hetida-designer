@@ -243,7 +243,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     try:
         metadata = get_dataset_metadata_from_attrs(data)
         metrics = _retrieve_metrics(data)
-    except ValueError as e:
+    except (ValidationError, TypeError, AttributeError, KeyError) as e:
         raise AdapterHandlingException(f"Error processing metadata for sink {sink_id}: {e}") from e
 
     engine = db_config.engine

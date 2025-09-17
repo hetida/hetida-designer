@@ -139,7 +139,7 @@ def prepare_validate_loaded_raw_multitsframe(
             "ref_interval_type": "closed",
         },
     }
-    if metrics_list:
+    if metrics_list is not None:
         validated_multi_ts_frame.attrs.update(
             {"by_metric": {metric: {} for metric in metrics_list}}
         )

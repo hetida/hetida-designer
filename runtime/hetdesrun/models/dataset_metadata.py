@@ -1,8 +1,11 @@
+import logging
 from datetime import datetime
 from enum import Enum
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 class IntervalType(str, Enum):
@@ -80,7 +83,15 @@ class DatasetMetadata(BaseModel):
 
 def get_dataset_metadata_from_attrs(df: pd.DataFrame) -> DatasetMetadata:
     dataset_metadata = df.attrs.get("dataset_metadata", {})
+
+    if not isinstance(dataset_metadata, dict):
+        logger.info(
+            "Invalid type for dataset_metadata in DataFrame.attrs: Expected a dictionary, got %s",
+            type(dataset_metadata),
+        )
+        raise TypeError("dataset_metadata must be a dictionary")
     try:
         return DatasetMetadata(**dataset_metadata)
     except ValidationError as e:
-        raise ValueError(f"Invalid dataset_metadata in DataFrame.attrs: {e}") from e
+        logger.info("Invalid dataset_metadata in DataFrame.attrs: %s", e)
+        raise e
