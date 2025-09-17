@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.graph_objects import Figure
 
-from hdutils import plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
 
 pio.templates.default = None
 

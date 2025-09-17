@@ -2,7 +2,7 @@ import contextvars
 
 from pydantic import BaseModel, Field
 
-from hdutils import PlotTargetSettings
+from hdhelpers import PlotTargetSettings
 
 
 class ExecutionContext(BaseModel):

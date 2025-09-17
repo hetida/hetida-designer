@@ -13,6 +13,7 @@
     "search.exclude": {
         "**/__pycache__": true,
         "**/.git": true,
+        "**/hdhelpers/.venv": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv*": true,
         "**/demo-adapter-python/nix_venv*": true,

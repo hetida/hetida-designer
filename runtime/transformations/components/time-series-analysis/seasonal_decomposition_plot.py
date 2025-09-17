@@ -76,7 +76,8 @@ import plotly.express as px
 import plotly.io as pio
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException
 
 pio.templates.default = None
 

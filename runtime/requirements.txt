@@ -662,6 +662,10 @@ h5py==3.14.0 \
     # via
     #   -r ./requirements.in
     #   keras
+hdhelpers==0.0.1 \
+    --hash=sha256:3fbd29ec1e8fc40b2823fbae396e4bbab600fc3702ffb30940b319723c9c0d1a \
+    --hash=sha256:9b3577c38d39c6a7aaf2e574f263cba8879885ec6c943043c6bfe84cfcf402f3
+    # via -r ./requirements.in
 holidays==0.80 \
     --hash=sha256:7bf251d243723d30ef8697fb65e6bf61808a28daf2ecf8a4871f5fbb5be4ba2c \
     --hash=sha256:dbb1c73df2ef248bde09c4de9387e82c3aadc000b081977d255fe662ee889d8e
@@ -1663,6 +1667,7 @@ pandas==2.3.2 \
     #   datashader
     #   fastparquet
     #   geopandas
+    #   hdhelpers
     #   ortools
     #   statsmodels
     #   xarray
@@ -1865,7 +1870,9 @@ platformdirs==4.4.0 \
 plotly==6.3.0 \
     --hash=sha256:7ad806edce9d3cdd882eaebaf97c0c9e252043ed1ed3d382c3e3520ec07806d4 \
     --hash=sha256:8840a184d18ccae0f9189c2b9a2943923fd5cae7717b723f36eef78f444e5a73
-    # via -r ./requirements.in
+    # via
+    #   -r ./requirements.in
+    #   hdhelpers
 pluggy==1.6.0 \
     --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
@@ -1964,6 +1971,7 @@ pydantic==2.11.7 \
     # via
     #   -r ./requirements.in
     #   fastapi
+    #   hdhelpers
     #   pydantic-settings
 pydantic-core==2.33.2 \
     --hash=sha256:0069c9acc3f3981b9ff4cdfaf088e98d83440a4c7ea1bc07460af3d4dc22e72d \

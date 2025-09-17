@@ -8,7 +8,7 @@
             "console": "internalConsole",
             "mainClass": "org.hetida.designer.backend.HetidaDesignerBackendApplication",
             "projectName": "backend",
-            "args": "--spring.profiles.active=local",  
+            "args": "--spring.profiles.active=local",
         }
     ]
 }

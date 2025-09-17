@@ -34,7 +34,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from pandas.api.types import is_datetime64_any_dtype
 
-from hdutils import plotly_fig_to_json_dict
+from hdhelpers import plotly_fig_to_json_dict
 
 pio.templates.default = None
 

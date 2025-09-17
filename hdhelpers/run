@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+usage() {
+    echo "$0 [COMMAND]"
+    echo ""
+    echo "Hint: All commands expect a Python dev virtual environment to be active"
+    echo ""
+    echo "  Commands:"
+    echo "  - lint               :    run ruff on all packages or on specific directories defining them as input, e.g., bash ./run lint hdhelpers"
+    echo "  - test               :    run pytest on all packages or on specific directories defining them as input, e.g., bash ./run test test"
+    echo "  - typecheck          :    run mypy static type check"
+    echo "  - format             :    run ruff format"
+    echo "  - check              :    run format check, tests, typechecking"
+}
+
+set -euo pipefail
+
+fn_exists() {
+    LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
+}
+COMMAND="${1:-}"
+shift
+ARGUMENTS=("${@}")
+
+#----- subcommands -----#
+
+
+lint(){
+    if (( ${#} == 0 )) ; then
+        uvx ruff check hdhelpers --exclude "**/__init__.py"
+    else
+        uvx ruff check "${@}"
+    fi 
+}
+
+
+format() {
+    uvx ruff check --select I hdhelpers tests --fix "${@}" && echo "--> Ruff import sorting run."
+    uvx ruff format hdhelpers tests "${@}" && echo "--> ruff format run."
+}
+
+
+test() {
+    if (( ${#} == 0 )) ; then
+        echo "Testing hdhelpers package code ..."
+        uv run -m pytest tests -c pytest.ini \
+        --cov=hdhelpers --no-cov-on-fail \
+        --ignore=*/__init__.py
+        coverage xml -i -o coverage.xml
+    else
+        uv run -m pytest "${@}" \
+        --cov="${@}" \
+        --no-cov-on-fail --cov-report=term-missing:skip-covered
+    fi 
+}
+
+
+typecheck() {
+    uv run -m mypy "${@}" hdhelpers
+}
+
+
+check() {
+    # Will fail with non-zero exit status if any tool has some complaint.
+    # If everything is okay this will have 0 exits status
+    echo "--> Running ruff format in check mode" && uvx ruff format hdhelpers tests --check &&
+        echo "--> Running tests" && uv run -m pytest tests -c pytest.ini &&
+        echo "--> Running mypy" && uv run -m mypy hdhelpers &&
+        echo "--> Running ruff" && uvx ruff check hdhelpers tests &&
+        echo "CHECKS EXECUTION RESULTS: All checks were successful!"
+}
+
+
+#----- Execution -----#
+if fn_exists "$COMMAND"; then
+    # cd into the script's current directory
+    cd "${0%/*}" || exit 1
+    # Execute
+    TIMEFORMAT=$'\nTask completed in %3lR'
+    time "$COMMAND" "${ARGUMENTS[@]}"
+else
+    usage
+fi

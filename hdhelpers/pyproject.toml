@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hdhelpers"
+version = "0.0.1"
+description = "Streamlines plotting and timezone handling in hetida designer components"
+readme = "README.md"
+authors = [
+    {name = "Christoph Dingel", email = "cdingel@fuseki.com"},
+    {name = "Steffen Wittkamp", email = "swittkamp@fuseki.com"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pandas>=2,<3",
+    "plotly>=6,<7",
+    "pydantic>=2,<3"
+]
+license = {file = "LICENSE"}
+
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: Unix',
+    'Programming Language :: Python :: 3.13',
+    'Topic :: Scientific/Engineering'
+]
+
+[project.urls]
+homepage = "https://fuseki.com/data-science/hetida-designer/"
+documentation = "https://github.com/hetida/hetida-designer/tree/release/docs"
+repository = "https://github.com/hetida/hetida-designer"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16.1",
+    "pandas-stubs>=2.2.3.250527",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.1",
+    "sqlalchemy>=2.0.43",
+]
+
+[tool.ruff]
+
+# allow longer lines than the default (88, same as black)
+line-length = 100
+
+# Assume python313
+target-version = "py313"
+
+lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
+
+lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PLR0913", "UP017", "ISC001"]
+
+[tool.ruff.lint.per-file-ignores]
+"/**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]
+
