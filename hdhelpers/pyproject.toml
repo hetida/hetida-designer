@@ -54,7 +54,7 @@ target-version = "py313"
 
 lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
 
-lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017", "ISC001"]
+lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PLR0913", "UP017", "ISC001"]
 
 [tool.ruff.lint.per-file-ignores]
 "/**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]

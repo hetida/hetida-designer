@@ -64,8 +64,7 @@ class PlotTargetSettings(BaseModel):
     plot_target_timezone: str | None = Field(
         None,
         description="""The timezone plot components should use for datetime axes etc.
-             Usually via
-             s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)""",
+             Usually via series = modify_timezone(series)""",
         examples=["Europe/Berlin"],
     )
     plot_target_locale: str | None = Field(
@@ -107,6 +106,9 @@ def get_plot_target_settings() -> PlotTargetSettings:
 
         return plot_target_settings
     except (ImportError, TypeError):
-        logger.warning("Could not load runtime exec context, import failed! Switch to defaults.")
+        logger.warning(
+            msg="Tried to load plot_target_settings, but could not load runtime exec"
+            "context, import failed! Switch to plot_target_settings defaults."
+        )
         # return defaults if hetdesrun is not available as import
         return PlotTargetSettings()  # type: ignore

@@ -3,131 +3,130 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import pytest
 
 from hdhelpers.exceptions import HelperException
 from hdhelpers.plot_target_settings import (
     PlotTargetSettings,
-    PlotTargetStyle,
-    StatusColors,
 )
-from hdhelpers.user_functions import (
-    get_and_pad_start_and_end_timestamp,
-    get_colors_from_plot_target_settings,
-    get_locale_from_plot_target_settings,
-    get_y_axis_label,
+from hdhelpers.time_helpers import (
+    _convert_to_optional_timezone,
+    _get_end_timestamp,
+    _get_start_timestamp,
+    _to_pd_timestamp,
     modify_timezone,
-    plotly_fig_to_json_dict,
 )
 
 
-def test_get_y_axis_label_default():
-    series = pd.Series()
+def test_convert_to_optional_timezone_naive_none():
     assert (
-        get_y_axis_label(series=series, default_title="default_name", default_unit="default_unit")
-        == "default_name [default_unit]"
+        _convert_to_optional_timezone(pd.to_datetime("2025-01-01T01:00:00"), None).tz
+        == datetime.timezone.utc
     )
 
 
-def test_get_y_axis_labeltitle_with_unit_metadata():
+def test_convert_to_optional_timezone_aware_none():
+    assert _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00+05:00"), None
+    ).tz == datetime.timezone(datetime.timedelta(seconds=18000))
+
+
+def test_convert_to_optional_timezone_naive_given():
+    timestamp = _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00"), "Europe/Berlin"
+    )
+    assert timestamp.utcoffset() == datetime.timedelta(seconds=3600)
+
+
+def test_convert_to_optional_timezone_aware_given():
+    timestamp = _convert_to_optional_timezone(
+        pd.to_datetime("2025-01-01T01:00:00+05:00"), "Europe/Berlin"
+    )
+    assert timestamp.utcoffset() == datetime.timedelta(seconds=3600)
+
+
+def test_get_start_timestamp_directly():
+    timestamp = _get_start_timestamp(pd.Series(), "2025-05-28T09:00:00+02:00")
+    assert isinstance(timestamp, pd.Timestamp)
+
+
+def test_get_start_timestamp_attrs():
     series = pd.Series()
-    series.attrs["single_metric_metadata"] = {
-        "structured_metadata": {"metric": {"short_display_name": "name_from_metadata"}}
+    series.attrs = {
+        "single_metric_dataset_metadata": {
+            "ref_interval_start_timestamp": "2025-05-28T09:00:00+02:00"
+        }
     }
-    series.attrs["single_metric_metadata"]["structured_metadata"]["metric"]["unit"] = (
-        "unit_from_metadata"
-    )
-    assert get_y_axis_label(series=series) == "name_from_metadata [unit_from_metadata]"
+    timestamp = _get_start_timestamp(series, None)
+    assert isinstance(timestamp, pd.Timestamp)
 
 
-def test_get_no_colors_from_plot_target_settings():
-    plot_target_settings_mock = MagicMock(return_value=PlotTargetSettings())
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        style_object = get_colors_from_plot_target_settings()
-        assert isinstance(style_object, PlotTargetStyle)
-
-
-def test_get_one_color_from_plot_target_settings():
+def test_get_start_timestamp_plot_target_settings():
     plot_target_settings_mock = MagicMock(
-        return_value=PlotTargetSettings(
-            plot_target_style=PlotTargetStyle(
-                axes_label_color="#000000",
-            )
-        )
+        return_value=PlotTargetSettings(datetime_x_axes_range_start="2025-05-28T09:00:00+02:00")
     )
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        style_object = get_colors_from_plot_target_settings()
-        assert isinstance(style_object, PlotTargetStyle)
+    with patch("hdhelpers.time_helpers.get_plot_target_settings", plot_target_settings_mock):
+        timestamp = _get_start_timestamp(pd.Series(), None)
+        assert isinstance(timestamp, pd.Timestamp)
 
 
-def test_get_all_colors_from_plot_target_settings():
+def test_get_end_timestamp_directly():
+    timestamp = _get_end_timestamp(pd.Series(), "2025-05-28T18:00:00+02:00")
+    assert isinstance(timestamp, pd.Timestamp)
+
+
+def test_get_end_timestamp_attrs():
+    series = pd.Series()
+    series.attrs = {
+        "single_metric_dataset_metadata": {
+            "ref_interval_end_timestamp": "2025-05-28T18:00:00+02:00"
+        }
+    }
+    timestamp = _get_end_timestamp(series, None)
+    assert isinstance(timestamp, pd.Timestamp)
+
+
+def test_get_end_timestamp_plot_target_settings():
     plot_target_settings_mock = MagicMock(
-        return_value=PlotTargetSettings(
-            plot_target_style=PlotTargetStyle(
-                axes_label_color="#000000",
-                background_color="#FFFFFF",
-                grid_color="#8C8C98",
-                line_colors=["#2FAE53", "#EB7C45", "#89CE6E", "#FFB058"],
-                status_colors=StatusColors(
-                    success_color="#2FAE53",
-                    error_color="#EB6962",
-                    warn_color="#9CE6E",
-                    info_color="#80B0EC",
-                ),
-            )
-        )
+        return_value=PlotTargetSettings(datetime_x_axes_range_end="2025-05-28T18:00:00+02:00")
     )
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        style_object = get_colors_from_plot_target_settings()
-        assert isinstance(style_object, PlotTargetStyle)
+    with patch("hdhelpers.time_helpers.get_plot_target_settings", plot_target_settings_mock):
+        timestamp = _get_end_timestamp(pd.Series(), None)
+        assert isinstance(timestamp, pd.Timestamp)
 
 
-def test_get_no_locale_from_plot_target_settings():
-    plot_target_settings_mock = MagicMock(return_value=PlotTargetSettings(plot_target_locale=None))
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        locale = get_locale_from_plot_target_settings()
-        assert isinstance(locale, str | None)
+def test_get_end_none():
+    timestamp = _get_end_timestamp(pd.Series(), None)
+    assert timestamp is None
 
 
-def test_get_empty_locale_from_plot_target_settings():
-    plot_target_settings_mock = MagicMock(return_value=PlotTargetSettings(plot_target_locale=""))
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        locale = get_locale_from_plot_target_settings()
-        assert isinstance(locale, str | None)
+def test_get_start_none():
+    timestamp = _get_start_timestamp(pd.Series(), None)
+    assert timestamp is None
 
 
-def test_get_german_locale_from_plot_target_settings():
-    plot_target_settings_mock = MagicMock(return_value=PlotTargetSettings(plot_target_locale="de"))
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
-        locale = get_locale_from_plot_target_settings()
-        assert isinstance(locale, str | None)
+def test_to_pd_timestamp_int():
+    timestamp = 1748415600
+    timestamp = _to_pd_timestamp(timestamp)
+    assert isinstance(timestamp, pd.Timestamp)
 
 
-@pytest.mark.parametrize(
-    ("start", "end", "start_padding", "end_padding"),
-    [
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1s", "1s"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1min", "1min"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1h", "1h"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1d", "1d"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1W", "1W"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1ME", "1ME"),
-        ("2025-05-19T09:00:00+02:00", "2025-05-19T18:00:00+02:00", "1YE", "1YE"),
-    ],
-)
-def test_get_and_pad_start_and_end_timestamp(start, end, start_padding, end_padding):
-    start, end = get_and_pad_start_and_end_timestamp(
-        pd.Series(), "Europe/Berlin", start, start_padding, end, end_padding
-    )
-    assert isinstance(start, pd.Timestamp)
-    assert isinstance(end, pd.Timestamp)
-    assert end >= start
+def test_to_pd_timestamp_str():
+    timestamp = "2025-05-28T09:00:00+02:00"
+    timestamp = _to_pd_timestamp(timestamp)
+    assert isinstance(timestamp, pd.Timestamp)
 
 
-def test_get_and_pad_none():
+def test_to_pd_timestamp_none():
+    timestamp = None
+    timestamp = _to_pd_timestamp(timestamp)
+    assert timestamp is None
+
+
+def test_to_pd_timestamp_float():
+    timestamp = 3.14
     with pytest.raises(HelperException):
-        start, end = get_and_pad_start_and_end_timestamp(pd.Series())
+        timestamp = _to_pd_timestamp(timestamp)
 
 
 @pytest.fixture()
@@ -332,7 +331,7 @@ def test_plot_target_timezone(series_summer):
     plot_target_settings_mock = MagicMock(
         return_value=PlotTargetSettings(plot_target_timezone="Europe/Berlin")
     )
-    with patch("hdhelpers.user_functions.get_plot_target_settings", plot_target_settings_mock):
+    with patch("hdhelpers.time_helpers.get_plot_target_settings", plot_target_settings_mock):
         modified_data = modify_timezone(series_summer)
         assert modified_data.index[1].utcoffset() == datetime.timedelta(seconds=3600)
 
@@ -342,58 +341,3 @@ def test_modify_timestamp():
         pd.to_datetime("2023-03-25 23:00", utc=True), to_timezone="Europe/Berlin"
     )
     assert modified_timestamp.utcoffset() == datetime.timedelta(seconds=3600)
-
-
-def test_plotly_fig_to_json_dict_defaults():
-    plotly_fig = go.Figure()
-    plotly_fig.add_trace(
-        go.Scatter(
-            x=[1, 2, 3],
-            y=[9, 8, 7],
-            name="Foo",
-        )
-    )
-    json_dict = plotly_fig_to_json_dict(plotly_fig)
-    assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
-    assert json_dict.get("layout", {}).get("margin", {})["autoexpand"]
-    assert json_dict.get("layout", {}).get("margin", {})["l"] == 0
-    assert json_dict.get("layout", {}).get("margin", {})["r"] == 0
-    assert json_dict.get("layout", {}).get("margin", {})["b"] == 0
-    assert json_dict.get("layout", {}).get("margin", {})["t"] == 0
-    assert json_dict.get("layout", {}).get("margin", {})["pad"] == 0
-    assert not json_dict.get("config", {})["displaylogo"]
-    assert not json_dict.get("config", {})["displayModeBar"]
-
-
-def test_plotly_fig_to_json_dict_set_everything():
-    plotly_fig = go.Figure()
-    plotly_fig.add_trace(
-        go.Scatter(
-            x=[1, 2, 3],
-            y=[9, 8, 7],
-            name="Foo",
-        )
-    )
-    json_dict = plotly_fig_to_json_dict(
-        fig=plotly_fig,
-        add_config_settings=False,
-        hide_legend=True,
-        hide_x_title=True,
-        remove_plotly_bar=False,
-        remove_plotly_icon=False,
-        update_x_axes_tickformat=True,
-        use_default_standoff=True,
-        use_minimum_margin=False,
-        use_muplot_axes_color=True,
-        use_muplot_grid=True,
-        use_muplot_line_and_markers=True,
-        use_platform_background=True,
-        use_platform_defaults=True,
-        use_simple_white_template=False,
-    )
-    assert isinstance(json_dict, dict)
-
-    assert len(json_dict.get("layout", {}).get("template", {}).get("layout", {})["colorway"]) > 0
-    assert json_dict.get("layout", {}).get("margin", {}) == {}
-    assert "displaylogo" not in json_dict.get("config", {})
-    assert "displayModeBar" not in json_dict.get("config", {})

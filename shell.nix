@@ -192,6 +192,7 @@ let
 
     echo "BUILD AND ACTIVATE VENV AT ${venvDirRuntime}"
     source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; import black; # import tensorflow"
+    "$venvDirRuntime/bin/pip" install -e -U hdhelpers
   '';
 
   prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
@@ -352,8 +353,8 @@ pkgs.mkShell rec {
     opencv
 
     # Postgres
-
     postgresql
+    postgresql.pg_config
     postgresql.lib
     # Node
     nodejs_22
@@ -383,6 +384,8 @@ pkgs.mkShell rec {
 
     ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
+    set +e
+    return 0
     ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
 
     echo "NODE VERSION"

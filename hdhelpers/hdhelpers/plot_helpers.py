@@ -2,24 +2,14 @@ import json
 import logging
 from datetime import datetime
 from typing import Any
-from warnings import warn
 
 import pandas as pd
-import pytz
-from plotly.graph_objects import Figure  # type: ignore
-from plotly.utils import PlotlyJSONEncoder  # type: ignore
+from pandas.tseries.frequencies import to_offset
+from plotly.graph_objects import Figure  # type: ignore  # type: ignore
 
-from hdhelpers.exceptions import HelperException
-from hdhelpers.helper_functions import (
-    _convert_to_optional_timezone,
-    _get_display_name,
-    _get_end_timestamp,
-    _get_start_timestamp,
-    _get_unit,
-    _pad_end,
-    _pad_start,
-)
+from hdhelpers.exceptions import HelperException, InsufficientPlottingData
 from hdhelpers.plot_target_settings import PlotTargetStyle, get_plot_target_settings
+from hdhelpers.time_helpers import _get_end_timestamp, _get_start_timestamp, modify_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +38,63 @@ def get_locale_from_plot_target_settings() -> str | None:
     return plot_target_settings.plot_target_locale
 
 
-def get_y_axis_label(series: pd.Series, default_title: str = "", default_unit: str = "") -> str:
-    """Get full y-axis label from metadata
+def _get_metric_metadate(series: pd.Series, metadate: str, default_return_value: str = "") -> str:
+    """Get metadata from attrs["single_metric_metadata"]["structured_metadata"]["metric"]
 
-    Combines the title and unit provided by _get_display_name and _get_unit.
+    Tries to get the metadate from series.attrs according to the conventions of the hetida platform.
+    If such metadata doesn't exist, the default_return_value is returned instead.
     """
-    title = _get_display_name(series, default_title)
-    unit = _get_unit(series, default_unit)
-    if len(unit) > 0:
-        title = f"{title} [{unit}]"
+    try:
+        title = (
+            series.attrs.get("single_metric_metadata", {})
+            .get("structured_metadata", {})
+            .get("metric", {})[metadate]
+        )
+        if not isinstance(title, str):
+            msg = f"""Expected {metadate} to be a string, but it is not!
+ Switching to default {metadate}."""
+            raise HelperException(msg)
+    except KeyError as exc:
+        msg = f"""Expected attrs["single_metric_metadata"]["structured_metadata"]["metric"]
+            ["{metadate}"] but got incorrect keys! Switching to default {metadate}"""
+        logger.info(msg=msg, exc_info=exc)
+        title = default_return_value
+    except HelperException as exc:
+        logger.warning(msg=msg, exc_info=exc)
+        title = default_return_value
     return title
+
+
+def _pad_start(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp:
+    """Subtracts padding from the timestamp
+
+    That padding has to be formatted to be compatible with pandas.tseries.frequencies.to_offset().
+    """
+    if padding is None:
+        return timestamp
+    try:
+        return timestamp - to_offset(padding)
+    except ValueError as exc:
+        raise HelperException(
+            f"{padding} as padding value is an invalid duration, i.e. not a 'pandas frequency "
+            "string'. Use something compatible with pandas.tseries.frequencies.to_offset()"
+        ) from exc
+
+
+def _pad_end(timestamp: pd.Timestamp, padding: str | None) -> pd.Timestamp:
+    """Adds padding to the timestamp
+
+    That padding has to be formatted to be compatible with pandas.tseries.frequencies.to_offset().
+    """
+    if padding is None:
+        return timestamp
+    try:
+        return timestamp + to_offset(padding)
+    except ValueError as exc:
+        raise HelperException(
+            f"{padding} as padding value is an invalid duration, i.e. not a 'pandas frequency "
+            "string'. Use something compatible with pandas.tseries.frequencies.to_offset()"
+        ) from exc
 
 
 def get_and_pad_start_and_end_timestamp(
@@ -80,10 +117,10 @@ def get_and_pad_start_and_end_timestamp(
     end = _get_end_timestamp(series, end)
 
     if start is None:
-        raise HelperException("No start timestamp found!")
+        raise InsufficientPlottingData("No start timestamp found!")
     start_timestamp = start
     if end is None:
-        raise HelperException("No end timestamp found!")
+        raise InsufficientPlottingData("No end timestamp found!")
     end_timestamp = end
 
     # Convert timezone
@@ -101,101 +138,29 @@ def get_and_pad_start_and_end_timestamp(
     return start_padded, end_padded
 
 
-def modify_timezone[T: (pd.Timestamp, pd.Series, pd.DataFrame)](  # noqa: PLR0912
-    object_to_convert: T,
-    to_timezone: str | None = None,
-    column_name: str | None = None,
-    column_names: list[str] | None = None,
-    convert_index: bool = True,
-) -> T:
-    """Modifies timestamps to a certain timezone
+def get_y_axis_label(series: pd.Series, default_title: str = "", default_unit: str = "") -> str:
+    """Get full y-axis label from metadata
 
-    Keyword arguments:
-    object_to_convert -- pd.Timestamp, pd.Series or pd.DataFrame where timezone is modified
-    to_timezone -- timezone to convert to, e.g. for German time use Europe/Berlin.
-    See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
-    column_name -- column_name to apply, default is index as pd.Series have timestamps in index
+    Combines the title and unit provided by _get_display_name and _get_unit.
     """
-    if not isinstance(object_to_convert, pd.Timestamp | pd.Series | pd.DataFrame):
-        raise TypeError(
-            f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame"
-        )
-    if column_names is None:
-        column_names = []
+    title = _get_metric_metadate(series, "short_display_name", default_title)
+    unit = _get_metric_metadate(series, "unit", default_unit)
+    if len(unit) > 0:
+        title = f"{title} [{unit}]"
+    return title
 
-    try:
-        if to_timezone is None:
-            plot_target_settings = get_plot_target_settings()
-            if plot_target_settings.plot_target_timezone is not None:
-                to_timezone = plot_target_settings.plot_target_timezone
 
-        if isinstance(object_to_convert, pd.Timestamp):
-            return _convert_to_optional_timezone(object_to_convert, to_timezone)
+def _serialize_plotly_fig(v: dict[str, Any] | Figure) -> Any:
+    if isinstance(v, dict):
+        return v
 
-        if isinstance(object_to_convert, pd.Series):
-            new_object = object_to_convert.to_frame(name=object_to_convert.name)
-        else:
-            new_object = object_to_convert.copy(deep=True)
+    # possibly quite inefficient (multiple serialisation / deserialization) but
+    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
+    # should be definitely compatible with the plotly javascript library:
 
-        # Both column_name branches exist purely for backwards compatibility,
-        # only convert_index should stay.
-        if column_name is None and convert_index:
-            new_object.index = _convert_to_optional_timezone(
-                pd.to_datetime(new_object.index), to_timezone
-            )
-        if column_name is not None:
-            warn(
-                """The parameter 'column_name' will soon be deprecated in favor of
-                the more flexible 'columns_names'""",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            new_object[column_name] = _convert_to_optional_timezone(
-                pd.to_datetime(new_object[column_name]).dt, to_timezone
-            )
-            column_names.append(column_name)
-
-        if len(column_names) == 0:
-            if isinstance(object_to_convert, pd.Series):
-                new_object.index = _convert_to_optional_timezone(
-                    pd.to_datetime(new_object.index), to_timezone
-                )
-                msg = f"Converted index to datetime starting with {object_to_convert.index[0]}"
-                logger.debug(msg=msg)
-            elif isinstance(new_object, pd.DataFrame) and "timestamp" in new_object.columns:
-                new_object["timestamp"] = _convert_to_optional_timezone(
-                    pd.to_datetime(new_object["timestamp"]).dt, to_timezone
-                )
-                msg = f"""Converted column "timestamp" to datetime starting with
-                {object_to_convert["timestamp"][0]}"""
-                logger.debug(msg=msg)
-        if len(column_names) > 0:
-            for column in column_names:
-                new_object[column] = _convert_to_optional_timezone(
-                    pd.to_datetime(new_object[column]).dt, to_timezone
-                )
-
-        if not isinstance(object_to_convert, pd.Series):
-            new_object.attrs = object_to_convert.attrs
-            return new_object
-
-        series_object = pd.Series(
-            new_object[object_to_convert.name],
-            index=new_object.index,
-            name=object_to_convert.name,
-        )
-        series_object.attrs = object_to_convert.attrs
-
-        return series_object
-
-    except pytz.exceptions.UnknownTimeZoneError as exc:
-        possible_timezone = pytz.all_timezones
-        raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from exc
-    except (AttributeError, pytz.exceptions.NonExistentTimeError) as exc:
-        raise TypeError("Entries to convert do not contain valid timestamps") from exc
-    except KeyError as exc:
-        exc.add_note(f"Column name {column_name} not in object_to_convert")
-        raise
+    # Whats the difference using json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
+    # or employing fig.to_plotly_json()
+    return json.loads(v.to_json())
 
 
 def plotly_fig_to_json_dict(  # noqa: PLR0912, PLR0915
@@ -306,14 +271,20 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912, PLR0915
         fig.update_yaxes(title_standoff=5)
 
     if use_muplot_line_and_markers:
-        fig.update_traces(
-            {
-                "marker": {"size": 3},
-                "line": {"width": 1},
-                "mode": "lines+markers",
-                "marker_symbol": "circle",
-            }
-        )
+        try:
+            fig.update_traces(
+                {
+                    "marker": {"size": 3},
+                    "line": {"width": 1},
+                    "mode": "lines+markers",
+                    "marker_symbol": "circle",
+                }
+            )
+        except ValueError:
+            logger.debug(
+                msg="Skipping use_muplot_line_and_markers "
+                "because this plot does not have compatible lines and markers"
+            )
 
     if use_minimum_margin:
         fig.update_layout(
@@ -329,7 +300,7 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912, PLR0915
         }
         fig.update_layout({"xaxis": grid_dict, "yaxis": grid_dict})
 
-    fig_dict_obj = fig.to_plotly_json()
+    fig_dict_obj = _serialize_plotly_fig(fig)
     if not "config" in fig_dict_obj:
         fig_dict_obj["config"] = {}
 
@@ -345,4 +316,4 @@ def plotly_fig_to_json_dict(  # noqa: PLR0912, PLR0915
     # possibly quite inefficient (multiple serialisation / deserialization) but
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
-    return json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
+    return fig_dict_obj

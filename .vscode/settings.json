@@ -13,6 +13,7 @@
     "search.exclude": {
         "**/__pycache__": true,
         "**/.git": true,
+        "**/hdhelpers/.venv": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv*": true,
         "**/demo-adapter-python/nix_venv*": true,
@@ -62,12 +63,5 @@
     ],
     "editor.indentSize": "tabSize",
     "editor.detectIndentation": false,
-    "python.testing.pytestArgs": [
-        "runtime/hdhelpers",
-        "-c",
-        "runtime/hdhelpers/pytest.ini"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
     "python.languageServer": "Default"
 }
