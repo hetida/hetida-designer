@@ -54,6 +54,7 @@ export interface AbstractTransformation {
   content: string | WorkflowContent;
   io_interface: IoInterface;
   test_wiring: TestWiring;
+  release_wiring?: TestWiring;
 }
 
 export interface UnitTestResults {

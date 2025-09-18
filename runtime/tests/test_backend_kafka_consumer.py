@@ -188,7 +188,7 @@ async def run_kafka_msg(msg_str, exec_func_mock=mock_successful_execute_transfor
             "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.producer",
             producer_mock,
         ) as mocked_ctx_producer:
-            from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
+            from hetdesrun.backend.kafka.consumer import get_kafka_worker_context  # noqa: PLC0415
 
             kafka_ctx = get_kafka_worker_context()
             kafka_ctx.last_unhandled_exception = None  # reset

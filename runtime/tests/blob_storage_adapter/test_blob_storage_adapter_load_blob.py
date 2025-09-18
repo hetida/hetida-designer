@@ -7,7 +7,7 @@ from unittest import mock
 import boto3
 import joblib
 import pytest
-from moto import mock_s3
+from moto import mock_aws
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     AdapterConnectionError,
@@ -21,7 +21,7 @@ from hetdesrun.models.data_selection import FilteredSource
 
 @pytest.mark.asyncio
 async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         file_object = BytesIO()
@@ -64,7 +64,7 @@ async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_blob_storage_load_blob_from_storage_with_non_existing_source() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -92,7 +92,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
 
 @pytest.mark.asyncio
 async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -150,7 +150,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
 
 @pytest.mark.asyncio
 async def test_blob_storage_load_blob_from_storage_with_non_existing_object() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)

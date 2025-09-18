@@ -30,6 +30,9 @@ imports_template: str = """\
 # add your own imports here, e.g.
 # import pandas as pd
 # import numpy as np
+# import logging
+
+# logger = logging.getLogger(__name__)
 
 
 """
@@ -271,8 +274,6 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
             str(error),
         )
         return function_header
-
-    return format_code_with_black(function_header)
 
 
 def generate_complete_component_module(

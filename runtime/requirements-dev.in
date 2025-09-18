@@ -1,5 +1,6 @@
 -c requirements.txt
 -c requirements-base.txt
+bandit
 coverage
 ipykernel
 moto
@@ -12,6 +13,7 @@ pytest-random-order
 pytest-xdist
 rope
 ruff
+structlog
 types-pytz
 types-requests
 watchfiles

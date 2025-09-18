@@ -5,14 +5,46 @@ import logging
 import os
 
 import pytest
+from structlog.stdlib import ProcessorFormatter
 
 from hetdesrun import logger as hetdesrun_runtime_exec_logger
 from hetdesrun.component.load import base_module_path
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.runtime import runtime_execution_logger
-from hetdesrun.runtime.logging import ComponentCodeLogHandler
+from hetdesrun.runtime.logging import (
+    ComponentCodeLogHandler,
+    ExecutionContextFilter,
+    JobIdContextFilter,
+)
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
+
+
+@pytest.fixture
+def example_exec_input(mocked_clean_test_db_session):
+    with TrafoCollection(save_to_db=True) as tc:
+        logging_component = tc.add_from_py_file(
+            os.path.join(
+                "tests",
+                "data",
+                "components",
+                "logging_in_component.py",
+            )
+        )
+
+    return ExecByIdInput(
+        id=logging_component.id,
+        job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+        wiring=WorkflowWiring(
+            input_wirings=[
+                {
+                    "workflow_input_name": "new_input_1",
+                    "adapter_id": "direct_provisioning",
+                    "filters": {"value": "test_string"},
+                }
+            ]
+        ),
+    )
 
 
 def assert_infos_in_record(
@@ -54,36 +86,14 @@ def extract_single_record_with_msg_containing(
 
 
 @pytest.mark.asyncio
-async def test_logging_in_component(async_test_client, mocked_clean_test_db_session, caplog):
+async def test_logging_in_component(async_test_client, example_exec_input, caplog):
     """Test that exec context information gets into log records and in exec response
 
     Together with the test below that tests the formatter, this tests guarantees
     about the infos being contained in log records ensures that
     context information is actually logged.
     """
-    with TrafoCollection(save_to_db=True) as tc:
-        logging_component = tc.add_from_py_file(
-            os.path.join(
-                "tests",
-                "data",
-                "components",
-                "logging_in_component.py",
-            )
-        )
-
-    exec_input = ExecByIdInput(
-        id=logging_component.id,
-        job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
-        wiring=WorkflowWiring(
-            input_wirings=[
-                {
-                    "workflow_input_name": "new_input_1",
-                    "adapter_id": "direct_provisioning",
-                    "filters": {"value": "test_string"},
-                }
-            ]
-        ),
-    )
+    exec_input = example_exec_input
 
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
@@ -127,15 +137,10 @@ async def test_logging_in_component(async_test_client, mocked_clean_test_db_sess
         assert_infos_in_record(log_record, False, False)
 
 
-def log_format_assertions(
+def check_for_correct_filters(
     logger: logging.Logger, log_execution_context: bool = False, log_job_id_context: bool = False
 ):
-    """Test that formatting is configured correctly so that context is logged if there
-
-    Together with the test above that tests the records, this guarantees
-    that context informartion is actually logged.
-    """
-
+    """Test that the correct filters are attached to a logging handler."""
     non_component_code_handlers = [
         handler for handler in logger.handlers if not isinstance(handler, ComponentCodeLogHandler)
     ]
@@ -143,42 +148,99 @@ def log_format_assertions(
     assert len(non_component_code_handlers) == 1
 
     handler = non_component_code_handlers[0]
-    assert handler.formatter is not None
-
     formatter = handler.formatter
 
-    if log_execution_context or log_job_id_context:
-        assert "%(currently_executed_job_id)" in formatter._fmt
-    else:
-        assert "%(currently_executed_job_id)" not in formatter._fmt
+    assert isinstance(formatter, ProcessorFormatter)
 
-    if log_execution_context:
-        assert "%(currently_executed_transformation_type)" in formatter._fmt
-        assert "%(currently_executed_transformation_id)" in formatter._fmt
-        assert "%(currently_executed_transformation_name)" in formatter._fmt
-        assert "%(currently_executed_transformation_tag)" in formatter._fmt
-        assert "%(currently_executed_operator_hierarchical_id)" in formatter._fmt
-        assert "%(currently_executed_operator_hierarchical_name)" in formatter._fmt
-    else:
-        assert "%(currently_executed_transformation_type)" not in formatter._fmt
-        assert "%(currently_executed_transformation_id)" not in formatter._fmt
-        assert "%(currently_executed_transformation_name)" not in formatter._fmt
-        assert "%(currently_executed_transformation_tag)" not in formatter._fmt
-        assert "%(currently_executed_operator_hierarchical_id)" not in formatter._fmt
-        assert "%(currently_executed_operator_hierarchical_name)" not in formatter._fmt
+    handler_filters = handler.filters
+
+    has_execution_context_filter = any(
+        isinstance(f, ExecutionContextFilter) for f in handler_filters
+    )
+    has_job_id_context_filter = any(isinstance(f, JobIdContextFilter) for f in handler_filters)
+
+    assert has_execution_context_filter == log_execution_context, (
+        "Execution context filter not present"
+    )
+    assert has_job_id_context_filter == log_job_id_context, "Job ID context filter not present"
 
 
-def test_logging_configuration_formatting_setup():
-    """Test that formatting is configured correctly for several loggers"""
+def get_log_records_for_logger(
+    records: list[logging.LogRecord], logger: logging.Logger
+) -> list[logging.LogRecord]:
+    """Extract only those records emitted by `logger` or its children."""
+    name = logger.name
+    return [r for r in records if r.name == name or r.name.startswith(name + ".")]
 
-    logger = logging.getLogger(base_module_path)
 
-    log_format_assertions(logger, True, True)
+def check_log_formatting(
+    logger: logging.Logger,
+    log_records: list[logging.LogRecord],
+    log_execution_context: bool = False,
+    log_job_id_context: bool = False,
+):
+    """Test that the formatter attached to a given logging handler works correctly."""
 
-    log_format_assertions(runtime_execution_logger, True, True)
+    # This assumes that only one handler with a ProcessorFormatter is attached to each logger
+    structlog_handlers = [h for h in logger.handlers if isinstance(h.formatter, ProcessorFormatter)]
+    assert structlog_handlers, "No handler with a ProcessorFormatter found"
+    assert len(structlog_handlers) == 1, "More than one handler with a ProcessorFormatter found"
 
-    log_format_assertions(hetdesrun_runtime_exec_logger, True, False)
+    formatter = structlog_handlers[0].formatter
 
-    log_format_assertions(logging.getLogger("hetdesrun"), False, False)
+    # Fields that should always appear in the logs
+    shared_fields = ("timestamp", "level", "logger", "filename", "lineno", "func_name", "message")
 
-    log_format_assertions(logging.getLogger("hetdesrun_runtime_service"), False, True)
+    for log_record in log_records:
+        formatted_record = formatter.format(log_record)  # type: ignore[union-attr]
+        assert all(k in formatted_record for k in shared_fields), (
+            "Not all shared fields are present"
+        )
+        if log_job_id_context or log_execution_context:
+            assert "job_id" in formatted_record, "The job ID is not present"
+
+        if log_execution_context:
+            execution_context_fields = ("tr_id", "tr_name", "tr_tag", "tr_type", "op_id", "op_name")
+            assert all(k in formatted_record for k in execution_context_fields), (
+                "Not all execution context fields are present"
+            )
+
+
+@pytest.mark.asyncio
+async def test_logging_configuration_formatting_setup(
+    async_test_client, example_exec_input, caplog
+):
+    """Test that formatting is configured correctly for several loggers
+
+    Together with the test above that tests the records, this guarantees
+    that context informartion is actually logged.
+    """
+    exec_input = example_exec_input
+
+    with caplog.at_level(logging.DEBUG):
+        caplog.clear()
+
+        async with async_test_client as ac:
+            resp = await ac.post(
+                "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+            )
+
+        assert resp.status_code == 200
+
+    test_cases = [
+        (logging.getLogger(base_module_path), True, False),
+        (runtime_execution_logger, True, False),
+        (hetdesrun_runtime_exec_logger, True, False),
+        (logging.getLogger("hetdesrun"), False, False),
+        (logging.getLogger("hetdesrun_runtime_service"), False, True),
+    ]
+
+    for logger, execution_context, job_context in test_cases:
+        check_for_correct_filters(
+            logger, log_execution_context=execution_context, log_job_id_context=job_context
+        )
+
+        recs = get_log_records_for_logger(caplog.records, logger)
+        check_log_formatting(
+            logger, recs, log_execution_context=execution_context, log_job_id_context=job_context
+        )

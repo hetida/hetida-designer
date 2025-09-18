@@ -37,6 +37,9 @@ def mocked_clean_test_db_session(clean_test_db_engine):
     ) as _fixture:
         yield _fixture
 
+    # Clean up any remaining connections after the test
+    clean_test_db_engine.dispose()
+
 
 @pytest.fixture(scope="session")
 def use_in_memory_db(pytestconfig: pytest.Config) -> Any:

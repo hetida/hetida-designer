@@ -50,7 +50,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/bb8bdb47b718645b2f198a6cf9dff98d967d0fd4.tar.gz")
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/b4c2c57c31e68544982226d07e4719a2d86302a8.tar.gz")
 {
   config = {
     permittedInsecurePackages = [
@@ -59,11 +59,9 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/bb8bdb47b718
     ];
   };
 };
-# 5b7cd5c39befee629be284970415b6eb3b0ff000
-# 23.05: 4ecab3273592f27479a583fb6d975d4aba3486fe
 
 let
-  pythonPackages = python312Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python313Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -193,7 +191,7 @@ let
     set -e
 
     echo "BUILD AND ACTIVATE VENV AT ${venvDirRuntime}"
-    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; import black; # import tensorflow"
   '';
 
   prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
@@ -322,7 +320,7 @@ pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python312Packages.python
+    python313Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib
@@ -356,6 +354,7 @@ pkgs.mkShell rec {
     # Postgres
 
     postgresql
+    postgresql.pg_config
     postgresql.lib
     # Node
     nodejs_22
@@ -372,6 +371,11 @@ pkgs.mkShell rec {
   OVERMIND_PROCFILE = procfile;
   OVERMIND_NO_PORT = "1";
   OVERMIND_CAN_DIE = "runtime";
+
+  RUNTIME_VENV_ACTIVATE_COMMAND="${prepare-runtime-venv}/bin/prepare-runtime-venv";
+  # To manually activate runtime venv in
+  # use via 
+  #     source $RUNTIME_VENV_ACTIVATE_COMMAND
 
 
   shellHook = ''

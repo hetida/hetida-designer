@@ -81,6 +81,8 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
         index=False,
     )
 
+    engine.dispose()
+
     return temporary_sqlite_file_path_ts_db
 
 
@@ -109,6 +111,9 @@ def two_sqlite_dbs_configured(temporary_sqlite_file_path, _clean_configured_dbs_
         ],
     ) as _fixture:
         yield _fixture
+
+    for c in _fixture:
+        c.engine.dispose()
 
 
 @pytest.fixture(scope="function")  # noqa: PT003
@@ -158,6 +163,9 @@ def three_sqlite_dbs_configured(
         ],
     ) as _fixture:
         yield _fixture
+
+    for c in _fixture:
+        c.engine.dispose()
 
 
 @pytest.fixture(scope="session")

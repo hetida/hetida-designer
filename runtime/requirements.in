@@ -50,9 +50,9 @@ semver
 shapely
 sqlalchemy[mypy]>=2.0,<3
 statsmodels
+structlog
 tables
 typing-extensions
-u8darts[notorch]
 uvicorn>=0.17.2
 uvloop
 xlrd>=2.0

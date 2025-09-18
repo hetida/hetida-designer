@@ -17,16 +17,22 @@
 
   <span class="d-flex justify-center align-items-center">
     <mat-icon
-      class="mat-icon-svg mr-1"
+      [class]="
+        transformation.state === RevisionState.DISABLED
+          ? 'mat-icon-svg-disabled mr-1'
+          : 'mat-icon-svg mr-1'
+      "
       [svgIcon]="svgIcon"
       title="{{
         transformation.state === RevisionState.RELEASED
-          ? 'Published - Can be dragged into a workflow'
-          : 'Draft - Work in progress'
+          ? 'Published - Released'
+          : transformation.state === RevisionState.DRAFT
+            ? 'Draft - Work in progress'
+            : 'Deprecated - Disabled trafos cannot be dragged into workflows'
       }}"
       [ngClass]="{
-        'draggable-mat-icon': transformation.state === RevisionState.RELEASED,
-        'mat-icon-svg--draft': transformation.state !== RevisionState.RELEASED
+        'draggable-mat-icon': transformation.state === RevisionState.DISABLED,
+        'mat-icon-svg--draft': transformation.state === RevisionState.DRAFT
       }"
     >
     </mat-icon>

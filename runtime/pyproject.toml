@@ -3,8 +3,8 @@
 # allow longer lines than the default (88, same as black)
 line-length = 100
 
-# Assume python312
-target-version = "py312"
+# Assume python313
+target-version = "py313"
 
 lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
 
@@ -33,7 +33,8 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
 "**/tests/auth/test_outgoing_auth.py" = ["S106"]
-"**/transformations/components/*/*.py" = ["INP001", "E501"]
+"**/transformations/components/*/*.py" = ["INP001", "E501", "PLR0912"]
+"**/webservice/application.py" = ["PLC0415"]
 
 
 [tool.ruff.lint.isort]

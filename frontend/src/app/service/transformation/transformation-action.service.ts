@@ -44,7 +44,10 @@ import { ExecutionResponse } from '../../components/protocol-viewer/protocol-vie
 import { IOConnector } from 'src/app/model/io-connector';
 import { Link } from 'src/app/model/link';
 import { Constant } from 'src/app/model/constant';
-import { TransformationHttpService } from '../http-service/transformation-http.service';
+import {
+  DeleteResult,
+  TransformationHttpService
+} from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
@@ -146,7 +149,7 @@ export class TransformationActionService {
   }
 
   public editDetails(transformation: Transformation): void {
-    const isReleased = this.isReleased(transformation);
+    const isReleasedOrDisabled = this.isReleasedOrDisabled(transformation);
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
       TransformationDialogData,
@@ -164,10 +167,10 @@ export class TransformationActionService {
         showDeleteButton: transformation.state === RevisionState.DRAFT,
         transformation: Utils.deepCopy(transformation),
         disabledState: {
-          name: isReleased,
-          category: isReleased,
-          tag: isReleased,
-          description: isReleased
+          name: isReleasedOrDisabled,
+          category: isReleasedOrDisabled,
+          tag: isReleasedOrDisabled,
+          description: isReleasedOrDisabled
         }
       }
     });
@@ -197,7 +200,7 @@ export class TransformationActionService {
   }
 
   public newRevision(transformation: Transformation): void {
-    if (!this.isReleased(transformation)) {
+    if (!this.isReleasedOrDisabled(transformation)) {
       return;
     }
     const newId = uuid().toString();
@@ -235,7 +238,7 @@ export class TransformationActionService {
   }
 
   public delete(transformation: Transformation): Observable<boolean> {
-    if (this.isReleased(transformation)) {
+    if (this.isReleasedOrDisabled(transformation)) {
       return of(false);
     }
 
@@ -267,8 +270,11 @@ export class TransformationActionService {
     );
   }
 
-  public isReleased(transformation: Transformation) {
-    return transformation.state === RevisionState.RELEASED;
+  public isReleasedOrDisabled(transformation: Transformation) {
+    return (
+      transformation.state === RevisionState.RELEASED ||
+      transformation.state === RevisionState.DISABLED
+    );
   }
 
   public upgradeWorkflowOperators(transformation: Transformation): void {
@@ -383,7 +389,7 @@ export class TransformationActionService {
     >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
-        title: `Copy ${type} ${copyOfTransformation.name} ${copyOfTransformation.version_tag}`,
+        title: `Copy ${type} ${transformation.name} ${transformation.version_tag}`,
         actionOk: `Copy ${type}`,
         actionCancel: 'Cancel',
         transformation: copyOfTransformation,
@@ -556,10 +562,22 @@ export class TransformationActionService {
 
   public doDeleteTransformation(
     transformation: Transformation
-  ): Observable<void> {
+  ): Observable<DeleteResult> {
     this.tabItemService.deselectActiveTabItem();
+
     this.queryParameterService.deleteQueryParameter(transformation.id);
-    return this.transformationService.deleteTransformation(transformation.id);
+    return this.transformationService
+      .deleteTransformation(transformation.id)
+      .pipe(
+        tap(result => {
+          if (result.success) {
+            // prettier-ignore
+            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
+            console.info('Successfully deleted transformation.');
+          }
+        })
+      );
   }
 
   // Visible for testing
@@ -578,6 +596,9 @@ export class TransformationActionService {
         revision_group_id: groupId,
         version_tag: `${transformation.version_tag} ${suffix}`,
         state: RevisionState.DRAFT,
+        released_timestamp: null,
+        disabled_timestamp: null,
+        release_wiring: null,
         // io_interface is generated in the backend for workflows, so we just send empty arrays
         io_interface: {
           inputs: [],
@@ -591,6 +612,9 @@ export class TransformationActionService {
         revision_group_id: groupId,
         version_tag: `${transformation.version_tag} ${suffix}`,
         state: RevisionState.DRAFT,
+        released_timestamp: null,
+        disabled_timestamp: null,
+        release_wiring: null,
         // io_interface will copied for components, with new ids
         io_interface: {
           inputs: transformation.io_interface.inputs.map(input => ({
@@ -693,7 +717,7 @@ export class TransformationActionService {
     const componentIoDialogData: ComponentIoDialogData = {
       // TODO: Check whether the item is being mutated and if so remove the mutations.
       componentTransformation: Utils.deepCopy(componentTransformation),
-      editMode: componentTransformation.state !== RevisionState.RELEASED,
+      editMode: componentTransformation.state === RevisionState.DRAFT,
       actionOk: 'Save',
       actionCancel: 'Cancel'
     };
@@ -748,7 +772,7 @@ export class TransformationActionService {
             workflowTransformation: Utils.deepCopy(
               selectedTransformation
             ) as WorkflowTransformation,
-            editMode: selectedTransformation.state !== RevisionState.RELEASED,
+            editMode: selectedTransformation.state === RevisionState.DRAFT,
             actionOk: 'Save',
             actionCancel: 'Cancel'
           }

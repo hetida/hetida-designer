@@ -46,7 +46,9 @@
     }
   </span>
   <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
-    {{ transformation.state }}
+    {{
+      transformation.state === 'DISABLED' ? 'DEPRECATED' : transformation.state
+    }}
   </span>
   <span>
     <mat-icon
@@ -54,7 +56,7 @@
       title="{{ upgradeWorkflowOperatorsTooltip }}"
       (click)="upgradeWorkflowOperators()"
       *ngIf="isWorkflow"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
       auto_awesome</mat-icon
     >
@@ -64,7 +66,7 @@
       title="{{ updateExpandTooltip }}"
       (click)="updateExpand()"
       *ngIf="isComponent"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
       cleaning_services</mat-icon
     >
@@ -81,7 +83,7 @@
       class="clickable unselectable"
       title="{{ publishTooltip }}"
       (click)="publish()"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
       share</mat-icon
     >
@@ -89,7 +91,7 @@
       class="clickable unselectable"
       title="{{ newRevisionTooltip }}"
       (click)="newRevision()"
-      [ngClass]="{ disabled: !isReleased() }"
+      [ngClass]="{ disabled: !isReleasedOrDeprecated() }"
       >plus_one</mat-icon
     >
     <mat-icon class="clickable unselectable" title="Copy" (click)="copy()"
@@ -107,7 +109,7 @@
       class="clickable unselectable"
       title="{{ deleteTooltip }}"
       (click)="delete()"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
       >delete_forever</mat-icon
     >
     <mat-divider vertical></mat-divider>

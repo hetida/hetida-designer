@@ -41,5 +41,10 @@
     &.released {
       font-weight: 700;
     }
+
+    &.disabled {
+      color: #ff0000;
+      font-weight: 700;
+    }
   }
 }

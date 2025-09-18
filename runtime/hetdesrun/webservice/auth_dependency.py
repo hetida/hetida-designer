@@ -50,8 +50,7 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
             )
             return {"Authorization": "Bearer " + possible_fixed_token}
         logger.debug(
-            "No stored auth token and no explititely fixed configured token."
-            " Not setting auth header"
+            "No stored auth token and no explicitly fixed configured token. Not setting auth header"
         )
         return {}
     logger.debug("Found stored auth token. Setting Authorization header with schema Bearer")

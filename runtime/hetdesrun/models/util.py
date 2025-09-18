@@ -19,7 +19,7 @@ def valid_python_identifier(cls: Any, name: str) -> str:  # noqa: ARG001
 T = TypeVar("T", bound=NamedEntity | OptionallyNamedEntity)
 
 
-def names_unique(cls: Any, inputs_or_outputs: list[T]) -> list[T]:  # noqa: ARG001
+def names_unique(cls: Any, inputs_or_outputs: list[T]) -> list[T]:  # noqa: ARG001,UP047
     if any(io.name is None for io in inputs_or_outputs):
         raise ValueError("uniqueness of names can only be checked if name is not None")
     if len({io.name for io in inputs_or_outputs}) == len(inputs_or_outputs):

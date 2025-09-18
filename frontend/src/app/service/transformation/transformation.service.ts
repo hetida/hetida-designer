@@ -13,7 +13,10 @@ import {
   WorkflowTransformation,
   UnitTestResults
 } from '../../model/transformation';
-import { TransformationHttpService } from '../http-service/transformation-http.service';
+import {
+  TransformationHttpService,
+  DeleteResult
+} from '../http-service/transformation-http.service';
 import {
   addTransformation,
   removeTransformation,
@@ -206,11 +209,28 @@ export class TransformationService {
       });
   }
 
-  deleteTransformation(id: string): Observable<void> {
+  deleteTransformation(id: string): Observable<DeleteResult> {
     return this.transformationHttpService.deleteTransformation(id).pipe(
-      tap(_ => {
-        this.localStorageService.removeItemFromLastOpened(id);
-        this.store.dispatch(removeTransformation(id));
+      tap(result => {
+        if (result.success) {
+          this.localStorageService.removeItemFromLastOpened(id);
+          this.store.dispatch(removeTransformation(id));
+        } else {
+          switch (result.status) {
+            case 409: // Conflict
+              this.notificationService.warn(
+                'Could not delete. Transformation is probably in use in another workflow.'
+              );
+              break;
+            case 404:
+              this.notificationService.warn(
+                'Could not delete. Cannot find Transformation.'
+              );
+              break;
+            default:
+              break;
+          }
+        }
       })
     );
   }

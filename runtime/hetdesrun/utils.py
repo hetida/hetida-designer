@@ -15,7 +15,6 @@ from uuid import UUID
 import requests  # noqa: F401
 from pydantic import BaseModel
 
-from hetdesrun.datatypes import DataType
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -50,8 +49,8 @@ def get_uuid_from_seed(seed_str: str) -> UUID:
     This may be used to get reproducible UUIDs from human-readable strings in scripts
     and tests. Should not be used anywhere else for security reasons.
     """
-    random.seed(seed_str)
-    return UUID(int=random.getrandbits(128))
+    random.seed(seed_str)  # nosec B311
+    return UUID(int=random.getrandbits(128))  # nosec B311
 
 
 def load_data(
@@ -113,31 +112,6 @@ class State(StrEnum):
 class Type(StrEnum):
     COMPONENT = "COMPONENT"
     WORKFLOW = "WORKFLOW"
-
-
-class IODTO(BaseModel):
-    id: UUID  # noqa: A003
-    name: str
-    posX: int = 0
-    posY: int = 0
-    type: DataType  # noqa: A003
-
-
-class ComponentDTO(BaseModel):
-    """Component DTO as expected by Backend Service"""
-
-    name: str
-    category: str
-    code: str
-    description: str
-    groupId: UUID
-    id: UUID  # noqa: A003
-    inputs: list[IODTO]
-    outputs: list[IODTO]
-    state: State = State.RELEASED
-    tag: str
-    testInput: dict = {}
-    type: Type = Type.COMPONENT  # noqa: A003
 
 
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
