@@ -92,12 +92,13 @@ def import_importable(
     }
 
     for transformation in trafos_to_process:
-        logger.debug(
+        logger.info(
             "Importing transformation %s with tag %s with id %s",
             transformation.name,
             transformation.version_tag,
             str(transformation.id),
         )
+        logger.debug("Settings for importing are %s", str(multi_import_config))
         try:
             update_or_create_single_transformation_revision(
                 transformation,
