@@ -96,6 +96,10 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
+        logger.debug("using settings: allow_overwrite_released=%s, update_component_code=%s, strip_wiring=%s",
+            allow_overwrite_released,
+            update_component_code,
+            strip_wiring)
         try:
             update_or_create_single_transformation_revision(
                 tr,
