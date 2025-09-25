@@ -341,8 +341,8 @@ The json input of a typical call of this component is
 ```
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.signal import butter, filtfilt, lfilter
 
 from hdutils import ComponentInputValidationException
@@ -375,12 +375,12 @@ from hdutils import parse_default_value  # noqa: E402, F401
 
 def main(
     *,
-    data: pd.Series,
-    cutoff_frequency: float,
-    frequency_as_periods_per_unit: str = "s",
-    order: int = 1,
-    forward_backward: bool = True,
-) -> dict[str, pd.Series]:
+    data,
+    cutoff_frequency,
+    frequency_as_periods_per_unit="s",
+    order=1,
+    forward_backward=True,
+):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
 
@@ -445,9 +445,7 @@ def main(
 
     # Check for constant sampling interval
     idx = data.index
-    diffs_ns = (
-        (idx[1:] - idx[:-1]).astype("timedelta64[ns]").astype(np.int64)
-    )  # nanoseconds
+    diffs_ns = (idx[1:] - idx[:-1]).astype("timedelta64[ns]").astype(np.int64)  # nanoseconds
     if not np.all(diffs_ns == diffs_ns[0]):
         raise ComponentInputValidationException(
             'Index of "data" must have exactly constant spacing (no tolerance).',
@@ -462,7 +460,7 @@ def main(
         )
 
     # Validate cutoff > 0
-    if not (isinstance(cutoff_frequency, (int, float)) and cutoff_frequency > 0):
+    if not (isinstance(cutoff_frequency, int | float) and cutoff_frequency > 0):
         raise ComponentInputValidationException(
             '"cutoff_frequency" must be a positive number.',
             invalid_component_inputs=["cutoff_frequency"],
