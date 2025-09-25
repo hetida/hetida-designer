@@ -153,15 +153,29 @@ def resample_time_series_if_needed(series: pd.Series):
     if time_diffs.empty:
         return series
 
-    # Determine the most common interval
-    normal_diff = time_diffs.value_counts().idxmax()
+    positive_diffs = time_diffs[time_diffs > pd.Timedelta(0)]
+    if positive_diffs.empty:
+        return series
 
-    # Resample only if intervals are inconsistent and the inferred interval is valid
-    if normal_diff > pd.Timedelta(0) and not all(time_diffs == normal_diff):
-        new_index = pd.date_range(
-            start=series.index.min(), end=series.index.max(), freq=normal_diff
-        )
-        series = series.reindex(new_index).interpolate()
+    median_diff = positive_diffs.median()
+    if median_diff <= pd.Timedelta(0):
+        return series
+
+    tolerance = pd.Timedelta(microseconds=1)
+    if (positive_diffs - median_diff).abs().le(tolerance).all():
+        return series
+
+    rounded_index = series.index.round(median_diff)
+    series = series.groupby(rounded_index).mean().sort_index()
+
+    if len(series) < 2:
+        return series
+
+    regular_index = pd.date_range(
+        start=series.index.min(), end=series.index.max(), freq=median_diff
+    )
+
+    series = series.reindex(regular_index).interpolate(method="time")
 
     return series
 
