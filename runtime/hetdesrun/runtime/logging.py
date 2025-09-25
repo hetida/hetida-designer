@@ -205,7 +205,7 @@ class ExecutionContextFilter(logging.Filter):
             "currently_executed_job_id", None
         )
 
-        # UUID to str
+        # UUID to str since some opentelemetry frameworks cannot serialize UUID
         record.currently_executed_job_id = (  # type: ignore
             str(record.currently_executed_job_id) if record.currently_executed_job_id else None  # type: ignore
         )
@@ -296,7 +296,7 @@ class JobIdContextFilter(logging.Filter):
         record.currently_executed_job_id = context_dict.get(  # type: ignore
             "currently_executed_job_id", None
         )
-        # UUID to str
+        # UUID to str since some opentelemetry frameworks cannot serialize UUID
         record.currently_executed_job_id = (  # type: ignore
             str(record.currently_executed_job_id) if record.currently_executed_job_id else None  # type: ignore
         )

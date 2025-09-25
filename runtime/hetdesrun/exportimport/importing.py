@@ -43,6 +43,49 @@ class TrafoUpdateProcessSummary(BaseModel):
     version_tag: str | None = None
 
 
+class TrafosUpdateProcessSummary(BaseModel):
+    failure: list[str] = []
+    ignore: list[str] = []
+    success: list[str] = []
+    other: list[str] = []
+    not_tried: list[str] = []
+
+
+def _evaluate_success_reports(
+    reports: list[dict[UUID | str, TrafoUpdateProcessSummary]],
+) -> TrafosUpdateProcessSummary:
+    result = TrafosUpdateProcessSummary()
+    for report in reports:
+        evaluation = _evaluate_sucess_report(report)
+        result.failure.extend(evaluation.failure)
+        result.ignore.extend(evaluation.ignore)
+        result.success.extend(evaluation.success)
+        result.other.extend(evaluation.other)
+        result.not_tried.extend(evaluation.not_tried)
+
+    return result
+
+
+def _evaluate_sucess_report(
+    report: dict[UUID | str, TrafoUpdateProcessSummary],
+) -> TrafosUpdateProcessSummary:
+    evaluation = TrafosUpdateProcessSummary()
+    for trafo_report in report.values():
+        current_trafo = str(trafo_report.name) + " (" + str(trafo_report.version_tag) + ")"
+        match trafo_report.status:
+            case UpdateProcessStatus.FAILED:
+                evaluation.failure.append(current_trafo)
+            case UpdateProcessStatus.IGNORED:
+                evaluation.ignore.append(current_trafo)
+            case UpdateProcessStatus.SUCCESS:
+                evaluation.success.append(current_trafo)
+            case UpdateProcessStatus.NOT_TRIED:
+                evaluation.not_tried.append(current_trafo)
+            case _:
+                evaluation.other.append(current_trafo)
+    return evaluation
+
+
 def import_importable(
     importable: Importable,
     raise_on_missing_dependency: bool = False,
@@ -91,14 +134,23 @@ def import_importable(
         for trafo in trafo_revs
     }
 
+    logger.info("Settings for imports are %s", str(multi_import_config))
+
     for transformation in trafos_to_process:
         logger.info(
             "Importing transformation %s with tag %s with id %s",
             transformation.name,
             transformation.version_tag,
             str(transformation.id),
+            extra={
+                "allow_overwrite_released": multi_import_config.allow_overwrite_released,
+                "update_component_code": multi_import_config.update_component_code,
+                "expand_component_code": multi_import_config.expand_component_code,
+                "strip_wiring": multi_import_config.strip_wirings,
+                "strip_release_wiring": multi_import_config.strip_release_wirings,
+            },
         )
-        logger.debug("Settings for importing are %s", str(multi_import_config))
+
         try:
             update_or_create_single_transformation_revision(
                 transformation,
@@ -163,7 +215,25 @@ def import_importables(
     importables: Iterable[Importable],
 ) -> list[dict[UUID | str, TrafoUpdateProcessSummary]]:
     """Import all trafo rev sets from multiple importables"""
-    return [import_importable(importable) for importable in importables]
+    success_reports = [import_importable(importable) for importable in importables]
+    summary = _evaluate_success_reports(success_reports)
+    logger.info(
+        "Import Summary: %i failed, %i ignored, %i successfully, %i not tried, %i undefined",
+        len(summary.failure),
+        len(summary.ignore),
+        len(summary.success),
+        len(summary.not_tried),
+        len(summary.other),
+        extra={
+            "number_failed": len(summary.failure),
+            "number_ignored": len(summary.ignore),
+            "number_undefined": len(summary.other),
+            "failed_workflows": summary.failure,
+            "ignored_workflows": summary.ignore,
+            "undefined_workflows": summary.other,
+        },
+    )
+    return success_reports
 
 
 def import_transformations(
