@@ -95,13 +95,13 @@ def update_or_create_transformation_revision(
             str(tr.id),
             tr.category,
             tr.name,
+            extra={
+                "allow_overwrite_released": allow_overwrite_released,
+                "update_component_code": update_component_code,
+                "strip_wiring": strip_wiring,
+            },
         )
-        logger.debug(
-            "using allow_overwrite_released=%s, update_component_code=%s, strip_wiring=%s",
-            allow_overwrite_released,
-            update_component_code,
-            strip_wiring,
-        )
+
         try:
             update_or_create_single_transformation_revision(
                 tr,
