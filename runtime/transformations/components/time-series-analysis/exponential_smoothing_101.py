@@ -104,11 +104,11 @@ import random
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from statsmodels.tsa.stattools import acf as sm_acf
 from scipy import stats
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.stattools import acf as sm_acf
 
 from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
@@ -134,8 +134,7 @@ def resample_time_series_if_needed(series: pd.Series):
         )
     if pd.api.types.is_datetime64_any_dtype(series.index.dtype) is False:
         raise ComponentInputValidationException(
-            "Indices of series must be datetime, but are of type "
-            + str(series.index.dtype),
+            "Indices of series must be datetime, but are of type " + str(series.index.dtype),
             error_code="422",
             invalid_component_inputs=["series"],
         )
@@ -183,9 +182,7 @@ def clean_time_series_by_interpolation(series: pd.Series, min_required_points: i
     # Coerce non-numeric values to NaN to avoid statsmodels errors on object dtypes
     series = pd.to_numeric(series, errors="coerce")
     series = series.replace([np.inf, -np.inf], np.nan)
-    method = (
-        "time" if pd.api.types.is_datetime64_any_dtype(series.index.dtype) else "linear"
-    )
+    method = "time" if pd.api.types.is_datetime64_any_dtype(series.index.dtype) else "linear"
     series = series.interpolate(method=method)
     series = series.dropna()
     if len(series) < min_required_points:
@@ -197,9 +194,7 @@ def clean_time_series_by_interpolation(series: pd.Series, min_required_points: i
     return series
 
 
-def estimate_seasonal_periods_acf(
-    train: pd.Series, acf_threshold: float = 0.3
-) -> int | None:
+def estimate_seasonal_periods_acf(train: pd.Series, acf_threshold: float = 0.3) -> int | None:
     """Estimate seasonal_periods using ACF on the training series.
 
     Considers lags in [2, max_period] and returns the lag with the highest
@@ -215,7 +210,7 @@ def estimate_seasonal_periods_acf(
     if isinstance(train.index, pd.DatetimeIndex):
         try:
             freq = pd.infer_freq(train.index)
-        except Exception:
+        except ValueError:
             freq = None
         if freq:
             f = freq.upper()
@@ -235,7 +230,7 @@ def estimate_seasonal_periods_acf(
     # Compute ACF up to max_period
     try:
         acf_vals = sm_acf(train.values, nlags=max_period, fft=True)
-    except Exception:
+    except ValueError:
         return None
 
     best_lag = None
@@ -268,6 +263,15 @@ def ensure_positivity(series: pd.Series):
         series = series - min_value + 1
 
     return series, min_value
+
+
+def series_has_variation(series: pd.Series) -> bool:
+    """Return True when the series contains more than one distinct value."""
+
+    if series.empty:
+        return False
+
+    return bool(series.diff().dropna().ne(0).any())
 
 
 def train_test_split_func(series: pd.Series, test_size: float = None):
@@ -338,9 +342,7 @@ def hyper_tuning_grid_search(
         Optimized type of seasonal component.
     """
     # Parameter validations
-    if seasonal_periods and (
-        not isinstance(seasonal_periods, int) or seasonal_periods <= 0
-    ):
+    if seasonal_periods and (not isinstance(seasonal_periods, int) or seasonal_periods <= 0):
         raise ComponentInputValidationException(
             "`seasonal_periods` must be a positive integer",
             error_code=422,
@@ -378,7 +380,7 @@ def hyper_tuning_grid_search(
         seasonal = random.choice(seasonal_pos)  # noqa: S311
         # Train model (guard against invalid parameter combinations)
         try:
-            use_boxcox_param = True if train.nunique() > 1 else False
+            use_boxcox_param = series_has_variation(train)
             model = ExponentialSmoothing(
                 train,
                 trend=trend,
@@ -394,17 +396,15 @@ def hyper_tuning_grid_search(
                 damping_trend=phi,
             )
             # In-sample forecast
-            if train.equals(test):
-                y_pred = fitted_model.fittedvalues
-            else:
-                y_pred = fitted_model.forecast(len(test))
-        except Exception:
-            # Skip this parameter set on any statsmodels or numeric error
+            y_pred = (
+                fitted_model.fittedvalues
+                if train.equals(test)
+                else fitted_model.forecast(len(test))
+            )
+        except ValueError:
             continue
         # Robust alignment and filtering of NaN/Inf for scoring
-        df_eval = pd.concat(
-            [test.rename("y_true"), y_pred.rename("y_pred")], axis=1, join="inner"
-        )
+        df_eval = pd.concat([test.rename("y_true"), y_pred.rename("y_pred")], axis=1, join="inner")
         df_eval = df_eval.replace([np.inf, -np.inf], np.nan).dropna()
         # Update parameter
         if len(df_eval) > 0:
@@ -493,7 +493,7 @@ def train_exponential_smoothing(
     # If no seasonal_periods are provided, enforce non-seasonal model
     if seasonal_periods is None:
         seasonal = None
-    use_boxcox_param = True if train.nunique() > 1 else False
+    use_boxcox_param = series_has_variation(train)
     model = ExponentialSmoothing(
         train,
         trend=trend,
@@ -570,9 +570,7 @@ def forecast_exponential_smoothing(
     # Forecast
     if series.equals(test):
         in_sample_forecast = np.round(trained_model.fittedvalues, 2)
-        out_of_sample_forecast = np.round(
-            trained_model.forecast(steps=number_of_forecast_steps), 2
-        )
+        out_of_sample_forecast = np.round(trained_model.forecast(steps=number_of_forecast_steps), 2)
     else:
         forecast = trained_model.forecast(steps=number_of_forecast_steps + len(test))
         in_sample_forecast = np.round(forecast[: len(test)], 2)
@@ -585,12 +583,8 @@ def forecast_exponential_smoothing(
     value_before = series.iloc[-1]
     index_before = series.index[-1]
     value_before_series = pd.Series([value_before], index=[index_before])
-    conf_interval_upper_limit = pd.concat(
-        [value_before_series, conf_interval_upper_limit]
-    )
-    conf_interval_lower_limit = pd.concat(
-        [value_before_series, conf_interval_lower_limit]
-    )
+    conf_interval_upper_limit = pd.concat([value_before_series, conf_interval_upper_limit])
+    conf_interval_lower_limit = pd.concat([value_before_series, conf_interval_lower_limit])
 
     # Sort indices
     series = series.sort_index()
@@ -628,7 +622,6 @@ def timeseries_plot_including_predictions(
     conf_interval_lower_limit: pd.Series,
     mse: float,
     min_value: float,
-    confidence_level: float = 0.05,
     plot_in_sample_forecast: bool = False,
     plot_marker: bool = True,
     seasonal_note: str = None,
@@ -652,10 +645,6 @@ def timeseries_plot_including_predictions(
         Root Mean Squared Error (RMSE) of the optimized Exponential Smoothing model.
     min_value (Float):
         If negative, the zero line is included in the plot.
-    confidence_level (Float, optional):
-        Confidence level used for the displayed forecast interval. Default value is 0.05. The
-        confidence interval is omitted if there are insufficient residuals (fewer than 3
-        in-sample vs. test pairs) or if RMSE is effectively zero.
     plot_in_sample_forecast (Bool, optional):
         If True, it plots the in-sample forecast also. Default value is False.
     plot_marker (Bool, optional):
@@ -667,9 +656,7 @@ def timeseries_plot_including_predictions(
     """
     # Decide whether to show confidence interval based on RMSE and residual availability
     df_eval_ci = (
-        pd.concat(
-            [in_sample_forecast.rename("yhat"), test.rename("y")], axis=1, join="inner"
-        )
+        pd.concat([in_sample_forecast.rename("yhat"), test.rename("y")], axis=1, join="inner")
         .replace([np.inf, -np.inf], np.nan)
         .dropna()
     )
@@ -915,10 +902,7 @@ def main(
             phi=None,
         )
         # Compute a robust RMSE for display/CI
-        if train.equals(test):
-            y_pred_fb = model_fit.fittedvalues
-        else:
-            y_pred_fb = model_fit.forecast(len(test))
+        y_pred_fb = model_fit.fittedvalues if train.equals(test) else model_fit.forecast(len(test))
         df_eval_fb = (
             pd.concat(
                 [test.rename("y_true"), y_pred_fb.rename("y_pred")],
@@ -929,9 +913,7 @@ def main(
             .dropna()
         )
         best_score = (
-            float(
-                np.sqrt(mean_squared_error(df_eval_fb["y_pred"], df_eval_fb["y_true"]))
-            )
+            float(np.sqrt(mean_squared_error(df_eval_fb["y_pred"], df_eval_fb["y_true"])))
             if len(df_eval_fb) > 0
             else 0.0
         )
@@ -961,7 +943,6 @@ def main(
         conf_interval_upper_limit=conf_interval_upper_limit,
         conf_interval_lower_limit=conf_interval_lower_limit,
         mse=best_score,
-        confidence_level=confidence_level,
         min_value=min_value,
         plot_in_sample_forecast=plot_in_sample_forecast,
         plot_marker=plot_marker,
