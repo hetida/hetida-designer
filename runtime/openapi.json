@@ -6161,6 +6161,56 @@
         ],
         "title": "HierarchyInWorkflow"
       },
+      "HierarchyObject": {
+        "properties": {
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "parent_node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Node Id"
+          }
+        },
+        "type": "object",
+        "title": "HierarchyObject"
+      },
       "IOInterface-Input": {
         "properties": {
           "inputs": {
@@ -7263,6 +7313,14 @@
         "properties": {
           "plot_target_settings": {
             "$ref": "#/components/schemas/PlotTargetSettings"
+          },
+          "hierarchy_object": {
+            "$ref": "#/components/schemas/HierarchyObject",
+            "description": "Additional information on a hierarchy from which a trafo is executed"
+          },
+          "global_time_interval": {
+            "$ref": "#/components/schemas/TimeInterval",
+            "description": "A global time interval that should be assumed if explicit time interval information is missing"
           }
         },
         "type": "object",
@@ -7950,6 +8008,34 @@
           "element_type_external_id"
         ],
         "title": "StructureServiceThingNode"
+      },
+      "TimeInterval": {
+        "properties": {
+          "timestampFrom": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestampfrom"
+          },
+          "timestampTo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestampto"
+          }
+        },
+        "type": "object",
+        "title": "TimeInterval"
       },
       "TrafoUpdateProcessSummary": {
         "properties": {

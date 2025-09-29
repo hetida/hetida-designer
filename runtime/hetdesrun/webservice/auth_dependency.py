@@ -165,7 +165,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
             status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
         ) from None
 
-    auth_context_dict = {"token": token, "creds": credentials}
+    auth_context_dict = {"token": token, "creds": credentials, "payload": payload}
     set_request_auth_context(auth_context_dict)
 
     logger.debug("Auth token check successful.")

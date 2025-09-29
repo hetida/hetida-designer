@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from uuid import UUID
 
-from pydantic import Field, Json, SecretStr, ValidationInfo, field_validator
+from pydantic import Field, Json, RootModel, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
@@ -35,6 +35,10 @@ class InternalAuthMode(str, Enum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
+
+
+class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
+    pass
 
 
 class RuntimeConfig(BaseSettings):
@@ -362,6 +366,19 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HD_AUTH_ALLOWED_ROLE",
     )
 
+    auth_runtime_engine_url_by_role: RoleToRuntimeEngineUrlMapping | None = Field(
+        None,
+        description=(
+            "Map roles to runtime service urls. This allows to refer multiple runtime services"
+            " and delegate executions to specific runtime instances by provided role."
+            " An example is to have an additonal role hd-privileged-user mapped to a runtime"
+            " service with additional privileges or credentials. Note that the first matching role"
+            " found in the token is used to determine the runtime url. If no match is found,"
+            " hd_runtime_engine_url will be used instead."
+        ),
+        validation_alias="HD_AUTH_RUNTIME_ENGINE_URL_BY_ROLE",
+    )
+
     auth_reload_public_key: bool = Field(
         True,
         description="Whether public keys for signature check will be reloaded"
@@ -499,7 +516,11 @@ class RuntimeConfig(BaseSettings):
     hd_runtime_engine_url: str = Field(
         "http://hetida-designer-runtime:8090/engine/",
         validation_alias="HETIDA_DESIGNER_RUNTIME_ENGINE_URL",
-        description="URL to runtime",
+        description=(
+            "URL to runtime engine. Note that if auth_runtime_engine_url_by_role is set"
+            " this usually should point to the least privileged runtime service instance, as"
+            " it is the fallback."
+        ),
     )
 
     hd_runtime_verify_certs: bool = Field(

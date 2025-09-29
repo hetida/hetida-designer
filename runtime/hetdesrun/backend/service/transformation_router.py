@@ -98,6 +98,7 @@ from hetdesrun.webservice.auth_dependency import (
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 
@@ -1250,7 +1251,7 @@ async def test_transformation_revision(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "unittest")
+            url = posix_urljoin(get_runtime_engine_url(), "unittest")
             try:
                 response = await client.post(
                     url,
