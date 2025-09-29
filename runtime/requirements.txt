@@ -1932,6 +1932,9 @@ psycopg==3.2.10 \
     --hash=sha256:0bce99269d16ed18401683a8569b2c5abd94f72f8364856d56c0389bcd50972a \
     --hash=sha256:ab5caf09a9ec42e314a21f5216dbcceac528e0e05142e42eea83a3b28b320ac3
     # via -r ./requirements.in
+psycopg-c==3.2.10 \
+    --hash=sha256:30183897f5fe7ff4375b7dfcec9d44dfe8a5e009080addc1626889324a9eb1ed
+    # via psycopg
 py-cpuinfo==9.0.0 \
     --hash=sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690 \
     --hash=sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5

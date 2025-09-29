@@ -35,7 +35,7 @@ pandas
 pendulum
 pillow
 plotly<7
-psycopg
+psycopg[c]
 pyarrow
 pydantic[dotenv]<3,>=2.11
 pydantic-settings
