@@ -385,7 +385,6 @@ pkgs.mkShell rec {
     set +e
     echo ${postgresql.lib}
     echo ${postgresql}
-    return 0
 
     ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
