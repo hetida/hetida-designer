@@ -114,70 +114,53 @@ from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
 
 def resample_time_series_if_needed(series: pd.Series):
-    """Checks if a time series has consistent intervals between its indices.
-    If not, it resamples the series to the most common interval.
+    """Return a regularly sampled copy of the time series if needed."""
 
-    Inputs:
-    series (Pandas Series):
-        The time series with a Datetime index.
-
-    Outputs:
-    series (Pandas Series):
-        The resampled time series if necessary.
-    """
-    # Parameter validations
-    if len(series) == 0:
+    if not series:
         raise ComponentInputValidationException(
             "The input data must not be empty!",
             error_code="EmptyDataFrame",
             invalid_component_inputs=["series"],
         )
-    if pd.api.types.is_datetime64_any_dtype(series.index.dtype) is False:
+    if not pd.api.types.is_datetime64_any_dtype(series.index.dtype):
         raise ComponentInputValidationException(
             "Indices of series must be datetime, but are of type " + str(series.index.dtype),
             error_code="422",
             invalid_component_inputs=["series"],
         )
 
-    # Ensure chronological order and handle duplicate timestamps by averaging
-    series = series.sort_index()
-    if not series.index.is_unique:
-        series = series.groupby(level=0).mean()
+    ordered = series.sort_index()
+    if not ordered.index.is_unique:
+        ordered = ordered.groupby(level=0).mean()
 
-    # If fewer than 2 points remain, skip resampling
-    if len(series) < 2:
-        return series
+    resampled = ordered
+    should_resample = False
 
-    # Calculate differences between consecutive timestamps
-    time_diffs = series.index.to_series().diff().dropna()
-    if time_diffs.empty:
-        return series
+    if len(ordered) >= 2:
+        diffs = ordered.index.to_series().diff().dropna()
+        if not diffs.empty:
+            positive_diffs = diffs[diffs > pd.Timedelta(0)]
+            if not positive_diffs.empty:
+                median_diff = positive_diffs.median()
+                tolerance = pd.Timedelta(microseconds=1)
+                is_regular = median_diff <= pd.Timedelta(0) or (
+                    (positive_diffs - median_diff).abs().le(tolerance).all()
+                )
 
-    positive_diffs = time_diffs[time_diffs > pd.Timedelta(0)]
-    if positive_diffs.empty:
-        return series
+                if not is_regular:
+                    rounded = ordered.index.round(median_diff)
+                    grouped = ordered.groupby(rounded).mean().sort_index()
 
-    median_diff = positive_diffs.median()
-    if median_diff <= pd.Timedelta(0):
-        return series
+                    if len(grouped) >= 2:
+                        regular_index = pd.date_range(
+                            start=grouped.index.min(),
+                            end=grouped.index.max(),
+                            freq=median_diff,
+                        )
+                        resampled = grouped.reindex(regular_index).interpolate(method="time")
+                        should_resample = True
 
-    tolerance = pd.Timedelta(microseconds=1)
-    if (positive_diffs - median_diff).abs().le(tolerance).all():
-        return series
-
-    rounded_index = series.index.round(median_diff)
-    series = series.groupby(rounded_index).mean().sort_index()
-
-    if len(series) < 2:
-        return series
-
-    regular_index = pd.date_range(
-        start=series.index.min(), end=series.index.max(), freq=median_diff
-    )
-
-    series = series.reindex(regular_index).interpolate(method="time")
-
-    return series
+    return resampled if should_resample else ordered
 
 
 def clean_time_series_by_interpolation(series: pd.Series, min_required_points: int = 3):
