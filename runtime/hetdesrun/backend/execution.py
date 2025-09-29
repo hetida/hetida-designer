@@ -47,6 +47,7 @@ from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -408,7 +409,7 @@ async def run_execution_input(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_runtime_engine_url(), "runtime")
             try:
                 pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
                     "pure_runtime_request"
