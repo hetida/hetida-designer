@@ -687,12 +687,12 @@ async def update_transformation_revisions(
         success_per_trafo = import_importable(importable)
     except NestingLevelCycleDetected as e:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Dependency cycle detected in filtered trafos:\nstr(e)",
         ) from e
     except MissingReferencedTransformation as e:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Missing dependency in provided transformations\nstr(e)",
         ) from e
 
@@ -722,7 +722,7 @@ async def update_transformation_revisions(
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Id from path does not match id from object in request body"
         },
         status.HTTP_409_CONFLICT: {
@@ -755,7 +755,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
             f"{updated_transformation_revision.id} is"
             " not a workflow. Cannot upgrade operator."
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if updated_transformation_revision.state is not State.DRAFT:
         msg = (
@@ -764,7 +764,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
             f"{updated_transformation_revision.id} does"
             " not have state DRAFT. Cannot upgrade operator."
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if id != updated_transformation_revision.id:
         msg = (
@@ -772,7 +772,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
             f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     workflow_content = updated_transformation_revision.content
     assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 # for mypy
@@ -783,7 +783,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
             f"Got {len(ops)} operators in workflow {id} with the provided id {operator_id}."
             " Need exactly 1. Aborting operator upgrade"
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
     operator = ops[0]
 
     try:
@@ -811,7 +811,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
             " Does not agree with that of the fetched new trafo "
             f"rev {new_operator_transformation_revision_id}. Cannot upgrade."
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     upgrade_workflow_operator_in_place(
         updated_transformation_revision, operator_id, operator, possibly_newer_trafo
@@ -872,7 +872,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Id from path does not match id from object in request body"
         },
         status.HTTP_409_CONFLICT: {
@@ -897,7 +897,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
             f"{updated_transformation_revision.id} is"
             " not a workflow. Cannot upgrade operators."
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if updated_transformation_revision.state is not State.DRAFT:
         msg = (
@@ -906,7 +906,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
             f"{updated_transformation_revision.id} does"
             " not have state DRAFT. Cannot upgrade operators."
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if id != updated_transformation_revision.id:
         msg = (
@@ -914,7 +914,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
             f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     # TODO: expose options "only_check_deprecated" and "use_release_date"
     try:
@@ -997,7 +997,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Id from path does not match id from object in request body"
         },
         status.HTTP_409_CONFLICT: {
@@ -1032,7 +1032,7 @@ async def update_transformation_revision(
             f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     try:
         persisted_transformation_revision = (
@@ -1137,7 +1137,7 @@ async def handle_trafo_revision_execution_request(
             f"\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
     except TrafoExecutionNotFoundError as err:
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
@@ -1202,7 +1202,7 @@ async def execute_transformation_revision_endpoint(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"description": "Successfully tested the transformation revision."},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": "Not a component."},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Not a component."},
         status.HTTP_404_NOT_FOUND: {"description": "Could not find trafo rev in db."},
     },
 )
@@ -1225,7 +1225,7 @@ async def test_transformation_revision(
             f"Transformation revision {trafo.name} ({trafo.version_tag}) "
             f"with id {str(id)} is not a component"
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if get_config().is_runtime_service:
         try:
@@ -1653,17 +1653,17 @@ async def transformation_dashboard(
     if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
         msg = "Either none or both of fromTimestamp and toTimestamp must be set."
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if fromTimestamp is not None and toTimestamp is not None and fromTimestamp > toTimestamp:
         msg = "fromTimestamp must be <= toTimestamp"
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if relNow is not None and fromTimestamp is not None:
         msg = "Cannot both specify absolute and relative timerange overrides!"
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     inputs_to_expose = {inp_name for inp_name in exposed_inputs.split(",") if inp_name != ""}
 
@@ -1701,7 +1701,7 @@ async def transformation_dashboard(
     except DashboardQueryParamValidationError as e:
         msg = str(e)
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from e
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
 
     # compute possible override time range setting
     calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
