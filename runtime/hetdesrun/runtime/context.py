@@ -14,6 +14,18 @@ class ExecutionContext(BaseModel):
     currently_executed_operator_hierarchical_name: str
 
 
+class HierarchyObject(BaseModel):
+    type: str | None = None
+    id: str | None = None
+    node_id: str | None = None
+    parent_node_id: str | None = None
+
+
+class TimeInterval(BaseModel):
+    timestampFrom: str | None = None
+    timestampTo: str | None = None
+
+
 class RuntimeExecutionContext(BaseModel):
     """Context that is available during execution in the runtime
 
@@ -22,6 +34,19 @@ class RuntimeExecutionContext(BaseModel):
     """
 
     plot_target_settings: PlotTargetSettings = Field(default_factory=PlotTargetSettings)
+
+    hierarchy_object: HierarchyObject = Field(
+        default_factory=HierarchyObject,
+        description="Additional information on a hierarchy from which a trafo is executed",
+    )
+
+    global_time_interval: TimeInterval = Field(
+        default_factory=TimeInterval,
+        description=(
+            "A global time interval that should be assumed if explicit time interval"
+            " information is missing"
+        ),
+    )
 
 
 _RUNTIME_EXECUTION_CONTEXT_VAR: contextvars.ContextVar[RuntimeExecutionContext] = (
@@ -39,3 +64,13 @@ def get_runtime_exec_context() -> RuntimeExecutionContext:
 
 def set_runtime_exec_context(runtime_exec_context: RuntimeExecutionContext) -> None:
     _RUNTIME_EXECUTION_CONTEXT_VAR.set(runtime_exec_context)
+
+
+def get_hierarchy_object_info() -> HierarchyObject:
+    runtime_context = get_runtime_exec_context()
+    return runtime_context.hierarchy_object
+
+
+def get_global_time_interval_info() -> TimeInterval:
+    runtime_context = get_runtime_exec_context()
+    return runtime_context.global_time_interval
