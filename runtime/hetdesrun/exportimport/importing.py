@@ -56,7 +56,7 @@ def _evaluate_success_reports(
 ) -> TrafosUpdateProcessSummary:
     result = TrafosUpdateProcessSummary()
     for report in reports:
-        evaluation = _evaluate_sucess_report(report)
+        evaluation = _evaluate_single_success_report(report)
         result.failure.extend(evaluation.failure)
         result.ignore.extend(evaluation.ignore)
         result.success.extend(evaluation.success)
@@ -66,7 +66,7 @@ def _evaluate_success_reports(
     return result
 
 
-def _evaluate_sucess_report(
+def _evaluate_single_success_report(
     report: dict[UUID | str, TrafoUpdateProcessSummary],
 ) -> TrafosUpdateProcessSummary:
     evaluation = TrafosUpdateProcessSummary()
@@ -134,10 +134,10 @@ def import_importable(
         for trafo in trafo_revs
     }
 
-    logger.info("Settings for imports are %s", str(multi_import_config))
+    logger.debug("Settings for imports are %s", str(multi_import_config))
 
     for transformation in trafos_to_process:
-        logger.info(
+        logger.debug(
             "Importing transformation %s with tag %s with id %s",
             transformation.name,
             transformation.version_tag,
