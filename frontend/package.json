@@ -22,12 +22,8 @@
     "format:staged": "pretty-quick --staged",
     "e2e-all": "playwright test --config=./playwright/playwright.config.ts",
     "e2e-chromium": "playwright test --config=./playwright/playwright.config.ts --project=chromium",
-    "test-headless": "ng test --watch=false --browsers=ChromeHeadless"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "npm run lint && npm run format:staged"
-    }
+    "test-headless": "ng test --watch=false --browsers=ChromeHeadless",
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "private": true,
   "dependencies": {
