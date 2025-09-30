@@ -38,6 +38,7 @@ SHARED_PROCESSORS: list[Processor] = [
             structlog.processors.CallsiteParameter.LINENO,
         }
     ),
+    structlog.stdlib.ExtraAdder(allow=None),  # extra-information always logged
     structlog.processors.format_exc_info,
     structlog.processors.StackInfoRenderer(),
 ]

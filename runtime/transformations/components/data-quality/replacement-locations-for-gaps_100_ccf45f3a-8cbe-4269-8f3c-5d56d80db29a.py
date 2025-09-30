@@ -216,7 +216,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     expected_data_frequency: pd.Timedelta | None = Field(None, validate_default=True)
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = Field(None, validate_default=True)
-    externally_determined_gap_timestamps: pd.Series | None
 
     @field_validator("timeseries")
     @classmethod
