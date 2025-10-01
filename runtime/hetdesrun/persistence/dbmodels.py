@@ -12,7 +12,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, deferred, mapped_column, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
@@ -37,14 +37,23 @@ class TransformationRevisionDBModel(Base):
     version_tag: Mapped[str] = mapped_column(String, nullable=False)
     state: Mapped[State] = mapped_column(Enum(State), nullable=False)
     type: Mapped[Type] = mapped_column(Enum(Type), nullable=False)
-    documentation: Mapped[str] = mapped_column(String, nullable=False)
-    workflow_content: Mapped[dict | None] = mapped_column(
-        JSON(none_as_null=True), nullable=True, default=lambda: None
+    documentation: Mapped[str] = deferred(
+        mapped_column(String, nullable=False), group="potentially_large"
     )
-    component_code: Mapped[str | None] = mapped_column(String, nullable=True)
+    workflow_content: Mapped[dict | None] = deferred(
+        mapped_column(JSON(none_as_null=True), nullable=True, default=lambda: None),
+        group="potentially_large",
+    )
+    component_code: Mapped[str | None] = deferred(
+        mapped_column(String, nullable=True), group="potentially_large"
+    )
     io_interface: Mapped[dict] = mapped_column(JSON, nullable=False)
-    test_wiring: Mapped[dict] = mapped_column(JSON, nullable=False)
-    release_wiring: Mapped[dict] = mapped_column(JSON, nullable=False)
+    test_wiring: Mapped[dict] = deferred(
+        mapped_column(JSON, nullable=False), group="potentially_large"
+    )
+    release_wiring: Mapped[dict] = deferred(
+        mapped_column(JSON, nullable=False), group="potentially_large"
+    )
     released_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     disabled_timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

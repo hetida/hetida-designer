@@ -79,6 +79,8 @@ async def test_upgrade_workflow_operator_runs(
 
         assert resp.status_code == 201
 
+        caplog.clear()
+
         TransformationRevision(**(resp.json()))  # validates correctly
 
         # Note: validations of WorkflowContent log with warning level when they

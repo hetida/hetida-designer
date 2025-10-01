@@ -8270,6 +8270,10 @@
             "$ref": "#/components/schemas/Type",
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
+          "io_interface": {
+            "$ref": "#/components/schemas/IOInterface-Input",
+            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
+          },
           "documentation": {
             "type": "string",
             "title": "Documentation",
@@ -8287,10 +8291,6 @@
             ],
             "title": "Content",
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
-          },
-          "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Input",
-            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "test_wiring": {
             "$ref": "#/components/schemas/WorkflowWiring-Input",
@@ -8316,8 +8316,8 @@
           "version_tag",
           "state",
           "type",
-          "content",
           "io_interface",
+          "content",
           "test_wiring"
         ],
         "title": "TransformationRevision",
@@ -8404,6 +8404,10 @@
             "$ref": "#/components/schemas/Type",
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
+          "io_interface": {
+            "$ref": "#/components/schemas/IOInterface-Output",
+            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
+          },
           "documentation": {
             "type": "string",
             "title": "Documentation",
@@ -8421,10 +8425,6 @@
             ],
             "title": "Content",
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
-          },
-          "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Output",
-            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "test_wiring": {
             "$ref": "#/components/schemas/WorkflowWiring-Output",
@@ -8450,8 +8450,8 @@
           "version_tag",
           "state",
           "type",
-          "content",
           "io_interface",
+          "content",
           "test_wiring"
         ],
         "title": "TransformationRevision",
@@ -8587,6 +8587,10 @@
             "$ref": "#/components/schemas/Type",
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
+          "io_interface": {
+            "$ref": "#/components/schemas/IOInterface-Output",
+            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
+          },
           "documentation": {
             "type": "string",
             "title": "Documentation",
@@ -8604,10 +8608,6 @@
             ],
             "title": "Content",
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
-          },
-          "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Output",
-            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "test_wiring": {
             "$ref": "#/components/schemas/WorkflowWiring-Output",
@@ -8638,8 +8638,8 @@
           "version_tag",
           "state",
           "type",
-          "content",
           "io_interface",
+          "content",
           "test_wiring"
         ],
         "title": "UpdatedTransformationRevision"
