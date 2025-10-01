@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from hetdesrun.component.code import (
+    ParseDefaultValueError,
     add_documentation_as_module_doc_string,
     add_test_wiring_dictionary,
     check_parameter_names,
@@ -284,8 +285,10 @@ def test_function_header_optional_inputs():
         test_wiring={},
     )
     with pytest.raises(
-        TypeError,
-        match="Parsing Error for value 'None' of input 'none' as FLOAT. Enter 'null' instead.",
+        ParseDefaultValueError,
+        match=(
+            "Parsing Error for default value 'None' of input 'none' as FLOAT. Enter 'null' instead."
+        ),
     ):
         generate_function_header(component_with_none)
 

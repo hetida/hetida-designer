@@ -3,6 +3,9 @@ import os
 import shutil
 from unittest import mock
 
+import pytest
+
+from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.datatypes import DataType
 from hetdesrun.exportimport.importing import (
     generate_import_order_file,
@@ -141,6 +144,21 @@ def test_tr_from_code_for_component_with_edge_case_optional_inputs():
             tr_from_py.io_interface.inputs[input_index].value
             == tr_from_json.io_interface.inputs[input_index].value
         )
+
+
+def test_optional_input_default_value_parsing(mocked_clean_test_db_session):
+    py_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component_unparsable_default_values.py",
+    )
+    with open(py_path) as f:
+        code = f.read()
+
+    tr_from_py = transformation_revision_from_python_code(code)  # works
+    with pytest.raises(ParseDefaultValueError):
+        update_or_create_transformation_revision(tr_from_py, directly_in_db=True)
 
 
 def test_import_single_transformation(mocked_clean_test_db_session):

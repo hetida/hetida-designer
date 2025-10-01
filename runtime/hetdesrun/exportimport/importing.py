@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     update_or_create_transformation_revision,
@@ -170,6 +171,7 @@ def import_importable(
             DBNestingCycleDetected,
             DBNotFoundError,
             ModelConstraintViolation,
+            ParseDefaultValueError,
         ) as e:
             success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
 

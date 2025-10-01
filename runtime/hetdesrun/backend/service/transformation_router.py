@@ -41,7 +41,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     DashboardQueryParamValidationError,
     update_wiring_from_query_parameters,
 )
-from hetdesrun.component.code import expand_code, update_code
+from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
 from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
@@ -1072,6 +1072,11 @@ async def update_transformation_revision(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
+    except ParseDefaultValueError as err:
+        msg = f"Update impossible for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
+
     if get_config().log_updated_trafo_revision:
         logger.debug(
             "Updated trafo",
