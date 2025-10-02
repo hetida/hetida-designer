@@ -3610,6 +3610,213 @@
         }
       }
     },
+    "/api/transformations/stubs": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns combined list of all transformation revision stubs (components and workflows)",
+        "description": "Get all transformation revision stubs from the data base.\n\nThis can be used to load available trafos as stubs, i.e.\n* including name, id, description, type, category, version_tag, state and so on\n* including io_interface\n* excluding test_wiring, release_wiring, documentation, content (component code\n  or workflow internal structure)\n\nThis endpoint can be used for example to find fitting (io_interface) trafos\nand offer them for configuration / usage in 3rd party applications.\n\nThe parameters filtering the transformation revision stubs are logically combined as follows\n* OR for the same filter, e.g. providing two ids will yield both trafos.\n* AND between different filters.",
+        "operationId": "get_all_transformation_revision_stubs_api_transformations_stubs_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Type"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified type.",
+              "title": "Type"
+            },
+            "description": "Filter for specified type."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/State"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified state.",
+              "title": "State"
+            },
+            "description": "Filter for specified state."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of categories.",
+              "title": "Category"
+            },
+            "description": "Filter for specified list of categories."
+          },
+          {
+            "name": "category_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category prefix that must be matched exactly (case-sensitive).",
+              "title": "Category Prefix"
+            },
+            "description": "Category prefix that must be matched exactly (case-sensitive)."
+          },
+          {
+            "name": "revision_group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified revision group id.",
+              "title": "Revision Group Id"
+            },
+            "description": "Filter for specified revision group id."
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of ids.",
+              "title": "Id"
+            },
+            "description": "Filter for specified list of ids."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of names.",
+              "title": "Name"
+            },
+            "description": "Filter for specified list of names."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to False to omit transformation revisions with state DISABLED this will not affect included dependent transformation revisions.",
+              "default": true,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to False to omit transformation revisions with state DISABLED this will not affect included dependent transformation revisions."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got all transformation revision stubs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransformationRevisionStub"
+                  },
+                  "title": "Response Get All Transformation Revision Stubs Api Transformations Stubs Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}": {
       "get": {
         "tags": [
@@ -8456,6 +8663,105 @@
         ],
         "title": "TransformationRevision",
         "description": "Either a component revision or a workflow revision\n\nBoth can be instantiated as an operator in a workflow revision\n(yes, workflow in workflow in workflow... is possible) and are therefore\nable to transform input data to output result data.\n\nNote that there is no actual component or workflow entity, only revisions. Revisions are tied\ntogether via the group id, and otherwise do not need to have anything in common, i.e. their\nname and their interface etc. can differ completely.\n\nDuring the development of a transformation revision it has the state DRAFT and may go through\nstages where it does not meet all requirements e.g. for execution. Therefore, some properties\nare not validated for revisions in DRAFT state and in particular the test_wiring is not\nvalidated for entities of this class, but instead in the context of execution.\n\nRevisions with the state RELEASED are what makes the execution reproducible - they cannot be\nedited anymore except for the two attributes test_wiring and documentation, and only they can\nbe instantiated as operators.\n\nAdditionally RELEASED revisions cannot be deleted, but their state can be changed to\nDISABLED. DISABLED revisions cannot be instantiated as new operators anymore but existing\noperators from them still work (for reproducibility). Note that in the Frontend the DISABLED\nstate is called \"DEPRECATED\". The frontend then allows to replace deprecated operators by other\n(possibly newer) released revisions from the the same revision group (i.e. same group id)."
+      },
+      "TransformationRevisionStub": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "revision_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Group Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$",
+            "title": "Description",
+            "default": ""
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
+            "title": "Category",
+            "description": "Category in which this is classified, i.e. the \"drawer\" in the User Interface.",
+            "default": "Other"
+          },
+          "version_tag": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
+            "title": "Version Tag"
+          },
+          "disabled_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disabled Timestamp",
+            "description": "If the revision is DISABLED then this should be disable/deprecation timestamp.",
+            "examples": [
+              "2025-09-05T13:06:59.760469Z"
+            ]
+          },
+          "released_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released Timestamp",
+            "description": "If the revision is RELEASED then this should be release timestamp.",
+            "examples": [
+              "2025-09-05T13:06:59.760469Z"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/State",
+            "description": "one of \"DRAFT\", \"RELEASED\", \"DISABLED\""
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type",
+            "description": "one of \"COMPONENT\", \"WORKFLOW\""
+          },
+          "io_interface": {
+            "$ref": "#/components/schemas/IOInterface-Output",
+            "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "revision_group_id",
+          "name",
+          "version_tag",
+          "state",
+          "type",
+          "io_interface"
+        ],
+        "title": "TransformationRevisionStub",
+        "description": "Stub of TransformationRevision\n\nNot containing actual content (WorkflowContent, component code),\ntest wiring / release wiring and documentation.\n\nBut everything that defines the trafo's interface."
       },
       "Type": {
         "type": "string",

@@ -63,6 +63,7 @@ from hetdesrun.persistence.dbservice.revision import (
     get_latest_revision_id,
     get_multiple_transformation_revisions,
     read_single_transformation_revision,
+    select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
@@ -70,6 +71,7 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import (
     TrafoUpdateState,
     TransformationRevision,
+    TransformationRevisionStub,
     UpdatedTransformationRevision,
 )
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -434,6 +436,99 @@ async def get_all_transformation_revisions(
             )
 
     return transformation_revision_list + code_list
+
+
+@transformation_router.get(
+    "/stubs",
+    response_model=list[TransformationRevisionStub],
+    summary="Returns combined list of all transformation revision stubs (components and workflows)",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got all transformation revision stubs"}
+    },
+)
+async def get_all_transformation_revision_stubs(
+    type: Type  # noqa: A002
+    | None = Query(
+        None,
+        description="Filter for specified type.",
+    ),
+    state: State | None = Query(
+        None,
+        description="Filter for specified state.",
+    ),
+    categories: list[ValidStr] | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: UUID | None = Query(
+        None, description="Filter for specified revision group id."
+    ),
+    ids: list[UUID] | None = Query(
+        None, description="Filter for specified list of ids.", alias="id"
+    ),
+    names: list[NonEmptyValidStr] | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions."
+        ),
+    ),
+) -> list[TransformationRevisionStub]:
+    """Get all transformation revision stubs from the data base.
+
+    This can be used to load available trafos as stubs, i.e.
+    * including name, id, description, type, category, version_tag, state and so on
+    * including io_interface
+    * excluding test_wiring, release_wiring, documentation, content (component code
+      or workflow internal structure)
+
+    This endpoint can be used for example to find fitting (io_interface) trafos
+    and offer them for configuration / usage in 3rd party applications.
+
+    The parameters filtering the transformation revision stubs are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will yield both trafos.
+    * AND between different filters.
+    """
+
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_dependencies=False,
+        include_deprecated=include_deprecated,
+        unused=False,
+    )
+
+    logger.info("get all transformation revision stubs with %s", repr(filter_params))
+    try:
+        trafo_stubs = select_multiple_transformation_revision_stubs(
+            type=filter_params.type,
+            state=filter_params.state,
+            categories=filter_params.categories,
+            category_prefix=filter_params.category_prefix,
+            revision_group_id=filter_params.revision_group_id,
+            ids=filter_params.ids,
+            names=filter_params.names,
+            include_deprecated=filter_params.include_deprecated,
+        )
+
+    except DBIntegrityError as err:
+        msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    return trafo_stubs
 
 
 @transformation_router.get(

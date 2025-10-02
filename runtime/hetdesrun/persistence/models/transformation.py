@@ -288,6 +288,41 @@ class TransformationRevisionStub(BaseModel):
 
         return io_interface
 
+    @classmethod
+    def from_orm_model(
+        cls, orm_model: TransformationRevisionDBModel
+    ) -> "TransformationRevisionStub":
+        try:
+            return TransformationRevisionStub(
+                id=orm_model.id,
+                revision_group_id=orm_model.revision_group_id,
+                name=orm_model.name,
+                description=orm_model.description,
+                category=orm_model.category,
+                version_tag=orm_model.version_tag,
+                state=orm_model.state,
+                type=orm_model.type,
+                io_interface=orm_model.io_interface,
+                released_timestamp=orm_model.released_timestamp.replace(
+                    tzinfo=datetime.timezone.utc
+                )
+                if orm_model.released_timestamp is not None
+                else None,
+                disabled_timestamp=orm_model.disabled_timestamp.replace(
+                    tzinfo=datetime.timezone.utc
+                )
+                if orm_model.disabled_timestamp is not None
+                else None,
+            )
+        except ValidationError as error:
+            msg = (
+                f"Could not validate db entry for trafo stub for id {orm_model.id}. "
+                f"Validation error was:\n{str(error)}"
+            )
+            raise DBIntegrityError(msg) from error
+
+    model_config = ConfigDict(validate_assignment=True)
+
 
 class TransformationRevision(TransformationRevisionStub):
     """Either a component revision or a workflow revision

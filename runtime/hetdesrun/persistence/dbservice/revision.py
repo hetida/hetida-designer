@@ -6,6 +6,8 @@ from uuid import UUID
 from pydantic import StrictInt, StrictStr
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import load_only
+from sqlalchemy.sql.selectable import Select
 
 from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
@@ -23,7 +25,10 @@ from hetdesrun.persistence.models.exceptions import (
     StateConflict,
     TypeConflict,
 )
-from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.transformation import (
+    TransformationRevision,
+    TransformationRevisionStub,
+)
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type, cache_conditionally, cache_output_dict_conditionally
@@ -468,6 +473,94 @@ def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
     return list(categories.scalars().all())
 
 
+def multiple_trafo_select_filtered(
+    type: Type | None = None,  # noqa: A002
+    state: State | None = None,
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
+    revision_group_id: UUID | None = None,
+    ids: list[UUID] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+    include_deprecated: bool = True,
+    states: list[State] | None = None,
+) -> Select:
+    selection = select(TransformationRevisionDBModel)
+
+    if type is not None:
+        selection = selection.where(TransformationRevisionDBModel.type == type)
+    if state is not None:
+        selection = selection.where(TransformationRevisionDBModel.state == state)
+    if states is not None:
+        selection = selection.where(TransformationRevisionDBModel.state.in_(states))
+    if categories is not None:
+        selection = selection.where(TransformationRevisionDBModel.category.in_(categories))
+    if category_prefix is not None:
+        selection = selection.where(
+            TransformationRevisionDBModel.category.startswith(category_prefix, autoescape=True)
+        )
+    if revision_group_id is not None:
+        selection = selection.where(
+            TransformationRevisionDBModel.revision_group_id == revision_group_id
+        )
+    if ids is not None:
+        selection = selection.where(TransformationRevisionDBModel.id.in_(ids))
+    if names is not None:
+        selection = selection.where(
+            TransformationRevisionDBModel.name.in_(names),
+        )
+    if not include_deprecated:
+        selection = selection.where(TransformationRevisionDBModel.state != State.DISABLED)
+
+    return selection
+
+
+def select_multiple_transformation_revision_stubs(
+    type: Type | None = None,  # noqa: A002
+    state: State | None = None,
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
+    revision_group_id: UUID | None = None,
+    ids: list[UUID] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+    include_deprecated: bool = True,
+    states: list[State] | None = None,
+) -> list[TransformationRevisionStub]:
+    """Filterable selection of transformation revision stubs from db
+
+    Only the columns for a TransformationRevisionStub are loaded from db.
+    """
+    with get_session()() as session, session.begin():
+        selection = multiple_trafo_select_filtered(
+            type=type,
+            state=state,
+            categories=categories,
+            category_prefix=category_prefix,
+            revision_group_id=revision_group_id,
+            ids=ids,
+            names=names,
+            include_deprecated=include_deprecated,
+            states=states,
+        )
+        selection = selection.options(
+            load_only(
+                TransformationRevisionDBModel.id,
+                TransformationRevisionDBModel.revision_group_id,
+                TransformationRevisionDBModel.name,
+                TransformationRevisionDBModel.description,
+                TransformationRevisionDBModel.category,
+                TransformationRevisionDBModel.version_tag,
+                TransformationRevisionDBModel.disabled_timestamp,
+                TransformationRevisionDBModel.released_timestamp,
+                TransformationRevisionDBModel.state,
+                TransformationRevisionDBModel.type,
+                TransformationRevisionDBModel.io_interface,
+            )
+        )
+        results = session.execute(selection).scalars().all()
+
+        return [TransformationRevisionStub.from_orm_model(result) for result in results]
+
+
 def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
@@ -480,39 +573,23 @@ def select_multiple_transformation_revisions(
     states: list[State] | None = None,
 ) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
-    with get_session()() as session, session.begin():
-        selection = select(TransformationRevisionDBModel)
 
-        if type is not None:
-            selection = selection.where(TransformationRevisionDBModel.type == type)
-        if state is not None:
-            selection = selection.where(TransformationRevisionDBModel.state == state)
-        if states is not None:
-            selection = selection.where(TransformationRevisionDBModel.state.in_(states))
-        if categories is not None:
-            selection = selection.where(TransformationRevisionDBModel.category.in_(categories))
-        if category_prefix is not None:
-            selection = selection.where(
-                TransformationRevisionDBModel.category.startswith(category_prefix, autoescape=True)
-            )
-        if revision_group_id is not None:
-            selection = selection.where(
-                TransformationRevisionDBModel.revision_group_id == revision_group_id
-            )
-        if ids is not None:
-            selection = selection.where(TransformationRevisionDBModel.id.in_(ids))
-        if names is not None:
-            selection = selection.where(
-                TransformationRevisionDBModel.name.in_(names),
-            )
-        if not include_deprecated:
-            selection = selection.where(TransformationRevisionDBModel.state != State.DISABLED)
+    with get_session()() as session, session.begin():
+        selection = multiple_trafo_select_filtered(
+            type=type,
+            state=state,
+            categories=categories,
+            category_prefix=category_prefix,
+            revision_group_id=revision_group_id,
+            ids=ids,
+            names=names,
+            include_deprecated=include_deprecated,
+            states=states,
+        )
 
         results = session.execute(selection).scalars().all()
 
-        tr_list = [TransformationRevision.from_orm_model(result) for result in results]
-
-        return tr_list
+        return [TransformationRevision.from_orm_model(result) for result in results]
 
 
 def get_multiple_transformation_revisions(
