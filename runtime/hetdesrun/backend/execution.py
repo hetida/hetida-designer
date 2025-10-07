@@ -301,6 +301,13 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         component_adapter_source_components + component_adapter_sink_components
     )
 
+    if exec_by_id_input.wiring is None:
+        logger.warning("Since no wiring was provided, fall back to test_wiring!")
+        wiring_to_use = transformation_revision.test_wiring
+
+    else:
+        wiring_to_use = exec_by_id_input.wiring
+
     # Build WorkflowExecutionInput and validate everything in combination
     try:
         execution_input = WorkflowExecutionInput(
@@ -337,11 +344,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
                 name=str(tr_workflow.id),
                 run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
             ),
-            workflow_wiring=(
-                exec_by_id_input.wiring
-                if exec_by_id_input.wiring is not None
-                else transformation_revision.test_wiring
-            ),
+            workflow_wiring=wiring_to_use,
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
             runtime_execution_context=exec_by_id_input.runtime_execution_context,

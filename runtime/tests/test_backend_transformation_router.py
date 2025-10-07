@@ -629,6 +629,40 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revision_stubs(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
+    store_single_transformation_revision(TransformationRevision(**tr_json_workflow_1))
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
+    )
+    async with async_test_client as ac:
+        response = await ac.get("/api/transformations/stubs")
+
+    assert response.status_code == 200
+    resp_json = response.json()
+    assert len(resp_json) == 4
+
+    assert resp_json[0] != tr_json_component_1
+    assert resp_json[1] != tr_json_component_2
+    assert resp_json[2] != tr_json_workflow_1
+    assert resp_json[3] != tr_json_workflow_2_with_named_io_for_operator
+    for resp_json_obj in resp_json:
+        assert "test_wiring" not in resp_json_obj
+        assert "release_wiring" not in resp_json_obj
+        assert "documentation" not in resp_json_obj
+        assert "content" not in resp_json_obj
+
+        assert "io_interface" in resp_json_obj
+        assert "id" in resp_json_obj
+        assert "name" in resp_json_obj
+        assert "state" in resp_json_obj
+        assert "type" in resp_json_obj
+
+
+@pytest.mark.asyncio
 async def test_get_all_transformation_revisions_with_no_db_entries(
     async_test_client, mocked_clean_test_db_session
 ):
