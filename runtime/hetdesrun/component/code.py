@@ -65,6 +65,10 @@ function_body_template: str = """
 """
 
 
+class ParseDefaultValueError(ValueError):
+    """A default value cannot be parsed"""
+
+
 def component_info_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
@@ -94,7 +98,7 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
             + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
         )
         logger.error(msg)
-        raise TypeError(msg) from error
+        raise ParseDefaultValueError(msg) from error
 
 
 def function_signature_default_value_string(inp: TransformationInput) -> str:
@@ -129,11 +133,12 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         )
     except ValueError as error:
         msg = (
-            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            f"Parsing Error for default value '{inp.value}' of input '{inp.name}' as"
+            f" {inp.data_type.value}"
             + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
         )
         logger.error(msg)
-        raise TypeError(msg) from error
+        raise ParseDefaultValueError(msg) from error
 
 
 def format_function_header(function_header: str) -> str:

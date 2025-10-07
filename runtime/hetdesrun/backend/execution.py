@@ -47,6 +47,7 @@ from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -300,6 +301,13 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         component_adapter_source_components + component_adapter_sink_components
     )
 
+    if exec_by_id_input.wiring is None:
+        logger.warning("Since no wiring was provided, fall back to test_wiring!")
+        wiring_to_use = transformation_revision.test_wiring
+
+    else:
+        wiring_to_use = exec_by_id_input.wiring
+
     # Build WorkflowExecutionInput and validate everything in combination
     try:
         execution_input = WorkflowExecutionInput(
@@ -336,11 +344,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
                 name=str(tr_workflow.id),
                 run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
             ),
-            workflow_wiring=(
-                exec_by_id_input.wiring
-                if exec_by_id_input.wiring is not None
-                else transformation_revision.test_wiring
-            ),
+            workflow_wiring=wiring_to_use,
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
             runtime_execution_context=exec_by_id_input.runtime_execution_context,
@@ -408,7 +412,7 @@ async def run_execution_input(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_runtime_engine_url(), "runtime")
             try:
                 pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
                     "pure_runtime_request"

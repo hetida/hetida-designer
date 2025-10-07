@@ -95,7 +95,13 @@ def update_or_create_transformation_revision(
             str(tr.id),
             tr.category,
             tr.name,
+            extra={
+                "allow_overwrite_released": allow_overwrite_released,
+                "update_component_code": update_component_code,
+                "strip_wiring": strip_wiring,
+            },
         )
+
         try:
             update_or_create_single_transformation_revision(
                 tr,

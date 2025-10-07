@@ -165,8 +165,10 @@ def test_is_modifiable():
         documentation="",
     )
 
-    changed_type_tr = deepcopy(tr_object)
-    changed_type_tr.type = Type.WORKFLOW
+    changed_type_tr = tr_object.model_copy(
+        update={"type": Type.WORKFLOW, "content": WorkflowContent()}
+    )
+
     assert (
         is_modifiable(
             existing_transformation_revision=tr_object,
