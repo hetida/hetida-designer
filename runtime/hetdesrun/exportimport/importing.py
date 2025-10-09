@@ -3,6 +3,7 @@ import os
 from collections.abc import Iterable
 from enum import Enum
 from uuid import UUID
+from warnings import deprecated
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +24,9 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.io.load import (
     Importable,
+    MultipleTrafosUpdateConfig,
+    get_import_sources,
+    load_import_sources,
     load_transformation_revisions_from_directory,
 )
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
@@ -238,6 +242,53 @@ def import_importables(
     return success_reports
 
 
+def import_transformation_from_dir(
+    import_dir: str,
+    strip_wirings: bool = False,
+    allow_overwrite_released: bool = True,
+    update_component_code: bool = True,
+    deprecate_older_revisions: bool = False,
+) -> None:
+    """Import all transformations from specified download path.
+
+    This function imports all transformations together with their documentations.
+    The import_dir should be a path which contains the exported transformations
+    organized in subdirectories corresponding to the categories.
+    The following parameters can be used to
+
+    - strip_wirings: Set to true to reset the test wiring to empty input and output
+        wirings for each transformation revision
+    - allow_overwrite_released: Set to false to disable overwriting of transformation
+        revisions with state "RELEASED" or "DISABLED"
+    - update_component_code: Set to false if you want to keep the component code
+        unchanged
+    - deprecate_older_revisions: Set to true to deprecate all but the latest revision
+        for all revision groups imported. This might result in all imported revisions to
+        be deprecated if these are older than the latest revision in the database.
+
+    WARNING: Overwrites possibly existing transformation revisions!
+
+    Usage:
+        import_transformations("./transformations")
+    """
+
+    update_config = MultipleTrafosUpdateConfig(
+        strip_wirings=strip_wirings,
+        allow_overwrite_released=allow_overwrite_released,
+        update_component_code=update_component_code,
+        deprecate_older_revisions=deprecate_older_revisions,
+    )
+
+    files_to_upload = get_import_sources(import_dir)
+    importables = load_import_sources(files_to_upload)
+
+    for importable in importables:
+        importable.import_config.update_config = update_config
+
+    _ = import_importables(importables)
+
+
+@deprecated("This function has been deprecated, use import_transformation_from_dir instead.")
 def import_transformations(
     download_path: str,
     strip_wirings: bool = False,
