@@ -8,6 +8,7 @@ etc.
 
 import ast
 from typing import Any
+from uuid import UUID
 
 import black
 import libcst as cst
@@ -254,3 +255,44 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
         raise CodeParsingException(msg) from exc
 
     return new_cst.code
+
+
+def get_global_component_imports(code_str: str) -> list[UUID]:
+    """
+
+    my_comp = import_comp("caf158f6-5545-44fe-8f12-9438a6a992de")
+    my_comp = import_comp("my_comp", "1.0.1") ?
+
+
+    """
+
+    found_component_import_ids = []
+
+    parsed_ast = ast.parse(code_str)
+    for element in parsed_ast.body:
+        if isinstance(element, ast.Assign):
+            if len(element.targets) != 1:  # only consider single target assignments
+                continue
+            # The assignment target on the left can be obtained via
+            #   assign_target = element.targets[0] # noqa: ERA001
+
+            val = element.value
+
+            if (
+                isinstance(val, ast.Call)
+                and hasattr(val, "func")
+                and hasattr(val.func, "id")
+                and val.func.id == "import_comp"
+            ):
+                # TODO: what if user uses import_comp as name for something else?
+
+                if len(val.args) == 1:
+                    literal_first_arg = ast.literal_eval(val.args[0])
+                    found_component_import_ids.append(literal_first_arg)
+
+                if len(val.args) == 2:
+                    # TODO: allow name + verstion_tag instead of id?
+                    # Note: val.keywords should give keyword args
+                    raise NotImplementedError("Not implemented importing from name + version")
+
+    return found_component_import_ids

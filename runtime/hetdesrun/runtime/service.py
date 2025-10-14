@@ -6,7 +6,10 @@ from pydantic import ValidationError
 
 from hdutils import DataType, parsing_not_identical
 from hetdesrun.adapters import AdapterHandlingException
+from hetdesrun.component.load import hash_code
 from hetdesrun.datatypes import NamedDataTypedValue
+from hetdesrun.models.code import CodeModule
+from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.run import (
     AllMeasuredSteps,
     ProcessStage,
@@ -51,10 +54,26 @@ runtime_logger.addFilter(job_id_context_filter)
 def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> None:
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
+
+    code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in runtime_input.code_modules}
+    component_rev_dict: dict[str, ComponentRevision] = {
+        str(c.uuid): c for c in runtime_input.components
+    }
+    code_hash_dict: dict[str, str] = {
+        str(c.uuid): hash_code(c.code) for c in runtime_input.code_modules
+    }
+
+    currently_importing: dict[str, bool] = {str(c.uuid): False for c in runtime_input.code_modules}
+
     execution_context_filter.bind_context(
         current_code_modules=runtime_input.code_modules,
         current_components=runtime_input.components,
+        code_modules_by_trafo_id=code_module_dict,
+        component_revisions_by_trafo_id=component_rev_dict,
+        code_hash_dict=code_hash_dict,
+        currently_importing=currently_importing,
     )
+    execution_context_filter.bind_context(trafo_id_to_code_hash_map={})
     execution_context_filter.bind_context(
         plot_target_settings=runtime_input.runtime_execution_context.plot_target_settings
     )

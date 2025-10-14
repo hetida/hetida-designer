@@ -23,6 +23,7 @@ from pydantic import HttpUrl, StrictInt, StrictStr, ValidationError
 
 from hetdesrun.backend.execution import (
     TrafoExecutionComponentAdapterComponentsNotFound,
+    TrafoExecutionComponentImportCycleError,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -1243,6 +1244,11 @@ async def handle_trafo_revision_execution_request(
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    except TrafoExecutionComponentImportCycleError as err:
+        msg = f"Detected component import cycle:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
     except TrafoExecutionComponentAdapterComponentsNotFound as err:
         msg = (

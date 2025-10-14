@@ -136,3 +136,67 @@ class Descendant(NamedTuple):
     depth: int
     transformation_id: UUID
     operator_id: UUID
+
+
+class ComponentImportingDBModel(Base):
+    """Components can import other components
+
+    These dependencies must be tracked in order to being able to
+    load all relevant components for execution.
+
+    An entry here means that component_id imports via depth steps
+    nested_component_id. If depth>=2, then via_component_id is the
+    first direct import in the chain leading to nested_component_id.
+    """
+
+    __tablename__ = "component_dependencies"
+
+    component_id: Mapped[UUIDType] = mapped_column(
+        UUIDType(binary=False),
+        ForeignKey(TransformationRevisionDBModel.id),
+        primary_key=True,
+        default=uuid4,
+    )
+
+    via_component_id: Mapped[UUIDType] = mapped_column(
+        UUIDType(binary=False),
+        ForeignKey(TransformationRevisionDBModel.id),
+        default=uuid4,
+        nullable=True,
+    )
+
+    depth: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+
+    nested_component_id: Mapped[UUIDType] = mapped_column(
+        UUIDType(binary=False),
+        ForeignKey(TransformationRevisionDBModel.id),
+        default=uuid4,
+        nullable=False,
+    )
+
+    component: Mapped[TransformationRevisionDBModel] = relationship(
+        TransformationRevisionDBModel,
+        foreign_keys=[component_id],
+    )
+
+    nested_component: Mapped[TransformationRevisionDBModel] = relationship(
+        TransformationRevisionDBModel, foreign_keys=[nested_component_id]
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "depth > 0",
+            name="_depth_natural_number_cc",
+        ),
+        CheckConstraint(
+            """
+            (
+                (
+                   (CASE WHEN depth > 1 THEN 1 ELSE 0 END)
+                +  (CASE WHEN via_component_id = nested_component_id THEN 1 ELSE 0 END)
+                ) = 1
+            )
+            """,
+            name="_via_ids_equal_nested_ids_for_direct_nesting_cc",
+        ),
+    )
