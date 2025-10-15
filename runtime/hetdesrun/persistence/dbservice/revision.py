@@ -10,7 +10,7 @@ from sqlalchemy.orm import load_only
 from sqlalchemy.sql.selectable import Select
 
 from hetdesrun.component.code import expand_code, update_code
-from hetdesrun.component.code_utils import get_global_component_imports
+from hetdesrun.component.code_utils import CodeParsingException, get_global_component_imports
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
@@ -82,6 +82,20 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
+@cache_conditionally(
+    lambda trafo: (
+        get_config().enable_caching_for_non_draft_trafos_for_execution
+        and trafo.state != State.DRAFT
+    )
+)
+def select_tr_by_id_with_possible_caching(
+    id: UUID,  # noqa: A002
+    session: SQLAlchemySession,
+    log_error: bool = True,
+) -> TransformationRevision:
+    return select_tr_by_id(session=session, id=id, log_error=log_error)
+
+
 def read_multiple_transformation_revisions_by_id(
     ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
@@ -95,97 +109,6 @@ def read_multiple_transformation_revisions_by_id(
         return {
             trafo_id: select_tr_by_id(session, trafo_id, log_error=log_error) for trafo_id in ids
         }
-
-
-def recursively_load_with_component_imports(
-    current_ids: tuple[UUID, ...],
-    already_fetched_dict: dict[UUID, TransformationRevision],
-    current_session: SQLAlchemySession,
-    log_error: bool = True,
-) -> dict[UUID, TransformationRevision]:
-    current_level_trafo_dict = {
-        trafo_id: select_tr_by_id(current_session, trafo_id, log_error=log_error)
-        for trafo_id in current_ids
-        if not trafo_id in already_fetched_dict
-    }
-
-    for trafo_id, trafo in current_level_trafo_dict.items():
-        already_fetched_dict[trafo_id] = trafo
-
-    newly_added_components = {
-        trafo_id: trafo
-        for trafo_id, trafo in current_level_trafo_dict.items()
-        if trafo.type is Type.COMPONENT
-    }
-
-    direct_imports = []
-    for trafo in newly_added_components.values():
-        assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
-        direct_import_ids = get_global_component_imports(trafo.content)
-        direct_imports.extend(direct_import_ids)
-
-    if len(direct_imports) > 0:
-        recursively_load_with_component_imports(
-            tuple(comp_id for comp_id in direct_imports if not comp_id in already_fetched_dict),
-            already_fetched_dict,
-            current_session,
-            log_error,
-        )
-
-    return already_fetched_dict
-
-
-def read_multiple_trafo_revisions_by_id_and_add_component_imports_recursively(
-    ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
-) -> dict[UUID, TransformationRevision]:
-    if session is None:
-        with get_session()() as new_session, new_session.begin():
-            return recursively_load_with_component_imports(
-                ids, {}, new_session, log_error=log_error
-            )
-
-    else:
-        return recursively_load_with_component_imports(ids, {}, session, log_error=log_error)
-
-
-def read_component_imports_recursively(
-    trafos: list[TransformationRevision],
-    log_error: bool = True,
-    session: SQLAlchemySession | None = None,
-) -> dict[UUID, TransformationRevision]:
-    """Obtains all components imported by the given components
-
-    trafos can be arbitrary TransformationRevision objects, however, workflows will
-    be ignored. Of all components given, this loads components imported by them recursively,
-    ignoring (and not loading) the initial components, even if they occur at
-    some recursion level.
-
-    Returns the loaded components only (and not the initial components).
-    """
-
-    initial_components_dict = {trafo.id: trafo for trafo in trafos if trafo.type is Type.COMPONENT}
-
-    all_direct_import_ids = set()
-
-    for component in initial_components_dict.values():
-        if component.type is Type.COMPONENT:
-            assert isinstance(component.content, str)  # noqa: S101 # for mypy
-            direct_import_ids = get_global_component_imports(component.content)
-            all_direct_import_ids.update(direct_import_ids)
-
-    if session is None:
-        with get_session()() as new_session, new_session.begin():
-            return recursively_load_with_component_imports(
-                tuple(all_direct_import_ids),
-                initial_components_dict,
-                new_session,
-                log_error=log_error,
-            )
-
-    else:
-        return recursively_load_with_component_imports(
-            tuple(all_direct_import_ids), initial_components_dict, session, log_error=log_error
-        )
 
 
 @cache_output_dict_conditionally(
@@ -219,6 +142,95 @@ def read_single_transformation_revision_with_caching(
     log_error: bool = True,
 ) -> TransformationRevision:
     return read_single_transformation_revision(id, log_error)
+
+
+def recursively_load_with_component_imports(
+    current_ids: tuple[UUID, ...],
+    already_fetched_dict: dict[UUID, TransformationRevision],
+    current_session: SQLAlchemySession,
+    log_error: bool = True,
+    possibly_caching: bool = True,
+) -> dict[UUID, TransformationRevision]:
+    current_level_trafo_dict = {
+        trafo_id: (
+            select_tr_by_id_with_possible_caching(trafo_id, current_session, log_error=log_error)
+            if possibly_caching
+            else select_tr_by_id(current_session, trafo_id, log_error=log_error)
+        )
+        for trafo_id in current_ids
+        if not trafo_id in already_fetched_dict
+    }
+
+    for trafo_id, trafo in current_level_trafo_dict.items():
+        already_fetched_dict[trafo_id] = trafo
+
+    newly_added_components = {
+        trafo_id: trafo
+        for trafo_id, trafo in current_level_trafo_dict.items()
+        if trafo.type is Type.COMPONENT
+    }
+
+    direct_imports = []
+    for trafo in newly_added_components.values():
+        assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
+        direct_import_ids = get_global_component_imports(trafo.content)
+        direct_imports.extend(direct_import_ids)
+
+    if len(direct_imports) > 0:
+        recursively_load_with_component_imports(
+            tuple(comp_id for comp_id in direct_imports if not comp_id in already_fetched_dict),
+            already_fetched_dict,
+            current_session,
+            log_error,
+        )
+
+    return already_fetched_dict
+
+
+def read_component_imports_recursively(
+    trafos: list[TransformationRevision],
+    log_error: bool = True,
+    session: SQLAlchemySession | None = None,
+    possibly_caching: bool = True,
+) -> dict[UUID, TransformationRevision]:
+    """Obtains all components imported by the given components
+
+    trafos can be arbitrary TransformationRevision objects, however, workflows will
+    be ignored. Of all components given, this loads components imported by them recursively,
+    ignoring (and not loading) the initial components, even if they occur at
+    some recursion level.
+
+    Returns the loaded components only (and not the initial components).
+    """
+
+    initial_components_dict = {trafo.id: trafo for trafo in trafos if trafo.type is Type.COMPONENT}
+
+    all_direct_import_ids = set()
+
+    for component in initial_components_dict.values():
+        if component.type is Type.COMPONENT:
+            assert isinstance(component.content, str)  # noqa: S101 # for mypy
+            direct_import_ids = get_global_component_imports(component.content)
+            all_direct_import_ids.update(direct_import_ids)
+
+    if session is None:
+        with get_session()() as new_session, new_session.begin():
+            return recursively_load_with_component_imports(
+                tuple(all_direct_import_ids),
+                initial_components_dict,
+                new_session,
+                log_error=log_error,
+                possibly_caching=possibly_caching,
+            )
+
+    else:
+        return recursively_load_with_component_imports(
+            tuple(all_direct_import_ids),
+            initial_components_dict,
+            session,
+            log_error=log_error,
+            possibly_caching=possibly_caching,
+        )
 
 
 def update_tr(session: SQLAlchemySession, transformation_revision: TransformationRevision) -> None:
@@ -380,6 +392,93 @@ def update_content(
     return updated_transformation_revision
 
 
+class ComponentImportComponentError(ValueError):
+    pass
+
+
+class ComponentImportNonExistingComponentError(ComponentImportComponentError):
+    pass
+
+
+class ReleasedComponentCannotImportDraftComponentError(ComponentImportComponentError):
+    pass
+
+
+def check_direct_component_imports(
+    component: TransformationRevision,
+    allow_everything_for_draft_components: bool = True,
+    check_releasability: bool = False,
+    session: SQLAlchemySession | None = None,
+) -> None:
+    """Checks whether direct component imports in components are valid
+
+    By default, checks are only done for a non-draft component, i.e. in a DRAFT
+    component everything is allowed. Set allow_everything_for_draft_components to
+    False if you also want to check DRAFT components.
+
+    Checks direct imports, not recursively! In particular, does not check
+    for import cycles.
+
+    This is meant to be run on putting (create, update) of component revisions.
+
+    Raises a variant of ComponentImportComponentError if something is wrong.
+    Otherwise just returns None.
+
+    Since this requires database access, it is not part of the
+    TransformationRevision model validation.
+
+    Requires that direct component imports
+    * can be parsed / read from code
+    * all exist
+    * are all components
+    * are all released if the component itself is released or if
+      check_releasability is True
+    """
+
+    if allow_everything_for_draft_components and component.state is State.DRAFT:
+        # allow everything for DRAFT components
+        return
+
+    assert isinstance(component.content, str)  # noqa: S101 # for mypy
+    try:
+        direct_import_ids = get_global_component_imports(component.content)
+    except CodeParsingException as e:
+        raise ComponentImportComponentError(
+            f"Could not parse component code for component {component.name}"
+            f" ({component.version_tag}) with id  {component.id} while checking"
+            " direct imports"
+        ) from e
+
+    try:
+        # without caching, as this is/should not be run
+        # during execution requests:
+        direct_import_trafos = read_multiple_transformation_revisions_by_id(
+            tuple(direct_import_ids), session=session
+        )
+    except DBNotFoundError as e:
+        raise ComponentImportNonExistingComponentError(
+            f"While checking direct component imports for component {component.name}"
+            f" ({component.version_tag}) with id  {component.id}, one of the imported"
+            "trafos could not be loaded from database."
+        ) from e
+
+    for trafo in direct_import_trafos.values():
+        if not trafo.type is Type.COMPONENT:
+            raise ComponentImportComponentError(
+                f"The component {component.name} ({component.version_tag}) with id"
+                f" {component.id} imports a trafo in its code that is not a component:"
+                f" {trafo.name} ({trafo.version_tag} with id {trafo.id})"
+            )
+        if (
+            component.state is not State.DRAFT or check_releasability
+        ) and trafo.state is State.DRAFT:
+            raise ReleasedComponentCannotImportDraftComponentError(
+                f"The component {component.name} ({component.version_tag}) with id"
+                f" {component.id} is released or should be released, but its code imports"
+                f" a DRAFT component: {trafo.name} ({trafo.version_tag} with id {trafo.id})"
+            )
+
+
 def if_applicable_release_or_deprecate(
     existing_transformation_revision: TransformationRevision | None,
     updated_transformation_revision: TransformationRevision,
@@ -393,6 +492,7 @@ def if_applicable_release_or_deprecate(
                 "release transformation revision %s",
                 existing_transformation_revision.id,
             )
+
             updated_transformation_revision.release()
             # prevent overwriting content during releasing
             updated_transformation_revision.content = existing_transformation_revision.content
@@ -435,6 +535,12 @@ def update_or_create_single_transformation_revision(
     )
 
     with get_session()() as session, session.begin():
+        if transformation_revision.type is Type.COMPONENT:
+            # may raise ComponentImportComponentError
+            check_direct_component_imports(
+                transformation_revision, session=session
+            )  # in particular checks all imports are released if component is RELEASED
+
         try:
             existing_transformation_revision = select_tr_by_id(
                 session, transformation_revision.id, log_error=False

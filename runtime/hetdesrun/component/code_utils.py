@@ -258,23 +258,37 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
 
 
 def get_global_component_imports(code_str: str) -> list[UUID]:
-    """
+    """Parses component imports from code
 
-    my_comp = import_comp("caf158f6-5545-44fe-8f12-9438a6a992de")
-    my_comp = import_comp("my_comp", "1.0.1") ?
+    Parses component code imports like
 
+        my_comp = import_comp("caf158f6-5545-44fe-8f12-9438a6a992de")
 
+        my_second_comp = import_comp("a12358f6-5545-44fe-8f12-9438a6a992de")
+
+    Only parses global assignments, invocations of import_comp at other places are ignored.
+
+    Does not validate that import_comp is actually the import_comp function
+    of hetdesrun!
+
+    Does not validate the parsed ids to import in any way to represent suitable components.
+
+    May raise some variants of CodeParsingException
     """
 
     found_component_import_ids = []
+    try:
+        parsed_ast = ast.parse(code_str)
+    except (SyntaxError, ValueError) as exc:
+        msg = f"Could not parse provided Python Code into AST. Error was: {str(exc)}"
+        raise CodeParsingException(msg) from exc
 
-    parsed_ast = ast.parse(code_str)
     for element in parsed_ast.body:
         if isinstance(element, ast.Assign):
             if len(element.targets) != 1:  # only consider single target assignments
                 continue
             # The assignment target on the left can be obtained via
-            #   assign_target = element.targets[0] # noqa: ERA001
+            # assign_target = element.targets[0] # noqa: ERA001
 
             val = element.value
 
@@ -287,11 +301,24 @@ def get_global_component_imports(code_str: str) -> list[UUID]:
                 # TODO: what if user uses import_comp as name for something else?
 
                 if len(val.args) == 1:
-                    literal_first_arg = ast.literal_eval(val.args[0])
+                    try:
+                        literal_first_arg = ast.literal_eval(val.args[0])
+                    except (
+                        ValueError,
+                        TypeError,
+                        SyntaxError,
+                        MemoryError,
+                        RecursionError,
+                    ) as exc:
+                        msg = (
+                            f"Could not literal_eval the arg for import_comp {val.args[0]}. "
+                            f"Error was: {str(exc)}"
+                        )
+                        raise LiteralEvalError(msg) from exc
                     found_component_import_ids.append(literal_first_arg)
 
                 if len(val.args) == 2:
-                    # TODO: allow name + verstion_tag instead of id?
+                    # TODO: allow name + version_tag instead of id?
                     # Note: val.keywords should give keyword args
                     raise NotImplementedError("Not implemented importing from name + version")
 

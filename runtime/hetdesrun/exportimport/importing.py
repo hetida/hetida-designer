@@ -17,6 +17,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
 )
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
@@ -168,6 +169,7 @@ def import_importable(
 
         except (
             DBIntegrityError,
+            ComponentImportComponentError,
             DBNestingCycleDetected,
             DBNotFoundError,
             ModelConstraintViolation,

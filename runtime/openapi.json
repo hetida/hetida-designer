@@ -8288,7 +8288,8 @@
         "type": "string",
         "enum": [
           "SUCCESS",
-          "RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED"
+          "RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED",
+          "UNALLOWED_COMPONENT_IMPORTS"
         ],
         "title": "TrafoUpdateState"
       },

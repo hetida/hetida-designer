@@ -60,6 +60,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
 )
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
@@ -931,6 +932,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
     except DBNestingCycleDetected as err:
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
@@ -1148,6 +1150,26 @@ async def update_transformation_revision(
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except ComponentImportComponentError as err:
+        msg = (
+            "Error while checking component imports for component"
+            f" {updated_transformation_revision.name}"
+            f" ({updated_transformation_revision.version_tag})"
+            f" with id {updated_transformation_revision.id}:\n{str(err)}"
+        )
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = (
+                UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                    read_single_transformation_revision(id),
+                    update_state=TrafoUpdateState.UNALLOWED_COMPONENT_IMPORTS,
+                )
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
     except DBNestingCycleDetected as err:
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
