@@ -292,7 +292,7 @@ def import_transformation_from_dir(
     """
 
     logger.info(
-        "Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s", #noqa: E501
+        "Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s",  # noqa: E501
         import_dir,
         strip_wirings,
         allow_overwrite_released,
