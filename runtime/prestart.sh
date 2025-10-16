@@ -30,17 +30,6 @@ retry() {
             )
     done
 }
-
-function parse_env() {
-    local env=$1
-    if ! [[ -n "$env" ]]; then
-        env="False"
-    else
-        env="${env^}"
-    fi
-   echo $env
-}
-
 _true_equiv="@(|true|yes|y|ok|on|1)"
 
 # Run migrations if this is run as backend service.
@@ -89,15 +78,10 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     fi
 
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
-        _strip_wiring=$(parse_env "${HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS}")
-        _allow_overwrite_released=$(parse_env "${HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED}")
-        _update_component_code=$(parse_env "${HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE}")
-        _deprecate_older_revisions=$(parse_env "${HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS}")
 
-        settings_str='import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",strip_wirings="'"$_strip_wiring"'",update_component_code="'"$_update_component_code"'",deprecate_older_revisions="'"$_deprecate_older_revisions"'",allow_overwrite_released="'"$_allow_overwrite_released"'"'
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
-        echo "Using the following settings: $settings_str"
-        python -c "from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir($settings_str)"
+        settings_str='import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",**settings'
+        python -c "from hetdesrun.exportimport.importing import import_transformation_from_dir, AutoImportSettings; settings = AutoImportSettings().model_dump(); import_transformation_from_dir($settings_str)"
         if [ "$?" -eq 0 ]; then
             echo "Successfully triggered auto import process. See details above."
         else

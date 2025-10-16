@@ -137,52 +137,57 @@ def update_or_create_transformation_revision(
             )
 
     else:
-        try:
-            headers = sync_wrapped_get_auth_headers(external=True)
-        except ServiceAuthenticationError as e:
-            msg = (
+        import_using_api(tr, allow_overwrite_released, update_component_code, strip_wiring)
+
+
+def import_using_api(trafos: TransformationRevision, allow_overwrite_released: bool, update_component_code: bool, strip_wiring: bool):
+
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
                 "Failed to get auth headers for external request for importing transformations."
                 f" Error was:\n{str(e)}"
             )
-            logger.error(msg)
-            raise Exception(msg) from e
+        logger.error(msg)
+        raise Exception(msg) from e
 
-        response = requests.put(
-            posix_urljoin(get_config().hd_backend_api_url, "transformations", str(tr.id)),
+    response = requests.put(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations", str(trafos.id)),
             params={
                 "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
                 "strip_wiring": strip_wiring,
             },
             verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.model_dump_json()),  # TODO: avoid double serialization.
+            json=json.loads(trafos.model_dump_json()),  # TODO: avoid double serialization.
             auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )
-        logger.info(
+    logger.info(
             ("PUT %s with id %s in category %s with name %s"),
-            tr.type.value,
-            tr.id,
-            tr.category,
-            tr.name,
+            trafos.type.value,
+            trafos.id,
+            trafos.category,
+            trafos.name,
         )
 
-        if response.status_code != 201:
-            if allow_overwrite_released is False and response.status_code == 409:
+    if response.status_code != 201:
+        if allow_overwrite_released is False and response.status_code == 409:
                 # other reason for 409: type of object in DB and of passed object do not match
-                logger.info(
+            logger.info(
                     "%s with id %s already in DB and released/deprecated",
-                    tr.type.value,
-                    str(tr.id),
+                    trafos.type.value,
+                    str(trafos.id),
                 )
-            else:
-                msg = (
-                    f"COULD NOT PUT {str(tr.type)} with id {tr.id}.\n"
+        else:
+            msg = (
+                    f"COULD NOT PUT {str(trafos.type)} with id {trafos.id}.\n"
                     f"Response status code {response.status_code} "
                     f"with response text:\n{response.text}"
                 )
-                logger.error(msg)
+            logger.error(msg)
 
 
 def delete_transformation_revision(

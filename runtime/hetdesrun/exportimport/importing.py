@@ -6,11 +6,13 @@ from uuid import UUID
 from warnings import deprecated
 
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     update_or_create_transformation_revision,
+    import_using_api
 )
 from hetdesrun.persistence.dbservice.exceptions import (
     DBIntegrityError,
@@ -242,12 +244,20 @@ def import_importables(
     return success_reports
 
 
+class AutoImportSettings(BaseSettings):
+    strip_wirings: bool = Field(alias='HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS', default=False)
+    allow_overwrite_released: bool = Field(alias='HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED', default=False)
+    update_component_code: bool = Field(alias='HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE', default=False)
+    deprecate_older_revisions: bool = Field(alias='HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS', default=False)
+    directly_into_db: bool = True
+
 def import_transformation_from_dir(
     import_dir: str,
     strip_wirings: bool = False,
-    allow_overwrite_released: bool = True,
-    update_component_code: bool = True,
-    deprecate_older_revisions: bool = False,
+    allow_overwrite_released =False,
+    update_component_code = False,
+    deprecate_older_revisions = False,
+    directly_into_db: bool = False,
 ) -> None:
     """Import all transformations from specified download path.
 
@@ -266,26 +276,40 @@ def import_transformation_from_dir(
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
 
-    WARNING: Overwrites possibly existing transformation revisions!
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
         import_transformations("./transformations")
     """
 
-    update_config = MultipleTrafosUpdateConfig(
-        strip_wirings=strip_wirings,
-        allow_overwrite_released=allow_overwrite_released,
-        update_component_code=update_component_code,
-        deprecate_older_revisions=deprecate_older_revisions,
-    )
+    logger.info("Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s", import_dir, strip_wirings, allow_overwrite_released, update_component_code, deprecate_older_revisions)
 
     files_to_upload = get_import_sources(import_dir)
     importables = load_import_sources(files_to_upload)
 
-    for importable in importables:
-        importable.import_config.update_config = update_config
+    if directly_into_db is False:
+        logger.info("Trying endpoint for auto-import, deprecate older revisions not possible.")
 
-    _ = import_importables(importables)
+        for importable in importables:
+            for trafo in importable.transformation_revisions:
+                import_using_api(
+                    trafos = trafo,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    strip_wiring=strip_wirings)
+
+    else:
+        update_config = MultipleTrafosUpdateConfig(
+            strip_wirings=strip_wirings,
+            allow_overwrite_released=allow_overwrite_released,
+            update_component_code=update_component_code,
+            deprecate_older_revisions=deprecate_older_revisions,
+        )
+
+        for importable in importables:
+            importable.import_config.update_config = update_config
+
+        _ = import_importables(importables)
 
 
 @deprecated("This function has been deprecated, use import_transformation_from_dir instead.")
@@ -316,7 +340,7 @@ def import_transformations(
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
 
-    WARNING: Overwrites possibly existing transformation revisions!
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
         import_transformations("./transformations")
