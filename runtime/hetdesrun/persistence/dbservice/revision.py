@@ -204,6 +204,7 @@ def read_component_imports_recursively(
     """
 
     initial_components_dict = {trafo.id: trafo for trafo in trafos if trafo.type is Type.COMPONENT}
+    initial_component_ids = set(initial_components_dict.keys())
 
     all_direct_import_ids = set()
 
@@ -215,22 +216,28 @@ def read_component_imports_recursively(
 
     if session is None:
         with get_session()() as new_session, new_session.begin():
-            return recursively_load_with_component_imports(
+            loaded_component_imports_dict = recursively_load_with_component_imports(
                 tuple(all_direct_import_ids),
-                initial_components_dict,
+                initial_components_dict,  # this will be mutated!
                 new_session,
                 log_error=log_error,
                 possibly_caching=possibly_caching,
             )
 
     else:
-        return recursively_load_with_component_imports(
+        loaded_component_imports_dict = recursively_load_with_component_imports(
             tuple(all_direct_import_ids),
-            initial_components_dict,
+            initial_components_dict,  # this will be mutated!
             session,
             log_error=log_error,
             possibly_caching=possibly_caching,
         )
+
+    return {
+        tr_id: tr
+        for tr_id, tr in loaded_component_imports_dict.items()
+        if not tr_id in initial_component_ids
+    }
 
 
 def update_tr(session: SQLAlchemySession, transformation_revision: TransformationRevision) -> None:
@@ -819,6 +826,12 @@ def get_multiple_transformation_revisions(
                         already_included_trafo_ids.add(nested_trafo_id)
                         dependencies.append(nested_tr_dict[nested_trafo_id])
         tr_list = tr_list + dependencies
+
+        # obtain imported components for all components, recusively
+        components = [tr for tr in tr_list if tr.type is Type.COMPONENT]
+
+        imported_components_by_id = read_component_imports_recursively(components)
+        tr_list = tr_list + list(imported_components_by_id.values())
 
     return tr_list
 

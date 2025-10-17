@@ -1,4 +1,10 @@
-from hetdesrun.component.code_utils import get_global_component_imports
+import pytest
+
+from hetdesrun.component.code_utils import (
+    CodeParsingException,
+    LiteralValidationError,
+    get_global_component_imports,
+)
 
 
 def test_component_import_extraction():
@@ -29,3 +35,21 @@ def some_func():
     """
     found_component_imports = get_global_component_imports(code_str)
     assert len(found_component_imports) == 0
+
+
+def test_component_import_extraction_errors():
+    code_str = """
+  invalid code
+    my_comp = import_comp("caf158f6-5545-44fe-8f12-9438a6a992de")
+    my_comp2 = import_comp("a6e4bb9b-6b85-47b2-bcb2-691b0c0ed744")
+    """
+    with pytest.raises(CodeParsingException):
+        get_global_component_imports(code_str)
+
+    # Arg is not a valid UUID:
+    code_str = """
+my_comp = import_comp(42)
+    """
+
+    with pytest.raises(LiteralValidationError):
+        get_global_component_imports(code_str)

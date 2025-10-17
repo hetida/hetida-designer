@@ -23,6 +23,10 @@ class LiteralEvalError(CodeParsingException):
     pass
 
 
+class LiteralValidationError(CodeParsingException):
+    pass
+
+
 def format_code_with_black(code: str) -> str:
     """Format code with black
 
@@ -315,6 +319,13 @@ def get_global_component_imports(code_str: str) -> list[UUID]:
                             f"Error was: {str(exc)}"
                         )
                         raise LiteralEvalError(msg) from exc
+                    try:
+                        UUID(literal_first_arg)
+                    except Exception as e:  # noqa: BLE001
+                        raise LiteralValidationError(
+                            f"Parsed first argument to import_comp was not a UUID. Got:"
+                            f" {str(literal_first_arg)}"
+                        ) from e
                     found_component_import_ids.append(literal_first_arg)
 
                 if len(val.args) == 2:

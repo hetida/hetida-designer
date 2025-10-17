@@ -19,7 +19,7 @@ from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.component.load import ComponentImportCycleError
+from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import (
@@ -65,6 +65,10 @@ class TrafoExecutionInputValidationError(TrafoExecutionError):
 
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionComponentImportsLoadingError(TrafoExecutionError):
+    """Errors that hapen when loading all imported components recursively"""
 
 
 class TrafoExecutionComponentImportCycleError(TrafoExecutionError):
@@ -332,8 +336,8 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         )
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
-    except ComponentImportCycleError as e:
-        raise TrafoExecutionComponentImportCycleError() from e
+    except CodeParsingException as e:
+        raise TrafoExecutionComponentImportsLoadingError() from e
 
     # Gather all components
     all_components_dict: dict[UUID, TransformationRevision] = {}

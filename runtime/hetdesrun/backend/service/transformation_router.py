@@ -24,6 +24,7 @@ from pydantic import HttpUrl, StrictInt, StrictStr, ValidationError
 from hetdesrun.backend.execution import (
     TrafoExecutionComponentAdapterComponentsNotFound,
     TrafoExecutionComponentImportCycleError,
+    TrafoExecutionComponentImportsLoadingError,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -43,7 +44,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
-from hetdesrun.component.load import ComponentCodeImportError
+from hetdesrun.component.load import ComponentCodeImportError, ComponentImportCycleError
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     UpdateProcessStatus,
@@ -1267,8 +1268,13 @@ async def handle_trafo_revision_execution_request(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    except TrafoExecutionComponentImportCycleError as err:
+    except (ComponentImportCycleError, TrafoExecutionComponentImportCycleError) as err:
         msg = f"Detected component import cycle:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
+
+    except TrafoExecutionComponentImportsLoadingError as err:
+        msg = f"Could not load some component import components:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
