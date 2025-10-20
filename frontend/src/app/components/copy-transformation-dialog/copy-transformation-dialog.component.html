@@ -74,7 +74,30 @@
       [queryParams]="{ id: data.transformation.id }"
       target="_blank"
       >{{ data.transformation.id }}</a
-    >&nbsp;(<a [href]="getDashboardUrl()" target="_blank">dashboard</a>)
+    ><button
+      type="button"
+      (click)="copyToClipboard(data.transformation.id)"
+      [title]="
+        copiedId === data.transformation.id ? 'Copied!' : 'Copy ID to clipboard'
+      "
+      style="
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0 0 0 4px;
+        vertical-align: middle;
+        transition: all 0.2s;
+      "
+    >
+      <mat-icon
+        [style.font-size.px]="14"
+        [style.width.px]="14"
+        [style.height.px]="14"
+      >
+        {{ copiedId === data.transformation.id ? 'check' : 'content_copy' }}
+      </mat-icon>
+    </button>
+    &nbsp;(<a [href]="getDashboardUrl()" target="_blank">dashboard</a>)
   </small>
   <small class="block__small-info"
     >{{ data.transformation.type | titlecase }} revision group ID:
