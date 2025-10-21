@@ -80,7 +80,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
 
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
-        python -c "from hetdesrun.exportimport.importing import import_transformation_from_dir, AutoImportSettings; settings = AutoImportSettings().model_dump(); import_transformation_from_dir(import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",**settings)"
+        python -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir, AutoImportSettings; settings = AutoImportSettings().model_dump(); import_transformation_from_dir(import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",**settings)'
         if [ "$?" -eq 0 ]; then
             echo "Successfully triggered auto import process. See details above."
         else
