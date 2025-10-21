@@ -284,6 +284,8 @@ def import_transformation_from_dir(
     - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend.
 
     WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
@@ -304,7 +306,7 @@ def import_transformation_from_dir(
     importables = load_import_sources(files_to_upload)
 
     if directly_into_db is False:
-        logger.info("Trying endpoint for auto-import, deprecate older revisions not possible.")
+        logger.info("Using endpoint for auto-import.")
 
         for importable in importables:
             for trafo in importable.transformation_revisions:
@@ -313,6 +315,7 @@ def import_transformation_from_dir(
                     allow_overwrite_released=allow_overwrite_released,
                     update_component_code=update_component_code,
                     strip_wiring=strip_wirings,
+                    deprecate_older_revisions=deprecate_older_revisions,
                 )
 
     else:

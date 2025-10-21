@@ -145,6 +145,7 @@ def import_using_api(
     allow_overwrite_released: bool,
     update_component_code: bool,
     strip_wiring: bool,
+    deprecate_older_revisions: bool = False,
 ) -> None:
     try:
         headers = sync_wrapped_get_auth_headers(external=True)
@@ -162,6 +163,7 @@ def import_using_api(
             "allow_overwrite_released": allow_overwrite_released,
             "update_component_code": update_component_code,
             "strip_wiring": strip_wiring,
+            "deprecate_older_revisions": deprecate_older_revisions,
         },
         verify=get_config().hd_backend_verify_certs,
         json=json.loads(trafos.model_dump_json()),  # TODO: avoid double serialization.
