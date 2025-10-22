@@ -68,7 +68,7 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
     execution_context_filter.bind_context(
         current_code_modules=runtime_input.code_modules,
         current_components=runtime_input.components,
-        code_modules_by_trafo_id=code_module_dict,
+        code_modules_by_id=code_module_dict,
         component_revisions_by_trafo_id=component_rev_dict,
         code_hash_dict=code_hash_dict,
         currently_importing=currently_importing,

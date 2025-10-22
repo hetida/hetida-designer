@@ -104,23 +104,29 @@ def import_comp(trafo_id: str) -> ModuleType:
     runtime context bindings step.
     """
 
-    code_modules_by_trafo_id = execution_context_filter.get_value("code_modules_by_trafo_id")
-    if code_modules_by_trafo_id is None:
-        code_modules_by_trafo_id = {}
-
-    if trafo_id not in code_modules_by_trafo_id:
-        raise ComponentCodeImportError(f"Missing component code module for id {trafo_id}")
-
     component_revisions_by_trafo_id = execution_context_filter.get_value(
         "component_revisions_by_trafo_id"
     )
+    if component_revisions_by_trafo_id is None:
+        component_revisions_by_trafo_id = {}
 
     if trafo_id not in component_revisions_by_trafo_id:
         raise ComponentCodeImportError(f"Missing component revision for id {trafo_id}")
 
-    return import_from_code_module(
-        code_modules_by_trafo_id[trafo_id], component_revisions_by_trafo_id[trafo_id]
-    )
+    component_revision = component_revisions_by_trafo_id[trafo_id]
+
+    code_module_uuid = str(component_revision.code_module_uuid)
+
+    code_modules_by_id = execution_context_filter.get_value("code_modules_by_id")
+    if code_modules_by_id is None:
+        code_modules_by_id = {}
+
+    if code_module_uuid not in code_modules_by_id:
+        raise ComponentCodeImportError(f"Missing component code module for id {code_module_uuid}")
+
+    code_module = code_modules_by_id[code_module_uuid]
+
+    return import_from_code_module(code_module, component_revision)
 
 
 def import_from_code_module(
