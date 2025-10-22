@@ -302,8 +302,6 @@ def get_global_component_imports(code_str: str) -> list[UUID]:
                 and hasattr(val.func, "id")
                 and val.func.id == "import_comp"
             ):
-                # TODO: what if user uses import_comp as name for something else?
-
                 if len(val.args) == 1:
                     try:
                         literal_first_arg = ast.literal_eval(val.args[0])
@@ -328,9 +326,11 @@ def get_global_component_imports(code_str: str) -> list[UUID]:
                         ) from e
                     found_component_import_ids.append(literal_first_arg)
 
-                if len(val.args) == 2:
+                if len(val.args) >= 2:
                     # TODO: allow name + version_tag instead of id?
                     # Note: val.keywords should give keyword args
-                    raise NotImplementedError("Not implemented importing from name + version")
+                    raise NotImplementedError(
+                        "Not implemented importing from name + version or other variants."
+                    )
 
     return found_component_import_ids
