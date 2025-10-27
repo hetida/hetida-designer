@@ -21,7 +21,7 @@ ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
 RESERVED_FILTER_KEYS = ["from", "to", "id"]
 
 FilterKey = Annotated[
-    str, Field(min_length=1, pattern=re.compile(r"^[a-zA-Z]\w+$", flags=re.ASCII))
+    str, Field(min_length=1, pattern=re.compile(r"^[a-zA-Z]\w*$", flags=re.ASCII))
 ]
 
 
@@ -143,7 +143,7 @@ class InputWiring(BaseModel):
     use_default_value: bool = False
 
     # we must allow Any as filter value here, since InputWirings for Component Adapter
-    # sinks need to get the actual value as Python object isntead of a str in order
+    # sinks need to get the actual value as Python object instead of a str in order
     # to avoid unnecessary serializing/deserializing between trafo output and
     # component adapter sink execution.
     filters: dict[FilterKey, str | Any | None] = {}

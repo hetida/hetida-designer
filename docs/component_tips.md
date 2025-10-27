@@ -25,6 +25,13 @@ log messages are displayed.
 
 You can use logging instead as described above for basic debugging purposes. Or you can raise an exception containing relevant debugging information in its message.
 
+## Unit tests
+
+Components can contain unit tests (pytest) directly in their component code, i.e.
+functions prefixed with `test_`. Doctests are also supported.
+
+Unit tests can be run from the designer user interface using the corresponding symbol bar button at the top of the corresponding component editor tab.
+
 ## Importing other components
 
 It is possible to import other components and use functions / classes etc from them:

@@ -6565,7 +6565,7 @@
           },
           "filters": {
             "patternProperties": {
-              "^[a-zA-Z]\\w+$": {
+              "^[a-zA-Z]\\w*$": {
                 "anyOf": [
                   {
                     "type": "string"
@@ -7291,7 +7291,7 @@
           },
           "filters": {
             "patternProperties": {
-              "^[a-zA-Z]\\w+$": {
+              "^[a-zA-Z]\\w*$": {
                 "anyOf": [
                   {
                     "type": "string"
