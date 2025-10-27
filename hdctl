@@ -525,7 +525,9 @@ def validate_multits_properties(  # noqa:PLR0912
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     if len(df.columns) == 0:
+        attrs = df.attrs
         df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+        df.attrs = attrs
 
     if len(df.columns) < 3:
         raise ValueError(

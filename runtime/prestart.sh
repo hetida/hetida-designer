@@ -30,7 +30,6 @@ retry() {
             )
     done
 }
-
 _true_equiv="@(|true|yes|y|ok|on|1)"
 
 # Run migrations if this is run as backend service.
@@ -79,8 +78,9 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     fi
 
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
+
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
-        python -c 'from hetdesrun.exportimport.importing import import_importables; from hetdesrun.trafoutils.io.load import get_import_sources, load_import_sources; import_importables(load_import_sources(get_import_sources("'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'")))'
+        python -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir, AutoImportSettings; settings = AutoImportSettings().model_dump(); import_transformation_from_dir(import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",**settings)'
         if [ "$?" -eq 0 ]; then
             echo "Successfully triggered auto import process. See details above."
         else

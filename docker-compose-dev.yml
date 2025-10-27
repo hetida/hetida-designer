@@ -34,7 +34,7 @@ services:
       - HD_USE_AUTH=false
       - MAX_WORKERS=1
       - LOG_LEVEL=DEBUG
-      - LOG_HTTPX=true      
+      - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
       - LOG_DIRECT_PROVISIONING_OUTPUTS=true
 
@@ -47,7 +47,7 @@ services:
     depends_on:
       hetida-designer-db:
         condition: service_healthy
-      hetida-designer-runtime: 
+      hetida-designer-runtime:
         condition: service_started
 
   hetida-designer-runtime:
@@ -67,8 +67,8 @@ services:
       MAX_WORKERS: 1
       LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
-      HETIDA_DESIGNER_PURE_UVICORN: "true"     
-      LOG_DIRECT_PROVISIONING_OUTPUTS: "true" 
+      HETIDA_DESIGNER_PURE_UVICORN: "true"
+      LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
 
 
   hetida-designer-db:

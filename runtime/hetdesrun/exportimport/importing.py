@@ -3,12 +3,15 @@ import os
 from collections.abc import Iterable
 from enum import Enum
 from uuid import UUID
+from warnings import deprecated
 
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
+    import_using_api,
     update_or_create_transformation_revision,
 )
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -24,6 +27,9 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.io.load import (
     Importable,
+    MultipleTrafosUpdateConfig,
+    get_import_sources,
+    load_import_sources,
     load_transformation_revisions_from_directory,
 )
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
@@ -240,6 +246,95 @@ def import_importables(
     return success_reports
 
 
+class AutoImportSettings(BaseSettings):
+    strip_wirings: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS", default=False
+    )
+    allow_overwrite_released: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED", default=False
+    )
+    update_component_code: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE", default=False
+    )
+    deprecate_older_revisions: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS", default=False
+    )
+    directly_into_db: bool = True
+
+
+def import_transformation_from_dir(
+    import_dir: str,
+    strip_wirings: bool = False,
+    allow_overwrite_released: bool = False,
+    update_component_code: bool = False,
+    deprecate_older_revisions: bool = False,
+    directly_into_db: bool = False,
+) -> None:
+    """Import all transformations from specified download path.
+
+    This function imports all transformations together with their documentations.
+    The import_dir should be a path which contains the exported transformations
+    organized in subdirectories corresponding to the categories.
+    The following parameters can be used to
+
+    - strip_wirings: Set to true to reset the test wiring to empty input and output
+        wirings for each transformation revision
+    - allow_overwrite_released: Set to false to disable overwriting of transformation
+        revisions with state "RELEASED" or "DISABLED"
+    - update_component_code: Set to false if you want to keep the component code
+        unchanged
+    - deprecate_older_revisions: Set to true to deprecate all but the latest revision
+        for all revision groups imported. This might result in all imported revisions to
+        be deprecated if these are older than the latest revision in the database.
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend.
+
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
+
+    Usage:
+        import_transformations("./transformations")
+    """
+
+    logger.info(
+        "Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s",  # noqa: E501
+        import_dir,
+        strip_wirings,
+        allow_overwrite_released,
+        update_component_code,
+        deprecate_older_revisions,
+    )
+
+    files_to_upload = get_import_sources(import_dir)
+    importables = load_import_sources(files_to_upload)
+
+    if directly_into_db is False:
+        logger.info("Using endpoint for auto-import.")
+
+        for importable in importables:
+            for trafo in importable.transformation_revisions:
+                import_using_api(
+                    trafos=trafo,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    strip_wiring=strip_wirings,
+                    deprecate_older_revisions=deprecate_older_revisions,
+                )
+
+    else:
+        update_config = MultipleTrafosUpdateConfig(
+            strip_wirings=strip_wirings,
+            allow_overwrite_released=allow_overwrite_released,
+            update_component_code=update_component_code,
+            deprecate_older_revisions=deprecate_older_revisions,
+        )
+
+        for importable in importables:
+            importable.import_config.update_config = update_config
+
+        _ = import_importables(importables)
+
+
+@deprecated("This function will be deprecated, use import_transformation_from_dir instead.")
 def import_transformations(
     download_path: str,
     strip_wirings: bool = False,
@@ -267,7 +362,7 @@ def import_transformations(
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
 
-    WARNING: Overwrites possibly existing transformation revisions!
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
         import_transformations("./transformations")
