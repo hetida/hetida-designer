@@ -1,3 +1,4 @@
+* Add support for specifying wirings via uris.
 * components can now import other components
 * remove deprecated web endpoints for base-items, components, workflows, wirings and documentation
 * remove exporting capabilities for exporting from the pre 0.7 Java backend
