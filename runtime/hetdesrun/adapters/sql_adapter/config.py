@@ -17,6 +17,20 @@ class TimeseriesTableConfig(BaseModel):
         " Note that this is setting does not provide write protection. This has to be ensured "
         "on the database via its security / access management features if necessary.",
     )
+    allow_invalidation: bool = Field(
+        False,
+        description="Whether invalidating data (before writing) is allowed."
+        " If True, metadata on a multitsframe can specify data to be invalidated"
+        " (before the new data is written)."
+        " Note that invalidation without deletion is not supported yet.",
+    )
+    delete_invalidated: bool = Field(
+        False,
+        description="Whether invalidated data should be deleted (before writing)."
+        " If True, metadata on a multitsframe can specify data to be deleted"
+        " (before the new data is written)."
+        " allow_invalidation must be True for deletion to happen.",
+    )
     metric_col_name: str = "metric"
     timestamp_col_name: str = "timestamp"
     fetchable_value_cols: list[str] = ["value"]
@@ -136,6 +150,14 @@ class SQLAdapterConfig(BaseSettings):
 
     sql_databases: list[SQLAdapterDBConfig] = Field(
         [], validation_alias="SQL_ADAPTER_SQL_DATABASES"
+    )
+
+    infer_metrics_from_metric_column_for_deletion_if_not_present: bool = Field(
+        False,
+        description="If set to True, the metrics to be deleted are inferred "
+        "from the metric column of the respective multitsframe. "
+        "Only if 'by_metric' and 'ref_metrics' are not set in the mutlitsframes attrs.",
+        validation_alias="INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT",
     )
 
     model_config = SettingsConfigDict(validate_by_alias=True, validate_by_name=True)

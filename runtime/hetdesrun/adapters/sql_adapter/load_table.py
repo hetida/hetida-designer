@@ -105,6 +105,19 @@ def prepare_validate_loaded_raw_multitsframe(
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
 ) -> pd.DataFrame:
+    """Prepares and validates a multitsframe.
+
+    Preparation is done by enforcing UTC and correct column naming.
+    For validation, the corresponding function is called.
+
+    Args:
+        metrics_list (list[str] | None):
+            Is only None if 'ALL' was provided in the metrics filter when calling the adapter.
+
+    Returns:
+        pd.DataFrame: A validated multitsframe
+    """
+
     # Guarantee that we have utc timezoned timetsamp column (naive timestamps from db
     # will be assumed to be UTC, non-naive will be transformed into explicit UTC):
     multits_frame[ts_table_config.timestamp_col_name] = pd.to_datetime(
@@ -133,11 +146,16 @@ def prepare_validate_loaded_raw_multitsframe(
 
     # setting meta data (attrs)
     validated_multi_ts_frame.attrs = {
-        "ref_interval_start_timestamp": from_datetime.isoformat(),
-        "ref_interval_end_timestamp": to_datetime.isoformat(),
-        "ref_interval_type": "closed",
-        "ref_metrics": metrics_list,
+        "dataset_metadata": {
+            "ref_interval_start_timestamp": from_datetime.isoformat(),
+            "ref_interval_end_timestamp": to_datetime.isoformat(),
+            "ref_interval_type": "closed",
+        },
     }
+    if metrics_list is not None:
+        validated_multi_ts_frame.attrs.update(
+            {"by_metric": {metric: {} for metric in metrics_list}}
+        )
 
     return validated_multi_ts_frame
 

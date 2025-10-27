@@ -1,6 +1,8 @@
 import os
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 from fastapi import FastAPI
@@ -25,8 +27,16 @@ def temporary_sqlite_file_path_ts_db(tmpdir):
     return os.path.join(tmpdir, "temporary_sqlite_ts_db.db")
 
 
+@pytest.fixture()
+def deletion_test_table_size() -> int:
+    """Num of rows written to deletion_test_table in temporary_prefilled_sqlite_ts_db fixture."""
+    return 30
+
+
 @pytest.fixture(scope="function")  # noqa: PT003
-def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
+def temporary_prefilled_sqlite_ts_db(
+    temporary_sqlite_file_path_ts_db, deletion_test_table_size: int
+):
     ts_df = pd.DataFrame(
         {
             "value": [1.2, 1.3, 2, 2.2],
@@ -80,6 +90,21 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
         if_exists="replace",
         index=False,
     )
+
+    # Create deletion test table
+    start = datetime(1949, 5, 23, tzinfo=timezone.utc)
+
+    dates = [(start + timedelta(days=i)).isoformat() for i in range(deletion_test_table_size)]
+
+    del_test_df = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(dates),
+            "metric": ["nf" for _ in range(deletion_test_table_size)],
+            "value": [np.random.random_sample() for _ in range(deletion_test_table_size)],
+        }
+    )
+
+    del_test_df.to_sql("deletion_test_table", engine, if_exists="replace", index=False)
 
     engine.dispose()
 
@@ -157,6 +182,9 @@ def three_sqlite_dbs_configured(
                             "timestamp": "datetime",
                             "value": "measurement_val",
                         },
+                    ),
+                    "deletion_test_table": TimeseriesTableConfig(
+                        appendable=True, allow_invalidation=True, delete_invalidated=True
                     ),
                 },
             ),
