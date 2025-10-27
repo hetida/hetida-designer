@@ -195,11 +195,11 @@ def try_parse_wrapped(
 
 def parse_wrapped_content(
     v: str | dict | list,
-    wrapped_data_objec: Literal["SERIES", "DATAFRAME"],
+    wrapped_data_object: Literal["SERIES", "DATAFRAME"],
 ) -> tuple[str | dict | list, None | dict[str, Any], dict[str, Any]]:
     data_content: str | dict | list
     try:
-        wrapped_object = try_parse_wrapped(v, wrapped_data_objec)
+        wrapped_object = try_parse_wrapped(v, wrapped_data_object)
         parsed_metadata = wrapped_object.metadata__
         data_content = wrapped_object.data__
         parsing_options = wrapped_object.data_parsing_options__
@@ -666,7 +666,7 @@ def parse_via_pydantic(
     }
 
     DynamicModel = create_model(
-        "DynamicyModel",
+        "DynamicModel",
         **type_dict,
         __config__=ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True),
     )  # type: ignore
@@ -776,7 +776,7 @@ def parse_obj_as_type(obj: Any, target_type: type) -> Any:
     """
 
     DynamicModel = create_model(
-        "DynamicyModel",
+        "DynamicModel",
         value=(target_type, ...),
         __config__=ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True),
     )
