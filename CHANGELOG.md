@@ -1,3 +1,4 @@
+* components can now import other components
 * remove deprecated web endpoints for base-items, components, workflows, wirings and documentation
 * remove exporting capabilities for exporting from the pre 0.7 Java backend
 * allow to change single operator revision to a DRAFT revision
