@@ -24,7 +24,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-runtime
-      target: pre-prod
     #image: hetida/designer-backend
     ports:
       - 8080:8090
@@ -55,7 +54,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-runtime
-      target: pre-prod
     #image: hetida/designer-runtime
     ports:
       - 8090:8090
