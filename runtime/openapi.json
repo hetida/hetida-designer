@@ -6501,6 +6501,20 @@
             "type": "string",
             "title": "Workflow Input Name"
           },
+          "uri": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uri",
+            "description": "A wiring can be described completely (apart from the workflow input\nname and the type) by a uri. If such a uri is provided, its information\nwill override other fields. The uri's filters (via query params) will update\nan supplement filters provided via the filters field, possibly overwriting\nthem. I.e. filters set by uri have higher precedence.\n\nThe format is\n\n    hd://<adapter_key>/<ref_id>?filter_key_1=filter_value_1&other_filter=other_value#ref_key=<ref_key>&ref_id_type=<ref_id_type>\n\nNotes:\n* Schema must be \"hd\"\n* must be properly url encoded\n* multiple values for the same filter key will yield an json serialized array\n  (i.e. a string) to this filter. This string will also override any\n  value possibly provided with the filters field.\n* ref_key and ref_id_type can be provided in the \"fragment\" part of the uri"
+          },
           "adapter_id": {
             "anyOf": [
               {
@@ -7230,6 +7244,20 @@
           "workflow_output_name": {
             "type": "string",
             "title": "Workflow Output Name"
+          },
+          "uri": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uri",
+            "description": "A wiring can be described completely (apart from the workflow input\nname and the type) by a uri. If such a uri is provided, its information\nwill override other fields. The uri's filters (via query params) will update\nan supplement filters provided via the filters field, possibly overwriting\nthem. I.e. filters set by uri have higher precedence.\n\nThe format is\n\n    hd://<adapter_key>/<ref_id>?filter_key_1=filter_value_1&other_filter=other_value#ref_key=<ref_key>&ref_id_type=<ref_id_type>\n\nNotes:\n* Schema must be \"hd\"\n* must be properly url encoded\n* multiple values for the same filter key will yield an json serialized array\n  (i.e. a string) to this filter. This string will also override any\n  value possibly provided with the filters field.\n* ref_key and ref_id_type can be provided in the \"fragment\" part of the uri"
           },
           "adapter_id": {
             "anyOf": [
