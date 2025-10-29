@@ -292,7 +292,7 @@ def import_transformation_from_dir(
     WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
-        import_transformations("./transformations")
+        import_transformation_from_dir("./transformations")
     """
 
     logger.info(
@@ -332,67 +332,6 @@ def import_transformation_from_dir(
             importable.import_config.update_config = update_config
 
         _ = import_importables(importables)
-
-
-@deprecated("This function will be deprecated, use import_transformation_from_dir instead.")
-def import_transformations(
-    download_path: str,
-    strip_wirings: bool = False,
-    directly_into_db: bool = False,
-    allow_overwrite_released: bool = True,
-    update_component_code: bool = True,
-    deprecate_older_revisions: bool = False,
-) -> None:
-    """Import all transforamtions from specified download path.
-
-    This function imports all transformations together with their documentations.
-    The download_path should be a path which contains the exported transformations
-    organized in subdirectories corresponding to the categories.
-    The following parameters can be used to
-
-    - directly_into_db: If direct access to the database is possible, set this to true
-        to ommit the detour via the backend
-    - strip_wirings: Set to true to reset the test wiring to empty input and output
-        wirings for each transformation revision
-    - allow_overwrite_released: Set to false to disable overwriting of transformation
-        revisions with state "RELEASED" or "DISABLED"
-    - update_component_code: Set to false if you want to keep the component code
-        unchanged
-    - deprecate_older_revisions: Set to true to deprecate all but the latest revision
-        for all revision groups imported. This might result in all imported revisions to
-        be deprecated if these are older than the latest revision in the database.
-
-    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
-
-    Usage:
-        import_transformations("./transformations")
-    """
-
-    transformation_dict, _ = load_transformation_revisions_from_directory(download_path)
-
-    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
-
-    for level in sorted(ids_by_nesting_level):
-        logger.info("importing level %i transformation revisions", level)
-        for transformation_id in ids_by_nesting_level[level]:
-            transformation = transformation_dict[transformation_id]
-            update_or_create_transformation_revision(
-                transformation,
-                directly_in_db=directly_into_db,
-                allow_overwrite_released=allow_overwrite_released,
-                update_component_code=update_component_code,
-                strip_wiring=strip_wirings,
-            )
-
-    logger.info("finished importing")
-
-    if deprecate_older_revisions:
-        revision_group_ids = {
-            transformation.revision_group_id for _, transformation in transformation_dict.items()
-        }
-        logger.info("deprecate all but latest revision of imported revision groups")
-        for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=directly_into_db)
 
 
 def generate_import_order_file(
