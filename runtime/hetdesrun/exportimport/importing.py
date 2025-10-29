@@ -3,7 +3,6 @@ import os
 from collections.abc import Iterable
 from enum import Enum
 from uuid import UUID
-from warnings import deprecated
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
@@ -12,7 +11,6 @@ from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     import_using_api,
-    update_or_create_transformation_revision,
 )
 from hetdesrun.persistence.dbservice.exceptions import (
     DBIntegrityError,
@@ -262,7 +260,7 @@ class AutoImportSettings(BaseSettings):
     directly_into_db: bool = True
 
 
-def import_transformation_from_dir(
+def import_transformations_from_dir(
     import_dir: str,
     strip_wirings: bool = False,
     allow_overwrite_released: bool = False,
@@ -292,7 +290,7 @@ def import_transformation_from_dir(
     WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
-        import_transformation_from_dir("./transformations")
+        import_transformations_from_dir("./transformations")
     """
 
     logger.info(

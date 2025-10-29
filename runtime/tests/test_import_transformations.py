@@ -11,7 +11,7 @@ from hetdesrun.exportimport.importing import (
     generate_import_order_file,
     import_importable,
     import_importables,
-    import_transformation_from_dir,
+    import_transformations_from_dir,
     update_or_create_transformation_revision,
 )
 from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
@@ -181,7 +181,7 @@ def test_component_import_via_rest_api(caplog):
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformation_from_dir("./transformations/components")
+            import_transformations_from_dir("./transformations/components")
             assert "Reduce data set by leaving out values" in caplog.text
             # name of a component
 
@@ -194,7 +194,7 @@ def test_component_import_via_rest_api(caplog):
     with caplog.at_level(logging.INFO):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformation_from_dir("./transformations/components")
+            import_transformations_from_dir("./transformations/components")
             assert "COULD NOT PUT COMPONENT" in caplog.text
 
 
@@ -203,7 +203,7 @@ def test_workflow_import_via_rest_api(caplog):
     response_mock.status_code = 200
 
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-        import_transformation_from_dir("./transformations/workflows")
+        import_transformations_from_dir("./transformations/workflows")
 
     # at least tries to upload many workflows
     assert patched_put.call_count > 3
@@ -211,7 +211,7 @@ def test_workflow_import_via_rest_api(caplog):
     response_mock.status_code = 400
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
         caplog.clear()
-        import_transformation_from_dir("./transformations/workflows")
+        import_transformations_from_dir("./transformations/workflows")
         assert "COULD NOT PUT WORKFLOW" in caplog.text
 
 
@@ -222,7 +222,7 @@ def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session)
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformation_from_dir("./transformations/components", directly_into_db=True)
+            import_transformations_from_dir("./transformations/components", directly_into_db=True)
             assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
             # id of a component
 
@@ -241,7 +241,7 @@ def test_import_with_deprecate_older_versions(mocked_clean_test_db_session):
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-            import_transformation_from_dir(
+            import_transformations_from_dir(
                 "./transformations/components",
                 deprecate_older_revisions=True,
                 directly_into_db=True,
