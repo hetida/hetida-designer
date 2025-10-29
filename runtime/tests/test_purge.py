@@ -525,7 +525,7 @@ def test_delete_all_restart():
         return_value=None,
     ) as mocked_delete:
         with mock.patch(
-            "hetdesrun.exportimport.purge.import_transformations",
+            "hetdesrun.exportimport.purge.import_transformation_from_dir",
             return_value=None,
         ) as mocked_import:
             with mock.patch(
