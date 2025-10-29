@@ -1,3 +1,4 @@
+* add Pegelonline component
 * **BREAKING CHANGE**: Removed import_transformations function and replaced entirely with import_transformations_from_dir. This may affect import script operations.
 * Add support for specifying wirings via uris.
 * components can now import other components
