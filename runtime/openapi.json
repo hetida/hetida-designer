@@ -2956,7 +2956,6 @@
                   "items": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 60,
                     "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
                   }
                 },
@@ -3320,7 +3319,6 @@
                   "items": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 60,
                     "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
                   }
                 },
@@ -3748,7 +3746,6 @@
                   "items": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 60,
                     "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
                   }
                 },
@@ -6345,7 +6342,6 @@
           "by_name": {
             "items": {
               "type": "string",
-              "maxLength": 60,
               "minLength": 1,
               "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
             },
@@ -6999,7 +6995,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -7068,7 +7063,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8329,7 +8323,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8439,7 +8432,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8452,7 +8444,6 @@
           },
           "category": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Category",
@@ -8573,7 +8564,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8586,7 +8576,6 @@
           },
           "category": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Category",
@@ -8707,7 +8696,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8720,7 +8708,6 @@
           },
           "category": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Category",
@@ -8855,7 +8842,6 @@
           },
           "name": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Name"
@@ -8868,7 +8854,6 @@
           },
           "category": {
             "type": "string",
-            "maxLength": 60,
             "minLength": 1,
             "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
             "title": "Category",
