@@ -33,7 +33,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
+  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("./transformations/");'
 ```
 Check the documentation of [Export and Import of Components/Workflows](./import_export.md) for an introduction of the available options.
 
@@ -45,7 +45,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("./transformations/");'
 ```
 
 In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.

@@ -12,9 +12,11 @@ from hetdesrun.exportimport.importing import (
     import_importable,
     import_importables,
     import_transformations_from_dir,
-    update_or_create_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
+from hetdesrun.exportimport.utils import update_or_create_transformation_revision
+from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
+)
 from hetdesrun.persistence.models.io import InputType
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.io.load import (

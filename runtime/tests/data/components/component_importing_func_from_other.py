@@ -31,5 +31,3 @@ def main(*, inp):
     # write your function code here.
     return {"outp": doubling_func(inp) + 3}
 
-
-# %%
