@@ -25,8 +25,8 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.io.load import (
     Importable,
+    ImportSource,
     MultipleTrafosUpdateConfig,
-    get_import_sources,
     load_import_sources,
     load_transformation_revisions_from_directory,
 )
@@ -302,21 +302,19 @@ def import_transformations_from_dir(
         deprecate_older_revisions,
     )
 
-    files_to_upload = get_import_sources(import_dir)
-    importables = load_import_sources(files_to_upload)
+    importables = load_import_sources([ImportSource(path=import_dir, is_dir=True)])
 
     if directly_into_db is False:
         logger.info("Using endpoint for auto-import.")
 
         for importable in importables:
-            for trafo in importable.transformation_revisions:
-                import_using_api(
-                    trafos=trafo,
-                    allow_overwrite_released=allow_overwrite_released,
-                    update_component_code=update_component_code,
-                    strip_wiring=strip_wirings,
-                    deprecate_older_revisions=deprecate_older_revisions,
-                )
+            import_using_api(
+                trafos=importable.transformation_revisions,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wirings,
+                deprecate_older_revisions=deprecate_older_revisions,
+            )
 
     else:
         update_config = MultipleTrafosUpdateConfig(

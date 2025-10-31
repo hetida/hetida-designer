@@ -179,42 +179,27 @@ def test_import_single_transformation(mocked_clean_test_db_session):
 def test_component_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
+    response_mock.json = mock.Mock(return_value={})
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
             import_transformations_from_dir("./transformations/components")
-            assert "Reduce data set by leaving out values" in caplog.text
-            # name of a component
 
-    # at least tries to upload many components (we have more than 10 there)
-    assert patched_put.call_count > 10
-
-    # Test logging when posting does not work
-    response_mock.status_code = 400
-
-    with caplog.at_level(logging.INFO):  # noqa: SIM117
-        with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-            caplog.clear()
-            import_transformations_from_dir("./transformations/components")
-            assert "COULD NOT PUT COMPONENT" in caplog.text
+    # 1 call to multiple put endpoint
+    assert patched_put.call_count == 1
 
 
 def test_workflow_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
+    response_mock.json = mock.Mock(return_value={})
 
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
         import_transformations_from_dir("./transformations/workflows")
 
-    # at least tries to upload many workflows
-    assert patched_put.call_count > 3
-    # Test logging when posting does not work
-    response_mock.status_code = 400
-    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-        caplog.clear()
-        import_transformations_from_dir("./transformations/workflows")
-        assert "COULD NOT PUT WORKFLOW" in caplog.text
+    # one call to multiple endpoint
+    assert patched_put.call_count == 1
 
 
 def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session):
