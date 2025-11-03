@@ -267,8 +267,13 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 transformation_json = load_json(path)
                 try:
                     transformation = TransformationRevision(**transformation_json)
-                except ValueError as err:
-                    logger.error("ValueError for json from path %s:\n%s", download_path, str(err))
+                except (ValueError, TypeError) as err:
+                    logger.error(
+                        "Error for json from path %s:\n%s",
+                        download_path,
+                        str(err),
+                        extra={"transformation_json": transformation_json},
+                    )
                     continue
             else:
                 if ext != ".pyc":
