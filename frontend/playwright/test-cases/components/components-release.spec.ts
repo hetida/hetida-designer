@@ -127,6 +127,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-value-input-wiring-dialog`
   );
+  await page.waitForSelector('hd-json-editor');
   const componentInputDataReleased = await page
     .locator('hd-json-editor >> .view-lines')
     .innerText();

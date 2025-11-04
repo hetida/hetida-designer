@@ -1,21 +1,22 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('Create a component with Optional Input and Default Value', async ({
+test('Allow null value as default_value for primitive data types, if the value is optional', async ({
   page,
   hetidaDesigner,
   browserName
 }) => {
   // Arrange
   const componentCategory = 'Test';
-  const componentName = `Test Optional Input component ${browserName}`;
+  const componentName = `Test input optional null value component ${browserName}`;
   const componentDescription =
-    'Releases a component with Optional Input and Default Value';
+    'Allow null value as default_value for primitive data types, if the value is optional';
   const componentTag = '0.1.0';
   const componentInputName = 'input';
   const componentOutputName = 'output';
   const inputType = 'OPTIONAL';
-  const inputDataType = 'ANY';
-  const inputDefaultValue = 'defaultValueString';
+  const inputDataType = 'INT';
+  const inputDefaultValue = '1';
+  const inputDefaultValueNull = 'null';
 
   // Act
   // Add a new test component
@@ -64,33 +65,37 @@ test('Create a component with Optional Input and Default Value', async ({
   // Wait for the store to update
   await page.waitForTimeout(2000);
 
-  // Publish component
-  await hetidaDesigner.clickIconInToolbar('Publish');
-  await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
-
-  // Get released component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  // Configure Execute
+  await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
+    `mat-dialog-container:has-text("Execute Component ${componentName} ${componentTag}")`
   );
+  await hetidaDesigner.clickByTestId(
+    `${componentInputName}-use-default-input-wiring-dialog`
+  );
+  await hetidaDesigner.typeInInputByTestId(
+    `${componentInputName}-value-input-wiring-dialog`,
+    inputDefaultValueNull
+  );
+  await page
+    .getByTestId(`${componentInputName}-value-input-wiring-dialog`)
+    .blur();
 
-  const componentDefaultValueReleased = await page
-    .getByTestId(
-      `${componentInputName}-optional-input-default-value-component-io-dialog`
-    )
-    .inputValue();
-
-  await hetidaDesigner.clickByTestId('cancel-component-io-dialog');
+  const validationError = await page
+    .locator('mat-form-field >> mat-error')
+    .isVisible();
 
   // Assert
-  expect(componentDefaultValueReleased).toEqual(inputDefaultValue);
+  expect(validationError).toBeFalsy();
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   // Clear
   const componentCategory = 'Test';
-  const componentName = `Test Optional Input component ${browserName}`;
+  const componentName = `Test input optional null value component ${browserName}`;
   const componentTag = '0.1.0';
+
+  await hetidaDesigner.clickByTestId('cancel-wiring-dialog');
 
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.searchInNavigation(componentName);
@@ -100,11 +105,11 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     componentName
   );
   await page.locator('.mat-mdc-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Deprecate');
+  await hetidaDesigner.clickOnContextMenu('Delete...');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
+    `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
   );
-  await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+  await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
 
   await hetidaDesigner.clearTest();
 });
