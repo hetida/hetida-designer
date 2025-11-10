@@ -16,14 +16,13 @@ the future.
     Number of forecasted points. Must be a positive integer.
 - **forecast_horizon** (String, optional, default value: "2D"):
     Alternative to ``forecast_steps``. Duration formatted like ``"2D"`` or ``"12H"``.
-- **method** (String, default value: "seasonal_trend"):
-    Forecasting strategy. Supported values: ``linear_trend``, ``moving_average``,
-    ``seasonal_trend`` oder ``fourier_trend``.
+- **method** (String, default value: "auto_select"):
+    Forecasting strategy. Supported values: ``auto_select``, ``linear_trend``,
+    ``moving_average``, ``seasonal_trend`` oder ``fourier_trend``.
 
 ## Outputs
 - **plot** (Plotly JSON):
-    Visualisation containing both the history and the forecast, including fallback
-    information in the subtitle.
+    Visualisation containing both the history and the forecast.
 
 ## Remarks
 - Designed for robustness and speed rather than absolute accuracy.
@@ -38,9 +37,10 @@ the future.
   add the two pieces together for the forecast horizon.
 - If no reliable season length can be inferred, the logic automatically falls back to
   the linear trend.
-- The plot subtitle reveals the actually used method and whether the seasonal profile
-  was active.
-
+- Larger gaps (more than five regular intervals) remain unfilled to avoid synthetic
+  bridging values.
+- Hours that are almost always zero in the recent history (last seven days) are
+  forced to zero in the forecast as well.
 ## Example
 ```json
 {
@@ -100,21 +100,25 @@ the future.
 ```
 """
 
-from typing import Optional, Tuple
-
+from typing import Dict, Optional, Set, Tuple
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
 from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
-
 DEFAULT_FORECAST_HORIZON = pd.Timedelta(days=2)
-TREND_TOLERANCE_FRACTION = 0.1  # allow trend plus season to wander 10% beyond historic span
-FLOOR_SLOT_THRESHOLD = 0.6
-FLOOR_TOLERANCE_FRACTION = 0.01
-MAX_TREND_FACTOR_ITERATIONS = 12
-TREND_REDUCTION_FACTOR = 0.8
+SEASONAL_TREND_TOLERANCE_FRACTION = 0.1
+SEASONAL_TREND_MIN_CHANGE_FRACTION = 0.05
+SEASONAL_TREND_REDUCTION_FACTOR = 0.8
+SEASONAL_TREND_MAX_ITERATIONS = 12
+SEASONAL_FLOOR_TOLERANCE_FRACTION = 0.01
+SEASONAL_ALIGNMENT_WINDOW = 10
+SEASONAL_FLOOR_MIN_FRACTION = 0.6
+MAX_INTERPOLATION_GAP_STEPS = 4
+DAILY_ZERO_LOOKBACK_DAYS = 7
+DAILY_ZERO_TOLERANCE = 1e-6
+DAILY_ZERO_REQUIRED_DAYS = 5
 
 
 def resample_time_series_if_needed(
@@ -155,7 +159,7 @@ def resample_time_series_if_needed(
             if not positive_diffs.empty:
                 median_diff = positive_diffs.median()
                 inferred_freq = median_diff
-                # Ein minimaler Toleranzpuffer erlaubt kleine Rundungsfehler in den Zeitstempeln.
+                # A tiny tolerance buffer allows minor rounding deviations in the timestamps.
                 tolerance = pd.Timedelta(microseconds=1)
                 is_regular = median_diff <= pd.Timedelta(0) or (
                     (positive_diffs - median_diff).abs().le(tolerance).all()
@@ -178,14 +182,30 @@ def resample_time_series_if_needed(
 
 
 def clean_time_series_by_interpolation(
-    series: pd.Series, min_required_points: int = 3
+    series: pd.Series,
+    min_required_points: int = 3,
+    max_gap_steps: int = MAX_INTERPOLATION_GAP_STEPS,
 ) -> pd.Series:
     """Replace non-numeric entries, interpolate missing values, drop residual NaNs."""
 
     cleaned = pd.to_numeric(series, errors="coerce")
     cleaned = cleaned.replace([np.inf, -np.inf], np.nan)
     method = "time" if isinstance(cleaned.index, pd.DatetimeIndex) else "linear"
-    cleaned = cleaned.interpolate(method=method).dropna()
+    interpolated = cleaned.interpolate(
+        method=method,
+        limit=max_gap_steps,
+        limit_direction="both",
+    )
+
+    if interpolated.isna().any() and max_gap_steps >= 0:
+        na_mask = interpolated.isna()
+        if na_mask.any():
+            run_ids = (na_mask != na_mask.shift()).cumsum()
+            run_lengths = na_mask.groupby(run_ids).transform("sum")
+            long_gap_mask = run_lengths > max_gap_steps
+            interpolated[long_gap_mask] = np.nan
+
+    cleaned = interpolated.dropna()
     if len(cleaned) < min_required_points:
         raise ComponentInputValidationException(
             "After cleaning missing or infinite values, not enough data points remain (>= 3 required)",
@@ -195,8 +215,10 @@ def clean_time_series_by_interpolation(
     return cleaned
 
 
-def infer_common_floor(series: pd.Series, min_fraction: float = 0.2) -> Optional[float]:
-    """Detect a frequently occurring lower bound (e.g. 0 for Verbrauchsdaten)."""
+def infer_common_floor(
+    series: pd.Series, min_fraction: float = 0.05
+) -> Optional[float]:
+    """Detect a frequently occurring lower bound."""
 
     if len(series) < 5:
         return None
@@ -215,12 +237,84 @@ def infer_common_floor(series: pd.Series, min_fraction: float = 0.2) -> Optional
     return None
 
 
-def moving_average_forecast(
-    series: pd.Series, steps: int, window_size: int
-) -> pd.Series:
-    """Forecast with the mean of the trailing window."""
+def detect_seasonal_floor_slots(
+    series: pd.Series,
+    season_length: int,
+    floor_value: float,
+    tolerance_fraction: float = SEASONAL_FLOOR_TOLERANCE_FRACTION,
+    min_fraction: float = SEASONAL_FLOOR_MIN_FRACTION,
+) -> Dict[int, float]:
+    if season_length < 1 or floor_value is None:
+        return {}
 
-    window = max(1, min(window_size, len(series)))
+    history = series.tail(season_length * 6)
+    if history.empty:
+        return {}
+
+    values = history.to_numpy(dtype=float)
+    indices = np.arange(len(history))
+
+    floor_slots: Dict[int, float] = {}
+    value_range = history.max() - history.min()
+    tolerance = max(value_range * tolerance_fraction, 1e-6)
+    limit = floor_value + tolerance
+
+    for slot in range(season_length):
+        slot_mask = indices % season_length == slot
+        slot_values = values[slot_mask]
+        if slot_values.size == 0:
+            continue
+        fraction_at_floor = (slot_values <= limit).mean()
+        if fraction_at_floor >= min_fraction:
+            floor_slots[slot] = floor_value
+
+    return floor_slots
+
+
+def detect_daily_zero_hours(
+    series: pd.Series,
+    lookback_days: int = DAILY_ZERO_LOOKBACK_DAYS,
+    tolerance: float = DAILY_ZERO_TOLERANCE,
+    required_zero_days: int = DAILY_ZERO_REQUIRED_DAYS,
+) -> Set[int]:
+    if not isinstance(series.index, pd.DatetimeIndex) or series.empty:
+        return set()
+
+    window_start = series.index.max() - pd.Timedelta(days=lookback_days)
+    recent = series[series.index >= window_start]
+    if recent.empty:
+        return set()
+
+    zero_hours: Set[int] = set()
+    grouped = recent.groupby(recent.index.hour)
+    for hour, values in grouped:
+        per_day = values.groupby(values.index.normalize())
+        zero_per_day = per_day.apply(lambda x: (x.abs() <= tolerance).all())
+        zero_day_count = int(zero_per_day.sum())
+        if zero_day_count >= required_zero_days:
+            zero_hours.add(int(hour))
+
+    return zero_hours
+
+
+def moving_average_forecast(series: pd.Series, steps: int) -> pd.Series:
+    """Forecast using the mean of the most recent observations matching the horizon."""
+
+    if steps <= 0:
+        raise ComponentInputValidationException(
+            "`steps` must be a positive integer",
+            error_code="422",
+            invalid_component_inputs=["forecast_steps"],
+        )
+
+    window = min(steps, len(series))
+    if window == 0:
+        raise ComponentInputValidationException(
+            "Moving average forecast requires at least one data point",
+            error_code="422",
+            invalid_component_inputs=["series"],
+        )
+
     avg = float(series.tail(window).mean())
     return pd.Series([avg] * steps)
 
@@ -228,7 +322,6 @@ def moving_average_forecast(
 def linear_trend_forecast(series: pd.Series, steps: int) -> pd.Series:
     """Forecast by extending a least-squares trend over uniformly spaced observations."""
 
-    # Positions 0..n-1 are sufficient because the series is already regularised.
     positions = np.arange(len(series), dtype=float)
     slope, intercept = np.polyfit(positions, series.to_numpy(dtype=float), 1)
     future_positions = np.arange(len(series), len(series) + steps, dtype=float)
@@ -242,17 +335,17 @@ def fourier_trend_forecast(
     season_length: int,
     max_harmonics: int = 3,
 ) -> pd.Series:
-    """Forecast mit linearem Drift plus Fourier-Termen eines Saisonzyklus."""
+    """Forecast with a linear drift plus Fourier terms of a seasonal cycle."""
 
     if season_length < 2:
         raise ComponentInputValidationException(
-            "Fourier-basierte Prognose erfordert eine Saisonlänge von mindestens 2 Schritten.",
+            "Fourier-based forecasting requires a seasonal length of at least two steps.",
             error_code="422",
             invalid_component_inputs=["series"],
         )
     if len(series) < 2:
         raise ComponentInputValidationException(
-            "Fourier-basierte Prognose benötigt mindestens zwei Punkte.",
+            "Fourier-based forecasting needs at least two data points.",
             error_code="422",
             invalid_component_inputs=["series"],
         )
@@ -273,7 +366,7 @@ def fourier_trend_forecast(
         coefficients, *_ = np.linalg.lstsq(design_matrix, values, rcond=None)
     except np.linalg.LinAlgError as exc:
         raise ComponentInputValidationException(
-            "Fourier-Anpassung konnte nicht berechnet werden.",
+            "Unable to compute Fourier fit for the provided series.",
             error_code="422",
             invalid_component_inputs=["series"],
         ) from exc
@@ -311,7 +404,7 @@ def infer_season_length_steps(
         approx_steps = int(round(candidate / freq))
         if approx_steps < 2:
             continue
-        # Die Serie muss mindestens zwei vollständige Saisons enthalten, damit der Mittelwert stabil ist.
+        # Require at least two complete seasons so the seasonal mean is stable.
         if series_length < approx_steps * min_repeats:
             continue
         estimated_cycle = freq * approx_steps
@@ -327,28 +420,28 @@ def seasonal_trend_forecast(
     season_length: int,
     floor_value: Optional[float] = None,
 ) -> Tuple[pd.Series, bool]:
-    """Forecast via additive Zerlegung: Trend (gleitend) + saisonales Mittelwertmuster.
+    """Forecast via additive decomposition: rolling trend plus seasonal mean profile.
 
-    Returns both the forecast series and a flag indicating whether a trendanteil
-    tatsächlich genutzt wurde.
+    Returns both the forecast series and a flag indicating whether a trend component
+    contributed to the result.
     """
 
     if season_length < 2:
         raise ValueError("season_length must be >= 2")
     if len(series) < season_length * 2:
         raise ComponentInputValidationException(
-            "Seasonal trend forecast benötigt mindestens zwei vollständige Saisons.",
+            "Seasonal trend forecast requires at least two complete seasons.",
             error_code="422",
             invalid_component_inputs=["series"],
         )
 
-    # Für das Zerlegen reicht ein Tail, damit aktuelle Muster dominieren.
+    # Focus on the recent portion of the series so current patterns dominate the decomposition.
     tail_length = max(season_length * 4, season_length * 2)
     working_series = series.tail(tail_length)
     values = working_series.to_numpy(dtype=float)
     positions = np.arange(len(values), dtype=float)
 
-    # Trend mit gleitendem Durchschnitt glätten; anschließend Lücken sanft auffüllen.
+    # Smooth the trend with a rolling mean and gently fill remaining gaps afterwards.
     trend_series = (
         working_series.rolling(
             window=season_length, center=True, min_periods=max(2, season_length // 2)
@@ -358,7 +451,7 @@ def seasonal_trend_forecast(
     )
     trend_series = trend_series.ffill().bfill()
     if trend_series.isna().any():
-        # Fallback: einfacher Lineartrend, falls Glättung komplett fehlschlägt.
+        # Fallback: rely on a simple linear trend if smoothing fails completely.
         slope, intercept = np.polyfit(positions, values, 1)
         trend_series = pd.Series(
             slope * positions + intercept, index=working_series.index
@@ -366,7 +459,7 @@ def seasonal_trend_forecast(
 
     trend_values = trend_series.to_numpy(dtype=float)
 
-    # Saisonales Profil aus Mittelwert der Trend-residuals je Saisonposition.
+    # Derive the seasonal profile from the average residual for each seasonal position.
     residuals = values - trend_values
     seasonal_pattern = np.zeros(season_length, dtype=float)
     seasonal_counts = np.zeros(season_length, dtype=int)
@@ -378,16 +471,16 @@ def seasonal_trend_forecast(
     seasonal_pattern = seasonal_pattern / seasonal_counts
     seasonal_pattern -= seasonal_pattern.mean()
 
-    # Trend-Fortschreibung: lineare Regression auf geglätteten Trendwerten.
+    # Extend the trend component via linear regression on the smoothed trend values.
     slope, _ = np.polyfit(positions, trend_values, 1)
     future_idx = np.arange(len(values), len(values) + steps, dtype=float)
 
-    def _build_trend_series(slope_factor: float) -> np.ndarray:
+    def build_trend_series(slope_factor: float) -> np.ndarray:
         scaled_slope = slope * slope_factor
         intercept_local = trend_values[-1] - scaled_slope * (len(values) - 1)
         return scaled_slope * future_idx + intercept_local
 
-    trend_forecast = _build_trend_series(1.0)
+    trend_forecast = build_trend_series(1.0)
 
     seasonal_future = seasonal_pattern[
         (np.arange(len(values), len(values) + steps) % season_length)
@@ -398,35 +491,35 @@ def seasonal_trend_forecast(
     value_min = float(values.min())
     value_max = float(values.max())
     value_range = max(value_max - value_min, 1e-9)
-    tolerance = value_range * TREND_TOLERANCE_FRACTION
+    tolerance = value_range * SEASONAL_TREND_TOLERANCE_FRACTION
 
     trend_used = True
     maximum_change = abs(slope) * max(steps, season_length)
-    if maximum_change < value_range * 0.05:
+    if maximum_change < value_range * SEASONAL_TREND_MIN_CHANGE_FRACTION:
         trend_used = False
     lower_bound = value_min - tolerance
     upper_bound = value_max + tolerance
 
-    def _within_bounds(vals: np.ndarray) -> bool:
+    def within_bounds(vals: np.ndarray) -> bool:
         return vals.min() >= lower_bound and vals.max() <= upper_bound
 
-    if trend_used and not _within_bounds(forecast_values):
+    if trend_used and not within_bounds(forecast_values):
         if slope == 0:
             trend_used = False
         else:
             # Shrink the slope gradually until the forecast remains within the soft bounds.
             factor = 1.0
             adjusted_forecast = forecast_values
-            for _ in range(MAX_TREND_FACTOR_ITERATIONS):
-                factor *= TREND_REDUCTION_FACTOR
-                candidate = _build_trend_series(factor) + seasonal_future
-                if _within_bounds(candidate):
+            for _ in range(SEASONAL_TREND_MAX_ITERATIONS):
+                factor *= SEASONAL_TREND_REDUCTION_FACTOR
+                candidate = build_trend_series(factor) + seasonal_future
+                if within_bounds(candidate):
                     adjusted_forecast = candidate
-                    trend_forecast = _build_trend_series(factor)
+                    trend_forecast = build_trend_series(factor)
                     break
             else:
                 trend_used = False
-                trend_forecast = _build_trend_series(0.0)
+                trend_forecast = build_trend_series(0.0)
                 adjusted_forecast = trend_forecast + seasonal_future
 
             forecast_values = adjusted_forecast
@@ -436,12 +529,13 @@ def seasonal_trend_forecast(
         trend_forecast = np.full(steps, baseline, dtype=float)
         forecast_values = trend_forecast + seasonal_future
 
-    # Hard align: erster Prognosepunkt entspricht exakt dem zuletzt beobachteten Wert.
+    # Keep the first forecast point in sync with the latest observation.
     offset = float(values[-1] - forecast_values[0])
     forecast_values = forecast_values + offset
 
     if floor_value is not None and season_length > 0:
-        floor_tolerance = max(value_range * FLOOR_TOLERANCE_FRACTION, 1e-9)
+        # Detect seasonal slots that usually touch the floor and pin those forecast points.
+        floor_tolerance = max(value_range * SEASONAL_FLOOR_TOLERANCE_FRACTION, 1e-9)
         slot_floor_mask = np.zeros(season_length, dtype=bool)
         indices = np.arange(len(values))
         for slot in range(season_length):
@@ -469,32 +563,135 @@ def build_forecast_series(
     return pd.Series(values.values, index=forecast_index)
 
 
-def _build_method_subtitle(
-    requested_method: str,
-    effective_method: str,
-    seasonal_used: bool,
-    trend_used: Optional[bool],
-) -> str:
-    """Compose subtitle showing the actually used method and status flags."""
+def align_seasonal_forecast_start(
+    values: pd.Series, reference_value: float
+) -> pd.Series:
+    if values.empty:
+        return values
+    offset = reference_value - float(values.iloc[0])
+    if offset == 0:
+        return values
+    return values + offset
 
-    parts = [
-        (
-            f"Verwendete Methode: {effective_method}"
-            if effective_method == requested_method
-            else f"Verwendete Methode: {effective_method} (Fallback für {requested_method})"
-        ),
-        f"Saison aktiv: {'ja' if seasonal_used else 'nein'}",
-    ]
-    if trend_used is not None:
-        parts.append(f"Trend aktiv: {'ja' if trend_used else 'nein'}")
-    return " | ".join(parts)
+
+def run_selected_method(
+    series: pd.Series,
+    steps: int,
+    frequency: pd.Timedelta,
+    floor_value: Optional[float],
+    method: str,
+) -> Tuple[pd.Series, str, bool, Optional[bool]]:
+    seasonal_used = False
+    trend_component_used: Optional[bool] = None
+    effective_method = method
+    season_length_used: Optional[int] = None
+    base_length = len(series)
+
+    if method == "seasonal_trend":
+        season_length = infer_season_length_steps(frequency, len(series))
+        if season_length is None:
+            forecast_values = linear_trend_forecast(series, steps)
+            effective_method = "linear_trend"
+        else:
+            season_length_used = season_length
+            try:
+                forecast_values, trend_component_used = seasonal_trend_forecast(
+                    series,
+                    steps,
+                    season_length,
+                    floor_value=floor_value,
+                )
+                seasonal_used = True
+            except ComponentInputValidationException:
+                forecast_values = linear_trend_forecast(series, steps)
+                effective_method = "linear_trend"
+    elif method == "fourier_trend":
+        season_length = infer_season_length_steps(frequency, len(series))
+        if season_length is None:
+            forecast_values = linear_trend_forecast(series, steps)
+            effective_method = "linear_trend"
+        else:
+            season_length_used = season_length
+            try:
+                forecast_values = fourier_trend_forecast(
+                    series,
+                    steps,
+                    season_length,
+                )
+                seasonal_used = True
+            except ComponentInputValidationException:
+                forecast_values = linear_trend_forecast(series, steps)
+                effective_method = "linear_trend"
+    elif method == "linear_trend":
+        forecast_values = linear_trend_forecast(series, steps)
+    elif method == "moving_average":
+        forecast_values = moving_average_forecast(series, steps)
+    else:
+        # defensive fallback, same as moving average with a horizon-based window
+        forecast_values = moving_average_forecast(series, steps)
+        effective_method = "moving_average"
+
+    if (
+        effective_method in {"seasonal_trend", "fourier_trend"}
+        and season_length_used
+        and floor_value is not None
+    ):
+        floor_slots = detect_seasonal_floor_slots(
+            series, season_length_used, floor_value
+        )
+        if floor_slots:
+            for step in range(steps):
+                slot = (base_length + step) % season_length_used
+                if slot in floor_slots:
+                    forecast_values.iloc[step] = floor_slots[slot]
+
+    if effective_method in {"seasonal_trend", "fourier_trend"}:
+        # Use the average of the most recent observations to soften seasonal alignment.
+        tail_length = min(len(series), SEASONAL_ALIGNMENT_WINDOW)
+        tail_window = series.tail(tail_length)
+        reference_value = float(tail_window.mean()) if not tail_window.empty else np.nan
+        if not np.isnan(reference_value):
+            forecast_values = align_seasonal_forecast_start(
+                forecast_values, reference_value
+            )
+
+    if floor_value is not None:
+        forecast_values = forecast_values.clip(lower=floor_value)
+
+    return forecast_values, effective_method, seasonal_used, trend_component_used
+
+
+def auto_select_forecast(
+    series: pd.Series,
+    steps: int,
+    frequency: pd.Timedelta,
+    floor_value: Optional[float],
+) -> Tuple[pd.Series, str, bool, Optional[bool]]:
+    candidates = ["seasonal_trend", "fourier_trend", "linear_trend", "moving_average"]
+    last_result: Optional[Tuple[pd.Series, str, bool, Optional[bool]]] = None
+
+    for candidate in candidates:
+        result = run_selected_method(series, steps, frequency, floor_value, candidate)
+        forecast_values, effective_method, seasonal_used, trend_used = result
+        last_result = result
+
+        if effective_method == candidate:
+            return result
+
+    # if every candidate fell back to an alternative, return the last computed result
+    if last_result is None:
+        raise ComponentInputValidationException(
+            "Unable to compute forecast using any available method.",
+            error_code="422",
+            invalid_component_inputs=["series"],
+        )
+
+    return last_result
 
 
 def build_forecast_plot(
     series: pd.Series,
     forecast: pd.Series,
-    steps: int,
-    requested_method: str,
     effective_method: str,
     seasonal_used: bool,
     trend_used: Optional[bool],
@@ -502,80 +699,29 @@ def build_forecast_plot(
     """Create a plot closely mirroring the exponential smoothing visualisation."""
 
     combined = pd.concat([series.tail(1), forecast])
-    traces = [
-        go.Scatter(
-            name="Forecast",
-            x=combined.index,
-            y=combined.values,
-            mode="lines+markers",
-            line={"color": "#fc7d0b"},
-        ),
-        go.Scatter(
-            name="Observed Value",
-            x=series.index,
-            y=series.values,
-            mode="lines+markers",
-            line={"color": "#1f77b4"},
-        ),
-    ]
-
-    fig = go.Figure(traces)
+    fig = go.Figure(
+        [
+            go.Scatter(
+                name="Forecast",
+                x=combined.index,
+                y=combined.values,
+                mode="lines",
+                line={"color": "#fc7d0b"},
+            ),
+            go.Scatter(
+                name="Observed Value",
+                x=series.index,
+                y=series.values,
+                mode="lines",
+                line={"color": "#1f77b4"},
+            ),
+        ]
+    )
 
     if series.min() <= 0:
         fig.add_hline(y=0, line={"color": "gray", "width": 1, "dash": "dash"})
 
-    fig.update_layout(
-        xaxis={
-            "showline": True,
-            "showgrid": False,
-            "showticklabels": True,
-            "linecolor": "rgb(204, 204, 204)",
-            "linewidth": 2,
-            "ticks": "outside",
-            "tickfont": {"family": "Arial", "size": 12, "color": "rgb(82, 82, 82)"},
-        },
-        yaxis={
-            "showgrid": True,
-            "zeroline": False,
-            "showline": True,
-            "showticklabels": True,
-        },
-        autosize=False,
-        width=1600,
-        height=700,
-        margin={"autoexpand": False, "l": 50, "r": 250, "t": 100, "b": 50},
-        showlegend=True,
-        plot_bgcolor="white",
-        annotations=[
-            {
-                "xref": "paper",
-                "yref": "paper",
-                "x": 0.0,
-                "y": 1.05,
-                "xanchor": "left",
-                "yanchor": "bottom",
-                "text": "Generic Time Series Forecast",
-                "font": {"family": "Arial", "size": 30, "color": "rgb(37,37,37)"},
-                "showarrow": False,
-            },
-            {
-                "xref": "paper",
-                "yref": "paper",
-                "x": 0.0,
-                "y": 1.0,
-                "xanchor": "left",
-                "yanchor": "bottom",
-                "text": _build_method_subtitle(
-                    requested_method,
-                    effective_method,
-                    seasonal_used,
-                    trend_used,
-                ),
-                "font": {"family": "Arial", "size": 18, "color": "rgb(90,90,90)"},
-                "showarrow": False,
-            },
-        ],
-    )
+    fig.update_layout(title="Generic Time Series Forecast")
 
     return fig
 
@@ -587,7 +733,7 @@ COMPONENT_INFO = {
         "series": {"data_type": "SERIES"},
         "forecast_steps": {"data_type": "INT", "default_value": None},
         "forecast_horizon": {"data_type": "STRING", "default_value": "2D"},
-        "method": {"data_type": "STRING", "default_value": "seasonal_trend"},
+        "method": {"data_type": "STRING", "default_value": "auto_select"},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
@@ -595,8 +741,8 @@ COMPONENT_INFO = {
     "name": "Generic Fast Time Series Forecast",
     "category": "Time Series Analysis",
     "description": "Quick forecast baseline for arbitrary time series inputs.",
-    "version_tag": "1.0.0",
-    "id": "8ea6f84d-920b-4f00-9af7-3e0130bd63f8",
+    "version_tag": "1.0.3",
+    "id": "a7bf4906-6d45-4d65-8ade-1c11ad062e44",
     "revision_group_id": "e2f66407-8297-44fe-8a91-0ed6ce72f553",
     "state": "DRAFT",
 }
@@ -607,7 +753,7 @@ def main(
     series,
     forecast_steps=None,
     forecast_horizon=None,
-    method="seasonal_trend",
+    method="auto_select",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -660,16 +806,20 @@ def main(
         "moving_average",
         "seasonal_trend",
         "fourier_trend",
+        "auto_select",
     }:
         raise ComponentInputValidationException(
-            "`method` must be one of 'linear_trend', 'moving_average', 'seasonal_trend', or 'fourier_trend'",
+            "`method` must be one of 'auto_select', 'linear_trend', 'moving_average', 'seasonal_trend', or 'fourier_trend'",
             error_code="422",
             invalid_component_inputs=["method"],
         )
 
     # Step 2: Resample and clean the series
     prepared, inferred_frequency = resample_time_series_if_needed(series)
-    cleaned = clean_time_series_by_interpolation(prepared)
+    cleaned = clean_time_series_by_interpolation(
+        prepared,
+        max_gap_steps=MAX_INTERPOLATION_GAP_STEPS,
+    )
     floor_value = infer_common_floor(cleaned)
 
     # Step 3: Determine frequency for extrapolating timestamps
@@ -691,51 +841,28 @@ def main(
     seasonal_used = False
     trend_component_used: Optional[bool] = None
     effective_method = method_normalised
-    if method_normalised == "moving_average":
-        default_window = max(1, min(5, len(cleaned)))
-        forecast_values = moving_average_forecast(
-            cleaned, forecast_steps, default_window
+    if method_normalised == "auto_select":
+        # Try the seasonal methods first, then fall back to trend-based variants.
+        forecast_values, effective_method, seasonal_used, trend_component_used = (
+            auto_select_forecast(
+                cleaned,
+                forecast_steps,
+                frequency,
+                floor_value,
+            )
         )
-    elif method_normalised == "seasonal_trend":
-        season_length = infer_season_length_steps(frequency, len(cleaned))
-        if season_length is None:
-            # Fallback auf linearen Trend, wenn keine solide Saisonlänge erkannt werden kann.
-            forecast_values = linear_trend_forecast(cleaned, forecast_steps)
-            effective_method = "linear_trend"
-        else:
-            try:
-                forecast_values, trend_component_used = seasonal_trend_forecast(
-                    cleaned,
-                    forecast_steps,
-                    season_length,
-                    floor_value=floor_value,
-                )
-                seasonal_used = True
-            except ComponentInputValidationException:
-                # Wenn die Zerlegung trotz erkannter Saison scheitert, liefern wir den linearen Trend.
-                forecast_values = linear_trend_forecast(cleaned, forecast_steps)
-                effective_method = "linear_trend"
-    elif method_normalised == "fourier_trend":
-        season_length = infer_season_length_steps(frequency, len(cleaned))
-        if season_length is None:
-            forecast_values = linear_trend_forecast(cleaned, forecast_steps)
-            effective_method = "linear_trend"
-        else:
-            try:
-                forecast_values = fourier_trend_forecast(
-                    cleaned,
-                    forecast_steps,
-                    season_length,
-                )
-                seasonal_used = True
-            except ComponentInputValidationException:
-                forecast_values = linear_trend_forecast(cleaned, forecast_steps)
-                effective_method = "linear_trend"
-    elif method_normalised == "linear_trend":
-        forecast_values = linear_trend_forecast(cleaned, forecast_steps)
-    else:  # sollte nach der Validierung nicht eintreten, bleibt aber defensiv erhalten
-        forecast_values = moving_average_forecast(
-            cleaned, forecast_steps, max(1, min(5, len(cleaned)))
+    else:
+        (
+            forecast_values,
+            effective_method,
+            seasonal_used,
+            trend_component_used,
+        ) = run_selected_method(
+            cleaned,
+            forecast_steps,
+            frequency,
+            floor_value,
+            method_normalised,
         )
 
     if floor_value is not None:
@@ -743,13 +870,18 @@ def main(
 
     forecast_series = build_forecast_series(cleaned, forecast_values, frequency)
 
+    zero_hours = detect_daily_zero_hours(cleaned)
+    if zero_hours and isinstance(forecast_series.index, pd.DatetimeIndex):
+        mask = forecast_series.index.hour.astype(int)
+        zero_indices = np.isin(mask, list(zero_hours))
+        if zero_indices.any():
+            forecast_series.iloc[zero_indices] = 0.0
+
     # Step 5: Create outputs (series + plot)
     plot = plotly_fig_to_json_dict(
         build_forecast_plot(
             cleaned,
             forecast_series,
-            forecast_steps,
-            method_normalised,
             effective_method,
             seasonal_used,
             trend_component_used,
@@ -817,10 +949,9 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             },
         },
         {"workflow_input_name": "forecast_horizon", "filters": {"value": "2D"}},
-        {"workflow_input_name": "method", "filters": {"value": "seasonal_trend"}},
+        {"workflow_input_name": "method", "filters": {"value": "auto_select"}},
     ]
 }
 RELEASE_WIRING = {
     "input_wirings": TEST_WIRING_FROM_PY_FILE_IMPORT["input_wirings"],
 }
-FLOOR_SLOT_THRESHOLD = 0.6
