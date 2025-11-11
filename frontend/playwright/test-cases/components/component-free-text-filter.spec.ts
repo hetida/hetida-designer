@@ -109,5 +109,11 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   );
   await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
 
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
+    )
+  ).waitForElementState('hidden');
+
   await hetidaDesigner.clearTest();
 });

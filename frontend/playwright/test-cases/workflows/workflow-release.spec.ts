@@ -138,7 +138,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-value-input-wiring-dialog`
   );
-  await page.waitForSelector('hd-json-editor');
+  await page.waitForSelector('hd-json-editor >> .view-lines:has-text("Mock")');
   const workflowInputDataReleased = await page
     .locator('.view-lines')
     .innerText();
@@ -208,6 +208,12 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     );
     await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
   }
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+    )
+  ).waitForElementState('hidden');
 
   await hetidaDesigner.clearTest();
 });
