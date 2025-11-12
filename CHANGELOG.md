@@ -1,7 +1,8 @@
+* Add backend support for relative timerange filters for input wirings for sql adapter and generic rest adapters
 * **POSSIBLY BREAKING CHANGE**: from and to timestamps for time intervals are now resolved using dtexp library, possibly involving execution context. This impacts adapters and dashboarding. In particular any input wiring that uses "timestampFrom" and "timestampTo" filters can now behave differently if you provide no / or non-absolute timestamps.
-* **POSSIBLY BREAKING CHANGE**: Generic rest adapters will now be requested with isoformat timestamps using offsets ("+00:00" for UTC) as "from" and "to" (formerly Zulu format was used for UTC)
+* **POSSIBLY BREAKING CHANGE**: Generic rest adapters will now be requested with isoformat timestamps using offsets ("+00:00" for UTC) in "from" and "to" params (formerly Zulu format was used for UTC). Furthermore timestamps will be preferably be sent with "+00:00" offset instead of Zulu "Z" instead. External services and adapters interacting with hetida designer should generally be able to parse all typical isoformat timestamps everywhere where timestamps are sent/received.
 * add Pegelonline component
-* **BREAKING CHANGE**: Removed import_transformations function and replaced entirely with import_transformations_from_dir. This may affect import script operations.
+* **BREAKING CHANGE**: Removed import_transformations function and replaced entirely with import_transformations_from_dir. This may affect import script operations. The new function should be a drop-in replacement.
 * Add support for specifying wirings via uris.
 * components can now import other components
 * remove deprecated web endpoints for base-items, components, workflows, wirings and documentation
