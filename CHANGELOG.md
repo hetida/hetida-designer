@@ -1,3 +1,5 @@
+* **POSSIBLY BREAKING CHANGE**: from and to timestamps for time intervals are now resolved using dtexp library, possibly involving execution context. This impacts adapters and dashboarding. In particular any input wiring that uses "timestampFrom" and "timestampTo" filters can now behave differently if you provide no / or non-absolute timestamps.
+* **POSSIBLY BREAKING CHANGE**: Generic rest adapters will now be requested with isoformat timestamps using offsets ("+00:00" for UTC) as "from" and "to" (formerly Zulu format was used for UTC)
 * add Pegelonline component
 * **BREAKING CHANGE**: Removed import_transformations function and replaced entirely with import_transformations_from_dir. This may affect import script operations.
 * Add support for specifying wirings via uris.

@@ -10,6 +10,8 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
+from hetdesrun.dt_utils import resolve_interval
+
 # %%
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -70,6 +72,8 @@ def main(
 
     rng = np.random.default_rng(seed=random_seed)
 
+    start, end = resolve_interval(timestampFrom, timestampTo)
+
     ts_dfs = []
     for ts_id in metrics:
         metric_params_dict = (
@@ -79,8 +83,8 @@ def main(
         )
 
         dt_range = pd.date_range(
-            start=timestampFrom,
-            end=timestampTo,
+            start=start,
+            end=end,
             freq=(
                 frequency.strip()
                 if frequency.strip() != ""

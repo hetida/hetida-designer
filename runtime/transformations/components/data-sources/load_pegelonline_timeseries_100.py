@@ -30,6 +30,8 @@ from uuid import UUID
 import pandas as pd
 import requests
 
+from hetdesrun.dt_utils import resolve_interval
+
 
 def load_station_by_uuid(station_uuid: UUID) -> dict:
     """Loads station info from Pegelonline by uuid.
@@ -100,9 +102,11 @@ def load_pegelonline_timeseries(
 
     url = f"https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/{str(station_uuid)}/{measurement}/measurements.json"
 
+    start, end = resolve_interval(timestamp_from, timestamp_to)
+
     params = {
-        "start": pd.to_datetime(timestamp_from).isoformat(),
-        "end": pd.to_datetime(timestamp_to).isoformat(),
+        "start": start.isoformat(),
+        "end": end.isoformat(),
     }
 
     response = requests.get(url, params=params, headers={"Accept-Encoding": "gzip"}, timeout=30)

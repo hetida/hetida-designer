@@ -182,14 +182,14 @@ async def test_load_grouped_timeseries_data_together():
         assert args_0[0][0].ref_id == "id_1"
         assert "from" in args_0[0][0].filters
         assert "filter_key" in args_0[0][0].filters
-        assert args_0[0][0].filters["from"] == "2018-09-01T00:00:00Z"
+        assert args_0[0][0].filters["from"] == "2018-09-01T00:00:00+00:00"
         assert args_0[0][1].ref_id == "id_2"
         assert "from" in args_0[0][1].filters
         assert "filter_key" in args_0[0][1].filters
-        assert args_0[0][1].filters["from"] == "2018-09-01T00:00:00Z"
+        assert args_0[0][1].filters["from"] == "2018-09-01T00:00:00+00:00"
         assert len(args_0[1]) == 3
-        assert ("from", "2018-09-01T00:00:00Z") in args_0[1]
-        assert ("to", "2020-01-01T00:00:00Z") in args_0[1]
+        assert ("from", "2018-09-01T00:00:00+00:00") in args_0[1]
+        assert ("to", "2020-01-01T00:00:00+00:00") in args_0[1]
         assert ("filter_key", "filter_value") in args_0[1]
         assert len(kwargs_0) == 1
         assert kwargs_0["adapter_key"] == "test"
@@ -201,10 +201,10 @@ async def test_load_grouped_timeseries_data_together():
         assert args_1[0][0].ref_id == "id_3"
         assert "from" in args_1[0][0].filters
         assert "filter_key" not in args_1[0][0].filters
-        assert args_1[0][0].filters["from"] == "2018-09-01T00:00:00Z"
+        assert args_1[0][0].filters["from"] == "2018-09-01T00:00:00+00:00"
         assert len(args_1[1]) == 2
-        assert ("from", "2018-09-01T00:00:00Z") in args_1[1]
-        assert ("to", "2020-01-01T00:00:00Z") in args_1[1]
+        assert ("from", "2018-09-01T00:00:00+00:00") in args_1[1]
+        assert ("to", "2020-01-01T00:00:00+00:00") in args_1[1]
         assert len(kwargs_1) == 1
         assert kwargs_1["adapter_key"] == "test"
 
@@ -215,10 +215,10 @@ async def test_load_grouped_timeseries_data_together():
         assert args_2[0][0].ref_id == "id_1"
         assert "from" in args_2[0][0].filters
         assert "filter_key" in args_2[0][0].filters
-        assert args_2[0][0].filters["from"] == "2017-09-01T00:00:00Z"
+        assert args_2[0][0].filters["from"] == "2017-09-01T00:00:00+00:00"
         assert len(args_2[1]) == 3
-        assert ("from", "2017-09-01T00:00:00Z") in args_2[1]
-        assert ("to", "2020-01-01T00:00:00Z") in args_2[1]
+        assert ("from", "2017-09-01T00:00:00+00:00") in args_2[1]
+        assert ("to", "2020-01-01T00:00:00+00:00") in args_2[1]
         assert ("filter_key", "filter_value") in args_2[1]
         assert len(kwargs_2) == 1
         assert kwargs_2["adapter_key"] == "test"

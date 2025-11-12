@@ -4784,17 +4784,16 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Override from timestamp. Expected to be explicit UTC.",
+              "description": "Override from timestamp. Expected to be dtexp expression or absolute UTC timestamp",
               "title": "Fromtimestamp"
             },
-            "description": "Override from timestamp. Expected to be explicit UTC."
+            "description": "Override from timestamp. Expected to be dtexp expression or absolute UTC timestamp"
           },
           {
             "name": "toTimestamp",
@@ -4803,17 +4802,16 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Override to timestamp. Expected to be explicit UTC.",
+              "description": "Override to timestamp. Expected to be dtexp expression or absolute UTC timestamp",
               "title": "Totimestamp"
             },
-            "description": "Override to timestamp. Expected to be explicit UTC."
+            "description": "Override to timestamp. Expected to be dtexp expression or absolute UTC timestamp"
           },
           {
             "name": "relNow",
