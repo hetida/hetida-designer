@@ -371,6 +371,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
             runtime_execution_context=exec_by_id_input.runtime_execution_context,
+            reproducibility_reference=exec_by_id_input.resolved_reproducibility_references,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e

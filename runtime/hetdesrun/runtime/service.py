@@ -18,6 +18,7 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
+from hetdesrun.reference_context import set_reproducibility_reference_context
 from hetdesrun.runtime import (
     ComponentException,
     RuntimeExecutionError,
@@ -52,6 +53,9 @@ runtime_logger.addFilter(job_id_context_filter)
 
 
 def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> None:
+    # make reproducibility reference available during runtime execution
+    set_reproducibility_reference_context(runtime_input.reproducibility_reference)
+
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
 

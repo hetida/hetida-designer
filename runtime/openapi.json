@@ -7514,17 +7514,10 @@
       "ReproducibilityReference": {
         "properties": {
           "exec_start_timestamp": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Exec Start Timestamp",
-            "description": "UTC-Timestamp referencing the start time of an execution."
+            "description": "UTC-Timestamp referencing the start time of an execution. If not provided this will be calculated once, probably in the backend. This should be used when 'now' is resolved."
           }
         },
         "type": "object",
@@ -9875,6 +9868,9 @@
           "runtime_execution_context": {
             "$ref": "#/components/schemas/RuntimeExecutionContext",
             "description": "General settings to influence aspects of workflow/component execution"
+          },
+          "reproducibility_reference": {
+            "$ref": "#/components/schemas/ReproducibilityReference"
           }
         },
         "type": "object",

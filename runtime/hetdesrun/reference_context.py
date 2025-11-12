@@ -1,3 +1,4 @@
+import datetime
 from contextvars import ContextVar
 from copy import deepcopy
 
@@ -24,3 +25,7 @@ def set_reproducibility_reference_context(
     new_reference: ReproducibilityReference,
 ) -> None:
     reproducibility_reference_context.set(new_reference)
+
+
+def get_exec_start_from_reproducibility_context() -> datetime.datetime:
+    return get_reproducibility_reference_context().exec_start_timestamp

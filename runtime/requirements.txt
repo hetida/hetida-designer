@@ -529,6 +529,10 @@ defusedxml==0.7.1 \
     --hash=sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69 \
     --hash=sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61
     # via odfpy
+dtexp==0.1.1 \
+    --hash=sha256:8edc2b686406a1a8cff1b5f9212e5c5fc21143eee999d20302923b48fe31806a \
+    --hash=sha256:b3f62511b215392a39e0494a39ae8718d54a9ba37248a2cbe39b269ae90793be
+    # via -r ./requirements.in
 ecdsa==0.19.1 \
     --hash=sha256:30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3 \
     --hash=sha256:478cba7b62555866fcb3bb3fe985e06decbdb68ef55713c4e5ab98c57d508e61
@@ -1858,7 +1862,9 @@ pendulum==3.1.0 \
     --hash=sha256:f8dee234ca6142bf0514368d01a72945a44685aaa2fc4c14c98d09da9437b620 \
     --hash=sha256:f9178c2a8e291758ade1e8dd6371b1d26d08371b4c7730a6e9a3ef8b16ebae0f \
     --hash=sha256:ffb39c3f3906a9c9a108fa98e5556f18b52d2c6451984bbfe2f14436ec4fc9d4
-    # via -r ./requirements.in
+    # via
+    #   -r ./requirements.in
+    #   dtexp
 pillow==11.3.0 \
     --hash=sha256:023f6d2d11784a465f09fd09a34b150ea4672e85fb3d05931d89f373ab14abb2 \
     --hash=sha256:02a723e6bf909e7cea0dac1b0e0310be9d7650cd66222a5f1c571455c0a45214 \
