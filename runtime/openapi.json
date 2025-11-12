@@ -19,7 +19,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoResponse"
+                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
                 }
               }
             }
@@ -448,7 +448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoResponse"
+                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
                 }
               }
             }
@@ -877,7 +877,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoResponse"
+                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
                 }
               }
             }
@@ -1306,7 +1306,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoResponse"
+                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
                 }
               }
             }
@@ -1839,7 +1839,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoResponse"
+                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
                 }
               }
             }
@@ -6216,7 +6216,7 @@
             "default": ""
           },
           "type": {
-            "$ref": "#/components/schemas/FilterType",
+            "$ref": "#/components/schemas/hetdesrun__structure__models__FilterType",
             "description": "Type of the filter"
           },
           "required": {
@@ -6232,13 +6232,6 @@
           "required"
         ],
         "title": "Filter"
-      },
-      "FilterType": {
-        "type": "string",
-        "enum": [
-          "free_text"
-        ],
-        "title": "FilterType"
       },
       "GridstackItemPositioning": {
         "properties": {
@@ -6457,29 +6450,6 @@
         "type": "object",
         "title": "IOInterface",
         "description": "Represents combination of inputs and outputs.\n\nNote: The names in the list of inputs and outputs must be unique, respectively."
-      },
-      "InfoResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "version"
-        ],
-        "title": "InfoResponse"
       },
       "InputType": {
         "type": "string",
@@ -7822,7 +7792,7 @@
             "title": "Name"
           },
           "type": {
-            "$ref": "#/components/schemas/FilterType"
+            "$ref": "#/components/schemas/hetdesrun__structure__models__FilterType"
           },
           "required": {
             "type": "boolean",
@@ -10298,6 +10268,29 @@
         "type": "object",
         "title": "WorkflowWiring"
       },
+      "hetdesrun__adapters__component_adapter__models__InfoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version"
+        ],
+        "title": "InfoResponse"
+      },
       "hetdesrun__adapters__component_adapter__models__MultipleSinksResponse": {
         "properties": {
           "resultCount": {
@@ -10879,6 +10872,13 @@
           "description"
         ],
         "title": "StructureThingNode"
+      },
+      "hetdesrun__structure__models__FilterType": {
+        "type": "string",
+        "enum": [
+          "free_text"
+        ],
+        "title": "FilterType"
       }
     }
   }

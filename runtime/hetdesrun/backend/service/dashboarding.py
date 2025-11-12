@@ -219,7 +219,9 @@ def html_str_to_gridstack_div(
                 div(
                     id=db_id,
                     style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
-                )[Markup(content)]  # noqa: S704 # nosec: B704
+                )[
+                    Markup(content)  # noqa: S704 # nosec: B704
+                ]
             ],
         ]
     ]
