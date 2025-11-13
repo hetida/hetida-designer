@@ -1,6 +1,6 @@
 import os
 from functools import cached_property
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,6 +32,9 @@ class TimeseriesTableConfig(BaseModel):
         " allow_invalidation must be True for deletion to happen.",
     )
     metric_col_name: str = "metric"
+    metric_type: Literal["str", "int"] = Field(
+        "str", description="Type of the metric column (int versus str)."
+    )
     timestamp_col_name: str = "timestamp"
     fetchable_value_cols: list[str] = ["value"]
     writable_value_cols: list[str] = ["value"]

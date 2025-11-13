@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import Literal
 
 import pandas as pd
 from dtexp import DtexpParsingError
@@ -57,6 +58,7 @@ def prepare_sql_statement(
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
     metrics_list: list[str] | None,
+    metric_type: Literal["str", "int"] = "str",
 ) -> Select:
     """Prepare the statement for fetching metrics
 
@@ -66,6 +68,7 @@ def prepare_sql_statement(
     # ad hoc table object without data type specifications since
     # corresponding to the fact that we want to employ pandas read_sql automatic
     # flexible dtype inference.
+
     ts_table = table(
         ts_table_name,
         column(
@@ -75,13 +78,20 @@ def prepare_sql_statement(
         *(column(val_col_name) for val_col_name in ts_table_config.fetchable_value_cols),
     )
 
+    metrics_to_use: list[str] | list[int]
+    if metrics_list is not None:
+        if metric_type == "str":
+            metrics_to_use = metrics_list
+        else:
+            metrics_to_use = [int(metric) for metric in metrics_list]
+
     clauses = (
         ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,
         ts_table.c[ts_table_config.timestamp_col_name] <= to_datetime,
     ) + (
         ()
         if metrics_list is None
-        else (ts_table.c[ts_table_config.metric_col_name].in_(metrics_list),)
+        else (ts_table.c[ts_table_config.metric_col_name].in_(metrics_to_use),)
     )
 
     # ad hoc sqlalchemy expression construction
@@ -203,7 +213,12 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
         ts_table_config = db_config.timeseries_tables[ts_table_name]
 
         statement = prepare_sql_statement(
-            ts_table_name, ts_table_config, from_datetime, to_datetime, metrics_list
+            ts_table_name,
+            ts_table_config,
+            from_datetime,
+            to_datetime,
+            metrics_list,
+            metric_type=ts_table_config.metric_type,
         )
 
         multits_frame = load_sql_query(db_config, statement)

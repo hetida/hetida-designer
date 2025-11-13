@@ -48,8 +48,13 @@ def prepare_validate_multitsframe(
         )
         raise AdapterHandlingException(msg) from e
 
-    # Column mapping
+    # Ensure correct metric column data type before applying column mapping
+    if ts_table_config.metric_type == "str":
+        data_to_send["metric"] = data_to_send["metric"].astype(str)
+    else:
+        data_to_send["metric"] = data_to_send["metric"].astype(int)
 
+    # Column mapping
     data_to_send.rename(
         columns=ts_table_config.column_mapping_hd_to_db,
         inplace=True,  # noqa:PD002
@@ -128,6 +133,13 @@ def _handle_deletion(
     timestamp_col = getattr(table_obj.c, ts_table_config.timestamp_col_name)
     metric_col = getattr(table_obj.c, ts_table_config.metric_col_name)
 
+    metrics_to_use: list[str] | list[int]
+
+    if ts_table_config.metric_type == "str":
+        metrics_to_use = metrics
+    else:
+        metrics_to_use = [int(metric) for metric in metrics]
+
     where_clause = None
 
     # Invalidation interval is set
@@ -141,7 +153,7 @@ def _handle_deletion(
         where_clause = and_(
             start_op(timestamp_col, metadata.invalidation_interval_start),
             end_op(timestamp_col, metadata.invalidation_interval_end),
-            metric_col.in_(metrics),
+            metric_col.in_(metrics_to_use),
         )
 
     # Ref dataset is discrete
@@ -158,7 +170,13 @@ def _handle_deletion(
             return
 
         data_points_to_delete = list(
-            zip(filtered_df["timestamp"], filtered_df["metric"], strict=True)
+            zip(
+                filtered_df["timestamp"],
+                filtered_df["metric"]
+                if ts_table_config.metric_type == "str"
+                else filtered_df["metric"].astype(int),
+                strict=True,
+            )
         )
 
         where_clause = tuple_(timestamp_col, metric_col).in_(data_points_to_delete)
@@ -174,7 +192,7 @@ def _handle_deletion(
         where_clause = and_(
             start_op(timestamp_col, metadata.ref_interval_start_timestamp),
             end_op(timestamp_col, metadata.ref_interval_end_timestamp),
-            metric_col.in_(metrics),
+            metric_col.in_(metrics_to_use),
         )
 
     # Infer interval from data
@@ -186,7 +204,7 @@ def _handle_deletion(
         where_clause = and_(
             start_op(timestamp_col, min_ts),
             end_op(timestamp_col, max_ts),
-            metric_col.in_(metrics),
+            metric_col.in_(metrics_to_use),
         )
 
     # No criteria met

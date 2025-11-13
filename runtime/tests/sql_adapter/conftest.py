@@ -51,6 +51,23 @@ def temporary_prefilled_sqlite_ts_db(
             "metric": ["a", "b", "a", "c"],
         }
     )
+
+    ts_df_with_int_metrics = pd.DataFrame(
+        {
+            "value": [1.2, 1.3, 2, 2.2],
+            "timestamp": pd.to_datetime(
+                [
+                    "2023-08-29T11:58:02+00:00",
+                    "2023-08-29T12:27:31+00:00",
+                    "2023-08-29T13:07:46+00:00",
+                    "2023-08-29T13:07:46+00:00",
+                ]
+            ),
+            "metric": [-1, 42, 3, 4],
+        }
+    )
+    ts_df_with_int_metrics["metric"] = ts_df_with_int_metrics["metric"].astype(int)
+
     engine = create_engine("sqlite+pysqlite:///" + temporary_sqlite_file_path_ts_db, echo=True)
 
     ts_df.to_sql(
@@ -62,6 +79,13 @@ def temporary_prefilled_sqlite_ts_db(
 
     ts_df.to_sql(
         "ts_table",  # ts table name
+        engine,
+        if_exists="replace",  # versus "append"
+        index=False,
+    )
+
+    ts_df_with_int_metrics.to_sql(
+        "ts_table_with_int_metric",  # ts table name
         engine,
         if_exists="replace",  # versus "append"
         index=False,
@@ -171,6 +195,9 @@ def three_sqlite_dbs_configured(
                 timeseries_tables={
                     "ro_ts_table": TimeseriesTableConfig(appendable=False),
                     "ts_table": TimeseriesTableConfig(appendable=True),
+                    "ts_table_with_int_metric": TimeseriesTableConfig(
+                        appendable=True, metric_type="int"
+                    ),
                     "table3": TimeseriesTableConfig(
                         appendable=True,
                         metric_col_name="tsid",
@@ -205,6 +232,14 @@ def app_without_auth() -> FastAPI:
 @pytest.fixture
 def async_test_client_with_sql_adapter(
     two_sqlite_dbs_configured,
+    app_without_auth: FastAPI,
+) -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
+
+
+@pytest.fixture
+def async_test_client_with_sql_adapter_with_timeseries_table(
+    three_sqlite_dbs_configured,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")

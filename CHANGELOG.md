@@ -1,3 +1,5 @@
+* support int metric columns for timeseries tables in sql adapter
+
 ## 0.13.0
 * Add backend support for relative timerange filters (like "now - 10d") for input wirings for sql adapter and generic rest adapters. Now is inferred from reproducibility context exec start timestamp.
 * From and to timestamps for time intervals are now resolved using dtexp library, allowing them to express timeranges relative to execution start timestamp from the reproducibility context. This impacts adapters and dashboarding. In particular any input wiring that uses "timestampFrom" and "timestampTo" filters can now be provided expressions like "now -2d" or "now". This functionality is currently only available via API, not via the frontend.

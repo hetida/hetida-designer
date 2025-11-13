@@ -31,8 +31,8 @@ def test_sql_timeseries_table_structure(three_sqlite_dbs_configured):
     # ts db
     structure_results = get_structure("read_only_timeseries_sqlite_database")
     assert len(structure_results.thingNodes) == 0
-    assert len(structure_results.sources) == 6  # query source + multits sources
-    assert len(structure_results.sinks) == 3  # number of appendable ts tables
+    assert len(structure_results.sources) == 7  # query source + multits sources
+    assert len(structure_results.sinks) == 4  # number of appendable ts tables
 
     for src in structure_results.sources:
         assert src == get_source_by_id(src.id)
@@ -41,13 +41,13 @@ def test_sql_timeseries_table_structure(three_sqlite_dbs_configured):
         assert snk == get_sink_by_id(snk.id)
 
     all_sources = get_sources()
-    assert len(all_sources) == 10
+    assert len(all_sources) == 11
     assert "Table table2" in {src.name for src in all_sources}
     assert not "Table table1" in {src.name for src in all_sources}
     assert not "Table table3" in {src.name for src in all_sources}
 
     all_sinks = get_sinks()
-    assert len(all_sinks) == 6
+    assert len(all_sinks) == 7
 
 
 @pytest.mark.asyncio
@@ -118,6 +118,42 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     assert len(received_data["inp"]) == 4
     assert len(received_data["inp"].columns) == 3
 
+    # Table with int metric
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": "-1",
+                    "timestampFrom": "2023-08-01T11:58:02+00:00",
+                    "timestampTo": "2023-08-29T11:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert len(received_data["inp"]) == 1
+    assert len(received_data["inp"].columns) == 3
+
+    # Table with int metric queried as string
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": '["-1"]',
+                    "timestampFrom": "2023-08-01T11:58:02+00:00",
+                    "timestampTo": "2023-08-29T11:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert len(received_data["inp"]) == 1
+    assert len(received_data["inp"].columns) == 3
+
     # TODO: test combinations of different filters
 
 
@@ -164,6 +200,60 @@ async def test_write_ts_table(three_sqlite_dbs_configured):
                 ref_id_type="SOURCE",
                 filters={
                     "metrics": "test_write",
+                    "timestampFrom": "2023-06-01T11:58:02+00:00",
+                    "timestampTo": "2023-09-01T11:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert len(received_data["inp"]) == 2
+    assert set(received_data["inp"].columns) == {"timestamp", "metric", "value"}
+
+
+@pytest.mark.asyncio
+async def test_write_ts_table_with_int_metric(three_sqlite_dbs_configured):
+    dataframe = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]),
+            "metric": [-1, 22],
+            "value": [42.8, 49.2],
+        }
+    )
+
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": "-1",
+                    "timestampFrom": "2023-06-01T11:58:02+00:00",
+                    "timestampTo": "2023-07-01T11:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert len(received_data["inp"]) == 0
+
+    await send_data(
+        {
+            "outp": FilteredSink(
+                ref_id="read_only_timeseries_sqlite_database/appendable_ts_table/ts_table_with_int_metric",
+                ref_id_type="SINK",
+            )
+        },
+        {"outp": dataframe},
+        adapter_key="sql-adapter",
+    )
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": "-1",
                     "timestampFrom": "2023-06-01T11:58:02+00:00",
                     "timestampTo": "2023-09-01T11:58:02+00:00",
                 },
