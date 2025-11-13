@@ -1,3 +1,4 @@
+## 0.13.1
 * support int metric columns for timeseries tables in sql adapter
 
 ## 0.13.0
