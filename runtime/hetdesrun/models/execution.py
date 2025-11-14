@@ -1,6 +1,7 @@
+from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from hetdesrun.models.repr_reference import ReproducibilityReference
 from hetdesrun.models.wiring import WorkflowWiring
@@ -32,6 +33,19 @@ class ExecByIdBase(BaseModel):
             " execution and can be accessed in component code."
         ),
     )
+
+    @field_validator("runtime_execution_context", mode="before")
+    @classmethod
+    def handle_null_fields(cls, v: Any) -> Any:
+        """Allow to initialize explicitely with null/None
+
+        Fields should not be optional / nullable typed and always be proper objects,
+        but the case that null / None is provided should just call the default_factory
+        and provide the default values.
+        """
+        if v is None:
+            return {}  # will be passed to default_factory
+        return v
 
 
 class ExecByIdInput(ExecByIdBase):

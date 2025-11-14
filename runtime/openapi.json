@@ -6216,7 +6216,7 @@
             "default": ""
           },
           "type": {
-            "$ref": "#/components/schemas/hetdesrun__structure__models__FilterType",
+            "$ref": "#/components/schemas/hetdesrun__adapters__local_file__models__FilterType",
             "description": "Type of the filter"
           },
           "required": {
@@ -7515,7 +7515,7 @@
         },
         "type": "object",
         "title": "RuntimeExecutionContext",
-        "description": "Context that is available during execution in the runtime\n\nMay contain general information needed by components from the invoking\nexecution request."
+        "description": "Context that is available during execution in the runtime\n\nMay contain general information needed by components from the invoking\nexecution request, especially as fallback or default if no direct / explicit\ninformation is available via inputs / filters etc."
       },
       "RuntimeMemoryInfo": {
         "properties": {
@@ -7792,7 +7792,7 @@
             "title": "Name"
           },
           "type": {
-            "$ref": "#/components/schemas/hetdesrun__structure__models__FilterType"
+            "$ref": "#/components/schemas/hetdesrun__adapters__local_file__models__FilterType"
           },
           "required": {
             "type": "boolean",
@@ -10637,6 +10637,13 @@
         ],
         "title": "StructureThingNode"
       },
+      "hetdesrun__adapters__local_file__models__FilterType": {
+        "type": "string",
+        "enum": [
+          "free_text"
+        ],
+        "title": "FilterType"
+      },
       "hetdesrun__adapters__local_file__models__MultipleSinksResponse": {
         "properties": {
           "resultCount": {
@@ -10872,13 +10879,6 @@
           "description"
         ],
         "title": "StructureThingNode"
-      },
-      "hetdesrun__structure__models__FilterType": {
-        "type": "string",
-        "enum": [
-          "free_text"
-        ],
-        "title": "FilterType"
       }
     }
   }
