@@ -2221,7 +2221,7 @@ def generate_dashboard_html(
             dateFormat: 'Z',
             time_24hr: true,
             altInput: true,
-            altFormat: 'Y-m-d h:i',
+            altFormat: 'Y-m-d H:i:S',
             clickOpens: (document.getElementById("override-timerange-select"
                 ).value == "absolute"),
             """
