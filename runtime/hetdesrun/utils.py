@@ -125,6 +125,8 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
 def cache_conditionally(condition_func: Callable) -> Callable:
     """Caching decorator that caches a result if a condition is fulfilled
 
+    * caching only depends on the first argument. That is despite other args varying, the same
+      element may be returned from the cache!
     * The result is only cached if it fulfills a condition that is checked by the condition function
     * The decorated function `func` (see cache_conditionally_decorator) must have exactly one
       hashable argument
@@ -144,11 +146,11 @@ def cache_conditionally(condition_func: Callable) -> Callable:
         if asyncio.iscoroutinefunction(func):
 
             @wraps(func)
-            async def async_cache_wrapper(arg: Any) -> Any:
+            async def async_cache_wrapper(arg: Any, *args: Any, **kwargs: Any) -> Any:
                 if arg in cache:
                     return cache[arg]
 
-                val = await func(arg)
+                val = await func(arg, *args, **kwargs)
 
                 if condition_func(val):
                     cache[arg] = val
@@ -160,11 +162,11 @@ def cache_conditionally(condition_func: Callable) -> Callable:
 
         # Function is synchronous
         @wraps(func)  # type: ignore
-        def cache_wrapper(arg: Any) -> Any:
+        def cache_wrapper(arg: Any, *args: Any, **kwargs: Any) -> Any:
             if arg in cache:
                 return cache[arg]
 
-            val = func(arg)  # type: ignore
+            val = func(arg, *args, **kwargs)  # type: ignore
 
             if condition_func(val):
                 cache[arg] = val

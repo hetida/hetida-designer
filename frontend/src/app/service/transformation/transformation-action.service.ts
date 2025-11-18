@@ -279,9 +279,11 @@ export class TransformationActionService {
 
   public upgradeWorkflowOperators(transformation: Transformation): void {
     if (transformation.type === TransformationType.WORKFLOW) {
-      this.transformationService
-        .upgradeWorkflowOperators(transformation)
-        .subscribe();
+      if (transformation.state === RevisionState.DRAFT) {
+        this.transformationService
+          .upgradeWorkflowOperators(transformation)
+          .subscribe();
+      }
     } else {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} is not a workflow and therefore has no operators.`
@@ -292,9 +294,11 @@ export class TransformationActionService {
 
   public updateExpand(transformation: Transformation): void {
     if (transformation.type === TransformationType.COMPONENT) {
-      this.transformationService
-        .updateExpandComponent(transformation)
-        .subscribe();
+      if (transformation.state === RevisionState.DRAFT) {
+        this.transformationService
+          .updateExpandComponent(transformation)
+          .subscribe();
+      }
     } else {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} is not a component and therefore has no code.`

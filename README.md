@@ -241,7 +241,7 @@ python main.py
 
 If you want to develop against the postgres db running in the docker compose dev environment the command is
 ```shell
-HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
+HD_DATABASE_URL="postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
 ```
 
 In both cases the OpenAPI UI can be found at http://localhost:8000/docs.

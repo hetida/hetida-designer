@@ -20,6 +20,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ async def post_framelike_records(
             ],
             json=list_of_records,
             headers=headers,
-            timeout=60,
+            timeout=get_config().external_request_timeout,
         )
     except httpx.HTTPError as e:
         msg = f"Http error while posting framelike data to {url} for id {ref_id}: {str(e)}"

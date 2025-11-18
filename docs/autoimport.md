@@ -13,7 +13,12 @@ Automatic importing happens at backend startup time (prestart) if the environmen
 
 The autoimport will then include all subdirectories in the directory specified by `HD_BACKEND_AUTOIMPORT_DIRECTORY` and all `.json` files residing there as import sources. It expects them to be structured as described above.
 
-The backend image already includes a `/mnt/autoimport` directory that can be used as the directory path for `HD_BACKEND_AUTOIMPORT_DIRECTORY`.
+The backend image already includes a `/mnt/autoimport` directory that can be used as the directory path for `HD_BACKEND_AUTOIMPORT_DIRECTORY`. To configure how the autoimport is conducted, the following environmental variables can be used:
+- HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS (for strip_wirings)
+- HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED (for allow_overwrite_released)
+- HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE (for update_component_code)
+- HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS (for deprecate_older_revisions)
+Per default, all of the configurable variables are set to "false". See the documentation for [sync](./sync.md) for further information on allow_overwrite_released and update_component_code.
 
 ## Configuring autoimport for each import source
 If you save/mount an additional file having the full name of the import source plus an additional suffix `.config.json`, this file is parsed for configuration for that particular import source. For example if your import source is a file `/mnt/automimport/my_trafos.json` this config file must be `/mnt/autoimport/my_trafos.json.config.json`
@@ -38,4 +43,3 @@ The filter params determine filters that are applied before importing. In this e
 The update config is used to control some aspects of the actual importing process. Here we allow to overwrite existing released transformation revisions.
 
 For further details and other options please refer to the source code mentioned above and the backend openapi documentation (at suburl /api/docs) for the /api/transformations PUT endpoint.
-

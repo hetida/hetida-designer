@@ -8,6 +8,7 @@ boto3
 boto3-stubs[essential]
 datashader
 dateparser
+dtexp
 fastapi>=0.65.2
 fastparquet
 gekko
@@ -35,7 +36,7 @@ pandas
 pendulum
 pillow
 plotly<7
-psycopg2
+psycopg[c]
 pyarrow
 pydantic[dotenv]<3,>=2.11
 pydantic-settings

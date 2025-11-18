@@ -12,7 +12,13 @@ from httpx import ASGITransport, AsyncClient
 from jose import constants, jwk, jwt
 
 from hetdesrun.webservice.application import init_app
-from hetdesrun.webservice.auth_dependency import ExternalAuthMode, InternalAuthMode
+from hetdesrun.webservice.auth_dependency import (
+    ExternalAuthMode,
+    InternalAuthMode,
+)
+from hetdesrun.webservice.auth_dependency import (
+    set_request_auth_context as set_request_auth_context_func,
+)
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
@@ -224,6 +230,42 @@ def valid_access_token_with_role(key_pair):
     return generate_token(
         algorithm="RS256", key=key_pair[0], payload={"some_roles": ["allowed_hd_user"]}
     )
+
+
+@pytest.fixture()
+def valid_access_token_with_several_roles(key_pair):
+    return generate_token(
+        algorithm="RS256",
+        key=key_pair[0],
+        payload={
+            "some_roles": [
+                "some_other_role",
+                "allowed_hd_user",
+                "privileged_hd_user",
+                "some_other_role",
+            ]
+        },
+    )
+
+
+@pytest.fixture()
+def _valid_access_token_with_several_roles_in_context(key_pair):
+    payload = {
+        "some_roles": [
+            "some_other_role",
+            "allowed_hd_user",
+            "privileged_hd_user",
+            "some_other_role",
+        ]
+    }
+    token = generate_token(
+        algorithm="RS256",
+        key=key_pair[0],
+        payload=payload,
+    )
+    set_request_auth_context_func({"token": token, "payload": payload})
+    yield
+    set_request_auth_context_func({})
 
 
 @pytest.fixture()

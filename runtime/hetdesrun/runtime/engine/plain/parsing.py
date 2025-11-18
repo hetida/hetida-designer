@@ -3,7 +3,10 @@
 from collections.abc import Callable, Coroutine
 from typing import cast
 
-from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
+from hetdesrun.component.load import (
+    ComponentCodeImportError,
+    import_func_from_code_module,
+)
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentOutput, ComponentRevision
@@ -68,7 +71,7 @@ def load_func(
     """Load entrypoint function"""
     code_module_uuid = component.code_module_uuid
     try:
-        code = code_module_dict[str(code_module_uuid)].code
+        code_module = code_module_dict[str(code_module_uuid)]
     except KeyError as e:
         # This could alternatively be efficiently validated upfront in WorkflowExecutionInput.
         # However we do it here to be consistent with the other checks (e.g. operators
@@ -82,13 +85,10 @@ def load_func(
         raise NodeFunctionLoadingError(msg) from e
 
     try:
-        component_func = import_func_from_code(
-            code,
-            component.function_name,
-            component_name=str(component.name),
-            component_tag=component.tag,
-            component_uuid_str=str(component.uuid),
+        component_func = import_func_from_code_module(
+            component.function_name, code_module, component
         )
+
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
             f"Could not load node function (Code module uuid: "

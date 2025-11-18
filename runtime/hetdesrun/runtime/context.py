@@ -1,6 +1,7 @@
 import contextvars
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from hdutils import PlotTargetSettings
 
@@ -30,7 +31,8 @@ class RuntimeExecutionContext(BaseModel):
     """Context that is available during execution in the runtime
 
     May contain general information needed by components from the invoking
-    execution request.
+    execution request, especially as fallback or default if no direct / explicit
+    information is available via inputs / filters etc.
     """
 
     plot_target_settings: PlotTargetSettings = Field(default_factory=PlotTargetSettings)
@@ -47,6 +49,21 @@ class RuntimeExecutionContext(BaseModel):
             " information is missing"
         ),
     )
+
+    @field_validator(
+        "plot_target_settings", "hierarchy_object", "global_time_interval", mode="before"
+    )
+    @classmethod
+    def handle_null_fields(cls, v: Any) -> Any:
+        """Allow to initialize explicitely with null/None
+
+        Fields should not be optional / nullable typed and always be proper objects,
+        but the case that null / None is provided should just call the default_factory
+        and provide the default values.
+        """
+        if v is None:
+            return {}  # will be passed to default_factory
+        return v
 
 
 _RUNTIME_EXECUTION_CONTEXT_VAR: contextvars.ContextVar[RuntimeExecutionContext] = (

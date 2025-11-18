@@ -38,6 +38,7 @@ class TransformationRevisionDBModel(Base):
     state: Mapped[State] = mapped_column(Enum(State), nullable=False)
     type: Mapped[Type] = mapped_column(Enum(Type), nullable=False)
     documentation: Mapped[str] = mapped_column(String, nullable=False)
+
     workflow_content: Mapped[dict | None] = mapped_column(
         JSON(none_as_null=True), nullable=True, default=lambda: None
     )

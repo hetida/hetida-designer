@@ -8,6 +8,7 @@ etc.
 
 import ast
 from typing import Any
+from uuid import UUID
 
 import black
 import libcst as cst
@@ -19,6 +20,10 @@ class CodeParsingException(Exception):
 
 
 class LiteralEvalError(CodeParsingException):
+    pass
+
+
+class LiteralValidationError(CodeParsingException):
     pass
 
 
@@ -254,3 +259,78 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
         raise CodeParsingException(msg) from exc
 
     return new_cst.code
+
+
+def get_global_component_imports(code_str: str) -> list[UUID]:
+    """Parses component imports from code
+
+    Parses component code imports like
+
+        my_comp = import_comp("caf158f6-5545-44fe-8f12-9438a6a992de")
+
+        my_second_comp = import_comp("a12358f6-5545-44fe-8f12-9438a6a992de")
+
+    Only parses global assignments, invocations of import_comp at other places are ignored.
+
+    Does not validate that import_comp is actually the import_comp function
+    of hetdesrun!
+
+    Does not validate the parsed ids to import in any way to represent suitable components.
+
+    May raise some variants of CodeParsingException
+    """
+
+    found_component_import_ids = []
+    try:
+        parsed_ast = ast.parse(code_str)
+    except (SyntaxError, ValueError) as exc:
+        msg = f"Could not parse provided Python Code into AST. Error was: {str(exc)}"
+        raise CodeParsingException(msg) from exc
+
+    for element in parsed_ast.body:
+        if isinstance(element, ast.Assign):
+            if len(element.targets) != 1:  # only consider single target assignments
+                continue
+            # The assignment target on the left can be obtained via
+            # assign_target = element.targets[0] # noqa: ERA001
+
+            val = element.value
+
+            if (
+                isinstance(val, ast.Call)
+                and hasattr(val, "func")
+                and hasattr(val.func, "id")
+                and val.func.id == "import_comp"
+            ):
+                if len(val.args) == 1:
+                    try:
+                        literal_first_arg = ast.literal_eval(val.args[0])
+                    except (
+                        ValueError,
+                        TypeError,
+                        SyntaxError,
+                        MemoryError,
+                        RecursionError,
+                    ) as exc:
+                        msg = (
+                            f"Could not literal_eval the arg for import_comp {val.args[0]}. "
+                            f"Error was: {str(exc)}"
+                        )
+                        raise LiteralEvalError(msg) from exc
+                    try:
+                        UUID(literal_first_arg)
+                    except Exception as e:  # noqa: BLE001
+                        raise LiteralValidationError(
+                            f"Parsed first argument to import_comp was not a UUID. Got:"
+                            f" {str(literal_first_arg)}"
+                        ) from e
+                    found_component_import_ids.append(literal_first_arg)
+
+                if len(val.args) >= 2:
+                    # TODO: allow name + version_tag instead of id?
+                    # Note: val.keywords should give keyword args
+                    raise NotImplementedError(
+                        "Not implemented importing from name + version or other variants."
+                    )
+
+    return found_component_import_ids

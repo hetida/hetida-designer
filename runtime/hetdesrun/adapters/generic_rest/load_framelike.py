@@ -196,7 +196,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
                 str(df) if len(df) > 0 else "EMPTY RESULT",
             )
-        except requests.HTTPError as e:
+        except (requests.HTTPError, requests.ConnectionError, requests.RequestException) as e:
             msg = (
                 f"Requesting framelike data from generic rest adapter endpoint {url}"
                 f" failed with Exception {str(e)}"

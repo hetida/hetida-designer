@@ -1,7 +1,9 @@
 import datetime
 import logging
+from typing import Literal
 
 import pandas as pd
+from dtexp import DtexpParsingError
 from pydantic import RootModel, ValidationError
 from sqlalchemy.exc import OperationalError as SQLOpsError
 from sqlalchemy.sql import and_, column, select, table
@@ -16,6 +18,7 @@ from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
     validate_multits_frame,
 )
+from hetdesrun.dt_utils import resolve_interval
 
 logger = logging.getLogger(__name__)
 
@@ -39,21 +42,12 @@ def extract_time_range(
     from_timestamp = source_filters.get("timestampFrom")
     to_timestamp = source_filters.get("timestampTo")
 
-    if from_timestamp is None or to_timestamp is None:
-        msg = "Missing timestamp filters for multitsframe timeseries source"
-        logger.error(msg)
-        raise AdapterHandlingException(msg)
-
     try:
-        from_datetime = pd.to_datetime(from_timestamp, utc=True).to_pydatetime()
-        to_datetime = pd.to_datetime(to_timestamp, utc=True).to_pydatetime()
-    except ValueError as e:  # pragma: no cover
-        msg = (
-            "Could not parse one of multitsframe timestamp filters: "
-            f"(timestampFrom: {from_timestamp}), "
-            f"(timestampTo: {to_timestamp})."
-        )
-        raise AdapterHandlingException(msg) from e
+        from_datetime, to_datetime = resolve_interval(from_timestamp, to_timestamp)
+    except (ValueError, DtexpParsingError) as e:
+        raise AdapterHandlingException(
+            "Could not resolve timestamp filters for multitsframe timeseries source."
+        ) from e
 
     return from_datetime, to_datetime
 
@@ -64,6 +58,7 @@ def prepare_sql_statement(
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
     metrics_list: list[str] | None,
+    metric_type: Literal["str", "int"] = "str",
 ) -> Select:
     """Prepare the statement for fetching metrics
 
@@ -73,6 +68,7 @@ def prepare_sql_statement(
     # ad hoc table object without data type specifications since
     # corresponding to the fact that we want to employ pandas read_sql automatic
     # flexible dtype inference.
+
     ts_table = table(
         ts_table_name,
         column(
@@ -82,13 +78,20 @@ def prepare_sql_statement(
         *(column(val_col_name) for val_col_name in ts_table_config.fetchable_value_cols),
     )
 
+    metrics_to_use: list[str] | list[int]
+    if metrics_list is not None:
+        if metric_type == "str":
+            metrics_to_use = metrics_list
+        else:
+            metrics_to_use = [int(metric) for metric in metrics_list]
+
     clauses = (
         ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,
         ts_table.c[ts_table_config.timestamp_col_name] <= to_datetime,
     ) + (
         ()
         if metrics_list is None
-        else (ts_table.c[ts_table_config.metric_col_name].in_(metrics_list),)
+        else (ts_table.c[ts_table_config.metric_col_name].in_(metrics_to_use),)
     )
 
     # ad hoc sqlalchemy expression construction
@@ -105,6 +108,19 @@ def prepare_validate_loaded_raw_multitsframe(
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
 ) -> pd.DataFrame:
+    """Prepares and validates a multitsframe.
+
+    Preparation is done by enforcing UTC and correct column naming.
+    For validation, the corresponding function is called.
+
+    Args:
+        metrics_list (list[str] | None):
+            Is only None if 'ALL' was provided in the metrics filter when calling the adapter.
+
+    Returns:
+        pd.DataFrame: A validated multitsframe
+    """
+
     # Guarantee that we have utc timezoned timetsamp column (naive timestamps from db
     # will be assumed to be UTC, non-naive will be transformed into explicit UTC):
     multits_frame[ts_table_config.timestamp_col_name] = pd.to_datetime(
@@ -133,11 +149,16 @@ def prepare_validate_loaded_raw_multitsframe(
 
     # setting meta data (attrs)
     validated_multi_ts_frame.attrs = {
-        "ref_interval_start_timestamp": from_datetime.isoformat(),
-        "ref_interval_end_timestamp": to_datetime.isoformat(),
-        "ref_interval_type": "closed",
-        "ref_metrics": metrics_list,
+        "dataset_metadata": {
+            "ref_interval_start_timestamp": from_datetime.isoformat(),
+            "ref_interval_end_timestamp": to_datetime.isoformat(),
+            "ref_interval_type": "closed",
+        },
     }
+    if metrics_list is not None:
+        validated_multi_ts_frame.attrs.update(
+            {"by_metric": {metric: {} for metric in metrics_list}}
+        )
 
     return validated_multi_ts_frame
 
@@ -192,7 +213,12 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
         ts_table_config = db_config.timeseries_tables[ts_table_name]
 
         statement = prepare_sql_statement(
-            ts_table_name, ts_table_config, from_datetime, to_datetime, metrics_list
+            ts_table_name,
+            ts_table_config,
+            from_datetime,
+            to_datetime,
+            metrics_list,
+            metric_type=ts_table_config.metric_type,
         )
 
         multits_frame = load_sql_query(db_config, statement)

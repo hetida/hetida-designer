@@ -72,6 +72,14 @@ export class TransformationService {
               'Workflow was resetted because changes introduced cycles.'
             );
           }
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.UNALLOWED_COMPONENT_IMPORTS
+          ) {
+            this.notificationService.warn(
+              'Component was resetted because component imports do not obey rules, e.g. must be released for released component.'
+            );
+          }
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );

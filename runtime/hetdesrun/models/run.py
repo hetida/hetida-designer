@@ -218,6 +218,10 @@ class WorkflowExecutionInput(BaseModel):
         description="General settings to influence aspects of workflow/component execution",
     )
 
+    reproducibility_reference: ReproducibilityReference = Field(
+        default_factory=ReproducibilityReference
+    )
+
     @field_validator("components")
     @classmethod
     def components_unique(cls, components: list[ComponentRevision]) -> list[ComponentRevision]:

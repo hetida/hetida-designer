@@ -6,7 +6,7 @@ More specifically, it enables
 * Writing dataframes to tables, either replacing the complete target table or appending to it. Tables are created in both cases if necessary.
 * Reading and writing timeseries data from sql databases (e.g. timescale db).
 
-Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../custom_python_dependencies.md). Sqlite support as well as postgres support via [psycopg2](https://pypi.org/project/psycopg2/) are preinstalled.
+Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../custom_python_dependencies.md). Sqlite support as well as postgres support via [psycopg3](https://pypi.org/project/psycopg/) are preinstalled.
 
 ## Limitations
 Under the hood this adapter simply invokes Pandas' built-in [read_sql_table](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_table.html), [read_sql_query](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_query.html) and [to_sql](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html) methods. In particular access is sequential and configurability of some possibly relevant aspects like connection management is limited. Additionally, parsing of data types is handled by Pandas automatically and cannot be configured in detail.
@@ -39,7 +39,18 @@ Furthermore, the tables to be used as sinks can be configured:
 * "append_tables" generate sinks that allow to append tabular data to them.
 * "replace_tables" replace the complete table with the provided dataframe on each write!
 
+Additionally, timeseries tables, which can be used as sources or sinks, can be configured.  
+They must be listed under "timeseries_tables" in the database configuration.  
+An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in which the timeseries table can be configured further.  
+Timeseries tables can be configured to allow deletion of rows. Refer to [Metadata field conventions](../metadata_attrs.md#metadata-field-conventions) for more information on configuring invalidation or deletion using metadata.
+
 Note that tables will be created and columns added automatically depending on the data sent to these sinks.
+
+By default, the API serving the hetida designer frontend is part of the runtime.  
+This can be changed by setting `SQL_ADAPTER_SERVICE_IN_RUNTIME` to `false`. Then the API is part of the backend.
+
+`INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT` controls whether the metrics to delete are inferred from the data of the MULTITSFRAME, if no metric is specified in the metadata.  
+This inference is disabled by default.
 
 Here we give an example configuration for mounting and accessing two sqlite databases and additionally access to hetida designer's own postgres db (only for demonstration, do not do this in a real setup!):
 
@@ -102,7 +113,7 @@ Here we give an example configuration for mounting and accessing two sqlite data
           {
             "name": "hd postgres",
             "key": "hd_postgres_db",
-            "connection_url": "postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db",
+            "connection_url": "postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db",
             "append_tables": [],
             "replace_tables" : []
           }

@@ -19,6 +19,7 @@ from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import (
@@ -32,6 +33,7 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_component_imports_recursively,
     read_multiple_transformation_revisions_by_id_with_possible_caching,
     read_single_transformation_revision_with_caching,
 )
@@ -47,6 +49,7 @@ from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -62,6 +65,14 @@ class TrafoExecutionInputValidationError(TrafoExecutionError):
 
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionComponentImportsLoadingError(TrafoExecutionError):
+    """Errors that hapen when loading all imported components recursively"""
+
+
+class TrafoExecutionComponentImportCycleError(TrafoExecutionError):
+    """During resolving component imports a cycle has been detected"""
 
 
 class TrafoExecutionComponentAdapterComponentsNotFound(TrafoExecutionError):
@@ -205,57 +216,14 @@ def get_component_ids_from_component_adapter_wirings(
     return comp_ids_from_inp_wirings, comp_ids_from_outp_wirings
 
 
-def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
-    """Loads trafo revision and prepares execution input from it.
-
-    Loads the trafo revision specified by id and prepares
-    an workflow execution input object which can be executed by the runtime
-    -- either code or by calling runtime rest endpoint for running
-    workflows.
-
-    Note that trafo revisions of type components will be wrapped in
-    an ad-hoc workflow structure for execution.
-    """
-    try:
-        transformation_revision = read_single_transformation_revision_with_caching(
-            exec_by_id_input.id
-        )
-        logger.debug(
-            "found possibly cached transformation revision with id %s",
-            str(exec_by_id_input.id),
-        )
-    except DBNotFoundError as e:
-        raise TrafoExecutionNotFoundError() from e
-
-    if transformation_revision.type == Type.COMPONENT:
-        tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
-        assert isinstance(  # noqa: S101
-            tr_workflow.content, WorkflowContent
-        )  # hint for mypy
-        nested_transformations = {
-            tr_workflow.content.operators[0].transformation_id: transformation_revision
-        }
-    else:
-        tr_workflow = transformation_revision
-        nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
-
-    nested_components = {
-        tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
-    }
-    workflow_node = tr_workflow.to_workflow_node(
-        operator_id=uuid4(),
-        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
-    )
-
+def load_componen_adapter_wirings_components(
+    wiring: WorkflowWiring,
+) -> list[TransformationRevision]:
     # Obtain component adapter component ids from wiring
     (
         component_adapter_component_ids_from_input_wirings,
         component_adapter_component_ids_from_output_wirings,
-    ) = (
-        get_component_ids_from_component_adapter_wirings(exec_by_id_input.wiring)
-        if exec_by_id_input.wiring is not None
-        else ([], [])
-    )
+    ) = get_component_ids_from_component_adapter_wirings(wiring) if wiring is not None else ([], [])
 
     # Load component adapter components
     try:
@@ -300,50 +268,110 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         component_adapter_source_components + component_adapter_sink_components
     )
 
+    return component_adapter_components
+
+
+def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
+    """Loads trafo revision and prepares execution input from it.
+
+    Loads the trafo revision specified by id and prepares
+    an workflow execution input object which can be executed by the runtime
+    -- either code or by calling runtime rest endpoint for running
+    workflows.
+
+    Note that trafo revisions of type components will be wrapped in
+    an ad-hoc workflow structure for execution.
+    """
+
+    # Load and prepare trafo to execute, convert to workflow_node
+
+    try:
+        transformation_revision = read_single_transformation_revision_with_caching(
+            exec_by_id_input.id
+        )
+        logger.debug(
+            "found possibly cached transformation revision with id %s",
+            str(exec_by_id_input.id),
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionNotFoundError() from e
+
+    if transformation_revision.type == Type.COMPONENT:
+        tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
+        assert isinstance(  # noqa: S101
+            tr_workflow.content, WorkflowContent
+        )  # hint for mypy
+        nested_transformations = {
+            tr_workflow.content.operators[0].transformation_id: transformation_revision
+        }
+    else:
+        tr_workflow = transformation_revision
+        nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
+
+    nested_components = {
+        tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
+    }
+    workflow_node = tr_workflow.to_workflow_node(
+        operator_id=uuid4(),
+        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
+    )
+
+    # Handle wiring fallback to test_wiring
+
+    if exec_by_id_input.wiring is None:
+        logger.warning("Since no wiring was provided, fall back to test_wiring!")
+        wiring_to_use = transformation_revision.test_wiring
+
+    else:
+        wiring_to_use = exec_by_id_input.wiring
+
+    # Load component adapter components
+
+    component_adapter_components = load_componen_adapter_wirings_components(wiring_to_use)
+
+    # Resolve and load component imports, i.e. components importing components
+    try:
+        all_imported_components_dict = read_component_imports_recursively(
+            list(nested_components.values()) + component_adapter_components
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionNotFoundError() from e
+    except CodeParsingException as e:
+        raise TrafoExecutionComponentImportsLoadingError() from e
+
+    # Gather all components
+    all_components_dict: dict[UUID, TransformationRevision] = {}
+
+    for comp in nested_components.values():
+        all_components_dict[comp.id] = comp
+
+    for comp in component_adapter_components:
+        all_components_dict[comp.id] = comp
+
+    for comp in all_imported_components_dict.values():
+        all_components_dict[comp.id] = comp
+
     # Build WorkflowExecutionInput and validate everything in combination
     try:
         execution_input = WorkflowExecutionInput(
-            code_modules=(
-                list(
-                    set().union(
-                        (
-                            tr_component.to_code_module()
-                            for tr_component in nested_components.values()
-                        ),
-                        (comp_tr.to_code_module() for comp_tr in component_adapter_components),
-                    )
-                )
-            ),
-            components=(
-                list(
-                    {
-                        c_rev.uuid: c_rev
-                        for c_rev in (
-                            [
-                                component.to_component_revision()
-                                for component in nested_components.values()
-                            ]
-                            + [
-                                comp_tr.to_component_revision()
-                                for comp_tr in component_adapter_components
-                            ]
-                        )
-                    }.values()
-                )
+            code_modules=list({comp.to_code_module() for comp in all_components_dict.values()}),
+            # convert to uniques without using set, since ComponentRevision is not hashable:
+            components=list(
+                {
+                    (c_rev := comp.to_component_revision()).uuid: c_rev
+                    for comp in all_components_dict.values()
+                }.values()
             ),
             workflow=workflow_node,
             configuration=ConfigurationInput(
                 name=str(tr_workflow.id),
                 run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
             ),
-            workflow_wiring=(
-                exec_by_id_input.wiring
-                if exec_by_id_input.wiring is not None
-                else transformation_revision.test_wiring
-            ),
+            workflow_wiring=wiring_to_use,
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
             runtime_execution_context=exec_by_id_input.runtime_execution_context,
+            reproducibility_reference=exec_by_id_input.resolved_reproducibility_references,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e
@@ -408,7 +436,7 @@ async def run_execution_input(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_runtime_engine_url(), "runtime")
             try:
                 pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
                     "pure_runtime_request"

@@ -33,6 +33,7 @@ module.exports = function (config) {
       }
     },
     singleRun: false,
-    restartOnFileChange: true
+    restartOnFileChange: true,
+    files: ['../node_modules/plotly.js/dist/plotly.min.js']
   });
 };

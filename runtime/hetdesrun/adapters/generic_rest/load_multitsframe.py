@@ -1,9 +1,11 @@
 import asyncio
 
 import pandas as pd
+from dtexp import DtexpParsingError
 
 from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
+from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.models.data_selection import FilteredSource
 
 
@@ -23,13 +25,18 @@ async def load_multitsframes_from_adapter(
     data_to_load: dict[str, FilteredSource], adapter_key: str
 ) -> dict[str, pd.DataFrame]:
     for filtered_source in data_to_load.values():
-        if (not isinstance(filtered_source.filters.get("timestampFrom", None), str)) or (
-            not isinstance(filtered_source.filters.get("timestampTo", None), str)
-        ):
-            raise AdapterClientWiringInvalidError("MultiTSFrame data with no to/from filters.")
+        start_expr = filtered_source.filters.pop("timestampFrom", None)
+        end_expr = filtered_source.filters.pop("timestampTo", None)
 
-        filtered_source.filters["from"] = filtered_source.filters.pop("timestampFrom")
-        filtered_source.filters["to"] = filtered_source.filters.pop("timestampTo")
+        try:
+            start, end = resolve_interval(start_expr, end_expr)
+        except (ValueError, DtexpParsingError) as e:
+            raise AdapterClientWiringInvalidError(
+                "MultiTSFrame data could not resolve to/from filters."
+            ) from e
+
+        filtered_source.filters["from"] = start.isoformat()
+        filtered_source.filters["to"] = end.isoformat()
 
     loaded_frames = await asyncio.gather(
         *[

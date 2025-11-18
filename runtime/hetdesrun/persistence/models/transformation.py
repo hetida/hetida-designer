@@ -14,6 +14,7 @@ from pydantic import (
     ValidationError,
     ValidationInfo,
     field_validator,
+    model_validator,
 )
 
 from hetdesrun.models.code import (
@@ -50,6 +51,7 @@ class TrafoUpdateState(StrEnum):
     RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED = (
         "RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED"
     )
+    UNALLOWED_COMPONENT_IMPORTS = "UNALLOWED_COMPONENT_IMPORTS"
 
 
 logger = logging.getLogger(__name__)
@@ -152,31 +154,13 @@ def add_trafo_outputs_for_surplus_wf_outputs(
         io_interface_outputs.append(wf_output.to_transformation_output())
 
 
-class TransformationRevision(BaseModel):
-    """Either a component revision or a workflow revision
+class TransformationRevisionStub(BaseModel):
+    """Stub of TransformationRevision
 
-    Both can be instantiated as an operator in a workflow revision
-    (yes, workflow in workflow in workflow... is possible) and are therefore
-    able to transform input data to output result data.
+    Not containing actual content (WorkflowContent, component code),
+    test wiring / release wiring and documentation.
 
-    Note that there is no actual component or workflow entity, only revisions. Revisions are tied
-    together via the group id, and otherwise do not need to have anything in common, i.e. their
-    name and their interface etc. can differ completely.
-
-    During the development of a transformation revision it has the state DRAFT and may go through
-    stages where it does not meet all requirements e.g. for execution. Therefore, some properties
-    are not validated for revisions in DRAFT state and in particular the test_wiring is not
-    validated for entities of this class, but instead in the context of execution.
-
-    Revisions with the state RELEASED are what makes the execution reproducible - they cannot be
-    edited anymore except for the two attributes test_wiring and documentation, and only they can
-    be instantiated as operators.
-
-    Additionally RELEASED revisions cannot be deleted, but their state can be changed to
-    DISABLED. DISABLED revisions cannot be instantiated as new operators anymore but existing
-    operators from them still work (for reproducibility). Note that in the Frontend the DISABLED
-    state is called "DEPRECATED". The frontend then allows to replace deprecated operators by other
-    (possibly newer) released revisions from the the same revision group (i.e. same group id).
+    But everything that defines the trafo's interface.
     """
 
     id: UUID  # noqa: A003
@@ -211,47 +195,11 @@ class TransformationRevision(BaseModel):
         ...,
         description="one of " + ", ".join(['"' + str(x) + '"' for x in list(Type)]),
     )
-
-    documentation: str = Field(
-        (
-            "# New Component/Workflow\n"
-            "## Description\n"
-            "## Inputs\n"
-            "## Outputs\n"
-            "## Details\n"
-            "## Examples\n"
-        ),
-        description="Documentation in markdown format.",
-    )
-    content: str | WorkflowContent = Field(
-        ...,
-        description=(
-            "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
-        ),
-    )
-
     io_interface: IOInterface = Field(
         ...,
         description=(
             "In case of type WORKFLOW determined from content. "
             "To change from state DRAFT to state RELEASED all inputs and outputs must have names."
-        ),
-    )
-
-    test_wiring: WorkflowWiring = Field(
-        ...,
-        description=(
-            "To enable execution the input and output wirings must match "
-            "the inputs and outputs of the io_interface, which is validated "
-            "in the scope of the execution."
-        ),
-    )
-
-    release_wiring: WorkflowWiring | None = Field(
-        None,
-        description=(
-            "Wiring that is stored during release. This allows to reset to a fixed wiring."
-            " And to use a fixed wiring for dashboarding."
         ),
     )
 
@@ -316,6 +264,129 @@ class TransformationRevision(BaseModel):
         ):
             raise ValueError("disabled_timestamp must be set if state is DISABLED")
         return v
+
+    @field_validator("io_interface")
+    @classmethod
+    def io_interface_no_names_empty(
+        cls, io_interface: IOInterface, info: ValidationInfo
+    ) -> IOInterface:
+        try:
+            state = info.data["state"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot validate that no names in io_interface are empty "
+                "if attribute 'state' is missing!"
+            ) from error
+
+        if state is State.DRAFT:
+            return io_interface
+
+        for io in io_interface.inputs + io_interface.outputs:
+            if io.name is None or io.name == "":
+                raise ValueError(
+                    "Released transformation revisions may not have empty input or output names!"
+                )
+
+        return io_interface
+
+    @classmethod
+    def from_orm_model(
+        cls, orm_model: TransformationRevisionDBModel
+    ) -> "TransformationRevisionStub":
+        try:
+            return TransformationRevisionStub(
+                id=orm_model.id,
+                revision_group_id=orm_model.revision_group_id,
+                name=orm_model.name,
+                description=orm_model.description,
+                category=orm_model.category,
+                version_tag=orm_model.version_tag,
+                state=orm_model.state,
+                type=orm_model.type,
+                io_interface=orm_model.io_interface,
+                released_timestamp=orm_model.released_timestamp.replace(
+                    tzinfo=datetime.timezone.utc
+                )
+                if orm_model.released_timestamp is not None
+                else None,
+                disabled_timestamp=orm_model.disabled_timestamp.replace(
+                    tzinfo=datetime.timezone.utc
+                )
+                if orm_model.disabled_timestamp is not None
+                else None,
+            )
+        except ValidationError as error:
+            msg = (
+                f"Could not validate db entry for trafo stub for id {orm_model.id}. "
+                f"Validation error was:\n{str(error)}"
+            )
+            raise DBIntegrityError(msg) from error
+
+    model_config = ConfigDict(validate_assignment=True)
+
+
+class TransformationRevision(TransformationRevisionStub):
+    """Either a component revision or a workflow revision
+
+    Both can be instantiated as an operator in a workflow revision
+    (yes, workflow in workflow in workflow... is possible) and are therefore
+    able to transform input data to output result data.
+
+    Note that there is no actual component or workflow entity, only revisions. Revisions are tied
+    together via the group id, and otherwise do not need to have anything in common, i.e. their
+    name and their interface etc. can differ completely.
+
+    During the development of a transformation revision it has the state DRAFT and may go through
+    stages where it does not meet all requirements e.g. for execution. Therefore, some properties
+    are not validated for revisions in DRAFT state and in particular the test_wiring is not
+    validated for entities of this class, but instead in the context of execution.
+
+    Revisions with the state RELEASED are what makes the execution reproducible - they cannot be
+    edited anymore except for the two attributes test_wiring and documentation, and only they can
+    be instantiated as operators.
+
+    Additionally RELEASED revisions cannot be deleted, but their state can be changed to
+    DISABLED. DISABLED revisions cannot be instantiated as new operators anymore but existing
+    operators from them still work (for reproducibility). Note that in the Frontend the DISABLED
+    state is called "DEPRECATED". The frontend then allows to replace deprecated operators by other
+    (possibly newer) released revisions from the the same revision group (i.e. same group id).
+    """
+
+    documentation: str = Field(
+        (
+            "# New Component/Workflow\n"
+            "## Description\n"
+            "## Inputs\n"
+            "## Outputs\n"
+            "## Details\n"
+            "## Examples\n"
+        ),
+        description="Documentation in markdown format.",
+    )
+
+    content: str | WorkflowContent = Field(
+        ...,
+        description=(
+            "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
+        ),
+    )
+
+    test_wiring: WorkflowWiring = Field(
+        ...,
+        description=(
+            "To enable execution the input and output wirings must match "
+            "the inputs and outputs of the io_interface, which is validated "
+            "in the scope of the execution."
+        ),
+    )
+
+    release_wiring: WorkflowWiring | None = Field(
+        None,
+        description=(
+            "Wiring that is stored during release. This allows to reset to a fixed wiring."
+            " And to use a fixed wiring for dashboarding."
+        ),
+    )
 
     @field_validator("content")
     @classmethod
@@ -407,22 +478,20 @@ class TransformationRevision(BaseModel):
 
         return v
 
-    @field_validator("io_interface")
-    @classmethod
+    # as validates io_interface from the parent class and needs a field
+    # (content) from the subclass, this validator cannot be implemented as a
+    # field validator, because content would not be available in the info
+    # object!
+    @model_validator(mode="after")
     def io_interface_fits_to_content(  # noqa: PLR0912
-        cls, io_interface: IOInterface, info: ValidationInfo
-    ) -> IOInterface:
-        try:
-            type_ = info.data["type"]
-            workflow_content = info.data["content"]
-        except KeyError as error:
-            raise ValueError(
-                "Cannot fit io_interface to content if any of the attributes "
-                "'type', 'content' is missing!"
-            ) from error
+        self,
+    ) -> Self:
+        io_interface = self.io_interface
+        type_ = self.type
+        workflow_content = self.content
 
         if type_ is not Type.WORKFLOW:
-            return io_interface
+            return self
 
         assert isinstance(  # noqa: S101
             workflow_content, WorkflowContent
@@ -449,32 +518,7 @@ class TransformationRevision(BaseModel):
             io_interface.outputs,
             wf_outputs_by_id,
         )
-
-        return io_interface
-
-    @field_validator("io_interface")
-    @classmethod
-    def io_interface_no_names_empty(
-        cls, io_interface: IOInterface, info: ValidationInfo
-    ) -> IOInterface:
-        try:
-            state = info.data["state"]
-        except KeyError as error:
-            raise ValueError(
-                "Cannot validate that no names in io_interface are empty "
-                "if attribute 'state' is missing!"
-            ) from error
-
-        if state is State.DRAFT:
-            return io_interface
-
-        for io in io_interface.inputs + io_interface.outputs:
-            if io.name is None or io.name == "":
-                raise ValueError(
-                    "Released transformation revisions may not have empty input or output names!"
-                )
-
-        return io_interface
+        return self
 
     def release(self) -> None:
         """Release a transformation revision
@@ -699,7 +743,10 @@ class TransformationRevision(BaseModel):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name="COMPONENT EXECUTION WRAPPER WORKFLOW",
+            name=(
+                f"COMPONENT EXECUTION WRAPPER WORKFLOW for component {self.name}"
+                f" ({self.version_tag}) with id {self.id}"
+            ),
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

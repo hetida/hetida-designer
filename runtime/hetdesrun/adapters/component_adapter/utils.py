@@ -19,6 +19,7 @@ from hetdesrun.persistence.models.io import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.reference_context import get_deepcopy_of_reproducibility_reference_context
 from hetdesrun.utils import State, Type
 
 # need DataType (component output) to ExternalType mapping
@@ -158,6 +159,8 @@ def to_component_trafo_rev(
 def wf_exec_input_from_component_trafo_revision(
     component_trafo_rev: TransformationRevision,
     wiring: WorkflowWiring | None,
+    code_modules: list[CodeModule],
+    component_revisions: list[ComponentRevision],
     run_pure_plot_operators: bool = True,
     job_id: UUID | None = None,
 ) -> WorkflowExecutionInput:
@@ -169,9 +172,6 @@ def wf_exec_input_from_component_trafo_revision(
     nested_transformations = {
         tr_workflow.content.operators[0].transformation_id: component_trafo_rev
     }
-    nested_components = {
-        tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
-    }
 
     workflow_node = tr_workflow.to_workflow_node(
         operator_id=uuid4(),
@@ -180,12 +180,8 @@ def wf_exec_input_from_component_trafo_revision(
 
     try:
         execution_input = WorkflowExecutionInput(
-            code_modules=(
-                [tr_component.to_code_module() for tr_component in nested_components.values()]
-            ),
-            components=(
-                [component.to_component_revision() for component in nested_components.values()]
-            ),
+            code_modules=code_modules,
+            components=component_revisions,
             workflow=workflow_node,
             configuration=ConfigurationInput(
                 name=str(tr_workflow.id),
@@ -194,6 +190,7 @@ def wf_exec_input_from_component_trafo_revision(
             workflow_wiring=wiring if wiring is not None else component_trafo_rev.test_wiring,
             job_id=uuid4() if job_id is None else job_id,
             trafo_id=component_trafo_rev.id,
+            reproducibility_reference=get_deepcopy_of_reproducibility_reference_context(),
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e

@@ -1,4 +1,10 @@
 <div class="h-100 overflow-hidden">
-  <ngx-monaco-editor [options]="editorOptions" [(ngModel)]="code" class="h-100">
+  <ngx-monaco-editor
+    #monacoEditor
+    [options]="editorOptions"
+    [(ngModel)]="code"
+    (onInit)="onEditorInit($event)"
+    class="h-100"
+  >
   </ngx-monaco-editor>
 </div>

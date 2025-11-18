@@ -1,4 +1,12 @@
+import json
+import os
+from urllib.parse import quote_plus
+
 import pytest
+
+from hetdesrun.models.execution import ExecByIdInput
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):
@@ -57,3 +65,164 @@ async def test_wiring_direct_input_provisioning(
 
         assert "32.0" in node_results  # intermediate result
         assert "64.0" in node_results
+
+
+@pytest.mark.asyncio
+async def test_uri_input_wiring(mocked_clean_test_db_session, async_test_client):
+    with TrafoCollection(save_to_db=True) as tc:
+        pass_trough_int = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
+            )
+        )
+
+    async with async_test_client as ac:
+        exec_input = ExecByIdInput(
+            id=pass_trough_int.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "uri": f"hd://component-adapter/{pass_trough_int.id}?input=55",
+                        "workflow_input_name": "input",
+                    }
+                ]
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+        assert resp_json["output_results_by_output_name"]["output"] == 55
+
+        # test filter from uri has higehr priority
+        exec_input = ExecByIdInput(
+            id=pass_trough_int.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "uri": f"hd://component-adapter/{pass_trough_int.id}?input=55",
+                        "workflow_input_name": "input",
+                        "filters": {"input": 21},
+                    }
+                ]
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+        assert resp_json["output_results_by_output_name"]["output"] == 55
+
+        # test filter can be provided out of uri as well
+        exec_input = ExecByIdInput(
+            id=pass_trough_int.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "uri": f"hd://component-adapter/{pass_trough_int.id}",
+                        "workflow_input_name": "input",
+                        "filters": {"input": 21},
+                    }
+                ]
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+        assert resp_json["output_results_by_output_name"]["output"] == 21
+
+
+@pytest.mark.asyncio
+async def test_uri_output_wiring(mocked_clean_test_db_session, async_test_client, tmpdir):
+    target_path = tmpdir / "out_file.md"
+
+    with TrafoCollection(save_to_db=True) as tc:
+        pass_trough_int = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
+            )
+        )
+        pass_trough_str = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json",
+            )
+        )
+        markdown_file_component_sink = tc.add_from_py_file(
+            os.path.join(
+                "tests",
+                "data",
+                "components",
+                "markdown_file.py",
+            )
+        )
+
+    async with async_test_client as ac:
+        exec_input = ExecByIdInput(
+            id=pass_trough_int.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "workflow_input_name": "input",
+                        "filters": {"value": 42},
+                    }
+                ],
+                output_wirings=[
+                    {"workflow_output_name": "output", "uri": "hd://direct_provisioning"}
+                ],
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+        assert resp_json["output_results_by_output_name"]["output"] == 42
+
+        # output wiring different from direct_provisioning
+        exec_input = ExecByIdInput(
+            id=pass_trough_str.id,
+            wiring={
+                "input_wirings": [
+                    {
+                        "workflow_input_name": "input",
+                        "adapter_id": "direct_provisioning",
+                        "filters": {"value": "test"},
+                    }
+                ],
+                "output_wirings": [
+                    {
+                        "workflow_output_name": "output",
+                        "uri": f"hd://component-adapter/{markdown_file_component_sink.id}?path={quote_plus(str(target_path))}",
+                    }
+                ],
+            },
+        )
+
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["error"] is None
+        assert len(resp.json()["output_results_by_output_name"]) == 0  # no outputs

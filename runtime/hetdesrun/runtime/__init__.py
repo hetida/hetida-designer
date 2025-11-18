@@ -1,6 +1,6 @@
 import logging
 
-from hetdesrun.component.load import base_module_path
+from hetdesrun.component.base_module import base_module_path
 from hetdesrun.runtime.exceptions import (  # noqa: F401
     ComponentException,
     ComponentInputValidationException,

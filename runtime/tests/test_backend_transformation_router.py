@@ -199,7 +199,7 @@ tr_json_component_3 = {
     "state": "DRAFT",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print("test")\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -235,7 +235,7 @@ tr_json_component_3_publish = {
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print("test")\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -626,6 +626,40 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
     assert response.json()[1] == tr_json_component_2
     assert response.json()[2] == tr_json_workflow_1
     assert response.json()[3] == tr_json_workflow_2_with_named_io_for_operator
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revision_stubs(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
+    store_single_transformation_revision(TransformationRevision(**tr_json_workflow_1))
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
+    )
+    async with async_test_client as ac:
+        response = await ac.get("/api/transformations/stubs")
+
+    assert response.status_code == 200
+    resp_json = response.json()
+    assert len(resp_json) == 4
+
+    assert resp_json[0] != tr_json_component_1
+    assert resp_json[1] != tr_json_component_2
+    assert resp_json[2] != tr_json_workflow_1
+    assert resp_json[3] != tr_json_workflow_2_with_named_io_for_operator
+    for resp_json_obj in resp_json:
+        assert "test_wiring" not in resp_json_obj
+        assert "release_wiring" not in resp_json_obj
+        assert "documentation" not in resp_json_obj
+        assert "content" not in resp_json_obj
+
+        assert "io_interface" in resp_json_obj
+        assert "id" in resp_json_obj
+        assert "name" in resp_json_obj
+        assert "state" in resp_json_obj
+        assert "type" in resp_json_obj
 
 
 @pytest.mark.asyncio
