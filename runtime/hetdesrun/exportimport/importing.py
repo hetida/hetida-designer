@@ -5,11 +5,12 @@ from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
-    update_or_create_transformation_revision,
+    import_using_api,
 )
 from hetdesrun.persistence.dbservice.exceptions import (
     DBIntegrityError,
@@ -17,12 +18,16 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
 )
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.io.load import (
     Importable,
+    ImportSource,
+    MultipleTrafosUpdateConfig,
+    load_import_sources,
     load_transformation_revisions_from_directory,
 )
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
@@ -168,6 +173,7 @@ def import_importable(
 
         except (
             DBIntegrityError,
+            ComponentImportComponentError,
             DBNestingCycleDetected,
             DBNotFoundError,
             ModelConstraintViolation,
@@ -238,23 +244,37 @@ def import_importables(
     return success_reports
 
 
-def import_transformations(
-    download_path: str,
+class AutoImportSettings(BaseSettings):
+    strip_wirings: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS", default=False
+    )
+    allow_overwrite_released: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED", default=False
+    )
+    update_component_code: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE", default=False
+    )
+    deprecate_older_revisions: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS", default=False
+    )
+    directly_into_db: bool = True
+
+
+def import_transformations_from_dir(
+    import_dir: str,
     strip_wirings: bool = False,
-    directly_into_db: bool = False,
-    allow_overwrite_released: bool = True,
-    update_component_code: bool = True,
+    allow_overwrite_released: bool = False,
+    update_component_code: bool = False,
     deprecate_older_revisions: bool = False,
+    directly_into_db: bool = False,
 ) -> None:
-    """Import all transforamtions from specified download path.
+    """Import all transformations from specified download path.
 
     This function imports all transformations together with their documentations.
-    The download_path should be a path which contains the exported transformations
+    The import_dir should be a path which contains the exported transformations
     organized in subdirectories corresponding to the categories.
     The following parameters can be used to
 
-    - directly_into_db: If direct access to the database is possible, set this to true
-        to ommit the detour via the backend
     - strip_wirings: Set to true to reset the test wiring to empty input and output
         wirings for each transformation revision
     - allow_overwrite_released: Set to false to disable overwriting of transformation
@@ -264,38 +284,50 @@ def import_transformations(
     - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend.
 
-    WARNING: Overwrites possibly existing transformation revisions!
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
-        import_transformations("./transformations")
+        import_transformations_from_dir("./transformations")
     """
 
-    transformation_dict, _ = load_transformation_revisions_from_directory(download_path)
+    logger.info(
+        "Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s",  # noqa: E501
+        import_dir,
+        strip_wirings,
+        allow_overwrite_released,
+        update_component_code,
+        deprecate_older_revisions,
+    )
 
-    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
+    importables = load_import_sources([ImportSource(path=import_dir, is_dir=True)])
 
-    for level in sorted(ids_by_nesting_level):
-        logger.info("importing level %i transformation revisions", level)
-        for transformation_id in ids_by_nesting_level[level]:
-            transformation = transformation_dict[transformation_id]
-            update_or_create_transformation_revision(
-                transformation,
-                directly_in_db=directly_into_db,
+    if directly_into_db is False:
+        logger.info("Using endpoint for auto-import.")
+
+        for importable in importables:
+            import_using_api(
+                trafos=importable.transformation_revisions,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
                 strip_wiring=strip_wirings,
+                deprecate_older_revisions=deprecate_older_revisions,
             )
 
-    logger.info("finished importing")
+    else:
+        update_config = MultipleTrafosUpdateConfig(
+            strip_wirings=strip_wirings,
+            allow_overwrite_released=allow_overwrite_released,
+            update_component_code=update_component_code,
+            deprecate_older_revisions=deprecate_older_revisions,
+        )
 
-    if deprecate_older_revisions:
-        revision_group_ids = {
-            transformation.revision_group_id for _, transformation in transformation_dict.items()
-        }
-        logger.info("deprecate all but latest revision of imported revision groups")
-        for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=directly_into_db)
+        for importable in importables:
+            importable.import_config.update_config = update_config
+
+        _ = import_importables(importables)
 
 
 def generate_import_order_file(

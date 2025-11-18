@@ -6,6 +6,8 @@ import { ThemeService } from './service/theme/theme.service';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { AuthService } from './auth/auth.service';
+import { PlotlyService } from 'angular-plotly.js';
+import plotlyDeLocale from 'plotly.js-locales/de';
 
 @Component({
   selector: 'hd-root',
@@ -21,13 +23,13 @@ export class AppComponent implements OnInit {
     private readonly overlayContainer: OverlayContainer,
     private readonly appElement: ElementRef<Element>,
     private readonly themeService: ThemeService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly plotlyService: PlotlyService
   ) {
     this.iconRegistry.addSvgIcon(
       'icon-component',
       this.sanitizer.bypassSecurityTrustResourceUrl('assets/svg/component.svg')
     );
-
     this.iconRegistry.addSvgIcon(
       'icon-workflow',
       this.sanitizer.bypassSecurityTrustResourceUrl('assets/svg/workflow.svg')
@@ -44,6 +46,8 @@ export class AppComponent implements OnInit {
         'assets/svg/published_component.svg'
       )
     );
+
+    this.setupPlotlyWithGermanLocale();
   }
 
   ngOnInit() {
@@ -65,5 +69,10 @@ export class AppComponent implements OnInit {
     if (this.authService.isAuthEnabled()) {
       this.oidcSecurityService.checkAuth().subscribe();
     }
+  }
+
+  private async setupPlotlyWithGermanLocale(): Promise<void> {
+    const plotly = await this.plotlyService.getPlotly();
+    plotly.register(plotlyDeLocale);
   }
 }

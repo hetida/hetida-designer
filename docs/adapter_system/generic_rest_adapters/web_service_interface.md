@@ -363,7 +363,7 @@ This endpoint streams several timeseries together. This endpoint is only necessa
 Query parameters:
 
 * `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
-* `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
+* `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
 * `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
@@ -497,7 +497,7 @@ It is up to your adapter implementation what you do with that metadata.
 Query parameters:
 
 * `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
-* `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
+* `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
 * `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 

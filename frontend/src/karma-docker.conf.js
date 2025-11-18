@@ -38,6 +38,7 @@ module.exports = function (config) {
           '--disable-gpu'
         ]
       }
-    }
+    },
+    files: ['../node_modules/plotly.js/dist/plotly.min.js']
   });
 };

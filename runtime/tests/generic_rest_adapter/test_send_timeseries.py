@@ -58,9 +58,9 @@ async def test_end_to_end_send_only_timeseries_data_works():
             ("filter_key", "filter_value"),
         ]
         assert kwargs["json"] == [
-            {"timestamp": "2020-01-15T00:00:00.000000000Z", "value": 1.2},
-            {"timestamp": "2020-01-15T01:00:00.000000000Z", "value": 3.4},
-            {"timestamp": "2020-01-15T02:00:00.000000000Z", "value": 5.9},
+            {"timestamp": "2020-01-15T00:00:00.000000000+00:00", "value": 1.2},
+            {"timestamp": "2020-01-15T01:00:00.000000000+00:00", "value": 3.4},
+            {"timestamp": "2020-01-15T02:00:00.000000000+00:00", "value": 5.9},
         ]
 
         # more than one timeseries

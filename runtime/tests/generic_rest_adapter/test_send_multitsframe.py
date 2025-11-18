@@ -96,47 +96,47 @@ async def test_end_to_end_send_only_multitsframe_data(mocked_url, mocked_api) ->
     ]
     assert kwargs_1["json"] == [
         {
-            "timestamp": "2019-08-01T15:45:36.000000000Z",
+            "timestamp": "2019-08-01T15:45:36.000000000+00:00",
             "metric": "a",
             "value": 1.0,
         },
         {
-            "timestamp": "2019-08-01T15:45:37.000000000Z",
+            "timestamp": "2019-08-01T15:45:37.000000000+00:00",
             "metric": "b",
             "value": 1.2,
         },
         {
-            "timestamp": "2019-08-01T15:45:37.000000000Z",
+            "timestamp": "2019-08-01T15:45:37.000000000+00:00",
             "metric": "c",
             "value": 0.5,
         },
         {
-            "timestamp": "2019-08-01T15:45:46.000000000Z",
+            "timestamp": "2019-08-01T15:45:46.000000000+00:00",
             "metric": "a",
             "value": 1.9,
         },
         {
-            "timestamp": "2019-08-01T15:45:46.000000000Z",
+            "timestamp": "2019-08-01T15:45:46.000000000+00:00",
             "metric": "b",
             "value": 1.3,
         },
         {
-            "timestamp": "2019-08-01T15:45:47.000000000Z",
+            "timestamp": "2019-08-01T15:45:47.000000000+00:00",
             "metric": "c",
             "value": 0.2,
         },
         {
-            "timestamp": "2019-08-01T15:45:56.000000000Z",
+            "timestamp": "2019-08-01T15:45:56.000000000+00:00",
             "metric": "a",
             "value": 1.5,
         },
         {
-            "timestamp": "2019-08-01T15:45:57.000000000Z",
+            "timestamp": "2019-08-01T15:45:57.000000000+00:00",
             "metric": "b",
             "value": 1.7,
         },
         {
-            "timestamp": "2019-08-01T15:45:58.000000000Z",
+            "timestamp": "2019-08-01T15:45:58.000000000+00:00",
             "metric": "c",
             "value": 0.1,
         },
@@ -153,32 +153,32 @@ async def test_end_to_end_send_only_multitsframe_data(mocked_url, mocked_api) ->
     ]
     assert kwargs_2["json"] == [
         {
-            "timestamp": "2019-08-01T15:45:36.000000000Z",
+            "timestamp": "2019-08-01T15:45:36.000000000+00:00",
             "metric": "a",
             "value": 1.0,
         },
         {
-            "timestamp": "2019-08-01T15:45:37.000000000Z",
+            "timestamp": "2019-08-01T15:45:37.000000000+00:00",
             "metric": "d",
             "value": None,
         },
         {
-            "timestamp": "2019-08-01T15:45:37.000000000Z",
+            "timestamp": "2019-08-01T15:45:37.000000000+00:00",
             "metric": "e",
             "value": None,
         },
         {
-            "timestamp": "2019-08-01T15:45:46.000000000Z",
+            "timestamp": "2019-08-01T15:45:46.000000000+00:00",
             "metric": "a",
             "value": 1.9,
         },
         {
-            "timestamp": "2019-08-01T15:45:56.000000000Z",
+            "timestamp": "2019-08-01T15:45:56.000000000+00:00",
             "metric": "a",
             "value": 1.5,
         },
         {
-            "timestamp": "2019-08-01T15:45:57.000000000Z",
+            "timestamp": "2019-08-01T15:45:57.000000000+00:00",
             "metric": "e",
             "value": "text",
         },

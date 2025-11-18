@@ -5,7 +5,7 @@ from collections.abc import Callable
 from fastapi import HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, SecretStr
 
-from hetdesrun.exportimport.importing import import_importables, import_transformations
+from hetdesrun.exportimport.importing import import_importables, import_transformations_from_dir
 from hetdesrun.exportimport.purge import (
     delete_all_and_refill,
     delete_drafts,
@@ -245,7 +245,7 @@ async def deploy_base_trafos(
     """
 
     def handle_base_deployment(directly_in_db: bool = True) -> None:
-        import_transformations(
+        import_transformations_from_dir(
             "./transformations/",
             directly_into_db=directly_in_db,
             allow_overwrite_released=allow_overwrite_released,

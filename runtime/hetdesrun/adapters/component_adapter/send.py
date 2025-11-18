@@ -82,6 +82,10 @@ async def send_data(
                         value=wf_output_name_to_value_mapping_dict[outp_name],
                         component_rev_inputs_by_name=component_rev_inputs_by_name,
                     ),
+                    # we pass through all, since we do not want to resolve
+                    # the import transitive-closure again for the single component
+                    code_modules=code_modules,
+                    component_revisions=component_revisions,
                 )
 
                 task = tg.create_task(

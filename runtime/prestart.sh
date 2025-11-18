@@ -30,7 +30,6 @@ retry() {
             )
     done
 }
-
 _true_equiv="@(|true|yes|y|ok|on|1)"
 
 # Run migrations if this is run as backend service.
@@ -50,7 +49,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
         if [[ $nof_db_entries -eq 0 ]]; then
             echo "DB IS EMPTY"
             echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT"
-            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+            python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, update_component_code=False);'
         else
             echo "DB CONTAINS $nof_db_entries VALUES"
             echo "HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY=$HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY"
@@ -60,10 +59,10 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
                 echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
                 if [[ "$_allow_overwrite_released" == $_true_equiv ]]; then
                     echo "INCLUDING RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
-                    python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+                    python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, update_component_code=False);'
                 else
                     echo "EXCEPT FOR RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
-                    python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, allow_overwrite_released=False, update_component_code=False);'
+                    python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, allow_overwrite_released=False, update_component_code=False);'
                 fi
             fi
         fi
@@ -79,8 +78,9 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     fi
 
     if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
+
         echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
-        python -c 'from hetdesrun.exportimport.importing import import_importables; from hetdesrun.trafoutils.io.load import get_import_sources, load_import_sources; import_importables(load_import_sources(get_import_sources("'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'")))'
+        python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir, AutoImportSettings; settings = AutoImportSettings().model_dump(); import_transformations_from_dir(import_dir="'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'",**settings)'
         if [ "$?" -eq 0 ]; then
             echo "Successfully triggered auto import process. See details above."
         else

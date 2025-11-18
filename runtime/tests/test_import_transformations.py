@@ -11,10 +11,12 @@ from hetdesrun.exportimport.importing import (
     generate_import_order_file,
     import_importable,
     import_importables,
-    import_transformations,
-    update_or_create_transformation_revision,
+    import_transformations_from_dir,
 )
-from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
+from hetdesrun.exportimport.utils import update_or_create_transformation_revision
+from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
+)
 from hetdesrun.persistence.models.io import InputType
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.io.load import (
@@ -177,42 +179,27 @@ def test_import_single_transformation(mocked_clean_test_db_session):
 def test_component_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
+    response_mock.json = mock.Mock(return_value={})
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformations("./transformations/components")
-            assert "Reduce data set by leaving out values" in caplog.text
-            # name of a component
+            import_transformations_from_dir("./transformations/components")
 
-    # at least tries to upload many components (we have more than 10 there)
-    assert patched_put.call_count > 10
-
-    # Test logging when posting does not work
-    response_mock.status_code = 400
-
-    with caplog.at_level(logging.INFO):  # noqa: SIM117
-        with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-            caplog.clear()
-            import_transformations("./transformations/components")
-            assert "COULD NOT PUT COMPONENT" in caplog.text
+    # 1 call to multiple put endpoint
+    assert patched_put.call_count == 1
 
 
 def test_workflow_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
+    response_mock.json = mock.Mock(return_value={})
 
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-        import_transformations("./transformations/workflows")
+        import_transformations_from_dir("./transformations/workflows")
 
-    # at least tries to upload many workflows
-    assert patched_put.call_count > 3
-    # Test logging when posting does not work
-    response_mock.status_code = 400
-    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
-        caplog.clear()
-        import_transformations("./transformations/workflows")
-        assert "COULD NOT PUT WORKFLOW" in caplog.text
+    # one call to multiple endpoint
+    assert patched_put.call_count == 1
 
 
 def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session):
@@ -222,7 +209,7 @@ def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session)
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock) as patched_put:
             caplog.clear()
-            import_transformations("./transformations/components", directly_into_db=True)
+            import_transformations_from_dir("./transformations/components", directly_into_db=True)
             assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
             # id of a component
 
@@ -230,7 +217,7 @@ def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session)
     assert patched_put.call_count == 0
 
 
-def test_import_with_deprecate_older_versions():
+def test_import_with_deprecate_older_versions(mocked_clean_test_db_session):
     response_mock = mock.Mock()
     response_mock.status_code = 201
 
@@ -241,7 +228,11 @@ def test_import_with_deprecate_older_versions():
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-            import_transformations("./transformations/components", deprecate_older_revisions=True)
+            import_transformations_from_dir(
+                "./transformations/components",
+                deprecate_older_revisions=True,
+                directly_into_db=True,
+            )
 
     assert patched_deprecate_group.call_count > 10
 

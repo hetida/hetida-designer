@@ -57,44 +57,118 @@ Note that the unwrapped format (i.e. sending only the content of the `__data__` 
 ## Metadata field conventions
 
 The following metadata fields should be attached to timeseries objects (typically MULTITSFRAME or SERIES inputs/outputs). I.e.
-* We strongly recommend that custom adapter implementations provide them!
+* We strongly recommend that custom adapter implementations provide at least the fields concerning the `ref` dataset!
 * Some base components may expect these metadata fields in the `.attrs` dictionary of input dataframes (or multitsframes) or series.
 * Some base components may provide these metadata fields in the `.attrs` dictionary of output dataframes (or multitsframes) or series objects.
 
-```
+SERIES metadata conventions:
+```json
 {
-    # Start / End timestamps of the queried time interval in explicit UTC isoformat:
+    "dataset_metadata": {
+        # Whether the ref dataset should be considered as discrete, i.e. isolated datapoints,
+        # not an interval.
+        # If set, this has higher priority than all interval settings for the ref dataset.
+        “ref_dataset_discrete“: false,
 
-    "ref_interval_start_timestamp": "2023-01-01T00:00:00+00:00", 
-    "ref_interval_end_timestamp": "2023-01-01T00:00:00+00:00",
+        # Start / End timestamps of the queried time interval in explicit UTC isoformat:
+        "ref_interval_start_timestamp": "2023-01-01T00:00:00+00:00",
+        "ref_interval_end_timestamp": "2023-01-02T00:00:00+00:00",
 
+        # Type of queried time interval (one of
+        # "left_closed", "right_open", "right_closed", "left_open", "closed", or "open"):
+        "ref_interval_type": "closed",
 
-    # Type of queried time interval (one of
-    # "left_closed", "right_open", "right_closed", "left_open", "closed", or "open"):
+        # Queried metric (agrees with name of SERIES object)
+        "ref_metric": "sensor_a",
 
-    "ref_interval_type": "closed",
+        # Fixed frequency (timedelta between subsequent datapoints) of the timeseries as
+        # Pandas date offset alias or a timedelta string.
+        # In combination with an offset this defines the absolute timestamps at which data is expected.
+        "ref_data_frequency": "5min",
+        "ref_data_frequency_offset": "4min",
 
+        # Define an invalidation dataset, separate from the ref dataset.
+        "invalidation_interval_start": "2023-01-01T00:00:00+00:00",
+        "invalidation_interval_end": "2023-01-02T00:00:00+00:00",
+        # One of "left_closed", "right_open", "right_closed", "left_open", "closed", or "open":
+        "invalidation_interval_type": "closed"
 
-    # Queried metrics as array/list (List with exactly one entry for a 
-    # single timeseries)
+        # Whether invalidation should occur. If no extra invalidation dataset is specified,
+        # existing data in the time domain of the ref dataset is invalidated, else
+        # existing data in the invalidation dataset is invalidated instead.
+        # If no dataset is specified and there is at least one datapoint, a ref interval
+        # is inferred from the provided datapoints (taking first and last and building
+        # a closed interval from their timestamps, possibly with length 0). If no dataset is
+        # specified and no datapoints provided, no invalidation can occur.
+        "invalidate_dataset": true # bool, should be considered true, if missing!
 
-    "ref_metrics": ["sensor_a", "sensor_b"],
+        # Whether invalidated data should be deleted instead.
+        # What null means depends on the adapter: It can decide to default to
+        # deletion or not. If this is true or the adapter interprets null or missing as true,
+        # then instead of invalidating, all data that is to be invalidated should be actually deleted.
+        # If false or the adapter interprets null or missing as false, then invalidation should
+        # be applied.
+        # Note that an adapter is allowed to not support deletion.
+        "delete_invalidated": null, # Optional[bool].
 
+        # A common invalidation_timestamp can be specified to be applied to all invalidated
+        # datapoints if invalidation occurs. If no invalidation_timestamp is sent (missing or null)
+        # the execution_timestamp provided as query parameter to the generic rest adapter should be used.
+        # Or if that is also not present, the adapter should calculate "now" as utc timestamp
+        # when receiving the request.
+        # "invalidation_timestamp": null # or valid UTC timestamp "2025-08-01T00:00:00+00:00"
 
-    # Fixed frequency (timedelta between subsequent datapoints) of the timeseries as
-    # Pandas date offset alias or a timedelta string.
-    # In combination with an offset this defines the absolute timestamps at which data is expected.
+        # If the following flag is true, only invalidation should occur, but new data should
+        # not be stored.
+        # Cannot be true if "invalidate_dataset" is false
+        "only_invalidate": false # should be considered false if missing.
 
-    "ref_data_frequency": {"sensor_a": 5min}
-    "ref_data_frequency_offset": {"sensor_a": 4min}
+        # Optionally new data provided with the ref dataset can be given a
+        # (for all datapoints common) invalidation date in advance.
+        # If not set or null, this should be ignored. If set to a valid utc isoformat timestamp,
+        # it should be stored together with the new data points.
+        "new_data_invalidation_date": null # or valid UTC timestamp "2026-01-01T00:00:00+00:00"
 
+  },
+  "single_metric_metadata": {
+    "structured_metadata": {
+        "metric": { # metadata associated to the current metric.
+          "name": "sensor_a",
+          "display_name": "Sensor A",
+          "short_display_name": "sa",
+          "description": "This is a sensor"
+          "unit": "m/s",
+          "value_data_type": "float",
+          "external_id": "some.external.id",
+          "channel_id": "abc123"
+        },
+      },
+  },
 }
 ```
 
+MULTITSFRAME metadata conventions:
+```json
+{
+  "dataset_metadata": {
+    # SAME AS dataset_metadata above, without ref_metric.
+  },
+  "by_metric": {
+    "sensor_a": {
+      # ==> SERIES attrs Struktur <==
+    },
+    "sensor_b": {
+      # ==> SERIES attrs Struktur <==
+    }
+  }
+}
+```
+
+
 Some remarks:
 * `ref_interval_start_timestamp`, `ref_interval_end_timestamp` together with `ref_interval_type` carry all information necessary for the "gap detection" use case described at the beginning of this page.
-* `ref_metrics` is additionally necessary for this use case if one wants to implement it for a bundle of timeseries received as multitsframe: If there is no datapoint at all for a certain metric, you need to know that you should return an interval sized gap for that metric.
-* `ref_metrics` can even be helpful for a single (time)series when organizing data / results. Therefore we recommend to always attach it.
+* `by_metric` and `ref_metric` are additionally necessary for this use case if one wants to implement it for a bundle of timeseries received as multitsframe: If there is no datapoint at all for a certain metric, you need to know that you should return an interval sized gap for that metric.
+* The fields concerning invalidation and deletion are only relevant if the adapter supports these operations, e.g. the SQL-adapter.
 
 ## Adapter support
 Several builtin adapters support sending and receiving metadata:

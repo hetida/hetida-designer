@@ -219,7 +219,9 @@ def html_str_to_gridstack_div(
                 div(
                     id=db_id,
                     style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
-                )[Markup(content)]  # noqa: S704 # nosec: B704
+                )[
+                    Markup(content)  # noqa: S704 # nosec: B704
+                ]
             ],
         ]
     ]
@@ -431,12 +433,12 @@ def override_timestamps_in_wiring(
         if inp_wiring.filters.get("timestampFrom", None) is not None:  # type: ignore
             # We excpect UTC!
             inp_wiring.filters["timestampFrom"] = (  # type: ignore
-                from_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+                from_ts.isoformat(timespec="milliseconds")
             )
         if inp_wiring.filters.get("timestampTo", None) is not None:  # type: ignore
             # We expect UTC!
             inp_wiring.filters["timestampTo"] = (  # type: ignore
-                to_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+                to_ts.isoformat(timespec="milliseconds")
             )
     return mutable_wiring
 
@@ -2218,11 +2220,9 @@ def generate_dashboard_html(
             + f"""{
                 (
                     'defaultDate: ["'
-                    + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]
-                    + "Z"
+                    + calculated_from_timestamp.isoformat(timespec="milliseconds")
                     + '", "'
-                    + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0]
-                    + "Z"
+                    + calculated_to_timestamp.isoformat(timespec="milliseconds")
                     + '"],'
                 )
                 if (calculated_from_timestamp is not None and calculated_to_timestamp is not None)

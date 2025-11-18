@@ -138,7 +138,7 @@ async def test_component_sink_wiring_executes_via_backend_webendpoint(async_test
     target_path = tmpdir / "out_file.md"
 
     exec_input = ExecByIdInput(
-        id=UUID("2b1b474f-ddf5-1f4d-fec4-17ef9122112b"),  # pass through multits
+        id=UUID("2b1b474f-ddf5-1f4d-fec4-17ef9122112b"),
         wiring={
             "input_wirings": [
                 {

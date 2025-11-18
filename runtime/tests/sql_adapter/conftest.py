@@ -1,6 +1,8 @@
 import os
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 from fastapi import FastAPI
@@ -25,8 +27,16 @@ def temporary_sqlite_file_path_ts_db(tmpdir):
     return os.path.join(tmpdir, "temporary_sqlite_ts_db.db")
 
 
+@pytest.fixture()
+def deletion_test_table_size() -> int:
+    """Num of rows written to deletion_test_table in temporary_prefilled_sqlite_ts_db fixture."""
+    return 30
+
+
 @pytest.fixture(scope="function")  # noqa: PT003
-def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
+def temporary_prefilled_sqlite_ts_db(
+    temporary_sqlite_file_path_ts_db, deletion_test_table_size: int
+):
     ts_df = pd.DataFrame(
         {
             "value": [1.2, 1.3, 2, 2.2],
@@ -41,6 +51,23 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
             "metric": ["a", "b", "a", "c"],
         }
     )
+
+    ts_df_with_int_metrics = pd.DataFrame(
+        {
+            "value": [1.2, 1.3, 2, 2.2],
+            "timestamp": pd.to_datetime(
+                [
+                    "2023-08-29T11:58:02+00:00",
+                    "2023-08-29T12:27:31+00:00",
+                    "2023-08-29T13:07:46+00:00",
+                    "2023-08-29T13:07:46+00:00",
+                ]
+            ),
+            "metric": [-1, 42, 3, 4],
+        }
+    )
+    ts_df_with_int_metrics["metric"] = ts_df_with_int_metrics["metric"].astype(int)
+
     engine = create_engine("sqlite+pysqlite:///" + temporary_sqlite_file_path_ts_db, echo=True)
 
     ts_df.to_sql(
@@ -52,6 +79,13 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
 
     ts_df.to_sql(
         "ts_table",  # ts table name
+        engine,
+        if_exists="replace",  # versus "append"
+        index=False,
+    )
+
+    ts_df_with_int_metrics.to_sql(
+        "ts_table_with_int_metric",  # ts table name
         engine,
         if_exists="replace",  # versus "append"
         index=False,
@@ -80,6 +114,21 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
         if_exists="replace",
         index=False,
     )
+
+    # Create deletion test table
+    start = datetime(1949, 5, 23, tzinfo=timezone.utc)
+
+    dates = [(start + timedelta(days=i)).isoformat() for i in range(deletion_test_table_size)]
+
+    del_test_df = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(dates),
+            "metric": ["nf" for _ in range(deletion_test_table_size)],
+            "value": [np.random.random_sample() for _ in range(deletion_test_table_size)],
+        }
+    )
+
+    del_test_df.to_sql("deletion_test_table", engine, if_exists="replace", index=False)
 
     engine.dispose()
 
@@ -146,6 +195,9 @@ def three_sqlite_dbs_configured(
                 timeseries_tables={
                     "ro_ts_table": TimeseriesTableConfig(appendable=False),
                     "ts_table": TimeseriesTableConfig(appendable=True),
+                    "ts_table_with_int_metric": TimeseriesTableConfig(
+                        appendable=True, metric_type="int"
+                    ),
                     "table3": TimeseriesTableConfig(
                         appendable=True,
                         metric_col_name="tsid",
@@ -157,6 +209,9 @@ def three_sqlite_dbs_configured(
                             "timestamp": "datetime",
                             "value": "measurement_val",
                         },
+                    ),
+                    "deletion_test_table": TimeseriesTableConfig(
+                        appendable=True, allow_invalidation=True, delete_invalidated=True
                     ),
                 },
             ),
@@ -177,6 +232,14 @@ def app_without_auth() -> FastAPI:
 @pytest.fixture
 def async_test_client_with_sql_adapter(
     two_sqlite_dbs_configured,
+    app_without_auth: FastAPI,
+) -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
+
+
+@pytest.fixture
+def async_test_client_with_sql_adapter_with_timeseries_table(
+    three_sqlite_dbs_configured,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")

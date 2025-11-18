@@ -51,6 +51,7 @@ class TrafoUpdateState(StrEnum):
     RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED = (
         "RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED"
     )
+    UNALLOWED_COMPONENT_IMPORTS = "UNALLOWED_COMPONENT_IMPORTS"
 
 
 logger = logging.getLogger(__name__)
@@ -742,7 +743,10 @@ class TransformationRevision(TransformationRevisionStub):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name="COMPONENT EXECUTION WRAPPER WORKFLOW",
+            name=(
+                f"COMPONENT EXECUTION WRAPPER WORKFLOW for component {self.name}"
+                f" ({self.version_tag}) with id {self.id}"
+            ),
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

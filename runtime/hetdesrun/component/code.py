@@ -30,9 +30,10 @@ imports_template: str = """\
 # add your own imports here, e.g.
 # import pandas as pd
 # import numpy as np
-# import logging
 
-# logger = logging.getLogger(__name__)
+# See
+#   https://github.com/hetida/hetida-designer/tree/release/docs/component_tips.md
+# for component writing features and tips (logging, debugging, importing other components)
 
 
 """

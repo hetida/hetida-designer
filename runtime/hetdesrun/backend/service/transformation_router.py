@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 import httpx
+from dtexp import DtexpParsingError
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -23,6 +24,8 @@ from pydantic import HttpUrl, StrictInt, StrictStr, ValidationError
 
 from hetdesrun.backend.execution import (
     TrafoExecutionComponentAdapterComponentsNotFound,
+    TrafoExecutionComponentImportCycleError,
+    TrafoExecutionComponentImportsLoadingError,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -42,7 +45,8 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
-from hetdesrun.component.load import ComponentCodeImportError
+from hetdesrun.component.load import ComponentCodeImportError, ComponentImportCycleError
+from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     UpdateProcessStatus,
@@ -59,6 +63,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
 )
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
@@ -930,6 +935,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
     except DBNestingCycleDetected as err:
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
@@ -1147,6 +1153,26 @@ async def update_transformation_revision(
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except ComponentImportComponentError as err:
+        msg = (
+            "Error while checking component imports for component"
+            f" {updated_transformation_revision.name}"
+            f" ({updated_transformation_revision.version_tag})"
+            f" with id {updated_transformation_revision.id}:\n{str(err)}"
+        )
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = (
+                UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                    read_single_transformation_revision(id),
+                    update_state=TrafoUpdateState.UNALLOWED_COMPONENT_IMPORTS,
+                )
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
     except DBNestingCycleDetected as err:
         msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
         logger.warning(msg)
@@ -1243,6 +1269,16 @@ async def handle_trafo_revision_execution_request(
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    except (ComponentImportCycleError, TrafoExecutionComponentImportCycleError) as err:
+        msg = f"Detected component import cycle:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
+
+    except TrafoExecutionComponentImportsLoadingError as err:
+        msg = f"Could not load some component import components:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
     except TrafoExecutionComponentAdapterComponentsNotFound as err:
         msg = (
@@ -1688,11 +1724,17 @@ async def transformation_dashboard(
         ...,
         examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
-    fromTimestamp: datetime.datetime | None = Query(
-        None, description="Override from timestamp. Expected to be explicit UTC."
+    fromTimestamp: str | None = Query(
+        None,
+        description=(
+            "Override from timestamp. Expected to be dtexp expression or absolute UTC timestamp"
+        ),
     ),
-    toTimestamp: datetime.datetime | None = Query(
-        None, description="Override to timestamp. Expected to be explicit UTC."
+    toTimestamp: str | None = Query(
+        None,
+        description=(
+            "Override to timestamp. Expected to be dtexp expression or absolute UTC timestamp"
+        ),
     ),
     relNow: str | None = Query(
         None,
@@ -1750,18 +1792,32 @@ async def transformation_dashboard(
         return generate_login_dashboard_stub()
 
     # Validate query params
-    if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
+
+    num_explicit_timestamps_set = int(fromTimestamp is not None and len(fromTimestamp) > 0) + int(
+        toTimestamp is not None and len(toTimestamp) > 0
+    )
+
+    if num_explicit_timestamps_set == 1:
         msg = "Either none or both of fromTimestamp and toTimestamp must be set."
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
-    if fromTimestamp is not None and toTimestamp is not None and fromTimestamp > toTimestamp:
-        msg = "fromTimestamp must be <= toTimestamp"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+    start: datetime.datetime | None = None
+    end: datetime.datetime | None = None
 
-    if relNow is not None and fromTimestamp is not None:
-        msg = "Cannot both specify absolute and relative timerange overrides!"
+    if num_explicit_timestamps_set == 2:
+        try:
+            start, end = resolve_interval(fromTimestamp, toTimestamp)
+        except (DtexpParsingError, ValueError) as e:
+            msg = (
+                f"Could not resolve fromTimestamp {fromTimestamp} and toTimestamp {toTimestamp}"
+                " into valid interval datetimes."
+            )
+            logger.error(msg)
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
+
+    if relNow is not None and num_explicit_timestamps_set > 0:
+        msg = "Cannot both specify timerange and relative to now timerange overrides!"
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
@@ -1770,7 +1826,7 @@ async def transformation_dashboard(
     # Calculate override mode
     override_mode: OverrideMode = (
         OverrideMode.Absolute
-        if (fromTimestamp is not None)
+        if (num_explicit_timestamps_set == 2)
         else (OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride)
     )
 
@@ -1805,7 +1861,7 @@ async def transformation_dashboard(
 
     # compute possible override time range setting
     calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
-        fromTimestamp, toTimestamp, relNow
+        start, end, relNow
     )
 
     # override timerange if requested:

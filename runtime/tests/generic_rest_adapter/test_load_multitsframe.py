@@ -138,8 +138,8 @@ async def test_load_multitsframe_from_adapter() -> None:
         assert args[0].ref_id == "id_1"
         assert args[0].type == "multitsframe"
         assert args[0].filters["lower_threshold"] == "93.4"
-        assert args[0].filters["from"] == "2019-08-01T15:45:30.000Z"
-        assert args[0].filters["to"] == "2019-08-01T15:46:00.000Z"
+        assert args[0].filters["from"] == "2019-08-01T15:45:30+00:00"
+        assert args[0].filters["to"] == "2019-08-01T15:46:00+00:00"
         assert args[1] == "load_multitsframe"
 
 

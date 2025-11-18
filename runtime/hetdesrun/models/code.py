@@ -13,7 +13,7 @@ ALLOWED_CHARS_RAW_STRING = r"\w ,\.\-\(\)\&\+=/"
 
 
 NonEmptyValidStr = Annotated[
-    str, Field(min_length=1, max_length=60, pattern=re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$"))
+    str, Field(min_length=1, pattern=re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$"))
 ]
 
 

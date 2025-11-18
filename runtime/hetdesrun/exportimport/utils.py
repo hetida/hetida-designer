@@ -137,52 +137,46 @@ def update_or_create_transformation_revision(
             )
 
     else:
-        try:
-            headers = sync_wrapped_get_auth_headers(external=True)
-        except ServiceAuthenticationError as e:
-            msg = (
-                "Failed to get auth headers for external request for importing transformations."
-                f" Error was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise Exception(msg) from e
+        import_using_api([tr], allow_overwrite_released, update_component_code, strip_wiring)
 
-        response = requests.put(
-            posix_urljoin(get_config().hd_backend_api_url, "transformations", str(tr.id)),
-            params={
-                "allow_overwrite_released": allow_overwrite_released,
-                "update_component_code": update_component_code,
-                "strip_wiring": strip_wiring,
-            },
-            verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.model_dump_json()),  # TODO: avoid double serialization.
-            auth=get_backend_basic_auth(),  # type: ignore
-            headers=headers,
-            timeout=get_config().external_request_timeout,
-        )
-        logger.info(
-            ("PUT %s with id %s in category %s with name %s"),
-            tr.type.value,
-            tr.id,
-            tr.category,
-            tr.name,
-        )
 
-        if response.status_code != 201:
-            if allow_overwrite_released is False and response.status_code == 409:
-                # other reason for 409: type of object in DB and of passed object do not match
-                logger.info(
-                    "%s with id %s already in DB and released/deprecated",
-                    tr.type.value,
-                    str(tr.id),
-                )
-            else:
-                msg = (
-                    f"COULD NOT PUT {str(tr.type)} with id {tr.id}.\n"
-                    f"Response status code {response.status_code} "
-                    f"with response text:\n{response.text}"
-                )
-                logger.error(msg)
+def import_using_api(
+    trafos: list[TransformationRevision],
+    allow_overwrite_released: bool,
+    update_component_code: bool,
+    strip_wiring: bool,
+    deprecate_older_revisions: bool = False,
+) -> None:
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for external request for importing transformations."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise Exception(msg) from e
+
+    response = requests.put(
+        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+        params={
+            "allow_overwrite_released": allow_overwrite_released,
+            "update_component_code": update_component_code,
+            "strip_wiring": strip_wiring,
+            "deprecate_older_revisions": deprecate_older_revisions,
+        },
+        verify=get_config().hd_backend_verify_certs,
+        json=[json.loads(x.model_dump_json()) for x in trafos],  # TODO: avoid double serialization.
+        auth=get_backend_basic_auth(),  # type: ignore
+        headers=headers,
+        timeout=get_config().external_request_timeout,
+    )
+
+    multiple_put_response = response.json()
+
+    logger.info(
+        "PUT trafos via Rest endpoint", extra={"multiple_put_response": multiple_put_response}
+    )
 
 
 def delete_transformation_revision(

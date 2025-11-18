@@ -10,14 +10,16 @@ The recommended approach is to use [general custom adapters](./adapter_system/ge
 
 General custom adapters are preferable here over generic rest adapters since read/write operations run directly from within the runtime Python code. This avoids having to transport potentially large amounts of binary data via http.
 
-hetida designer is equipped with two built-in such general custom adapters suitable for the task of persisiting arbitrary (binary) Python objects. Both use Python's built-in pickle module for serialization / deserialization:
+hetida designer is equipped with several built-in such general custom adapters suitable for the task of persisiting arbitrary (binary) Python objects. The following use Python's built-in pickle module for serialization / deserialization:
 
 * the [local file adapter](adapter_system/local_file_adapter.md)
 * the [blob storage adapter](adapter_system/blob_storage_adapter.md) (for S3 compatible storage)
 
-Apart from these two, you can write your completely own general custom adapters tailored to your specific needs and persistence backends.
+The [component adapter](adapter_system/component_adapter.md) allows to write components using arbitrary Python code that act as sources / sinks. This allows for easy custom / ad-hoc integration of additional storage solutions.
 
-Another solution consist of using serialization/deserialization components directly from within the workflows. This is not recommended as its thwarts hetida designer's principles like reproducibility and separation of analytics from data in/egestion. Nevertheless it is explained below.
+Apart from these, you can write your completely own general custom adapters tailored to your specific needs and persistence backends.
+
+Using serialization/deserialization components directly from within the workflows is possible but not recommended as its thwarts hetida designer's principles like reproducibility and separation of analytics from data in/egestion. The recommendation is to simply use such components via the component adapter instead.
 
 **General warnings on deserialization**: 
 * Deserializing executes code and therefore is a security risk - you should only load objects from trusted sources!
@@ -32,7 +34,10 @@ But the "management" part, i.e. selecting the current/prod model, fallback proce
 
 ### Note on custom classes
 Custom classes can be defined in components, which return the class via a component output. If it is only necessary to ensure that such a class has been imported it is sufficient to include the exact same component in the respective workflow. The output of the component may be routed to the "Forget" component.
+
 A minimal example is provided in the [Tips and Tricks](./tips_and_tricks.md).
+
+Furthermore you may import components in other components (see [component tips](./component_tips.md)), which in particular allows to import classes from other components.
 
 ## Persisting and Loading via General Custom Adapter
 ### Built in general custom adapters
@@ -42,6 +47,10 @@ The [Local File Adapter](./adapter_system/local_file_adapter.md) supports pickli
 
 #### Blob Storage Adapter
 The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) supports pickling objects from `ANY` typed outputs to a mounted Blob storage and loading them into `ANY` type inputs via the S3 standard.
+
+
+#### Component Adapter
+The [Component Adapter](./adapter_system/component_adapter.md) is the most customizable solution apart from writing your own adapter. It allows to write custom Python code for accessing 3rd party persistence solutions / storage. Typically you would use `ANY` as type for models.
 
 ### Writing your own general custom adapter
 If the builtin adapters are not suitable for your scenario, writing your own [General Custom Adapter](./adapter_system/general_custom_adapters/instructions.md) is the recommended way for persisting and loading models. It has the following advantages specific to model persistence:
@@ -60,7 +69,7 @@ In case additional Python libraries such as [`onnx`](https://github.com/onnx/onn
 ## Persisting and Loading from within Workflows via Components
 A simple option for development purposes is to use basic components for serializing objects to disk. 
 
-**WARNING:** We only recommend this for early development / experimentation as its counteracts basic hetida designer principles. For production environments it is higly recommended to use or write a suitable general custom adapter.
+**WARNING:** We only recommend this for early development / experimentation as its counteracts basic hetida designer principles. For production environments it is higly recommended to use the component adapter or use / write another suitable general custom adapter. Almost always using the component adapter is strictly better and your best option with the least effort and the best cost-benefit ratio
 
 In order to persist objects from within workflows, the `Store Object` component is provided in the category `Data Sinks`. In addition to the object to be stored, this component expects a `name` string and a `tag` string as inputs, which in combination should uniquely identify the respective object. The name and the tag are used to determine the location of the serialized object file. The tag must not be "latest" because that is used internally and has a specific meaning.
 

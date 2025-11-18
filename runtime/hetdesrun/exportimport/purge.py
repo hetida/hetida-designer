@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from hetdesrun.exportimport.importing import import_transformations
+from hetdesrun.exportimport.importing import import_transformations_from_dir
 from hetdesrun.exportimport.utils import (
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
@@ -78,4 +78,4 @@ def delete_all_and_refill(directly_in_db: bool = False) -> None:
 
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
-    import_transformations("./transformations", directly_into_db=directly_in_db)
+    import_transformations_from_dir("./transformations", directly_into_db=directly_in_db)

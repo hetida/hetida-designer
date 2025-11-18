@@ -247,12 +247,14 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
             path = os.path.join(root, file)
             ext = os.path.splitext(path)[1]
 
+            transformations: list[TransformationRevision]
+
             if ext == ".py":
                 logger.info("Loading transformation from python file %s", path)
                 python_code = load_python_file(path)
                 if python_code is not None:
                     try:
-                        transformation = transformation_revision_from_python_code(python_code)
+                        transformations = [transformation_revision_from_python_code(python_code)]
                     except ComponentCodeImportError as e:
                         logging.error(
                             "Could not load main function from %s\n"
@@ -263,13 +265,24 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                         continue
 
             elif ext == ".json":
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
-                try:
-                    transformation = TransformationRevision(**transformation_json)
-                except ValueError as err:
-                    logger.error("ValueError for json from path %s:\n%s", download_path, str(err))
-                    continue
+                logger.info("Loading transformation(s) from json file %s", path)
+                json_obj = load_json(path)
+
+                trafo_jsons = json_obj if isinstance(json_obj, list) else [json_obj]
+
+                transformations = []
+
+                for transformation_json in trafo_jsons:
+                    try:
+                        transformations.append(TransformationRevision(**transformation_json))
+                    except (ValueError, TypeError) as err:
+                        logger.error(
+                            "Error for json from path %s:\n%s",
+                            download_path,
+                            str(err),
+                            extra={"transformation_json": transformation_json},
+                        )
+                        continue
             else:
                 if ext != ".pyc":
                     logger.warning(
@@ -278,17 +291,18 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                         path,
                     )
                 continue
-            transformation_dict[transformation.id] = transformation
-            if ext == ".py":
-                if transform_py_to_json:
-                    path = save_transformation_into_directory(
-                        transformation_revision=transformation,
-                        directory_path=download_path,
-                    )
+            for transformation in transformations:
+                transformation_dict[transformation.id] = transformation
+                if ext == ".py":
+                    if transform_py_to_json:
+                        path = save_transformation_into_directory(
+                            transformation_revision=transformation,
+                            directory_path=download_path,
+                        )
+                        path_dict[transformation.id] = path
                     path_dict[transformation.id] = path
-                path_dict[transformation.id] = path
-            else:
-                path_dict[transformation.id] = path
+                else:
+                    path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
 

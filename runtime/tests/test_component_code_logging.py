@@ -8,7 +8,7 @@ import pytest
 from structlog.stdlib import ProcessorFormatter
 
 from hetdesrun import logger as hetdesrun_runtime_exec_logger
-from hetdesrun.component.load import base_module_path
+from hetdesrun.component.base_module import base_module_path
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.runtime import runtime_execution_logger
@@ -119,6 +119,7 @@ async def test_logging_in_component(async_test_client, example_exec_input, caplo
         log_record = extract_single_record_with_msg_containing(
             caplog.records, "TEST LOGGING COMPONENT WITH COMPONENT MODULE LOGGER"
         )
+
         assert_infos_in_record(log_record, True, True)
 
         log_record = extract_single_record_with_msg_containing(

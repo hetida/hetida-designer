@@ -252,9 +252,11 @@ async def load_open_meteo(  # noqa: PLR0915
 
     if resulting_multitsframe.empty:
         # ensure correct columns present
+        attrs = resulting_multitsframe.attrs
         resulting_multitsframe = pd.DataFrame(
             columns=["timestamp", "metric", "value", "latitude", "longitude"]
         )
+        resulting_multitsframe.attrs = attrs
 
     # guarantee unique index:
     resulting_multitsframe.reset_index(drop=True, inplace=True)  # noqa: PD002

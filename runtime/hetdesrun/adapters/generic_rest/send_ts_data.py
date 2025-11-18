@@ -82,9 +82,9 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
                 "timestamp": pd.Series(series.index, index=series.index).apply(
                     lambda x: x.strftime(
                         "%Y-%m-%dT%H:%M:%S.%f"
-                    )  # Generic Rest datetime format is yyyy-MM-ddTHH:mm:ss.SSSSSSSSSX
+                    )  # We want to be able to send nanoseconds:
                     + "{:03d}".format(x.nanosecond)  # noqa: UP032
-                    + "Z"  # we guaranteed UTC time zone some lines above!
+                    + "+00:00"  # we guaranteed UTC time zone some lines above!
                 ),
             }
         )
