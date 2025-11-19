@@ -1,20 +1,22 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('Free text filter for component', async ({
+test('Allow null value as default_value for primitive data types, if the value is optional', async ({
   page,
   hetidaDesigner,
   browserName
 }) => {
   // Arrange
   const componentCategory = 'Test';
-  const componentName = `Test free text filter for component ${browserName}`;
-  const componentDescription = 'Free text filter for component';
+  const componentName = `Test input optional null value component ${browserName}`;
+  const componentDescription =
+    'Allow null value as default_value for primitive data types, if the value is optional';
   const componentTag = '0.1.0';
   const componentInputName = 'input';
   const componentOutputName = 'output';
-  const adapter = 'Python-Demo-Adapter';
-  const source = 'Temperature Unit';
-  const dataType = 'STRING';
+  const inputType = 'OPTIONAL';
+  const inputDataType = 'INT';
+  const inputDefaultValue = '1';
+  const inputDefaultValueNull = 'null';
 
   // Act
   // Add a new test component
@@ -41,59 +43,59 @@ test('Free text filter for component', async ({
     'new_input_1-label-input-component-io-dialog',
     componentInputName
   );
-
-  // Select Data Type
+  await hetidaDesigner.selectItemInDropdown(
+    `${componentInputName}-type-input-component-io-dialog`,
+    inputType
+  );
   await hetidaDesigner.selectItemInDropdown(
     `${componentInputName}-data-type-input-component-io-dialog`,
-    dataType
+    inputDataType
   );
-
+  await hetidaDesigner.typeInInputByTestId(
+    `${componentInputName}-optional-input-default-value-component-io-dialog`,
+    inputDefaultValue
+  );
   await hetidaDesigner.clickByTestId('add-output-component-io-dialog');
   await hetidaDesigner.typeInInputByTestId(
     'new_output_1-label-output-component-io-dialog',
     componentOutputName
   );
-
   await hetidaDesigner.clickByTestId('save-component-io-dialog');
 
-  // Execute component and get the protocol
+  // Wait for the store to update
+  await page.waitForTimeout(2000);
+
+  // Configure Execute
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Component ${componentName} ${componentTag}")`
   );
-
-  // Select adapter
-  await hetidaDesigner.selectItemInDropdown(
-    `${componentInputName}-adapter-list-input-wiring-dialog`,
-    adapter
-  );
-
-  // Select source
   await hetidaDesigner.clickByTestId(
-    `${componentInputName}-browse-sources-input-wiring-dialog`
+    `${componentInputName}-use-default-input-wiring-dialog`
   );
-  await page.waitForSelector('mat-dialog-container:has-text("Search Sources")');
-  await hetidaDesigner.typeInInputByTestId('search-tree-node', source);
-  await hetidaDesigner.selectSourceSearchResult(0);
-  await hetidaDesigner.clickByTestId(
-    `${componentInputName}-node-wiring-context-menu`
+  await hetidaDesigner.typeInInputByTestId(
+    `${componentInputName}-value-input-wiring-dialog`,
+    inputDefaultValueNull
   );
-  await page.mouse.click(0, 0); // Close context menu
-  await hetidaDesigner.clickByTestId('done-tree-node-modal'); // Close Source Dialog
-  await hetidaDesigner.clickByTestId('cancel-wiring-dialog'); // Close Execute Dialog
+  await page
+    .getByTestId(`${componentInputName}-value-input-wiring-dialog`)
+    .blur();
 
-  const InputFreeText = page.getByTestId(
-    `${componentInputName}-free-text-filter-input-wiring-dialog`
-  );
+  const validationError = await page
+    .locator('mat-form-field >> mat-error')
+    .isVisible();
 
-  expect(InputFreeText).toBeTruthy();
+  // Assert
+  expect(validationError).toBeFalsy();
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   // Clear
   const componentCategory = 'Test';
-  const componentName = `Test free text filter for component ${browserName}`;
+  const componentName = `Test input optional null value component ${browserName}`;
   const componentTag = '0.1.0';
+
+  await hetidaDesigner.clickByTestId('cancel-wiring-dialog');
 
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.searchInNavigation(componentName);
@@ -103,7 +105,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     componentName
   );
   await page.locator('.mat-mdc-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Delete');
+  await hetidaDesigner.clickOnContextMenu('Delete...');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
   );

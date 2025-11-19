@@ -1,0 +1,6 @@
+# frontend/.husky/pre-commit
+
+cd frontend
+
+npm run lint
+npm run format:staged

@@ -28,6 +28,7 @@ class StructureFilter(BaseModel):
     name: str
     type: FilterType  # noqa: A003
     required: bool
+    default_value: str | None = None
 
 
 class StructureSource(BaseModel):
