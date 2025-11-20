@@ -26,6 +26,7 @@ from hetdesrun.adapters.blob_storage import (
 )
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
+from hetdesrun.adapters.models import FilterType
 
 ThingNodeName = Annotated[
     str, Field(min_length=1, max_length=63, pattern=re.compile(r"^[a-zA-Z0-9]+$"))
@@ -355,10 +356,6 @@ class StructureThingNode(BaseModel):
                 f"'{OBJECT_KEY_DIR_SEPARATOR}' with its name '{name}'!"
             )
         return name
-
-
-class FilterType(str, Enum):
-    free_text = "free_text"
 
 
 class StructureFilter(BaseModel):
