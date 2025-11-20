@@ -41,7 +41,7 @@ else
     if [[ "$_is_pure_uvicorn" == $_true_equiv ]]; then
         # Pure uvicorn mode
         echo "Starting in pure uvicorn mode!"
-        exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" "$APP_MODULE"
+        exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" --log-level "${UVICORN_LOG_LEVEL:-"info"}" "$APP_MODULE"
     else
         # Start Gunicorn
         echo "Starting in gunicorn mode!"
