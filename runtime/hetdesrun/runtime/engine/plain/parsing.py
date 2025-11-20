@@ -3,7 +3,10 @@
 from collections.abc import Callable, Coroutine
 from typing import cast
 
-from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
+from hetdesrun.component.load import (
+    ComponentCodeImportError,
+    import_func_from_code_module,
+)
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentOutput, ComponentRevision
@@ -28,10 +31,6 @@ class WorkflowParsingException(Exception):
 
 
 class NodeFunctionLoadingError(WorkflowParsingException):
-    pass
-
-
-class NodeDoesNotExistError(WorkflowParsingException):
     pass
 
 
@@ -72,7 +71,7 @@ def load_func(
     """Load entrypoint function"""
     code_module_uuid = component.code_module_uuid
     try:
-        code = code_module_dict[str(code_module_uuid)].code
+        code_module = code_module_dict[str(code_module_uuid)]
     except KeyError as e:
         # This could alternatively be efficiently validated upfront in WorkflowExecutionInput.
         # However we do it here to be consistent with the other checks (e.g. operators
@@ -86,14 +85,15 @@ def load_func(
         raise NodeFunctionLoadingError(msg) from e
 
     try:
-        component_func = import_func_from_code(
-            code,
-            component.function_name,
+        component_func = import_func_from_code_module(
+            component.function_name, code_module, component
         )
+
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
             f"Could not load node function (Code module uuid: "
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
+            f" {component.name} ({str(component.tag)})) "
             f"function name: {component.function_name})"
         )
         runtime_logger.warning(msg)
@@ -270,6 +270,7 @@ def recursively_parse_workflow_node(
     """
     node_name = node.name if node.name is not None else "UNKNOWN"
     new_sub_nodes: dict[str, Node] = {}
+
     for sub_input_node in node.sub_nodes:
         new_sub_node: Node
         if isinstance(sub_input_node, WorkflowNode):
@@ -284,6 +285,7 @@ def recursively_parse_workflow_node(
             assert isinstance(  # noqa: S101
                 sub_input_node, ComponentNode
             )  # hint for mypy
+
             new_sub_node = parse_component_node(
                 sub_input_node,
                 component_dict,
@@ -291,6 +293,7 @@ def recursively_parse_workflow_node(
                 name_prefix + node_name + HIERARCHY_SEPARATOR,
                 id_prefix + node.id + HIERARCHY_SEPARATOR,
             )
+
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
     connections: list[WorkflowConnection] = node.connections
@@ -360,8 +363,7 @@ def recursively_parse_workflow_node(
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(
-            "Some default values could not be parsed into the "
-            "respective workflow input datatypes."
+            "Some default values could not be parsed into the respective workflow input datatypes."
         ).set_context(workflow.context) from error
 
     # provide constant data
@@ -390,12 +392,11 @@ def recursively_parse_workflow_node(
                 if inp.name in optional_input_mappings  # does have a default value
             ],
             optional=True,
-            id_suffix="workflow_constant_values",
+            id_suffix="workflow_constant_values_optional",
         )
     except WorkflowInputDataValidationError as error:
         raise WorkflowInputDataValidationError(
-            "Some constant values could not be parsed into the "
-            "respective workflow input datatypes."
+            "Some constant values could not be parsed into the respective workflow input datatypes."
         ).set_context(workflow.context) from error
 
     return workflow

@@ -32,7 +32,6 @@ async def test_roundtrip_append_table(two_sqlite_dbs_configured):
         },
         adapter_key="sql-adapter",
     )
-
     dataframe = received_data["inp"]
     assert isinstance(dataframe, pd.DataFrame)
     assert len(dataframe) == 3

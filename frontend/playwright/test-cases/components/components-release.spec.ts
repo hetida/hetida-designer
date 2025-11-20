@@ -71,7 +71,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-value-input-wiring-dialog`
   );
-  await hetidaDesigner.typeInJsonEditor(componentInputData);
+  await hetidaDesigner.typeInJsonEditor(componentInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
 
   // TODO: Wait for a change to happen
@@ -127,6 +127,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-value-input-wiring-dialog`
   );
+  await page.waitForSelector('hd-json-editor >> .view-lines:has-text("Mock")');
   const componentInputDataReleased = await page
     .locator('hd-json-editor >> .view-lines')
     .innerText();
@@ -196,6 +197,12 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     );
     await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
   }
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
+    )
+  ).waitForElementState('hidden');
 
   await hetidaDesigner.clearTest();
 });

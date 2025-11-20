@@ -1,8 +1,9 @@
+# noqa: A005
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.component import ComponentInput, ComponentOutput
@@ -18,7 +19,8 @@ class IO(BaseModel):
     )
     data_type: DataType
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":
             return name
@@ -46,10 +48,13 @@ class InputTypeMixIn(BaseModel):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
-    @validator("value")
-    def value_set_only_for_optional_input(cls, value: Any | None, values: dict) -> Any | None:
+    @field_validator("value")
+    @classmethod
+    def value_set_only_for_optional_input(
+        cls, value: Any | None, info: ValidationInfo
+    ) -> Any | None:
         try:
-            type = values["type"]  # noqa: A001
+            type = info.data["type"]  # noqa: A001
         except KeyError as error:
             raise ValueError(
                 "Cannot check if value is set correctly if any of the attributes 'type' is missing!"
@@ -82,7 +87,8 @@ class IOInterface(BaseModel):
     inputs: list[TransformationInput] = []
     outputs: list[TransformationOutput] = []
 
-    @validator("inputs", "outputs", each_item=False)
+    @field_validator("inputs", "outputs")
+    @classmethod
     def io_names_unique(cls, ios: list[IO]) -> list[IO]:
         ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
@@ -92,8 +98,8 @@ class IOInterface(BaseModel):
 
 
 class Position(BaseModel):
-    x: int
-    y: int
+    x: float
+    y: float  # frontend actually uses half-values (0.5) occasionally
 
 
 class Connector(IO):
@@ -123,7 +129,7 @@ class OperatorOutput(Connector):
         for execution.
         """
         return OperatorOutput(
-            id=transformation_output.id,
+            id=uuid4(),
             name=transformation_output.name,
             data_type=transformation_output.data_type,
             position=Position(x=pos_x, y=pos_y),
@@ -131,15 +137,16 @@ class OperatorOutput(Connector):
 
 
 class OperatorInput(InputTypeMixIn, Connector):
-    exposed: bool = False
+    exposed: bool = Field(False, validate_default=True)
 
-    @validator("exposed", always=True)
-    def required_inputs_exposed(cls, exposed: bool, values: dict) -> bool:
+    @field_validator("exposed")
+    @classmethod
+    def required_inputs_exposed(cls, exposed: bool, info: ValidationInfo) -> bool:
         try:
-            type = values["type"]  # noqa: A001
+            type = info.data["type"]  # noqa: A001
         except KeyError as error:
             raise ValueError(
-                "Cannot set 'exposed' to true for required inputs " "if the input type is missing!"
+                "Cannot set 'exposed' to true for required inputs if the input type is missing!"
             ) from error
         if type == InputType.REQUIRED:
             return True
@@ -159,7 +166,7 @@ class OperatorInput(InputTypeMixIn, Connector):
         for execution.
         """
         return OperatorInput(
-            id=input.id,
+            id=uuid4(),  # input.id,
             name=input.name,
             data_type=input.data_type,
             type=input.type,
@@ -190,8 +197,8 @@ class WorkflowContentIO(Connector):
             "Is displayed in the IO dialog."
         ),
     )  # not needed in FE/BE/RT, kept for readability of jsons only
-    connector_name: str = Field(
-        ...,
+    connector_name: str | None = Field(
+        None,
         description=(
             "Name of the connector of the operator to which this IOConnector is connected. "
             "Is displayed in the IO dialog."
@@ -332,11 +339,11 @@ class WorkflowContentConstantInput(WorkflowContentIO):
     # the runtime will take care of the correct data type before execution
     value: str = Field(..., description="Value of the Constant")
 
-    @root_validator()
-    def name_none(cls, values: dict) -> dict:
-        if not ("name" not in values or values["name"] is None or values["name"] == ""):
-            raise ValueError("Constants must have an empty string as name.")
-        return values
+    @model_validator(mode="after")
+    def name_none(self) -> Self:
+        if self.name != "" and self.name is not None:
+            raise ValueError("Constants must have an empty string or None as name.")
+        return self
 
     def to_workflow_input(self) -> WorkflowInput:
         """Transform constant workflow input into workflow node input.

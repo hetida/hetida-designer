@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 import httpx
+from dtexp import DtexpParsingError
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -23,6 +24,8 @@ from pydantic import HttpUrl, StrictInt, StrictStr, ValidationError
 
 from hetdesrun.backend.execution import (
     TrafoExecutionComponentAdapterComponentsNotFound,
+    TrafoExecutionComponentImportCycleError,
+    TrafoExecutionComponentImportsLoadingError,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -41,8 +44,9 @@ from hetdesrun.backend.service.dashboarding_utils import (
     DashboardQueryParamValidationError,
     update_wiring_from_query_parameters,
 )
-from hetdesrun.component.code import expand_code, update_code
-from hetdesrun.component.load import ComponentCodeImportError
+from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
+from hetdesrun.component.load import ComponentCodeImportError, ComponentImportCycleError
+from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     UpdateProcessStatus,
@@ -52,24 +56,46 @@ from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.run import UnitTestPayload, UnitTestResults
 from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import DBError, DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBError,
+    DBIntegrityError,
+    DBNestingCycleDetected,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
     read_single_transformation_revision,
+    select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
-from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.transformation import (
+    TrafoUpdateState,
+    TransformationRevision,
+    TransformationRevisionStub,
+    UpdatedTransformationRevision,
+)
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.runtime.service import unittest_service
+from hetdesrun.service.serialization_helpers import (
+    MsgSpecJSONResponse,
+    handle_frontend_exec_response_dict_serialisation,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     Importable,
     ImportSourceConfig,
     MultipleTrafosUpdateConfig,
     transformation_revision_from_python_code,
+)
+from hetdesrun.trafoutils.nestings import MissingReferencedTransformation, NestingLevelCycleDetected
+from hetdesrun.trafoutils.upgrade_operators import (
+    upgrade_operators_in_workflow,
+    upgrade_workflow_operator_in_place,
 )
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import (
@@ -79,6 +105,7 @@ from hetdesrun.webservice.auth_dependency import (
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +165,12 @@ async def create_transformation_revision(
         msg = f"Could not store transformation revision {transformation_revision.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = (
+            f"Cycle detected when trying to store {transformation_revision.id}:\n{str(err)}."
+            " Resetting."
+        )
+        logger.warning(msg)
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
@@ -147,8 +180,11 @@ async def create_transformation_revision(
         msg = f"Could not find transformation revision {transformation_revision.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-
-    logger.debug(persisted_transformation_revision.json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
+        )
 
     return persisted_transformation_revision
 
@@ -159,7 +195,7 @@ def change_code(
     update_component_code: bool = False,
 ) -> str:
     """Handle desired code changes"""
-    tr_copy = tr.copy(deep=True)
+    tr_copy = tr.model_copy(deep=True)
     assert isinstance(tr_copy.content, str)  # for mypy # noqa: S101
 
     if update_component_code:
@@ -408,6 +444,99 @@ async def get_all_transformation_revisions(
 
 
 @transformation_router.get(
+    "/stubs",
+    response_model=list[TransformationRevisionStub],
+    summary="Returns combined list of all transformation revision stubs (components and workflows)",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got all transformation revision stubs"}
+    },
+)
+async def get_all_transformation_revision_stubs(
+    type: Type  # noqa: A002
+    | None = Query(
+        None,
+        description="Filter for specified type.",
+    ),
+    state: State | None = Query(
+        None,
+        description="Filter for specified state.",
+    ),
+    categories: list[ValidStr] | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: UUID | None = Query(
+        None, description="Filter for specified revision group id."
+    ),
+    ids: list[UUID] | None = Query(
+        None, description="Filter for specified list of ids.", alias="id"
+    ),
+    names: list[NonEmptyValidStr] | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions."
+        ),
+    ),
+) -> list[TransformationRevisionStub]:
+    """Get all transformation revision stubs from the data base.
+
+    This can be used to load available trafos as stubs, i.e.
+    * including name, id, description, type, category, version_tag, state and so on
+    * including io_interface
+    * excluding test_wiring, release_wiring, documentation, content (component code
+      or workflow internal structure)
+
+    This endpoint can be used for example to find fitting (io_interface) trafos
+    and offer them for configuration / usage in 3rd party applications.
+
+    The parameters filtering the transformation revision stubs are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will yield both trafos.
+    * AND between different filters.
+    """
+
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_dependencies=False,
+        include_deprecated=include_deprecated,
+        unused=False,
+    )
+
+    logger.info("get all transformation revision stubs with %s", repr(filter_params))
+    try:
+        trafo_stubs = select_multiple_transformation_revision_stubs(
+            type=filter_params.type,
+            state=filter_params.state,
+            categories=filter_params.categories,
+            category_prefix=filter_params.category_prefix,
+            revision_group_id=filter_params.revision_group_id,
+            ids=filter_params.ids,
+            names=filter_params.names,
+            include_deprecated=filter_params.include_deprecated,
+        )
+
+    except DBIntegrityError as err:
+        msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    return trafo_stubs
+
+
+@transformation_router.get(
     "/{id}",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
@@ -432,7 +561,7 @@ async def get_transformation_revision_by_id(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     return transformation_revision
 
@@ -654,7 +783,19 @@ async def update_transformation_revisions(
         ),
     )
 
-    success_per_trafo = import_importable(importable)
+    try:
+        success_per_trafo = import_importable(importable)
+    except NestingLevelCycleDetected as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Dependency cycle detected in filtered trafos:\nstr(e)",
+        ) from e
+    except MissingReferencedTransformation as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Missing dependency in provided transformations\nstr(e)",
+        ) from e
+
     for msg, ccs in broken_component_codes:
         success_per_trafo[ccs] = TrafoUpdateProcessSummary(
             status=UpdateProcessStatus.FAILED,
@@ -669,8 +810,286 @@ async def update_transformation_revisions(
 
 
 @transformation_router.put(
+    "/{id}/upgrade_operators/{operator_id}",
+    response_model=UpdatedTransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary=(
+        "Upgrade an operator in a DRAFT workflow transformation revision to a provided revision."
+    ),
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully updated the transformation revision"
+        },
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Id from path does not match id from object in request body"
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": "DB entry is not modifiable due to status or non-matching types"
+        },
+    },
+)
+async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
+    id: UUID,  # noqa: A002
+    operator_id: UUID,
+    updated_transformation_revision: TransformationRevision,
+    new_operator_transformation_revision_id: UUID = Query(
+        ..., description="The new transformation revision for the provided operator."
+    ),
+    allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
+    update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    expand_component_code: bool = Query(False, description="Expand with wirings etc."),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
+) -> UpdatedTransformationRevision:
+    logger.info(
+        "Upgrade workflow operator %s in workflow %s with trafo revision %s",
+        operator_id,
+        id,
+        new_operator_transformation_revision_id,
+    )
+    if updated_transformation_revision.type is not Type.WORKFLOW:
+        msg = (
+            f"Transformation {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} is"
+            " not a workflow. Cannot upgrade operator."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    if updated_transformation_revision.state is not State.DRAFT:
+        msg = (
+            f"Workflow {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} does"
+            " not have state DRAFT. Cannot upgrade operator."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    if id != updated_transformation_revision.id:
+        msg = (
+            f"The id {id} does not match the id of the provided "
+            f"transformation revision {updated_transformation_revision.id}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    workflow_content = updated_transformation_revision.content
+    assert isinstance(workflow_content, WorkflowContent)  # noqa: S101 # for mypy
+
+    ops = [op for op in workflow_content.operators if op.id == operator_id]
+    if len(ops) != 1:
+        msg = (
+            f"Got {len(ops)} operators in workflow {id} with the provided id {operator_id}."
+            " Need exactly 1. Aborting operator upgrade"
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+    operator = ops[0]
+
+    try:
+        possibly_newer_trafo = read_single_transformation_revision(
+            id=new_operator_transformation_revision_id
+        )
+        logger.info(
+            "Found requested new transformation revision with id %s for operator %s in workflow %s",
+            new_operator_transformation_revision_id,
+            operator_id,
+            id,
+        )
+    except DBNotFoundError as err:
+        msg = (
+            "Could not find requested new transformation revision with id"
+            f" {new_operator_transformation_revision_id} for operator {operator_id} "
+            f"in workflow {id}:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    if possibly_newer_trafo.revision_group_id != operator.revision_group_id:
+        msg = (
+            f"In provided workflow {id} the revision_group_id of operator {operator_id}."
+            " Does not agree with that of the fetched new trafo "
+            f"rev {new_operator_transformation_revision_id}. Cannot upgrade."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    upgrade_workflow_operator_in_place(
+        updated_transformation_revision, operator_id, operator, possibly_newer_trafo
+    )
+
+    try:
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    updated_transformation_revision,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
+        )
+        logger.info("updated transformation revision %s", id)
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except ModelConstraintViolation as err:
+        msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
+
+    logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
+
+    return persisted_transformation_revision
+
+
+@transformation_router.put(
+    "/{id}/upgrade_operators",
+    response_model=UpdatedTransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Upgrade operators in a DRAFT workflow transformation revision.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully updated the transformation revision"
+        },
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Id from path does not match id from object in request body"
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": "DB entry is not modifiable due to status or non-matching types"
+        },
+    },
+)
+async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
+    id: UUID,  # noqa: A002
+    updated_transformation_revision: TransformationRevision,
+    allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
+    update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    expand_component_code: bool = Query(False, description="Expand with wirings etc."),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
+) -> UpdatedTransformationRevision:
+    logger.info("Upgrade workflow %s operators", id)
+
+    if updated_transformation_revision.type is not Type.WORKFLOW:
+        msg = (
+            f"Transformation {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} is"
+            " not a workflow. Cannot upgrade operators."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    if updated_transformation_revision.state is not State.DRAFT:
+        msg = (
+            f"Workflow {updated_transformation_revision.name} "
+            f"({updated_transformation_revision.version_tag}) with id "
+            f"{updated_transformation_revision.id} does"
+            " not have state DRAFT. Cannot upgrade operators."
+        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    if id != updated_transformation_revision.id:
+        msg = (
+            f"The id {id} does not match the id of the provided "
+            f"transformation revision {updated_transformation_revision.id}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
+
+    # TODO: expose options "only_check_deprecated" and "use_release_date"
+    try:
+        upgraded_operators_trafo_rev = upgrade_operators_in_workflow(
+            updated_transformation_revision, only_check_deprecated=False, use_release_date=True
+        )
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when upgrading operators for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operators in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            upgraded_operators_trafo_rev = read_single_transformation_revision(id)
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when upgrading operators for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    try:
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    upgraded_operators_trafo_rev,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
+        )
+        logger.info("updated transformation revision %s", id)
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operators in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except ModelConstraintViolation as err:
+        msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
+    if get_config().log_updated_trafo_revision:
+        logger.debug(
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
+        )
+
+    return persisted_transformation_revision
+
+
+@transformation_router.put(
     "/{id}",
-    response_model=TransformationRevision,
+    response_model=UpdatedTransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Updates a transformation revision.",
@@ -679,7 +1098,7 @@ async def update_transformation_revisions(
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Id from path does not match id from object in request body"
         },
         status.HTTP_409_CONFLICT: {
@@ -694,7 +1113,7 @@ async def update_transformation_revision(
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
-) -> TransformationRevision:
+) -> UpdatedTransformationRevision:
     """Update or store a transformation revision in the database.
 
     If no DB entry with the provided id is found, it will be created.
@@ -711,24 +1130,61 @@ async def update_transformation_revision(
     if id != updated_transformation_revision.id:
         msg = (
             f"The id {id} does not match the id of the provided "
-            f"transformation revision DTO {updated_transformation_revision.id}"
+            f"transformation revision {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision,
-            allow_overwrite_released=allow_overwrite_released,
-            update_component_code=update_component_code,
-            expand_component_code=expand_component_code,
-            strip_wiring=strip_wiring,
+        persisted_transformation_revision = (
+            UpdatedTransformationRevision.from_transformation_revision(
+                update_or_create_single_transformation_revision(
+                    updated_transformation_revision,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                    expand_component_code=expand_component_code,
+                    strip_wiring=strip_wiring,
+                ),
+                update_state=TrafoUpdateState.SUCCESS,
+            )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as err:
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except ComponentImportComponentError as err:
+        msg = (
+            "Error while checking component imports for component"
+            f" {updated_transformation_revision.name}"
+            f" ({updated_transformation_revision.version_tag})"
+            f" with id {updated_transformation_revision.id}:\n{str(err)}"
+        )
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = (
+                UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                    read_single_transformation_revision(id),
+                    update_state=TrafoUpdateState.UNALLOWED_COMPONENT_IMPORTS,
+                )
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    except DBNestingCycleDetected as err:
+        msg = f"Cycle detected when trying to upgrade operator in {id}:\n{str(err)}. Resetting."
+        logger.warning(msg)
+        try:
+            persisted_transformation_revision = UpdatedTransformationRevision.from_transformation_revision(  # noqa: E501
+                read_single_transformation_revision(id),
+                update_state=TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED,
+            )
+        except DBNotFoundError as err:
+            msg = f"Could not find transformation revision {id}:\n{str(err)}"
+            logger.error(msg)
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     except DBNotFoundError as err:
         msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
@@ -737,8 +1193,16 @@ async def update_transformation_revision(
         msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
+    except ParseDefaultValueError as err:
+        msg = f"Update impossible for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
-    logger.debug(persisted_transformation_revision.json())
+    if get_config().log_updated_trafo_revision:
+        logger.debug(
+            "Updated trafo",
+            extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
+        )
 
     return persisted_transformation_revision
 
@@ -794,14 +1258,27 @@ async def handle_trafo_revision_execution_request(
         exec_response = await perf_measured_execute_trafo_rev(exec_by_id)
 
     except TrafoExecutionInputValidationError as err:
-        msg = f"Could not validate execution input\n{exec_by_id.json(indent=2)}:\n{str(err)}"
+        msg = (
+            "Could not validate execution input"
+            f"\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
+        )
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
     except TrafoExecutionNotFoundError as err:
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    except (ComponentImportCycleError, TrafoExecutionComponentImportCycleError) as err:
+        msg = f"Detected component import cycle:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
+
+    except TrafoExecutionComponentImportsLoadingError as err:
+        msg = f"Could not load some component import components:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from err
 
     except TrafoExecutionComponentAdapterComponentsNotFound as err:
         msg = (
@@ -837,7 +1314,7 @@ async def handle_trafo_revision_execution_request(
 )
 async def execute_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute a transformation revision.
 
     The transformation will be loaded from the DB and executed with the wiring sent in the request
@@ -845,7 +1322,11 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
-    return await handle_trafo_revision_execution_request(exec_by_id)
+
+    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+    dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
 
 @transformation_router.post(
@@ -857,7 +1338,7 @@ async def execute_transformation_revision_endpoint(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"description": "Successfully tested the transformation revision."},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": "Not a component."},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Not a component."},
         status.HTTP_404_NOT_FOUND: {"description": "Could not find trafo rev in db."},
     },
 )
@@ -880,7 +1361,7 @@ async def test_transformation_revision(
             f"Transformation revision {trafo.name} ({trafo.version_tag}) "
             f"with id {str(id)} is not a component"
         )
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     if get_config().is_runtime_service:
         try:
@@ -906,12 +1387,14 @@ async def test_transformation_revision(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "unittest")
+            url = posix_urljoin(get_runtime_engine_url(), "unittest")
             try:
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(unit_test_payload.json()),  # TODO: avoid double serialization.
+                    json=json.loads(
+                        unit_test_payload.model_dump_json()
+                    ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                     timeout=None,
@@ -921,7 +1404,6 @@ async def test_transformation_revision(
                 # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
                 msg = f"Failure connecting to hd runtime unittest endpoint ({url}):\n{str(e)}"
                 logger.error(msg)
-                # TODO: raise error
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
             try:
                 json_obj = response.json()
@@ -949,6 +1431,8 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(result)
+
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -961,11 +1445,9 @@ async def send_result_to_callback_url(
     ) as client:
         try:
             await client.post(
-                callback_url,
+                str(callback_url),
                 headers=headers,
-                json=json.loads(result.json()),  # TODO: avoid double serialization.
-                # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                json=dict_like_obj,
             )
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)
@@ -1065,7 +1547,7 @@ async def handle_latest_trafo_revision_execution_request(
 )
 async def execute_latest_transformation_revision_endpoint(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
-) -> ExecutionResponseFrontendDto:
+) -> MsgSpecJSONResponse:
     """Execute the latest transformation revision of a revision group.
 
     WARNING: Even when the input is not changed, the execution response might change if a new latest
@@ -1083,7 +1565,12 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    return await handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input)
+    exec_result = await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
+    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+
+    return MsgSpecJSONResponse(content=dict_like_obj)
 
 
 async def execute_latest_and_post(
@@ -1218,7 +1705,7 @@ async def update_transformation_dashboard_positioning(
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
 
 @dashboard_router.get(
@@ -1237,11 +1724,17 @@ async def transformation_dashboard(
         ...,
         examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
-    fromTimestamp: datetime.datetime | None = Query(
-        None, description="Override from timestamp. Expected to be explicit UTC."
+    fromTimestamp: str | None = Query(
+        None,
+        description=(
+            "Override from timestamp. Expected to be dtexp expression or absolute UTC timestamp"
+        ),
     ),
-    toTimestamp: datetime.datetime | None = Query(
-        None, description="Override to timestamp. Expected to be explicit UTC."
+    toTimestamp: str | None = Query(
+        None,
+        description=(
+            "Override to timestamp. Expected to be dtexp expression or absolute UTC timestamp"
+        ),
     ),
     relNow: str | None = Query(
         None,
@@ -1299,27 +1792,41 @@ async def transformation_dashboard(
         return generate_login_dashboard_stub()
 
     # Validate query params
-    if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
+
+    num_explicit_timestamps_set = int(fromTimestamp is not None and len(fromTimestamp) > 0) + int(
+        toTimestamp is not None and len(toTimestamp) > 0
+    )
+
+    if num_explicit_timestamps_set == 1:
         msg = "Either none or both of fromTimestamp and toTimestamp must be set."
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
-    if fromTimestamp is not None and toTimestamp is not None and fromTimestamp > toTimestamp:
-        msg = "fromTimestamp must be <= toTimestamp"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+    start: datetime.datetime | None = None
+    end: datetime.datetime | None = None
 
-    if relNow is not None and fromTimestamp is not None:
-        msg = "Cannot both specify absolute and relative timerange overrides!"
+    if num_explicit_timestamps_set == 2:
+        try:
+            start, end = resolve_interval(fromTimestamp, toTimestamp)
+        except (DtexpParsingError, ValueError) as e:
+            msg = (
+                f"Could not resolve fromTimestamp {fromTimestamp} and toTimestamp {toTimestamp}"
+                " into valid interval datetimes."
+            )
+            logger.error(msg)
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
+
+    if relNow is not None and num_explicit_timestamps_set > 0:
+        msg = "Cannot both specify timerange and relative to now timerange overrides!"
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     inputs_to_expose = {inp_name for inp_name in exposed_inputs.split(",") if inp_name != ""}
 
     # Calculate override mode
     override_mode: OverrideMode = (
         OverrideMode.Absolute
-        if (fromTimestamp is not None)
+        if (num_explicit_timestamps_set == 2)
         else (OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride)
     )
 
@@ -1333,7 +1840,7 @@ async def transformation_dashboard(
         msg = f"Could not find transformation revision {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
-    logger.debug(transformation_revision.json())
+    logger.debug(transformation_revision.model_dump_json())
 
     # obtain test wiring
     wiring = (
@@ -1350,11 +1857,11 @@ async def transformation_dashboard(
     except DashboardQueryParamValidationError as e:
         msg = str(e)
         logger.error(msg)
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from e
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
 
     # compute possible override time range setting
     calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
-        fromTimestamp, toTimestamp, relNow
+        start, end, relNow
     )
 
     # override timerange if requested:

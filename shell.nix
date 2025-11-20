@@ -8,7 +8,7 @@
 # with live reload / restart functionality enabling fast-paced development without docker.
 # This includes the main hetida designer application submodules (frontend, backend, runtime) and
 # a postgres database. It uses overmind to orchestrate/manage the services instead of
-# docker-compose.
+# docker compose.
 #
 # Prerequisites:
 #     * Linux OS with a proper Bash. MacOS may work but has not been tested so far.
@@ -50,20 +50,18 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/bb8bdb47b718645b2f198a6cf9dff98d967d0fd4.tar.gz")
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/b4c2c57c31e68544982226d07e4719a2d86302a8.tar.gz")
 {
   config = {
     permittedInsecurePackages = [
-      "nodejs-14.21.3"
+      # "nodejs-14.21.3"
       # "openssl-1.1.1u"
     ];
   };
 };
-# 5b7cd5c39befee629be284970415b6eb3b0ff000
-# 23.05: 4ecab3273592f27479a583fb6d975d4aba3486fe
 
 let
-  pythonPackages = python312Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python313Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -182,7 +180,6 @@ let
             source "$venv_target_dir/bin/activate"
         fi
         echo "finished prepare_venv"
-
     }
 
     prepare_venv "''${@}"
@@ -193,7 +190,8 @@ let
     set -e
 
     echo "BUILD AND ACTIVATE VENV AT ${venvDirRuntime}"
-    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; import black; # import tensorflow"
+
   '';
 
   prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
@@ -232,7 +230,7 @@ let
     source ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
     cd ${runtimeDir}
-    export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
+    export HD_DATABASE_URL="postgresql+psycopg://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
 
     WRITABLE_SQLITE_TMP_DIR="$(mktemp -d)"
     export SQL_ADAPTER_SQL_DATABASES='
@@ -270,6 +268,7 @@ let
 
     echo "STARTING RUNTIME"
     PORT=8080 \
+    LOG_LEVEL=DEBUG \
     HD_USE_AUTH=false \
     HD_KAFKA_CONFIGS='
     {
@@ -321,7 +320,7 @@ pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python312Packages.python
+    python313Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib
@@ -355,7 +354,9 @@ pkgs.mkShell rec {
     # Postgres
 
     postgresql
+    postgresql.pg_config
     postgresql.lib
+    postgresql.pg_config
     # Node
     nodejs_22
     chromium # for tests
@@ -372,10 +373,18 @@ pkgs.mkShell rec {
   OVERMIND_NO_PORT = "1";
   OVERMIND_CAN_DIE = "runtime";
 
+  RUNTIME_VENV_ACTIVATE_COMMAND="${prepare-runtime-venv}/bin/prepare-runtime-venv";
+  # To manually activate runtime venv in
+  # use via 
+  #     source $RUNTIME_VENV_ACTIVATE_COMMAND
+
 
   shellHook = ''
     set -e
     SOURCE_DATE_EPOCH=$(date +%s)
+    set +e
+    echo ${postgresql.lib}
+    echo ${postgresql}
 
     ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
@@ -401,7 +410,7 @@ pkgs.mkShell rec {
         echo "    and restart nix shell."
     else
         current_dir=$(pwd)
-        cd ./frontend && npm ci
+        cd ./frontend && rm -rf node_modules && npm ci
         # npm-ci = sync with package-lock.json. Could be improved:
         # Does not intelligently check by using
         # hashes

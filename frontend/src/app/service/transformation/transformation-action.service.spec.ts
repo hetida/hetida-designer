@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
@@ -11,11 +11,16 @@ import { WorkflowContent } from 'src/app/model/workflow-content';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
+import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
 import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { RouterModule } from '@angular/router';
-import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
+
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(
     newId: string,
@@ -260,11 +265,7 @@ describe('TransformationActionService', () => {
     notificationServiceSpy = jasmine.createSpy();
 
     TestBed.configureTestingModule({
-      imports: [
-        MaterialModule,
-        HttpClientTestingModule,
-        RouterModule.forRoot([])
-      ],
+      imports: [MaterialModule, RouterModule.forRoot([])],
       providers: [
         provideMockStore(),
         {
@@ -282,7 +283,9 @@ describe('TransformationActionService', () => {
         {
           provide: NotificationService,
           useValue: notificationServiceSpy
-        }
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     });
   });

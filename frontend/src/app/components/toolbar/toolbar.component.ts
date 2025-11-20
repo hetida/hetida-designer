@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
-import { of, timer } from 'rxjs';
+import { of, ReplaySubject, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -19,36 +20,27 @@ import { selectTransformationById } from '../../store/transformation/transformat
   styleUrls: ['./toolbar.component.scss']
 })
 export class ToolbarComponent implements OnInit {
+  public transformation: Transformation | undefined;
+  public incompleteFlag = false;
+
+  private readonly _transformationId$ = new ReplaySubject<string>();
+  private readonly _destroyRef = inject(DestroyRef);
+
+  @Input()
+  set transformationId(transformationId: string) {
+    this._transformationId$.next(transformationId);
+  }
+
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartService: NgHetidaFlowchartService,
     private readonly transformationActionService: TransformationActionService
   ) {}
 
-  @Input() transformationId: string;
-
-  transformation: Transformation | undefined;
-
-  get isWorkflow(): boolean {
-    return this.transformation.type === TransformationType.WORKFLOW;
-  }
-
-  get isComponent(): boolean {
-    return this.transformation.type === TransformationType.COMPONENT;
-  }
-
-  get isWorkflowWithoutIo(): boolean {
-    return (
-      isWorkflowTransformation(this.transformation) &&
-      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
-    );
-  }
-
-  incompleteFlag = false;
-
   ngOnInit() {
     timer(0, 100)
       .pipe(
+        takeUntilDestroyed(this._destroyRef),
         switchMap(() =>
           of(this.transformationActionService.isIncomplete(this.transformation))
         )
@@ -56,8 +48,16 @@ export class ToolbarComponent implements OnInit {
       .subscribe(isIncomplete => {
         this.incompleteFlag = isIncomplete;
       });
-    this.transformationStore
-      .select(selectTransformationById(this.transformationId))
+
+    this._transformationId$
+      .pipe(
+        takeUntilDestroyed(this._destroyRef),
+        switchMap(transformationId =>
+          this.transformationStore.select(
+            selectTransformationById(transformationId)
+          )
+        )
+      )
       .subscribe(transformation => {
         this.transformation = transformation;
       });
@@ -83,15 +83,42 @@ export class ToolbarComponent implements OnInit {
     await this.transformationActionService.execute(this.transformation);
   }
 
+  get isComponent(): boolean {
+    return this.transformation.type === TransformationType.COMPONENT;
+  }
+
+  get isWorkflow(): boolean {
+    return this.transformation.type === TransformationType.WORKFLOW;
+  }
+
+  get isWorkflowWithoutIo(): boolean {
+    return (
+      isWorkflowTransformation(this.transformation) &&
+      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
+    );
+  }
+
   get publishTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return 'Publish';
     }
     return 'Already published';
   }
 
+  get upgradeWorkflowOperatorsTooltip(): string {
+    if (!this.isReleasedOrDeprecated()) {
+      return [
+        'Upgrade workflow operators',
+        // prettier-ignore
+        '- DRAFT operators => update to revision\'s current state',
+        '- RELEASED / DISABLED operators => newest revision in revision group'
+      ].join('\n');
+    }
+    return 'Cannot upgrade operators for released workflows';
+  }
+
   get updateExpandTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return 'Update and Expand code (Wirings, Formatting, Documentation)';
     }
     return 'Cannot change code for released component';
@@ -103,6 +130,12 @@ export class ToolbarComponent implements OnInit {
 
   publish(): void {
     this.transformationActionService.publish(this.transformation);
+  }
+
+  upgradeWorkflowOperators(): void {
+    this.transformationActionService.upgradeWorkflowOperators(
+      this.transformation
+    );
   }
 
   updateExpand(): void {
@@ -136,7 +169,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   get newRevisionTooltip(): string {
-    if (!this.isReleased()) {
+    if (!this.isReleasedOrDeprecated()) {
       return `New revision is disabled, because the ${this.transformation.type.toLowerCase()} is not released.`;
     }
     return 'New revision';
@@ -150,6 +183,17 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.state === RevisionState.RELEASED;
   }
 
+  isDeprecated() {
+    return this.transformation.state === RevisionState.DISABLED;
+  }
+
+  isReleasedOrDeprecated() {
+    return (
+      this.transformation.state === RevisionState.RELEASED ||
+      this.transformation.state === RevisionState.DISABLED
+    );
+  }
+
   get executeTooltip(): string {
     if (this.incompleteFlag === true) {
       return `Cannot execute, because the ${this.transformation.type.toLowerCase()} is incomplete.`;
@@ -158,7 +202,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   get deleteTooltip(): string {
-    if (this.isReleased()) {
+    if (this.isReleasedOrDeprecated()) {
       return `Cannot delete this ${this.transformation.type.toLowerCase()}, because it is already released`;
     }
     return 'Delete';

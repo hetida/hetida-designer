@@ -1,5 +1,5 @@
 import logging
-import pickle
+import pickle  # nosec: B403
 from io import BytesIO
 from typing import Any, cast
 from uuid import UUID
@@ -185,7 +185,7 @@ async def write_blob_to_storage(
     is_keras_model = False
     is_keras_model_with_custom_objects = False
     try:
-        import tensorflow as tf
+        import tensorflow as tf  # noqa: PLC0415
     except ModuleNotFoundError:
         logger.debug("To store a keras model, add tensorflow to the runtime dependencies.")
     else:
@@ -295,7 +295,7 @@ async def send_data(
             msg = (
                 "To use the BLOB storage adapter each filtered "
                 "sink must have 'ref_id' and 'ref_key' set!"
-                f"That is not the case for {filtered_sink.json()}"
+                f"That is not the case for {filtered_sink.model_dump_json()}"
             )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)

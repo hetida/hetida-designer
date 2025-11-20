@@ -65,6 +65,8 @@ export directory configured for my-hd-instance as source / target.
 
 ## Frequently used parameters and settings
 
+**Note**: A full description of available parameters / settings can be viewed in [openapi.json](../runtime/openapi.json) (use an API viewer!).
+
 Typically filter settings are configured for pulling only and pushing just pushes everything
 available as local file to the hd instance. Let's start with an example in the .hd-instance file
 
@@ -229,30 +231,6 @@ def test_run_with_test_wiring():
     assert isinstance(result, dict)
     ...
 ```
-
-If you need to import pytest, e.g. to use one of its decorators or `pytest.raises` we recommend to put all your tests in the `else` part of a try ... except ... else block around the pytest import as follows:
-
-```python
-...
-# bottom of component code
-
-try:
-    import pytest
-except ImportError:
-    pass
-else:
-    @pytest.mark.parametrize("test_str", ["test1", "test2"])
-    def test_one(test_str):
-        assert main(test_str=test_str) == test_str
-
-    def test_two():
-        with pytest.raises(ValueError):
-            main(test_str="error")
-```
-
-This guarantees that
-* your component code will run in the runtime container where only prod dependencies are installed meaning that pytest typically is not available.
-* during running the unit tests in an environment with dev dependencies installed you can use all features of pytest.
 
 #### Writing doctests
 You can enter doctests as [usual](https://docs.python.org/3/library/doctest.html) in your functions docstring. For the component's main function the docstring must be entered below the comment marking the end of the auto-generated function header:

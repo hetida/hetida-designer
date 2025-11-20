@@ -1,5 +1,5 @@
 ##### Build stage
-FROM --platform=linux/amd64 python:3.12.8-slim-bookworm AS base
+FROM --platform=linux/amd64 python:3.13.7-slim-trixie AS base
 
 ENV TIMEOUT=900
 
@@ -12,12 +12,12 @@ COPY ./runtime/requirements-dev.txt /app/requirements-dev.txt
 COPY ./runtime/pipt /app/pipt
 COPY ./hdctl /hdctl
 
-RUN apt-get -y update && apt-get -y install libpq-dev gcc libsnappy-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get -y update && apt-get -y install curl libpq-dev gcc libsnappy-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 ENV PIPT_PIP_INSTALL_ARGS="--no-cache-dir"
 ENV PIPT_PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
-RUN ./pipt sync-system --prod
+RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content
 FROM base AS application_base
@@ -34,12 +34,29 @@ RUN chmod -R a+rw /mnt/autoimport
 ##### Production stage
 # making prod stage available early allows to build it without building test stage
 # since test stage is only necessary on build system
-FROM application_base AS prod
+FROM application_base AS pre-prod
 RUN useradd -m hd_app
 USER hd_app
 ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
+
+
+# Syft stage - scan the complete production image
+FROM anchore/syft:latest AS sbom-generator
+
+# Copy the entire production filesystem to scan everything
+COPY --from=pre-prod / /scan-target
+# Generate SBOM of the complete production image
+RUN ["/syft", "/scan-target",  "-o", "spdx-json=/tmp/sbom.spdx.json"]
+RUN ["/syft", "/scan-target",  "-o", "syft-json=/tmp/sbom.syft.json"]
+RUN ["/syft", "/scan-target",  "-o", "cyclonedx-json=/tmp/sbom.cyclonedx.json"]
+
+FROM anchore/grype:latest AS grype-generator
+COPY --from=sbom-generator /tmp /tmp
+RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "json=/tmp/grype-report.json"]
+RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "cyclonedx-json=/tmp/grype-report-cyclonedx.json"]
+
 
 ##### Test stage
 FROM application_base AS test
@@ -51,4 +68,8 @@ RUN bash /app/scripts/gen_ruff_report.sh
 # Note that in order to really skip building the test stage you need to explicitly specify
 # the prod stage via
 #     docker build --target prod -f Dockerfile-runtime . -t hetdesrun_webservice
-FROM prod
+FROM pre-prod AS prod
+
+# Copy SBOM and grype files
+COPY --from=grype-generator /tmp/sbom.*.json ./sbom/
+COPY --from=grype-generator /tmp/grype-*.json ./grype/

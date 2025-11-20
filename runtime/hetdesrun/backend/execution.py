@@ -1,6 +1,6 @@
 """Handle execution of transformation revisions."""
 
-import json
+import datetime
 import logging
 import os
 from copy import deepcopy
@@ -22,6 +22,7 @@ from hetdesrun.adapters.virtual_structure_adapter.utils import (
     add_vst_metadata_to_input_wiring_attrs,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import (
@@ -30,11 +31,12 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_component_imports_recursively,
     read_multiple_transformation_revisions_by_id_with_possible_caching,
     read_single_transformation_revision_with_caching,
 )
@@ -50,6 +52,7 @@ from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -65,6 +68,14 @@ class TrafoExecutionInputValidationError(TrafoExecutionError):
 
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionComponentImportsLoadingError(TrafoExecutionError):
+    """Errors that hapen when loading all imported components recursively"""
+
+
+class TrafoExecutionComponentImportCycleError(TrafoExecutionError):
+    """During resolving component imports a cycle has been detected"""
 
 
 class TrafoExecutionComponentAdapterComponentsNotFound(TrafoExecutionError):
@@ -92,60 +103,103 @@ class TrafoExecutionResultValidationError(TrafoExecutionError):
     pass
 
 
+def get_direct_child_trafos_by_operator_id(
+    tr_workflow: TransformationRevision, all_nested_tr: dict[UUID, TransformationRevision]
+) -> dict[UUID, TransformationRevision]:
+    """Obtain only the direct children by operator id
+
+    all_nested_tr contains trafos by their id, at least of tr_workflow but
+    possibly of a higher workflow which at some depth contains an operator
+    with tr_workflow as transformation revision.
+    """
+    if tr_workflow.type != Type.WORKFLOW:
+        raise ValueError("Trafo Revision must be of type WORKFLOW to obtain child trafos.")
+
+    assert isinstance(  # noqa: S101
+        tr_workflow.content, WorkflowContent
+    )  # hint for mypy
+
+    direct_child_trafos_by_operator_id: dict[UUID, TransformationRevision] = {}
+    for operator in tr_workflow.content.operators:
+        if operator.transformation_id in all_nested_tr:
+            direct_child_trafos_by_operator_id[operator.id] = all_nested_tr[
+                operator.transformation_id
+            ]
+        else:
+            raise DBIntegrityError(
+                f"trafo {operator.transformation_id} for operator {operator.id} of"
+                f" transformation revision {tr_workflow.id}"
+                " not contained in result of get_all_nested_transformation_revisions"
+            )
+
+    return direct_child_trafos_by_operator_id
+
+
+def collect_child_nodes(
+    workflow: WorkflowContent,
+    direct_child_trafos_by_operator_id: dict[UUID, TransformationRevision],
+    all_nested_tr: dict[UUID, TransformationRevision],
+) -> list[ComponentNode | WorkflowNode]:
+    """Recursively build up subnodes
+
+    Returns list of direct subnodes of the WorkflowContent as proper subnodes,
+    i.e. each including its own subnodes as well and so on.
+    """
+    sub_nodes: list[ComponentNode | WorkflowNode] = []
+
+    for operator in workflow.operators:
+        if operator.type == Type.COMPONENT:
+            sub_nodes.append(
+                direct_child_trafos_by_operator_id[operator.id].to_component_node(
+                    operator.id, operator.name
+                )
+            )
+        if operator.type == Type.WORKFLOW:
+            current_workflow_tr = direct_child_trafos_by_operator_id[operator.id]
+            assert isinstance(  # noqa: S101
+                current_workflow_tr.content, WorkflowContent
+            )  # hint for mypy
+            current_child_trafos_by_operator_id = get_direct_child_trafos_by_operator_id(
+                current_workflow_tr, all_nested_tr
+            )
+
+            sub_nodes.append(
+                current_workflow_tr.content.to_workflow_node(
+                    transformation_id=all_nested_tr[operator.transformation_id].id,
+                    transformation_name=all_nested_tr[operator.transformation_id].name,
+                    transformation_tag=all_nested_tr[operator.transformation_id].version_tag,
+                    operator_id=operator.id,
+                    operator_name=operator.name,
+                    sub_nodes=collect_child_nodes(
+                        current_workflow_tr.content,
+                        current_child_trafos_by_operator_id,
+                        all_nested_tr,
+                    ),
+                )
+            )
+
+    return sub_nodes
+
+
 def nested_nodes(
     tr_workflow: TransformationRevision,
     all_nested_tr: dict[UUID, TransformationRevision],
 ) -> list[ComponentNode | WorkflowNode]:
+    """Get direct subnodes which contain their own subnodes recursively"""
     if tr_workflow.type != Type.WORKFLOW:
         raise ValueError
 
     assert isinstance(  # noqa: S101
         tr_workflow.content, WorkflowContent
     )  # hint for mypy
-    ancestor_operator_ids = [operator.id for operator in tr_workflow.content.operators]
-    ancestor_children: dict[UUID, TransformationRevision] = {}
-    for operator_id in ancestor_operator_ids:
-        if operator_id in all_nested_tr:
-            ancestor_children[operator_id] = all_nested_tr[operator_id]
-        else:
-            raise DBIntegrityError(
-                f"operator {operator_id} of transformation revision {tr_workflow.id} "
-                f"not contained in result of get_all_nested_transformation_revisions"
-            )
 
-    def children_nodes(
-        workflow: WorkflowContent, tr_operators: dict[UUID, TransformationRevision]
-    ) -> list[ComponentNode | WorkflowNode]:
-        sub_nodes: list[ComponentNode | WorkflowNode] = []
+    direct_child_trafos_by_operator_id = get_direct_child_trafos_by_operator_id(
+        tr_workflow, all_nested_tr
+    )
 
-        for operator in workflow.operators:
-            if operator.type == Type.COMPONENT:
-                sub_nodes.append(
-                    tr_operators[operator.id].to_component_node(operator.id, operator.name)
-                )
-            if operator.type == Type.WORKFLOW:
-                tr_workflow = tr_operators[operator.id]
-                assert isinstance(  # noqa: S101
-                    tr_workflow.content, WorkflowContent
-                )  # hint for mypy
-                operator_ids = [operator.id for operator in tr_workflow.content.operators]
-                tr_children = {
-                    id_: all_nested_tr[id_] for id_ in operator_ids if id_ in all_nested_tr
-                }
-                sub_nodes.append(
-                    tr_workflow.content.to_workflow_node(
-                        transformation_id=all_nested_tr[operator.id].id,
-                        transformation_name=all_nested_tr[operator.id].name,
-                        transformation_tag=all_nested_tr[operator.id].version_tag,
-                        operator_id=operator.id,
-                        operator_name=operator.name,
-                        sub_nodes=children_nodes(tr_workflow.content, tr_children),
-                    )
-                )
-
-        return sub_nodes
-
-    return children_nodes(tr_workflow.content, ancestor_children)
+    return collect_child_nodes(
+        tr_workflow.content, direct_child_trafos_by_operator_id, all_nested_tr
+    )
 
 
 def get_component_ids_from_component_adapter_wirings(
@@ -165,55 +219,14 @@ def get_component_ids_from_component_adapter_wirings(
     return comp_ids_from_inp_wirings, comp_ids_from_outp_wirings
 
 
-def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
-    """Loads trafo revision and prepares execution input from it.
-
-    Loads the trafo revision specified by id and prepares
-    an workflow execution input object which can be executed by the runtime
-    -- either code or by calling runtime rest endpoint for running
-    workflows.
-
-    Note that trafo revisions of type components will be wrapped in
-    an ad-hoc workflow structure for execution.
-    """
-    try:
-        transformation_revision = read_single_transformation_revision_with_caching(
-            exec_by_id_input.id
-        )
-        logger.info(
-            "found possibly cached transformation revision with id %s",
-            str(exec_by_id_input.id),
-        )
-    except DBNotFoundError as e:
-        raise TrafoExecutionNotFoundError() from e
-
-    if transformation_revision.type == Type.COMPONENT:
-        tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
-        assert isinstance(  # noqa: S101
-            tr_workflow.content, WorkflowContent
-        )  # hint for mypy
-        nested_transformations = {tr_workflow.content.operators[0].id: transformation_revision}
-    else:
-        tr_workflow = transformation_revision
-        nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
-
-    nested_components = {
-        tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
-    }
-    workflow_node = tr_workflow.to_workflow_node(
-        operator_id=uuid4(),
-        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
-    )
-
+def load_componen_adapter_wirings_components(
+    wiring: WorkflowWiring,
+) -> list[TransformationRevision]:
     # Obtain component adapter component ids from wiring
     (
         component_adapter_component_ids_from_input_wirings,
         component_adapter_component_ids_from_output_wirings,
-    ) = (
-        get_component_ids_from_component_adapter_wirings(exec_by_id_input.wiring)
-        if exec_by_id_input.wiring is not None
-        else ([], [])
-    )
+    ) = get_component_ids_from_component_adapter_wirings(wiring) if wiring is not None else ([], [])
 
     # Load component adapter components
     try:
@@ -258,54 +271,130 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         component_adapter_source_components + component_adapter_sink_components
     )
 
+    return component_adapter_components
+
+
+def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
+    """Loads trafo revision and prepares execution input from it.
+
+    Loads the trafo revision specified by id and prepares
+    an workflow execution input object which can be executed by the runtime
+    -- either code or by calling runtime rest endpoint for running
+    workflows.
+
+    Note that trafo revisions of type components will be wrapped in
+    an ad-hoc workflow structure for execution.
+    """
+
+    # Load and prepare trafo to execute, convert to workflow_node
+
+    try:
+        transformation_revision = read_single_transformation_revision_with_caching(
+            exec_by_id_input.id
+        )
+        logger.debug(
+            "found possibly cached transformation revision with id %s",
+            str(exec_by_id_input.id),
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionNotFoundError() from e
+
+    if transformation_revision.type == Type.COMPONENT:
+        tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
+        assert isinstance(  # noqa: S101
+            tr_workflow.content, WorkflowContent
+        )  # hint for mypy
+        nested_transformations = {
+            tr_workflow.content.operators[0].transformation_id: transformation_revision
+        }
+    else:
+        tr_workflow = transformation_revision
+        nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
+
+    nested_components = {
+        tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
+    }
+    workflow_node = tr_workflow.to_workflow_node(
+        operator_id=uuid4(),
+        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
+    )
+
+    # Handle wiring fallback to test_wiring
+
+    if exec_by_id_input.wiring is None:
+        logger.warning("Since no wiring was provided, fall back to test_wiring!")
+        wiring_to_use = transformation_revision.test_wiring
+
+    else:
+        wiring_to_use = exec_by_id_input.wiring
+
+    # Load component adapter components
+
+    component_adapter_components = load_componen_adapter_wirings_components(wiring_to_use)
+
+    # Resolve and load component imports, i.e. components importing components
+    try:
+        all_imported_components_dict = read_component_imports_recursively(
+            list(nested_components.values()) + component_adapter_components
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionNotFoundError() from e
+    except CodeParsingException as e:
+        raise TrafoExecutionComponentImportsLoadingError() from e
+
+    # Gather all components
+    all_components_dict: dict[UUID, TransformationRevision] = {}
+
+    for comp in nested_components.values():
+        all_components_dict[comp.id] = comp
+
+    for comp in component_adapter_components:
+        all_components_dict[comp.id] = comp
+
+    for comp in all_imported_components_dict.values():
+        all_components_dict[comp.id] = comp
+
     # Build WorkflowExecutionInput and validate everything in combination
     try:
         execution_input = WorkflowExecutionInput(
-            code_modules=(
-                list(
-                    set().union(
-                        (
-                            tr_component.to_code_module()
-                            for tr_component in nested_components.values()
-                        ),
-                        (comp_tr.to_code_module() for comp_tr in component_adapter_components),
-                    )
-                )
-            ),
-            components=(
-                list(
-                    {
-                        c_rev.uuid: c_rev
-                        for c_rev in (
-                            [
-                                component.to_component_revision()
-                                for component in nested_components.values()
-                            ]
-                            + [
-                                comp_tr.to_component_revision()
-                                for comp_tr in component_adapter_components
-                            ]
-                        )
-                    }.values()
-                )
+            code_modules=list({comp.to_code_module() for comp in all_components_dict.values()}),
+            # convert to uniques without using set, since ComponentRevision is not hashable:
+            components=list(
+                {
+                    (c_rev := comp.to_component_revision()).uuid: c_rev
+                    for comp in all_components_dict.values()
+                }.values()
             ),
             workflow=workflow_node,
             configuration=ConfigurationInput(
                 name=str(tr_workflow.id),
                 run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
             ),
-            workflow_wiring=(
-                exec_by_id_input.wiring
-                if exec_by_id_input.wiring is not None
-                else transformation_revision.test_wiring
-            ),
+            workflow_wiring=wiring_to_use,
             job_id=exec_by_id_input.job_id,
             trafo_id=exec_by_id_input.id,
+            runtime_execution_context=exec_by_id_input.runtime_execution_context,
+            reproducibility_reference=exec_by_id_input.resolved_reproducibility_references,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e
 
     return execution_input
+
+
+def add_runtime_request_response_reaction_times(
+    start_in_backend: datetime.datetime,
+    exec_result: ExecutionResponseFrontendDto | WorkflowExecutionResult,
+    response_received_time: datetime.datetime | None = None,
+) -> None:
+    if exec_result.measured_steps.runtime_sending_response_start.start is not None:
+        exec_result.measured_steps.runtime_sending_response_start.stop(end=response_received_time)
+    if exec_result.measured_steps.backend_calling_runtime_request_start.end is not None:
+        exec_result.measured_steps.backend_calling_runtime_request_start.start = start_in_backend
+        exec_result.measured_steps.backend_calling_runtime_request_start.duration = (
+            exec_result.measured_steps.backend_calling_runtime_request_start.end
+            - exec_result.measured_steps.backend_calling_runtime_request_start.start
+        )
 
 
 async def run_execution_input(
@@ -322,13 +411,17 @@ async def run_execution_input(
     run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
         "run_execution_input"
     )
-
-    output_types = {output.name: output.type for output in execution_input.workflow.outputs}
-
     execution_result: WorkflowExecutionResult
 
     if get_config().is_runtime_service:
+        start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
+
         execution_result = await runtime_service(execution_input)
+
+        # measure request / response delays
+        add_runtime_request_response_reaction_times(start_calling_runtime, execution_result)
+
+        execution_response = ExecutionResponseFrontendDto.model_construct(**dict(execution_result))
     else:
         try:
             headers = await get_auth_headers(external=False)
@@ -340,20 +433,31 @@ async def run_execution_input(
             logger.info(msg)
             raise TrafoExecutionRuntimeConnectionError(msg) from e
 
+        headers["Accept-Encoding"] = "gzip"
+
         async with httpx.AsyncClient(
             verify=get_config().hd_runtime_verify_certs,
             timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_runtime_engine_url(), "runtime")
             try:
+                pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
+                    "pure_runtime_request"
+                )
+                start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
                 response = await client.post(
                     url,
                     headers=headers,
-                    json=json.loads(execution_input.json()),  # TODO: avoid double serialization.
-                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    json=execution_input.model_dump(mode="json"),
                     timeout=None,
                 )
+                response_received_time = datetime.datetime.now(datetime.timezone.utc)
+                logger.debug(
+                    "Runtime response content encoding: %s",
+                    str(response.headers.get("content-encoding", "n/a")),
+                )
+
+                pure_runtime_request_step.stop()
             except httpx.HTTPError as e:
                 # handles both request errors (connection problems)
                 # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
@@ -361,8 +465,22 @@ async def run_execution_input(
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e
             try:
+                runtime_request_response_parsing_step = PerformanceMeasuredStep.create_and_begin(
+                    "runtime_request_response_parsing"
+                )
+
                 json_obj = response.json()
-                execution_result = WorkflowExecutionResult(**json_obj)
+                execution_response = ExecutionResponseFrontendDto.model_validate(
+                    json_obj, context={"result_validation": False}
+                )
+                add_runtime_request_response_reaction_times(
+                    start_calling_runtime,
+                    execution_response,
+                    response_received_time=response_received_time,
+                )
+
+                runtime_request_response_parsing_step.stop()
+
             except ValidationError as e:
                 msg = (
                     f"Could not validate hd runtime result object. Exception:\n{str(e)}"
@@ -370,16 +488,61 @@ async def run_execution_input(
                 )
                 logger.info(msg)
                 raise TrafoExecutionResultValidationError(msg) from e
-
-    execution_response = ExecutionResponseFrontendDto(
-        **execution_result.dict(),
-        output_types_by_output_name=output_types,
-    )
+            execution_response.measured_steps.runtime_request_response_parsing = (
+                runtime_request_response_parsing_step
+            )
+            execution_response.measured_steps.pure_runtime_request = pure_runtime_request_step
 
     run_execution_input_measured_step.stop()
-
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
+
+    logger.info(
+        "Execution Result Response",
+        extra={
+            "execution_result_response": execution_response.model_dump(
+                mode="json",
+                exclude={"output_results_by_output_name"}
+                if not get_config().log_direct_provisioning_outputs
+                else None,
+                context={"naive_result_serialization": not get_config().is_runtime_service},
+            )
+        },
+    )
     return execution_response
+
+
+def possibly_truncate_filter_value_str(inp_wiring: InputWiring) -> InputWiring:
+    """Truncates too long direct_provisioning value filters
+
+    Mutates InputWiring and returns it.
+    """
+    if (
+        inp_wiring.adapter_id in {"direct_provisioning", 1}
+        and "value" in inp_wiring.filters
+        and isinstance(inp_wiring.filters["value"], str)
+        and len(inp_wiring.filters["value"]) > 201
+    ):
+        inp_wiring.filters["value"] = (
+            inp_wiring.filters["value"][:100]
+            + f"... ({str(len(inp_wiring.filters['value']) - 200)} characters omitted) ..."
+            + inp_wiring.filters["value"][-100:]
+        )
+
+    return inp_wiring
+
+
+def exec_by_id_input_to_stub(exec_by_id_input: ExecByIdInput) -> ExecByIdInput:
+    exec_by_id_input_stub = exec_by_id_input.model_copy(deep=True)
+
+    if exec_by_id_input_stub.wiring is None:
+        return exec_by_id_input_stub
+
+    exec_by_id_input_stub.wiring.input_wirings = [
+        possibly_truncate_filter_value_str(inp_wiring)
+        for inp_wiring in exec_by_id_input_stub.wiring.input_wirings
+    ]
+
+    return exec_by_id_input_stub
 
 
 async def execute_transformation_revision(
@@ -393,7 +556,24 @@ async def execute_transformation_revision(
     if exec_by_id_input.job_id is None:
         exec_by_id_input.job_id = uuid4()
 
-    execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+    if get_config().full_backend_exec_input_logging:
+        logger.debug(
+            "ExecByIdInput:", extra={"exec_by_id_input": exec_by_id_input.model_dump(mode="json")}
+        )
+    else:
+        logger.debug(
+            "ExecByIdInput Stub",
+            extra={
+                "exec_by_id_input_stub": exec_by_id_input_to_stub(exec_by_id_input).model_dump(
+                    mode="json"
+                )
+            },
+        )
+
+    execution_context_filter.bind_context(
+        job_id=exec_by_id_input.job_id,
+        runtime_execution_context=exec_by_id_input.runtime_execution_context,
+    )
 
     # Set the reproducibility reference context to the provided reference of the exec object
     repr_reference = deepcopy(exec_by_id_input.resolved_reproducibility_references)
@@ -405,16 +585,19 @@ async def execute_transformation_revision(
             resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
                 "resolve_virtual_wirings_if_contained"
             )
+
             relevant_indices, virtual_sources = resolve_virtual_structure_wirings(
                 exec_by_id_input.wiring
             )
             add_vst_metadata_to_input_wiring_attrs(
                 exec_by_id_input.wiring.input_wirings, relevant_indices, virtual_sources
             )
-            logger.debug(
-                "Resolved virtual structure wirings: \n%s",
-                exec_by_id_input.wiring,
-            )
+
+            if get_config().log_resolved_virtual_structure_wirings:
+                logger.debug(
+                    "Resolved virtual structure wirings: \n%s",
+                    exec_by_id_input.wiring,
+                )
 
             resolve_wirings_measured_step.stop()
         except AdapterHandlingException as exc:
@@ -424,7 +607,7 @@ async def execute_transformation_revision(
             )
             logger.info(
                 "Reproducibility reference contents at time of wiring resolution: %s",
-                get_deepcopy_of_reproducibility_reference_context().dict(),
+                get_deepcopy_of_reproducibility_reference_context().model_dump(),
             )
             raise TrafoExecutionError() from exc
 

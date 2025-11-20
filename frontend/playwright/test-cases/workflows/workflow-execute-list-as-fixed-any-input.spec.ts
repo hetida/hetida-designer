@@ -53,7 +53,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-${componentName}-input-data-workflow-io-dialog`
   );
-  await hetidaDesigner.typeInJsonEditor(workflowInputData);
+  await hetidaDesigner.typeInJsonEditor(workflowInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
   await hetidaDesigner.typeInInputByTestId(
     `${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`,
@@ -73,7 +73,9 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   const output = await page
     .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
     .innerText();
-  expect(output).toEqual(workflowInputData);
+  expect(output).toEqual(
+    JSON.stringify(JSON.parse(workflowInputData), null, 2)
+  );
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
@@ -94,6 +96,12 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
   );
   await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+    )
+  ).waitForElementState('hidden');
 
   await hetidaDesigner.clearTest();
 });

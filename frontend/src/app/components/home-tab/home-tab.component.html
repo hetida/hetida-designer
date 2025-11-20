@@ -2,7 +2,9 @@
   <img class="home-header__logo" src="assets/svg/logo.svg" />
   <h1>Welcome to hetida designer</h1>
   <h3>{{ version }}</h3>
-  <p *ngIf="_userInfoText !== ''" class="user-info-text">{{ _userInfoText }}</p>
+  @if (_userInfoText !== '') {
+    <p class="user-info-text">{{ _userInfoText }}</p>
+  }
 </header>
 <nav class="home-content">
   <ul class="home-content__item-list">
@@ -14,23 +16,27 @@
       <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
       new workflow...
     </li>
-    <li
-      class="home-content__item"
-      *ngFor="let item of lastOpenedWorkflows | async"
-      (contextmenu)="
-        $event.preventDefault(); openTransformationContextMenu(item, $event)
-      "
-      (click)="select(item)"
-    >
-      <mat-icon
-        svgIcon="icon-workflow"
-        class="mat-icon-svg"
-        [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
+    @for (item of lastOpenedWorkflows | async; track item.id) {
+      <li
+        class="home-content__item"
+        (contextmenu)="
+          $event.preventDefault(); openTransformationContextMenu(item, $event)
+        "
+        (click)="select(item)"
       >
-      </mat-icon>
-
-      <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
-    </li>
+        <mat-icon
+          svgIcon="icon-workflow"
+          [ngClass]="{
+            'mat-icon-svg-disabled': item.state === 'DISABLED',
+            'mat-icon-svg-draft': item.state === 'DRAFT',
+            'mat-icon-svg-released': item.state === 'RELEASED'
+          }"
+        ></mat-icon>
+        <span class="text-ellipsis"
+          >{{ item.name }} ({{ item.version_tag }})</span
+        >
+      </li>
+    }
   </ul>
 
   <ul class="home-content__item-list">
@@ -42,23 +48,27 @@
       <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
       new component...
     </li>
-    <li
-      class="home-content__item"
-      *ngFor="let item of lastOpenedComponents | async"
-      (click)="select(item)"
-      (contextmenu)="
-        $event.preventDefault(); openTransformationContextMenu(item, $event)
-      "
-    >
-      <mat-icon
-        svgIcon="icon-component"
-        class="mat-icon-svg"
-        [ngClass]="{ 'mat-icon-svg--draft': item.state === 'DRAFT' }"
+    @for (item of lastOpenedComponents | async; track item.id) {
+      <li
+        class="home-content__item"
+        (click)="select(item)"
+        (contextmenu)="
+          $event.preventDefault(); openTransformationContextMenu(item, $event)
+        "
       >
-      </mat-icon>
-
-      <span class="text-ellipsis">{{ item.name }} ({{ item.tag }})</span>
-    </li>
+        <mat-icon
+          svgIcon="icon-component"
+          [ngClass]="{
+            'mat-icon-svg-disabled': item.state === 'DISABLED',
+            'mat-icon-svg-draft': item.state === 'DRAFT',
+            'mat-icon-svg-released': item.state === 'RELEASED'
+          }"
+        ></mat-icon>
+        <span class="text-ellipsis"
+          >{{ item.name }} ({{ item.version_tag }})</span
+        >
+      </li>
+    }
   </ul>
 
   <ul class="home-content__item-list">
@@ -72,4 +82,4 @@
     </li>
   </ul>
 </nav>
-<app-import-button></app-import-button>
+<hd-import-trafos-button></hd-import-trafos-button>

@@ -8,11 +8,14 @@
     <mat-panel-description></mat-panel-description>
   </mat-expansion-panel-header>
 
-  <div
-    *ngFor="let transformation of transformations"
-    class="unselectable expansion-panel-content"
-    [ngClass]="{ active: transformation.id === activeTransformationId }"
-  >
-    <hd-navigation-item [transformation]="transformation"></hd-navigation-item>
-  </div>
+  @for (transformation of transformations; track transformation.id) {
+    <div
+      class="unselectable expansion-panel-content"
+      [ngClass]="{ active: transformation.id === activeTransformationId }"
+    >
+      <hd-navigation-item
+        [transformation]="transformation"
+      ></hd-navigation-item>
+    </div>
+  }
 </mat-expansion-panel>

@@ -61,23 +61,21 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have DatetimeTZDtype "
             "dtype index as expected for generic rest adapter multitsframe endpoints. "
-            f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            f"Got {str(df['timestamp'].dtype)} index dtype instead."
         )
 
     if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have UTC timezone "
             "but generic rest adapter only accepts UTC timeseries data. "
-            f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
+            f"Got {str(df['timestamp'].dt.tz)} timezone instead."
         )
 
     new_df = df.replace({np.nan: None})
     new_df["timestamp"] = new_df["timestamp"].apply(
-        lambda x: x.strftime(
-            "%Y-%m-%dT%H:%M:%S.%f"
-        )  # Generic Rest datetime format is yyyy-MM-ddTHH:mm:ss.SSSSSSSSSX
+        lambda x: x.strftime("%Y-%m-%dT%H:%M:%S.%f")  # We want to be able to send nanoseconds:
         + "{:03d}".format(x.nanosecond)  # noqa: UP032
-        + "Z"  # we guaranteed UTC time zone some lines above!
+        + "+00:00"  # we guaranteed UTC time zone some lines above!
     )
     return new_df.to_dict(orient="records")  # type: ignore
 

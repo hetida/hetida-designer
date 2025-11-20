@@ -1,3 +1,98 @@
+## 0.13.2
+* More lenient runtime execution context parsing
+
+## 0.13.1
+* support int metric columns for timeseries tables in sql adapter
+
+## 0.13.0
+* **BREAKING CHANGE** Upgraded to psycopg3. When using postgres you need to replace psycopg2 with psycopg in respective URLs (configurations, component code if you use it there). Since psycopg3 is stricter, you may need to adapt code to that.
+* Add backend support for relative timerange filters (like "now - 10d") for input wirings for sql adapter and generic rest adapters. Now is inferred from reproducibility context exec start timestamp.
+* From and to timestamps for time intervals are now resolved using dtexp library, allowing them to express timeranges relative to execution start timestamp from the reproducibility context. This impacts adapters and dashboarding. In particular any input wiring that uses "timestampFrom" and "timestampTo" filters can now be provided expressions like "now -2d" or "now". This functionality is currently only available via API, not via the frontend.
+* **POSSIBLY BREAKING CHANGE**: Generic rest adapters will now be requested with isoformat timestamps using offsets ("+00:00" for UTC) in "from" and "to" params (formerly Zulu format was used for UTC). Furthermore timeseries timestamps will be preferably be sent with "+00:00" offset instead of Zulu "Z" instead. External services and adapters interacting with hetida designer should ensure to be able to parse all typical isoformat timestamps everywhere where timestamps are received from designer.
+* add Pegelonline component which is an example for a source component for the component adapter.
+* **BREAKING CHANGE**: Removed `import_transformations` function and replaced entirely with `import_transformations_from_dir`. This may affect import script operations. The new function should be a drop-in replacement.
+* Add support for specifying wirings via uris in the backend. It is planned to add this possibility to the Frontend in an upcoming release.
+* Components can now import other components. This allows to reuse functions, classes etc that you may require in multiple components and therefore reduces the need to install custom packages to the designer runtime just for this purpose.
+* Remove long-outdated / deprecated web endpoints for base-items, components, workflows, wirings and documentation.
+* Remove exporting capabilities for exporting from the long-outdated / deprecated pre 0.7 Java backend
+* Allow to change a single operator revision to a DRAFT revision in a DRAFT Workflow.
+
+
+## 0.12.1
+* dependency upgrades and upgrade to Python 3.13
+* **BREAKING CHANGE**: removed u8darts from runtime image due to non-maintained transitive dependencies
+* improve traceback presentation on errors.
+
+## 0.12.0
+* new feature: draft operators: workflows in draft state can now contain operators in draft state
+  * releasing requires that all operators are released
+  * the toolbar button for upgrading operators now also upgrades draft operators to the current state of the draft revision.
+  * detects / prevents cycles 
+* fixed crushed workflow icon
+* fixed bug in blob storage adapter
+* structured logging
+* some updates to base components
+* improve auth token refresh option documentation
+* several smaller fixes
+
+## 0.11.4
+* Fix component code logging, enrich messages and make them part of execution responses. In particular it can be viewed in the test result display.
+* reduce autosave interval and provide some error message if updating trafos fails.
+* include job id to load/send requests against generic rest adapters to improve tracability of execution jobs
+* improve / clearify test execution result / protocol view
+* fix component adapter sink search backend endpoint
+* replace hyphens by underscore in hdctl. This allows to import component py files directly.
+* fix / improve some outdated docs
+* fix newline handling in String outputs or in json representation of ANY outputs leading to problems in the test execution result / protocol view.
+
+## 0.11.3
+* Avoid unnecessary direct output parsing / serialization between runtime and backend. Also mitigates some issues related to automatic dtype detection / conversion of Pandas read_json function.
+* Add additional request measurements for communication between backend and runtime
+* Fix auth role checking resulting in 403 when role checking is deactivated but some roles are present in the default role key.
+* Fix getting dependant trafos / nested trafos
+
+## 0.11.2
+* Add pure uvicorn mode, allowing to circumvent usage of gunicorn for now.
+
+## 0.11.1
+* include docker-compose changes
+
+## 0.11.0
+* **BREAKING CHANGE**: Pydantic V2 migration. 
+  * validation is more strict, in particular for component/workflow outputs
+  * serialization is less tolerant: If your workflow actually provides a string value for a float this will raise an Exception now
+  * components using Pydantic need to migrate as well
+    * **UPGRADE NOTE**: base components/workflows should be redeployed overwriting released trafos
+  * overhauling parsing and validation may result in minor differences generally. E.g.
+    serialization of UTC datetimes may use "Z" instead of "+00:00" to indicate the timezone.
+* performance improvements through pydantic V2 and avoiding some serialization/desiralization loops.
+* improved logging and execution results:
+  * Include information on loaded and sent data and memory usage.
+  * Additional steps of the execution process are measured.
+  * Restructure execution logging and provide more hints on executed trafo. Make some details of execution logging configurable.
+* dependency / library upgrades. In particular plotly upgrade.
+* fix component editor cursor jumping
+* improve docker-compose files
+* **BREAKING CHANGE**: New default of gunicorn MAX_WORKERS: 1
+
+## 0.10.2
+* fix buggy comparison to "null" string for optional input default values
+
+## 0.10.1
+* fix buggy detection of async component main functions
+* add pendulum dependency for better datetime calculations in components
+* dependency upgrades
+
+## 0.10.0
+* add component adapter: Write components that acts as sources/sinks for the adapter system
+* improve workflow operator upgrading:
+  * upgrading keeps links into and out of the operator if possible (types agree)
+  * new button for auto-upgrading all operators in a DRAFT workflow with respect to released_timestamp of the respective transformation revisions
+* add import transformations button in frontend / home tab: Allows to import components and workflows by pasting json or component code directly in the user interface.
+* add component unit test button: Run component unit tests from designer frontend.
+* add component code cleanup button: formatting, test wiring, release wiring, add documentation as module docstring (if no docstring is present)
+* bugfixes and dependency upgrades
+
 ## 0.9.10
 * dependency upgrades / Docker image upgrades / security upgrades
 * fix Python demo adapter tests

@@ -1,4 +1,8 @@
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -66,7 +70,7 @@ import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 import { from, map } from 'rxjs';
-import { ImportTransformationsButtonComponent } from './components/import-trafo/import-trafos-button.component';
+import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
 
 const httpLoaderFactory = (configService: ConfigService) => {
@@ -98,7 +102,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ConfirmDialogComponent,
     ComponentIODialogComponent,
     WorkflowIODialogComponent,
-    ImportTransformationsButtonComponent,
+    ImportTrafosButtonComponent,
     ImportDialogComponent,
     HomeComponent,
     HomeTabComponent,
@@ -117,6 +121,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     TransformationContextMenuComponent,
     OptionalFieldsDialogComponent
   ],
+  bootstrap: [AppComponent],
   imports: [
     AppRoutingModule,
     PlotlyViaWindowModule,
@@ -124,7 +129,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     OwlDateTimeModule,
     OwlMomentDateTimeModule,
     MaterialModule,
@@ -203,8 +207,8 @@ const httpLoaderFactory = (configService: ConfigService) => {
     },
     // Fix for Frozen Progress bar animation, in an *ngIf condition.
     // https://github.com/angular/components/issues/11453#issuecomment-466038415
-    { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' }
-  ],
-  bootstrap: [AppComponent]
+    { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' },
+    provideHttpClient(withInterceptorsFromDi())
+  ]
 })
 export class AppModule {}

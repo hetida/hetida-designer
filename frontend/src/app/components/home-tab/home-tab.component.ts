@@ -5,7 +5,6 @@ import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
-import { RevisionState } from 'src/app/enums/revision-state';
 import { Transformation } from 'src/app/model/transformation';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { ConfigService } from '../../service/configuration/config.service';
@@ -16,7 +15,6 @@ import { TransformationState } from 'src/app/store/transformation/transformation
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
-
 @Component({
   selector: 'hd-home-tab',
   templateUrl: './home-tab.component.html',
@@ -54,10 +52,8 @@ export class HomeTabComponent implements OnInit {
         return lastOpenedTransformationIds
           .filter(() => !Utils.object.isEmpty(transformationsLookup))
           .map(transformationId => transformationsLookup[transformationId])
-          .filter(
-            (transformation): transformation is Transformation =>
-              Utils.isDefined(transformation) &&
-              transformation.state !== RevisionState.DISABLED
+          .filter((transformation): transformation is Transformation =>
+            Utils.isDefined(transformation)
           );
       })
     );

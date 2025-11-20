@@ -20,25 +20,26 @@
 </div>
 
 <div class="navigation-container__buttons">
-  <div
-    class="add-button clickable"
-    (click)="newWorkflow()"
-    *ngIf="getFilterState('WORKFLOW')"
-  >
-    <button mat-icon-button>
-      <mat-icon>add_circle_outline</mat-icon>
-    </button>
-    <span>Add workflow</span>
-  </div>
-  <div
-    class="add-button clickable"
-    (click)="newComponent()"
-    *ngIf="getFilterState('COMPONENT')"
-  >
-    <button mat-icon-button>
-      <mat-icon>add_circle_outline</mat-icon>
-    </button>
-    <span>Add component</span>
+  @if (getFilterState('WORKFLOW')) {
+    <div class="add-button clickable" (click)="newWorkflow()">
+      <button mat-icon-button>
+        <mat-icon>add_circle_outline</mat-icon>
+      </button>
+      <span>Add workflow</span>
+    </div>
+  }
+  @if (getFilterState('COMPONENT')) {
+    <div class="add-button clickable" (click)="newComponent()">
+      <button mat-icon-button>
+        <mat-icon>add_circle_outline</mat-icon>
+      </button>
+      <span>Add component</span>
+    </div>
+  }
+  <div class="right-aligned-toggle mr-1">
+    <mat-slide-toggle [formControl]="showDeprecatedFilter">
+      Show deprecated
+    </mat-slide-toggle>
   </div>
 </div>
 
@@ -55,15 +56,15 @@
 </form>
 
 <div class="navigation-container__scrollable">
-  <hd-navigation-category
-    *ngFor="
-      let item of transformationsByCategory
-        | keyvalue: sortByCategoryAlphabetically;
-      trackBy: trackCategory
-    "
-    [transformations]="item.value"
-    [category]="item.key"
-    (mouseleave)="closePopover()"
-  >
-  </hd-navigation-category>
+  @for (
+    item of transformationsByCategory | keyvalue: sortByCategoryAlphabetically;
+    track item.key
+  ) {
+    <hd-navigation-category
+      [transformations]="item.value"
+      [category]="item.key"
+      (mouseleave)="closePopover()"
+    >
+    </hd-navigation-category>
+  }
 </div>

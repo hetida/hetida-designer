@@ -126,11 +126,11 @@ exec_latest_by_group_id_input_msg = r"""
 """
 
 exec_result_raw = r"""
-{"error": null, "execution_id": null, "output_results_by_output_name": {"score": {"data": [{"mode": "lines", "x": ["2018-05-19T20:50:00+00:00", "2018-05-19T20:55:00+00:00", "2018-05-19T21:00:00+00:00", "2018-05-19T21:05:00+00:00", "2018-05-19T21:10:00+00:00", "2018-05-22T04:20:00+00:00", "2018-05-22T04:25:00+00:00", "2018-05-22T04:30:00+00:00", "2018-05-22T04:35:00+00:00", "2018-05-22T04:40:00+00:00"], "y": [null, 0.0, 16.56128491139998, 16.56128491139998, 35.388887386599976, 0.0, 0.0, 52.63498194919998, 52.63498194919998, 52.63498194919998], "type": "scatter", "line": {"color": "#1199bb"}}], "layout": {"xaxis": {"title": {"text": "Time"}, "automargin": true}, "yaxis": {"title": {"text": "volatilities"}, "automargin": true}, "autosize": true, "height": 200, "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0}}}, "data_and_alerts": {"data": [{"mode": "lines", "x": ["2018-05-19T22:20:00+00:00", "2018-05-19T22:25:00+00:00", "2018-05-19T22:30:00+00:00", "2018-05-19T22:35:00+00:00", "2018-05-19T22:40:00+00:00", "2018-05-22T05:50:00+00:00", "2018-05-22T05:55:00+00:00", "2018-05-22T06:00:00+00:00", "2018-05-22T06:05:00+00:00", "2018-05-22T06:10:00+00:00"], "y": [86.9358994238, 78.6552569681, 93.515633185, 96.3497006614, 83.1926874657, 926.4357356548, 934.7257131637, 908.4082221891, 917.7112901544, 924.0958121497], "type": "scatter"}], "layout": {"xaxis": {"title": {"text": "Time"}, "automargin": true}, "yaxis": {"title": {"text": "Values"}, "automargin": true}, "autosize": true, "height": 200, "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0}}}}, "output_types_by_output_name": {"score": "PLOTLYJSON", "data_and_alerts": "PLOTLYJSON"}, "response": null, "result": "ok", "traceback": null, "job_id": "00000000-0000-0000-0000-000000000002"}
+{"error": null, "tr_name": "Some Trafo Name", "tr_tag": "1.0.0", "tr_id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "execution_id": null, "output_results_by_output_name": {"score": {"data": [{"mode": "lines", "x": ["2018-05-19T20:50:00+00:00", "2018-05-19T20:55:00+00:00", "2018-05-19T21:00:00+00:00", "2018-05-19T21:05:00+00:00", "2018-05-19T21:10:00+00:00", "2018-05-22T04:20:00+00:00", "2018-05-22T04:25:00+00:00", "2018-05-22T04:30:00+00:00", "2018-05-22T04:35:00+00:00", "2018-05-22T04:40:00+00:00"], "y": [null, 0.0, 16.56128491139998, 16.56128491139998, 35.388887386599976, 0.0, 0.0, 52.63498194919998, 52.63498194919998, 52.63498194919998], "type": "scatter", "line": {"color": "#1199bb"}}], "layout": {"xaxis": {"title": {"text": "Time"}, "automargin": true}, "yaxis": {"title": {"text": "volatilities"}, "automargin": true}, "autosize": true, "height": 200, "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0}}}, "data_and_alerts": {"data": [{"mode": "lines", "x": ["2018-05-19T22:20:00+00:00", "2018-05-19T22:25:00+00:00", "2018-05-19T22:30:00+00:00", "2018-05-19T22:35:00+00:00", "2018-05-19T22:40:00+00:00", "2018-05-22T05:50:00+00:00", "2018-05-22T05:55:00+00:00", "2018-05-22T06:00:00+00:00", "2018-05-22T06:05:00+00:00", "2018-05-22T06:10:00+00:00"], "y": [86.9358994238, 78.6552569681, 93.515633185, 96.3497006614, 83.1926874657, 926.4357356548, 934.7257131637, 908.4082221891, 917.7112901544, 924.0958121497], "type": "scatter"}], "layout": {"xaxis": {"title": {"text": "Time"}, "automargin": true}, "yaxis": {"title": {"text": "Values"}, "automargin": true}, "autosize": true, "height": 200, "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0}}}}, "output_types_by_output_name": {"score": "PLOTLYJSON", "data_and_alerts": "PLOTLYJSON"}, "response": null, "result": "ok", "traceback": null, "job_id": "00000000-0000-0000-0000-000000000002"}
 """
 
 
-exec_result = ExecutionResponseFrontendDto.parse_raw(exec_result_raw)
+exec_result = ExecutionResponseFrontendDto.model_validate_json(exec_result_raw)
 
 
 class MockKafkaConsumer:
@@ -188,7 +188,7 @@ async def run_kafka_msg(msg_str, exec_func_mock=mock_successful_execute_transfor
             "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.producer",
             producer_mock,
         ) as mocked_ctx_producer:
-            from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
+            from hetdesrun.backend.kafka.consumer import get_kafka_worker_context  # noqa: PLC0415
 
             kafka_ctx = get_kafka_worker_context()
             kafka_ctx.last_unhandled_exception = None  # reset
@@ -216,7 +216,7 @@ async def test_consumer_successful_exec_by_id_input():
     mocked_producer.send_and_wait.assert_called_with(
         get_config().hd_kafka_response_topic,
         key=None,
-        value=exec_result.json().encode("utf8"),
+        value=exec_result.model_dump_json().encode("utf8"),
     )
 
 
@@ -235,7 +235,7 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
         mocked_producer.send_and_wait.assert_called_with(
             get_config().hd_kafka_response_topic,
             key=None,
-            value=exec_result.json().encode("utf8"),
+            value=exec_result.model_dump_json().encode("utf8"),
         )
 
 

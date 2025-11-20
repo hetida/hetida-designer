@@ -7,12 +7,15 @@
 .navigation-container {
   &__filter {
     width: 100%;
+
     .mat-button-toggle-group {
       width: 100%;
       display: flex;
       justify-content: center;
+
       .mat-button-toggle {
         flex: 0 0 50%;
+
         &.active {
           font-weight: 500;
         }
@@ -22,6 +25,7 @@
 
   &__buttons {
     display: flex;
+
     .add-button {
       flex: 0 0 50%;
       display: inline-block;
@@ -37,4 +41,10 @@
     overflow-y: auto;
     padding: 0 10px;
   }
+}
+
+.right-aligned-toggle {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }

@@ -25,6 +25,7 @@ from hetdesrun import configure_logging
 logger = logging.getLogger(__name__)
 configure_logging(logger)
 
+
 # must be after logging config:
 from hetdesrun.webservice import get_app
 from hetdesrun.webservice.config import get_config
@@ -46,7 +47,6 @@ def detect_in_memory_db() -> bool:
         (database is None) or database.lower() in (":memory:",)
     ):
         return True
-
     return False
 
 
@@ -67,11 +67,11 @@ def run_migrations(
 
     migrations_invoked_from_py = True
 
+    from alembic.config import Config
     from pydantic import SecretStr
 
     import hetdesrun.persistence.dbmodels
     from alembic import command
-    from alembic.config import Config
     from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     engine = get_db_engine()
@@ -95,9 +95,11 @@ def run_migrations(
 
 
 def run_trafo_rev_deployment():
-    from hetdesrun.exportimport.importing import import_transformations
+    from hetdesrun.exportimport.importing import import_transformations_from_dir
 
-    import_transformations("./transformations", update_component_code=False, directly_into_db=True)
+    import_transformations_from_dir(
+        "./transformations", update_component_code=False, directly_into_db=True
+    )
 
 
 in_memory_db = detect_in_memory_db()

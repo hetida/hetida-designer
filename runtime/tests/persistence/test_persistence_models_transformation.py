@@ -182,25 +182,6 @@ def test_tr_nonemptyvalidstr_regex_validator_empty():
         )
 
 
-def test_tr_nonemptyvalidstr_validator_max_characters():
-    id_ = get_uuid_from_seed("test")
-    with pytest.raises(ValidationError):
-        TransformationRevision(
-            id=id_,
-            revision_group_id=id_,
-            name="Name Name Name Name Name Name Name Name Name Name Name Name Name",
-            description="Test description",
-            version_tag="1.0.0",
-            category="Test category",
-            state=State.DRAFT,
-            type=Type.COMPONENT,
-            content="test",
-            io_interface=IOInterface(),
-            test_wiring=WorkflowWiring(),
-            documentation="",
-        )
-
-
 def test_tr_shortnonemptyvalidstr_validator_max_characters():
     id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
@@ -296,7 +277,7 @@ def test_wrap_component_in_tr_workflow():
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
-    assert tr_workflow.name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
+    assert tr_workflow.name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
     assert valid_component_tr_dict["category"] == tr_workflow.category
     assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
     assert valid_component_tr_dict["state"] == tr_workflow.state
@@ -319,7 +300,7 @@ def test_wrap_component_in_tr_workflow():
 def test_to_workflow_node():
     tr_component = TransformationRevision(**valid_component_tr_dict)
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
-    nested_transformations = {tr_workflow.content.operators[0].id: tr_component}
+    nested_transformations = {tr_workflow.content.operators[0].transformation_id: tr_component}
 
     workflow_node = tr_workflow.to_workflow_node(
         uuid4(), nested_nodes(tr_workflow, nested_transformations)
@@ -329,8 +310,8 @@ def test_to_workflow_node():
     assert len(workflow_node.outputs) == len(valid_component_tr_dict["io_interface"]["outputs"])
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
-    assert workflow_node.name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
-    assert workflow_node.tr_name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
+    assert workflow_node.name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
+    assert workflow_node.tr_name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
 
 
 def test_transformation_validation_for_change_dynamic_input_to_constant(

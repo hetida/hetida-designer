@@ -70,9 +70,15 @@ async def load_data(
                     workflow_wiring_from_source_filters(
                         filtered_component_adapter_src, component_rev_inputs_by_name
                     ),
+                    # we pass through all, since we do not want to resolve
+                    # the import transitive-closure again for the single component
+                    code_modules=code_modules,
+                    component_revisions=component_revisions,
                 )
 
-                task = tg.create_task(runtime_service(runtime_input=wf_exec_input))
+                task = tg.create_task(
+                    runtime_service(runtime_input=wf_exec_input, enforce_result_logging=True)
+                )
                 fetch_tasks[inp_name] = task
 
         # tasks are awaited when leaving async with context of task group

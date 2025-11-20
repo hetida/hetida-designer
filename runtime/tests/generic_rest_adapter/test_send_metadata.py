@@ -40,7 +40,7 @@ async def test_end_to_end_send_only_single_metadata_data():
             _, args, kwargs = post_mock.mock_calls[0]
 
             assert kwargs["json"] == {"key": "number", "value": 55, "dataType": "int"}
-            assert kwargs["params"] == {"filter_key": "filter_value"}
+            assert kwargs["params"] == [("filter_key", "filter_value")]
             assert args[0] == "https://hetida.de/sources/sink_id_1/metadata/number"
 
             response.status_code = 400
@@ -114,11 +114,11 @@ async def test_end_to_end_send_only_metadata_data():
                     "dataType": "float",
                 }
             ) in [kwargs_1["json"], kwargs_2["json"]]
-            assert {"filter_key_1": "filter_value_1"} in [
+            assert [("filter_key_1", "filter_value_1")] in [
                 kwargs_1["params"],
                 kwargs_2["params"],
             ]
-            assert {"filter_key_2": "filter_value_2"} in [
+            assert [("filter_key_2", "filter_value_2")] in [
                 kwargs_1["params"],
                 kwargs_2["params"],
             ]

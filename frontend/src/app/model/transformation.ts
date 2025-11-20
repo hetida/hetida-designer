@@ -21,6 +21,16 @@ export function isWorkflowTransformation(
 
 export type Transformation = ComponentTransformation | WorkflowTransformation;
 
+export enum TrafoUpdateState {
+  SUCCESS = 'SUCCESS',
+  RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED = 'RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED',
+  UNALLOWED_COMPONENT_IMPORTS = 'UNALLOWED_COMPONENT_IMPORTS'
+}
+
+export type UpdatedTransformation = Transformation & {
+  update_state: TrafoUpdateState;
+};
+
 export interface ComponentTransformation extends AbstractTransformation {
   type: TransformationType.COMPONENT;
   content: string;
@@ -45,6 +55,7 @@ export interface AbstractTransformation {
   content: string | WorkflowContent;
   io_interface: IoInterface;
   test_wiring: TestWiring;
+  release_wiring?: TestWiring;
 }
 
 export interface UnitTestResults {

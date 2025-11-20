@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { StoreModule } from '@ngrx/store';
@@ -16,13 +19,12 @@ describe('DocumentationEditorComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        FormsModule,
-        HttpClientModule,
-        StoreModule.forRoot(appReducers)
-      ],
       declarations: [DocumentationEditorComponent],
-      providers: [provideMockStore()]
+      imports: [FormsModule, StoreModule.forRoot(appReducers)],
+      providers: [
+        provideMockStore(),
+        provideHttpClient(withInterceptorsFromDi())
+      ]
     }).compileComponents();
   }));
 

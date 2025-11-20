@@ -11,6 +11,15 @@ from typing import Any
 import pandas as pd
 from pydantic import create_model
 
+from hdutils import (
+    DataType,
+    ParsedAny,
+    PydanticMultiTimeseriesPandasDataFrame,
+    PydanticPandasDataFrame,
+    PydanticPandasSeries,
+    parse_obj_as_type,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -193,3 +202,60 @@ class ExternalType(StrEnum):
     def store_general_type(cls, member: "ExternalType") -> None:
         general_type_str = member.value.split("(", 1)[0]
         member.general_type = GeneralType(general_type_str)
+
+
+external_type_to_pydantic_type: dict[ExternalType, type] = {
+    ExternalType.METADATA_INT: int,
+    ExternalType.METADATA_FLOAT: float,
+    ExternalType.METADATA_NUMERIC: float,
+    ExternalType.METADATA_STR: str,
+    ExternalType.METADATA_BOOLEAN: bool,
+    ExternalType.METADATA_ANY: ParsedAny,
+    ExternalType.TIMESERIES_INT: PydanticPandasSeries,
+    ExternalType.TIMESERIES_FLOAT: PydanticPandasSeries,
+    ExternalType.TIMESERIES_NUMERIC: PydanticPandasSeries,
+    ExternalType.TIMESERIES_STR: PydanticPandasSeries,
+    ExternalType.TIMESERIES_BOOLEAN: PydanticPandasSeries,
+    ExternalType.TIMESERIES_ANY: PydanticPandasSeries,
+    ExternalType.SERIES_INT: PydanticPandasSeries,
+    ExternalType.SERIES_FLOAT: PydanticPandasSeries,
+    ExternalType.SERIES_NUMERIC: PydanticPandasSeries,
+    ExternalType.SERIES_STR: PydanticPandasSeries,
+    ExternalType.SERIES_BOOLEAN: PydanticPandasSeries,
+    ExternalType.SERIES_ANY: PydanticPandasSeries,
+    ExternalType.MULTITSFRAME: PydanticMultiTimeseriesPandasDataFrame,
+    ExternalType.DATAFRAME: PydanticPandasDataFrame,
+    ExternalType.PLOTLYJSON: dict,
+}
+
+external_type_to_datatype: dict[ExternalType, DataType] = {
+    ExternalType.METADATA_INT: DataType.Integer,
+    ExternalType.METADATA_FLOAT: DataType.Float,
+    ExternalType.METADATA_NUMERIC: DataType.Float,
+    ExternalType.METADATA_STR: DataType.String,
+    ExternalType.METADATA_BOOLEAN: DataType.Boolean,
+    ExternalType.METADATA_ANY: DataType.Any,
+    ExternalType.TIMESERIES_INT: DataType.Series,
+    ExternalType.TIMESERIES_FLOAT: DataType.Series,
+    ExternalType.TIMESERIES_NUMERIC: DataType.Series,
+    ExternalType.TIMESERIES_STR: DataType.Series,
+    ExternalType.TIMESERIES_BOOLEAN: DataType.Series,
+    ExternalType.TIMESERIES_ANY: DataType.Series,
+    ExternalType.SERIES_INT: DataType.Series,
+    ExternalType.SERIES_FLOAT: DataType.Series,
+    ExternalType.SERIES_NUMERIC: DataType.Series,
+    ExternalType.SERIES_STR: DataType.Series,
+    ExternalType.SERIES_BOOLEAN: DataType.Series,
+    ExternalType.SERIES_ANY: DataType.Series,
+    ExternalType.MULTITSFRAME: DataType.MultiTSFrame,
+    ExternalType.DATAFRAME: DataType.DataFrame,
+    ExternalType.PLOTLYJSON: DataType.PlotlyJson,
+}
+
+
+def to_correct_obj(obj: Any, external_type: ExternalType | None) -> Any:
+    if obj is None:
+        return None
+    if external_type is None:
+        return obj
+    return parse_obj_as_type(obj, external_type_to_pydantic_type[external_type])

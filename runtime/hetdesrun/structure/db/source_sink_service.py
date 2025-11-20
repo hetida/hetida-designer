@@ -101,7 +101,7 @@ def fetch_collection_of_sources_from_db_by_id(
         src_ids,
     )
     with get_session()() as session:
-        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size)):
+        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSourceDBModel).filter(
                 StructureServiceSourceDBModel.id.in_(id_batch)
             )
@@ -138,7 +138,7 @@ def fetch_collection_of_sinks_from_db_by_id(
         sink_ids,
     )
     with get_session()() as session:
-        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size)):
+        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSinkDBModel).filter(
                 StructureServiceSinkDBModel.id.in_(id_batch)
             )
@@ -249,7 +249,7 @@ def upsert_sources(
     """
     if not sources:
         return
-    source_dicts = [src.dict() for src in sources]
+    source_dicts = [src.model_dump() for src in sources]
 
     try:
         engine: Engine | Connection = session.get_bind()
@@ -316,7 +316,7 @@ def upsert_sinks(
     """
     if not sinks:
         return
-    sink_dicts = [sink.dict() for sink in sinks]
+    sink_dicts = [sink.model_dump() for sink in sinks]
 
     try:
         engine: Engine | Connection = session.get_bind()

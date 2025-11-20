@@ -31,8 +31,8 @@ def parse_message(
     message_bytes: bytes, multi: bool = False
 ) -> KafkaMultiValueMessage | KafkaSingleValueMessage:
     if multi:
-        return KafkaMultiValueMessage.parse_raw(message_bytes.decode("utf8"))
-    return KafkaSingleValueMessage.parse_raw(message_bytes.decode("utf8"))
+        return KafkaMultiValueMessage.model_validate_json(message_bytes.decode("utf8"))
+    return KafkaSingleValueMessage.model_validate_json(message_bytes.decode("utf8"))
 
 
 async def receive_kafka_message(
@@ -91,6 +91,7 @@ async def receive_kafka_message(
         try:
             message = await receive_encoded_message(consumer)
         except Exception as e:  # noqa: BLE001
+            await consumer.stop()
             msg = (
                 f"Error consuming message {message_identifier} from Kafka with "
                 f"config key {kafka_config_key}"
@@ -98,6 +99,7 @@ async def receive_kafka_message(
             )
             logger.error(msg)
             raise AdapterHandlingException(msg) from e
+        await consumer.stop()
 
         logger.debug(
             "Finished consuming message %s from Kafka with config key %s from topic %s",
@@ -110,7 +112,7 @@ async def receive_kafka_message(
             msg_object = parse_message(message.value, multi=multi)
         except ValidationError as e:
             msg = (
-                f'Error parsing/validating {"multi" if multi else "single"} value message '
+                f"Error parsing/validating {'multi' if multi else 'single'} value message "
                 f"{message_identifier} "
                 f"from Kafka with config key {kafka_config_key}"
                 f"from topic {topic}:\n{str(e)}:\n{str(e)}"

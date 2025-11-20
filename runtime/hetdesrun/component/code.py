@@ -1,3 +1,4 @@
+# noqa: A005
 """Code template generation
 
 This module contains functions for generating and updating component code modules
@@ -30,6 +31,10 @@ imports_template: str = """\
 # import pandas as pd
 # import numpy as np
 
+# See
+#   https://github.com/hetida/hetida-designer/tree/release/docs/component_tips.md
+# for component writing features and tips (logging, debugging, importing other components)
+
 
 """
 
@@ -61,6 +66,10 @@ function_body_template: str = """
 """
 
 
+class ParseDefaultValueError(ValueError):
+    """A default value cannot be parsed"""
+
+
 def component_info_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
@@ -90,7 +99,7 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
             + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
         )
         logger.error(msg)
-        raise TypeError(msg) from error
+        raise ParseDefaultValueError(msg) from error
 
 
 def function_signature_default_value_string(inp: TransformationInput) -> str:
@@ -125,11 +134,12 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         )
     except ValueError as error:
         msg = (
-            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            f"Parsing Error for default value '{inp.value}' of input '{inp.name}' as"
+            f" {inp.data_type.value}"
             + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
         )
         logger.error(msg)
-        raise TypeError(msg) from error
+        raise ParseDefaultValueError(msg) from error
 
 
 def format_function_header(function_header: str) -> str:
@@ -271,8 +281,6 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
         )
         return function_header
 
-    return format_code_with_black(function_header)
-
 
 def generate_complete_component_module(
     component: TransformationRevision, is_coroutine: bool = False
@@ -334,10 +342,14 @@ def update_code(
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****\n", 1)
 
     old_func_def_lines = old_func_def.split("\n")
-    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[-3].startswith(
-        "async def"
-    )
-    is_coroutine = use_async_def
+
+    is_coroutine = False
+
+    for line in old_func_def_lines:
+        if line.startswith("async def main("):
+            is_coroutine = True
+        elif line.startswith("def main("):
+            is_coroutine = False
 
     new_function_header = generate_function_header(tr, is_coroutine)
 
@@ -346,7 +358,7 @@ def update_code(
 
 def add_documentation_as_module_doc_string(code: str, tr: TransformationRevision) -> str:
     current_trafo_doc_stripped = tr.documentation.strip()
-    if code.startswith('"""') or current_trafo_doc_stripped == "":
+    if code.startswith(('"""', 'r"""')) or current_trafo_doc_stripped == "":
         return code
 
     mod_doc_string = (
@@ -361,7 +373,9 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         expanded_code = update_module_level_variable(
             code=code,
             variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
-            value=json.loads(tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)),
+            value=json.loads(
+                tr.test_wiring.model_dump_json(exclude_unset=True, exclude_defaults=True)
+            ),
         )
     except CodeParsingException as e:
         msg = (
@@ -379,7 +393,7 @@ def add_release_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
             code=code,
             variable_name="RELEASE_WIRING",
             value=json.loads(
-                tr.release_wiring.json(exclude_unset=True, exclude_defaults=True)
+                tr.release_wiring.model_dump_json(exclude_unset=True, exclude_defaults=True)
                 if tr.release_wiring is not None
                 else "null"
             ),

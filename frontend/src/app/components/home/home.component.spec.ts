@@ -4,7 +4,7 @@ import { BasicTestModule } from 'src/app/basic-test.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterModule } from '@angular/router';
 import { StoreModule } from '@ngrx/store';
 import { AuthService } from 'src/app/auth/auth.service';
@@ -22,6 +22,10 @@ import { ProtocolViewerComponent } from '../protocol-viewer/protocol-viewer.comp
 import { WorkflowEditorComponent } from '../workflow-editor/workflow-editor.component';
 import { ConfigService } from '../../service/configuration/config.service';
 import { of } from 'rxjs';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 
 class AuthServiceStub {
   public isAuthEnabled(): boolean {
@@ -55,26 +59,6 @@ describe('HomeComponent', () => {
     mockConfigService = createConfigServiceMock();
 
     TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NgHetidaFlowchartModule,
-        MonacoEditorModule,
-        StoreModule.forRoot(appReducers),
-        HttpClientTestingModule,
-        RouterModule.forRoot([])
-      ],
-      providers: [
-        {
-          provide: AuthService,
-          useClass: AuthServiceStub
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService
-        }
-      ],
       declarations: [
         AppComponent,
         HomeComponent,
@@ -88,6 +72,27 @@ describe('HomeComponent', () => {
         PopoverTransformationComponent,
         ComponentEditorComponent,
         WorkflowEditorComponent
+      ],
+      imports: [
+        BasicTestModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgHetidaFlowchartModule,
+        MonacoEditorModule,
+        StoreModule.forRoot(appReducers),
+        RouterModule.forRoot([])
+      ],
+      providers: [
+        {
+          provide: AuthService,
+          useClass: AuthServiceStub
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
   }));

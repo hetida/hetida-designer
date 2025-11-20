@@ -9,10 +9,14 @@ import { IAppState } from '../../store/app.state';
 import {
   ComponentTransformation,
   Transformation,
+  TrafoUpdateState,
   WorkflowTransformation,
   UnitTestResults
 } from '../../model/transformation';
-import { TransformationHttpService } from '../http-service/transformation-http.service';
+import {
+  TransformationHttpService,
+  DeleteResult
+} from '../http-service/transformation-http.service';
 import {
   addTransformation,
   removeTransformation,
@@ -28,6 +32,7 @@ import {
 } from 'src/app/store/execution-protocol/execution-protocol.actions';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { Utils } from 'src/app/utils/utils';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +41,8 @@ export class TransformationService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
     private readonly localStorageService: LocalStorageService,
-    private readonly store: Store<IAppState>
+    private readonly store: Store<IAppState>,
+    private readonly notificationService: NotificationService
   ) {}
 
   createTransformation(transformation: Transformation): Observable<never> {
@@ -58,6 +64,64 @@ export class TransformationService {
       .updateTransformation(transformation)
       .pipe(
         tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.UNALLOWED_COMPONENT_IMPORTS
+          ) {
+            this.notificationService.warn(
+              'Component was resetted because component imports do not obey rules, e.g. must be released for released component.'
+            );
+          }
+          this.store.dispatch(updateTransformation(updatedTransformation));
+        })
+      );
+  }
+
+  upgradeWorkflowOperators(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
+      .upgradeWorkflowOperators(transformation)
+      .pipe(
+        tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
+          this.store.dispatch(updateTransformation(updatedTransformation));
+        })
+      );
+  }
+
+  upgradeSingleOperator(
+    transformation: Transformation,
+    operatorId: string,
+    newRevisionId: string
+  ): Observable<Transformation> {
+    return this.transformationHttpService
+      .upgradeSingleOperator(transformation, operatorId, newRevisionId)
+      .pipe(
+        tap(updatedTransformation => {
+          if (
+            updatedTransformation.update_state ===
+            TrafoUpdateState.RESETTED_FROM_DB_BECAUSE_CHANGES_INTRODUCING_CYCLES_NOT_ALLOWED
+          ) {
+            this.notificationService.warn(
+              'Workflow was resetted because changes introduced cycles.'
+            );
+          }
           this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
@@ -153,11 +217,28 @@ export class TransformationService {
       });
   }
 
-  deleteTransformation(id: string): Observable<void> {
+  deleteTransformation(id: string): Observable<DeleteResult> {
     return this.transformationHttpService.deleteTransformation(id).pipe(
-      tap(_ => {
-        this.localStorageService.removeItemFromLastOpened(id);
-        this.store.dispatch(removeTransformation(id));
+      tap(result => {
+        if (result.success) {
+          this.localStorageService.removeItemFromLastOpened(id);
+          this.store.dispatch(removeTransformation(id));
+        } else {
+          switch (result.status) {
+            case 409: // Conflict
+              this.notificationService.warn(
+                'Could not delete. Transformation is probably in use in another workflow.'
+              );
+              break;
+            case 404:
+              this.notificationService.warn(
+                'Could not delete. Cannot find Transformation.'
+              );
+              break;
+            default:
+              break;
+          }
+        }
       })
     );
   }

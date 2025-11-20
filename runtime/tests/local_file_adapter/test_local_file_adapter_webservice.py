@@ -27,14 +27,14 @@ async def walk_thing_nodes(
 
     for src in response_obj["sources"]:
         metadata = (
-            await open_async_test_client.get(f'/adapters/localfile/sources/{src["id"]}/metadata/')
+            await open_async_test_client.get(f"/adapters/localfile/sources/{src['id']}/metadata/")
         ).json()
         for metadatum in metadata:
             src_attached_metadata_dict[(src["id"], metadatum["key"])] = metadatum
 
     for snk in response_obj["sinks"]:
         metadata = (
-            await open_async_test_client.get(f'/adapters/localfile/sinks/{snk["id"]}/metadata/')
+            await open_async_test_client.get(f"/adapters/localfile/sinks/{snk['id']}/metadata/")
         ).json()
         for metadatum in metadata:
             snk_attached_metadata_dict[(snk["id"], metadatum["key"])] = metadatum
@@ -118,18 +118,18 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915
         assert len(snk_attached_metadata_dict) == 0
         assert len(tn_attached_metadata_dict) == 0
         for src in all_srcs:
-            response_obj = (await client.get(f'/adapters/localfile/sources/{src["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/localfile/sources/{src['id']}")).json()
             for key in src:
                 assert response_obj[key] == src[key]
 
         for snk in all_snks:
-            response_obj = (await client.get(f'/adapters/localfile/sinks/{snk["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/localfile/sinks/{snk['id']}")).json()
             for key in snk:
                 print(response_obj)
                 assert response_obj[key] == snk[key]
 
         for tn in all_tns:
-            response_obj = (await client.get(f'/adapters/localfile/thingNodes/{tn["id"]}')).json()
+            response_obj = (await client.get(f"/adapters/localfile/thingNodes/{tn['id']}")).json()
             for key in tn:
                 print(response_obj)
                 assert response_obj[key] == tn[key]

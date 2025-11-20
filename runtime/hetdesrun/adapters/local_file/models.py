@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
@@ -39,7 +39,8 @@ class LocalFileStructureSource(BaseModel):
     metadataKey: str | None = None
     filters: dict[str, StructureFilter] | None = {}
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def restrict_to_supported_types(cls, v: ExternalType) -> ExternalType:
         if v not in (ExternalType.DATAFRAME, ExternalType.METADATA_ANY):
             raise TypeError(
@@ -64,7 +65,8 @@ class LocalFileStructureSink(BaseModel):
     metadataKey: str | None = None
     filters: dict[str, StructureFilter] | None = {}
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def restrict_to_supported_types(cls, v: ExternalType) -> ExternalType:
         if v not in (ExternalType.DATAFRAME, ExternalType.METADATA_ANY):
             raise TypeError(

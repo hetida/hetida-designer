@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -15,16 +18,16 @@ describe('ToolbarComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
+      declarations: [ToolbarComponent],
       imports: [
         MatIconModule,
         MatDividerModule,
         MatDialogModule,
-        HttpClientModule,
         StoreModule.forRoot(appReducers),
         MatSnackBarModule,
         RouterModule.forRoot([])
       ],
-      declarations: [ToolbarComponent]
+      providers: [provideHttpClient(withInterceptorsFromDi())]
     }).compileComponents();
   }));
 

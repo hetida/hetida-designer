@@ -219,7 +219,9 @@ def html_str_to_gridstack_div(
                 div(
                     id=db_id,
                     style="width:100%;height:100%;margin:0;padding:0;display:flex;flex-direction:column",
-                )[Markup(content)]
+                )[
+                    Markup(content)  # noqa: S704 # nosec: B704
+                ]
             ],
         ]
     ]
@@ -257,7 +259,7 @@ def dataframe_to_table_gridstack_div(
             style="width:100%;max-width:100%;height:100%;max-height:100%;overflow-y:none",
         ),
         script[
-            Markup(
+            Markup(  # noqa: S704 # nosec: B704
                 f"""
 
         create_and_register_tabulator_datatable(
@@ -431,12 +433,12 @@ def override_timestamps_in_wiring(
         if inp_wiring.filters.get("timestampFrom", None) is not None:  # type: ignore
             # We excpect UTC!
             inp_wiring.filters["timestampFrom"] = (  # type: ignore
-                from_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+                from_ts.isoformat(timespec="milliseconds")
             )
         if inp_wiring.filters.get("timestampTo", None) is not None:  # type: ignore
             # We expect UTC!
             inp_wiring.filters["timestampTo"] = (  # type: ignore
-                to_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+                to_ts.isoformat(timespec="milliseconds")
             )
     return mutable_wiring
 
@@ -1029,7 +1031,7 @@ def generate_config_panel_div(
                 summary[f"""Test Wiring{" (used as base)" if not use_release_wiring else ""}"""],
                 div[
                     pre(style="width:100%;max-width:inherit")[
-                        transformation_revision.test_wiring.json(indent=2)
+                        transformation_revision.test_wiring.model_dump_json(indent=2)
                     ]
                 ],
             ],
@@ -1037,7 +1039,7 @@ def generate_config_panel_div(
                 summary[f"""Release Wiring{" (used as base)" if use_release_wiring else ""}"""],
                 div[
                     pre(style="width:100%;max-width:inherit")[
-                        transformation_revision.release_wiring.json(indent=2)
+                        transformation_revision.release_wiring.model_dump_json(indent=2)
                         if transformation_revision.release_wiring is not None
                         else "null"
                     ]
@@ -1045,7 +1047,11 @@ def generate_config_panel_div(
             ],
             details(style="margin-bottom: 6px")[
                 summary["Updated Wiring (actually used wiring)"],
-                div[pre(style="width:100%;max-width:inherit")[actually_used_wiring.json(indent=2)]],
+                div[
+                    pre(style="width:100%;max-width:inherit")[
+                        actually_used_wiring.model_dump_json(indent=2)
+                    ]
+                ],
             ],
             details(style="margin-bottom: 6px")[
                 summary["Import Transformation Revisions"],
@@ -1300,7 +1306,7 @@ def generate_login_dashboard_stub() -> str:
     dashboard_login_stub_html = html[
         script(src="https://cdn.jsdelivr.net/npm/keycloak-js@25.0.5/dist/keycloak.min.js"),
         script()[
-            Markup(
+            Markup(  # noqa: S704 # nosec: B704
                 r"""       const Keycloak = window["Keycloak"];
 
         function getCookie(name) {
@@ -1388,7 +1394,9 @@ def error_message_part(exec_resp: ExecutionResponseFrontendDto) -> Element:
                 br,
                 b["Complete Error Information:"],
                 br,
-                pre(style="width:100%;max-width:inherit")[exec_resp.error.json(indent=2)],
+                pre(style="width:100%;max-width:inherit")[
+                    exec_resp.error.model_dump_json(indent=2)
+                ],
             ]
         )
 
@@ -1564,7 +1572,7 @@ def generate_dashboard_html(
     ]
 
     main_scripts = script[
-        Markup(
+        Markup(  # noqa: S704 # nosec: B704
             r"""
 
 
@@ -2212,11 +2220,9 @@ def generate_dashboard_html(
             + f"""{
                 (
                     'defaultDate: ["'
-                    + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]
-                    + "Z"
+                    + calculated_from_timestamp.isoformat(timespec="milliseconds")
                     + '", "'
-                    + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0]
-                    + "Z"
+                    + calculated_to_timestamp.isoformat(timespec="milliseconds")
                     + '"],'
                 )
                 if (calculated_from_timestamp is not None and calculated_to_timestamp is not None)

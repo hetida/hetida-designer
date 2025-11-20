@@ -184,7 +184,7 @@ async def handle_message(
     ) + (
         f"topic={kafka_msg.topic}:partition={kafka_msg.partition:d}:offset={kafka_msg.offset:d}: key={kafka_msg.key} timestamp={kafka_msg.timestamp}"  # noqa: E501, ISC003
         + "\nExecution Result:\n"
-        + exec_response.json(indent=2)
+        + exec_response.model_dump_json(indent=2)
     )
 
     logger.info(result_msg)
@@ -214,13 +214,10 @@ async def start_consumption_mode() -> None:
     assert consumption_mode_exec_base is not None  # noqa: S101 # for mypy
 
     logger.info(
-        "Start consuming in kafka adapter consumption mode.\n"
-        "kafka config key: "
-        "%s\nMulti: %s\n"
-        "consumption mode exec:\n%s",
+        "Start consuming in kafka adapter consumption mode.\nkafka config key: %s\nMulti: %s\n",
         relevant_kafka_config_key,
         str(multi),
-        consumption_mode_exec_base.json(indent=2),
+        extra={"consumption_mode_exec": consumption_mode_exec_base.model_dump(mode="json")},
     )
     await consumer.start()
 

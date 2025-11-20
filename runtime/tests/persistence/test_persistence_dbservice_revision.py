@@ -165,8 +165,10 @@ def test_is_modifiable():
         documentation="",
     )
 
-    changed_type_tr = deepcopy(tr_object)
-    changed_type_tr.type = Type.WORKFLOW
+    changed_type_tr = tr_object.model_copy(
+        update={"type": Type.WORKFLOW, "content": WorkflowContent()}
+    )
+
     assert (
         is_modifiable(
             existing_transformation_revision=tr_object,
@@ -321,13 +323,13 @@ def test_strip_wirings_and_keep_only_wirings(mocked_clean_test_db_session):
 
     # Test strip_wiring
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True), strip_wiring=True
+        tr_object.model_copy(deep=True), strip_wiring=True
     )
     assert len(received_tr_object.test_wiring.input_wirings) == 0
 
     # Test strip_wirings_with_adapter_ids
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True),
+        tr_object.model_copy(deep=True),
         strip_wiring=False,
         strip_wirings_with_adapter_ids={"blubb", "blah"},
     )
@@ -337,7 +339,7 @@ def test_strip_wirings_and_keep_only_wirings(mocked_clean_test_db_session):
     # Test keep_only_wirings_with_adapter_ids
 
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True),
+        tr_object.model_copy(deep=True),
         strip_wiring=False,
         keep_only_wirings_with_adapter_ids={"blubb", "blah"},
     )
@@ -393,13 +395,13 @@ def test_strip_release_wirings_and_keep_only_release_wirings(mocked_clean_test_d
 
     # Test strip_wiring
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True), strip_release_wiring=True, allow_overwrite_released=True
+        tr_object.model_copy(deep=True), strip_release_wiring=True, allow_overwrite_released=True
     )
     assert received_tr_object.release_wiring is None
 
     # Test strip_wirings_with_adapter_ids
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True),
+        tr_object.model_copy(deep=True),
         strip_release_wiring=False,
         strip_release_wirings_with_adapter_ids={"blubb", "blah"},
         allow_overwrite_released=True,
@@ -410,7 +412,7 @@ def test_strip_release_wirings_and_keep_only_release_wirings(mocked_clean_test_d
     # Test keep_only_wirings_with_adapter_ids
 
     received_tr_object = update_or_create_single_transformation_revision(
-        tr_object.copy(deep=True),
+        tr_object.model_copy(deep=True),
         strip_release_wiring=False,
         keep_only_release_wirings_with_adapter_ids={"blubb", "blah"},
         allow_overwrite_released=True,
@@ -538,13 +540,13 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
     )
 
     tr_uuid_1 = get_uuid_from_seed("test_multiple_select_1")
-    tr_object_1 = tr_object_template.copy()
+    tr_object_1 = tr_object_template.model_copy()
     tr_object_1.id = tr_uuid_1
     tr_object_1.revision_group_id = tr_uuid_1
     store_single_transformation_revision(tr_object_1)
 
     tr_uuid_2 = get_uuid_from_seed("test_multiple_select_2")
-    tr_object_2 = tr_object_1.copy()
+    tr_object_2 = tr_object_1.model_copy()
     tr_object_2.category = "Another category"
     tr_object_2.id = tr_uuid_2
     tr_object_2.version_tag = "1.0.1"
@@ -552,7 +554,7 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
     store_single_transformation_revision(tr_object_2)
 
     tr_uuid_3 = get_uuid_from_seed("test_multiple_select_3")
-    tr_object_3 = tr_object_template.copy()
+    tr_object_3 = tr_object_template.model_copy()
     tr_object_3.id = tr_uuid_3
     tr_object_3.revision_group_id = tr_uuid_3
     tr_object_3.release()
@@ -736,7 +738,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
             ],
         ),
         io_interface=IOInterface(
-            outputs=[TransformationOutput(**output_connector_not_deprecated.dict())]
+            outputs=[TransformationOutput(**output_connector_not_deprecated.model_dump())]
         ),
         test_wiring=WorkflowWiring(),
     )
@@ -797,13 +799,13 @@ def test_get_latest_revision_id(mocked_clean_test_db_session):
         documentation="",
     )
 
-    tr_object_1 = tr_object_template.copy()
+    tr_object_1 = tr_object_template.model_copy()
     tr_object_1.id = get_uuid_from_seed("test_get_latest_revision_1")
     tr_object_1.version_tag = "1.0.1"
     tr_object_1.release()
     store_single_transformation_revision(tr_object_1)
 
-    tr_object_2 = tr_object_template.copy()
+    tr_object_2 = tr_object_template.model_copy()
     tr_object_2.id = get_uuid_from_seed("test_get_latest_revision_2")
     tr_object_2.version_tag = "1.0.2"
     tr_object_2.release()

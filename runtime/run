@@ -67,6 +67,10 @@ format() {
     ruff format hetdesrun transformations/components tests "${@}" && echo "--> ruff format run."
 }
 
+seccheck() {
+    bandit -r hetdesrun --skip B101
+}
+
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
@@ -74,7 +78,12 @@ check() {
         echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy hetdesrun &&
         echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&
+        echo "--> Running bandit" && bandit -r hetdesrun --skip B101 &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
+}
+
+export_api_html() {
+    python extract_openapi_html.py "${@}"
 }
 
 #----- Execution -----#

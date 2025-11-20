@@ -1,5 +1,8 @@
 {
-  "apiEndpoint": "http://localhost:8080/api",
-  "userInfoText": "",
-  "authEnabled": false
+    "apiEndpoint": "http://localhost:8080/api",
+    "userInfoText": "",
+    "authEnabled": false,
+    "authConfig": {
+        "renewTimeBeforeTokenExpiresInSeconds": 10
+    }
 }

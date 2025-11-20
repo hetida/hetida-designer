@@ -1,6 +1,6 @@
 import logging
 
-from hetdesrun.component.load import base_module_path
+from hetdesrun.component.base_module import base_module_path
 from hetdesrun.runtime.exceptions import (  # noqa: F401
     ComponentException,
     ComponentInputValidationException,
@@ -14,3 +14,4 @@ from hetdesrun.runtime.exceptions import (  # noqa: F401
 
 runtime_execution_logger = logging.getLogger(base_module_path)
 runtime_logger = logging.getLogger("hetdesrun_runtime_service")
+internal_runtime_execution_logger = logging.getLogger("internal_runtime_execution_logger")

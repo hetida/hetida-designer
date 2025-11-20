@@ -1,4 +1,7 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { AuthModule, OidcSecurityService } from 'angular-auth-oidc-client';
 import { of } from 'rxjs';
@@ -34,7 +37,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientModule, AuthModule],
+      imports: [AuthModule],
       providers: [
         {
           provide: ConfigService,
@@ -43,7 +46,8 @@ describe('AuthService', () => {
         {
           provide: OidcSecurityService,
           useValue: mockSecurityService
-        }
+        },
+        provideHttpClient(withInterceptorsFromDi())
       ]
     });
   });

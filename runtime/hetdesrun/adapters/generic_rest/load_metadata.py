@@ -3,6 +3,7 @@ import logging
 import urllib
 from posixpath import join as posix_urljoin
 from typing import Any
+from uuid import UUID
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -16,6 +17,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class Metadatum(BaseModel):
     key: str
-    value: Any
+    value: Any = None
     dataType: ValueDataType | None = None
 
 
@@ -47,8 +49,15 @@ async def load_single_metadatum_from_adapter(
         "metadata",
         urllib.parse.quote(str(filtered_source.ref_key)),
     )
+
+    params = list(filtered_source.filters.items())
+    job_id: str | UUID | None = job_id_context_filter.get_value("currently_executed_job_id")
+
+    if job_id is not None:
+        params.append(("job_id", str(job_id)))
+
     try:
-        resp = await client.get(url, params=filtered_source.filters)
+        resp = await client.get(url, params=params)
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
@@ -67,7 +76,7 @@ async def load_single_metadatum_from_adapter(
         raise AdapterConnectionError(msg)
 
     try:
-        metadatum = Metadatum.parse_obj(resp.json())
+        metadatum = Metadatum.model_validate(resp.json())
     except ValidationError as e:
         msg = (
             f"Validation failure trying to parse received metadata from adapter"

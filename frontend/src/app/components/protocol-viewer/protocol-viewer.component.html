@@ -1,52 +1,95 @@
-<mat-progress-bar
-  *ngIf="isLoading$ | async"
-  mode="indeterminate"
-></mat-progress-bar>
-<ng-container *ngIf="!(isLoading$ | async)">
+@if (isLoading$ | async) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+@if (!(isLoading$ | async)) {
   <div class="menu-bar">
-    <span>execution protocol</span>
+    <span
+      >execution protocol
+      @if (displayRawValue) {
+        (raw json)
+      }
+    </span>
     <div class="menu-bar__expand-icon" (click)="isExpanded = !isExpanded">
-      <ng-container *ngIf="isExpanded">
+      @if (isExpanded) {
         <mat-icon>expand_more</mat-icon>
-      </ng-container>
-      <ng-container *ngIf="!isExpanded">
+      } @else {
         <mat-icon>expand_less</mat-icon>
-      </ng-container>
+      }
     </div>
     <div>
-      <mat-icon class="clickable" (click)="displayRawValue = !displayRawValue"
+      <mat-icon
+        class="clickable"
+        (click)="displayRawValue = !displayRawValue"
+        title="Switch between protocol and raw json view"
         >code</mat-icon
       >
       <mat-icon class="clickable" (click)="closeDialog()">close</mat-icon>
     </div>
   </div>
-  <div class="protocol-content" *ngIf="executionResponse && !displayRawValue">
-    <ng-container
-      *ngFor="
-        let item of executionResponse.output_results_by_output_name | keyvalue
-      "
-    >
-      <div style="padding-bottom: 10px; padding-left: 15px">
-        <ng-container
-          [ngTemplateOutlet]="getTemplateForType(item.key)"
-          [ngTemplateOutletContext]="{ transformation: item }"
-        >
-        </ng-container>
-      </div>
-      <mat-divider></mat-divider>
-    </ng-container>
-  </div>
+  @if (executionResponse && !displayRawValue) {
+    <div class="protocol-content">
+      @for (
+        item of executionResponse.output_results_by_output_name | keyvalue;
+        track $index
+      ) {
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <ng-container
+            [ngTemplateOutlet]="getTemplateForType(item.key)"
+            [ngTemplateOutletContext]="{ transformation: item }"
+          >
+          </ng-container>
+        </div>
+        <mat-divider></mat-divider>
+      }
+      @if (executionResponse.error) {
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">ERROR</span>
+          <br />
+          An error occured in {{ executionResponse.error.location.file }} in
+          function {{ executionResponse.error.location.function_name }} in line
+          {{ executionResponse.error.location.line_number }}:
+          <br />
+          <pre class="protocol-content-verbatim">{{
+            executionResponse.error.message
+          }}</pre>
+        </div>
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">Component Code Traceback</span>
+          <br />
 
-  <textarea
-    *ngIf="displayRawValue"
-    class="protocol-content__raw-value"
-    readonly
-    >{{ executionResponseRaw }}</textarea
-  >
-</ng-container>
+          <pre class="protocol-content-verbatim">{{
+            executionResponse.traceback
+          }}</pre>
+        </div>
+      }
+      @if (executionResponse.gathered_component_code_logs.length > 0) {
+        <mat-divider></mat-divider>
+        <div style="padding-bottom: 10px; padding-left: 15px">
+          <span class="mat-body-strong">Component Code Log Messages</span>
+          <br />
+          @for (
+            item of executionResponse.gathered_component_code_logs;
+            track item
+          ) {
+            <pre class="protocol-content-verbatim"
+              >{{ item.timestamp }} {{ item.message }}</pre
+            >
+          }
+        </div>
+      }
+    </div>
+  }
+  @if (displayRawValue) {
+    <textarea class="protocol-content__raw-value" readonly>{{
+      executionResponseRaw
+    }}</textarea>
+  }
+}
 
 <ng-template #plotlyTemplate let-plotlyItem="transformation">
-  <span>{{ plotlyItem.key }}:</span>
+  <span class="mat-body-strong">{{ plotlyItem.key }}:</span>
   <br />
   <plotly-plot
     [useResizeHandler]="true"
@@ -58,11 +101,36 @@
     class="protocol-content__plot"
     [data]="plotlyItem.value.data"
     [layout]="plotlyItem.value.layout"
+    [config]="plotlyItem.value.config"
   ></plotly-plot>
 </ng-template>
 
 <ng-template #simpleTemplate let-someItem="transformation">
-  <span>{{ someItem.key }}:</span>
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
   <br />
-  <span class="mat-body-strong">{{ stringifyJson(someItem.value) }}</span>
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
+    }}</pre>
+  </span>
+</ng-template>
+
+<ng-template #stringTemplate let-someItem="transformation">
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
+  <br />
+  <span class="mat-body-strong">
+    <pre class="protocol-content-verbatim">{{
+      someItem.value ?? '(null)'
+    }}</pre>
+  </span>
+</ng-template>
+
+<ng-template #ComponentCodeLogTemplate let-someItem="logentry">
+  <span class="mat-body-strong">{{ someItem.key }}:</span>
+  <br />
+  <span>
+    <pre class="protocol-content-verbatim">{{
+      someItem.value !== null ? stringifyJson(someItem.value) : '(null)'
+    }}</pre>
+  </span>
 </ng-template>

@@ -7,35 +7,36 @@ Depending on how much data is involved and how compute-intensive each execution 
 Of course it is impossible to describe all reasonable such setups here. The intention of this page is to rather provide some general hints and give some guidance which apply to the most typical scenarios.
 
 ## Scaling hetida designer on a k8s cluster
-hetida designer consists of interacting (micro)services and is meant to be scaled via a kubernetes (k8s) cluster. 
+hetida designer consists of interacting (micro)services and is meant to be scaled via a kubernetes (k8s) cluster in production. 
 
-The default docker-compose setup described via the docker-compose.yml file includes separate services for backend and runtime. This is also the recommended setup for scaling on a k8s cluster since it allows to scale the runtime separately. Typically only the runtime service needs to be scaled since most IO (loading and sending data from adapters) and computation heavy operations happen there.
+The default docker-compose setup described via the docker-compose.yml file includes separate services for backend and runtime. This is also the recommended setup for scaling on a k8s cluster since it allows to scale the runtime separately. Typically only the runtime service needs to be scaled since most IO (loading and sending data from adapters) as well as computation heavy operations (the actually analytics / Data Science / Python code execution) happen there.
 
 > Typically you only need to scale the runtime service
 
-### Understanding how the runtime service works?
+### Understanding how the runtime service works
 
 The runtime service starts worker processes via Gunicorn which then wait/listen for execution requests from the backend. By default one such process is started for each available CPU core. This can be controlled by the `WORKERS_PER_CORE` and `MAX_WORKERS` environment variables, see the `gunicorn_conf.py` file in the runtime subdirectory of this repository. Make sure to read the respective [gunicorn documentation](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Note that Gunicorn uses "OS level load balancing" to assign requests to worker processes.
 
 Now these worker processes handle requests asynchronously (via Python's asyncio capabilities) and they run Python code in one thread on one CPU if no GIL-releasing system/library code (e.g. from numpy) is involved.
 
-If GIL-releasing code is involved (which typically happens in Data Science code), all available CPUs can be used. Note that this means that a container running the runtime with MAX_WORKERS=1 can stil access all the underlying nodes' CPUs by default if no limits are enforced. Thus a computation-heavy workflow can completely consume all available CPU resources on a k8s node. More often this is desired because it increases workflow execution speed. Sometimes this is regarded as detrimental in particular if other services run on the same node.
+If GIL-releasing code is involved (which typically happens at some point in computation-heavy Data Science code), all available CPUs can be used. Note that this means that a container running the runtime with MAX_WORKERS=1 can stil access all the underlying nodes' CPUs by default if no limits are enforced. Thus a computation-heavy workflow can completely consume all available CPU resources on a k8s node. More often this is desired because it increases workflow execution speed. Sometimes this is regarded as detrimental in particular if other services run on the same node.
+
+For each worker process, Python libraries are imported separately. Since Python Data Science libraries sometimes have a large memory footprint you may end with lot of memory overhead if using multiple workers.
 
 ### Scaling vertically and horizontally
 
 In particular one runtime container per cluster node, even with `MAX_WORKERS=1` via GIL-releasing code, can be enough to make good use of available CPU resources. Generally 
 
-> scaling vertically, i.e. increasing available CPU / memory on nodes running runtime containers is a viable, valid and recommended scaling approach!
-
+> scaling vertically, i.e. increasing available CPU / memory on nodes running runtime containers is a viable, valid and recommended scaling approach that should be considered.
 
 For horizontal scaling the following patterns have proven their worth:
 
-1. One runtime container per node with default settings (i.e. one worker per node cpu).
-2. One runtime container per node with `MAX_WORKERS=1`.
+1. One runtime container per node with ``MAX_WORKERS=""` explicitely unset (resulting in one worker per node cpu as per the default gunicorn settings).
+2. One runtime container per node with `MAX_WORKERS=1`, the default.
 3. One runtime container per cpu core on each node with `MAX_WORKERS=1`. For example if you have 3 cluster nodes with each 4 cpu cores you should employ 12 runtime replicas.
 
 
-The first pattern is a good allround setup and a good start if you do not yet know the specifics of your workloads. It has the disadvantage that the two load balancing methods involved, i.e. the kubernetes inter-service http "load balancing" and Gunicorn's "OS-level load balancing", may lead to non-optimal distribution to workers as described below.
+The first pattern is a good starting setup if you do not yet know the specifics of your workloads. It has the disadvantage that the two load balancing methods involved, i.e. the kubernetes inter-service http "load balancing" and Gunicorn's "OS-level load balancing", may lead to non-optimal distribution to workers as described below. Another disadvantage is increased memory usage.
 
 The second pattern is strong if your workloads are CPU-heavy and do release the GIL and in particular if you have enough nodes available and know in advance how many parallel executions might occur. It prioritizes kubernetes inter-service load balancing which leads to a good distribution of controlled amounts of tasks.
 

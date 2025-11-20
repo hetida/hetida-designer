@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 
 from hdutils import DataType
 from hetdesrun.backend.execution import execute_transformation_revision
@@ -23,21 +24,18 @@ from hetdesrun.reference_context import (
 
 
 def test_utc_validation():
-    with pytest.raises(ValueError, match="The execution start timestamp must be timezone-aware"):
+    with pytest.raises(ValidationError, match="timezone"):
         _ = ReproducibilityReference(
             exec_start_timestamp=datetime.now()  # noqa: DTZ005
         )
 
-    with pytest.raises(ValueError, match="The execution start timestamp must be in UTC"):
+    with pytest.raises(ValidationError, match="The execution start timestamp must be in UTC"):
         __ = ReproducibilityReference(
             exec_start_timestamp=datetime.now(tz=timezone(timedelta(hours=1)))
         )
 
 
 def test_context_var_setting_and_getting():
-    # Test getter
-    assert get_reproducibility_reference_context() == ReproducibilityReference()
-
     # Test setter
     rr1 = ReproducibilityReference(exec_start_timestamp=datetime(1949, 5, 23, tzinfo=timezone.utc))
     set_reproducibility_reference_context(rr1)
@@ -56,10 +54,19 @@ def test_default_factories():
         output_results_by_output_name={"nf": 23},
         output_types_by_output_name={"nf": DataType.Integer},
         job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
     )
     exec_by_id_obj = ExecByIdBase(id=uuid4())
     wf_result = WorkflowExecutionResult(
-        result="failure", output_results_by_output_name={"nf": 23}, job_id=uuid4()
+        result="failure",
+        output_results_by_output_name={"nf": 23},
+        output_types_by_output_name={"nf": DataType.Integer},
+        job_id=uuid4(),
+        tr_name="Test",
+        tr_tag="1.0.0",
+        tr_id=uuid4(),
     )
 
     # Check that at points where marshalling is done

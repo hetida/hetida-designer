@@ -1,7 +1,9 @@
+# noqa: A005
 import re
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConstrainedStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # allow only some special characters for category, description, name and version tag
 ALLOWED_CHARS_RAW_STRING = r"\w ,\.\-\(\)\&\+=/"
@@ -10,20 +12,16 @@ ALLOWED_CHARS_RAW_STRING = r"\w ,\.\-\(\)\&\+=/"
 # and the underscore. If the ASCII flag is used, only [a-zA-Z0-9_] is matched.
 
 
-class NonEmptyValidStr(ConstrainedStr):
-    min_length = 1
-    max_length = 60
-    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$")
+NonEmptyValidStr = Annotated[
+    str, Field(min_length=1, pattern=re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$"))
+]
 
 
-class ShortNonEmptyValidStr(ConstrainedStr):
-    min_length = 1
-    max_length = 20
-    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$")
+ShortNonEmptyValidStr = Annotated[
+    str, Field(min_length=1, max_length=20, pattern=re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$"))
+]
 
-
-class ValidStr(ConstrainedStr):
-    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]*$")
+ValidStr = Annotated[str, Field(pattern=re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]*$"))]
 
 
 example_code: str = """\
@@ -79,7 +77,7 @@ class CodeModule(BaseModel):
     code: str = Field(
         ...,
         title="Python module source code",
-        example=example_code,
+        examples=[example_code],
         description="""\
 The code may contain functions that can act as entrypoints for components.
 A code module can contain more than one entrypoint and therefore be used
@@ -89,6 +87,4 @@ function called "main".
 """,
     )
     uuid: UUID
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)

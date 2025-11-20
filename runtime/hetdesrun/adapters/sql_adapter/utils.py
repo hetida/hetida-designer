@@ -1,7 +1,7 @@
 import functools
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from hetdesrun.adapters.sql_adapter.config import (
     SQLAdapterDBConfig,
@@ -12,6 +12,8 @@ from hetdesrun.datatypes import PydanticMultiTimeseriesPandasDataFrame
 
 class CorrectMultiTSFrame(BaseModel):
     multi_ts_frame: PydanticMultiTimeseriesPandasDataFrame
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 def to_url_representation(path: str) -> str:

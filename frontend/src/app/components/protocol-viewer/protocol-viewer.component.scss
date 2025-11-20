@@ -26,6 +26,7 @@
       justify-content: center;
     }
   }
+
   .protocol-content {
     overflow: auto;
     height: inherit;
@@ -42,5 +43,12 @@
       resize: none;
       overflow: auto;
     }
+  }
+
+  .protocol-content-verbatim {
+    white-space: pre-wrap;
+    line-height: 1.2;
+    font-size: 12px;
+    font-family: monospace;
   }
 }

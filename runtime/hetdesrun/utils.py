@@ -15,7 +15,6 @@ from uuid import UUID
 import requests  # noqa: F401
 from pydantic import BaseModel
 
-from hetdesrun.datatypes import DataType
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -50,8 +49,8 @@ def get_uuid_from_seed(seed_str: str) -> UUID:
     This may be used to get reproducible UUIDs from human-readable strings in scripts
     and tests. Should not be used anywhere else for security reasons.
     """
-    random.seed(seed_str)
-    return UUID(int=random.getrandbits(128))
+    random.seed(seed_str)  # nosec B311
+    return UUID(int=random.getrandbits(128))  # nosec B311
 
 
 def load_data(
@@ -115,42 +114,19 @@ class Type(StrEnum):
     WORKFLOW = "WORKFLOW"
 
 
-class IODTO(BaseModel):
-    id: UUID  # noqa: A003
-    name: str
-    posX: int = 0
-    posY: int = 0
-    type: DataType  # noqa: A003
-
-
-class ComponentDTO(BaseModel):
-    """Component DTO as expected by Backend Service"""
-
-    name: str
-    category: str
-    code: str
-    description: str
-    groupId: UUID
-    id: UUID  # noqa: A003
-    inputs: list[IODTO]
-    outputs: list[IODTO]
-    state: State = State.RELEASED
-    tag: str
-    testInput: dict = {}
-    type: Type = Type.COMPONENT  # noqa: A003
-
-
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
     """Pretty printing Pydantic Models
 
     For logging etc.
     """
-    return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
+    return pydantic_model.model_dump_json(indent=2)
 
 
 def cache_conditionally(condition_func: Callable) -> Callable:
     """Caching decorator that caches a result if a condition is fulfilled
 
+    * caching only depends on the first argument. That is despite other args varying, the same
+      element may be returned from the cache!
     * The result is only cached if it fulfills a condition that is checked by the condition function
     * The decorated function `func` (see cache_conditionally_decorator) must have exactly one
       hashable argument
@@ -170,11 +146,11 @@ def cache_conditionally(condition_func: Callable) -> Callable:
         if asyncio.iscoroutinefunction(func):
 
             @wraps(func)
-            async def async_cache_wrapper(arg: Any) -> Any:
+            async def async_cache_wrapper(arg: Any, *args: Any, **kwargs: Any) -> Any:
                 if arg in cache:
                     return cache[arg]
 
-                val = await func(arg)
+                val = await func(arg, *args, **kwargs)
 
                 if condition_func(val):
                     cache[arg] = val
@@ -186,11 +162,11 @@ def cache_conditionally(condition_func: Callable) -> Callable:
 
         # Function is synchronous
         @wraps(func)  # type: ignore
-        def cache_wrapper(arg: Any) -> Any:
+        def cache_wrapper(arg: Any, *args: Any, **kwargs: Any) -> Any:
             if arg in cache:
                 return cache[arg]
 
-            val = func(arg)  # type: ignore
+            val = func(arg, *args, **kwargs)  # type: ignore
 
             if condition_func(val):
                 cache[arg] = val
@@ -234,7 +210,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
         if asyncio.iscoroutinefunction(func):
 
             @wraps(func)
-            async def async_cache_wrapper(keys: tuple[Any]) -> Any:
+            async def async_cache_wrapper(keys: tuple[Any], **kwargs: Any) -> Any:
                 # data already cached
                 cached_dict_part = {key: cache[key] for key in keys if key in cache}
 
@@ -242,7 +218,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
                 if len(keys_not_in_cache) == 0:
                     return MappingProxyType(cached_dict_part)
 
-                result_dict = await func(keys_not_in_cache)
+                result_dict = await func(keys_not_in_cache, **kwargs)
 
                 for key, val in result_dict.items():
                     if condition_func(val):
@@ -257,7 +233,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
         assert callable(func)  # for mypy # noqa: S101
 
         @wraps(func)  # type: ignore
-        def cache_wrapper(keys: tuple[Any]) -> Any:
+        def cache_wrapper(keys: tuple[Any], **kwargs: Any) -> Any:
             # data already cached
             cached_dict_part = {key: cache[key] for key in keys if key in cache}
 
@@ -266,7 +242,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
             if len(keys_not_in_cache) == 0:
                 return MappingProxyType(cached_dict_part)
 
-            result_dict = func(keys_not_in_cache)
+            result_dict = func(keys_not_in_cache, **kwargs)
 
             for key, val in result_dict.items():
                 if condition_func(val):

@@ -125,8 +125,10 @@ Expected output of the above call is:
 ```
 """
 
+from typing import Self
+
 import pandas as pd
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, ValidationError, model_validator
 
 from hdutils import ComponentInputValidationException
 
@@ -137,8 +139,10 @@ class ValueRange(BaseModel):
     max_value: float
     max_value_inclusive: bool = True
 
-    @root_validator(skip_on_failure=True)
-    def verify_value_ranges(cls, values: dict) -> dict:
+    @model_validator(mode="after")
+    def verify_value_ranges(self) -> Self:
+        values = dict(self)
+
         try:
             min_value = values["min_value"]
             min_value_inclusive = values["min_value_inclusive"]
@@ -159,7 +163,7 @@ class ValueRange(BaseModel):
                 "To be valid, a value range must be non-empty, i.e min_value must "
                 "be smaller than max_value."
             )
-        return values
+        return self
 
 
 def check_value_ranges(
@@ -176,7 +180,7 @@ def check_value_ranges(
        Contains value ranges that are used for checking the values in `timeseries_data`.
     """
 
-    is_included_default_values = {range_name: False for range_name in value_range_dict}
+    is_included_default_values = {range_name: False for range_name in value_range_dict}  # noqa: C420
     is_included_default_values["_violates_all"] = True
     is_included_default_values["_violates_any"] = False
 
@@ -256,7 +260,7 @@ def main(*, timeseries_data, value_range_dict):
             error_dict[range_name] = "Range names must not end with '_IS_BELOW' or '_IS_ABOVE'! "
         if range_name in ("_violates_all", "_violates_any", "_timestamp"):
             error_dict[range_name] = (
-                "Range names must not be '_violates_all', '_violates_any', or" " '_timestamp'!"
+                "Range names must not be '_violates_all', '_violates_any', or '_timestamp'!"
             )
         try:
             value_ranges[range_name] = ValueRange(**value_range)

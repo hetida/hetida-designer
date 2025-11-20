@@ -1,10 +1,14 @@
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
 import { BasicTestModule } from './basic-test.module';
-import { RouterModule } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { PlotlyViaWindowModule, PlotlyService } from 'angular-plotly.js';
 import { of } from 'rxjs';
 
 class OidcSecurityServiceStub {
@@ -19,20 +23,22 @@ describe('AppComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
+      declarations: [AppComponent],
       imports: [
         BasicTestModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientModule,
-        RouterModule.forRoot([])
+        RouterModule.forRoot([]),
+        PlotlyViaWindowModule
       ],
       providers: [
         {
           provide: OidcSecurityService,
           useClass: OidcSecurityServiceStub
-        }
-      ],
-      declarations: [AppComponent]
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        PlotlyService
+      ]
     }).compileComponents();
   }));
 

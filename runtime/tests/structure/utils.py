@@ -32,7 +32,7 @@ def fetch_element_types(
         return existing_ets_mapping
     try:
         # Loop through keys in batches of size <batch_size> or less
-        for key_batch in batched(keys, ceil(len(keys) / batch_size)):
+        for key_batch in batched(keys, ceil(len(keys) / batch_size), strict=False):
             batch_query = session.query(StructureServiceElementTypeDBModel).filter(
                 tuple_(
                     StructureServiceElementTypeDBModel.stakeholder_key,
@@ -71,7 +71,7 @@ def fetch_thing_nodes(
         return existing_tns_mapping
     try:
         # Loop through keys in batches of size <batch_size> or less
-        for key_batch in batched(keys, ceil(len(keys) / batch_size)):
+        for key_batch in batched(keys, ceil(len(keys) / batch_size), strict=False):
             batch_query = session.query(StructureServiceThingNodeDBModel).filter(
                 tuple_(
                     StructureServiceThingNodeDBModel.stakeholder_key,
@@ -110,7 +110,7 @@ def fetch_sources(
         return existing_sources_mapping
     try:
         # Loop through keys in batches of size <batch_size> or less
-        for key_batch in batched(keys, ceil(len(keys) / batch_size)):
+        for key_batch in batched(keys, ceil(len(keys) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSourceDBModel).filter(
                 tuple_(
                     StructureServiceSourceDBModel.stakeholder_key,
@@ -151,7 +151,7 @@ def fetch_sinks(
         return existing_sinks_mapping
     try:
         # Loop through keys in batches of size <batch_size> or less
-        for key_batch in batched(keys, ceil(len(keys) / batch_size)):
+        for key_batch in batched(keys, ceil(len(keys) / batch_size), strict=False):
             batch_query = session.query(StructureServiceSinkDBModel).filter(
                 tuple_(
                     StructureServiceSinkDBModel.stakeholder_key,

@@ -3,14 +3,16 @@
 import json
 import logging
 import os
+import pathlib
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
 import pandas as pd
-from pydantic import BaseModel, Field, StrictInt, StrictStr, parse_file_as
+from pydantic import BaseModel, Field, RootModel, StrictInt, StrictStr
 
 from hetdesrun.component.code_utils import (
     CodeParsingException,
@@ -31,6 +33,8 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import Type, get_uuid_from_seed
+
+TrafoList = RootModel[list[TransformationRevision]]
 
 logger = logging.getLogger(__name__)
 
@@ -82,14 +86,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
 
 
 def transformation_revision_from_python_code(code: str) -> TransformationRevision:  # noqa: PLR0915
-    """Get the TransformationRevision as a json-like object from just the Python code
-
-    This uses information from the register decorator or a global variable COMPONENT_INFO
-    and docstrings.
-
-    Note: This needs to import the provided code, which may have arbitrary side effects
-    and security implications.
-    """
+    """Get the TransformationRevision as a json-like object from just the Python code"""
     try:
         mod_docstring = get_module_doc_string(code) or ""
     except CodeParsingException as e:
@@ -214,7 +211,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
                         else InputType.REQUIRED
                     ),
                 )
-                for input_name, input_info in component_info_dict["inputs"].items()
+                for input_name, input_info in component_info_dict["inputs"].items()  # type: ignore
             ],
             outputs=[
                 TransformationOutput(
@@ -228,7 +225,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype
                 )
-                for output_name, output_info in component_info_dict["outputs"].items()
+                for output_name, output_info in component_info_dict["outputs"].items()  # type: ignore
             ],
         ),
         content=code,
@@ -249,19 +246,15 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
         for file in files:
             path = os.path.join(root, file)
             ext = os.path.splitext(path)[1]
-            if ext not in (".py", ".json"):
-                logger.warning(
-                    "Invalid file extension '%s' to load transformation revision from: %s",
-                    ext,
-                    path,
-                )
-                continue
+
+            transformations: list[TransformationRevision]
+
             if ext == ".py":
                 logger.info("Loading transformation from python file %s", path)
                 python_code = load_python_file(path)
                 if python_code is not None:
                     try:
-                        transformation = transformation_revision_from_python_code(python_code)
+                        transformations = [transformation_revision_from_python_code(python_code)]
                     except ComponentCodeImportError as e:
                         logging.error(
                             "Could not load main function from %s\n"
@@ -271,25 +264,45 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                         )
                         continue
 
-            if ext == ".json":
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
-                try:
-                    transformation = TransformationRevision(**transformation_json)
-                except ValueError as err:
-                    logger.error("ValueError for json from path %s:\n%s", download_path, str(err))
-                    continue
-            transformation_dict[transformation.id] = transformation
-            if ext == ".py":
-                if transform_py_to_json:
-                    path = save_transformation_into_directory(
-                        transformation_revision=transformation,
-                        directory_path=download_path,
-                    )
-                    path_dict[transformation.id] = path
-                path_dict[transformation.id] = path
+            elif ext == ".json":
+                logger.info("Loading transformation(s) from json file %s", path)
+                json_obj = load_json(path)
+
+                trafo_jsons = json_obj if isinstance(json_obj, list) else [json_obj]
+
+                transformations = []
+
+                for transformation_json in trafo_jsons:
+                    try:
+                        transformations.append(TransformationRevision(**transformation_json))
+                    except (ValueError, TypeError) as err:
+                        logger.error(
+                            "Error for json from path %s:\n%s",
+                            download_path,
+                            str(err),
+                            extra={"transformation_json": transformation_json},
+                        )
+                        continue
             else:
-                path_dict[transformation.id] = path
+                if ext != ".pyc":
+                    logger.warning(
+                        "Invalid file extension '%s' to load transformation revision from: %s",
+                        ext,
+                        path,
+                    )
+                continue
+            for transformation in transformations:
+                transformation_dict[transformation.id] = transformation
+                if ext == ".py":
+                    if transform_py_to_json:
+                        path = save_transformation_into_directory(
+                            transformation_revision=transformation,
+                            directory_path=download_path,
+                        )
+                        path_dict[transformation.id] = path
+                    path_dict[transformation.id] = path
+                else:
+                    path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
 
@@ -303,14 +316,15 @@ def load_trafos_from_trafo_list_json_file(
     a file is a valid input for this function.
     """
 
-    trafo_revisions = parse_file_as(list[TransformationRevision], path)
+    json_string = pathlib.Path(path).read_text()
+    trafo_revisions = (TrafoList.model_validate_json(json_string)).root
     return trafo_revisions
 
 
 class ImportSource(BaseModel):
     path: str
     is_dir: bool
-    config_file: str | None
+    config_file: str | None = None
 
 
 class MultipleTrafosUpdateConfig(BaseModel):
@@ -488,7 +502,9 @@ def load_import_source(
             filter_params=FilterParams(), update_config=MultipleTrafosUpdateConfig()
         )
     else:
-        import_config = ImportSourceConfig.parse_file(import_source.config_file)
+        import_config = ImportSourceConfig.model_validate_json(
+            Path(import_source.config_file).read_text()
+        )
 
     # Load trafo revisions
     if import_source.is_dir:

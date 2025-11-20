@@ -2,7 +2,7 @@ import functools
 import json
 import logging
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from httpx import AsyncClient, Response
@@ -24,7 +24,7 @@ source_load_functions: dict[str, Callable] = {}  # source_id -> load func
 
 
 class OpenMeteoParams(BaseModel):
-    query_params: dict[str, str]  # | tuple[tuple[str, str], ...]
+    query_params: dict[str, Any]  # | tuple[tuple[str, str], ...]
 
 
 # Open Meteo Source
@@ -252,9 +252,11 @@ async def load_open_meteo(  # noqa: PLR0915
 
     if resulting_multitsframe.empty:
         # ensure correct columns present
+        attrs = resulting_multitsframe.attrs
         resulting_multitsframe = pd.DataFrame(
             columns=["timestamp", "metric", "value", "latitude", "longitude"]
         )
+        resulting_multitsframe.attrs = attrs
 
     # guarantee unique index:
     resulting_multitsframe.reset_index(drop=True, inplace=True)  # noqa: PD002

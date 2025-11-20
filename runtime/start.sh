@@ -2,21 +2,23 @@
 # from https://github.com/tiangolo/uvicorn-gunicorn-docker/blob/master/docker-images/start.sh
 set -e
 
+_true_equiv="@(|true|yes|y|ok|on|1)"
+
 if [ -f /app/app/main.py ]; then
-  DEFAULT_MODULE_NAME=app.main
+    DEFAULT_MODULE_NAME=app.main
 elif [ -f /app/main.py ]; then
-  DEFAULT_MODULE_NAME=main
+    DEFAULT_MODULE_NAME=main
 fi
 MODULE_NAME=${MODULE_NAME:-$DEFAULT_MODULE_NAME}
 VARIABLE_NAME=${VARIABLE_NAME:-app}
 export APP_MODULE=${APP_MODULE:-"$MODULE_NAME:$VARIABLE_NAME"}
 
 if [ -f /app/gunicorn_conf.py ]; then
-  DEFAULT_GUNICORN_CONF=/app/gunicorn_conf.py
+    DEFAULT_GUNICORN_CONF=/app/gunicorn_conf.py
 elif [ -f /app/app/gunicorn_conf.py ]; then
-  DEFAULT_GUNICORN_CONF=/app/app/gunicorn_conf.py
+    DEFAULT_GUNICORN_CONF=/app/app/gunicorn_conf.py
 else
-  DEFAULT_GUNICORN_CONF=/gunicorn_conf.py
+    DEFAULT_GUNICORN_CONF=/gunicorn_conf.py
 fi
 export GUNICORN_CONF=${GUNICORN_CONF:-$DEFAULT_GUNICORN_CONF}
 export WORKER_CLASS=${WORKER_CLASS:-"uvicorn.workers.UvicornWorker"}
@@ -25,15 +27,25 @@ export WORKER_CLASS=${WORKER_CLASS:-"uvicorn.workers.UvicornWorker"}
 PRE_START_PATH=${PRE_START_PATH:-/app/prestart.sh}
 echo "Checking for script in $PRE_START_PATH"
 if [ -f $PRE_START_PATH ]; then
-  echo "Running script $PRE_START_PATH"
-  . "$PRE_START_PATH"
+    echo "Running script $PRE_START_PATH"
+    . "$PRE_START_PATH"
 else
-  echo "There is no script $PRE_START_PATH"
+    echo "There is no script $PRE_START_PATH"
 fi
 
+_is_pure_uvicorn="${HETIDA_DESIGNER_PURE_UVICORN,,}" # to lower case
+
 if [[ -n "$HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE" ]]; then
-  python main.py
+    python main.py
 else
-  # Start Gunicorn
-  exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
+    if [[ "$_is_pure_uvicorn" == $_true_equiv ]]; then
+        # Pure uvicorn mode
+        echo "Starting in pure uvicorn mode!"
+        exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" "$APP_MODULE"
+    else
+        # Start Gunicorn
+        echo "Starting in gunicorn mode!"
+        exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
+    fi
+
 fi

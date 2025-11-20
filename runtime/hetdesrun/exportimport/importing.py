@@ -5,19 +5,29 @@ from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
+from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
-    update_or_create_transformation_revision,
+    import_using_api,
 )
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBIntegrityError,
+    DBNestingCycleDetected,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
+    ComponentImportComponentError,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.io.load import (
     Importable,
+    ImportSource,
+    MultipleTrafosUpdateConfig,
+    load_import_sources,
     load_transformation_revisions_from_directory,
 )
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
@@ -35,8 +45,51 @@ class UpdateProcessStatus(str, Enum):
 class TrafoUpdateProcessSummary(BaseModel):
     status: UpdateProcessStatus
     msg: str = Field("", description="details / error messages")
-    name: str | None
-    version_tag: str | None
+    name: str | None = None
+    version_tag: str | None = None
+
+
+class TrafosUpdateProcessSummary(BaseModel):
+    failure: list[str] = []
+    ignore: list[str] = []
+    success: list[str] = []
+    other: list[str] = []
+    not_tried: list[str] = []
+
+
+def _evaluate_success_reports(
+    reports: list[dict[UUID | str, TrafoUpdateProcessSummary]],
+) -> TrafosUpdateProcessSummary:
+    result = TrafosUpdateProcessSummary()
+    for report in reports:
+        evaluation = _evaluate_single_success_report(report)
+        result.failure.extend(evaluation.failure)
+        result.ignore.extend(evaluation.ignore)
+        result.success.extend(evaluation.success)
+        result.other.extend(evaluation.other)
+        result.not_tried.extend(evaluation.not_tried)
+
+    return result
+
+
+def _evaluate_single_success_report(
+    report: dict[UUID | str, TrafoUpdateProcessSummary],
+) -> TrafosUpdateProcessSummary:
+    evaluation = TrafosUpdateProcessSummary()
+    for trafo_report in report.values():
+        current_trafo = str(trafo_report.name) + " (" + str(trafo_report.version_tag) + ")"
+        match trafo_report.status:
+            case UpdateProcessStatus.FAILED:
+                evaluation.failure.append(current_trafo)
+            case UpdateProcessStatus.IGNORED:
+                evaluation.ignore.append(current_trafo)
+            case UpdateProcessStatus.SUCCESS:
+                evaluation.success.append(current_trafo)
+            case UpdateProcessStatus.NOT_TRIED:
+                evaluation.not_tried.append(current_trafo)
+            case _:
+                evaluation.other.append(current_trafo)
+    return evaluation
 
 
 def import_importable(
@@ -87,13 +140,23 @@ def import_importable(
         for trafo in trafo_revs
     }
 
+    logger.debug("Settings for imports are %s", str(multi_import_config))
+
     for transformation in trafos_to_process:
         logger.debug(
             "Importing transformation %s with tag %s with id %s",
             transformation.name,
             transformation.version_tag,
             str(transformation.id),
+            extra={
+                "allow_overwrite_released": multi_import_config.allow_overwrite_released,
+                "update_component_code": multi_import_config.update_component_code,
+                "expand_component_code": multi_import_config.expand_component_code,
+                "strip_wiring": multi_import_config.strip_wirings,
+                "strip_release_wiring": multi_import_config.strip_release_wirings,
+            },
         )
+
         try:
             update_or_create_single_transformation_revision(
                 transformation,
@@ -110,8 +173,11 @@ def import_importable(
 
         except (
             DBIntegrityError,
+            ComponentImportComponentError,
+            DBNestingCycleDetected,
             DBNotFoundError,
             ModelConstraintViolation,
+            ParseDefaultValueError,
         ) as e:
             success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
 
@@ -157,26 +223,58 @@ def import_importables(
     importables: Iterable[Importable],
 ) -> list[dict[UUID | str, TrafoUpdateProcessSummary]]:
     """Import all trafo rev sets from multiple importables"""
-    return [import_importable(importable) for importable in importables]
+    success_reports = [import_importable(importable) for importable in importables]
+    summary = _evaluate_success_reports(success_reports)
+    logger.info(
+        "Import Summary: %i failed, %i ignored, %i successfully, %i not tried, %i undefined",
+        len(summary.failure),
+        len(summary.ignore),
+        len(summary.success),
+        len(summary.not_tried),
+        len(summary.other),
+        extra={
+            "number_failed": len(summary.failure),
+            "number_ignored": len(summary.ignore),
+            "number_undefined": len(summary.other),
+            "failed_workflows": summary.failure,
+            "ignored_workflows": summary.ignore,
+            "undefined_workflows": summary.other,
+        },
+    )
+    return success_reports
 
 
-def import_transformations(
-    download_path: str,
+class AutoImportSettings(BaseSettings):
+    strip_wirings: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_STRIP_WIRINGS", default=False
+    )
+    allow_overwrite_released: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED", default=False
+    )
+    update_component_code: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE", default=False
+    )
+    deprecate_older_revisions: bool = Field(
+        alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS", default=False
+    )
+    directly_into_db: bool = True
+
+
+def import_transformations_from_dir(
+    import_dir: str,
     strip_wirings: bool = False,
-    directly_into_db: bool = False,
-    allow_overwrite_released: bool = True,
-    update_component_code: bool = True,
+    allow_overwrite_released: bool = False,
+    update_component_code: bool = False,
     deprecate_older_revisions: bool = False,
+    directly_into_db: bool = False,
 ) -> None:
-    """Import all transforamtions from specified download path.
+    """Import all transformations from specified download path.
 
     This function imports all transformations together with their documentations.
-    The download_path should be a path which contains the exported transformations
+    The import_dir should be a path which contains the exported transformations
     organized in subdirectories corresponding to the categories.
     The following parameters can be used to
 
-    - directly_into_db: If direct access to the database is possible, set this to true
-        to ommit the detour via the backend
     - strip_wirings: Set to true to reset the test wiring to empty input and output
         wirings for each transformation revision
     - allow_overwrite_released: Set to false to disable overwriting of transformation
@@ -186,38 +284,50 @@ def import_transformations(
     - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend.
 
-    WARNING: Overwrites possibly existing transformation revisions!
+    WARNING: Possibly overwrites existing transformation revisions depending on parameter!
 
     Usage:
-        import_transformations("./transformations")
+        import_transformations_from_dir("./transformations")
     """
 
-    transformation_dict, _ = load_transformation_revisions_from_directory(download_path)
+    logger.info(
+        "Import using the following settings:  dir=%s, strip_wirings=%s,allow_overwrite_released=%s, update_component_code=%s, deprecate_older_revisions=%s",  # noqa: E501
+        import_dir,
+        strip_wirings,
+        allow_overwrite_released,
+        update_component_code,
+        deprecate_older_revisions,
+    )
 
-    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
+    importables = load_import_sources([ImportSource(path=import_dir, is_dir=True)])
 
-    for level in sorted(ids_by_nesting_level):
-        logger.info("importing level %i transformation revisions", level)
-        for transformation_id in ids_by_nesting_level[level]:
-            transformation = transformation_dict[transformation_id]
-            update_or_create_transformation_revision(
-                transformation,
-                directly_in_db=directly_into_db,
+    if directly_into_db is False:
+        logger.info("Using endpoint for auto-import.")
+
+        for importable in importables:
+            import_using_api(
+                trafos=importable.transformation_revisions,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
                 strip_wiring=strip_wirings,
+                deprecate_older_revisions=deprecate_older_revisions,
             )
 
-    logger.info("finished importing")
+    else:
+        update_config = MultipleTrafosUpdateConfig(
+            strip_wirings=strip_wirings,
+            allow_overwrite_released=allow_overwrite_released,
+            update_component_code=update_component_code,
+            deprecate_older_revisions=deprecate_older_revisions,
+        )
 
-    if deprecate_older_revisions:
-        revision_group_ids = {
-            transformation.revision_group_id for _, transformation in transformation_dict.items()
-        }
-        logger.info("deprecate all but latest revision of imported revision groups")
-        for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=directly_into_db)
+        for importable in importables:
+            importable.import_config.update_config = update_config
+
+        _ = import_importables(importables)
 
 
 def generate_import_order_file(

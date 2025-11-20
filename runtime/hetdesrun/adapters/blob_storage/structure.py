@@ -65,7 +65,7 @@ async def get_sources_from_bucket(
                 bucket=bucket, object_key=object_key
             )
             src_list.append(source)
-            logger.debug("Created source:\n%s", source.json())
+            logger.debug("Created source", extra={"created_source": source.model_dump(mode="json")})
     return src_list
 
 
@@ -270,9 +270,7 @@ def get_sink_by_thing_node_id_and_metadata_key(
         ]
 
     except KeyError as error:
-        msg = (
-            f"Found no sink with thing node id {thing_node_id} " f"and metadata key {metadata_key}!"
-        )
+        msg = f"Found no sink with thing node id {thing_node_id} and metadata key {metadata_key}!"
         logger.error(msg)
         raise StructureObjectNotFound(msg) from error
     return sink

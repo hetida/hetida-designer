@@ -78,7 +78,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-value-input-wiring-dialog`
   );
-  await hetidaDesigner.typeInJsonEditor(workflowInputData);
+  await hetidaDesigner.typeInJsonEditor(workflowInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
 
   // TODO: Wait for a change to happen
@@ -138,6 +138,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-value-input-wiring-dialog`
   );
+  await page.waitForSelector('hd-json-editor >> .view-lines:has-text("Mock")');
   const workflowInputDataReleased = await page
     .locator('.view-lines')
     .innerText();
@@ -189,10 +190,30 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     workflowName
   );
   await page.locator('.mat-mdc-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Deprecate');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
-  );
-  await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
+
+  if (
+    await page
+      .locator('.mat-mdc-menu-content >> button:has-text("Deprecate")')
+      .isVisible()
+  ) {
+    await hetidaDesigner.clickOnContextMenu('Deprecate');
+    await page.waitForSelector(
+      `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
+    );
+    await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
+  } else {
+    await hetidaDesigner.clickOnContextMenu('Delete');
+    await page.waitForSelector(
+      `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
+    );
+    await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+  }
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+    )
+  ).waitForElementState('hidden');
+
   await hetidaDesigner.clearTest();
 });

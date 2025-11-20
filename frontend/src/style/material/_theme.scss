@@ -205,12 +205,48 @@
       }
     }
 
+    .mat-icon-svg-released {
+      .cls-1 {
+        fill: $hd-yellow-dark;
+      }
+    }
+
+    .mat-icon-svg-disabled {
+      .cls-1 {
+        fill: $hd-red-dark;
+      }
+    }
+
+    .mat-icon-svg-draft {
+      .cls-1 {
+        fill: $hd-grey-dark;
+      }
+    }
+
     .mdc-tab-indicator--active {
       background-color: map-get($secondary, 500) !important;
 
       .mat-icon-svg {
         .cls-1 {
           fill: $hd-yellow;
+        }
+      }
+
+      .mat-icon-svg-released {
+        .cls-1 {
+          fill: $hd-yellow;
+        }
+      }
+
+      .mat-icon-svg-draft {
+        .cls-1 {
+          fill: $hd-black;
+        }
+      }
+
+      .mat-icon-svg-disabled {
+        .cls-1 {
+          fill: $hd-red;
         }
       }
 

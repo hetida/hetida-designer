@@ -10,6 +10,7 @@ import json
 import logging
 from posixpath import join as posix_urljoin
 from typing import Any, Literal
+from uuid import UUID
 
 import pandas as pd
 import requests
@@ -22,6 +23,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
@@ -75,6 +77,11 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
     endpoint: Literal["timeseries", "dataframe", "multitsframe"],
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
+
+    job_id: str | UUID | None = job_id_context_filter.get_value("currently_executed_job_id")
+
+    if job_id is not None:
+        additional_params.append(("job_id", str(job_id)))
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
@@ -189,7 +196,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
                 str(df) if len(df) > 0 else "EMPTY RESULT",
             )
-        except requests.HTTPError as e:
+        except (requests.HTTPError, requests.ConnectionError, requests.RequestException) as e:
             msg = (
                 f"Requesting framelike data from generic rest adapter endpoint {url}"
                 f" failed with Exception {str(e)}"

@@ -55,8 +55,8 @@ async def test_basic_caching_with_async_func() -> None:
 @pytest.fixture(scope="function")  # noqa: PT003
 def enable_caching_in_config():
     with mock.patch(
-        "hetdesrun.webservice.config.runtime_config",
-        enable_caching_for_non_draft_trafos_for_execution=True,
+        "hetdesrun.webservice.config.runtime_config.enable_caching_for_non_draft_trafos_for_execution",
+        new=True,
     ) as _fixture:
         yield _fixture
 

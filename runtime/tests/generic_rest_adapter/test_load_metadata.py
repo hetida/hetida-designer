@@ -95,7 +95,7 @@ async def test_load_metadata_request():
             _, args, kwargs = mocked_async_client_get.mock_calls[0]
 
             assert args[0] == "https://hetida.de/sources/id_1/metadata/serial"
-            assert kwargs["params"] == {"filter_key": "filter_value"}
+            assert kwargs["params"] == [("filter_key", "filter_value")]
 
             resp_mock.status_code = 400
             resp_mock.text = "my adapter error"

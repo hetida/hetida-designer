@@ -82,11 +82,11 @@ test('Free text filter for component', async ({
   await hetidaDesigner.clickByTestId('done-tree-node-modal'); // Close Source Dialog
   await hetidaDesigner.clickByTestId('cancel-wiring-dialog'); // Close Execute Dialog
 
-  const freeTextInput = page.getByTestId(
+  const InputFreeText = page.getByTestId(
     `${componentInputName}-free-text-filter-input-wiring-dialog`
   );
 
-  expect(freeTextInput).toBeTruthy();
+  expect(InputFreeText).toBeTruthy();
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
@@ -96,6 +96,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   const componentTag = '0.1.0';
 
   await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(componentName);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.rightClickItemInNavigation(
     componentCategory,
@@ -107,6 +108,12 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
   );
   await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
+    )
+  ).waitForElementState('hidden');
 
   await hetidaDesigner.clearTest();
 });

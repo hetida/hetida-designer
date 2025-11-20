@@ -6,10 +6,13 @@ asyncstdlib
 black
 boto3
 boto3-stubs[essential]
+datashader
 dateparser
+dtexp
 fastapi>=0.65.2
 fastparquet
 gekko
+geojson
 geopandas
 gunicorn
 h5py
@@ -21,6 +24,8 @@ joblib
 kaleido
 keras
 libcst
+lightgbm
+msgspec
 numba!=0.56.2 # due to setuptools dependency resolution problems
 numpy
 odfpy
@@ -28,11 +33,13 @@ opencv-python-headless
 openpyxl
 ortools
 pandas
+pendulum
 pillow
-plotly==5.15.0
-psycopg2
+plotly<7
+psycopg[c]
 pyarrow
-pydantic[dotenv]>=1.8.2,<2
+pydantic[dotenv]<3,>=2.11
+pydantic-settings
 pytest
 pytest-asyncio
 python-jose[cryptography]
@@ -40,9 +47,11 @@ regex!=2022.3.15 # bug in combination with dateparser "bad escape..."
 requests
 scikit-learn
 scipy
+semver
 shapely
 sqlalchemy[mypy]>=2.0,<3
 statsmodels
+structlog
 tables
 typing-extensions
 uvicorn>=0.17.2

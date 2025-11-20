@@ -16,7 +16,7 @@ from posixpath import join as posix_urljoin
 from typing import Any, Literal
 
 from httpx import AsyncClient, HTTPError, Response
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class ServiceCredentials(BaseModel):
             "Additional keyword arguments for httpx AsyncClient against auth provider."
             " Affects both obtaining and refreshing requests."
         ),
-        example={"verify": False},
+        examples=[{"verify": False}],
     )
     post_kwargs: dict[str, Any] = Field(
         {},
@@ -71,7 +71,7 @@ class ServiceCredentials(BaseModel):
             "Additional keyword arguments for httpx post requests against auth provider."
             " Affects both obtaining and refreshing requests."
         ),
-        example={"timeout": 42.0},
+        examples=[{"timeout": 42.0}],
     )
 
 
@@ -120,9 +120,7 @@ class TokenResponse(BaseModel):
             " Is used to calculate expiration time estimates."
         ),
     )
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def json_parse_token_response(resp: Response) -> dict[str, Any]:
@@ -172,7 +170,7 @@ async def obtain_token_from_auth_provider(
     try:
         resp = await post_to_auth_provider(
             url=url,
-            data=service_user_credentials.grant_credentials.dict(exclude_none=True),
+            data=service_user_credentials.grant_credentials.model_dump(exclude_none=True),
             async_client_kwargs=service_user_credentials.post_client_kwargs,
             post_kwargs=service_user_credentials.post_kwargs,
         )
@@ -185,7 +183,7 @@ async def obtain_token_from_auth_provider(
     token_dict["issue_timestamp"] = now
 
     try:
-        token_response = TokenResponse.parse_obj(token_dict)
+        token_response = TokenResponse.model_validate(token_dict)
     except ValidationError as e:
         msg = (
             f"Could not understand answer to token request from auth provider at"
@@ -235,7 +233,7 @@ async def refresh_token_from_auth_provider(
     token_dict["issue_timestamp"] = now
 
     try:
-        token_response = TokenResponse.parse_obj(token_dict)
+        token_response = TokenResponse.model_validate(token_dict)
     except ValidationError as e:
         msg = (
             f"Could not understand answer to token refresh request from auth provider at"
@@ -311,10 +309,7 @@ async def obtain_or_refresh_token(
                     return await obtain_token_from_auth_provider(service_user_credentials)
                 except ServiceAuthenticationError as e2:
                     logger.error(
-                        (
-                            "After failed refresh also obtaining completely new"
-                            " tokens failed:\n%s."
-                        ),
+                        ("After failed refresh also obtaining completely new tokens failed:\n%s."),
                         str(e2),
                     )
                     raise e2

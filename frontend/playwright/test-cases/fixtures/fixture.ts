@@ -9,11 +9,8 @@ type HetidaDesignerFixture = {
 export const test = base.extend<HetidaDesignerFixture>({
   page: async ({ baseURL, page }, use) => {
     page.on('console', msg => {
-      const ignoreErrorMessages = [
-        '[ERROR] 0-undefined - The authority URL MUST be provided in the configuration! ',
-        '[ERROR] 0-undefined - The clientId is required and missing from your config!',
-        '[ERROR] 0-undefined - Validation of config rejected with errors. Config is NOT set.'
-      ];
+      // this is an error thrown by the monaco editor during e2e testing, we can safely ignore it
+      const ignoreErrorMessages = ['Error: Canceled: Canceled'];
 
       if (msg.type() === 'error') {
         const messages = msg.text().split('\n');

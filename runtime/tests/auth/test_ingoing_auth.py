@@ -1,4 +1,5 @@
 import asyncio
+from unittest import mock
 
 import pytest
 
@@ -141,3 +142,83 @@ async def test_auth_wrong_public_key_fails(
         headers={"Authorization": "Bearer " + valid_access_token},
     )
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_role_checking_works(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    valid_access_token_with_role,  # has "some_roles": ["allowed_hd_user"] in payload
+    mocked_public_key_fetching,
+):
+    client = open_async_test_client_with_auth
+
+    # default: no role checks. Should work!
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + valid_access_token_with_role},
+    )
+    assert response.status_code == 200
+    auth_headers = await get_auth_headers()
+    assert len(auth_headers) > 0
+    assert auth_headers["Authorization"].startswith("Bearer ")
+
+    # activate role checks
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "some_roles"),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_allowed_role", "allowed_hd_user"
+        ),
+    ):
+        # request with correct access token succeeds
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_role},
+        )
+        assert response.status_code == 200
+        auth_headers = await get_auth_headers()
+        assert len(auth_headers) > 0
+        assert auth_headers["Authorization"].startswith("Bearer ")
+
+    # role expected in other key should yield 403
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "other_roles"),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_allowed_role", "allowed_hd_user"
+        ),
+    ):
+        # request with correct access token succeeds
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_role},
+        )
+        assert response.status_code == 403
+
+    # role not allowed should yield 403
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "some_roles"),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_allowed_role", "not_allowed_hd_user"
+        ),
+    ):
+        # request with correct access token succeeds
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_role},
+        )
+        assert response.status_code == 403
+
+    # role not set (deactivating role checking), but roles present should yield 200
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "some_roles"),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_allowed_role", None),
+    ):
+        # request with correct access token succeeds
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_role},
+        )
+        assert response.status_code == 200
+        auth_headers = await get_auth_headers()
+        assert len(auth_headers) > 0
+        assert auth_headers["Authorization"].startswith("Bearer ")

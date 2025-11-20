@@ -1,0 +1,397 @@
+{
+    "id": "4d2b85e4-6221-4399-9990-b92bbef13978",
+    "revision_group_id": "caf3a867-63e2-41f6-a84a-feecc15d55d6",
+    "name": "Test Workflow Operator Upgrading",
+    "description": "Workflow for unit tests for workflow operator upgrading",
+    "category": "Test",
+    "version_tag": "0.1.0",
+    "state": "DRAFT",
+    "type": "WORKFLOW",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": {
+        "operators": [
+            {
+                "id": "9706f684-77d0-4e24-8bba-ae960a3e9f2e",
+                "revision_group_id": "a4064897-66d3-9601-328e-5ae9036665c5",
+                "name": "Name Series",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "a4064897-66d3-9601-328e-5ae9036665c5",
+                "inputs": [
+                    {
+                        "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    },
+                    {
+                        "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+                        "name": "name",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 840,
+                    "y": 190
+                }
+            },
+            {
+                "id": "4bcf8e3c-fe68-4444-a23f-362d0428b7f2",
+                "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+                "name": "Pass Through (Series)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+                "inputs": [
+                    {
+                        "id": "f103c395-92b6-444d-320a-93950ed6d857",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 220,
+                    "y": 285
+                }
+            },
+            {
+                "id": "756fe547-e846-4a56-a183-3eceb1ba2493",
+                "revision_group_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+                "name": "Pass Through (String)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+                "inputs": [
+                    {
+                        "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+                        "name": "input",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "REQUIRED",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+                        "name": "output",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 215,
+                    "y": 417
+                }
+            }
+        ],
+        "links": [
+            {
+                "id": "c8e5dfe7-2524-405d-8ee1-d9e61d58e223",
+                "start": {
+                    "operator": "756fe547-e846-4a56-a183-3eceb1ba2493",
+                    "connector": {
+                        "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+                        "name": "output",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "9706f684-77d0-4e24-8bba-ae960a3e9f2e",
+                    "connector": {
+                        "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+                        "name": "name",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": [
+                    {
+                        "x": 585,
+                        "y": 487
+                    },
+                    {
+                        "x": 725,
+                        "y": 432
+                    },
+                    {
+                        "x": 830,
+                        "y": 290
+                    }
+                ]
+            },
+            {
+                "id": "ff666a03-5b48-465d-8558-f29c5343c5b6",
+                "start": {
+                    "operator": "4bcf8e3c-fe68-4444-a23f-362d0428b7f2",
+                    "connector": {
+                        "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "9706f684-77d0-4e24-8bba-ae960a3e9f2e",
+                    "connector": {
+                        "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": [
+                    {
+                        "x": 590,
+                        "y": 355
+                    },
+                    {
+                        "x": 610,
+                        "y": 252
+                    },
+                    {
+                        "x": 730,
+                        "y": 252
+                    },
+                    {
+                        "x": 830,
+                        "y": 260
+                    }
+                ]
+            },
+            {
+                "id": "67e977ec-fd26-40ec-bef4-915ac4420068",
+                "start": {
+                    "connector": {
+                        "id": "0e59a5cc-b2f1-40cf-83cb-5498dc72ddac",
+                        "name": "s_in",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": -30,
+                            "y": 345
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "4bcf8e3c-fe68-4444-a23f-362d0428b7f2",
+                    "connector": {
+                        "id": "f103c395-92b6-444d-320a-93950ed6d857",
+                        "name": "input",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "7673cefd-ee73-4528-a20e-b21402ab8b47",
+                "start": {
+                    "connector": {
+                        "id": "5d2216ae-05e8-422c-8378-99f403680819",
+                        "name": "name_in",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": -35,
+                            "y": 477
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "756fe547-e846-4a56-a183-3eceb1ba2493",
+                    "connector": {
+                        "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+                        "name": "input",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "532299a2-f625-4591-ae8d-18f2480dcad5",
+                "start": {
+                    "operator": "9706f684-77d0-4e24-8bba-ae960a3e9f2e",
+                    "connector": {
+                        "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
+                        "name": "output",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "connector": {
+                        "id": "0b45344f-7613-4460-a3d5-8e75cbec3357",
+                        "name": "s_out",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 1290,
+                            "y": 250
+                        }
+                    }
+                },
+                "path": []
+            }
+        ],
+        "constants": [],
+        "inputs": [
+            {
+                "id": "0e59a5cc-b2f1-40cf-83cb-5498dc72ddac",
+                "name": "s_in",
+                "data_type": "SERIES",
+                "position": {
+                    "x": -30,
+                    "y": 345
+                },
+                "operator_id": "4bcf8e3c-fe68-4444-a23f-362d0428b7f2",
+                "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+                "operator_name": "Pass Through (Series)",
+                "connector_name": "input",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "5d2216ae-05e8-422c-8378-99f403680819",
+                "name": "name_in",
+                "data_type": "STRING",
+                "position": {
+                    "x": -35,
+                    "y": 477
+                },
+                "operator_id": "756fe547-e846-4a56-a183-3eceb1ba2493",
+                "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+                "operator_name": "Pass Through (String)",
+                "connector_name": "input",
+                "type": "REQUIRED"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "0b45344f-7613-4460-a3d5-8e75cbec3357",
+                "name": "s_out",
+                "data_type": "SERIES",
+                "position": {
+                    "x": 1290,
+                    "y": 250
+                },
+                "operator_id": "9706f684-77d0-4e24-8bba-ae960a3e9f2e",
+                "connector_id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
+                "operator_name": "Name Series",
+                "connector_name": "output"
+            }
+        ]
+    },
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "0e59a5cc-b2f1-40cf-83cb-5498dc72ddac",
+                "name": "s_in",
+                "data_type": "SERIES",
+                "type": "REQUIRED"
+            },
+            {
+                "id": "5d2216ae-05e8-422c-8378-99f403680819",
+                "name": "name_in",
+                "data_type": "STRING",
+                "type": "REQUIRED"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "0b45344f-7613-4460-a3d5-8e75cbec3357",
+                "name": "s_out",
+                "data_type": "SERIES"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "s_in",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+                }
+            },
+            {
+                "workflow_input_name": "name_in",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "test_name"
+                }
+            }
+        ],
+        "output_wirings": [],
+        "dashboard_positionings": []
+    }
+}

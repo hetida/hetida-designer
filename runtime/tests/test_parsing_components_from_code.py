@@ -28,14 +28,14 @@ async def test_default_values_with_metadata(async_test_client, mocked_clean_test
     async with async_test_client as ac:
         response = await ac.put(
             "/api/transformations",
-            json=[json.loads(tr_from_py.json())],
+            json=[json.loads(tr_from_py.model_dump_json())],
         )
         assert response.status_code == 207
         assert response.json()[str(tr_from_py.id)]["status"] == "SUCCESS"
 
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
     assert response.status_code == 200
@@ -66,7 +66,7 @@ def load_check_from_json_file(json_file_path: str) -> TransformationRevision:
         trafo = TransformationRevision(**json.load(f))
 
     tr_from_content = transformation_revision_from_python_code(trafo.content)
-    assert tr_from_content.dict() == trafo
+    assert tr_from_content.model_dump() == trafo
 
     return trafo
 
@@ -82,7 +82,11 @@ async def put_trafo_via_multiple_put_endpoint(
     response = await open_async_client.put(
         "/api/transformations",
         params={"overwrite_released": True, "update_code": update_code},
-        json=[json.loads(trafo.json()) if isinstance(trafo, TransformationRevision) else trafo],
+        json=[
+            json.loads(trafo.model_dump_json())
+            if isinstance(trafo, TransformationRevision)
+            else trafo
+        ],
     )
     assert response.status_code == 207
     assert len(response.json()) == 1
@@ -95,7 +99,7 @@ async def put_trafo_via_single_put_endpoint(
     response = await open_async_client.put(
         f"/api/transformations/{str(trafo.id)}",
         params={"overwrite_released": True, "update_code": update_code},
-        json=json.loads(trafo.json()),
+        json=json.loads(trafo.model_dump_json()),
     )
     assert response.status_code == 201
 

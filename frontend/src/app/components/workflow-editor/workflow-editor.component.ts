@@ -1,5 +1,6 @@
 import { ComponentPortal } from '@angular/cdk/portal';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { select, Store } from '@ngrx/store';
 import {
@@ -40,8 +41,6 @@ import {
 } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { Connector } from 'src/app/model/connector';
-import { Utils } from 'src/app/utils/utils';
-import { Constant } from 'src/app/model/constant';
 import { OptionalFieldsDialogComponent } from '../optional-fields-dialog/optional-fields-dialog.component';
 
 interface IdentifiableEntity {
@@ -58,13 +57,19 @@ export interface VertexIds {
   templateUrl: './workflow-editor.component.html',
   styleUrls: ['./workflow-editor.component.scss']
 })
-export class WorkflowEditorComponent {
-  flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
-  flowchartManipulatorConfiguration: SVGManipulatorConfiguration =
+export class WorkflowEditorComponent implements OnInit {
+  public flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
+  public flowchartManipulatorConfiguration: SVGManipulatorConfiguration =
     new SVGManipulatorConfiguration();
 
-  private currentWorkflow: WorkflowTransformation;
-  private hasChanges = false;
+  private _currentWorkflow: WorkflowTransformation;
+  private _hasChanges = false;
+  private readonly _destroyRef = inject(DestroyRef);
+
+  @Input()
+  set workflowTransformation(workflowTransformation: WorkflowTransformation) {
+    this._convertWorkflowToFlowchart(workflowTransformation);
+  }
 
   constructor(
     private readonly transformationStore: Store<TransformationState>,
@@ -74,14 +79,13 @@ export class WorkflowEditorComponent {
     private readonly popoverService: PopoverService,
     private readonly dialog: MatDialog,
     private readonly contextMenuService: ContextMenuService
-  ) {
-    // Only save updates every 500ms.
-    timer(500, 500).subscribe(() => this._updateWorkflowIfNecessary());
-  }
+  ) {}
 
-  @Input()
-  set workflowTransformation(workflowTransformation: WorkflowTransformation) {
-    this._convertWorkflowToFlowchart(workflowTransformation);
+  ngOnInit() {
+    // Only save updates every 500ms.
+    timer(500, 500)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(() => this._updateWorkflowIfNecessary());
   }
 
   openContextMenu(mouseEvent: CustomEvent): void {
@@ -96,7 +100,7 @@ export class WorkflowEditorComponent {
       componentPortal,
       position
     );
-    componentPortalRef.instance.transformation = this.currentWorkflow;
+    componentPortalRef.instance.transformation = this._currentWorkflow;
   }
 
   /**
@@ -119,7 +123,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOperator(element: HTMLElement): void {
-    const operator = this.currentWorkflow.content.operators.find(
+    const operator = this._currentWorkflow.content.operators.find(
       operatorCandidate => operatorCandidate.id === element.id
     );
     if (operator === undefined) {
@@ -133,7 +137,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateLink(element: HTMLElement): void {
-    const link = this.currentWorkflow.content.links.find(
+    const link = this._currentWorkflow.content.links.find(
       workflowLink => workflowLink.id === element.id
     );
     if (link === undefined) {
@@ -145,7 +149,7 @@ export class WorkflowEditorComponent {
       return;
     }
     link.path = pathData;
-    this.hasChanges = true;
+    this._hasChanges = true;
   }
 
   /**
@@ -153,7 +157,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateInput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.content.inputs);
+    this._updateIoItem(element, this._currentWorkflow.content.inputs);
   }
 
   /**
@@ -161,7 +165,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOutput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.content.outputs);
+    this._updateIoItem(element, this._currentWorkflow.content.outputs);
   }
 
   private _updateIoItem(element: HTMLElement, ioConnectors: IOConnector[]) {
@@ -172,7 +176,7 @@ export class WorkflowEditorComponent {
     }
     ioConnector.position.x = Number(element.getAttribute('x'));
     ioConnector.position.y = Number(element.getAttribute('y'));
-    this.hasChanges = true;
+    this._hasChanges = true;
   }
 
   /**
@@ -185,27 +189,27 @@ export class WorkflowEditorComponent {
     if (removedElement === null || removedElement === undefined) {
       throw new Error('No element associated with the event!');
     }
-    this.currentWorkflow.content.operators = this._removeById(
-      this.currentWorkflow.content.operators,
+    this._currentWorkflow.content.operators = this._removeById(
+      this._currentWorkflow.content.operators,
       removedElement.id
     );
-    this.currentWorkflow.content.inputs = this._removeById(
-      this.currentWorkflow.content.inputs,
+    this._currentWorkflow.content.inputs = this._removeById(
+      this._currentWorkflow.content.inputs,
       removedElement.id
     );
-    this.currentWorkflow.content.outputs = this._removeById(
-      this.currentWorkflow.content.outputs,
+    this._currentWorkflow.content.outputs = this._removeById(
+      this._currentWorkflow.content.outputs,
       removedElement.id
     );
-    this.currentWorkflow.content.links = this._removeById(
-      this.currentWorkflow.content.links,
+    this._currentWorkflow.content.links = this._removeById(
+      this._currentWorkflow.content.links,
       removedElement.id
     );
-    this.currentWorkflow.content.constants =
-      this.currentWorkflow.content.constants.filter(
+    this._currentWorkflow.content.constants =
+      this._currentWorkflow.content.constants.filter(
         constant => constant.operator_id !== removedElement.id
       );
-    this.hasChanges = true;
+    this._hasChanges = true;
   }
 
   private _removeById<T extends IdentifiableEntity>(
@@ -214,25 +218,6 @@ export class WorkflowEditorComponent {
   ): T[] {
     return sourceList.filter(
       identifiableEntity => identifiableEntity.id !== id
-    );
-  }
-
-  private _removeOperatorLinks(links: Link[], deletedOperator: Operator) {
-    return links.filter(
-      link =>
-        !(
-          link.start.operator === deletedOperator.id ||
-          link.end.operator === deletedOperator.id
-        )
-    );
-  }
-
-  private _removeOperatorConstants(
-    constants: Constant[],
-    deletedOperator: Operator
-  ) {
-    return constants.filter(
-      constant => constant.operator_id !== deletedOperator.id
     );
   }
 
@@ -257,8 +242,8 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'operator') {
       return;
     }
-    if (this.currentWorkflow.content.operators !== undefined) {
-      const operator = this.currentWorkflow.content.operators.find(
+    if (this._currentWorkflow.content.operators !== undefined) {
+      const operator = this._currentWorkflow.content.operators.find(
         operatorCandidate => operatorCandidate.id === element.id
       );
       if (operator === undefined) {
@@ -278,7 +263,7 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'link') {
       return;
     }
-    const link = this.currentWorkflow.content.links.find(
+    const link = this._currentWorkflow.content.links.find(
       wfLink => wfLink.id === element.id
     );
     if (link !== undefined) {
@@ -291,20 +276,20 @@ export class WorkflowEditorComponent {
       this.flowchartConverter.getLinkOperatorAndConnectorId(element, false);
 
     const sourceIsWorkflowInput =
-      linkSourceIds.operatorId === this.currentWorkflow.id;
+      linkSourceIds.operatorId === this._currentWorkflow.id;
     const startConnector: Connector =
       this.flowchartConverter.getConnectorFromOperatorById(
         linkSourceIds,
-        this.currentWorkflow,
+        this._currentWorkflow,
         sourceIsWorkflowInput
       );
 
     const targetIsWorkflowOutput =
-      linkTargetIds.operatorId === this.currentWorkflow.id;
+      linkTargetIds.operatorId === this._currentWorkflow.id;
     const endConnector: Connector =
       this.flowchartConverter.getConnectorFromOperatorById(
         linkTargetIds,
-        this.currentWorkflow,
+        this._currentWorkflow,
         targetIsWorkflowOutput
       );
 
@@ -324,9 +309,9 @@ export class WorkflowEditorComponent {
       path: linkPath
     };
 
-    this.currentWorkflow.content.links.push(newLink);
+    this._currentWorkflow.content.links.push(newLink);
     element.id = newLink.id;
-    this.hasChanges = true;
+    this._hasChanges = true;
   }
 
   /**
@@ -347,9 +332,9 @@ export class WorkflowEditorComponent {
       event.detail.svgX as number,
       event.detail.svgY as number
     );
-    this.currentWorkflow.content.operators.push(newOperator);
+    this._currentWorkflow.content.operators.push(newOperator);
     this.transformationService
-      .updateTransformation(this.currentWorkflow)
+      .updateTransformation(this._currentWorkflow)
       .subscribe();
   }
 
@@ -365,7 +350,7 @@ export class WorkflowEditorComponent {
       return;
     }
     const target = event.target;
-    const operator = this.currentWorkflow.content.operators.find(
+    const operator = this._currentWorkflow.content.operators.find(
       op => op.id === target.id
     );
     if (operator !== undefined) {
@@ -391,7 +376,7 @@ export class WorkflowEditorComponent {
       const openToTop =
         (position.y as number) + popoverMinHeight > bodyRect.bottom;
       this.popoverService.showPopover(
-        this.currentWorkflow.id,
+        this._currentWorkflow.id,
         position.x,
         openToTop ? position.y - popoverMinHeight : position.y,
         openToRight,
@@ -426,12 +411,14 @@ export class WorkflowEditorComponent {
             transformation.revision_group_id ===
               currentOperator.revision_group_id &&
             transformation.id !== currentOperator.transformation_id &&
-            transformation.state === RevisionState.RELEASED
+            (transformation.state === RevisionState.RELEASED ||
+              (transformation.state === RevisionState.DRAFT &&
+                this._currentWorkflow.state === RevisionState.DRAFT))
         );
 
         if (revisions.length === 0) {
           this.notificationService.info(
-            `This ${currentOperator.type.toLowerCase()} has no other revision.`
+            `This ${currentOperator.type.toLowerCase()} has no other RELEASED revision.`
           );
         } else {
           this._openRevisionChangeDialog(revisions, currentOperator);
@@ -457,31 +444,9 @@ export class WorkflowEditorComponent {
       if (data === undefined) {
         return;
       }
-      const replacementOperator = this._createNewOperator(
-        data,
-        operator.position.x,
-        operator.position.y
-      );
 
-      const copyOfCurrentWorkflow = Utils.deepCopy(this.currentWorkflow);
-
-      // update workflow
-      copyOfCurrentWorkflow.content.operators = this._removeById(
-        copyOfCurrentWorkflow.content.operators,
-        operator.id
-      );
-      copyOfCurrentWorkflow.content.links = this._removeOperatorLinks(
-        copyOfCurrentWorkflow.content.links,
-        operator
-      );
-      copyOfCurrentWorkflow.content.constants = this._removeOperatorConstants(
-        copyOfCurrentWorkflow.content.constants,
-        operator
-      );
-
-      copyOfCurrentWorkflow.content.operators.push(replacementOperator);
       this.transformationService
-        .updateTransformation(copyOfCurrentWorkflow)
+        .upgradeSingleOperator(this._currentWorkflow, operator.id, data.id)
         .subscribe();
     });
   }
@@ -512,7 +477,7 @@ export class WorkflowEditorComponent {
       }
       operator.name = newName;
       this.transformationService
-        .updateTransformation(this.currentWorkflow)
+        .updateTransformation(this._currentWorkflow)
         .subscribe();
     });
   }
@@ -533,9 +498,9 @@ export class WorkflowEditorComponent {
           currentOperator.position.x + 100,
           currentOperator.position.y + 100
         );
-        this.currentWorkflow.content.operators.push(copyOperator);
+        this._currentWorkflow.content.operators.push(copyOperator);
         this.transformationService
-          .updateTransformation(this.currentWorkflow)
+          .updateTransformation(this._currentWorkflow)
           .subscribe();
       });
   }
@@ -543,7 +508,7 @@ export class WorkflowEditorComponent {
   showOptionalFields(event: CustomEvent): void {
     const uuid = event.detail.uuid;
     if (uuid) {
-      const selected_op = this.currentWorkflow.content.operators.filter(
+      const selected_op = this._currentWorkflow.content.operators.filter(
         op => op.id === event.detail.uuid
       )[0];
       if (selected_op) {
@@ -565,13 +530,13 @@ export class WorkflowEditorComponent {
           .pipe(first())
           .subscribe((inputs: Connector[]) => {
             if (inputs) {
-              this.currentWorkflow.content.operators.filter(
+              this._currentWorkflow.content.operators.filter(
                 op => op.id === event.detail.uuid
               )[0].inputs = inputs;
               inputs
                 .filter(input => !input.exposed)
                 .forEach(input => {
-                  this.currentWorkflow.content.inputs
+                  this._currentWorkflow.content.inputs
                     .filter(
                       contentInput =>
                         contentInput.operator_id === event.detail.uuid
@@ -582,7 +547,7 @@ export class WorkflowEditorComponent {
                       }
                     });
                 });
-              this.hasChanges = true;
+              this._hasChanges = true;
               this._updateWorkflowIfNecessary();
             }
           });
@@ -597,7 +562,7 @@ export class WorkflowEditorComponent {
     if (element === null) {
       return null;
     }
-    const currentOperator = this.currentWorkflow.content.operators.find(
+    const currentOperator = this._currentWorkflow.content.operators.find(
       operator => operator.id === element.id
     );
     if (
@@ -612,18 +577,22 @@ export class WorkflowEditorComponent {
 
   private _updateWorkflowIfNecessary(): void {
     if (
-      !this.hasChanges ||
-      this.currentWorkflow.state === RevisionState.RELEASED
+      !this._hasChanges ||
+      this._currentWorkflow.state === RevisionState.RELEASED ||
+      this._currentWorkflow.state === RevisionState.DISABLED
     ) {
       return;
     }
     this.transformationService
-      .updateTransformation(this.currentWorkflow)
-      .subscribe(() => (this.hasChanges = false));
+      .updateTransformation(this._currentWorkflow)
+      .subscribe(() => (this._hasChanges = false));
   }
 
   private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
-    if (workflow.state === RevisionState.RELEASED) {
+    if (
+      workflow.state === RevisionState.RELEASED ||
+      workflow.state === RevisionState.DISABLED
+    ) {
       this.flowchartManipulatorConfiguration = createReadOnlyConfig(
         this.flowchartManipulatorConfiguration
       );
@@ -632,10 +601,10 @@ export class WorkflowEditorComponent {
     this.flowchartConfiguration =
       this.flowchartConverter.convertWorkflowToFlowchart(workflow);
 
-    this.currentWorkflow = workflow;
+    this._currentWorkflow = workflow;
 
     if (
-      this.currentWorkflow.content.operators.some(
+      this._currentWorkflow.content.operators.some(
         operator => operator.state === RevisionState.DISABLED
       )
     ) {
@@ -673,7 +642,7 @@ export class WorkflowEditorComponent {
       })),
       position: { x: posX, y: posY }
     };
-    const sameOperator = this.currentWorkflow.content.operators.filter(
+    const sameOperator = this._currentWorkflow.content.operators.filter(
       workflowOperator =>
         workflowOperator.transformation_id === newOperator.transformation_id
     );
@@ -689,7 +658,7 @@ export class WorkflowEditorComponent {
     if (operator.position.x !== newPosX || operator.position.y !== newPosY) {
       operator.position.x = newPosX;
       operator.position.y = newPosY;
-      this.hasChanges = true;
+      this._hasChanges = true;
     }
   }
 }

@@ -1,7 +1,7 @@
 import logging
 import threading
 import urllib
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec: B405
 from datetime import datetime, timezone
 from functools import cache
 
@@ -31,7 +31,10 @@ class CredentialInfo(BaseModel):
             " Is used to calculate expiration time estimates."
         ),
     )
-    expiration_time_in_seconds: int
+
+    expiration_time_in_seconds: float = Field(
+        ..., description=("Timedelta from now in seconds during which the credentials are valid.")
+    )
 
 
 def extract_namespace_from_root_tag(root_tag: str) -> str:
@@ -41,7 +44,7 @@ def extract_namespace_from_root_tag(root_tag: str) -> str:
 def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) -> CredentialInfo:
     logger.debug("Parsing XML response to obtain credential info")
     try:
-        xml_response = ET.fromstring(xml_string)  # noqa: S314
+        xml_response = ET.fromstring(xml_string)  # noqa: S314  # nosec: B314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
@@ -96,7 +99,7 @@ def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) ->
 
 def parse_xml_error_response(xml_string: str) -> str:
     try:
-        xml_response = ET.fromstring(xml_string)  # noqa: S314
+        xml_response = ET.fromstring(xml_string)  # noqa: S314 # nosec: B314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)

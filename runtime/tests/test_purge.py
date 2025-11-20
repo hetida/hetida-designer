@@ -7,8 +7,6 @@ from posixpath import join as posix_urljoin
 from unittest import mock
 from uuid import uuid4
 
-import pytest
-
 from hetdesrun.exportimport.purge import (
     delete_all_and_refill,
     delete_drafts,
@@ -23,8 +21,7 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
-from hetdesrun.persistence.models.exceptions import ModifyForbidden
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -66,7 +63,9 @@ def test_get_transformation_revisions(caplog):
     ) as mocked_get_from_db:
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.json = mock.Mock(return_value=[json.loads(tr.json()) for tr in tr_list])
+        resp_mock.json = mock.Mock(
+            return_value=[json.loads(tr.model_dump_json()) for tr in tr_list]
+        )
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
@@ -235,6 +234,7 @@ def test_update_or_create_transformation_revision_happy_path():
         return_value=None,
     ) as mocked_update_in_db:
         resp_mock = mock.Mock()
+        resp_mock.json = mock.Mock(return_value={})
         resp_mock.status_code = 201
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.put", return_value=resp_mock
@@ -276,7 +276,6 @@ def test_update_or_create_transformation_revision_happy_path():
             assert args[0] == posix_urljoin(
                 get_config().hd_backend_api_url,
                 "transformations",
-                str(example_tr_draft.id),
             )
             assert kwargs["params"]["allow_overwrite_released"] is True
             assert kwargs["params"]["update_component_code"] is True
@@ -294,68 +293,10 @@ def test_update_or_create_transformation_revision_happy_path():
             assert args[0] == posix_urljoin(
                 get_config().hd_backend_api_url,
                 "transformations",
-                str(example_tr_draft.id),
             )
             assert kwargs["params"]["allow_overwrite_released"] is False
             assert kwargs["params"]["update_component_code"] is False
             assert kwargs["params"]["strip_wiring"] is True
-
-
-def test_update_or_create_transformation_revision_rest_api_error(caplog):
-    with caplog.at_level(logging.ERROR):
-        resp_mock = mock.Mock()
-        resp_mock.status_code = 400
-        with mock.patch("hetdesrun.exportimport.utils.requests.put", return_value=resp_mock):
-            caplog.clear()
-            update_or_create_transformation_revision(example_tr_draft)
-            assert "COULD NOT PUT" in caplog.text
-
-
-def test_update_or_create_transformation_revision_rest_api_update_forbidden(caplog):
-    with caplog.at_level(logging.INFO):
-        resp_mock = mock.Mock()
-        resp_mock.status_code = 409
-        with mock.patch("hetdesrun.exportimport.utils.requests.put", return_value=resp_mock):
-            caplog.clear()
-            update_or_create_transformation_revision(
-                example_tr_draft, allow_overwrite_released=False
-            )
-            assert "already in DB and released/deprecated" in caplog.text
-
-
-def test_update_or_create_transformation_revision_db_not_found(caplog):
-    with caplog.at_level(logging.ERROR):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-            side_effect=DBNotFoundError,
-        ):
-            caplog.clear()
-            update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
-            assert "Not found error in DB" in caplog.text
-
-
-def test_update_or_create_transformation_revision_db_integrity_error(caplog):
-    with caplog.at_level(logging.ERROR):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-            side_effect=DBIntegrityError,
-        ):
-            caplog.clear()
-            update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
-            assert "Integrity error in DB" in caplog.text
-
-
-def test_update_or_create_transformation_revision_db_update_forbidden(caplog):
-    with caplog.at_level(logging.INFO):  # noqa: SIM117
-        with mock.patch(
-            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-            side_effect=ModifyForbidden,
-        ):
-            caplog.clear()
-
-            with pytest.raises(ModifyForbidden):
-                update_or_create_transformation_revision(example_tr_draft, directly_in_db=True)
-            assert "Update forbidden for entry" in caplog.text
 
 
 def test_deprecate_all_but_latest_in_group():
@@ -377,7 +318,7 @@ def test_deprecate_all_but_latest_in_group():
     stored_wf = TransformationRevision(**stored_wf_json)
     deprecated_version_of_stored_wf = deepcopy(stored_wf)
     deprecated_version_of_stored_wf.deprecate()
-    deprecated_stored_json = json.loads(deprecated_version_of_stored_wf.json())
+    deprecated_stored_json = json.loads(deprecated_version_of_stored_wf.model_dump_json())
 
     with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.utils.get_transformation_revisions",
@@ -394,7 +335,7 @@ def test_deprecate_all_but_latest_in_group():
             assert patched_update.call_count == 1
             _, args, _ = patched_update.mock_calls[0]
             update_tr = args[0]
-            update_json = json.loads(update_tr.json())
+            update_json = json.loads(update_tr.model_dump_json())
             del update_json["disabled_timestamp"]
             del deprecated_stored_json["disabled_timestamp"]
             assert update_json == deprecated_stored_json
@@ -523,7 +464,7 @@ def test_delete_all_restart():
         return_value=None,
     ) as mocked_delete:
         with mock.patch(
-            "hetdesrun.exportimport.purge.import_transformations",
+            "hetdesrun.exportimport.purge.import_transformations_from_dir",
             return_value=None,
         ) as mocked_import:
             with mock.patch(

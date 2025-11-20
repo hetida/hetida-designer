@@ -22,6 +22,8 @@ import { ConfigService } from '../../service/configuration/config.service';
 export class CopyTransformationDialogComponent implements OnInit {
   private apiEndpoint: string;
 
+  copiedId: string | null = null;
+
   constructor(
     public dialogRef: MatDialogRef<CopyTransformationDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
@@ -86,6 +88,20 @@ export class CopyTransformationDialogComponent implements OnInit {
   public isAllDataPropertiesDisabled(): boolean {
     return Object.entries(this.infoForm.controls).every(
       ([_, control]) => control.disabled
+    );
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        this.copiedId = text;
+        setTimeout(() => {
+          this.copiedId = null;
+        }, 1500);
+      },
+      err => {
+        console.error('Failed to copy to clipboard:', err);
+      }
     );
   }
 

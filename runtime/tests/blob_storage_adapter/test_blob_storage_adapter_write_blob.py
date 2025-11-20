@@ -7,7 +7,7 @@ import boto3
 import joblib
 import pytest
 from botocore.exceptions import ClientError
-from moto import mock_s3
+from moto import mock_aws
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     AdapterConnectionError,
@@ -99,7 +99,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
 
 @pytest.mark.asyncio
 async def test_blob_storage_custom_objects_to_storage_works() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -130,7 +130,7 @@ async def test_blob_storage_custom_objects_to_storage_works() -> None:
 
 @pytest.mark.asyncio
 async def test_blob_storage_custom_objects_to_storage_with_unexpected_error() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -159,7 +159,7 @@ async def test_blob_storage_custom_objects_to_storage_with_unexpected_error() ->
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_works() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -203,7 +203,7 @@ async def test_blob_storage_write_blob_to_storage_works() -> None:
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_unexpected_put_object_error() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -244,7 +244,7 @@ async def test_blob_storage_write_blob_to_storage_with_unexpected_put_object_err
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_unexpected_head_object_error() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -284,7 +284,7 @@ async def test_blob_storage_write_blob_to_storage_with_unexpected_head_object_er
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -315,7 +315,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
         ):
             thing_node_id = "i-ii/E"
             metadata_key = (
-                "E - 2001-02-03 04:05:06+00:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             await write_blob_to_storage(
                 data=struct.pack(">i", 23),
@@ -337,7 +337,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
 
             non_utc_metadata_key = (
-                "E - 2001-02-03 04:05:06+02:00 - " "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+                "E - 2001-02-03 04:05:06+02:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             with pytest.raises(AdapterClientWiringInvalidError):
                 await write_blob_to_storage(
@@ -350,7 +350,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         with (
             mock.patch(
@@ -399,7 +399,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
@@ -449,7 +449,7 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter() -> None:
-    with mock_s3():
+    with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)

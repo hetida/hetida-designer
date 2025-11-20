@@ -21,6 +21,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     load_json,
+    load_python_file,
     transformation_revision_from_python_code,
 )
 from hetdesrun.utils import State, get_uuid_from_seed
@@ -100,7 +101,7 @@ tr_json_component_1_new_revision = {
             }
         ],
     },
-    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": str(operator_input)}\n',  # noqa: E501
     "test_wiring": {
         "input_wirings": [
             {
@@ -198,7 +199,7 @@ tr_json_component_3 = {
     "state": "DRAFT",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print("test")\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -234,7 +235,7 @@ tr_json_component_3_publish = {
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print("test")\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -628,6 +629,40 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revision_stubs(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
+    store_single_transformation_revision(TransformationRevision(**tr_json_workflow_1))
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
+    )
+    async with async_test_client as ac:
+        response = await ac.get("/api/transformations/stubs")
+
+    assert response.status_code == 200
+    resp_json = response.json()
+    assert len(resp_json) == 4
+
+    assert resp_json[0] != tr_json_component_1
+    assert resp_json[1] != tr_json_component_2
+    assert resp_json[2] != tr_json_workflow_1
+    assert resp_json[3] != tr_json_workflow_2_with_named_io_for_operator
+    for resp_json_obj in resp_json:
+        assert "test_wiring" not in resp_json_obj
+        assert "release_wiring" not in resp_json_obj
+        assert "documentation" not in resp_json_obj
+        assert "content" not in resp_json_obj
+
+        assert "io_interface" in resp_json_obj
+        assert "id" in resp_json_obj
+        assert "name" in resp_json_obj
+        assert "state" in resp_json_obj
+        assert "type" in resp_json_obj
+
+
+@pytest.mark.asyncio
 async def test_get_all_transformation_revisions_with_no_db_entries(
     async_test_client, mocked_clean_test_db_session
 ):
@@ -769,7 +804,7 @@ async def test_get_all_transformation_revisions_with_specified_state(
     assert response_disabled.json()[0]["id"] == tr_json_workflow_2_with_named_io_for_operator["id"]
     assert response_disabled.json()[0]["state"] == "DISABLED"
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert "Input should be" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -803,7 +838,7 @@ async def test_get_all_transformation_revisions_with_specified_type(
     assert response_workflow.json()[0] == tr_json_workflow_1
     assert response_workflow.json()[1] == tr_json_workflow_2_with_named_io_for_operator
     assert response_foo.status_code == 422
-    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+    assert "Input should be" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -838,7 +873,7 @@ async def test_get_all_transformation_revisions_with_specified_category(
     assert len(response_aepfel.json()) == 1
     assert response_aepfel.json()[0] == tr_json_component_3
     assert response_single_quote.status_code == 422
-    assert "string does not match regex" in response_single_quote.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response_single_quote.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -875,7 +910,7 @@ async def test_get_all_transformation_revisions_with_specified_category_prefix(
     assert len(response_aepfel.json()) == 1
     assert response_aepfel.json()[0] == tr_json_component_3
     assert response_single_quote.status_code == 422
-    assert "string does not match regex" in response_single_quote.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response_single_quote.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -1241,7 +1276,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
 
     print(response.json())
     assert response.status_code == 422
-    assert "string does not match regex" in response.json()["detail"][0]["msg"]
+    assert "String should match pattern" in response.json()["detail"][0]["msg"]
     assert "name" in response.json()["detail"][0]["loc"]
 
 
@@ -1322,6 +1357,8 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
     del put_response_json_without_io_ids["content"]["outputs"][0]["id"]
 
     expected_put_response_json_without_io_ids = deepcopy(tr_json_workflow_2_added_io_for_operator)
+    expected_put_response_json_without_io_ids["update_state"] = "SUCCESS"
+
     del expected_put_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
     del expected_put_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
     del expected_put_response_json_without_io_ids["content"]["inputs"][0]["id"]
@@ -1331,7 +1368,10 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
 
     assert get_response.status_code == 200
 
-    assert get_response.json() == put_response.json()
+    put_response_dict = put_response.json()
+    put_response_dict.pop("update_state", None)
+
+    assert get_response.json() == put_response_dict
 
 
 @pytest.mark.asyncio
@@ -1483,7 +1523,7 @@ async def test_execute_for_transformation_revision(async_test_client, mocked_cle
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
     assert response.status_code == 200
@@ -1518,7 +1558,7 @@ async def test_execute_for_transformation_revision_with_missing_input_wiring(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
     assert response.status_code == 422
@@ -1540,7 +1580,7 @@ async def test_execute_for_transformation_revision_without_job_id(
 
     exec_by_id_input_json = {
         "id": str(tr_workflow_2.id),
-        "wiring": json.loads(tr_workflow_2.test_wiring.json()),
+        "wiring": json.loads(tr_workflow_2.test_wiring.model_dump_json()),
     }
 
     assert hasattr(exec_by_id_input_json, "job_id") is False
@@ -1597,7 +1637,7 @@ async def test_execute_for_separate_runtime_container(
             async with async_test_client as ac:
                 response = await ac.post(
                     "/api/transformations/execute",
-                    json=json.loads(exec_by_id_input.json()),
+                    json=json.loads(exec_by_id_input.model_dump_json()),
                 )
 
             assert response.status_code == 200
@@ -1694,7 +1734,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
         async with async_test_client as ac:
             response = await ac.post(
                 "/api/transformations/execute-async",
-                json=json.loads(exec_by_id_input.json()),
+                json=json.loads(exec_by_id_input.model_dump_json()),
                 params={"callback_url": "http://callback-url.com/"},
             )
 
@@ -1706,7 +1746,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
         assert func_name == ""
         assert len(kwargs) == 0
         assert len(args) == 2
-        assert args[0] == "http://callback-url.com/"
+        assert str(args[0]) == "http://callback-url.com/"
         assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
         assert args[1].output_results_by_output_name == {"wf_output": 100}
         assert args[1].output_types_by_output_name == {"wf_output": "INT"}
@@ -1733,7 +1773,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
             ):
                 await ac.post(
                     "/api/transformations/execute-async",
-                    json=json.loads(exec_by_id_input.json()),
+                    json=json.loads(exec_by_id_input.model_dump_json()),
                     params={"callback_url": "http://callback-url.com"},
                 )
 
@@ -1750,7 +1790,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
                 with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-async",
-                        json=json.loads(exec_by_id_input.json()),
+                        json=json.loads(exec_by_id_input.model_dump_json()),
                         params={"callback_url": "http://callback-url.com"},
                     )
 
@@ -1781,7 +1821,7 @@ async def test_execute_latest_for_transformation_revision_works(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input.json()),
+            json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
         )
 
     assert response.status_code == 200
@@ -1807,7 +1847,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
     async with async_test_client as ac:
         response = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input.json()),
+            json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
         )
 
     assert response.status_code == 404
@@ -1843,7 +1883,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
         async with async_test_client as ac:
             response = await ac.post(
                 "/api/transformations/execute-latest-async",
-                json=json.loads(exec_latest_by_group_id_input.json()),
+                json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                 params={"callback_url": "http://callback-url.com/"},
             )
 
@@ -1855,10 +1895,10 @@ async def test_execute_latest_async_for_transformation_revision_works(
         assert func_name == ""
         assert len(kwargs) == 0
         assert len(args) == 2
-        assert args[0] == "http://callback-url.com/"
+        assert str(args[0]) == "http://callback-url.com/"
 
         assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
-        assert args[1].output_results_by_output_name == {"operator_output": 100}
+        assert args[1].output_results_by_output_name == {"operator_output": "100"}
         assert args[1].output_types_by_output_name == {"operator_output": "STRING"}
         assert str(args[1].result) == "ok"
 
@@ -1883,7 +1923,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
             ):
                 await ac.post(
                     "/api/transformations/execute-latest-async",
-                    json=json.loads(exec_latest_by_group_id_input.json()),
+                    json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                     params={"callback_url": "http://callback-url.com"},
                 )
 
@@ -1900,7 +1940,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                 with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-latest-async",
-                        json=json.loads(exec_latest_by_group_id_input.json()),
+                        json=json.loads(exec_latest_by_group_id_input.model_dump_json()),
                         params={"callback_url": "http://callback-url.com"},
                     )
 
@@ -1922,7 +1962,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
             "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
             "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
             "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
-            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+            "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
             "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
             "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
             "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
@@ -1930,18 +1970,17 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
             "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
         ]
 
-        for file in json_files:
-            tr_json = load_json(file)
+        tr_list = [
+            load_json(file) if file.endswith(".json") else load_python_file(file)
+            for file in json_files
+        ]
 
-            response = await ac.put(
-                posix_urljoin(
-                    get_config().hd_backend_api_url,
-                    "transformations",
-                    tr_json["id"],
-                ),
-                params={"allow_overwrite_released": True},
-                json=tr_json,
-            )
+        response = await ac.put(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={"allow_overwrite_released": True},
+            json=tr_list,
+        )
+        assert response.status_code == 207
 
         component_id = UUID("57eea09f-d28e-89af-4e81-2027697a3f0f")
         updated_component = read_single_transformation_revision(component_id)
@@ -1949,7 +1988,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
 
         response = await ac.put(
             "/api/transformations/" + str(component_id),
-            json=json.loads(updated_component.json(by_alias=True)),
+            json=json.loads(updated_component.model_dump_json(by_alias=True)),
         )
 
         # linear rul from last positive step
@@ -1960,7 +1999,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
 
         response = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input.json()),
+            json=json.loads(exec_by_id_input.model_dump_json()),
         )
 
         assert response.status_code == 200
@@ -2022,7 +2061,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
         exec_by_id_input_nat = ExecByIdInput(id=tr_id_series, wiring=wiring_nat)
         response_nan = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input_nan.json()),
+            json=json.loads(exec_by_id_input_nan.model_dump_json()),
         )
 
         assert response_nan.status_code == 200
@@ -2034,7 +2073,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
 
         response_nat = await ac.post(
             "/api/transformations/execute",
-            json=json.loads(exec_by_id_input_nat.json()),
+            json=json.loads(exec_by_id_input_nat.model_dump_json()),
         )
 
         assert response_nat.status_code == 200
@@ -2056,7 +2095,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
         )
         response_latest_nan = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input_nan.json()),
+            json=json.loads(exec_latest_by_group_id_input_nan.model_dump_json()),
         )
 
         assert response_latest_nan.status_code == 200
@@ -2068,7 +2107,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
 
         response_latest_nat = await ac.post(
             "/api/transformations/execute-latest",
-            json=json.loads(exec_latest_by_group_id_input_nat.json()),
+            json=json.loads(exec_latest_by_group_id_input_nat.model_dump_json()),
         )
 
         assert response_latest_nat.status_code == 200
@@ -2089,19 +2128,26 @@ async def test_put_workflow_transformation(async_test_client, mocked_clean_test_
         "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
         "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
         "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
-        "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+        "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
         "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
     ]
 
-    for file in json_files:
-        tr_json = load_json(file)
-        store_single_transformation_revision(TransformationRevision(**tr_json))
-
-    example_workflow_tr_json = load_json(
-        "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json"
-    )
+    tr_list = [
+        load_json(file) if file.endswith(".json") else load_python_file(file) for file in json_files
+    ]
 
     async with async_test_client as ac:
+        response = await ac.put(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={"allow_overwrite_released": True},
+            json=tr_list,
+        )
+        assert response.status_code == 207
+
+        example_workflow_tr_json = load_json(
+            "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json"
+        )
+
         response = await ac.put(
             posix_urljoin("/api/transformations/", example_workflow_tr_json["id"]),
             json=example_workflow_tr_json,
@@ -2190,7 +2236,7 @@ async def test_put_releasing_drafts(async_test_client, mocked_clean_test_db_sess
         response = await ac.put(
             "/api/transformations/",
             params={"update_component_code": False, "release_drafts": True},
-            json=[json.loads(trafo.json())],
+            json=[json.loads(trafo.model_dump_json())],
         )
 
         assert response.status_code == 207

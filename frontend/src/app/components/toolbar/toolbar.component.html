@@ -1,4 +1,4 @@
-<ng-container *ngIf="transformation !== undefined">
+@if (transformation !== undefined) {
   <span>
     <mat-icon
       class="clickable unselectable"
@@ -23,40 +23,50 @@
       [ngClass]="{ disabled: incompleteFlag }"
       >play_circle_outline</mat-icon
     >
-    <mat-divider vertical *ngIf="isWorkflow"></mat-divider>
-    <mat-icon
-      class="clickable unselectable"
-      title="Show entire workflow"
-      (click)="showWorkflow()"
-      *ngIf="isWorkflow"
-    >
-      zoom_out_map</mat-icon
-    >
-    <mat-icon
-      class="clickable unselectable"
-      title="Zoom in"
-      (click)="zoomIn()"
-      *ngIf="isWorkflow"
-      >zoom_in</mat-icon
-    >
-    <mat-icon
-      class="clickable unselectable"
-      title="Zoom out"
-      (click)="zoomOut()"
-      *ngIf="isWorkflow"
-      >zoom_out</mat-icon
-    >
+    @if (isWorkflow) {
+      <mat-divider vertical></mat-divider>
+      <mat-icon
+        class="clickable unselectable"
+        title="Show entire workflow"
+        (click)="showWorkflow()"
+        >zoom_out_map</mat-icon
+      >
+      <mat-icon
+        class="clickable unselectable"
+        title="Zoom in"
+        (click)="zoomIn()"
+        >zoom_in</mat-icon
+      >
+      <mat-icon
+        class="clickable unselectable"
+        title="Zoom out"
+        (click)="zoomOut()"
+        >zoom_out</mat-icon
+      >
+    }
   </span>
   <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
-    {{ transformation.state }}
+    {{
+      transformation.state === 'DISABLED' ? 'DEPRECATED' : transformation.state
+    }}
   </span>
   <span>
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ upgradeWorkflowOperatorsTooltip }}"
+      (click)="upgradeWorkflowOperators()"
+      *ngIf="isWorkflow"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
+    >
+      auto_awesome</mat-icon
+    >
+
     <mat-icon
       class="clickable unselectable"
       title="{{ updateExpandTooltip }}"
       (click)="updateExpand()"
       *ngIf="isComponent"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
       cleaning_services</mat-icon
     >
@@ -68,12 +78,12 @@
     >
       bug_report</mat-icon
     >
-    <mat-divider vertical *ngIf="isComponent"></mat-divider>
+    <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ publishTooltip }}"
       (click)="publish()"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
       share</mat-icon
     >
@@ -81,7 +91,7 @@
       class="clickable unselectable"
       title="{{ newRevisionTooltip }}"
       (click)="newRevision()"
-      [ngClass]="{ disabled: !isReleased() }"
+      [ngClass]="{ disabled: !isReleasedOrDeprecated() }"
       >plus_one</mat-icon
     >
     <mat-icon class="clickable unselectable" title="Copy" (click)="copy()"
@@ -99,7 +109,7 @@
       class="clickable unselectable"
       title="{{ deleteTooltip }}"
       (click)="delete()"
-      [ngClass]="{ disabled: isReleased() }"
+      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
       >delete_forever</mat-icon
     >
     <mat-divider vertical></mat-divider>
@@ -110,4 +120,4 @@
       >description
     </mat-icon>
   </span>
-</ng-container>
+}

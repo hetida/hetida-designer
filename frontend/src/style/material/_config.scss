@@ -47,20 +47,20 @@ $mg-secondary-palette: (
 
 $light-primary-text: map_get($mg-primary-palette, 700);
 
-$mg-typography: mat.define-typography-config(
+$mg-typography: mat.m2-define-typography-config(
   $font-family: 'Roboto, "Helvetica Neue", sans-serif',
-  $headline-1: mat.define-typography-level(24px, 32px, 400),
-  $headline-2: mat.define-typography-level(20px, 32px, 400),
-  $headline-3: mat.define-typography-level(16px, 24px, 400),
-  $headline-4: mat.define-typography-level(15px, 24px, 400),
-  $headline-5: mat.define-typography-level(24px, 32px, 400),
-  $headline-6: mat.define-typography-level(20px, 32px, 500),
-  $subtitle-1: mat.define-typography-level(16px, 28px, 400),
-  $subtitle-2: mat.define-typography-level(14px, 24px, 500),
-  $body-1: mat.define-typography-level(14px, 20px, 400),
-  $body-2: mat.define-typography-level(14px, 20px, 400),
-  $caption: mat.define-typography-level(10.5px, 12px, 500),
-  $button: mat.define-typography-level(14px, 14px, 500)
+  $headline-1: mat.m2-define-typography-level(24px, 32px, 400),
+  $headline-2: mat.m2-define-typography-level(20px, 32px, 400),
+  $headline-3: mat.m2-define-typography-level(16px, 24px, 400),
+  $headline-4: mat.m2-define-typography-level(15px, 24px, 400),
+  $headline-5: mat.m2-define-typography-level(24px, 32px, 400),
+  $headline-6: mat.m2-define-typography-level(20px, 32px, 500),
+  $subtitle-1: mat.m2-define-typography-level(16px, 28px, 400),
+  $subtitle-2: mat.m2-define-typography-level(14px, 24px, 500),
+  $body-1: mat.m2-define-typography-level(14px, 20px, 400),
+  $body-2: mat.m2-define-typography-level(14px, 20px, 400),
+  $caption: mat.m2-define-typography-level(10.5px, 12px, 500),
+  $button: mat.m2-define-typography-level(14px, 14px, 500)
 );
 
 @include mat.all-component-typographies($mg-typography);
@@ -71,7 +71,7 @@ $mg-typography: mat.define-typography-config(
 
 // Light Theme
 
-mat.$light-theme-foreground-palette: (
+mat.$m2-light-theme-foreground-palette: (
   base: map_get($mg-primary-palette, 500),
   divider: map_get($mg-primary-palette, 100),
   dividers: map_get($mg-primary-palette, 100),
@@ -89,7 +89,7 @@ mat.$light-theme-foreground-palette: (
   slider-off-active: map_get($mg-primary-palette, 400)
 );
 
-mat.$light-theme-background-palette: (
+mat.$m2-light-theme-background-palette: (
   status-bar: map_get($mg-secondary-palette, 400),
   app-bar: map_get($mg-secondary-palette, 400),
   background: map_get($mg-secondary-palette, 500),
@@ -101,15 +101,15 @@ mat.$light-theme-background-palette: (
   focused-button: map_get($mg-primary-palette, 700),
   selected-button: map_get($mg-primary-palette, 500),
   selected-disabled-button: map_get($mg-secondary-palette, 700),
-  disabled-button-toggle: map_get(mat.$grey-palette, 200),
-  unselected-chip: map_get(mat.$grey-palette, 300),
-  disabled-list-option: map_get(mat.$grey-palette, 200)
+  disabled-button-toggle: map_get(mat.$m2-grey-palette, 200),
+  unselected-chip: map_get(mat.$m2-grey-palette, 300),
+  disabled-list-option: map_get(mat.$m2-grey-palette, 200)
 );
 
-$hd-primary: mat.define-palette($mg-primary-palette);
-$hd-accent: mat.define-palette($mg-secondary-palette, 200, 100, 400);
-$hd-warn: mat.define-palette(mat.$red-palette);
-$hd-theme: mat.define-light-theme(
+$hd-primary: mat.m2-define-palette($mg-primary-palette);
+$hd-accent: mat.m2-define-palette($mg-secondary-palette, 200, 100, 400);
+$hd-warn: mat.m2-define-palette(mat.$m2-red-palette);
+$hd-theme: mat.m2-define-light-theme(
   (
     color: (
       primary: $hd-primary,
@@ -124,7 +124,7 @@ $hd-theme: mat.define-light-theme(
 
 // Dark Theme
 
-mat.$dark-theme-foreground-palette: (
+mat.$m2-dark-theme-foreground-palette: (
   base: map_get($mg-secondary-palette, 500),
   divider: map_get($mg-secondary-palette, 700),
   dividers: map_get($mg-secondary-palette, 700),
@@ -142,7 +142,7 @@ mat.$dark-theme-foreground-palette: (
   slider-off-active: map_get($mg-secondary-palette, 400)
 );
 
-mat.$dark-theme-background-palette: (
+mat.$m2-dark-theme-background-palette: (
   status-bar: map_get($mg-primary-palette, 400),
   app-bar: map_get($mg-primary-palette, 400),
   background: map_get($mg-primary-palette, 500),
@@ -154,15 +154,15 @@ mat.$dark-theme-background-palette: (
   focused-button: map_get($mg-secondary-palette, 700),
   selected-button: map_get($mg-primary-palette, 500),
   selected-disabled-button: map_get($mg-primary-palette, 500),
-  disabled-button-toggle: map_get(mat.$grey-palette, 200),
-  unselected-chip: map_get(mat.$grey-palette, 300),
-  disabled-list-option: map_get(mat.$grey-palette, 200)
+  disabled-button-toggle: map_get(mat.$m2-grey-palette, 200),
+  unselected-chip: map_get(mat.$m2-grey-palette, 300),
+  disabled-list-option: map_get(mat.$m2-grey-palette, 200)
 );
 
-$hd-dark-primary: mat.define-palette($mg-secondary-palette);
-$hd-dark-accent: mat.define-palette($mg-primary-palette, A200, A100, A400);
-$hd-dark-warn: mat.define-palette(mat.$red-palette);
-$hd-dark-theme: mat.define-dark-theme(
+$hd-dark-primary: mat.m2-define-palette($mg-secondary-palette);
+$hd-dark-accent: mat.m2-define-palette($mg-primary-palette, A200, A100, A400);
+$hd-dark-warn: mat.m2-define-palette(mat.$m2-red-palette);
+$hd-dark-theme: mat.m2-define-dark-theme(
   (
     color: (
       primary: $hd-dark-primary,

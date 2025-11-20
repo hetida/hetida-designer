@@ -1,8 +1,9 @@
 -c requirements.txt
 -c requirements-base.txt
+bandit
 coverage
 ipykernel
-moto<5.0
+moto
 mypy
 nest_asyncio
 pytest
@@ -12,6 +13,7 @@ pytest-random-order
 pytest-xdist
 rope
 ruff
+structlog
 types-pytz
 types-requests
 watchfiles
