@@ -6216,7 +6216,7 @@
             "default": ""
           },
           "type": {
-            "$ref": "#/components/schemas/hetdesrun__adapters__local_file__models__FilterType",
+            "$ref": "#/components/schemas/FilterType",
             "description": "Type of the filter"
           },
           "required": {
@@ -6232,6 +6232,13 @@
           "required"
         ],
         "title": "Filter"
+      },
+      "FilterType": {
+        "type": "string",
+        "enum": [
+          "free_text"
+        ],
+        "title": "FilterType"
       },
       "GridstackItemPositioning": {
         "properties": {
@@ -7792,7 +7799,7 @@
             "title": "Name"
           },
           "type": {
-            "$ref": "#/components/schemas/hetdesrun__adapters__local_file__models__FilterType"
+            "$ref": "#/components/schemas/FilterType"
           },
           "required": {
             "type": "boolean",
@@ -10636,13 +10643,6 @@
           "description"
         ],
         "title": "StructureThingNode"
-      },
-      "hetdesrun__adapters__local_file__models__FilterType": {
-        "type": "string",
-        "enum": [
-          "free_text"
-        ],
-        "title": "FilterType"
       },
       "hetdesrun__adapters__local_file__models__MultipleSinksResponse": {
         "properties": {

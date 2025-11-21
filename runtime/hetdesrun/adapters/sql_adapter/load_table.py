@@ -83,7 +83,12 @@ def prepare_sql_statement(
         if metric_type == "str":
             metrics_to_use = metrics_list
         else:
-            metrics_to_use = [int(metric) for metric in metrics_list]
+            try:
+                metrics_to_use = [int(metric) for metric in metrics_list]
+            except (ValueError, TypeError) as e:
+                msg = "Error converting metrics to integers for loading data."
+                logger.info(msg)
+                raise AdapterHandlingException(msg) from e
 
     clauses = (
         ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,

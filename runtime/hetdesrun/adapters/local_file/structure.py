@@ -12,7 +12,6 @@ from hetdesrun.adapters.local_file.detect import (
 )
 from hetdesrun.adapters.local_file.extensions import handlers_by_extension
 from hetdesrun.adapters.local_file.models import (
-    FilterType,
     LocalFileStructureSink,
     LocalFileStructureSource,
     StructureFilter,
@@ -23,6 +22,7 @@ from hetdesrun.adapters.local_file.utils import (
     from_url_representation,
     to_url_representation,
 )
+from hetdesrun.adapters.models import FilterType
 
 logger = logging.getLogger(__name__)
 

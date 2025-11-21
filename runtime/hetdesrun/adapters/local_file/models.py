@@ -1,9 +1,9 @@
-from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.models import FilterType
 
 
 class InfoResponse(BaseModel):
@@ -17,10 +17,6 @@ class StructureThingNode(BaseModel):
     parentId: str | None = None
     name: str
     description: str
-
-
-class FilterType(str, Enum):
-    free_text = "free_text"
 
 
 class StructureFilter(BaseModel):

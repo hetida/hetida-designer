@@ -1319,6 +1319,8 @@ def generate_login_dashboard_stub() -> str:
         function updateAuthCookies() {
             if (keycloak.token !=  null) {
                 document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
+                document.cookie = "refresh_token="+keycloak.refreshToken + ";SameSite=Strict";
+                document.cookie = "id_token=" + keycloak.idToken + ";SameSite=Strict";
             }
 
         }
@@ -1326,14 +1328,15 @@ def generate_login_dashboard_stub() -> str:
         function getAuthCookies() {
             access_token = getCookie("access_token");
             refresh_token = getCookie("refresh_token");
-            return [access_token, refresh_token]
+            id_token = getCookie("id_token");
+            return [access_token, refresh_token, id_token]
         }
 
         async function init_keycloak() {
             let authenticated=false;
             try {
                 authenticated = await keycloak.init(
-                    {token: access_token, refreshToken: refresh_token,
+                    {token: access_token, refreshToken: refresh_token, idToken: id_token,
                 onLoad: 'login-required', checkLoginIframe:false,
                 pkceMethod:"S256"
                  }
@@ -1357,7 +1360,7 @@ def generate_login_dashboard_stub() -> str:
 
         console.log("Auth active:", auth_active);
 
-        [access_token, refresh_token] = getAuthCookies();
+        [access_token, refresh_token, id_token] = getAuthCookies();
 
         const keycloak = new Keycloak({
         """
@@ -1657,6 +1660,8 @@ def generate_dashboard_html(
         function updateAuthCookies() {
             if (keycloak.token !=  null) {
                 document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
+                document.cookie = "refresh_token="+keycloak.refreshToken + ";SameSite=Strict";
+                document.cookie = "id_token=" + keycloak.idToken + ";SameSite=Strict";
             }
         }
 
@@ -1667,12 +1672,15 @@ def generate_dashboard_html(
         function getAuthCookies() {
             access_token = getCookie("access_token");
             refresh_token = getCookie("refresh_token");
-            return [access_token, refresh_token]
+            id_token = getCookie("id_token");
+            return [access_token, refresh_token, id_token]
         }
 
 
         async function logout_user(){
             deleteCookie("access_token");
+            deleteCookie("refresh_token");
+            deleteCookie("id_token");
             await keycloak.logout(); // will reload page
         }
 
@@ -1685,7 +1693,7 @@ def generate_dashboard_html(
                     console.log("refresh token:", refresh_token);
                     console.log(keycloak);
                     const authenticated = await keycloak.init(
-                        {token: access_token, refreshToken: refresh_token,
+                        {token: access_token, refreshToken: refresh_token, idToken: id_token,
                         onLoad: "check-sso",
                         redirectUri: location.href, enableLogging: true,
                     checkLoginIframe:false,
@@ -1715,7 +1723,7 @@ def generate_dashboard_html(
 
         console.log("Auth active:", auth_active);
 
-        [access_token, refresh_token] = getAuthCookies();
+        [access_token, refresh_token, id_token] = getAuthCookies();
 
 
         const keycloak = new Keycloak({
@@ -2213,7 +2221,7 @@ def generate_dashboard_html(
             dateFormat: 'Z',
             time_24hr: true,
             altInput: true,
-            altFormat: 'Y-m-d h:i',
+            altFormat: 'Y-m-d H:i:S',
             clickOpens: (document.getElementById("override-timerange-select"
                 ).value == "absolute"),
             """
