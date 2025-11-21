@@ -277,15 +277,20 @@ def get_global_component_imports(code_str: str) -> list[UUID]:
 
     Does not validate the parsed ids to import in any way to represent suitable components.
 
-    May raise some variants of CodeParsingException
+    May raise some variants of CodeParsingException.
+
+    In case of SyntaxError it assumes that no component imports are defined!
     """
 
     found_component_import_ids = []
     try:
         parsed_ast = ast.parse(code_str)
     except (SyntaxError, ValueError) as exc:
-        msg = f"Could not parse provided Python Code into AST. Error was: {str(exc)}"
-        raise CodeParsingException(msg) from exc
+        msg = (
+            "Could not parse provided Python Code into AST."
+            f" Assuming no component imports! Error was: {str(exc)}"
+        )
+        return []
 
     for element in parsed_ast.body:
         if isinstance(element, ast.Assign):
