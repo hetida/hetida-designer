@@ -1,6 +1,5 @@
 import re
 import uuid
-from enum import Enum
 from typing import Any, Self
 from uuid import UUID
 
@@ -15,6 +14,7 @@ from pydantic import (
 )
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.models import FilterType
 from hetdesrun.persistence.structure_service_dbmodels import (
     StructureServiceElementTypeDBModel,
     StructureServiceSinkDBModel,
@@ -22,10 +22,6 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     StructureServiceThingNodeDBModel,
 )
 from hetdesrun.structure.db.exceptions import DBIntegrityError
-
-
-class FilterType(str, Enum):
-    free_text = "free_text"
 
 
 class Filter(BaseModel):

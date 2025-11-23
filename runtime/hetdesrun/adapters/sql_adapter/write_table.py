@@ -52,7 +52,12 @@ def prepare_validate_multitsframe(
     if ts_table_config.metric_type == "str":
         data_to_send["metric"] = data_to_send["metric"].astype(str)
     else:
-        data_to_send["metric"] = data_to_send["metric"].astype(int)
+        try:
+            data_to_send["metric"] = data_to_send["metric"].astype(int)
+        except (ValueError, TypeError) as e:
+            msg = "Error converting metrics to integers while preparing data so send via sql."
+            logger.info(msg)
+            raise AdapterHandlingException(msg) from e
 
     # Column mapping
     data_to_send.rename(
@@ -104,7 +109,7 @@ def _execute_delete(
         raise AdapterHandlingException(msg) from e
 
 
-def _handle_deletion(
+def _handle_deletion(  # noqa: PLR0915, PLR0912
     connection: Connection,
     metadata: DatasetMetadata,
     df: pd.DataFrame,
@@ -138,7 +143,12 @@ def _handle_deletion(
     if ts_table_config.metric_type == "str":
         metrics_to_use = metrics
     else:
-        metrics_to_use = [int(metric) for metric in metrics]
+        try:
+            metrics_to_use = [int(metric) for metric in metrics]
+        except (ValueError, TypeError) as e:
+            msg = "Error converting metrics to integers while deleting data."
+            logger.info(msg)
+            raise AdapterHandlingException(msg) from e
 
     where_clause = None
 
@@ -169,12 +179,20 @@ def _handle_deletion(
             logger.info("No data points for discrete deletion for the given metrics.")
             return
 
+        if ts_table_config.metric_type == "str":
+            metric_data = filtered_df["metric"]
+        else:
+            try:
+                metric_data = filtered_df["metric"].astype(int)
+            except (ValueError, TypeError) as e:
+                msg = "Error converting metrics to integers while deleting discrete data."
+                logger.info(msg)
+                raise AdapterHandlingException(msg) from e
+
         data_points_to_delete = list(
             zip(
                 filtered_df["timestamp"],
-                filtered_df["metric"]
-                if ts_table_config.metric_type == "str"
-                else filtered_df["metric"].astype(int),
+                metric_data,
                 strict=True,
             )
         )

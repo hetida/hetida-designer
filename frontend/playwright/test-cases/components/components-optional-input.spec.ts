@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('Create a component with Option Input and Default Value', async ({
+test('Create a component with Optional Input and Default Value', async ({
   page,
   hetidaDesigner,
   browserName
@@ -13,8 +13,9 @@ test('Create a component with Option Input and Default Value', async ({
   const componentTag = '0.1.0';
   const componentInputName = 'input';
   const componentOutputName = 'output';
-  const inputDefaultValue = 'DefaultValueString';
-  const inputOptionValue = 'OPTIONAL';
+  const inputType = 'OPTIONAL';
+  const inputDataType = 'ANY';
+  const inputDefaultValue = 'defaultValueString';
 
   // Act
   // Add a new test component
@@ -43,7 +44,11 @@ test('Create a component with Option Input and Default Value', async ({
   );
   await hetidaDesigner.selectItemInDropdown(
     `${componentInputName}-type-input-component-io-dialog`,
-    inputOptionValue
+    inputType
+  );
+  await hetidaDesigner.selectItemInDropdown(
+    `${componentInputName}-data-type-input-component-io-dialog`,
+    inputDataType
   );
   await hetidaDesigner.typeInInputByTestId(
     `${componentInputName}-optional-input-default-value-component-io-dialog`,
@@ -88,6 +93,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   const componentTag = '0.1.0';
 
   await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(componentName);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.rightClickItemInNavigation(
     componentCategory,
@@ -99,6 +105,12 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
   );
   await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
+    )
+  ).waitForElementState('hidden');
 
   await hetidaDesigner.clearTest();
 });

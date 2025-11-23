@@ -212,7 +212,7 @@ async def test_write_ts_table(three_sqlite_dbs_configured):
 
 
 @pytest.mark.asyncio
-async def test_write_ts_table_with_int_metric(three_sqlite_dbs_configured):
+async def test_load_and_write_ts_table_with_int_metric(three_sqlite_dbs_configured):
     dataframe = pd.DataFrame(
         {
             "timestamp": pd.to_datetime(["2023-07-01T00:00:00+00:00", "2023-07-02T00:00:00+00:00"]),
@@ -263,6 +263,36 @@ async def test_write_ts_table_with_int_metric(three_sqlite_dbs_configured):
     )
     assert len(received_data["inp"]) == 2
     assert set(received_data["inp"].columns) == {"timestamp", "metric", "value"}
+
+    with pytest.raises(AdapterHandlingException, match="int"):
+        received_data = await load_data(
+            {
+                "inp": FilteredSource(
+                    ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                    ref_id_type="SOURCE",
+                    filters={
+                        "metrics": "aaa",  # not an integer
+                        "timestampFrom": "2023-06-01T11:58:02+00:00",
+                        "timestampTo": "2023-09-01T11:58:02+00:00",
+                    },
+                )
+            },
+            adapter_key="sql-adapter",
+        )
+
+    df_metrics_not_int = dataframe.copy()
+    df_metrics_not_int["metric"] = ["aaa", "42"]
+    with pytest.raises(AdapterHandlingException, match="int"):
+        await send_data(
+            {
+                "outp": FilteredSink(
+                    ref_id="read_only_timeseries_sqlite_database/appendable_ts_table/ts_table_with_int_metric",
+                    ref_id_type="SINK",
+                )
+            },
+            {"outp": df_metrics_not_int},
+            adapter_key="sql-adapter",
+        )
 
 
 @pytest.mark.asyncio

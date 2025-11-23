@@ -101,5 +101,11 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   );
   await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
 
+  await (
+    await page.waitForSelector(
+      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+    )
+  ).waitForElementState('hidden');
+
   await hetidaDesigner.clearTest();
 });
