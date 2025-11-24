@@ -26,7 +26,7 @@ def resolve_dtexp(
     """
 
     return parse_dtexp(
-        dtexp_expression,
+        dtexp_expression.strip(),
         to_utc=to_utc,
         now=get_exec_start_from_reproducibility_context(),
         default_unaware_timezone=default_unaware_timezone,
@@ -76,8 +76,8 @@ def resolve_interval(
 
     # may raise DtexpParsingError:
     start, end = parse_dtexp_interval(
-        start_exp,
-        end_exp,
+        start_exp.strip(),
+        end_exp.strip(),
         to_utc=to_utc,
         now=get_exec_start_from_reproducibility_context(),
         default_unaware_timezone=default_unaware_timezone,
