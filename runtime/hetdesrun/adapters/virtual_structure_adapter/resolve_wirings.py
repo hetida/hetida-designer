@@ -1,7 +1,6 @@
-from uuid import UUID
-
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.utils import (
+    add_vst_metadata_to_input_wiring_attrs,
     get_enumerated_ids_of_vst_sources_or_sinks,
     get_virtual_sources_and_sinks_from_structure_service,
 )
@@ -44,12 +43,10 @@ def update_wirings(
 
 def resolve_virtual_structure_wirings(
     workflow_wiring: WorkflowWiring,
-) -> tuple[list[int], dict[UUID, StructureServiceSource]]:
+) -> None:
     """Resolves vst sources and sinks to their referenced sources and sinks.
 
     The WorkflowWiring object is modified in place.
-    Returns:
-    - Indices of modified wiring entries, corresponding vst sources
     """
 
     # Retrieve IDs of wirings referencing vst-adapter
@@ -63,8 +60,7 @@ def resolve_virtual_structure_wirings(
 
     if not (input_ref_ids or output_ref_ids):
         # No virtual wirings to resolve
-        return [], {}
-
+        return
     try:
         virtual_sources, virtual_sinks = get_virtual_sources_and_sinks_from_structure_service(
             input_ref_ids, output_ref_ids
@@ -89,4 +85,6 @@ def resolve_virtual_structure_wirings(
             workflow_wiring.output_wirings[idx], virtual_sink
         )  # type: ignore
 
-    return input_indices_to_be_updated, virtual_sources
+    add_vst_metadata_to_input_wiring_attrs(
+        workflow_wiring.input_wirings, input_indices_to_be_updated, virtual_sources
+    )

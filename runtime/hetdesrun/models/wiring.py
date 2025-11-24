@@ -301,7 +301,19 @@ class InputWiring(BaseModel):
     filters: dict[FilterKey, str | Any | None] = {}
 
     attrs: dict[str, Any] | None = Field(
-        None, description="Attributes of the potentially referenced source"
+        None,
+        description=(
+            "Additional metadata that should update a attrs attribute of type dict the"
+            " the loaded object after loading. This will be applied using a shallow dict"
+            " update, so its entries may overwrite same-named entries in the attrs dict of"
+            " the object provided by the adapter. This does only work for adapters"
+            " that provide the correct object themself. E.g. It does not work for the"
+            ' direct_provisioning adapter which provides the filter "value" as is (e.g. string)'
+            " and relies on parsing at a later stage in the execution process."
+            " The Virtual Structure adapter allows to set a meta_data attribute"
+            " in virtual sources. Its value is provided as attrs to the actual"
+            " adapter's wiring then."
+        ),
     )
 
     model_config = ConfigDict(validate_by_alias=True, validate_by_name=True)

@@ -95,6 +95,57 @@ async def test_component_source_wiring_executes_via_backend_webservice(async_tes
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures(
+    "_components_for_component_adapter_tests", "_pass_through_multits_component_in_db"
+)
+async def test_component_source_wiring_with_attrs_metadata_in_input_wiring(async_test_client):
+    """Tests that attrs provied with the input wiring are attached after loading from a true adapter
+
+    This must be tested with a real adapter an not direct_provisioning since the later does not
+    really parse the filter "value" itself. Instead it just returns the string value and parsing is
+    done later during workflow execution when the loaded obj is put into an input.
+    """
+    extra_metadata = {"some_metadata": {"a": 42, "b": "something"}}
+
+    exec_input = ExecByIdInput(
+        id=UUID("78ee6b00-9239-4214-b9bf-a093647f33f5"),  # pass through multits
+        wiring={
+            "input_wirings": [
+                {
+                    "workflow_input_name": "input",
+                    "adapter_id": "component-adapter",
+                    "ref_id": "f2a39f6b-3336-44f2-8c4f-2fd0a4651dd0",
+                    "filters": {
+                        "timestampFrom": "2025-01-14-12:00:00+00:00",
+                        "timestampTo": "2025-01-15-12:00:00+00:00",
+                        "frequency": "3h",
+                        "metrics": "a,b",
+                        "random_seed": 42,
+                        "metrics_parameters": r"{}",
+                    },
+                    "attrs": extra_metadata,
+                }
+            ]
+        },
+    )
+    with mock.patch(
+        "hetdesrun.adapters.component_adapter.config.component_adapter_config.allow_draft_components",
+        True,
+    ):
+        async with async_test_client as ac:
+            resp = await ac.post(
+                "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+            )
+
+    assert resp.status_code == 200
+    assert resp.json()["error"] is None
+
+    result_obj_dict = resp.json()["output_results_by_output_name"]["output"]
+    assert isinstance(result_obj_dict, dict)
+    assert result_obj_dict["__metadata__"] == extra_metadata
+
+
+@pytest.mark.asyncio
 @pytest.mark.usefixtures("_markdown_file_component_sink", "_pass_through_str")
 async def test_component_sink_wiring_executes_correctly(tmpdir):
     """Execute a trafo wired with a component adapter sink"""

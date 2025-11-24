@@ -214,7 +214,14 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
         " which the mapped source references if source has type metadata(any)",
     )
     meta_data: dict[str, Any] | None = Field(
-        None, description="Optional metadata for the StructureServiceSource"
+        None,
+        description=(
+            "Optional metadata for the StructureServiceSource."
+            " This will be attached to the actual adapter wiring as attrs and"
+            " then will override attrs metadata attached to objects provided"
+            " by the actual adapter, if such an attrs attribute of type dict is present"
+            " on the loaded object."
+        ),
     )
     thing_node_external_ids: list[str] | None = Field(
         None,

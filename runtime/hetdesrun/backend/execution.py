@@ -18,9 +18,6 @@ from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
 )
-from hetdesrun.adapters.virtual_structure_adapter.utils import (
-    add_vst_metadata_to_input_wiring_attrs,
-)
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.models.component import ComponentNode
@@ -586,12 +583,7 @@ async def execute_transformation_revision(
                 "resolve_virtual_wirings_if_contained"
             )
 
-            relevant_indices, virtual_sources = resolve_virtual_structure_wirings(
-                exec_by_id_input.wiring
-            )
-            add_vst_metadata_to_input_wiring_attrs(
-                exec_by_id_input.wiring.input_wirings, relevant_indices, virtual_sources
-            )
+            resolve_virtual_structure_wirings(exec_by_id_input.wiring)  # modifies wiring!
 
             if get_config().log_resolved_virtual_structure_wirings:
                 logger.debug(

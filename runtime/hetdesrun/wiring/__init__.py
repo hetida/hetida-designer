@@ -1,10 +1,33 @@
+import logging
 from collections import defaultdict
 from typing import Any
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.adapters.generic_rest.external_types import to_correct_obj
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
+
+logger = logging.getLogger(__name__)
+
+
+def update_with_metdata_from_input_wiring(obj: Any, input_wiring: InputWiring) -> None:
+    """Updates an attrs dict attribute if it exists and input wirings has attrs set
+
+    Warns (logging) if the input wiring has attrs, but the object does not have an "attrs"
+    attribute of type dict.
+    """
+    if input_wiring.attrs is not None:
+        if hasattr(obj, "attrs") and isinstance(obj.attrs, dict):
+            # shallow, i.e. possibly completely overriding main fields:
+            obj.attrs.update(input_wiring.attrs)  # type: ignore [union-attr]
+        else:
+            msg = (
+                f"Input wiring for input {input_wiring.workflow_input_name} "
+                f" for adapter {input_wiring.adapter_id} has attrs set but object provided"
+                " by adapter has no .attrs attribute of type dict."
+                " Cannot attach metadata from input wiring to object."
+            )
+            logger.warning(msg)
 
 
 async def resolve_and_load_data_from_wiring(
@@ -40,10 +63,13 @@ async def resolve_and_load_data_from_wiring(
             },
         )
 
+        # Update objects attrs from input wiring attrs if possible
         for input_wiring in input_wirings_of_adapter:
+            # note that this does not work for direct_provisioning, since direct provisioning
+            # loads data as string and it is parsed into the adequate object later.
+            # However for direct provisioning, you can provide metadata directly as well.
             obj = loaded_data_from_adapter.get(input_wiring.workflow_input_name)
-            if input_wiring.attrs and hasattr(obj, "attrs"):
-                obj.attrs.update(input_wiring.attrs)  # type: ignore [union-attr]
+            update_with_metdata_from_input_wiring(obj, input_wiring)
 
         loaded_data.update(loaded_data_from_adapter)
 

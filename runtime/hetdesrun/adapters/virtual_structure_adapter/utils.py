@@ -46,10 +46,10 @@ def add_vst_metadata_to_input_wiring_attrs(
     virtual_sources: dict[UUID, StructureServiceSource],
 ) -> None:
     for idx, virtual_source in zip(relevant_indices, virtual_sources.values(), strict=True):
-        if virtual_source.meta_data:
+        if virtual_source.meta_data is not None:
             if input_wirings[idx].attrs:
                 input_wirings[idx].attrs.update(  # type: ignore[union-attr]
-                    {"structure_service_metadata": virtual_source.meta_data}
+                    virtual_source.meta_data
                 )
             else:
-                input_wirings[idx].attrs = {"structure_service_metadata": virtual_source.meta_data}
+                input_wirings[idx].attrs = virtual_source.meta_data
