@@ -1,3 +1,6 @@
+## 0.13.4
+* make metadata column adding more flexible and adaptable to different metadata structures
+
 ## 0.13.3
 * add function in hdutils to add columns to a multitsframe from its metadata.
 * Virtual Structure adapter provides metadata

@@ -165,7 +165,7 @@ echo "add VERSION and CHANGELOG.md"
 echo "$RELEASE_VERSION" > VERSION     # Version into version file
 # git add --all
 git add VERSION CHANGELOG.md
-git commit --allow-empty --quiet --message="Release $RELEASE_TAG"
+git commit --no-verify --allow-empty --quiet --message="Release $RELEASE_TAG"
 git tag "$RELEASE_TAG"
 
 
@@ -183,7 +183,6 @@ git push --tags --no-verify "$TARGET_REMOTE" "$TARGET_BRANCH"
 git checkout --quiet "$SOURCE_BRANCH"
 echo "dev-snapshot-post-$RELEASE_VERSION" > VERSION
 git add VERSION
-git commit --allow-empty --quiet --message="Post-Release $RELEASE_VERSION dev snapshot"
+git commit --no-verify --allow-empty --quiet --message="Post-Release $RELEASE_VERSION dev snapshot"
 echo "Push development branch"
 git push --tags --no-verify "$SOURCE_REMOTE" "$SOURCE_BRANCH"
-
