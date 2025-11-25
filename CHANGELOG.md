@@ -1,3 +1,12 @@
+## 0.13.3
+* add function in hdutils to add columns to a multitsframe from its metadata.
+* Virtual Structure adapter provides metadata
+* Input wirings support an attrs field that allows to update / override .attrs metadata for objects loaded from adapters
+* Execution/wiring dialog allows to enter time ranges directly, allowing possibly relative datetime expressions like `now-15min, now` (to e.g. specify interval of last 15 minutes) and more (see [dtexp](https://github.com/stewit/dtexp) docs)
+* Fixing validation in UI to allow entering `null` as manual input for optional inputs.
+* free text filters now can have default values.
+* Plotly config can now be specified under key `"config"` on the plotly fig dict object. The designer frontend will respect and use these configurations. Additionally, German Plotly locale package is installed into the frontend.
+
 ## 0.13.2
 * More lenient runtime execution context parsing
 
