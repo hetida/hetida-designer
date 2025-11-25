@@ -153,6 +153,7 @@ import datetime
 import io
 import json
 import logging
+from collections import defaultdict
 from enum import StrEnum
 from types import NoneType, UnionType
 from typing import Annotated, Any, Literal, TypedDict
@@ -1017,6 +1018,73 @@ def modify_timezone(
     except KeyError as exc:
         exc.add_note(f"Column name {column_name} not in object_to_convert")
         raise
+
+
+def extract_sub_dict(data: dict[str, Any], json_path: list[str]) -> dict[str, Any] | None:
+    """Extract a subdict of a nested dict structure
+
+    Returns either the found dict, or None if it could not be found.
+    """
+    current: dict[str, Any] | None = data
+    for key in json_path:
+        if isinstance(current, dict):
+            current = current.get(key)
+            if current is None:
+                return None
+        else:
+            return None
+    return current
+
+
+def extract_sub_mapping(
+    dict_of_metadata: dict[str | int, dict[str, Any]], key: str
+) -> dict[str | int, Any]:
+    return {main_key: sub_dict.get(key) for main_key, sub_dict in dict_of_metadata.items()}
+
+
+def add_columns_from_metric_metadata(
+    multitsframe: pd.DataFrame,
+    keys: list[str] | None = None,
+    replace_metric_col_with_key: str | None = None,
+    default_value: Any = np.nan,
+) -> pd.DataFrame:
+    """Add columns (or replace metric column) from attrs metadata in a multitsframe
+
+    Expects a hetida designer multitsframe with metadata according to hetida designer
+    metadata conventions.
+
+    For replacing the metric col using replace_metric_col_with_key this expects a
+    value for each metric to be found in the metadata. If that is not the case it keeps
+    the existing metric entry!
+
+    For adding columns, a default_value can be specified that is used when no entry for
+    a key is found in the metadata for the corresponding metric.
+
+    Modifies in-place, but also returns the modified multitsframe.
+    """
+
+    metrics_metadata = extract_sub_dict(multitsframe.attrs, ["by_metric"])
+
+    if metrics_metadata is None:
+        metrics_metadata = extract_sub_dict(multitsframe.attrs, ["metric_metadata"])
+
+    if metrics_metadata is None:
+        logger.warning("Did not found metric metadata for extracting data into columns.")
+        return multitsframe
+
+    if replace_metric_col_with_key is not None:
+        multitsframe["metric"] = multitsframe["metric"].replace(
+            extract_sub_mapping(metrics_metadata, replace_metric_col_with_key)  # type: ignore
+        )
+    if keys is not None:
+        for key in keys:
+            mapping_dict = extract_sub_mapping(metrics_metadata, key)  # type: ignore
+
+            mapping_dict = defaultdict(lambda: default_value, mapping_dict)
+
+            multitsframe[key] = multitsframe["metric"].map(mapping_dict)
+
+    return multitsframe
 
 END_HEREDOC
 )
