@@ -2,7 +2,8 @@ import { Directive, ElementRef, Input, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 @Directive({
-  selector: '[hdErrorVisual]'
+    selector: '[hdErrorVisual]',
+    standalone: false
 })
 export class ErrorVisualDirective implements OnInit {
   @Input('hdErrorVisual') control: FormControl;

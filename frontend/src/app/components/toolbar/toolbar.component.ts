@@ -15,9 +15,10 @@ import {
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
-  selector: 'hd-toolbar',
-  templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.scss']
+    selector: 'hd-toolbar',
+    templateUrl: './toolbar.component.html',
+    styleUrls: ['./toolbar.component.scss'],
+    standalone: false
 })
 export class ToolbarComponent implements OnInit {
   public transformation: Transformation | undefined;

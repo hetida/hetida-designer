@@ -53,9 +53,10 @@ export interface VertexIds {
 }
 
 @Component({
-  selector: 'hd-workflow-editor',
-  templateUrl: './workflow-editor.component.html',
-  styleUrls: ['./workflow-editor.component.scss']
+    selector: 'hd-workflow-editor',
+    templateUrl: './workflow-editor.component.html',
+    styleUrls: ['./workflow-editor.component.scss'],
+    standalone: false
 })
 export class WorkflowEditorComponent implements OnInit {
   public flowchartConfiguration: FlowchartConfiguration | undefined = undefined;

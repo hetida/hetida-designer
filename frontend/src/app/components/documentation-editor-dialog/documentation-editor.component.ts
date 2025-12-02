@@ -26,10 +26,11 @@ const INITIAL_DOCUMENTATION_TEMPLATE = `
 `;
 
 @Component({
-  selector: 'hd-documentation-editor',
-  templateUrl: './documentation-editor.component.html',
-  styleUrls: ['./documentation-editor.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'hd-documentation-editor',
+    templateUrl: './documentation-editor.component.html',
+    styleUrls: ['./documentation-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DocumentationEditorComponent implements OnInit {
   public markdown = '';

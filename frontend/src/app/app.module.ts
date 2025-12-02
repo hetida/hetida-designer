@@ -3,7 +3,7 @@ import {
   provideHttpClient,
   withInterceptorsFromDi
 } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { ErrorHandler, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -178,16 +178,14 @@ const httpLoaderFactory = (configService: ConfigService) => {
     },
     { provide: MatDialogRef, useValue: {} },
     ConfigService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: (appConfig: ConfigService) => {
+    provideAppInitializer(() => {
+        const initializerFn = ((appConfig: ConfigService) => {
         return async () => {
           await appConfig.loadConfig();
         };
-      },
-      multi: true,
-      deps: [ConfigService]
-    },
+      })(inject(ConfigService));
+        return initializerFn();
+      }),
     {
       provide: HD_WIRING_CONFIG,
       useFactory: (themeService: ThemeService): HdWiringConfig => {

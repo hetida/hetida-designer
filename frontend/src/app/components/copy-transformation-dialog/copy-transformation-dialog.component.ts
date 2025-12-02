@@ -15,9 +15,10 @@ import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag
 import { ConfigService } from '../../service/configuration/config.service';
 
 @Component({
-  selector: 'hd-copy-transformation-dialog',
-  templateUrl: './copy-transformation-dialog.component.html',
-  styleUrls: ['./copy-transformation-dialog.component.scss']
+    selector: 'hd-copy-transformation-dialog',
+    templateUrl: './copy-transformation-dialog.component.html',
+    styleUrls: ['./copy-transformation-dialog.component.scss'],
+    standalone: false
 })
 export class CopyTransformationDialogComponent implements OnInit {
   private apiEndpoint: string;

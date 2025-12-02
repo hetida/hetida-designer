@@ -30,9 +30,10 @@ export interface ComponentIoDialogData {
 }
 
 @Component({
-  selector: 'hd-component-new-revision-modal',
-  templateUrl: 'component-io-dialog.component.html',
-  styleUrls: ['component-io-dialog.component.scss']
+    selector: 'hd-component-new-revision-modal',
+    templateUrl: 'component-io-dialog.component.html',
+    styleUrls: ['component-io-dialog.component.scss'],
+    standalone: false
 })
 export class ComponentIODialogComponent implements AfterViewInit {
   componentTransformation: ComponentTransformation;
