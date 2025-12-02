@@ -5,7 +5,7 @@
   "homepage": "https://neusta-sd-west.de/data-science/hetida-designer/",
   "license": "MIT",
   "engines": {
-    "node": "22.13.0"
+    "node": "22.21.1"
   },
   "repository": {
     "type": "git",
@@ -101,6 +101,6 @@
     "pretty-quick": "^4.0.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
-    "typescript": "^5.4.5"
+    "typescript": "^5.6.3"
   }
 }
