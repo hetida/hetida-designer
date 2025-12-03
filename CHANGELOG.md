@@ -1,3 +1,6 @@
+
+* Add endpoint to obtain complete structure from backend structure service
+
 ## 0.13.4
 * make metadata column adding more flexible and adaptable to different metadata structures
 
