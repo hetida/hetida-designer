@@ -7559,7 +7559,8 @@
           "ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE",
           "SENDING_DATA_TO_ADAPTERS",
           "ENCODING_RESULTS_TO_JSON",
-          "SERIALIZING_EXEC_RESULT"
+          "SERIALIZING_EXEC_RESULT",
+          "UNKNOWN"
         ],
         "title": "ProcessStage",
         "description": "Stages of the execution process."

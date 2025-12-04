@@ -25,6 +25,8 @@ from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import (
     ConfigurationInput,
     PerformanceMeasuredStep,
+    ProcessStage,
+    WorkflowExecutionInfo,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -53,6 +55,25 @@ from hetdesrun.webservice.runtime_engine_url import get_runtime_engine_url
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
+
+UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE = """
+An "unexpected" error happened while the transformation was executed in
+an external runtime service, which lead to no proper response from or
+connection loss to the runtime service worker process.
+
+Often such errors
+* are caused by what the executed trafo actually does, like using too much memory
+* are triggered by a resulting termination of the runtime service worker process,
+  e.g. by the server management process, the operating system or the container runtime
+  which enforces compliance with resource limits or timeouts.
+
+It is advised to carefully examine whether
+* too much data is loaded
+* too much data is generated / being output (especially for direct_provisioning outputs!)
+* too much memory is used
+* cpus are used / blocked for too long
+etc. by the executed transformation revision together with the requested wiring.
+"""
 
 
 class TrafoExecutionError(Exception):
@@ -94,6 +115,14 @@ class TrafoExecutionComponentAdapterComponentsNotFound(TrafoExecutionError):
 
 class TrafoExecutionRuntimeConnectionError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionRuntimeHttpStatusError(TrafoExecutionError):
+    """Handles the case that external runtime service throws 4xx or 5xx http error"""
+
+
+class TrafoExecutionRuntimeUnexpectedFailure(TrafoExecutionError):
+    """Unexpected error resulting in termination of runtime worker process or similar"""
 
 
 class TrafoExecutionResultValidationError(TrafoExecutionError):
@@ -394,7 +423,7 @@ def add_runtime_request_response_reaction_times(
         )
 
 
-async def run_execution_input(
+async def run_execution_input(  # noqa: PLR0915
     execution_input: WorkflowExecutionInput,
 ) -> ExecutionResponseFrontendDto:
     """Runs the provided execution input
@@ -448,6 +477,7 @@ async def run_execution_input(
                     json=execution_input.model_dump(mode="json"),
                     timeout=None,
                 )
+                response.raise_for_status()
                 response_received_time = datetime.datetime.now(datetime.timezone.utc)
                 logger.debug(
                     "Runtime response content encoding: %s",
@@ -455,12 +485,62 @@ async def run_execution_input(
                 )
 
                 pure_runtime_request_step.stop()
+            except httpx.HTTPStatusError as e:
+                # 4xx and 5xx
+                msg = (
+                    "HTTPStatusError during runtime execution request for job"
+                    f" {execution_input.job_id}: {str(e)}"
+                )
+                logger.error(msg)
+                raise TrafoExecutionRuntimeHttpStatusError(msg) from e
+
             except httpx.HTTPError as e:
-                # handles both request errors (connection problems)
-                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
-                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
-                logger.info(msg)
-                raise TrafoExecutionRuntimeConnectionError(msg) from e
+                # handle "unexpected" errors, that
+                # * are probably caused by what the executed trafo actually does, like
+                #   using too much memory
+                # * lead to a temrminated runtime worker process or a state, where the
+                #   the runtime cannot properly send a response any more.
+                #
+                # In this case we do not want to send a Http 500 error back but an actual
+                # structured error response that allows the user to review and handle situations
+                # probably triggered by their code / workflow or the amount of data
+                # requested or produced.
+                #
+                # Note: Can e.g. be triggered by running os._exit(1) in component code. But a test
+                # would of course require separated backend and runtime services and a runtime
+                # process management.
+                msg = f"Failed runtime execution request to hd runtime endpoint ({url}):\n{str(e)}"
+                logger.warning(msg)
+
+                trafo_failure_exc = TrafoExecutionRuntimeUnexpectedFailure(msg)
+                trafo_failure_exc.__cause__ = e
+                trafo_failure_exc.__traceback__ = e.__traceback__
+
+                wf_exec_info = WorkflowExecutionInfo.from_exception(
+                    exception=trafo_failure_exc,
+                    process_stage=ProcessStage.UNKNOWN,
+                    job_id=execution_input.job_id,
+                    tr_name=execution_input.workflow.tr_name,
+                    tr_tag=execution_input.workflow.tr_tag,
+                    tr_id=execution_input.trafo_id,
+                    cause=None,
+                    measured_steps=None,
+                    mem_info=None,
+                )
+
+                wf_exec_info_error = wf_exec_info.error
+                assert wf_exec_info_error is not None  # for mypy # noqa: S101
+
+                wf_exec_info_error.message = (
+                    UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE + f"\n\nThe actual error was:\n{str(e)}"
+                )
+                execution_response = ExecutionResponseFrontendDto(
+                    **(wf_exec_info.model_dump()),
+                    result="failure",
+                    resolved_reproducibility_references=get_deepcopy_of_reproducibility_reference_context(),
+                )
+
+                return execution_response
             try:
                 runtime_request_response_parsing_step = PerformanceMeasuredStep.create_and_begin(
                     "runtime_request_response_parsing"

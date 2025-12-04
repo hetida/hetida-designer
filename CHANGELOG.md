@@ -1,4 +1,5 @@
 
+* Improved error handling for runtime service worker process termination
 * Add endpoint to obtain complete structure from backend structure service
 
 ## 0.13.4

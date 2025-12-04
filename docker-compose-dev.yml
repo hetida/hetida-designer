@@ -55,6 +55,7 @@ services:
       context: .
       dockerfile: Dockerfile-runtime
     #image: hetida/designer-runtime
+    restart: always
     ports:
       - 8090:8090
     volumes:
@@ -70,20 +71,23 @@ services:
       HETIDA_DESIGNER_PURE_UVICORN: "true"
       LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
 
-
   hetida-designer-db:
     image: postgres:latest
     ports:
       - 5430:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_DB: hetida_designer_db
       POSTGRES_USER: hetida_designer_dbuser
       POSTGRES_PASSWORD: hetida_designer_dbpasswd
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hetida_designer_dbuser -d hetida_designer_db"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U hetida_designer_dbuser -d hetida_designer_db",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
