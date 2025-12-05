@@ -1,4 +1,7 @@
 
+## 0.13.5
+* Execution dialog now allows to specify timeranges with relative dtexp expressions.
+* New generic forecasting base component
 * Improved error handling for runtime service worker process termination
 * Add endpoint to obtain complete structure from backend structure service
 
