@@ -47,6 +47,7 @@ class UriFragmentWiringInfo(BaseModel):
     )
     ref_key: str | None = None
     use_default_value: bool = False
+    attrs: dict[str, Any] | None = None
 
     # When parsed from uri fragment, misspelled fields should be detected:
     model_config = ConfigDict(extra="forbid")
@@ -432,6 +433,8 @@ class InputWiring(BaseModel):
                 self.ref_id_type = uri_fragment_info.ref_id_type
             if uri_fragment_info.ref_key is not None and "ref_key" in parsed_fragment:
                 self.ref_key = uri_fragment_info.ref_key
+            if uri_fragment_info.attrs is not None and "attrs" in parsed_fragment:
+                self.attrs = uri_fragment_info.attrs
             if (
                 uri_fragment_info.use_default_value is not None
                 and "use_default_value" in parsed_fragment
