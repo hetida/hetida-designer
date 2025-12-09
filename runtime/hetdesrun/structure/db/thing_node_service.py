@@ -24,6 +24,16 @@ from hetdesrun.structure.utils import is_postgresql, is_sqlite
 logger = logging.getLogger(__name__)
 
 
+def fetch_all_thing_nodes_from_db() -> list[StructureServiceThingNode]:
+    logger.debug("Fetching all StructureServiceThingNode from database")
+    with get_session()() as session:
+        all_tns = session.query(StructureServiceThingNodeDBModel).all()
+
+    logger.debug("Successfully fetched %d thing nodes from the database.", len(all_tns))
+
+    return [StructureServiceThingNode.from_orm_model(tn) for tn in all_tns]
+
+
 def fetch_single_thing_node_from_db_by_id(tn_id: UUID) -> StructureServiceThingNode:
     logger.debug("Fetching single StructureServiceThingNode from database with ID: %s", tn_id)
     with get_session()() as session:
