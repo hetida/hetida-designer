@@ -1,44 +1,51 @@
-@import '../colors';
-@import 'src/app/app.component.theme';
-@import 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
-@import 'src/app/components/popover-transformation/popover-transformation.component.theme';
-@import 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
-@import 'node_modules/hd-wiring/theme';
-// @import 'src/app/hd-wiring-module/node-search/node-search.component.theme';
+@use 'sass:map';
+@use '../colors';
+@use 'src/app/app.component.theme';
+@use 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
+@use 'src/app/components/popover-transformation/popover-transformation.component.theme';
+@use 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
+@use 'node_modules/hd-wiring/theme';
+@use 'node_modules/hd-wiring/src/lib/node-search/node-search.component.theme';
 
 @mixin hd-material-theme($theme) {
-  $primary: map-get($theme, primary);
-  $secondary: map-get($theme, accent);
-  $secondary-contrasts: map-get($secondary, contrast);
+  $primary: map.get($theme, primary);
+  $secondary: map.get($theme, accent);
+  $secondary-contrasts: map.get($secondary, contrast);
 
-  @include app-theme($primary);
-  @include navigation-container-theme($primary, $secondary);
-  @include popover-transformation-theme($primary, $secondary);
-  @include protocol-viewer-theme($primary, $secondary);
-  @include hd-wiring-theme($theme);
-  // @include node-search-theme($primary, $secondary);
+  @include app.app-theme($primary);
+  @include navigation-container.navigation-container-theme(
+    $primary,
+    $secondary
+  );
+  @include popover-transformation.popover-transformation-theme(
+    $primary,
+    $secondary
+  );
+  @include protocol-viewer.protocol-viewer-theme($primary, $secondary);
+  @include theme.hd-wiring-theme($theme);
+  //@include node-search-theme($primary, $secondary);
 
   // Plain HTML elements overrides
   // TODO: Can we wrap those?
   textarea {
-    background-color: map_get($secondary, 500);
-    color: map_get($primary, 500);
+    background-color: map.get($secondary, 500);
+    color: map.get($primary, 500);
   }
 
   // Hetida Flowchart overrides
   .hetida-flowchart-svg {
-    background-color: map_get($secondary, 700);
+    background-color: map.get($secondary, 700);
   }
 
   // Angular Material overrides
   .mat-mdc-form-field {
     .mat-focused {
-      color: map-get($primary, 700);
+      color: map.get($primary, 700);
     }
   }
 
   .mat-mdc-text-field-wrapper {
-    background-color: map_get($secondary, 500) !important;
+    background-color: map.get($secondary, 500) !important;
   }
 
   .mat-mdc-form-field-focus-overlay {
@@ -46,18 +53,18 @@
   }
 
   .mat-expansion-panel {
-    border-color: map-get($secondary, 700);
+    border-color: map.get($secondary, 700);
   }
 
   .dark-theme {
     .mat-expansion-panel {
-      border-color: map-get($primary, 700);
+      border-color: map.get($primary, 700);
     }
   }
 
   .mat-button-toggle-checked {
-    background-color: map_get($secondary, 500);
-    color: map_get($primary, 500);
+    background-color: map.get($secondary, 500);
+    color: map.get($primary, 500);
   }
 
   .mdc-switch--selected {
@@ -72,7 +79,7 @@
   .mat-icon-svg {
     &--draft {
       .cls-1 {
-        fill: map_get($primary, 500);
+        fill: map.get($primary, 500);
       }
     }
   }
@@ -82,32 +89,32 @@
       margin: 0;
     }
 
-    background-color: $hd-white;
-    color: $hd-black;
-    border-color: $hd-black;
+    background-color: colors.$hd-white;
+    color: colors.$hd-black;
+    border-color: colors.$hd-black;
     border-radius: 5px;
 
     ul {
       li:hover {
-        background-color: $hd-grey-dark;
+        background-color: colors.$hd-grey-dark;
       }
     }
 
     & .component {
-      background-color: $hd-white;
-      color: $hd-black;
-      border-color: $hd-black;
+      background-color: colors.$hd-white;
+      color: colors.$hd-black;
+      border-color: colors.$hd-black;
 
       ul {
         li:hover {
-          background-color: $hd-grey-dark;
+          background-color: colors.$hd-grey-dark;
         }
       }
     }
   }
 
   .app-context-menu {
-    border: 1px solid map-get($primary, 700);
+    border: 1px solid map.get($primary, 700);
 
     .mat-mdc-menu-content {
       .mat-mdc-menu-item {
@@ -118,16 +125,16 @@
   }
 
   .mat-mdc-menu-item:hover:not([disabled]) {
-    background-color: $hd-grey-dark !important;
+    background-color: colors.$hd-grey-dark !important;
   }
 
   .mat-mdc-menu-item:focus:not([disabled]) {
-    background-color: $hd-grey-dark !important;
+    background-color: colors.$hd-grey-dark !important;
   }
 
   .mat-mdc-select-panel {
     .mat-mdc-option:hover {
-      background-color: $hd-grey-dark !important;
+      background-color: colors.$hd-grey-dark !important;
     }
   }
 
@@ -138,7 +145,7 @@
 
     .mat-mdc-dialog-title {
       --mdc-dialog-subhead-color: #292929;
-      background-color: $hd-yellow;
+      background-color: colors.$hd-yellow;
     }
 
     .mat-mdc-select {
@@ -177,19 +184,19 @@
       --mdc-dialog-supporting-text-color: #ffffff !important;
 
       & .mat-mdc-dialog-title {
-        color: $hd-black !important;
+        color: colors.$hd-black !important;
       }
 
       .mat-mdc-text-field-wrapper
         .mat-mdc-form-field-flex
         .mat-mdc-floating-label {
-        color: $hd-white !important;
+        color: colors.$hd-white !important;
       }
 
       & .hetida-context-menu {
         ul {
           li:hover {
-            background-color: $hd-blue-dark;
+            background-color: colors.$hd-blue-dark;
           }
         }
       }
@@ -197,61 +204,61 @@
   }
 
   .mat-mdc-tab-labels {
-    background-color: map-get($secondary, 700);
+    background-color: map.get($secondary, 700);
 
     .mat-icon-svg {
       .cls-1 {
-        fill: map_get($primary, 500);
+        fill: map.get($primary, 500);
       }
     }
 
     .mat-icon-svg-released {
       .cls-1 {
-        fill: $hd-yellow-dark;
+        fill: colors.$hd-yellow-dark;
       }
     }
 
     .mat-icon-svg-disabled {
       .cls-1 {
-        fill: $hd-red-dark;
+        fill: colors.$hd-red-dark;
       }
     }
 
     .mat-icon-svg-draft {
       .cls-1 {
-        fill: $hd-grey-dark;
+        fill: colors.$hd-grey-dark;
       }
     }
 
     .mdc-tab-indicator--active {
-      background-color: map-get($secondary, 500) !important;
+      background-color: map.get($secondary, 500) !important;
 
       .mat-icon-svg {
         .cls-1 {
-          fill: $hd-yellow;
+          fill: colors.$hd-yellow;
         }
       }
 
       .mat-icon-svg-released {
         .cls-1 {
-          fill: $hd-yellow;
+          fill: colors.$hd-yellow;
         }
       }
 
       .mat-icon-svg-draft {
         .cls-1 {
-          fill: $hd-black;
+          fill: colors.$hd-black;
         }
       }
 
       .mat-icon-svg-disabled {
         .cls-1 {
-          fill: $hd-red;
+          fill: colors.$hd-red;
         }
       }
 
       .mdc-tab-indicator__content--underline {
-        border-color: map-get($secondary, 700);
+        border-color: map.get($secondary, 700);
       }
     }
   }
@@ -261,11 +268,11 @@
   }
 
   .dark-theme .mat-tab-group .mat-tab-label-container {
-    background-color: map-get($secondary, 700);
+    background-color: map.get($secondary, 700);
   }
 
   .mat-tab-group .mat-tab-label-container {
-    background-color: map-get($secondary, 700);
+    background-color: map.get($secondary, 700);
   }
 
   .navigation-container__search {
@@ -281,15 +288,15 @@
   }
 
   .mat-mdc-snack-bar-container {
-    background-color: $hd-pink;
+    background-color: colors.$hd-pink;
     --mdc-snackbar-container-color: $hd-pink;
   }
 
   .dark-theme {
     & .mat-mdc-snack-bar-container {
-      color: rgba($hd-white, 0.7) !important;
+      color: rgba(colors.$hd-white, 0.7) !important;
       --mdc-snackbar-supporting-text-color: rgba($hd-white, 0.7) !important;
-      background-color: $hd-pink;
+      background-color: colors.$hd-pink;
       --mdc-snackbar-container-color: $hd-pink;
     }
   }

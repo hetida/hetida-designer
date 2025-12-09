@@ -1,7 +1,9 @@
+@use 'sass:map';
+
 @mixin app-theme($primary) {
   hd-root {
     .app-config {
-      border-top: 1px solid rgba(map_get($primary, 500), 0.12);
+      border-top: 1px solid rgba(map.get($primary, 500), 0.12);
     }
   }
 }

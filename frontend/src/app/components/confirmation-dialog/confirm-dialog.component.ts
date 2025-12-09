@@ -9,9 +9,9 @@ export interface ConfirmDialogData {
 }
 
 @Component({
-    selector: 'hd-confirm-dialog-modal',
-    templateUrl: 'confirm-dialog.component.html',
-    standalone: false
+  selector: 'hd-confirm-dialog-modal',
+  templateUrl: 'confirm-dialog.component.html',
+  standalone: false
 })
 export class ConfirmDialogComponent {
   constructor(

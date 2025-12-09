@@ -16,10 +16,10 @@ import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 @Component({
-    selector: 'hd-home-tab',
-    templateUrl: './home-tab.component.html',
-    styleUrls: ['./home-tab.component.scss'],
-    standalone: false
+  selector: 'hd-home-tab',
+  templateUrl: './home-tab.component.html',
+  styleUrls: ['./home-tab.component.scss'],
+  standalone: false
 })
 export class HomeTabComponent implements OnInit {
   constructor(

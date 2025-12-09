@@ -7,10 +7,10 @@ import { TextResultDialogService } from '../../service/text-result-service/text-
 import { NotificationService } from '../../service/notifications/notification.service';
 
 @Component({
-    selector: 'app-import-dialog',
-    templateUrl: './import-trafo-dialog.component.html',
-    styleUrls: ['./import-trafo-dialog.component.scss'],
-    standalone: false
+  selector: 'app-import-dialog',
+  templateUrl: './import-trafo-dialog.component.html',
+  styleUrls: ['./import-trafo-dialog.component.scss'],
+  standalone: false
 })
 export class ImportDialogComponent {
   importText = '';

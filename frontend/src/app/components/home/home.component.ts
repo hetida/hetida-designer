@@ -5,10 +5,10 @@ import { ContextMenuService } from './../../service/context-menu/context-menu.se
 import { ThemeService } from './../../service/theme/theme.service';
 
 @Component({
-    selector: 'hd-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss'],
-    standalone: false
+  selector: 'hd-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss'],
+  standalone: false
 })
 export class HomeComponent {
   constructor(

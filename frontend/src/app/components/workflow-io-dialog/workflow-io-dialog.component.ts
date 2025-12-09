@@ -92,10 +92,10 @@ function ioIsConstant(io: IO | Constant): io is Constant {
 }
 
 @Component({
-    templateUrl: 'workflow-io-dialog.component.html',
-    styleUrls: ['./workflow-io-dialog.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: 'workflow-io-dialog.component.html',
+  styleUrls: ['./workflow-io-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class WorkflowIODialogComponent implements AfterViewInit {
   ioItemForm: FormGroup;

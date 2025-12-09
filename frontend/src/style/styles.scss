@@ -1,25 +1,26 @@
 /* You can add global styles to this file, and also import other style files */
-@import 'core';
-@import 'material/config';
-@import 'overrides';
-@import 'typography';
-@import 'utilities';
-@import '@danielmoncada/angular-datetime-picker/assets/style/picker.min.css';
+@use 'core';
+@use 'material/config';
+@use 'overrides';
+@use 'typography';
+@use 'utilities';
+@use 'colors';
+@use '@danielmoncada/angular-datetime-picker/assets/style/picker.min.css';
 
 .mat-icon-svg-disabled {
   .cls-1 {
-    fill: $hd-red;
+    fill: colors.$hd-red;
   }
 }
 
 .mat-icon-svg-released {
   .cls-1 {
-    fill: $hd-yellow;
+    fill: colors.$hd-yellow;
   }
 }
 
 .mat-icon-svg-draft {
   .cls-1 {
-    fill: $hd-black;
+    fill: colors.$hd-black;
   }
 }

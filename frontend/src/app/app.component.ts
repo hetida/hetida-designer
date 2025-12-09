@@ -10,10 +10,10 @@ import { PlotlyService } from 'angular-plotly.js';
 import plotlyDeLocale from 'plotly.js-locales/de';
 
 @Component({
-    selector: 'hd-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+  selector: 'hd-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  standalone: false
 })
 export class AppComponent implements OnInit {
   constructor(

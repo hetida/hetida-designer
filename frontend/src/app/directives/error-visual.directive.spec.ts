@@ -17,7 +17,7 @@ describe('ErrorVisualDirective', () => {
       <mat-error id="error" [hdErrorVisual]="formGroup.get('name')"></mat-error>
     </form>`,
     standalone: false
-})
+  })
   class TestComponent {
     @Input()
     public formGroup: FormGroup;

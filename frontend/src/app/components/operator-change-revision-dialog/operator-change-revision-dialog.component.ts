@@ -7,10 +7,10 @@ export interface OperatorChangeRevisionDialogData {
 }
 
 @Component({
-    selector: 'hd-operator-change-revision-dialog',
-    templateUrl: './operator-change-revision-dialog.component.html',
-    styleUrls: ['./operator-change-revision-dialog.component.scss'],
-    standalone: false
+  selector: 'hd-operator-change-revision-dialog',
+  templateUrl: './operator-change-revision-dialog.component.html',
+  styleUrls: ['./operator-change-revision-dialog.component.scss'],
+  standalone: false
 })
 export class OperatorChangeRevisionDialogComponent implements OnInit {
   public selectedRevision: Transformation | null = null;

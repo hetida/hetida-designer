@@ -3,9 +3,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent } from './import-trafo-dialog.component';
 
 @Component({
-    selector: 'hd-import-trafos-button',
-    templateUrl: './import-trafos-button.component.html',
-    standalone: false
+  selector: 'hd-import-trafos-button',
+  templateUrl: './import-trafos-button.component.html',
+  standalone: false
 })
 export class ImportTrafosButtonComponent {
   constructor(private readonly matDialog: MatDialog) {}

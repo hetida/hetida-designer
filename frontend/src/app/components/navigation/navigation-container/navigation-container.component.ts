@@ -15,10 +15,10 @@ import { KeyValue } from '@angular/common';
 import { Utils } from '../../../utils/utils';
 
 @Component({
-    selector: 'hd-navigation-container',
-    templateUrl: './navigation-container.component.html',
-    styleUrls: ['./navigation-container.component.scss'],
-    standalone: false
+  selector: 'hd-navigation-container',
+  templateUrl: './navigation-container.component.html',
+  styleUrls: ['./navigation-container.component.scss'],
+  standalone: false
 })
 export class NavigationContainerComponent implements OnInit {
   constructor(

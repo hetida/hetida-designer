@@ -53,10 +53,10 @@ export const selectContentViewStoreState = createSelector(
 );
 
 @Component({
-    selector: 'hd-content-view',
-    templateUrl: './content-view.component.html',
-    styleUrls: ['./content-view.component.scss'],
-    standalone: false
+  selector: 'hd-content-view',
+  templateUrl: './content-view.component.html',
+  styleUrls: ['./content-view.component.scss'],
+  standalone: false
 })
 export class ContentViewComponent implements OnInit {
   public isComponentTransformation: typeof isComponentTransformation =

@@ -10,10 +10,10 @@ import { TransformationContextMenuComponent } from '../../transformation-context
 import { Transformation } from '../../../model/transformation';
 
 @Component({
-    selector: 'hd-navigation-item',
-    templateUrl: './navigation-item.component.html',
-    styleUrls: ['./navigation-item.component.scss'],
-    standalone: false
+  selector: 'hd-navigation-item',
+  templateUrl: './navigation-item.component.html',
+  styleUrls: ['./navigation-item.component.scss'],
+  standalone: false
 })
 export class NavigationItemComponent {
   @Input() transformation: Transformation;

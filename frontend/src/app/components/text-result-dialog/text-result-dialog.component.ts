@@ -13,10 +13,11 @@ interface DialogData {
 }
 
 @Component({
-    selector: 'app-result-dialog',
-    imports: [CommonModule, MatDialogModule, MatButtonModule],
-    templateUrl: './text-result-dialog.component.html',
-    styleUrls: ['./text-result-dialog.component.scss']
+  selector: 'app-result-dialog',
+  imports: [CommonModule, MatDialogModule, MatButtonModule],
+  templateUrl: './text-result-dialog.component.html',
+  styleUrls: ['./text-result-dialog.component.scss'],
+  standalone: true
 })
 export class TextResultDialogComponent {
   constructor(

@@ -17,11 +17,11 @@ import {
 } from '../../model/transformation';
 
 @Component({
-    selector: 'hd-transformation-context-menu',
-    templateUrl: './transformation-context-menu.component.html',
-    styleUrls: ['./transformation-context-menu.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'hd-transformation-context-menu',
+  templateUrl: './transformation-context-menu.component.html',
+  styleUrls: ['./transformation-context-menu.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class TransformationContextMenuComponent
   implements AfterViewInit, OnDestroy

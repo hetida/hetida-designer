@@ -21,10 +21,10 @@ import { Transformation } from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
-    selector: 'hd-popover-transformation',
-    templateUrl: './popover-transformation.component.html',
-    styleUrls: ['./popover-transformation.component.scss'],
-    standalone: false
+  selector: 'hd-popover-transformation',
+  templateUrl: './popover-transformation.component.html',
+  styleUrls: ['./popover-transformation.component.scss'],
+  standalone: false
 })
 export class PopoverTransformationComponent implements OnInit {
   @HostBinding('style.top')

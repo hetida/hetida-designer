@@ -20,8 +20,9 @@ import {
 } from '@angular/common/http';
 
 @Component({
-    selector: 'hd-home-tab', template: '',
-    standalone: false
+  selector: 'hd-home-tab',
+  template: '',
+  standalone: false
 })
 class HomeStubComponent {}
 

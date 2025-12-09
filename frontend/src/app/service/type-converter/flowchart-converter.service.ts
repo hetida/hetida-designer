@@ -32,6 +32,8 @@ export class FlowchartConverterService {
   public convertComponentToFlowchart(
     transformation: Transformation
   ): FlowchartConfiguration {
+    const position: Position = null;
+
     const inputs: IO[] =
       typeof transformation.content !== 'string'
         ? (transformation as WorkflowTransformation).content.inputs.map(
@@ -68,7 +70,7 @@ export class FlowchartConverterService {
             ...input,
             exposed: input.exposed,
             is_default_value: input.type === IOTypeOption.OPTIONAL,
-            position: null
+            position
           };
         }),
       outputs: transformation.io_interface.outputs.map(output => {
@@ -90,15 +92,17 @@ export class FlowchartConverterService {
         }
         return {
           ...output,
-          position: null
+          position
         };
       })
     };
+
     const flowchartOperator = this.convertOperatorToFlowchartOperator(
       operator,
       0,
       0
     );
+
     return {
       id: '',
       components: [flowchartOperator],
@@ -214,6 +218,7 @@ export class FlowchartConverterService {
   ): FlowchartComponentIO[] {
     // IO is reversed for a workflow, e.g. an output of a workflow takes a value in and transfers it to the world outside the workflow!
     const workflowIO: Array<FlowchartComponentIO> = [];
+
     for (const io of workflow.content.inputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
@@ -240,6 +245,7 @@ export class FlowchartConverterService {
         value: ''
       });
     }
+
     return workflowIO;
   }
 
@@ -274,6 +280,7 @@ export class FlowchartConverterService {
         path_ids: linkIds.length === 0 ? null : linkIds
       });
     }
+
     return links;
   }
 
@@ -300,6 +307,7 @@ export class FlowchartConverterService {
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
     link.setAttribute('custom-path', newIds.join(','));
+
     return coordinates.map(coords => ({
       x: coords[0],
       y: coords[1]
@@ -322,6 +330,7 @@ export class FlowchartConverterService {
     if (ids.length !== 2) {
       throw new Error('Internal Error: Link has insufficient data!');
     }
+
     return {
       operatorId: ids[0],
       connectorId: ids[1]
@@ -425,6 +434,7 @@ export class FlowchartConverterService {
         value: ''
       });
     }
+
     return component;
   }
 }
