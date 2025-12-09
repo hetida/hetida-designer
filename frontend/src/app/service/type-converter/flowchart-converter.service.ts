@@ -24,7 +24,7 @@ import { Utils } from 'src/app/utils/utils';
   providedIn: 'root'
 })
 export class FlowchartConverterService {
-  // TODO rename to convertTransformationToFlowchartForPreview?
+  // TODO: rename to convertTransformationToFlowchartForPreview?
   /**
    * converts the given transformation to a flowchart configuration
    * @param transformation given transformation

@@ -15,7 +15,7 @@ export class HetidaDesigner {
     await this.browserContext.clearCookies();
   }
 
-  // TODO use test ids
+  // TODO: use test ids
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
       throw new Error(

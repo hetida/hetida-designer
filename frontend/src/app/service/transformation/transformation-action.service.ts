@@ -772,7 +772,7 @@ export class TransformationActionService {
           width: '95%',
           minHeight: '200px',
           data: {
-            // TODO refactor all mutations in workflow dialog component and remove stringify.
+            // TODO: refactor all mutations in workflow dialog component and remove stringify
             workflowTransformation: Utils.deepCopy(
               selectedTransformation
             ) as WorkflowTransformation,

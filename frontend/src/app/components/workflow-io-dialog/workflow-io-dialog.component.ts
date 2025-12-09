@@ -436,7 +436,7 @@ export class WorkflowIODialogComponent implements AfterViewInit {
   }
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
-    // TODO do not mutate the dialog data, take a copy from form control
+    // TODO: do not mutate the dialog data, take a copy from form control
     const foundInput = this.data.workflowTransformation.content.inputs.find(
       (ref: IOConnector) => ref.id === data.id
     );
