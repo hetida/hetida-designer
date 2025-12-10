@@ -146,6 +146,59 @@ async def test_uri_input_wiring(mocked_clean_test_db_session, async_test_client)
 
 
 @pytest.mark.asyncio
+async def test_uri_input_default_wiring_variants(mocked_clean_test_db_session, async_test_client):
+    """What happens if filters are not set in URI wiring for inputs with default values
+
+    Then the default value should be used correctly.
+    """
+    with TrafoCollection(save_to_db=True) as tc:
+        pass_trough = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            )
+        )
+        default_variants = tc.add_from_py_file(
+            os.path.join(
+                "tests",
+                "data",
+                "components",
+                "input_default_value_variants.py",
+            )
+        )
+
+    async with async_test_client as ac:
+        exec_input = ExecByIdInput(
+            id=pass_trough.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "uri": f"hd://component-adapter/{default_variants.id}?inp_bool_required=false",
+                        "workflow_input_name": "input",
+                    }
+                ]
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+        assert resp_json["output_results_by_output_name"]["output"] == {
+            "inp_bool_default_actual_null": None,
+            # string rep "null" as default is interpreted correctly as None:
+            "inp_bool_default_null_string": None,
+            "inp_bool_required": False,
+            "inp_bool_default_true": True,
+            "inp_bool_default_false": False,
+        }
+
+
+@pytest.mark.asyncio
 async def test_uri_output_wiring(mocked_clean_test_db_session, async_test_client, tmpdir):
     target_path = tmpdir / "out_file.md"
 
