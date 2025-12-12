@@ -1,3 +1,5 @@
+## 0.13.6
+* forward context into component adapter component execution
 
 ## 0.13.5
 * Execution dialog now allows to specify timeranges with relative dtexp expressions.

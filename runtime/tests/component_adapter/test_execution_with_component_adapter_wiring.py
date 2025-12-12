@@ -1,4 +1,5 @@
 import json
+import os
 from unittest import mock
 from uuid import UUID
 
@@ -9,6 +10,9 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.models.execution import ExecByIdInput
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.runtime.context import RuntimeExecutionContext
+from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 
 
 @pytest.mark.asyncio
@@ -262,3 +266,67 @@ async def test_component_sink_wiring_plotly_executes_correctly(tmpdir):
 
     assert "<html" in content
     assert "2020-01-01T01:15:27+00:00" in content
+
+
+@pytest.mark.asyncio
+async def test_runtime_exec_context_available_during_component_adapter_execution(
+    mocked_clean_test_db_session, async_test_client
+):
+    """
+    If component adapter is used, we want context information to be forwarded
+    into the execution of component adapter components.
+    """
+    with TrafoCollection(save_to_db=True) as tc:
+        pass_trough = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            )
+        )
+        get_context_infos = tc.add_from_py_file(
+            os.path.join(
+                "tests",
+                "data",
+                "components",
+                "context_information.py",
+            )
+        )
+
+    async with async_test_client as ac:
+        exec_input = ExecByIdInput(
+            id=pass_trough.id,
+            job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+            wiring=WorkflowWiring(
+                input_wirings=[
+                    {
+                        "uri": f"hd://component-adapter/{get_context_infos.id}",
+                        "workflow_input_name": "input",
+                    }
+                ]
+            ),
+            runtime_execution_context=RuntimeExecutionContext(
+                hierarchy_object={
+                    "type": "blah",
+                    "id": "abc",
+                    "node_id": "def",
+                    "parent_node_id": "ghi",
+                }
+            ),
+        )
+        resp = await ac.post(
+            "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+        )
+        assert resp.status_code == 200
+
+        resp_json = resp.json()
+
+        output = resp_json["output_results_by_output_name"]["output"]
+
+        assert output["hierarchy_object_info"] == {
+            "type": "blah",
+            "id": "abc",
+            "node_id": "def",
+            "parent_node_id": "ghi",
+        }
