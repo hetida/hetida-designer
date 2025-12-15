@@ -259,9 +259,9 @@ def upsert_sources(
         upsert_stmt: sqlite_insert_typing | pg_insert_typing
 
         if is_postgresql(engine):
-            upsert_stmt = pg_insert(StructureServiceSourceDBModel).values(source_dicts)
+            upsert_stmt = pg_insert(StructureServiceSourceDBModel)
         elif is_sqlite(engine):
-            upsert_stmt = sqlite_insert(StructureServiceSourceDBModel).values(source_dicts)
+            upsert_stmt = sqlite_insert(StructureServiceSourceDBModel)
         else:
             raise ValueError(
                 f"Unsupported database engine: {engine}. Please use either Postgres or SQLITE."
@@ -280,6 +280,7 @@ def upsert_sources(
         # ORM models returned by the upsert query
         sources_dbmodels = session.scalars(
             upsert_stmt,
+            source_dicts,
             execution_options={"populate_existing": True},
         )
 
@@ -326,9 +327,9 @@ def upsert_sinks(
         upsert_stmt: sqlite_insert_typing | pg_insert_typing
 
         if is_postgresql(engine):
-            upsert_stmt = pg_insert(StructureServiceSinkDBModel).values(sink_dicts)
+            upsert_stmt = pg_insert(StructureServiceSinkDBModel)
         elif is_sqlite(engine):
-            upsert_stmt = sqlite_insert(StructureServiceSinkDBModel).values(sink_dicts)
+            upsert_stmt = sqlite_insert(StructureServiceSinkDBModel)
         else:
             raise ValueError(
                 f"Unsupported database engine: {engine}. Please use either Postgres or SQLITE."
@@ -347,6 +348,7 @@ def upsert_sinks(
         # ORM models returned by the upsert query
         sinks_dbmodels = session.scalars(
             upsert_stmt,
+            sink_dicts,
             execution_options={"populate_existing": True},
         )
 

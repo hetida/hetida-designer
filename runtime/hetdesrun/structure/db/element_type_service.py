@@ -57,9 +57,9 @@ def upsert_element_types(
         upsert_stmt: sqlite_insert_typing | pg_insert_typing
 
         if is_postgresql(engine):
-            upsert_stmt = pg_insert(StructureServiceElementTypeDBModel).values(element_dicts)
+            upsert_stmt = pg_insert(StructureServiceElementTypeDBModel)
         elif is_sqlite(engine):
-            upsert_stmt = sqlite_insert(StructureServiceElementTypeDBModel).values(element_dicts)
+            upsert_stmt = sqlite_insert(StructureServiceElementTypeDBModel)
         else:
             raise ValueError(
                 f"Unsupported database engine: {engine}. Please use either Postgres or SQLite."
@@ -78,6 +78,7 @@ def upsert_element_types(
         # ORM models returned by the upsert query
         element_dbmodels = session.scalars(
             upsert_stmt,
+            element_dicts,
             execution_options={"populate_existing": True},
         )
 
