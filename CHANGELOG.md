@@ -1,3 +1,6 @@
+## 0.13.7
+* compatibility fix for psycopg3 for structure upserting for large number of sources / sinks
+
 ## 0.13.6
 * forward context into component adapter component execution
 
