@@ -129,6 +129,66 @@ CONFIDENCE_ROLLING_WINDOW = 5
 CONFIDENCE_Z_VALUE = 1.96
 
 
+### Function regarding Step 1 in the main function
+def validate_inputs(
+    forecast_steps, forecast_horizon, method
+) -> tuple[int | None, pd.Timedelta | None, str]:
+    """Validate and normalize user inputs for the forecast."""
+    steps_value: int | None = None
+    horizon_value: pd.Timedelta | None = None
+
+    if forecast_steps is not None and forecast_horizon is not None:
+        raise ComponentInputValidationException(
+            "Please provide either `forecast_steps` or `forecast_horizon`, not both.",
+            error_code="422",
+            invalid_component_inputs=["forecast_steps", "forecast_horizon"],
+        )
+
+    if forecast_steps is not None:
+        if not isinstance(forecast_steps, int) or forecast_steps <= 0:
+            raise ComponentInputValidationException(
+                "`forecast_steps` must be a positive integer",
+                error_code="422",
+                invalid_component_inputs=["forecast_steps"],
+            )
+        steps_value = forecast_steps
+    elif forecast_horizon is not None:
+        horizon_text = str(forecast_horizon).strip()
+        if horizon_text:
+            try:
+                horizon_value = pd.to_timedelta(horizon_text)
+            except (TypeError, ValueError) as exc:
+                raise ComponentInputValidationException(
+                    "`forecast_horizon` must be a valid duration string (e.g. '12H' or '2D')",
+                    error_code="422",
+                    invalid_component_inputs=["forecast_horizon"],
+                ) from exc
+            if horizon_value <= pd.Timedelta(0):
+                raise ComponentInputValidationException(
+                    "`forecast_horizon` must describe a positive duration",
+                    error_code="422",
+                    invalid_component_inputs=["forecast_horizon"],
+                )
+
+    if steps_value is None and horizon_value is None:
+        horizon_value = pd.Timedelta(days=2)
+
+    method_normalised = str(method).lower()
+    if method_normalised not in {
+        "linear_trend",
+        "moving_average",
+        "seasonal_trend",
+        "auto_select",
+    }:
+        raise ComponentInputValidationException(
+            "`method` must be one of 'auto_select', 'linear_trend', 'moving_average' or 'seasonal_trend'",
+            error_code="422",
+            invalid_component_inputs=["method"],
+        )
+
+    return steps_value, horizon_value, method_normalised
+
+
 ### Functions regarding Step 2 in the main function
 # Time series resampling (median_diff)
 def resample_time_series_if_needed(
@@ -313,10 +373,7 @@ def estimate_residual_scale(
     residuals = residuals.tail(max_points)
     median = float(residuals.median())
     mad = float((residuals - median).abs().median())
-    if mad > 0:
-        scale = 1.4826 * mad
-    else:
-        scale = float(residuals.std(ddof=0))
+    scale = 1.4826 * mad if mad > 0 else float(residuals.std(ddof=0))
     if not np.isfinite(scale) or scale <= 0:
         return None
     return scale
@@ -814,7 +871,7 @@ COMPONENT_INFO = {
     "name": "Simple Time Series Forecast",
     "category": "Time Series Analysis",
     "description": "Quick forecast baseline for arbitrary time series inputs.",
-    "version_tag": "1.0.1",
+    "version_tag": "1.1.0",
     "id": "e20049ad-272f-4588-9358-c123b6c813a0",
     "revision_group_id": "e2f66407-8297-44fe-8a91-0ed6ce72f553",
     "state": "RELEASED",
@@ -836,59 +893,10 @@ def main(
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    ### Step 1: Validate input parameters
-    steps_value: int | None = None
-    horizon_value: pd.Timedelta | None = None
-
-    if forecast_steps is not None and forecast_horizon is not None:
-        raise ComponentInputValidationException(
-            "Please provide either `forecast_steps` or `forecast_horizon`, not both.",
-            error_code="422",
-            invalid_component_inputs=["forecast_steps", "forecast_horizon"],
-        )
-
-    if forecast_steps is not None:
-        if not isinstance(forecast_steps, int) or forecast_steps <= 0:
-            raise ComponentInputValidationException(
-                "`forecast_steps` must be a positive integer",
-                error_code="422",
-                invalid_component_inputs=["forecast_steps"],
-            )
-        steps_value = forecast_steps
-    elif forecast_horizon is not None:
-        horizon_text = str(forecast_horizon).strip()
-        if horizon_text:
-            try:
-                horizon_value = pd.to_timedelta(horizon_text)
-            except (TypeError, ValueError) as exc:
-                raise ComponentInputValidationException(
-                    "`forecast_horizon` must be a valid duration string (e.g. '12H' or '2D')",
-                    error_code="422",
-                    invalid_component_inputs=["forecast_horizon"],
-                ) from exc
-            if horizon_value <= pd.Timedelta(0):
-                raise ComponentInputValidationException(
-                    "`forecast_horizon` must describe a positive duration",
-                    error_code="422",
-                    invalid_component_inputs=["forecast_horizon"],
-                )
-
-    if steps_value is None and horizon_value is None:
-        # Use the documented default horizon if nothing explicit was supplied.
-        horizon_value = pd.Timedelta(days=2)
-
-    method_normalised = str(method).lower()
-    if method_normalised not in {
-        "linear_trend",
-        "moving_average",
-        "seasonal_trend",
-        "auto_select",
-    }:
-        raise ComponentInputValidationException(
-            "`method` must be one of 'auto_select', 'linear_trend', 'moving_average' or 'seasonal_trend'",
-            error_code="422",
-            invalid_component_inputs=["method"],
-        )
+    ### Step 1: Validate the input
+    steps_value, horizon_value, method_normalised = validate_inputs(
+        forecast_steps, forecast_horizon, method
+    )
 
     ### Step 2: Resample and clean the time series
     prepared, inferred_frequency = resample_time_series_if_needed(series)
