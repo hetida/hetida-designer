@@ -148,8 +148,7 @@ def resample_time_series_if_needed(
         )
     if not pd.api.types.is_datetime64_any_dtype(series.index.dtype):
         raise ComponentInputValidationException(
-            "Indices of series must be datetime, but are of type "
-            + str(series.index.dtype),
+            "Indices of series must be datetime, but are of type " + str(series.index.dtype),
             error_code="422",
             invalid_component_inputs=["series"],
         )
@@ -179,9 +178,7 @@ def resample_time_series_if_needed(
                             end=grouped.index.max(),
                             freq=median_diff,
                         )
-                        resampled = grouped.reindex(regular_index).interpolate(
-                            method="time"
-                        )
+                        resampled = grouped.reindex(regular_index).interpolate(method="time")
                         needs_resample = True
 
     return (resampled if needs_resample else ordered, inferred_freq)
@@ -309,9 +306,7 @@ def estimate_residual_scale(
     if series.empty:
         return None
     window = max(3, min(rolling_window, len(series)))
-    trend = (
-        series.rolling(window=window, min_periods=max(2, window // 2)).mean().shift(1)
-    )
+    trend = series.rolling(window=window, min_periods=max(2, window // 2)).mean().shift(1)
     residuals = (series - trend).dropna()
     if residuals.empty:
         return None
@@ -423,9 +418,7 @@ def smooth_trend_values(
     trend_series = trend_series.ffill().bfill()
     if trend_series.isna().any():
         slope, intercept = np.polyfit(positions, values, 1)
-        trend_series = pd.Series(
-            slope * positions + intercept, index=working_series.index
-        )
+        trend_series = pd.Series(slope * positions + intercept, index=working_series.index)
     return trend_series.to_numpy(dtype=float)
 
 
@@ -613,9 +606,7 @@ def build_forecast_series(
 
 
 # Align forecast start to last value
-def align_seasonal_forecast_start(
-    values: pd.Series, reference_value: float
-) -> pd.Series:
+def align_seasonal_forecast_start(values: pd.Series, reference_value: float) -> pd.Series:
     if values.empty:
         return values
     offset = reference_value - float(values.iloc[0])
@@ -666,14 +657,8 @@ def run_selected_method(
         forecast_values = moving_average_forecast(series, steps)
         effective_method = "moving_average"
 
-    if (
-        effective_method == "seasonal_trend"
-        and season_length_used
-        and floor_value is not None
-    ):
-        floor_slots = detect_seasonal_floor_slots(
-            series, season_length_used, floor_value
-        )
+    if effective_method == "seasonal_trend" and season_length_used and floor_value is not None:
+        floor_slots = detect_seasonal_floor_slots(series, season_length_used, floor_value)
         if floor_slots:
             for step in range(steps):
                 slot = (base_length + step) % season_length_used
@@ -686,9 +671,7 @@ def run_selected_method(
         tail_window = series.tail(tail_length)
         reference_value = float(tail_window.mean()) if not tail_window.empty else np.nan
         if not np.isnan(reference_value):
-            forecast_values = align_seasonal_forecast_start(
-                forecast_values, reference_value
-            )
+            forecast_values = align_seasonal_forecast_start(forecast_values, reference_value)
 
     if floor_value is not None:
         forecast_values = forecast_values.clip(lower=floor_value)
