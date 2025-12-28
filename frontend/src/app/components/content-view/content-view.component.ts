@@ -151,6 +151,15 @@ export class ContentViewComponent implements OnInit {
     }
   }
 
+  _onMiddleClick(event: MouseEvent, tabItem: any): void {
+    // Close tab if middle mouse button is pressed
+    if (event.button === 1) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._onTabClose(tabItem);
+    }
+  }
+
   _closePopover(): void {
     this.popoverService.closePopover();
   }
