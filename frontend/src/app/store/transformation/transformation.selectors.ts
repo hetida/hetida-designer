@@ -79,3 +79,24 @@ export const selectTransformationsByCategoryAndName = (
     }
   );
 };
+
+export const selectTransformationsByRevisionGroupId = (
+  transformationType: TransformationType,
+  revGroupId: string,
+  includeDeprecated: boolean = false
+) => {
+  return createSelector(
+    selectTransformationState,
+    (state: TransformationState) => {
+      return Object.values(state.entities)
+        .filter(
+          transformation => transformation.revision_group_id === revGroupId
+        )
+        .filter(transformation => transformation.type === transformationType)
+        .filter(
+          transformation =>
+            transformation.state !== RevisionState.DISABLED || includeDeprecated
+        );
+    }
+  );
+};
