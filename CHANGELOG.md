@@ -1,3 +1,8 @@
+
+* option deprecte other revisions when releasing a new one
+* recommend semver patch version increase for version tag upon new revision in frontend if previous revision has a simple semver version tag
+* add logging import + setup to default component code
+
 ## 0.13.7
 * compatibility fix for psycopg3 for structure upserting for large number of sources / sinks
 
