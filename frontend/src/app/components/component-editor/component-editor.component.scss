@@ -1,10 +1,37 @@
 :host {
-  height: 100%;
-  width: 100%;
+    height: 100%;
+    width: 100%;
 }
 
 ::ng-deep .monaco-hover a {
-  text-decoration: none !important;
-  color: inherit !important;
-  pointer-events: none;
+    text-decoration: none !important;
+    color: inherit !important;
+    pointer-events: none;
+}
+
+.save-indicator {
+    position: absolute;
+    top: 43px;
+    right: 15%;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 10;
+    transition: all 0.3s ease;
+
+    &.saved {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    &.unsaved {
+        background-color: #ff9800;
+        color: white;
+    }
+
+    &.saving {
+        background-color: #2196f3;
+        color: white;
+    }
 }
