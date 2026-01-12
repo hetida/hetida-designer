@@ -1,11 +1,11 @@
 import {
-    Component,
-    DestroyRef,
-    inject,
-    Input,
-    OnDestroy,
-    OnInit,
-    ViewChild
+  Component,
+  DestroyRef,
+  inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of, Subject } from 'rxjs';
@@ -21,240 +21,264 @@ import { selectTransformationById } from 'src/app/store/transformation/transform
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 
 @Component({
-    selector: 'hd-component-editor',
-    templateUrl: './component-editor.component.html',
-    styleUrls: ['./component-editor.component.scss']
+  selector: 'hd-component-editor',
+  templateUrl: './component-editor.component.html',
+  styleUrls: ['./component-editor.component.scss']
 })
 export class ComponentEditorComponent implements OnInit, OnDestroy {
-    @ViewChild('monacoEditor', { static: false }) monacoEditorComponent: any;
+  @ViewChild('monacoEditor', { static: false }) monacoEditorComponent: any;
 
-    public editorOptions = {
-        theme: 'vs-dark',
-        language: 'python',
-        readOnly: false,
-        wordWrap: 'on'
-    };
+  public editorOptions = {
+    theme: 'vs-dark',
+    language: 'python',
+    readOnly: false,
+    wordWrap: 'on'
+  };
 
-    // Add to the class properties
-    public saveStatus: 'saved' | 'unsaved' | 'saving' = 'saved';
+  public saveStatus: 'saved' | 'unsaved' | 'saving' = 'saved';
+  public showIndicator = false;
+  private saveStatusTimer: any;
 
-    // only temporary
-    public codeCopy: string;
-    public lastSavedCode: string;
-    private _isAutoSaved = false;
-    private readonly _autoSave$ = new Subject<void>();
-    private readonly _autoSaveTimer$ = this._autoSave$.pipe(
-        debounceTime(environment.autosaveTimer)
-    );
+  // only temporary
+  public codeCopy: string;
+  public lastSavedCode: string;
+  private _isAutoSaved = false;
+  private readonly _autoSave$ = new Subject<void>();
+  private readonly _autoSaveTimer$ = this._autoSave$.pipe(
+    debounceTime(environment.autosaveTimer)
+  );
 
-    private readonly themeMap: Map<string, string> = new Map<string, string>([
-        ['dark-theme', 'vs-dark'],
-        ['light-theme', 'vs']
-    ]);
+  private readonly themeMap: Map<string, string> = new Map<string, string>([
+    ['dark-theme', 'vs-dark'],
+    ['light-theme', 'vs']
+  ]);
 
-    private _componentTransformation: ComponentTransformation;
-    private readonly _destroyRef = inject(DestroyRef);
-    private _editorInstance: any;
-    private linkDisposable: any;
+  private _componentTransformation: ComponentTransformation;
+  private readonly _destroyRef = inject(DestroyRef);
+  private _editorInstance: any;
+  private linkDisposable: any;
 
-    // UUID regex pattern
-    private readonly UUID_REGEX =
-        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+  // UUID regex pattern
+  private readonly UUID_REGEX =
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
-    @Input()
-    set componentTransformation(
-        componentTransformation: ComponentTransformation
-    ) {
-        this._componentTransformation = componentTransformation;
-        if (!this._isAutoSaved) {
-            this.code = this.componentTransformation.content;
-            this.lastSavedCode = this.componentTransformation.content;
-            this.saveStatus = 'saved'; // Add this line
-        }
-        if (this.componentTransformation.state !== RevisionState.DRAFT) {
-            this.editorOptions = {
-                ...this.editorOptions,
-                readOnly: true
-            };
-        }
-        // Resetting _isAutoSaved.
-        this._isAutoSaved = false;
+  @Input()
+  set componentTransformation(
+    componentTransformation: ComponentTransformation
+  ) {
+    this._componentTransformation = componentTransformation;
+    if (!this._isAutoSaved) {
+      this.code = this.componentTransformation.content;
+      this.lastSavedCode = this.componentTransformation.content;
+      this.saveStatus = 'saved';
+      this.showIndicator = false;
+      this.clearSaveStatusTimer();
     }
-
-    get componentTransformation(): ComponentTransformation {
-        return this._componentTransformation;
+    if (this.componentTransformation.state !== RevisionState.DRAFT) {
+      this.editorOptions = {
+        ...this.editorOptions,
+        readOnly: true
+      };
     }
+    // Resetting _isAutoSaved.
+    this._isAutoSaved = false;
+  }
 
-    constructor(
-        private readonly transformationStore: Store<TransformationState>,
-        private readonly tabItemService: TabItemService,
-        private readonly transformationService: TransformationService,
-        private readonly themeService: ThemeService
-    ) { }
+  get componentTransformation(): ComponentTransformation {
+    return this._componentTransformation;
+  }
 
-    ngOnInit() {
-        this.themeService.currentTheme
-            .pipe(takeUntilDestroyed(this._destroyRef))
-            .subscribe(theme => {
-                this.editorOptions = {
-                    ...this.editorOptions,
-                    theme: this.themeMap.get(theme)
-                };
+  constructor(
+    private readonly transformationStore: Store<TransformationState>,
+    private readonly tabItemService: TabItemService,
+    private readonly transformationService: TransformationService,
+    private readonly themeService: ThemeService
+  ) {}
+
+  ngOnInit() {
+    this.themeService.currentTheme
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(theme => {
+        this.editorOptions = {
+          ...this.editorOptions,
+          theme: this.themeMap.get(theme)
+        };
+      });
+
+    this._autoSaveTimer$
+      .pipe(
+        switchMap(() => {
+          if (this.lastSavedCode !== this.code) {
+            this._isAutoSaved = true;
+            this.saveStatus = 'saving';
+            this.showIndicator = true; // Show during saving
+            this.lastSavedCode = this.code;
+            return this.transformationService.updateTransformation({
+              ...this.componentTransformation,
+              content: this.code
             });
+          }
+          return of(null);
+        })
+      )
+      .subscribe(result => {
+        if (result !== null) {
+          this.saveStatus = 'saved';
+          this.showIndicator = true;
+          // Fade out after some time in saved state
+          this.clearSaveStatusTimer();
+          this.saveStatusTimer = setTimeout(() => {
+            this.showIndicator = false;
+          }, 2000);
+        }
+      });
+  }
 
-        this._autoSaveTimer$
-            .pipe(
-                switchMap(() => {
-                    if (this.lastSavedCode !== this.code) {
-                        this._isAutoSaved = true;
-                        this.saveStatus = 'saving';
-                        this.lastSavedCode = this.code;
-                        return this.transformationService.updateTransformation({
-                            ...this.componentTransformation,
-                            content: this.code
-                        });
-                    }
-                    return of(null);
-                })
-            )
-            .subscribe(result => {
-                if (result !== null) {
-                    this.saveStatus = 'saved';
+  public get code(): string {
+    return this.codeCopy;
+  }
+
+  public set code(code: string) {
+    const hasChanged = this.codeCopy !== code;
+    this.codeCopy = code;
+
+    if (hasChanged && this.lastSavedCode !== code) {
+      this.saveStatus = 'unsaved';
+      this.showIndicator = true; // Show indicator when unsaved
+      this.clearSaveStatusTimer(); // Clear any existing timer
+    } else {
+      this.saveStatus = 'saved';
+      this.showIndicator = false; // Do not show indicator when there is no change
+      this.clearSaveStatusTimer(); // Clear any existing timer
+    }
+
+    this._autoSave$.next();
+  }
+
+  // Called when Monaco editor is initialized
+  public onEditorInit(editor: any) {
+    this._editorInstance = editor;
+
+    // Register link provider for UUIDs
+    this.registerLinkProvider();
+
+    // Register link opener to handle clicks
+    this.registerLinkOpener();
+  }
+
+  private registerLinkProvider() {
+    if (!this._editorInstance) {
+      return;
+    }
+    const monaco = (window as any).monaco;
+
+    // Dispose previous provider if exists
+    if (this.linkDisposable) {
+      this.linkDisposable.dispose();
+    }
+
+    // Register link provider for trafo uuid links
+    this.linkDisposable = monaco.languages.registerLinkProvider('python', {
+      provideLinks: (model: any) => {
+        const links: any[] = [];
+        const lines = model.getLinesContent();
+        const regex = new RegExp(this.UUID_REGEX);
+
+        lines.forEach((line: string, lineIndex: number) => {
+          let match;
+
+          while ((match = regex.exec(line)) !== null) {
+            const uuid = match[0];
+            const startColumn = match.index + 1;
+            const endColumn = startColumn + uuid.length;
+
+            this.transformationStore
+              .select(selectTransformationById(uuid))
+              .pipe(first())
+              .subscribe(transformation => {
+                if (!transformation) {
+                  return;
+                  // Do nothing if transformation is null/undefined (no trafo could be found for this uuid)
                 }
-            });
-    }
-
-    public get code(): string {
-        return this.codeCopy;
-    }
-
-    public set code(code: string) {
-        const hasChanged = this.codeCopy !== code;
-        this.codeCopy = code;
-
-        if (hasChanged && this.lastSavedCode !== code) {
-            this.saveStatus = 'unsaved';
-        }
-
-        this._autoSave$.next();
-    }
-
-    // Called when Monaco editor is initialized
-    public onEditorInit(editor: any) {
-        this._editorInstance = editor;
-
-        // Register link provider for UUIDs
-        this.registerLinkProvider();
-
-        // Register link opener to handle clicks
-        this.registerLinkOpener();
-    }
-
-    private registerLinkProvider() {
-        if (!this._editorInstance) {
-            return;
-        }
-        const monaco = (window as any).monaco;
-
-        // Dispose previous provider if exists
-        if (this.linkDisposable) {
-            this.linkDisposable.dispose();
-        }
-
-        // Register link provider for trafo uuid links
-        this.linkDisposable = monaco.languages.registerLinkProvider('python', {
-            provideLinks: (model: any) => {
-                const links: any[] = [];
-                const lines = model.getLinesContent();
-                const regex = new RegExp(this.UUID_REGEX);
-
-                lines.forEach((line: string, lineIndex: number) => {
-                    let match;
-
-                    while ((match = regex.exec(line)) !== null) {
-                        const uuid = match[0];
-                        const startColumn = match.index + 1;
-                        const endColumn = startColumn + uuid.length;
-
-                        this.transformationStore
-                            .select(selectTransformationById(uuid))
-                            .pipe(first())
-                            .subscribe(transformation => {
-                                if (!transformation) {
-                                    return;
-                                    // Do nothing if transformation is null/undefined (no trafo could be found for this uuid)
-                                }
-                                links.push({
-                                    range: {
-                                        startLineNumber: lineIndex + 1,
-                                        startColumn,
-                                        endLineNumber: lineIndex + 1,
-                                        endColumn
-                                    },
-                                    url: this.getUuidLink(uuid),
-                                    tooltip: `${transformation.name} (${transformation.version_tag})`
-                                });
-                            });
-                    }
+                links.push({
+                  range: {
+                    startLineNumber: lineIndex + 1,
+                    startColumn,
+                    endLineNumber: lineIndex + 1,
+                    endColumn
+                  },
+                  url: this.getUuidLink(uuid),
+                  tooltip: `${transformation.name} (${transformation.version_tag})`
                 });
-
-                return { links };
-            }
+              });
+          }
         });
-    }
 
-    private registerLinkOpener() {
-        // Override the default link opener to open in new hetida designer tab
-        this._editorInstance.onMouseDown((e: any) => {
-            if (e.event.ctrlKey || e.event.metaKey) {
-                const position = e.target.position;
-                if (position) {
-                    const model = this._editorInstance.getModel();
-                    const lineContent = model.getLineContent(position.lineNumber);
+        return { links };
+      }
+    });
+  }
 
-                    // Find UUID at cursor position
-                    let match;
-                    const regex = new RegExp(this.UUID_REGEX);
+  private registerLinkOpener() {
+    // Override the default link opener to open in new hetida designer tab
+    this._editorInstance.onMouseDown((e: any) => {
+      if (e.event.ctrlKey || e.event.metaKey) {
+        const position = e.target.position;
+        if (position) {
+          const model = this._editorInstance.getModel();
+          const lineContent = model.getLineContent(position.lineNumber);
 
-                    while ((match = regex.exec(lineContent)) !== null) {
-                        const startColumn = match.index + 1;
-                        const endColumn = startColumn + match[0].length;
+          // Find UUID at cursor position
+          let match;
+          const regex = new RegExp(this.UUID_REGEX);
 
-                        // Check if cursor is within this UUID range
-                        if (
-                            position.column >= startColumn &&
-                            position.column <= endColumn
-                        ) {
-                            const uuid = match[0];
+          while ((match = regex.exec(lineContent)) !== null) {
+            const startColumn = match.index + 1;
+            const endColumn = startColumn + match[0].length;
 
-                            // only open tab if trafo exists:
-                            this.transformationStore
-                                .select(selectTransformationById(uuid))
-                                .pipe(first())
-                                .subscribe(transformation => {
-                                    if (transformation) {
-                                        // open trafo in new tab
-                                        this.tabItemService.addTransformationTab(uuid);
+            // Check if cursor is within this UUID range
+            if (
+              position.column >= startColumn &&
+              position.column <= endColumn
+            ) {
+              const uuid = match[0];
 
-                                        e.event.preventDefault();
-                                        e.event.stopPropagation();
-                                    }
-                                });
-                            return;
-                        }
-                    }
-                }
+              // only open tab if trafo exists:
+              this.transformationStore
+                .select(selectTransformationById(uuid))
+                .pipe(first())
+                .subscribe(transformation => {
+                  if (transformation) {
+                    // open trafo in new tab
+                    this.tabItemService.addTransformationTab(uuid);
+
+                    e.event.preventDefault();
+                    e.event.stopPropagation();
+                  }
+                });
+              return;
             }
-        });
-    }
-
-    private getUuidLink(uuid: string): string {
-        return `/home?id=${uuid}`;
-    }
-
-    ngOnDestroy() {
-        if (this.linkDisposable) {
-            this.linkDisposable.dispose();
+          }
         }
+      }
+    });
+  }
+
+  private getUuidLink(uuid: string): string {
+    return `/home?id=${uuid}`;
+  }
+
+  private clearSaveStatusTimer() {
+    if (this.saveStatusTimer) {
+      clearTimeout(this.saveStatusTimer);
+      this.saveStatusTimer = null;
     }
+  }
+
+  ngOnDestroy() {
+    if (this.linkDisposable) {
+      this.linkDisposable.dispose();
+    }
+    this.clearSaveStatusTimer();
+  }
 }

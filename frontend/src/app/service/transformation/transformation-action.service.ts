@@ -56,6 +56,7 @@ import {
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
+import { IOTypeOption } from 'hetida-flowchart/types/IOTypeOption';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -75,7 +76,10 @@ export class TransformationActionService {
     private readonly resultDialogService: TextResultDialogService
   ) {}
 
-  public async execute(transformation: Transformation) {
+  public async execute(
+    transformation: Transformation,
+    useCurrentTestWiring: boolean = false
+  ) {
     if (this.isIncomplete(transformation)) {
       return;
     }
@@ -91,6 +95,34 @@ export class TransformationActionService {
         'A new component type is introduced or the type property of item does not have the correct spelling'
       );
       title = 'Execute Unknown';
+    }
+
+    if (useCurrentTestWiring) {
+      // Validate that all required inputs have wirings in the current test_wiring
+      const requiredInputs = transformation.io_interface.inputs.filter(
+        input => input.type === IOTypeOption.REQUIRED
+      );
+
+      const wiredInputIds = new Set(
+        transformation.test_wiring.input_wirings.map(
+          wiring => wiring.workflow_input_name
+        )
+      );
+
+      const missingWirings = requiredInputs.filter(
+        input => !wiredInputIds.has(input.name)
+      );
+
+      if (missingWirings.length > 0) {
+        console.error('Missing wirings for required inputs:', missingWirings);
+        // continue with the normal procedure, i.e. open the wiring dialog
+      } else {
+        // execute with test wiring instead of the normal procedure.
+        this.transformationService
+          .testTransformation(transformation.id, transformation.test_wiring)
+          .subscribe();
+        return;
+      }
     }
 
     const adapterList = await lastValueFrom(
