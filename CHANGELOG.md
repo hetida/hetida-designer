@@ -1,5 +1,10 @@
 
-* option deprecte other revisions when releasing a new one
+
+* Add hotkey for test execution dialog (Shift+Enter)
+* Add hotkey for quick test execution (using the current test wiring, without opening the execution/wiring dialog) (Alt+Enter)
+* Add hotkey (ESC) for closing the execution result / protocol view.
+* Add autosave status indicator
+* option to deprecate other revisions when releasing a new one
 * recommend semver patch version increase for version tag upon new revision in frontend if previous revision has a simple semver version tag
 * add logging import + setup to default component code
 
