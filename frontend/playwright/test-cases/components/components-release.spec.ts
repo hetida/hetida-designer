@@ -44,7 +44,7 @@ ${componentInputData}
   );
 
   // Configure component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
@@ -85,7 +85,7 @@ ${componentInputData}
     .innerText();
 
   // Add component documentation
-  await hetidaDesigner.clickIconInToolbar('Open documentation');
+  await hetidaDesigner.clickIconInToolbar('Open_documentation');
   await page.waitForSelector('hd-documentation-editor >> textarea');
   await hetidaDesigner.typeInDocumentationEditor(componentDocumentation);
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
@@ -96,7 +96,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
 
   // Get released component details
-  await hetidaDesigner.clickIconInToolbar('Edit component details');
+  await hetidaDesigner.clickIconInToolbar('Edit');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Edit component ${componentName} ${componentTag}")`
   );
@@ -107,7 +107,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId('cancel-copy-transformation-dialog');
 
   // Get released component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
@@ -141,7 +141,7 @@ ${componentInputData}
     .innerText();
 
   // Get released component documentation
-  await hetidaDesigner.clickIconInToolbar('Open documentation');
+  await hetidaDesigner.clickIconInToolbar('Open_documentation');
   await page.waitForSelector(
     'hd-documentation-editor >> .editor-and-preview__preview'
   );

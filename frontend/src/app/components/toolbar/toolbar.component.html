@@ -3,6 +3,7 @@
     <mat-icon
       class="clickable unselectable"
       title="Edit {{ transformation.type | lowercase }} details"
+      data-testid="Edit"
       (click)="editDetails()"
     >
       edit
@@ -10,6 +11,7 @@
     <mat-icon
       class="clickable unselectable"
       title="Configure I/O"
+      data-testid="Configure_IO"
       (click)="configureIO()"
       [ngClass]="{
         disabled: isWorkflowWithoutIo
@@ -19,6 +21,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ executeTooltip }}"
+      data-testid="Execute"
       (click)="execute()"
       [ngClass]="{ disabled: incompleteFlag }"
       >play_circle_outline</mat-icon
@@ -28,18 +31,21 @@
       <mat-icon
         class="clickable unselectable"
         title="Show entire workflow"
+        data-testid="Show_entire_workflow"
         (click)="showWorkflow()"
         >zoom_out_map</mat-icon
       >
       <mat-icon
         class="clickable unselectable"
         title="Zoom in"
+        data-testid="Zoom_in"
         (click)="zoomIn()"
         >zoom_in</mat-icon
       >
       <mat-icon
         class="clickable unselectable"
         title="Zoom out"
+        data-testid="Zoom_out"
         (click)="zoomOut()"
         >zoom_out</mat-icon
       >
@@ -54,6 +60,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ upgradeWorkflowOperatorsTooltip }}"
+      data-testid="Upgrade_workflow_operators"
       (click)="upgradeWorkflowOperators()"
       *ngIf="isWorkflow"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
@@ -64,6 +71,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ updateExpandTooltip }}"
+      data-testid="Update_and_Expand_code"
       (click)="updateExpand()"
       *ngIf="isComponent"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
@@ -73,6 +81,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ unitTestTooltip }}"
+      data-testid="Run_Unit_Tests"
       (click)="unitTestComponent()"
       *ngIf="isComponent"
     >
@@ -82,6 +91,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ publishTooltip }}"
+      data-testid="Publish"
       (click)="publish()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
     >
@@ -90,17 +100,23 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ newRevisionTooltip }}"
+      data-test-id="New_revision"
       (click)="newRevision()"
       [ngClass]="{ disabled: !isReleasedOrDeprecated() }"
       >plus_one</mat-icon
     >
-    <mat-icon class="clickable unselectable" title="Copy" (click)="copy()"
+    <mat-icon
+      class="clickable unselectable"
+      title="Copy"
+      data-testid="Copy"
+      (click)="copy()"
       >file_copy</mat-icon
     >
     <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ deprecateTooltip }}"
+      data-testid="Deprecate"
       (click)="deprecate()"
       [ngClass]="{ disabled: !isReleased() }"
       >desktop_access_disabled</mat-icon
@@ -108,6 +124,7 @@
     <mat-icon
       class="clickable unselectable"
       title="{{ deleteTooltip }}"
+      data-testid="Delete"
       (click)="delete()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
       >delete_forever</mat-icon
@@ -116,6 +133,7 @@
     <mat-icon
       class="clickable unselectable"
       title="Open documentation"
+      data-testid="Open_documentation"
       (click)="showDocumentation()"
       >description
     </mat-icon>

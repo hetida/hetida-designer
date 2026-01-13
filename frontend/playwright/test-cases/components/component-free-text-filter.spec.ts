@@ -32,7 +32,7 @@ test('Free text filter for component', async ({
   );
 
   // Configure component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
