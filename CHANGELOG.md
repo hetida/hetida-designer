@@ -1,12 +1,11 @@
-
-
+## 0.13.8
 * Add hotkey for test execution dialog (Shift+Enter)
 * Add hotkey for quick test execution (using the current test wiring, without opening the execution/wiring dialog) (Alt+Enter)
 * Add hotkey (ESC) for closing the execution result / protocol view.
 * Add autosave status indicator
 * option to deprecate other revisions when releasing a new one
-* recommend semver patch version increase for version tag upon new revision in frontend if previous revision has a simple semver version tag
-* add logging import + setup to default component code
+* recommend semver patch version increase for version tag upon creating a new revision in frontend if previous revision has a simple semver version tag
+* add logging import + setup to default component code template
 
 ## 0.13.7
 * compatibility fix for psycopg3 for structure upserting for large number of sources / sinks
