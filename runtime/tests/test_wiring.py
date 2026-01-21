@@ -1,5 +1,6 @@
 import json
 import os
+from unittest import mock
 from urllib.parse import quote_plus
 
 import pytest
@@ -279,3 +280,38 @@ async def test_uri_output_wiring(mocked_clean_test_db_session, async_test_client
         assert resp.status_code == 200
         assert resp.json()["error"] is None
         assert len(resp.json()["output_results_by_output_name"]) == 0  # no outputs
+
+
+@pytest.mark.asyncio
+async def test_uri_wiring_shortcut(mocked_clean_test_db_session, async_test_client):
+    with TrafoCollection(save_to_db=True) as tc:
+        pass_trough_int = tc.add_from_json_file(
+            os.path.join(
+                "transformations",
+                "components",
+                "connectors",
+                "pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
+            )
+        )
+
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.uri_wiring_shortcuts",
+        new={"pt": ("component-adapter", str(pass_trough_int.id))},
+    ) as _fixture:
+        async with async_test_client as ac:
+            exec_input = ExecByIdInput(
+                id=pass_trough_int.id,
+                job_id="bbbbbbbb-3cdf-45a4-98ad-bbbbbbbbbbbb",
+                wiring=WorkflowWiring(
+                    input_wirings=[
+                        {
+                            "uri": "hd://pt?input=55",
+                            "workflow_input_name": "input",
+                        }
+                    ]
+                ),
+            )
+            resp = await ac.post(
+                "/api/transformations/execute", json=json.loads(exec_input.model_dump_json())
+            )
+            assert resp.status_code == 200

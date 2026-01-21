@@ -185,48 +185,7 @@ class OutputWiring(BaseModel):
             # do not run this validator again!
             return self
 
-        if self.uri.host:
-            # adapter key is host:
-            extracted_key = self.uri.host
-            self.adapter_id = extracted_key
-
-        if self.uri.path:
-            # ref_id is path:
-            ref_id = self.uri.path.lstrip("/")
-            self.ref_id = ref_id
-
-        # query params can provide (updated) filter values
-        if self.uri.query:
-            parsed_params: dict[str, list[str]] = parse_qs(self.uri.query)
-
-            # Convert to dict[str, str]
-            uri_filters = {
-                # repeated query param is stored as json array string value
-                filter_key_adapter.validate_python(key): (
-                    values[0] if len(values) == 1 else json.dumps(values)
-                )
-                for key, values in parsed_params.items()
-                if values  # Skip empty value lists
-            }
-
-            # Merge: URI params override existing filters
-            self.filters = {**self.filters, **uri_filters}
-
-        if self.uri.fragment:
-            # update other, less used, wiring fields from fragment
-            parsed_fragment: dict[str, list[str]] = parse_qs(self.uri.query)
-
-            uri_fragment_info = UriFragmentWiringInfo(**parsed_fragment)
-
-            if uri_fragment_info.ref_id_type is not None and "ref_id_type" in parsed_fragment:
-                self.ref_id_type = uri_fragment_info.ref_id_type
-            if uri_fragment_info.ref_key is not None and "ref_key" in parsed_fragment:
-                self.ref_key = uri_fragment_info.ref_key
-            if (
-                uri_fragment_info.use_default_value is not None
-                and "use_default_value" in parsed_fragment
-            ):
-                self.use_default_value = uri_fragment_info.use_default_value
+        update_wiring_from_uri(self)
 
         # revalidate the new data
         revalidated = OutputWiring.model_validate(
@@ -396,50 +355,7 @@ class InputWiring(BaseModel):
             # do not run this validator again!
             return self
 
-        if self.uri.host:
-            # adapter key is host:
-            extracted_key = self.uri.host
-            self.adapter_id = extracted_key
-
-        if self.uri.path:
-            # ref_id is path:
-            ref_id = self.uri.path.lstrip("/")
-            self.ref_id = ref_id
-
-        # query params can provide (updated) filter values
-        if self.uri.query:
-            parsed_params: dict[str, list[str]] = parse_qs(self.uri.query)
-
-            # Convert to dict[str, str]
-            uri_filters = {
-                # repeated query param is stored as json array string value
-                filter_key_adapter.validate_python(key): (
-                    values[0] if len(values) == 1 else json.dumps(values)
-                )
-                for key, values in parsed_params.items()
-                if values  # Skip empty value lists
-            }
-
-            # Merge: URI params override existing filters
-            self.filters = {**self.filters, **uri_filters}
-
-        if self.uri.fragment:
-            # update other, less used, wiring fields from fragment
-            parsed_fragment: dict[str, list[str]] = parse_qs(self.uri.query)
-
-            uri_fragment_info = UriFragmentWiringInfo(**parsed_fragment)
-
-            if uri_fragment_info.ref_id_type is not None and "ref_id_type" in parsed_fragment:
-                self.ref_id_type = uri_fragment_info.ref_id_type
-            if uri_fragment_info.ref_key is not None and "ref_key" in parsed_fragment:
-                self.ref_key = uri_fragment_info.ref_key
-            if uri_fragment_info.attrs is not None and "attrs" in parsed_fragment:
-                self.attrs = uri_fragment_info.attrs
-            if (
-                uri_fragment_info.use_default_value is not None
-                and "use_default_value" in parsed_fragment
-            ):
-                self.use_default_value = uri_fragment_info.use_default_value
+        update_wiring_from_uri(self)
 
         # revalidate the new data
         revalidated = InputWiring.model_validate(
@@ -455,6 +371,82 @@ class InputWiring(BaseModel):
             )
 
         return self
+
+
+def update_wiring_from_uri(wiring: InputWiring | OutputWiring) -> None:
+    """Modify wiring inplace with uri wiring if present
+
+    This actually resolves uri wirings into actual wirings by overwriting
+    fields with values from the uri, if present there.
+
+    That is, infos provided as part of the uri have higher priority than
+    directly provided, i.e. they overwrite them if both are present.
+
+    Also resolves uri_wiring_shortcuts if configured.
+    """
+    extracted_key: str | None = None
+    extracted_path: str | None = None
+    from hetdesrun.webservice.config import get_config  # noqa: PLC0415
+
+    if wiring.uri is None:
+        return
+
+    if wiring.uri.host:
+        config = get_config()
+        if wiring.uri.host in config.uri_wiring_shortcuts:
+            extracted_key, extracted_path = config.uri_wiring_shortcuts[wiring.uri.host]
+            extracted_path = extracted_path.lstrip("/")
+        else:
+            extracted_key = wiring.uri.host
+
+        wiring.adapter_id = extracted_key
+
+    if wiring.uri.path or extracted_path:
+        # ref_id is path:
+        if extracted_path is None and wiring.uri.path is not None:
+            extracted_path = wiring.uri.path.lstrip("/")
+
+        wiring.ref_id = extracted_path
+
+    # query params can provide (updated) filter values
+    if wiring.uri.query:
+        parsed_params: dict[str, list[str]] = parse_qs(wiring.uri.query)
+
+        # Convert to dict[str, str]
+        uri_filters = {
+            # repeated query param is stored as json array string value
+            filter_key_adapter.validate_python(key): (
+                values[0] if len(values) == 1 else json.dumps(values)
+            )
+            for key, values in parsed_params.items()
+            if values  # Skip empty value lists
+        }
+
+        # Merge: URI params override existing filters
+        wiring.filters = {**wiring.filters, **uri_filters}
+
+    if wiring.uri.fragment:
+        # update other, less used, wiring fields from fragment
+        parsed_fragment: dict[str, list[str]] = parse_qs(wiring.uri.query)
+
+        uri_fragment_info = UriFragmentWiringInfo(**parsed_fragment)
+
+        if uri_fragment_info.ref_id_type is not None and "ref_id_type" in parsed_fragment:
+            wiring.ref_id_type = uri_fragment_info.ref_id_type
+        if uri_fragment_info.ref_key is not None and "ref_key" in parsed_fragment:
+            wiring.ref_key = uri_fragment_info.ref_key
+        if (
+            uri_fragment_info.attrs is not None
+            and "attrs" in parsed_fragment
+            and isinstance(wiring, InputWiring)
+        ):
+            wiring.attrs = uri_fragment_info.attrs
+        if (
+            uri_fragment_info.use_default_value is not None
+            and "use_default_value" in parsed_fragment
+            and isinstance(wiring, InputWiring)
+        ):
+            wiring.use_default_value = uri_fragment_info.use_default_value
 
 
 class GridstackPositioningType(StrEnum):
