@@ -67,6 +67,10 @@ asyncstdlib==3.13.1 \
     --hash=sha256:a64da68176af1da8c699026cad98f70b184f82b4cb39739e0b9701a2a7541cf9 \
     --hash=sha256:f47564b9a3566f8f9172631d88c75fe074b0ce2127963b7265d310df9aeed03a
     # via -r ./requirements.in
+attrs==25.4.0 \
+    --hash=sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11 \
+    --hash=sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373
+    # via glom
 black==25.11.0 \
     --hash=sha256:0a1d40348b6621cc20d3d7530a5b8d67e9714906dfd7346338249ad9c6cedf2b \
     --hash=sha256:0c0f7c461df55cf32929b002335883946a4893d759f2df343389c4396f3b6b37 \
@@ -128,6 +132,12 @@ blosc2==3.11.0 \
     --hash=sha256:e3273980661b35aa7d16651e05400a3e45c0c7a3222619f089016e6d95747b1c \
     --hash=sha256:fb8c1be5026606b402ea068ea94ab2825a312a6b57c03cbf9a7ec4b98190f627
     # via tables
+boltons==25.0.0 \
+    --hash=sha256:dc9fb38bf28985715497d1b54d00b62ea866eca3938938ea9043e254a3a6ca62 \
+    --hash=sha256:e110fbdc30b7b9868cb604e3f71d4722dd8f4dcb4a5ddd06028ba8f1ab0b5ace
+    # via
+    #   face
+    #   glom
 boto3==1.40.71 \
     --hash=sha256:4ac9ee8d1629e45d6b6adc727795d1fc9852e998cd1a73e4eda50f6120677bab \
     --hash=sha256:6d38e0250154552658be92a62cd48adf8ca8fd4abc181fb52d13371b53179503
@@ -630,6 +640,10 @@ et-xmlfile==2.0.0 \
     --hash=sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa \
     --hash=sha256:dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54
     # via openpyxl
+face==24.0.0 \
+    --hash=sha256:0e2c17b426fa4639a4e77d1de9580f74a98f4869ba4c7c8c175b810611622cd3 \
+    --hash=sha256:611e29a01ac5970f0077f9c577e746d48c082588b411b33a0dd55c4d872949f6
+    # via glom
 fastapi==0.121.1 \
     --hash=sha256:2c5c7028bc3a58d8f5f09aecd3fd88a000ccc0c5ad627693264181a3c33aa1fc \
     --hash=sha256:b6dba0538fd15dab6fe4d3e5493c3957d8a9e1e9257f56446b5859af66f32441
@@ -692,6 +706,10 @@ geojson==3.2.0 \
 geopandas==1.1.1 \
     --hash=sha256:1745713f64d095c43e72e08e753dbd271678254b24f2e01db8cdb8debe1d293d \
     --hash=sha256:589e61aaf39b19828843df16cb90234e72897e2579be236f10eee0d052ad98e8
+    # via -r ./requirements.in
+glom==25.12.0 \
+    --hash=sha256:1ae7da88be3693df40ad27bdf57a765a55c075c86c971bcddd67927403eb0069 \
+    --hash=sha256:b9f21e77f71a6576a43864e85066b8cc3f0f778d0d50961563f8981377a6dcb1
     # via -r ./requirements.in
 greenlet==3.2.4 \
     --hash=sha256:00fadb3fedccc447f517ee0d3fd8fe49eae949e1cd0f6a611818f4f6fb7dc83b \
