@@ -7,6 +7,11 @@ from hetdesrun.helpers.metadata import (
     get_display_names,
     get_measurements,
     get_metric_info,
+    get_series_display_name,
+    get_series_measurement,
+    get_series_name,
+    get_series_short_display_name,
+    get_series_unit,
     get_units,
 )
 
@@ -231,3 +236,94 @@ def test_get_metric_info():
     assert external_ids_by_metric["UNKNOWN"] is None
     assert external_ids_by_metric["first"] == "external_first"
     assert external_ids_by_metric["second"] == "external_second"
+
+
+series_metadata_1 = json.loads(
+    """{
+    "dataset_metadata": {
+        "metric_key": "id",
+        "single_metric": "series"
+    },
+    "metrics": [
+        {
+            "id": "series",
+            "external_id": "external_first",
+            "unit": "m",
+            "name": "first name"
+        }
+    ]
+    }
+"""
+)
+
+series_metadata_old = json.loads(
+    """
+{
+    "dataset_metadata": {
+      "ref_interval_start_timestamp": "2026-02-06T12:45:00Z",
+      "ref_interval_end_timestamp": "2026-02-06T12:45:00Z",
+      "ref_interval_type": "closed",
+      "ref_metric": "Muster Channel",
+      "ref_data_frequency": null,
+      "ref_data_frequency_offset": null,
+      "invalidation_interval_start": null,
+      "invalidation_interval_end": null,
+      "invalidation_interval_type": null,
+      "invalidate_dataset": null,
+      "delete_invalidated": null,
+      "only_invalidate": null,
+      "ref_dataset_discrete": null,
+      "invalidation_timestamp": null,
+      "new_data_invalidation_date": null
+    },
+    "single_metric_metadata": {
+      "structured_metadata": {
+        "metric": {
+          "name": "Muster Channel",
+          "display_name": null,
+          "short_display_name": "muster",
+          "description": "*neue Beschreibung",
+          "unit": "C°",
+          "value_data_type": null,
+          "external_id": "raspi_demo.Heizung4.Temperature",
+          "channel_id": "67d5fc88-af8f-4901-92d1-cc61090a2023"
+        },
+        "inherited": {},
+        "value_dimensions": {
+          "value": {
+            "display_name": null,
+            "short_display_name": null,
+            "description": null,
+            "unit": "C°",
+            "value_data_type": "float"
+          }
+        }
+      }
+    }
+  }
+
+"""
+)
+
+
+def test_series_unit():
+    s = pd.Series()
+    s.attrs = series_metadata_1
+
+    assert get_series_unit(s) == "m"
+
+    assert get_series_name(s) == "first name"
+    assert get_series_display_name(s) == "first name"
+    assert get_series_short_display_name(s) == "first name"
+
+    assert get_series_measurement(s) is None
+
+    s.attrs = series_metadata_old
+
+    assert get_series_unit(s) == "C°"
+
+    assert get_series_name(s) == "Muster Channel"
+    assert get_series_display_name(s) == "Muster Channel"
+    assert get_series_short_display_name(s) == "muster"
+
+    assert get_series_measurement(s) is None

@@ -11,7 +11,7 @@ of the metadata conventions or simpler metadata structures.
 
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from glom import A, Check, Coalesce, Iter, Merge, S, Spec, T, glom
@@ -21,6 +21,10 @@ def update_dict_and_return_it(start_dict: dict, updated_values_dict: dict) -> di
     """Update a dict and return it"""
     start_dict.update(updated_values_dict)
     return start_dict
+
+
+def spec_not_none(spec: str | Spec) -> Spec:
+    return (spec, Check(validate=lambda x: x is not None))
 
 
 def glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
@@ -191,32 +195,38 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                         default={},
                     ),
                 ),
-                "defaults_by_metric": (
-                    "metrics",
-                    Check(instance_of=list),
-                    build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
-                        S.globals.metric_key,
-                        Coalesce(metadatum_key, default=None),
-                        key_as_value=True,
-                    ),
-                ),
-                "actual_per_metric_per_value_dimensions": (
+                "defaults_by_metric": Coalesce(
                     (
                         "metrics",
                         Check(instance_of=list),
                         build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
                             S.globals.metric_key,
-                            (
-                                Coalesce("value_dimensions", default={}),
-                                build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
-                                    "column",
-                                    Coalesce(metadatum_key, default=None),
-                                    add_keys_with_none_values=["value"],
-                                ),
-                            ),
+                            Coalesce(metadatum_key, default=None),
                             key_as_value=True,
                         ),
                     ),
+                    default={},
+                ),
+                "actual_per_metric_per_value_dimensions": (
+                    Coalesce(
+                        (
+                            "metrics",
+                            Check(instance_of=list),
+                            build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
+                                S.globals.metric_key,
+                                (
+                                    Coalesce("value_dimensions", default={}),
+                                    build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
+                                        "column",
+                                        Coalesce(metadatum_key, default=None),
+                                        add_keys_with_none_values=["value"],
+                                    ),
+                                ),
+                                key_as_value=True,
+                            ),
+                        ),
+                        default={},
+                    )
                 ),
             },
             lambda x: defaultdict(
@@ -270,11 +280,12 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                 {"value": Coalesce(metadatum_key, default=None)}  # only SERIES / only value column.
             ),
         ),
+        default={},
     )
 
 
 def get_value_dimension_info(
-    multitsframe: pd.DataFrame, value_dim_info: str | Spec
+    multitsframe: pd.DataFrame | pd.Series, value_dim_info: str | Spec
 ) -> defaultdict[str, defaultdict[str, Any]]:
     """Obtain metadata info associated to the value dimensions of the metrics
 
@@ -308,8 +319,20 @@ def get_units(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, s
     return get_value_dimension_info(multitsframe, "unit")
 
 
+def get_names(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
+    return get_value_dimension_info(multitsframe, Coalesce("name", default=None))
+
+
 def get_display_names(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
     return get_value_dimension_info(multitsframe, Coalesce("display_name", "name", default=None))
+
+
+def get_short_display_names(
+    multitsframe: pd.DataFrame,
+) -> defaultdict[str, defaultdict[str, str | None]]:
+    return get_value_dimension_info(
+        multitsframe, Coalesce("short_display_name", "display_name", "name", default=None)
+    )
 
 
 def get_measurements(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
@@ -406,3 +429,80 @@ def get_metric_info(multitsframe: pd.DataFrame, metric_info: str | Spec) -> defa
     spec = spec_by_metric_key(metric_info)
     metric_info = glom(multitsframe.attrs, spec)
     return defaultdict(lambda: None, metric_info)
+
+
+def extract_series_metric_key(metadata: Any) -> Any:
+    return glom(metadata, Coalesce("dataset_metadata.single_metric", default="series"))
+
+
+def get_series_info(series: pd.Series, value_dim_info: str | Spec) -> Any:
+    """Get an arbitrary series info
+
+    Since a series has only one value dimension named "value", this information is
+    equivalent to information on the metric.
+
+    Since the fallback behaviour for this value dimension is to fall back to the metric
+    metadata, we can reuse the code that extracts value_dimension metadata for
+    this value dimension.
+    """
+    series_metric_key = extract_series_metric_key(series.attrs)
+
+    from_new_convention = get_value_dimension_info(series, value_dim_info)[series_metric_key][
+        "value"
+    ]
+    if from_new_convention is not None:
+        return from_new_convention
+
+    # compatibility with some older format
+
+    return glom(
+        series.attrs,
+        Coalesce(
+            spec_not_none(
+                (
+                    "single_metric_metadata.structured_metadata.value_dimensions.value",
+                    value_dim_info,
+                )
+            ),
+            spec_not_none(
+                (
+                    "single_metric_metadata.structured_metadata.metric",
+                    value_dim_info,
+                )
+            ),
+            default=None,
+        ),
+    )
+
+
+def get_series_unit(series: pd.Series) -> str | None:
+    return cast(str | None, get_series_info(series, spec_not_none("unit")))
+
+
+def get_series_name(series: pd.Series) -> str | None:
+    return cast(str | None, get_series_info(series, spec_not_none("name")))
+
+
+def get_series_display_name(series: pd.Series) -> str | None:
+    return cast(
+        str | None,
+        get_series_info(series, Coalesce(spec_not_none("display_name"), spec_not_none("name"))),
+    )
+
+
+def get_series_short_display_name(series: pd.Series) -> str | None:
+    return cast(
+        str | None,
+        get_series_info(
+            series,
+            Coalesce(
+                spec_not_none("short_display_name"),
+                spec_not_none("display_name"),
+                spec_not_none("name"),
+            ),
+        ),
+    )
+
+
+def get_series_measurement(series: pd.Series) -> str | None:
+    return cast(str | None, get_series_info(series, "measurement"))
