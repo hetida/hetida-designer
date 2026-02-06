@@ -2,9 +2,11 @@
 
 This module provides functions to help extracting information from metadata
 provided as .attrs with pandas DataFrame / Series objects following the hetida
-designer metadata conventions. They properly cascades defaults / fallbacks
+designer metadata conventions.
+
+They properly cascade defaults / fallbacks
 and try to provide backwards compatible access to metadata for different versions
-of the metadata conventions.
+of the metadata conventions or simpler metadata structures.
 """
 
 from collections import defaultdict
@@ -16,6 +18,7 @@ from glom import A, Check, Coalesce, Iter, Merge, S, Spec, T, glom
 
 
 def update_dict_and_return_it(start_dict: dict, updated_values_dict: dict) -> dict:
+    """Update a dict and return it"""
     start_dict.update(updated_values_dict)
     return start_dict
 
@@ -25,7 +28,8 @@ def glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
 ) -> Spec:
     """Create dicts with keys from current dict and values from deeper in their value objects
 
-    This function provides a glom spec to do this. It uses https://glom.readthedocs.io/en/latest/tutorial.html#data-driven-assignment.
+    This function provides a glom spec to do this.
+    It uses https://glom.readthedocs.io/en/latest/tutorial.html#data-driven-assignment.
 
     deeper_glom_spec is the spec to get to the deeper values in each value object.
 
@@ -95,18 +99,21 @@ def build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
     continuation_spec: Spec | None = None,
     key_as_value: bool = False,
 ) -> Spec:
-    """
-    Spec to convert a list of objects to a dict using one of their fields (or something deeper)
-    as keys and something else as values — and then proceed with another spec.
+    """Build dict from an iterable
 
-    The key something and the value something can be arbitrary
+    Spec to convert an iterable of objects to a dict using one of their fields
+    (or something deeper) as keys and something else as values.
 
-    To be applied on an iterable!
+    The key something and the value something can be arbitrary specs that are applyable
+    on each item.
 
     The resulting glom spec first produces a dictionary which keys being extracted from
     each element of the iterable using key_spec and values using value_spec.
 
     If given it then proceeds on the resulting object using the continuation_spec.
+
+    add_keys_with_none_values allows to add keys even if they do not occur
+    with a default value of None.
 
     Example:
 
@@ -129,8 +136,6 @@ def build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
 
     # yields:
     {42: 'l', 53: 'm'}
-
-
     """
     if add_keys_with_none_values is None:
         add_keys_with_none_values = []
@@ -149,29 +154,30 @@ def build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
 
 
 def breakpoint_and_continue(x: Any) -> Any:
-    breakpoint()
+    """For testing purposes to insert into a glom spec"""
+    breakpoint()  # noqa: T100
     return x
 
 
 def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
-    """Glom spec that extracts a metadatum by metric by value dimension
+    """Providesglom spec that extracts a metadatum by metric by value dimension
 
-
-    Returns a dict of dicts:
+    The generated glom spec returns a defaultdict of defaultdicts:
         {metric_key: {value_dimension_column_name: metadatum_value}}
+    defaulting to None in the inner default dict.
 
     Properly falls back to respective field in metric metadatum for the "value"
-    value_dimension if this value dimension is not explicitely included.
+    value_dimension if this value dimension is not explicitely included in the
+    metadata of the metric.
 
     Properly falls back to "value_dimensions_shared" metadata if a value_dimension
     is not given for a metric if its available there.
 
-    metadatum_key can also be a spec
-
+    metadatum_key can also be any glom spec.
     """
     return Coalesce(
-        (  # new metdadata convention
-            {
+        (  # current metdadata convention
+            {  # first gather information at different locations in metadata in a dict
                 "metric_key": ("dataset_metadata.metric_key", A.globals.metric_key),
                 "defaults_by_value_dimension": (
                     Coalesce(
@@ -194,7 +200,7 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                         key_as_value=True,
                     ),
                 ),
-                "actual_per_metric_per_value_dimensions": (  # current metadata convention
+                "actual_per_metric_per_value_dimensions": (
                     (
                         "metrics",
                         Check(instance_of=list),
@@ -215,34 +221,36 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
             },
             lambda x: defaultdict(
                 lambda: defaultdict(lambda: None, {}),
-                {  # combine dicts / falling back to defaults
+                {  # combine dicts with gathered information / falling back to defaults
                     metric: defaultdict(
                         lambda: None,
                         {
-                            value_dim: unit
-                            if unit is not None
+                            value_dim: info
+                            if info is not None  # prio 1: use, if explicitely provided
                             else (
                                 x["defaults_by_metric"][metric]
                                 if (
                                     value_dim == "value"
                                     and x["defaults_by_metric"].get(metric) is not None
+                                )  # prio 2: only for "value" value dim: possibly use from metric
+                                else (
+                                    x["defaults_by_value_dimension"].get(
+                                        value_dim, None
+                                    )  # prio 3: from global "value_dimensions_shared"
                                 )
-                                # fallback to metric metadata unit for "value" value dimension
-                                # if provided
-                                else (x["defaults_by_value_dimension"].get(value_dim, None))
                             )
-                            for value_dim, unit in update_dict_and_return_it(
-                                x["defaults_by_value_dimension"].copy(), unit_by_value_dim
+                            for value_dim, info in update_dict_and_return_it(
+                                x["defaults_by_value_dimension"].copy(), info_by_val_dim
                             ).items()
                         },
                     )
-                    for metric, unit_by_value_dim in x[
+                    for metric, info_by_val_dim in x[
                         "actual_per_metric_per_value_dimensions"
                     ].items()
                 },
             ),
         ),
-        (  # current metadata convention
+        (  # older / simpler metadata convention
             "by_metric",
             Check(instance_of=dict),
             glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
@@ -255,8 +263,7 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                 )
             ),
         ),
-        (  # older, currently used by Hetida Platform Channel Data component
-            # by simply attaching the data it gets via SERIES endpoint of adapter
+        (  # another older / simpler metdata structure
             "metrics",
             Check(instance_of=dict),
             glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
@@ -266,29 +273,52 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
     )
 
 
-multits_unit_spec = spec_by_metric_key_by_val_dimension("unit")
+def get_value_dimension_info(
+    multitsframe: pd.DataFrame, value_dim_info: str | Spec
+) -> defaultdict[str, defaultdict[str, Any]]:
+    """Obtain metadata info associated to the value dimensions of the metrics
 
+    Returns a default dict whose values are the entries of the metrics metadata specified via
+    "metric_key" in "dataset_metadata".
 
-def get_units(multitsframe: pd.DataFrame) -> dict[str, dict[str, str | None]]:
-    units_by_metric_by_value_dimension = glom(multitsframe.attrs, multits_unit_spec)
-    return defaultdict(lambda: defaultdict(lambda: None), units_by_metric_by_value_dimension)
+    Its values are defaultdicts whose keys are the "column" entries of the value dimension
+    objects of that metric and whose values are extracted from the value_dimension object
+    using using value_dim_info as a glom Spec, typically just a subfield.
 
+    For the default "value" value dimension, if no concrete / explicit information is available
+    for this value dimension, a corresponding entry in the metric object may be used.
 
-multits_display_name_spec = spec_by_metric_key_by_val_dimension(
-    Coalesce("display_name", "name", default=None)
-)
+    For all value dimensions, if no concrete explicit information is available for that value
+    dimension in the value_dimensions list under the metric, the global "value_dimensions_shared"
+    field of the attrs object is searched for corresponding information.
 
+    If no information is found, None is set as value and is the default value of the
+    inner default dict.
 
-def get_display_names(multitsframe: pd.DataFrame) -> dict[str, dict[str, str | None]]:
-    display_names_by_metric_by_value_dimension = glom(multitsframe.attrs, multits_display_name_spec)
+    For examples we refer to the corresponding unit tests (/tests/helpers/test_metadata.py).
+    """
+    spec = spec_by_metric_key_by_val_dimension(value_dim_info)
+    value_dimension_info_by_metric_by_value_dimension = glom(multitsframe.attrs, spec)
     return defaultdict(
-        lambda: defaultdict(lambda: None), display_names_by_metric_by_value_dimension
+        lambda: defaultdict(lambda: None), value_dimension_info_by_metric_by_value_dimension
     )
+
+
+def get_units(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
+    return get_value_dimension_info(multitsframe, "unit")
+
+
+def get_display_names(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
+    return get_value_dimension_info(multitsframe, Coalesce("display_name", "name", default=None))
+
+
+def get_measurements(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
+    return get_value_dimension_info(multitsframe, "measurement")
 
 
 def spec_by_metric_key(metadatum_key: str | Spec) -> Spec:
     return Coalesce(
-        (  # new metdadata convention
+        (  # current metdadata convention
             {
                 "metric_key": ("dataset_metadata.metric_key", A.globals.metric_key),
                 "by_metric": (
@@ -303,14 +333,13 @@ def spec_by_metric_key(metadatum_key: str | Spec) -> Spec:
             },
             lambda x: defaultdict(lambda: None, x["by_metric"]),
         ),
-        (  # current metadata convention
+        (  # some older, simpler metadata structure
             "by_metric",
             glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
                 Coalesce(metadatum_key, default=None)
             ),
         ),
-        (  # older, currently used by Hetida Platform Channel Data component
-            # by simply attaching the data it gets via SERIES endpoint of adapter
+        (  # another older / simplified metadata structure
             "metrics",
             glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
                 Coalesce(metadatum_key, default=None)
@@ -319,9 +348,61 @@ def spec_by_metric_key(metadatum_key: str | Spec) -> Spec:
     )
 
 
-multits_measurement_spec = spec_by_metric_key("measurement")
+def get_metric_info(multitsframe: pd.DataFrame, metric_info: str | Spec) -> defaultdict[str, Any]:
+    """Obtain a defaultdict of metadata associated to metrics
 
+    In contrast to metadata associated to concrete value dimensions, this
+    function abstracts access to metadata associated to the underlying metric.
 
-def get_measurements(multitsframe: pd.DataFrame) -> dict[str, dict[str, str | None]]:
-    measurements_by_metric = glom(multitsframe.attrs, multits_measurement_spec)
-    return defaultdict(lambda: None, measurements_by_metric)
+    The keys are the entries of the metrics metadata specified via
+    "metric_key" in "dataset_metadata".
+
+    The values are the entries specified via metric_info in the metrics metadata.
+    Note that metric_info is interpreted as a glom Spec.
+
+    The default value of the default dict is None.
+
+    E.g. for
+    multitsframe.attrs = {
+        "dataset_metadata": {
+            "metric_key": "id"
+        },
+        "metrics": [
+            {
+                "id": "first",
+                "external_id": "external_first",
+                "unit": "m",
+                "display_name": "first display name",
+                "value_dimensions": [
+                    {
+                        "column": "temp",
+                        "unit": "C",
+                        "measurement": "temperature"
+                    }
+                ]
+            },
+            {
+                "id": "second",
+                "name": "second name",
+                "external_id": "external_second",
+                "value_dimensions": [
+                    {
+                        "column": "temp",
+                        "unit": "C"
+                    }
+                ]
+            }
+        ]
+    }
+
+    get_metric_info(multitsframe, "external_id")
+    # will yield a default dict with underlying dict:
+    {
+        "first": "external_first",
+        "second": "external_second"
+    }
+
+    """
+    spec = spec_by_metric_key(metric_info)
+    metric_info = glom(multitsframe.attrs, spec)
+    return defaultdict(lambda: None, metric_info)

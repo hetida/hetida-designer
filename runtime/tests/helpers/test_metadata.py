@@ -3,7 +3,12 @@ from copy import deepcopy
 
 import pandas as pd
 
-from hetdesrun.helpers.metadata import get_display_names, get_measurements, get_units
+from hetdesrun.helpers.metadata import (
+    get_display_names,
+    get_measurements,
+    get_metric_info,
+    get_units,
+)
 
 # what the platform currently sends with a single Series:
 
@@ -46,7 +51,12 @@ metadata_with_value_dimensions = json.loads(
         {
             "column": "pressure",
             "unit": "bar",
-            "name": "shared value_dimension pressure name"
+            "name": "shared value_dimension pressure name",
+            "measurement": "pressure"
+        },
+        {
+            "column": "temp",
+            "measurement": "temperature"
         }
     ],
     "metrics": [
@@ -58,7 +68,8 @@ metadata_with_value_dimensions = json.loads(
             "value_dimensions": [
                 {
                     "column": "temp",
-                    "unit": "C"
+                    "unit": "C",
+                    "measurement": "temperature"
                 }
             ]
         },
@@ -76,6 +87,7 @@ metadata_with_value_dimensions = json.loads(
         {
             "id": "third",
             "external_id": "external_third",
+            "measurement": "height",
             "value_dimensions": [
                 {
                     "column": "pressure",
@@ -125,14 +137,19 @@ def test_get_multitsframe_units_from_metadata():
 
 def test_get_multitsframe_measurements_from_metadata():
     df = pd.DataFrame()
-    df.attrs = old_metadata
-    measurements_by_metric = get_measurements(df)
+    df.attrs = metadata_with_value_dimensions
+    measurements_by_metric_by_value_dimension = get_measurements(df)
 
-    assert measurements_by_metric["test_channel"] is None
-    assert measurements_by_metric["some_other_metric"] == "volume"
+    assert measurements_by_metric_by_value_dimension["first"]["temp"] == "temperature"
+    assert measurements_by_metric_by_value_dimension["first"]["value"] is None
+    assert measurements_by_metric_by_value_dimension["first"]["pressure"] == "pressure"
+    assert measurements_by_metric_by_value_dimension["first"]["NOT OCCURING"] is None
+    assert measurements_by_metric_by_value_dimension["NOT OCCURING"]["value"] is None
 
-    # is a default dict
-    assert measurements_by_metric["SOME"] is None
+    assert measurements_by_metric_by_value_dimension["second"]["temp"] == "temperature"
+
+    assert measurements_by_metric_by_value_dimension["third"]["value"] == "height"
+    assert measurements_by_metric_by_value_dimension["third"]["pressure"] == "pressure"
 
 
 def test_get_multitsframe_units_from_metadata_with_value_dimensions():
@@ -204,3 +221,13 @@ def test_get_multitsframe_display_names_from_metadata_with_value_dimensions():
 
     assert display_names_by_metric_by_value_dimension["third"]["pressure"] == "thirds's pressure"
     assert display_names_by_metric_by_value_dimension["third"]["temp"] is None
+
+
+def test_get_metric_info():
+    df = pd.DataFrame()
+    df.attrs = metadata_with_value_dimensions
+    external_ids_by_metric = get_metric_info(df, "external_id")
+
+    assert external_ids_by_metric["UNKNOWN"] is None
+    assert external_ids_by_metric["first"] == "external_first"
+    assert external_ids_by_metric["second"] == "external_second"
