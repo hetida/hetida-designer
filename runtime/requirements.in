@@ -16,6 +16,7 @@ fastparquet
 gekko
 geojson
 geopandas
+glom
 gunicorn
 h5py
 holidays
