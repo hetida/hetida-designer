@@ -1,3 +1,5 @@
+* add support for frames / animations for rendering Plotly plots
+
 ## 0.13.8
 * Add hotkey for test execution dialog (Shift+Enter)
 * Add hotkey for quick test execution (using the current test wiring, without opening the execution/wiring dialog) (Alt+Enter)
