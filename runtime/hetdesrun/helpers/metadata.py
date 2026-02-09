@@ -260,6 +260,13 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                 },
             ),
         ),
+        (  # another simple variant
+            "metric_metadata",
+            Check(instance_of=dict),
+            glom_dict_with_keys_of_current_dict_and_values_something_deeper_nested(
+                {"value": Coalesce(metadatum_key, default=None)}  # only SERIES / only value column.
+            ),
+        ),
         (  # older / simpler metadata convention
             "by_metric",
             Check(instance_of=dict),
