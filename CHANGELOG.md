@@ -1,3 +1,4 @@
+* new metadata convention and helper functions to access structured metadata for MULTITSFRAME and SERIES object handling fallback behaviour. See [docs](./docs/metadata_attrs.md) for details.
 * add support for frames / animations for rendering Plotly plots
 
 ## 0.13.8
