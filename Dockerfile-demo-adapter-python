@@ -1,4 +1,4 @@
-##### Build stage
+##### Base stage
 FROM --platform=linux/amd64 python:3.13.7-slim-trixie AS base
 
 ENV TIMEOUT=60
@@ -23,9 +23,19 @@ COPY ./demo-adapter-python /app
 COPY ./VERSION /app/VERSION
 RUN chmod +x /app/start.sh
 
+
+##### Test stage
+# Note that in order to really build the test stage you need to explicitly specify it via
+#     docker build --target test -f Dockerfile-demo-adapter-python . -t hetdes_demo_adapter_python
+FROM application_base AS test
+WORKDIR /app
+RUN ./pipt sync-system --dev
+RUN python3 -m pytest --cov=demo_adapter_python --cov-report xml --junitxml test_results.xml tests
+RUN bash /app/scripts/gen_ruff_report.sh
+
+
 ##### Production stage
-# making prod stage available early allows to build it without building test stage
-# since test stage is only necessary on build system
+# prod should be the default build, this is why we close with FROM prod
 FROM application_base AS prod
 RUN useradd -m hdda_app
 USER hdda_app
@@ -34,16 +44,3 @@ ENV GUNICORN_CMD_ARGS "--preload"
 ENV PORT 8092
 EXPOSE 8092
 CMD ["/app/start.sh"]
-
-##### Test stage
-FROM application_base AS test
-WORKDIR /app
-RUN ./pipt sync-system --dev
-RUN python3 -m pytest --cov=demo_adapter_python --cov-report xml --junitxml test_results.xml tests
-RUN bash /app/scripts/gen_ruff_report.sh
-
-# prod should still be the default build, this is why we close with FROM prod
-# Note that in order to really skip the test stage you either need to explicitly specify the prod
-# stage via
-#     docker build --target prod -f Dockerfile-demo-adapter-python . -t hetdes_demo_adapter_python
-FROM prod
