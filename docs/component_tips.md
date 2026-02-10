@@ -58,6 +58,19 @@ Note that for releasing, all imported components must also be released.
 Note also that import_comp must be called in a global assignment statement for this to work.
 
 
+## Resolving possibly relative time intervals
+Especially relevant for component adapter source components for MULTITSFRAME or SERIES:
 
+Add `timestampFrom` and `timestampTo` required inputs of type STRING. With the following code they can be provided as absolute timestamps as well as [dtexp](https://github.com/stewit/dtexp) relative expressions and will be resolved with the execution timestamp as "now":
+
+```python
+from hetdesrun.dt_utils import resolve_interval
+
+...
+
+def main(...):
+    start, end = resolve_interval(timestampFrom, timestampTo)
+    # start, end are now utc timezoned datetime objects
+```
 
 
