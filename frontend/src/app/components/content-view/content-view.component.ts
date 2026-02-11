@@ -26,6 +26,7 @@ import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 const HOME_TAB = 0;
+const SCHEDULING_TAB = 1;
 
 const getTabItemHash = (
   tabItemWithTransformation: TabItemWithTransformation
@@ -96,7 +97,7 @@ export class ContentViewComponent implements OnInit {
                   tabItem.transformation.id ===
                     activeTabItem.transformationId &&
                   tabItem.tabItemType === activeTabItem.tabItemType
-              ) + 1;
+              ) + 2;
 
         // We may only set the selected tab index once the corresponding
         // material tab component has been rendered. Otherwise the material
@@ -121,10 +122,12 @@ export class ContentViewComponent implements OnInit {
   _onTabChange(event: MatTabChangeEvent) {
     if (event.index === HOME_TAB) {
       this.store.dispatch(unsetActiveTabItem());
+    } else if (event.index === SCHEDULING_TAB) {
+      console.warn('Scheduling Tab selected');
     } else {
       if (this._selectedTabIndex !== event.index) {
         this.store.dispatch(
-          setActiveTabItem(getTabItemHash(this._tabItems[event.index - 1]))
+          setActiveTabItem(getTabItemHash(this._tabItems[event.index - 2]))
         );
       }
     }

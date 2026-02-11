@@ -104,7 +104,11 @@ hd-copy-transformation-dialog {
     flex-grow: 0 !important;
 
     &[aria-posinset='1'] {
-      min-width: 80px;
+      min-width: 60px;
+    }
+
+    &[aria-posinset='2'] {
+      min-width: 60px;
     }
 
     .mdc-tab__content {
