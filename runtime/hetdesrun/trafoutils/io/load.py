@@ -97,6 +97,8 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
     mod_docstring_lines = mod_docstring.splitlines()
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
+    new_uuid = uuid4()
+
     default_dict = {
         "inputs": {},
         "outputs": {},
@@ -104,7 +106,7 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
         "description": "No description provided",
         "category": "Other",
         "version_tag": "1.0.0",
-        "id": uuid4(),
+        "id": new_uuid,
         "revision_group_id": uuid4(),
         "state": "RELEASED",
     }
@@ -233,6 +235,10 @@ def transformation_revision_from_python_code(code: str) -> TransformationRevisio
         release_wiring=release_wiring,
     )
 
+    if transformation_revision.id == new_uuid:
+        msg = "Could not identify trafo uuid in code file."
+        logging.debug(msg)
+        raise ComponentCodeImportError(msg)
     return transformation_revision
 
 
@@ -249,7 +255,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
 
             transformations: list[TransformationRevision]
 
-            if ext == ".py":
+            if ext == ".py" and file != "__init__.py":
                 logger.info("Loading transformation from python file %s", path)
                 python_code = load_python_file(path)
                 if python_code is not None:
