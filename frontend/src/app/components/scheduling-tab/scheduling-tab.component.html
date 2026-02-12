@@ -1,85 +1,83 @@
 <header class="scheduling-header">
-  <img class="scheduling-header__logo" src="assets/svg/logo.svg" />
-  <h1>Scheduling</h1>
-  <h3>{{ version }}</h3>
-  @if (_userInfoText !== '') {
-    <p class="user-info-text">{{ _userInfoText }}</p>
-  }
+    <h1>Scheduling</h1>
 </header>
-<nav class="scheduling-content">
-  <ul class="scheduling-content__item-list">
-    <li class="scheduling-content__item noninteractive draft">
-      <mat-icon></mat-icon>
-      <span class="mat-body-strong"> Workflows </span>
-    </li>
-    <li class="scheduling-content__item" (click)="newWorkflow()">
-      <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
-      new workflow...
-    </li>
-    @for (item of lastOpenedWorkflows | async; track item.id) {
-      <li
-        class="scheduling-content__item"
-        (contextmenu)="
-          $event.preventDefault(); openTransformationContextMenu(item, $event)
-        "
-        (click)="select(item)"
-      >
-        <mat-icon
-          svgIcon="icon-workflow"
-          [ngClass]="{
-            'mat-icon-svg-disabled': item.state === 'DISABLED',
-            'mat-icon-svg-draft': item.state === 'DRAFT',
-            'mat-icon-svg-released': item.state === 'RELEASED'
-          }"
-        ></mat-icon>
-        <span class="text-ellipsis"
-          >{{ item.name }} ({{ item.version_tag }})</span
-        >
-      </li>
-    }
-  </ul>
 
-  <ul class="scheduling-content__item-list">
-    <li class="scheduling-content__item draft noninteractive">
-      <mat-icon></mat-icon>
-      <span class="mat-body-strong"> Components </span>
-    </li>
-    <li class="scheduling-content__item" (click)="newComponent()">
-      <mat-icon class="mat-icon--small mr-1">add_circle_outline</mat-icon>Create
-      new component...
-    </li>
-    @for (item of lastOpenedComponents | async; track item.id) {
-      <li
-        class="scheduling-content__item"
-        (click)="select(item)"
-        (contextmenu)="
-          $event.preventDefault(); openTransformationContextMenu(item, $event)
-        "
-      >
-        <mat-icon
-          svgIcon="icon-component"
-          [ngClass]="{
-            'mat-icon-svg-disabled': item.state === 'DISABLED',
-            'mat-icon-svg-draft': item.state === 'DRAFT',
-            'mat-icon-svg-released': item.state === 'RELEASED'
-          }"
-        ></mat-icon>
-        <span class="text-ellipsis"
-          >{{ item.name }} ({{ item.version_tag }})</span
-        >
-      </li>
-    }
-  </ul>
+<div class="schedule-table">
 
-  <ul class="scheduling-content__item-list">
-    <li class="scheduling-content__item noninteractive">
-      <span class="mat-body-strong"> Documentation </span>
-    </li>
-    <li class="scheduling-content__item">
-      <a href="https://github.com/hetida/hetida-designer" target="_blank"
-        >hetida designer website</a
-      >
-    </li>
-  </ul>
-</nav>
-<hd-import-trafos-button></hd-import-trafos-button>
+    <!-- Header Row -->
+    <div class="schedule-row schedule-header">
+        <div class="col-active">Active</div>
+        <div class="col-name">Name</div>
+        <div class="col-name">Workflow / Component</div>
+        <div class="col-cron">Cron Expression</div>
+        <div class="col-actions"></div>
+    </div>
+
+    <!-- Data Rows -->
+    <div *ngFor="let schedule of schedules" class="schedule-row" (dragover)="onDragOver($event)"
+        (drop)="onDrop($event, schedule)">>
+
+        <!-- Active -->
+        <div class="col-active">
+            <mat-slide-toggle [(ngModel)]="schedule.active">
+            </mat-slide-toggle>
+        </div>
+
+        <!-- Name -->
+        <div class="col-name">
+            <ng-container *ngIf="!schedule.editing; else editName">
+                {{ schedule.name }}
+            </ng-container>
+            <ng-template #editName>
+                <input matInput [(ngModel)]="schedule.name">
+            </ng-template>
+        </div>
+
+        <!-- Trafo -->
+        <div class="col-trafo">
+            <ng-container *ngIf="!schedule.editing; else editTrafo">
+
+                <a [routerLink]="[]" [queryParams]="{ id: schedule.transformation_id }" target="_blank">{{
+                    schedule.transformation_name}} ({{schedule.transformation_version_tag}})</a>
+            </ng-container>
+            <ng-template #editTrafo>
+                <input matInput [(ngModel)]="schedule.transformation_id">
+            </ng-template>
+        </div>
+
+        <!-- Cron Expression -->
+        <div class="col-cron">
+            <ng-container *ngIf="!schedule.editing; else editCron">
+                {{ schedule.cron_expression }}
+            </ng-container>
+            <ng-template #editCron>
+                <input matInput [(ngModel)]="schedule.cronExpression">
+            </ng-template>
+        </div>
+
+        <!-- Actions -->
+        <div class="col-actions">
+
+            <!-- View Mode -->
+            <ng-container *ngIf="!schedule.editing; else editActions">
+                <button mat-icon-button color="primary" (click)="edit(schedule)">
+                    <mat-icon>edit</mat-icon>
+                </button>
+            </ng-container>
+
+            <!-- Edit Mode -->
+            <ng-template #editActions>
+                <button mat-icon-button color="primary" (click)="save(schedule)">
+                    <mat-icon>check</mat-icon>
+                </button>
+
+                <button mat-icon-button color="warn" (click)="cancel(schedule)">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </ng-template>
+
+        </div>
+
+    </div>
+
+</div>

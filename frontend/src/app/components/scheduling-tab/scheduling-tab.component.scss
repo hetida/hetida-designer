@@ -1,47 +1,40 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-}
-
-.scheduling-header {
-  flex: 0 0 25%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  &__logo {
-    height: 100px;
-  }
-}
-
-.scheduling-content {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: row;
-  padding: 0 10%;
-
-  &__item-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    flex: 0 0 33%;
-    overflow: hidden;
-  }
-
-  &__item {
-    cursor: pointer;
-    user-select: none;
-    padding: 5px 0;
-    font-size: 13px;
+.schedule-row {
     display: flex;
     align-items: center;
-  }
+    padding: 4px 24px;
+    /* Add horizontal padding to match header */
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.user-info-text {
-  white-space: pre-line;
-  text-align: center;
+.schedule-header {
+    font-weight: 600;
+    border-bottom: 2px solid #bdbdbd;
+    padding: 24px 24px 16px 24px;
+}
+
+.schedule-table {
+    padding: 0 12px 12px 12px;
+}
+
+.col-active {
+    width: 100px;
+}
+
+.col-name {
+    flex: 1;
+}
+
+.col-trafo {
+    flex: 1;
+}
+
+.col-cron {
+    flex: 1;
+    font-family: monospace;
+}
+
+.col-actions {
+    width: 120px;
+    display: flex;
+    gap: 4px;
 }
