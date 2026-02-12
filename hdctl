@@ -1941,7 +1941,7 @@ _export_to_dir() {
         elif [[ "$extension" == "py" ]]; then
             touch "$EXPORT_DIRECTORY/components/__init__.py"
             touch "$(dirname "$_file_path")"/__init__.py
-            echo "$decoded_row" | jq -r '.content' >"$_file_path"
+            echo "$decoded_row" | jq -j '.content' >"$_file_path"
         fi
 
         end=$(date +%s%N)
