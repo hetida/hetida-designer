@@ -3,10 +3,7 @@ import { TransformationService } from '../transformation/transformation.service'
 import { TabItem, TabItemType } from '../../model/tab-item';
 import { Store } from '@ngrx/store';
 import { IAppState } from '../../store/app.state';
-import {
-  addTabItem,
-  unsetActiveTabItem
-} from '../../store/tab-item/tab-item.actions';
+import { addTabItem, setHomeTab } from '../../store/tab-item/tab-item.actions';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { Transformation } from '../../model/transformation';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
@@ -42,7 +39,7 @@ export class TabItemService {
   }
 
   deselectActiveTabItem() {
-    this.store.dispatch(unsetActiveTabItem());
+    this.store.dispatch(setHomeTab());
   }
 
   createTransformationAndOpenInNewTab(transformation: Transformation): void {

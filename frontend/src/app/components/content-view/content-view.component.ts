@@ -10,7 +10,7 @@ import {
   removeTabItem,
   setActiveTabItem,
   setSchedulingTab,
-  unsetActiveTabItem
+  setHomeTab
 } from 'src/app/store/tab-item/tab-item.actions';
 import { TransformationType } from '../../enums/transformation-type';
 import { TabItem, TabItemType } from '../../model/tab-item';
@@ -89,14 +89,15 @@ export class ContentViewComponent implements OnInit {
       .subscribe(({ orderedTabItemsWithTransformation, activeTabItem }) => {
         this._tabItems = orderedTabItemsWithTransformation;
 
-        console.log(`Active Tab Item ${activeTabItem}`);
+        let selectedTabItemIndex = 0;
 
-        var selectedTabItemIndex = 0;
-
-        if (activeTabItem === undefined) {
-          selectedTabItemIndex = 1;
-        } else if (activeTabItem === null) {
+        if (
+          activeTabItem === null ||
+          activeTabItem.tabItemType === TabItemType.HOME
+        ) {
           selectedTabItemIndex = 0;
+        } else if (activeTabItem.tabItemType === TabItemType.SCHEDULING) {
+          selectedTabItemIndex = 1;
         } else {
           selectedTabItemIndex =
             activeTabItem === null ||
@@ -116,7 +117,6 @@ export class ContentViewComponent implements OnInit {
         // to zero. This is the purpose of postponing the update to the next
         // tick.
         setTimeout(() => {
-          console.log(`Setting _selectedTabIndex to ${selectedTabItemIndex}`);
           this._selectedTabIndex = selectedTabItemIndex;
         }, 0);
       });
@@ -132,15 +132,13 @@ export class ContentViewComponent implements OnInit {
   }
 
   _onTabChange(event: MatTabChangeEvent) {
-    if (this.isChangingTab) return;
+    if (this.isChangingTab) {
+      return;
+    }
     this.isChangingTab = true;
-    console.log(`Tab Change Event index ${event.index}`);
     if (event.index === HOME_TAB) {
-      console.warn('Home Tab selected');
-
-      this.store.dispatch(unsetActiveTabItem());
+      this.store.dispatch(setHomeTab());
     } else if (event.index === SCHEDULING_TAB) {
-      console.warn('Scheduling Tab selected');
       this.store.dispatch(setSchedulingTab());
     } else {
       if (this._selectedTabIndex !== event.index) {

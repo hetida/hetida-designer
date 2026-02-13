@@ -1,6 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { ITabItemState, tabItemEntityAdapter } from './tab-item.state';
-import { TabItem } from '../../model/tab-item';
+import { TabItem, TabItemType } from '../../model/tab-item';
 import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
 import { Transformation } from '../../model/transformation';
 
@@ -47,12 +47,18 @@ export const selectActiveTabItem = createSelector(
   selectActiveTabItemId,
   selectTabItemState,
   (activeTabItemId, tabItemState): TabItem | null => {
-    console.log(`selectActiveTabItem: ${activeTabItemId}`);
-
-    if (activeTabItemId === null) {
-      return null;
+    if (activeTabItemId === null || activeTabItemId === 'HOME') {
+      return {
+        id: 'HOME',
+        transformationId: null,
+        tabItemType: TabItemType.HOME
+      };
     } else if (activeTabItemId === 'SCHEDULING') {
-      return undefined;
+      return {
+        id: 'SCHEDULING',
+        transformationId: null,
+        tabItemType: TabItemType.SCHEDULING
+      };
     } else {
       const s = selectEntities(tabItemState)[activeTabItemId];
       return s;
