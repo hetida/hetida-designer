@@ -12,6 +12,15 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.trafo-item {
+  cursor: pointer;
+  user-select: none;
+  padding: 5px 0;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
 .scheduling-header {
   flex-shrink: 0;
   display: flex;

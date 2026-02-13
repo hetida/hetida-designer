@@ -9,6 +9,7 @@ import { setExecutionProtocol } from 'src/app/store/execution-protocol/execution
 import {
   removeTabItem,
   setActiveTabItem,
+  setSchedulingTab,
   unsetActiveTabItem
 } from 'src/app/store/tab-item/tab-item.actions';
 import { TransformationType } from '../../enums/transformation-type';
@@ -64,7 +65,7 @@ export class ContentViewComponent implements OnInit {
 
   // Component State
   public _selectedTabIndex = 0;
-
+  private isChangingTab = false;
   // ngrx State
   public _tabItems: TabItemWithTransformation[] = [];
 
@@ -88,16 +89,26 @@ export class ContentViewComponent implements OnInit {
       .subscribe(({ orderedTabItemsWithTransformation, activeTabItem }) => {
         this._tabItems = orderedTabItemsWithTransformation;
 
-        const selectedTabItemIndex =
-          activeTabItem === null ||
-          orderedTabItemsWithTransformation.length === 0
-            ? HOME_TAB
-            : orderedTabItemsWithTransformation.findIndex(
-                tabItem =>
-                  tabItem.transformation.id ===
-                    activeTabItem.transformationId &&
-                  tabItem.tabItemType === activeTabItem.tabItemType
-              ) + 2;
+        console.log(`Active Tab Item ${activeTabItem}`);
+
+        var selectedTabItemIndex = 0;
+
+        if (activeTabItem === undefined) {
+          selectedTabItemIndex = 1;
+        } else if (activeTabItem === null) {
+          selectedTabItemIndex = 0;
+        } else {
+          selectedTabItemIndex =
+            activeTabItem === null ||
+            orderedTabItemsWithTransformation.length === 0
+              ? HOME_TAB
+              : orderedTabItemsWithTransformation.findIndex(
+                  tabItem =>
+                    tabItem.transformation.id ===
+                      activeTabItem.transformationId &&
+                    tabItem.tabItemType === activeTabItem.tabItemType
+                ) + 2;
+        }
 
         // We may only set the selected tab index once the corresponding
         // material tab component has been rendered. Otherwise the material
@@ -105,6 +116,7 @@ export class ContentViewComponent implements OnInit {
         // to zero. This is the purpose of postponing the update to the next
         // tick.
         setTimeout(() => {
+          console.log(`Setting _selectedTabIndex to ${selectedTabItemIndex}`);
           this._selectedTabIndex = selectedTabItemIndex;
         }, 0);
       });
@@ -120,10 +132,16 @@ export class ContentViewComponent implements OnInit {
   }
 
   _onTabChange(event: MatTabChangeEvent) {
+    if (this.isChangingTab) return;
+    this.isChangingTab = true;
+    console.log(`Tab Change Event index ${event.index}`);
     if (event.index === HOME_TAB) {
+      console.warn('Home Tab selected');
+
       this.store.dispatch(unsetActiveTabItem());
     } else if (event.index === SCHEDULING_TAB) {
       console.warn('Scheduling Tab selected');
+      this.store.dispatch(setSchedulingTab());
     } else {
       if (this._selectedTabIndex !== event.index) {
         this.store.dispatch(
@@ -133,6 +151,7 @@ export class ContentViewComponent implements OnInit {
     }
     this._closePopover();
     this.store.dispatch(setExecutionProtocol());
+    setTimeout(() => (this.isChangingTab = false));
   }
 
   _isDocumentation(tabItem: TabItemWithTransformation): boolean {

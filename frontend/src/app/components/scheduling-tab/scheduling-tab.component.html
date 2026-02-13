@@ -1,6 +1,6 @@
 <header class="scheduling-header">
   <h1>Scheduling</h1>
-  <button mat-raised-button color="primary" (click)="addNewRow()">
+  <button mat-raised-button color="primary" (click)="addNewSchedule()">
     <mat-icon>add</mat-icon>
     Add New Schedule
   </button>
@@ -27,46 +27,63 @@
     </thead>
     <tbody>
       <tr
-        *ngFor="let row of data"
-        (dragover)="onDragOver($event, row)"
-        (drop)="onDrop($event, row)"
+        *ngFor="let schedule of schedules"
+        (dragover)="onDragOver($event, schedule)"
+        (drop)="onDrop($event, schedule)"
       >
         <!-- Active Toggle -->
         <td class="active_col">
-          <mat-slide-toggle [(ngModel)]="row.active"> </mat-slide-toggle>
+          <mat-slide-toggle [(ngModel)]="schedule.active"> </mat-slide-toggle>
         </td>
         <!-- Name Cell -->
         <td
           (click)="
-            !isEditing(row.id, 'name') && startEdit(row.id, 'name', row.name)
+            !isEditing(schedule.id, 'name') &&
+              startEdit(schedule.id, 'name', schedule.name)
           "
-          [class.editing]="isEditing(row.id, 'name')"
+          [class.editing]="isEditing(schedule.id, 'name')"
         >
-          <span *ngIf="!isEditing(row.id, 'name')" class="cell-content">
-            {{ row.name }}
+          <span *ngIf="!isEditing(schedule.id, 'name')" class="cell-content">
+            {{ schedule.name }}
           </span>
           <input
-            *ngIf="isEditing(row.id, 'name')"
+            *ngIf="isEditing(schedule.id, 'name')"
             type="text"
             [(ngModel)]="editValue"
-            (blur)="saveEdit(row)"
-            (keydown)="onKeyDown($event, row)"
+            (blur)="saveEdit(schedule)"
+            (keydown)="onKeyDown($event, schedule)"
             class="cell-input"
             autofocus
           />
         </td>
         <!-- Transformation Cell -->
         <td>
-          <ng-container *ngIf="row.transformation_id; else dragPrompt">
-            <a
-              [routerLink]="[]"
-              [queryParams]="{ id: row.transformation_id }"
-              target="_blank"
+          <ng-container *ngIf="schedule.transformation_id; else dragPrompt">
+            <span
+              class="trafo-item"
+              (contextmenu)="
+                $event.preventDefault();
+                openTransformationContextMenu(item, $event)
+              "
+              (click)="select(schedule)"
             >
-              {{ row.transformation_name }} ({{
-                row.transformation_version_tag
-              }})
-            </a>
+              <mat-icon
+                svgIcon="icon-workflow"
+                [ngClass]="{
+                  'mat-icon-svg-disabled':
+                    schedule.transformation_state === 'DISABLED',
+                  'mat-icon-svg-draft':
+                    schedule.transformation_state === 'DRAFT',
+                  'mat-icon-svg-released':
+                    schedule.transformation_state === 'RELEASED'
+                }"
+              ></mat-icon>
+              <span class="text-ellipsis"
+                >{{ schedule.transformation_name }} ({{
+                  schedule.transformation_version_tag
+                }})</span
+              >
+            </span>
           </ng-container>
           <ng-template #dragPrompt>
             <span style="color: #999">Drag a workflow / component here!</span>
@@ -78,8 +95,8 @@
           <button
             mat-raised-button
             color="primary"
-            [disabled]="!row.transformation_id"
-            (click)="openWiringDialog(row)"
+            [disabled]="!schedule.transformation_id"
+            (click)="openWiringDialog(schedule)"
           >
             Edit Wiring
           </button>
@@ -89,23 +106,27 @@
         <td
           class="cron_col"
           (click)="
-            !isEditing(row.id, 'cron_expression') &&
-              startEdit(row.id, 'cron_expression', row.cron_expression)
+            !isEditing(schedule.id, 'cron_expression') &&
+              startEdit(
+                schedule.id,
+                'cron_expression',
+                schedule.cron_expression
+              )
           "
-          [class.editing]="isEditing(row.id, 'cron_expression')"
+          [class.editing]="isEditing(schedule.id, 'cron_expression')"
         >
           <span
-            *ngIf="!isEditing(row.id, 'cron_expression')"
+            *ngIf="!isEditing(schedule.id, 'cron_expression')"
             class="cell-content"
           >
-            {{ row.cron_expression }}
+            {{ schedule.cron_expression }}
           </span>
           <input
-            *ngIf="isEditing(row.id, 'cron_expression')"
+            *ngIf="isEditing(schedule.id, 'cron_expression')"
             type="cron_expression"
             [(ngModel)]="editValue"
-            (blur)="saveEdit(row)"
-            (keydown)="onKeyDown($event, row)"
+            (blur)="saveEdit(schedule)"
+            (keydown)="onKeyDown($event, schedule)"
             class="cell-input"
             autofocus
           />
@@ -116,7 +137,7 @@
             mat-icon-button
             title="Execute Now"
             color="primary"
-            (click)="run(row)"
+            (click)="run(schedule)"
           >
             <mat-icon>play_circle_outline</mat-icon>
           </button>
@@ -124,7 +145,7 @@
             mat-icon-button
             title="Delete"
             color="primary"
-            (click)="delete(row).subscribe()"
+            (click)="delete(schedule).subscribe()"
           >
             <mat-icon>delete_forever</mat-icon>
           </button>

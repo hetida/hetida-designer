@@ -47,8 +47,15 @@ export const selectActiveTabItem = createSelector(
   selectActiveTabItemId,
   selectTabItemState,
   (activeTabItemId, tabItemState): TabItem | null => {
-    return activeTabItemId === null
-      ? null
-      : selectEntities(tabItemState)[activeTabItemId];
+    console.log(`selectActiveTabItem: ${activeTabItemId}`);
+
+    if (activeTabItemId === null) {
+      return null;
+    } else if (activeTabItemId === 'SCHEDULING') {
+      return undefined;
+    } else {
+      const s = selectEntities(tabItemState)[activeTabItemId];
+      return s;
+    }
   }
 );

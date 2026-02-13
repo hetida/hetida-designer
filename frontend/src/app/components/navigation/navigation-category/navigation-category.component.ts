@@ -38,7 +38,7 @@ export class NavigationCategoryComponent implements OnInit {
 
   ngOnInit() {
     this.store.select(selectActiveTabItem).subscribe(activeTabItem => {
-      if (activeTabItem === null) {
+      if (activeTabItem === null || activeTabItem === undefined) {
         this.activeTransformationId = '';
       } else {
         this.activeTransformationId = activeTabItem.transformationId;

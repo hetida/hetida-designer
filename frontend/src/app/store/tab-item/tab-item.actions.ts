@@ -11,6 +11,8 @@ export const removeTabItem = createAction(
   (payload: string) => ({ payload })
 );
 
+export const setSchedulingTab = createAction('[TabItem] Set SchedulingTab');
+
 export const setActiveTabItem = createAction(
   '[TabItem] Set ActiveTabItem',
   (payload: string) => ({ payload })

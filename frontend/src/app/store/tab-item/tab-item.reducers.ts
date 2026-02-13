@@ -5,6 +5,7 @@ import {
   addTabItem,
   removeTabItem,
   setActiveTabItem,
+  setSchedulingTab,
   unsetActiveTabItem
 } from './tab-item.actions';
 import {
@@ -103,6 +104,13 @@ export const tabItemReducers = createReducer(
     const transformationIdToRemove = action.payload;
     return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
   }),
+  on(
+    setSchedulingTab,
+    (state): ITabItemState => ({
+      ...state,
+      activeTabItemId: 'SCHEDULING'
+    })
+  ),
   on(
     setActiveTabItem,
     (state, action): ITabItemState => ({
