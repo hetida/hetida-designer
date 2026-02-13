@@ -1,83 +1,135 @@
 <header class="scheduling-header">
-    <h1>Scheduling</h1>
+  <h1>Scheduling</h1>
+  <button mat-raised-button color="primary" (click)="addNewRow()">
+    <mat-icon>add</mat-icon>
+    Add New Schedule
+  </button>
 </header>
 
-<div class="schedule-table">
+<div class="schedule-table" #scheduleTableContainer>
+  <table>
+    <thead>
+      <tr>
+        <th class="active_col">Active</th>
+        <th>Name</th>
+        <th>Workflow / Component</th>
+        <th class="wiring_col">Wiring</th>
+        <th
+          class="cron_col"
+          title="Set when to run automatically. Format: minute hour day month weekday
+'0 9 * * 1' runs Mondays at 9am
+'*/15 * * * *' runs every 15 minutes"
+        >
+          Cron Expression
+        </th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let row of data"
+        (dragover)="onDragOver($event, row)"
+        (drop)="onDrop($event, row)"
+      >
+        <!-- Active Toggle -->
+        <td class="active_col">
+          <mat-slide-toggle [(ngModel)]="row.active"> </mat-slide-toggle>
+        </td>
+        <!-- Name Cell -->
+        <td
+          (click)="
+            !isEditing(row.id, 'name') && startEdit(row.id, 'name', row.name)
+          "
+          [class.editing]="isEditing(row.id, 'name')"
+        >
+          <span *ngIf="!isEditing(row.id, 'name')" class="cell-content">
+            {{ row.name }}
+          </span>
+          <input
+            *ngIf="isEditing(row.id, 'name')"
+            type="text"
+            [(ngModel)]="editValue"
+            (blur)="saveEdit(row)"
+            (keydown)="onKeyDown($event, row)"
+            class="cell-input"
+            autofocus
+          />
+        </td>
+        <!-- Transformation Cell -->
+        <td>
+          <ng-container *ngIf="row.transformation_id; else dragPrompt">
+            <a
+              [routerLink]="[]"
+              [queryParams]="{ id: row.transformation_id }"
+              target="_blank"
+            >
+              {{ row.transformation_name }} ({{
+                row.transformation_version_tag
+              }})
+            </a>
+          </ng-container>
+          <ng-template #dragPrompt>
+            <span style="color: #999">Drag a workflow / component here!</span>
+          </ng-template>
+        </td>
 
-    <!-- Header Row -->
-    <div class="schedule-row schedule-header">
-        <div class="col-active">Active</div>
-        <div class="col-name">Name</div>
-        <div class="col-name">Workflow / Component</div>
-        <div class="col-cron">Cron Expression</div>
-        <div class="col-actions"></div>
-    </div>
+        <!-- Wiring Cell -->
+        <td class="wiring_col">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!row.transformation_id"
+            (click)="openWiringDialog(row)"
+          >
+            Edit Wiring
+          </button>
+        </td>
 
-    <!-- Data Rows -->
-    <div *ngFor="let schedule of schedules" class="schedule-row" (dragover)="onDragOver($event)"
-        (drop)="onDrop($event, schedule)">>
+        <!-- Cron Expression Cell -->
+        <td
+          class="cron_col"
+          (click)="
+            !isEditing(row.id, 'cron_expression') &&
+              startEdit(row.id, 'cron_expression', row.cron_expression)
+          "
+          [class.editing]="isEditing(row.id, 'cron_expression')"
+        >
+          <span
+            *ngIf="!isEditing(row.id, 'cron_expression')"
+            class="cell-content"
+          >
+            {{ row.cron_expression }}
+          </span>
+          <input
+            *ngIf="isEditing(row.id, 'cron_expression')"
+            type="cron_expression"
+            [(ngModel)]="editValue"
+            (blur)="saveEdit(row)"
+            (keydown)="onKeyDown($event, row)"
+            class="cell-input"
+            autofocus
+          />
+        </td>
 
-        <!-- Active -->
-        <div class="col-active">
-            <mat-slide-toggle [(ngModel)]="schedule.active">
-            </mat-slide-toggle>
-        </div>
-
-        <!-- Name -->
-        <div class="col-name">
-            <ng-container *ngIf="!schedule.editing; else editName">
-                {{ schedule.name }}
-            </ng-container>
-            <ng-template #editName>
-                <input matInput [(ngModel)]="schedule.name">
-            </ng-template>
-        </div>
-
-        <!-- Trafo -->
-        <div class="col-trafo">
-            <ng-container *ngIf="!schedule.editing; else editTrafo">
-
-                <a [routerLink]="[]" [queryParams]="{ id: schedule.transformation_id }" target="_blank">{{
-                    schedule.transformation_name}} ({{schedule.transformation_version_tag}})</a>
-            </ng-container>
-            <ng-template #editTrafo>
-                <input matInput [(ngModel)]="schedule.transformation_id">
-            </ng-template>
-        </div>
-
-        <!-- Cron Expression -->
-        <div class="col-cron">
-            <ng-container *ngIf="!schedule.editing; else editCron">
-                {{ schedule.cron_expression }}
-            </ng-container>
-            <ng-template #editCron>
-                <input matInput [(ngModel)]="schedule.cronExpression">
-            </ng-template>
-        </div>
-
-        <!-- Actions -->
-        <div class="col-actions">
-
-            <!-- View Mode -->
-            <ng-container *ngIf="!schedule.editing; else editActions">
-                <button mat-icon-button color="primary" (click)="edit(schedule)">
-                    <mat-icon>edit</mat-icon>
-                </button>
-            </ng-container>
-
-            <!-- Edit Mode -->
-            <ng-template #editActions>
-                <button mat-icon-button color="primary" (click)="save(schedule)">
-                    <mat-icon>check</mat-icon>
-                </button>
-
-                <button mat-icon-button color="warn" (click)="cancel(schedule)">
-                    <mat-icon>close</mat-icon>
-                </button>
-            </ng-template>
-
-        </div>
-
-    </div>
-
+        <td>
+          <button
+            mat-icon-button
+            title="Execute Now"
+            color="primary"
+            (click)="run(row)"
+          >
+            <mat-icon>play_circle_outline</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            title="Delete"
+            color="primary"
+            (click)="delete(row).subscribe()"
+          >
+            <mat-icon>delete_forever</mat-icon>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

@@ -3,7 +3,12 @@ import {
   provideHttpClient,
   withInterceptorsFromDi
 } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import {
+  APP_INITIALIZER,
+  ErrorHandler,
+  Injectable,
+  NgModule
+} from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -74,6 +79,30 @@ import { OptionalFieldsDialogComponent } from './components/optional-fields-dial
 import { from, map } from 'rxjs';
 import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
+
+@Injectable({ providedIn: 'root' })
+export class WiringConfigService implements HdWiringConfig {
+  // Implement all HdWiringConfig properties
+  allowOutputWiring = true;
+  showDownloadExampleJsonButton = true;
+  showUploadJsonButton = true;
+  allowManualWiring = true;
+  monacoEditorTheme: WiringTheme;
+  showDialogHeader = true;
+  confirmationButtonText = 'Execute';
+  enableDateRangeSelectionOnSeriesTypes = true;
+
+  constructor(private readonly themeService: ThemeService) {
+    this.monacoEditorTheme = this.themeService.activeTheme as WiringTheme;
+  }
+
+  // Method to reset to defaults
+  resetToDefaults(): void {
+    this.confirmationButtonText = 'Execute';
+    this.showDialogHeader = true;
+    // ... reset other properties
+  }
+}
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
@@ -191,22 +220,10 @@ const httpLoaderFactory = (configService: ConfigService) => {
       multi: true,
       deps: [ConfigService]
     },
+    WiringConfigService,
     {
       provide: HD_WIRING_CONFIG,
-      useFactory: (themeService: ThemeService): HdWiringConfig => {
-        const activeTheme = themeService.activeTheme as WiringTheme;
-        return {
-          allowOutputWiring: true,
-          showDownloadExampleJsonButton: true,
-          showUploadJsonButton: true,
-          allowManualWiring: true,
-          monacoEditorTheme: activeTheme,
-          showDialogHeader: true,
-          confirmationButtonText: 'Execute',
-          enableDateRangeSelectionOnSeriesTypes: true
-        };
-      },
-      deps: [ConfigService, ThemeService]
+      useExisting: WiringConfigService // Use the service instance itself
     },
     // Fix for Frozen Progress bar animation, in an *ngIf condition.
     // https://github.com/angular/components/issues/11453#issuecomment-466038415

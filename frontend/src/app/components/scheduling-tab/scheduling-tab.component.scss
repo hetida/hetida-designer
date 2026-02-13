@@ -1,40 +1,180 @@
-.schedule-row {
-    display: flex;
-    align-items: center;
-    padding: 4px 24px;
-    /* Add horizontal padding to match header */
-    border-bottom: 1px solid #e0e0e0;
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
-.schedule-header {
-    font-weight: 600;
-    border-bottom: 2px solid #bdbdbd;
-    padding: 24px 24px 16px 24px;
+.schedule-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.scheduling-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between; // Add this line
+  font-weight: 600;
+  align-items: center;
+  text-align: left;
+  border-bottom: 2px solid #bdbdbd;
+  padding: 16px 24px 16px 24px;
+
+  h1 {
+    margin: 0; // Remove default h1 margins
+  }
 }
 
 .schedule-table {
-    padding: 0 12px 12px 12px;
+  flex: 1;
+  padding: 0 0px 0px 0px;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .col-active {
-    width: 100px;
+  width: 100px;
 }
 
 .col-name {
-    flex: 1;
+  flex: 1;
 }
 
 .col-trafo {
-    flex: 1;
+  flex: 1;
 }
 
 .col-cron {
-    flex: 1;
-    font-family: monospace;
+  flex: 1;
+  font-family: monospace;
 }
 
 .col-actions {
-    width: 120px;
-    display: flex;
-    gap: 4px;
+  width: 120px;
+  display: flex;
+  gap: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  thead {
+    position: sticky;
+    top: 0;
+    background-color: #f5f5f5;
+    z-index: 10;
+
+    th {
+      position: sticky;
+      top: 0;
+      background-color: #f5f5f5;
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 2px solid #ddd;
+      font-weight: 600;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #eee;
+
+      &:hover {
+        background-color: #f9f9f9;
+      }
+
+      td {
+        padding: 12px 8px;
+      }
+    }
+  }
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+th.active_col {
+  width: 50px;
+  text-align: center;
+}
+
+th.wiring_col {
+  width: 100px;
+  text-align: center;
+}
+
+th.cron_col {
+  width: 140px;
+  text-align: center;
+}
+
+td {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  height: 30px;
+  /* Fixed row height */
+  vertical-align: middle;
+}
+
+td:hover {
+  background-color: #f9f9f9;
+}
+
+td.editing {
+  background-color: #e3f2fd;
+  cursor: default;
+}
+
+td.active_col {
+  width: 50px;
+  text-align: center;
+}
+
+td.wiring_col {
+  width: 100px;
+  text-align: center;
+}
+
+td.cron_col {
+  width: 140px;
+  text-align: center;
+}
+
+.cell-content {
+  display: block;
+  min-height: 20px;
+  padding: 6px 8px;
+  /* Match input padding */
+  line-height: 20px;
+  /* Match input line height */
+}
+
+.cell-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 2px solid #2196f3;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 20px;
+  /* Explicit line height */
+  height: 28px;
+  /* Explicit height */
 }
