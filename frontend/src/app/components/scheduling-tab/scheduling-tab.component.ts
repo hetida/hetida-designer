@@ -131,6 +131,7 @@ export class SchedulingTabComponent implements OnInit {
         schedule.transformation_id = transformation.id;
         schedule.transformation_name = transformation.name;
         schedule.transformation_version_tag = transformation.version_tag;
+        schedule.transformation_state = transformation.state;
       } catch (e) {
         console.error('Failed to parse transformation data', e);
       }
@@ -145,6 +146,12 @@ export class SchedulingTabComponent implements OnInit {
       cronExpression: schedule.cronExpression
     };
     schedule.editing = true;
+  }
+
+  getScheduleTrafo(schedule: any): Observable<any> {
+    return this.transformationStore
+      .select(selectTransformationById(schedule.transformation_id))
+      .pipe(first());
   }
 
   async openWiringDialog(schedule: Schedule): Promise<void> {
