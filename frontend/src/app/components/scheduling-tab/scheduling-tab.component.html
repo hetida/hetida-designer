@@ -33,7 +33,11 @@
       >
         <!-- Active Toggle -->
         <td class="active_col">
-          <mat-slide-toggle [(ngModel)]="schedule.active"> </mat-slide-toggle>
+          <mat-slide-toggle
+            [(ngModel)]="schedule.active"
+            (change)="onActiveToggleChange(schedule)"
+          >
+          </mat-slide-toggle>
         </td>
         <!-- Name Cell -->
         <td
