@@ -18,11 +18,7 @@ import {
 } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 
-import {
-  // ConfirmClickEvent,
-  ExecutionDialogData,
-  WiringDialogComponent
-} from 'hd-wiring';
+import { ExecutionDialogData, WiringDialogComponent } from 'hd-wiring';
 
 import { TransformationHttpService } from '../../service/http-service/transformation-http.service';
 import { Transformation } from 'src/app/model/transformation';
@@ -90,14 +86,6 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /**
-   * Update schedule in the API
-   * This method is called whenever a schedule is modified, either by:
-   * - User editing fields (name, cron_expression)
-   * - User toggling active state
-   * - User changing transformation assignment
-   * - Underlying transformation being updated in the store
-   */
   private updateScheduleInApi(schedule: Schedule): void {
     this.scheduleHttpService.updateSchedule(schedule).subscribe({
       next: updated_schedule => {
@@ -107,12 +95,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Subscribe to transformation updates from the store for all schedules
-   * that have a transformation_id set
-   */
   private subscribeToTransformationUpdates(): void {
-    // Create an array of observables for each schedule's transformation
     const transformationObservables = this.schedules.map((schedule, index) => {
       if (!schedule.transformation_id) {
         return of({ schedule, transformation: null, index });
@@ -129,38 +112,29 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
         );
     });
 
-    // Combine all observables and update schedules when any transformation changes
     combineLatest(transformationObservables)
       .pipe(takeUntil(this.destroy$))
       .subscribe(results => {
         results.forEach(({ schedule, transformation, index }) => {
           if (transformation) {
-            // Update schedule with latest transformation data
             this.schedules[index].transformation_name = transformation.name;
             this.schedules[index].transformation_version_tag =
               transformation.version_tag;
             this.schedules[index].transformation_state = transformation.state;
 
-            // Update schedule in API when transformation changes
             this.updateScheduleInApi(this.schedules[index]);
           } else if (schedule.transformation_id) {
-            // Transformation was deleted or not found
             this.schedules[index].transformation_id = null;
             this.schedules[index].transformation_name = null;
             this.schedules[index].transformation_version_tag = null;
             this.schedules[index].transformation_state = null;
 
-            // Update schedule in API when transformation is marked as disabled
             this.updateScheduleInApi(this.schedules[index]);
           }
         });
       });
   }
 
-  /**
-   * Re-subscribe to transformation updates after schedule changes
-   * Call this after adding/removing schedules or changing transformation_id
-   */
   private refreshTransformationSubscriptions(): void {
     this.destroy$.next();
     this.subscribeToTransformationUpdates();
@@ -182,7 +156,6 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
 
     this.scheduleHttpService.createSchedule(schedule).subscribe({
       next: createdSchedule => {
-        // Use the server-returned schedule (it may have a server-assigned id)
         this.schedules.push(createdSchedule);
         this.refreshTransformationSubscriptions();
         setTimeout(() => {
@@ -214,10 +187,8 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
         schedule.transformation_version_tag = transformation.version_tag;
         schedule.transformation_state = transformation.state;
 
-        // Refresh subscriptions to track the newly assigned transformation
         this.refreshTransformationSubscriptions();
 
-        // Update schedule in API when transformation is assigned
         this.updateScheduleInApi(schedule);
       } catch (e) {
         console.error('Failed to parse transformation data', e);
@@ -227,15 +198,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     await this.openWiringDialog(schedule);
   }
 
-  edit(schedule: any) {
-    schedule.original = {
-      name: schedule.name,
-      cronExpression: schedule.cronExpression
-    };
-    schedule.editing = true;
-  }
-
-  getScheduleTrafo(schedule: any): Observable<any> {
+  getScheduleTrafo(schedule: Schedule): Observable<Transformation> {
     return this.transformationStore
       .select(selectTransformationById(schedule.transformation_id))
       .pipe(first());
@@ -251,7 +214,6 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       .subscribe(transformation => {
         if (!transformation) {
           return;
-          // Do nothing if transformation is null/undefined (no trafo could be found for this uuid)
         }
 
         const dialogTitle = 'Change Wiring —';
@@ -286,7 +248,6 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
 
             tap(({ test_wiring }) => {
               schedule.wiring = test_wiring;
-              // Update schedule in API when wiring is changed
               this.updateScheduleInApi(schedule);
             }),
             finalize(() => dialogRef.close())
@@ -346,7 +307,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       const input = document.querySelector<HTMLInputElement>('.cell-input');
       input?.focus();
-      input?.select(); // select all text
+      input?.select(); // select all existing text
     }, 0);
   }
 
@@ -369,11 +330,10 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
           schedule.cron_expression = this.editValue;
           break;
         default:
-          console.warn('Unexpected field');
+          console.error('Unexpected field');
           break;
       }
 
-      // Update schedule in API after user edits
       this.updateScheduleInApi(schedule);
 
       this.cancelEdit();
@@ -394,12 +354,10 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   }
 
   onActiveToggleChange(schedule: Schedule): void {
-    // Update schedule in API when active state is toggled
     this.updateScheduleInApi(schedule);
   }
 
-  select(schedule: Schedule) {
-    // open as tab?
+  openTrafoOfScheduleInTab(schedule: Schedule) {
     this.transformationStore
       .select(selectTransformationById(schedule.transformation_id))
       .pipe(first())
@@ -408,10 +366,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       });
   }
 
-  openTransformationContextMenu(
-    selectedItem: Transformation,
-    mouseEvent: MouseEvent
-  ) {
+  openTransformationContextMenu(schedule: Schedule, mouseEvent: MouseEvent) {
     const { componentPortalRef } = this.contextMenuService.openContextMenu(
       new ComponentPortal(TransformationContextMenuComponent),
       {
@@ -420,11 +375,13 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       }
     );
 
-    componentPortalRef.instance.transformation = selectedItem;
+    this.getScheduleTrafo(schedule).subscribe(trafo => {
+      componentPortalRef.instance.transformation = trafo;
+    });
   }
 
   run(schedule: Schedule) {
-    // TODO: Implement run functionality
+    // TODO: Implement manual run functionality
     console.warn('Running schedule:', schedule);
   }
 }

@@ -67,9 +67,9 @@
               class="trafo-item"
               (contextmenu)="
                 $event.preventDefault();
-                openTransformationContextMenu(item, $event)
+                openTransformationContextMenu(schedule, $event)
               "
-              (click)="select(schedule)"
+              (click)="openTrafoOfScheduleInTab(schedule)"
             >
               <mat-icon
                 svgIcon="icon-workflow"
@@ -136,7 +136,7 @@
             autofocus
           />
         </td>
-
+        <!-- Status / Buttons -->
         <td>
           <button
             mat-icon-button
