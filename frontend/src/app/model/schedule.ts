@@ -1,4 +1,5 @@
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import { TestWiring } from 'hd-wiring';
 
 export interface Schedule {
   id: string;
@@ -9,6 +10,6 @@ export interface Schedule {
   transformation_version_tag: string;
   transformation_state: TransformationState;
   cron_expression: string;
-  wiring: any;
+  wiring: TestWiring | null;
   cron_expression_valid: boolean | null;
 }

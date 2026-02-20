@@ -142,6 +142,7 @@
             mat-icon-button
             title="Execute Now"
             color="primary"
+            [disabled]="!schedule.transformation_id || !schedule.wiring"
             (click)="run(schedule)"
           >
             <mat-icon>play_circle_outline</mat-icon>

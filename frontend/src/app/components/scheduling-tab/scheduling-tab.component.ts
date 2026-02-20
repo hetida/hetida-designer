@@ -23,7 +23,10 @@ import { ExecutionDialogData, WiringDialogComponent } from 'hd-wiring';
 import { TransformationHttpService } from '../../service/http-service/transformation-http.service';
 import { Transformation } from 'src/app/model/transformation';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
-import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import {
+  selectTransformationById,
+  selectTransformationsLoaded
+} from 'src/app/store/transformation/transformation.selectors';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
@@ -36,6 +39,8 @@ import {
   ConfirmDialogResult
 } from '../confirmation-dialog/confirm-dialog.component';
 import { ScheduleHttpService } from '../../service/http-service/schedule-http.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 @Component({
   selector: 'hd-scheduling-tab',
@@ -50,11 +55,13 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   constructor(
     private readonly dialog: MatDialog,
     private readonly wiringConfigService: WiringConfigService,
+    private readonly transformationService: TransformationService,
     private readonly transformationStore: Store<TransformationState>,
     private readonly transformationHttpService: TransformationHttpService,
     private readonly scheduleHttpService: ScheduleHttpService,
     private readonly tabItemService: TabItemService,
-    private readonly contextMenuService: ContextMenuService
+    private readonly contextMenuService: ContextMenuService,
+    private readonly notificationService: NotificationService
   ) {}
 
   schedules: Schedule[] = [];
@@ -100,35 +107,34 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       if (!schedule.transformation_id) {
         return of({ schedule, transformation: null, index });
       }
-
       return this.transformationStore
         .select(selectTransformationById(schedule.transformation_id))
-        .pipe(
-          map(transformation => ({
-            schedule,
-            transformation,
-            index
-          }))
-        );
+        .pipe(map(transformation => ({ schedule, transformation, index })));
     });
 
-    combineLatest(transformationObservables)
+    combineLatest([
+      combineLatest(transformationObservables),
+      this.transformationStore.select(selectTransformationsLoaded)
+    ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(results => {
+      .subscribe(([results, transformationsLoaded]) => {
         results.forEach(({ schedule, transformation, index }) => {
           if (transformation) {
             this.schedules[index].transformation_name = transformation.name;
             this.schedules[index].transformation_version_tag =
               transformation.version_tag;
             this.schedules[index].transformation_state = transformation.state;
-
             this.updateScheduleInApi(this.schedules[index]);
-          } else if (schedule.transformation_id) {
+          } else if (
+            (transformation === null ||
+              transformation === undefined ||
+              schedule.transformation_id === null) &&
+            transformationsLoaded
+          ) {
             this.schedules[index].transformation_id = null;
             this.schedules[index].transformation_name = null;
             this.schedules[index].transformation_version_tag = null;
             this.schedules[index].transformation_state = null;
-
             this.updateScheduleInApi(this.schedules[index]);
           }
         });
@@ -150,7 +156,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       transformation_name: null,
       transformation_version_tag: null,
       transformation_state: null,
-      wiring: {},
+      wiring: { input_wirings: [], output_wirings: [] },
       cron_expression_valid: null
     };
 
@@ -333,7 +339,6 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
           console.error('Unexpected field');
           break;
       }
-
       this.updateScheduleInApi(schedule);
 
       this.cancelEdit();
@@ -381,7 +386,19 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   }
 
   run(schedule: Schedule) {
-    // TODO: Implement manual run functionality
-    console.warn('Running schedule:', schedule);
+    if (
+      schedule.transformation_id === null ||
+      schedule.wiring === null ||
+      (schedule.wiring.input_wirings.length === 0 &&
+        schedule.wiring.output_wirings.length === 0)
+    ) {
+      this.notificationService.warn(
+        'Incomplete configuration. Cannot execute. Please check wiring!'
+      );
+      return;
+    }
+    this.transformationService
+      .testTransformation(schedule.transformation_id, schedule.wiring)
+      .subscribe();
   }
 }
