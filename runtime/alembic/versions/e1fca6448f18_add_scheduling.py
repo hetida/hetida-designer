@@ -1,0 +1,38 @@
+"""add scheduling
+
+Revision ID: e1fca6448f18
+Revises: 5cfafc3cf470
+Create Date: 2026-02-18 17:12:45.493444
+
+"""
+
+import sqlalchemy as sa
+import sqlalchemy_utils
+from sqlalchemy.dialects import sqlite
+
+from alembic import op
+
+# revision identifiers, used by Alembic.
+revision = "e1fca6448f18"
+down_revision = "5cfafc3cf470"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    op.create_table(
+        "schedules",
+        sa.Column("id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False),
+        sa.Column("name", sa.String(), nullable=False),
+        sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("cron_expression", sa.String(), nullable=False),
+        sa.Column(
+            "transformation_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=True
+        ),
+        sa.Column("wiring", sa.JSON(none_as_null=True), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+
+def downgrade():
+    op.drop_table("schedules")

@@ -4755,6 +4755,213 @@
         }
       }
     },
+    "/api/schedules": {
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns all schedules",
+        "operationId": "get_all_schedules_api_schedules_get",
+        "responses": {
+          "200": {
+            "description": "Successfully got all schedules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Schedule-Output"
+                  },
+                  "type": "array",
+                  "title": "Response Get All Schedules Api Schedules Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Creates a schedule.",
+        "description": "Store a Schedule in the database",
+        "operationId": "create_schedule_api_schedules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schedule-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the schedule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/{id}": {
+      "put": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Updates a schedule.",
+        "description": "Update a schedule\n\nCreates schedule if it does not exist already (Upsert).",
+        "operationId": "update_schedule_api_schedules__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schedule-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully updated the schedule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Id from path does not match id from object in request body"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Deletes a schedule.",
+        "description": "Delete a schedule from the database.",
+        "operationId": "delete_schedule_api_schedules__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted the schedule"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}/dashboard": {
       "get": {
         "tags": [
@@ -7767,6 +7974,118 @@
           "path"
         ],
         "title": "SQLAdapterStructureSource"
+      },
+      "Schedule-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "New Schedule"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "cron_expression": {
+            "type": "string",
+            "title": "Cron Expression",
+            "default": "*/5 * * * *"
+          },
+          "transformation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Id"
+          },
+          "wiring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowWiring-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "transformation_id",
+          "wiring"
+        ],
+        "title": "Schedule"
+      },
+      "Schedule-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "New Schedule"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "cron_expression": {
+            "type": "string",
+            "title": "Cron Expression",
+            "default": "*/5 * * * *"
+          },
+          "transformation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Id"
+          },
+          "wiring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowWiring-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cron_expression_valid": {
+            "type": "boolean",
+            "title": "Cron Expression Valid",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "transformation_id",
+          "wiring",
+          "cron_expression_valid"
+        ],
+        "title": "Schedule"
       },
       "SimplifiedLogRecord": {
         "properties": {

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -136,3 +137,19 @@ class Descendant(NamedTuple):
     depth: int
     transformation_id: UUID
     operator_id: UUID
+
+
+class ScheduleDBModel(Base):
+    __tablename__ = "schedules"
+    id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), primary_key=True, default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    cron_expression: Mapped[str] = mapped_column(String, nullable=False)
+    transformation_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), nullable=True, default=uuid4
+    )
+    wiring: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
+    )

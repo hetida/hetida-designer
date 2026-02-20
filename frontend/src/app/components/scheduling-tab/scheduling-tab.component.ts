@@ -33,23 +33,13 @@ import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 import { WiringConfigService } from 'src/app/app.module';
 import { v4 as UUID } from 'uuid';
+import { Schedule } from '../../model/schedule';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
   ConfirmDialogResult
 } from '../confirmation-dialog/confirm-dialog.component';
-
-interface Schedule {
-  id: string;
-  active: boolean;
-  name: string;
-  transformation_id: string;
-  transformation_name: string;
-  transformation_version_tag: string;
-  transformation_state: TransformationState;
-  cron_expression: string;
-  wiring: any;
-}
+import { ScheduleHttpService } from '../../service/http-service/schedule-http.service';
 
 @Component({
   selector: 'hd-scheduling-tab',
@@ -59,59 +49,40 @@ interface Schedule {
 export class SchedulingTabComponent implements OnInit, OnDestroy {
   @ViewChild('scheduleTableContainer') scheduleTableContainer: ElementRef;
 
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly dialog: MatDialog,
     private readonly wiringConfigService: WiringConfigService,
     private readonly transformationStore: Store<TransformationState>,
     private readonly transformationHttpService: TransformationHttpService,
+    private readonly scheduleHttpService: ScheduleHttpService,
     private readonly tabItemService: TabItemService,
     private readonly contextMenuService: ContextMenuService
   ) {}
 
-  schedules: Schedule[] = [
-    {
-      id: '80d1abdb-efa7-4588-90cc-92a39cdabca0',
-      name: 'Aggregation Bedarfsprognose Inputdaten',
-      cron_expression: '*/6 * * * *',
-      active: false,
-      transformation_id: null,
-      transformation_name: null,
-      transformation_version_tag: null,
-      transformation_state: null,
-      wiring: null
-    },
-    {
-      id: '2d48ce98-6ea0-4865-8bd9-908838f65920',
-      name: 'Wasserbedarfsprognose Inferenz',
-      cron_expression: '*/6 * * * *',
-      active: true,
-      transformation_id: '3c5916b0-00cc-4dc7-a45a-205fd0cdf412',
-      transformation_name: 'Some Trafo',
-      transformation_version_tag: '1.0.0',
-      transformation_state: null,
-      wiring: null
-    },
-    {
-      id: '767287af-9788-474d-8b12-0ed8ea5883b5',
-      name: 'Optimierung',
-      cron_expression: '*/6 * * * *',
-      active: true,
-      transformation_id: null,
-      transformation_name: null,
-      transformation_version_tag: null,
-      transformation_state: null,
-      wiring: null
-    }
-  ];
+  schedules: Schedule[] = [];
+  isLoading = false;
 
   editingCell: { scheduleId: number; field: keyof Schedule } | null = null;
   editValue = '';
 
   ngOnInit() {
-    console.warn('Should load schedules');
-    this.subscribeToTransformationUpdates();
+    this.loadSchedules();
+  }
+
+  private loadSchedules(): void {
+    this.isLoading = true;
+    this.scheduleHttpService
+      .fetchSchedules()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: schedules => {
+          this.schedules = schedules;
+          this.subscribeToTransformationUpdates();
+        },
+        error: err => console.error('Failed to load schedules:', err)
+      });
   }
 
   ngOnDestroy() {
@@ -128,24 +99,12 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
    * - Underlying transformation being updated in the store
    */
   private updateScheduleInApi(schedule: Schedule): void {
-    // TODO: Implement actual API call
-    console.log('Updating schedule in API:', {
-      id: schedule.id,
-      name: schedule.name,
-      active: schedule.active,
-      transformation_id: schedule.transformation_id,
-      transformation_name: schedule.transformation_name,
-      transformation_version_tag: schedule.transformation_version_tag,
-      transformation_state: schedule.transformation_state,
-      cron_expression: schedule.cron_expression,
-      wiring: schedule.wiring
+    this.scheduleHttpService.updateSchedule(schedule).subscribe({
+      next: updated_schedule => {
+        schedule.cron_expression_valid = updated_schedule.cron_expression_valid;
+      },
+      error: err => console.error('Failed to update schedule:', err)
     });
-
-    // Example of what the API call might look like:
-    // this.scheduleHttpService.updateSchedule(schedule.id, schedule).subscribe({
-    //     next: () => console.log('Schedule updated successfully'),
-    //     error: (err) => console.error('Failed to update schedule:', err)
-    // });
   }
 
   /**
@@ -208,28 +167,33 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   }
 
   addNewSchedule(): void {
-    const newRow: Schedule = {
+    const schedule: Schedule = {
       id: UUID().toString(),
       name: 'New Schedule',
-      cron_expression: '0 0 * * *', // Default: daily at midnight
+      cron_expression: '*/5 * * * *',
       active: false,
       transformation_id: null,
       transformation_name: null,
       transformation_version_tag: null,
       transformation_state: null,
-      wiring: null
+      wiring: {},
+      cron_expression_valid: null
     };
-    this.schedules.push(newRow);
 
-    // Refresh subscriptions to include the new schedule
-    this.refreshTransformationSubscriptions();
-
-    setTimeout(() => {
-      if (this.scheduleTableContainer) {
-        const element = this.scheduleTableContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
-      }
-    }, 0);
+    this.scheduleHttpService.createSchedule(schedule).subscribe({
+      next: createdSchedule => {
+        // Use the server-returned schedule (it may have a server-assigned id)
+        this.schedules.push(createdSchedule);
+        this.refreshTransformationSubscriptions();
+        setTimeout(() => {
+          if (this.scheduleTableContainer) {
+            const element = this.scheduleTableContainer.nativeElement;
+            element.scrollTop = element.scrollHeight;
+          }
+        }, 0);
+      },
+      error: err => console.error('Failed to create schedule:', err)
+    });
   }
 
   public onDragOver(event: DragEvent): void {
@@ -329,10 +293,8 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
           )
           .subscribe();
 
-        dialogRef.afterClosed().subscribe(result => {
-          console.warn(result);
+        dialogRef.afterClosed().subscribe(() => {
           this.wiringConfigService.resetToDefaults();
-          // Handle any result from the dialog
         });
       });
   }
@@ -355,32 +317,26 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     return dialogRef.afterClosed().pipe(
       switchMap(result => {
         if (result?.confirmed) {
-          // TODO: actually delete via API
-          console.warn('Should delete');
-          // Delete from current list of schedules
-          const index = this.schedules.findIndex(r => r.id === schedule.id);
-          if (index !== -1) {
-            this.schedules.splice(index, 1);
-            // Refresh subscriptions after removing a schedule
-            this.refreshTransformationSubscriptions();
-          }
+          return this.scheduleHttpService.deleteSchedule(schedule.id).pipe(
+            map(deleteResult => {
+              if (deleteResult.success) {
+                const index = this.schedules.findIndex(
+                  r => r.id === schedule.id
+                );
+                if (index !== -1) {
+                  this.schedules.splice(index, 1);
+                  this.refreshTransformationSubscriptions();
+                }
+              } else {
+                console.error('Failed to delete schedule:', deleteResult.error);
+              }
+              return deleteResult.success;
+            })
+          );
         }
         return of(result?.confirmed);
       })
     );
-  }
-
-  save(schedule: any) {
-    schedule.editing = false;
-
-    // TODO: call API here
-    console.warn('Saved:', schedule);
-  }
-
-  cancel(schedule: any) {
-    schedule.name = schedule.original.name;
-    schedule.cronExpression = schedule.original.cronExpression;
-    schedule.editing = false;
   }
 
   startEdit(scheduleId: number, field: keyof Schedule, currentValue: string) {

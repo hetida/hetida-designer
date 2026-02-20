@@ -667,6 +667,24 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
 
+    scheduling_active: bool = Field(
+        True,
+        description=(
+            "Whether scheduling is activated for this service. "
+            "Requires is_backend_service to be true!"
+        ),
+        validation_alias="HETIDA_DESIGNER_SCHEDULING_ACTIVE",
+    )
+
+    scheduling_sync_interval_seconds: int = Field(
+        30,
+        description=(
+            "The scheduler syncs active jobs periodically from the database."
+            "This defines the sync interval in seconds."
+        ),
+        validation_alias="HETIDA_DESIGNER_SCHEDULING_SYNC_INTERVAL_SECONDS",
+    )
+
     @field_validator("internal_auth_client_credentials")
     @classmethod
     def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(

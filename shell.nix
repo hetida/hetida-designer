@@ -253,6 +253,8 @@ let
     '
     export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8080/adapters/sql|http://localhost:8080/adapters/sql,kafka|Kafka Adapter|http://localhost:8080/adapters/kafka|http://localhost:8080/adapters/kafka,external-sources|External Sources|http://localhost:8080/adapters/external_sources|http://localhost:8080/adapters/external_sources,component-adapter|Component Adapter|http://localhost:8080/adapters/component|http://localhost:8080/adapters/component"
     export HD_USE_AUTH=false
+    export HETIDA_DESIGNER_SCHEDULING_ACTIVE=true
+    export DEVELOPMENT_MODE=true # activate uvicorn reload
     export HD_MAINTENANCE_SECRET="maintenance"
     echo "WAIT FOR POSTGRES DB"
     sleep 5 # wait for stopping possibly existing postgres instances before trying

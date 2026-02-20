@@ -119,15 +119,16 @@
           "
           [class.editing]="isEditing(schedule.id, 'cron_expression')"
         >
-          <span
-            *ngIf="!isEditing(schedule.id, 'cron_expression')"
-            class="cell-content"
-          >
-            {{ schedule.cron_expression }}
-          </span>
+          <ng-container *ngIf="!isEditing(schedule.id, 'cron_expression')">
+            <span class="cell-content">{{ schedule.cron_expression }}</span>
+            <div *ngIf="!schedule.cron_expression_valid" class="cron-error">
+              Invalid cron expression
+            </div>
+          </ng-container>
+
           <input
             *ngIf="isEditing(schedule.id, 'cron_expression')"
-            type="cron_expression"
+            type="text"
             [(ngModel)]="editValue"
             (blur)="saveEdit(schedule)"
             (keydown)="onKeyDown($event, schedule)"
