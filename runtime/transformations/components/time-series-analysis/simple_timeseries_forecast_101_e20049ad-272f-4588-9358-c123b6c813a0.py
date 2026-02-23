@@ -1,6 +1,6 @@
 """Documentation for Simple Time Series Forecast
 
-# Generic Fast Time Series Forecast
+# Simple Time Series Forecast
 
 ## Description
 Quick forecaster for arbitrary time series. It resamples irregular data to a
@@ -42,54 +42,54 @@ strategies.
 ```json
 {
   "series": {
-    "2023-01-01T00:03:00+00:00": 20.0,
-    "2023-01-01T01:08:00+00:00": 22.0,
-    "2023-01-01T02:05:00+00:00": 25.0,
-    "2023-01-01T03:12:00+00:00": 27.0,
-    "2023-01-01T04:04:00+00:00": 26.1,
-    "2023-01-01T05:09:00+00:00": 23.2,
-    "2023-01-01T06:02:00+00:00": 21.1,
-    "2023-01-01T07:15:00+00:00": 20.0,
-    "2023-01-01T08:07:00+00:00": 19.0,
-    "2023-01-01T09:11:00+00:00": 21.0,
-    "2023-01-01T10:05:00+00:00": 24.1,
-    "2023-01-01T11:10:00+00:00": 28.0,
-    "2023-01-01T12:06:00+00:00": 30.2,
-    "2023-01-01T13:08:00+00:00": 28.9,
-    "2023-01-01T14:02:00+00:00": 27.1,
-    "2023-01-01T15:14:00+00:00": 24.2,
-    "2023-01-01T16:09:00+00:00": 22.1,
-    "2023-01-01T17:01:00+00:00": 21.0,
-    "2023-01-01T18:06:00+00:00": 20.2,
-    "2023-01-01T19:10:00+00:00": 19.0,
-    "2023-01-01T20:04:00+00:00": 18.0,
-    "2023-01-01T21:16:00+00:00": 19.1,
-    "2023-01-01T22:05:00+00:00": 20.0,
-    "2023-01-01T23:12:00+00:00": 21.0,
-    "2023-01-02T00:04:00+00:00": 20.5,
-    "2023-01-02T01:11:00+00:00": 22.4,
-    "2023-01-02T02:06:00+00:00": 25.6,
-    "2023-01-02T03:13:00+00:00": 27.6,
-    "2023-01-02T04:03:00+00:00": 26.6,
-    "2023-01-02T05:08:00+00:00": 23.6,
-    "2023-01-02T06:04:00+00:00": 21.6,
-    "2023-01-02T07:12:00+00:00": 20.6,
-    "2023-01-02T08:03:00+00:00": 19.7,
-    "2023-01-02T09:15:00+00:00": 21.6,
-    "2023-01-02T10:07:00+00:00": 24.6,
-    "2023-01-02T11:09:00+00:00": 28.6,
-    "2023-01-02T12:02:00+00:00": 30.6,
-    "2023-01-02T13:11:00+00:00": 29.5,
-    "2023-01-02T14:05:00+00:00": 27.6,
-    "2023-01-02T15:10:00+00:00": 24.6,
-    "2023-01-02T16:04:00+00:00": 22.6,
-    "2023-01-02T17:08:00+00:00": 21.6,
-    "2023-01-02T18:01:00+00:00": 20.6,
-    "2023-01-02T19:14:00+00:00": 19.6,
-    "2023-01-02T20:06:00+00:00": 18.6,
-    "2023-01-02T21:12:00+00:00": 19.6,
-    "2023-01-02T22:08:00+00:00": 20.6,
-    "2023-01-02T23:05:00+00:00": 21.6
+    "2026-01-01T00:03:00+00:00": 20.0,
+    "2026-01-01T01:08:00+00:00": 22.0,
+    "2026-01-01T02:05:00+00:00": 25.0,
+    "2026-01-01T03:12:00+00:00": 27.0,
+    "2026-01-01T04:04:00+00:00": 26.1,
+    "2026-01-01T05:09:00+00:00": 23.2,
+    "2026-01-01T06:02:00+00:00": 21.1,
+    "2026-01-01T07:15:00+00:00": 20.0,
+    "2026-01-01T08:07:00+00:00": 19.0,
+    "2026-01-01T09:11:00+00:00": 21.0,
+    "2026-01-01T10:05:00+00:00": 24.1,
+    "2026-01-01T11:10:00+00:00": 28.0,
+    "2026-01-01T12:06:00+00:00": 30.2,
+    "2026-01-01T13:08:00+00:00": 28.9,
+    "2026-01-01T14:02:00+00:00": 27.1,
+    "2026-01-01T15:14:00+00:00": 24.2,
+    "2026-01-01T16:09:00+00:00": 22.1,
+    "2026-01-01T17:01:00+00:00": 21.0,
+    "2026-01-01T18:06:00+00:00": 20.2,
+    "2026-01-01T19:10:00+00:00": 19.0,
+    "2026-01-01T20:04:00+00:00": 18.0,
+    "2026-01-01T21:16:00+00:00": 19.1,
+    "2026-01-01T22:05:00+00:00": 20.0,
+    "2026-01-01T23:12:00+00:00": 21.0,
+    "2026-01-02T00:04:00+00:00": 20.5,
+    "2026-01-02T01:11:00+00:00": 22.4,
+    "2026-01-02T02:06:00+00:00": 25.6,
+    "2026-01-02T03:13:00+00:00": 27.6,
+    "2026-01-02T04:03:00+00:00": 26.6,
+    "2026-01-02T05:08:00+00:00": 23.6,
+    "2026-01-02T06:04:00+00:00": 21.6,
+    "2026-01-02T07:12:00+00:00": 20.6,
+    "2026-01-02T08:03:00+00:00": 19.7,
+    "2026-01-02T09:15:00+00:00": 21.6,
+    "2026-01-02T10:07:00+00:00": 24.6,
+    "2026-01-02T11:09:00+00:00": 28.6,
+    "2026-01-02T12:02:00+00:00": 30.6,
+    "2026-01-02T13:11:00+00:00": 29.5,
+    "2026-01-02T14:05:00+00:00": 27.6,
+    "2026-01-02T15:10:00+00:00": 24.6,
+    "2026-01-02T16:04:00+00:00": 22.6,
+    "2026-01-02T17:08:00+00:00": 21.6,
+    "2026-01-02T18:01:00+00:00": 20.6,
+    "2026-01-02T19:14:00+00:00": 19.6,
+    "2026-01-02T20:06:00+00:00": 18.6,
+    "2026-01-02T21:12:00+00:00": 19.6,
+    "2026-01-02T22:08:00+00:00": 20.6,
+    "2026-01-02T23:05:00+00:00": 21.6
   },
   "forecast_horizon": "2D",
   "method": "seasonal_trend"
@@ -123,6 +123,8 @@ SEASONAL_TREND_REDUCTION_FACTOR = 0.8
 SEASONAL_TREND_MAX_ITERATIONS = 12
 SEASONAL_FLOOR_TOLERANCE_FRACTION = 0.01
 SEASONAL_ALIGNMENT_WINDOW = 10
+SEASONAL_FLOOR_BLEND_MIN = 0.35
+SEASONAL_FLOOR_BLEND_MAX = 0.9
 # confidence interval defaults
 CONFIDENCE_MAX_RESIDUALS = 200
 CONFIDENCE_ROLLING_WINDOW = 5
@@ -481,13 +483,19 @@ def smooth_trend_values(
 
 # Step 3: Derive the seasonal profile from the average residual for each seasonal position
 def compute_seasonal_pattern(
-    values: np.ndarray, trend_values: np.ndarray, season_length: int
+    values: np.ndarray,
+    trend_values: np.ndarray,
+    season_length: int,
+    index: pd.DatetimeIndex,
+    frequency: pd.Timedelta,
 ) -> np.ndarray:
     residuals = values - trend_values
     seasonal_pattern = np.zeros(season_length, dtype=float)
     seasonal_counts = np.zeros(season_length, dtype=int)
-    for idx, residual in enumerate(residuals):
-        slot = idx % season_length
+    origin = index[0]
+    step_numbers = np.rint((index - origin) / frequency).astype(int)
+    for step_number, residual in zip(step_numbers, residuals):
+        slot = int(step_number % season_length)
         seasonal_pattern[slot] += residual
         seasonal_counts[slot] += 1
     seasonal_counts = np.where(seasonal_counts == 0, 1, seasonal_counts)
@@ -580,19 +588,27 @@ def apply_floor_alignment(
         return forecast_values
 
     floor_tolerance = max(value_range * SEASONAL_FLOOR_TOLERANCE_FRACTION, 1e-9)
-    slot_floor_mask = np.zeros(season_length, dtype=bool)
+    slot_floor_fraction = np.zeros(season_length, dtype=float)
     indices = np.arange(len(values))
     for slot in range(season_length):
         slot_values = values[indices % season_length == slot]
         if slot_values.size == 0:
             continue
-        if ((slot_values <= floor_value + floor_tolerance).mean()) >= 0.6:
-            slot_floor_mask[slot] = True
+        fraction_at_floor = float((slot_values <= floor_value + floor_tolerance).mean())
+        if fraction_at_floor >= SEASONAL_FLOOR_MIN_FRACTION:
+            slot_floor_fraction[slot] = fraction_at_floor
 
-    for step in range(1, len(forecast_values)):
+    for step in range(len(forecast_values)):
         slot = (len(values) + step) % season_length
-        if slot_floor_mask[slot]:
-            forecast_values[step] = floor_value
+        fraction = slot_floor_fraction[slot]
+        if fraction <= 0:
+            continue
+        # Blend towards floor instead of hard pinning to reduce step-like jumps.
+        strength = (fraction - SEASONAL_FLOOR_MIN_FRACTION) / (1.0 - SEASONAL_FLOOR_MIN_FRACTION)
+        alpha = SEASONAL_FLOOR_BLEND_MIN + (
+            SEASONAL_FLOOR_BLEND_MAX - SEASONAL_FLOOR_BLEND_MIN
+        ) * np.clip(strength, 0.0, 1.0)
+        forecast_values[step] = (1.0 - alpha) * forecast_values[step] + alpha * floor_value
     return forecast_values
 
 
@@ -601,6 +617,7 @@ def seasonal_trend_forecast(
     series: pd.Series,
     steps: int,
     season_length: int,
+    frequency: pd.Timedelta,
     floor_value: float | None = None,
 ) -> tuple[pd.Series, bool]:
     """Forecast via additive decomposition: rolling trend plus seasonal mean profile."""
@@ -616,14 +633,25 @@ def seasonal_trend_forecast(
     # Step 1 to 6
     working_series, values, positions = prepare_recent_history(series, season_length)
     trend_values = smooth_trend_values(working_series, season_length, values, positions)
-    seasonal_pattern = compute_seasonal_pattern(values, trend_values, season_length)
+    seasonal_pattern = compute_seasonal_pattern(
+        values,
+        trend_values,
+        season_length,
+        working_series.index,
+        frequency,
+    )
 
     trend_forecast, slope, build_trend_series = build_trend_extension(
         trend_values, positions, steps
     )
-    seasonal_future = seasonal_pattern[
-        (np.arange(len(values), len(values) + steps) % season_length)
-    ]
+    future_index = pd.date_range(
+        start=working_series.index[-1] + frequency,
+        periods=steps,
+        freq=frequency,
+    )
+    origin = working_series.index[0]
+    future_steps = np.rint((future_index - origin) / frequency).astype(int)
+    seasonal_future = seasonal_pattern[future_steps % season_length]
     forecast_values = trend_forecast + seasonal_future
 
     (
@@ -642,8 +670,6 @@ def seasonal_trend_forecast(
         build_trend_series,
     )
 
-    offset = float(values[-1] - forecast_values[0])
-    forecast_values = forecast_values + offset
     forecast_values = apply_floor_alignment(
         forecast_values, values, season_length, floor_value, value_range
     )
@@ -699,6 +725,7 @@ def run_selected_method(
                     series,
                     steps,
                     season_length,
+                    frequency,
                     floor_value=floor_value,
                 )
                 seasonal_used = True
@@ -721,14 +748,6 @@ def run_selected_method(
                 slot = (base_length + step) % season_length_used
                 if slot in floor_slots:
                     forecast_values.iloc[step] = floor_slots[slot]
-
-    if effective_method == "seasonal_trend":
-        # Use the average of the most recent observations to soften seasonal alignment.
-        tail_length = min(len(series), SEASONAL_ALIGNMENT_WINDOW)
-        tail_window = series.tail(tail_length)
-        reference_value = float(tail_window.mean()) if not tail_window.empty else np.nan
-        if not np.isnan(reference_value):
-            forecast_values = align_seasonal_forecast_start(forecast_values, reference_value)
 
     if floor_value is not None:
         forecast_values = forecast_values.clip(lower=floor_value)
@@ -871,7 +890,7 @@ COMPONENT_INFO = {
     "name": "Simple Time Series Forecast",
     "category": "Time Series Analysis",
     "description": "Quick forecast baseline for arbitrary time series inputs.",
-    "version_tag": "1.1.0",
+    "version_tag": "1.0.1",
     "id": "e20049ad-272f-4588-9358-c123b6c813a0",
     "revision_group_id": "e2f66407-8297-44fe-8a91-0ed6ce72f553",
     "state": "RELEASED",
@@ -997,14 +1016,14 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n    "2023-01-01T00:03:00+00:00": 20.0,\n    "2023-01-01T01:08:00+00:00": 22.0,\n    "2023-01-01T02:05:00+00:00": 25.0,\n    "2023-01-01T03:12:00+00:00": 27.0,\n    "2023-01-01T04:04:00+00:00": 26.1,\n    "2023-01-01T05:09:00+00:00": 23.2,\n    "2023-01-01T06:02:00+00:00": 21.1,\n    "2023-01-01T07:15:00+00:00": 20.0,\n    "2023-01-01T08:07:00+00:00": 19.0,\n    "2023-01-01T09:11:00+00:00": 21.0,\n    "2023-01-01T10:05:00+00:00": 24.1,\n    "2023-01-01T11:10:00+00:00": 28.0,\n    "2023-01-01T12:06:00+00:00": 30.2,\n    "2023-01-01T13:08:00+00:00": 28.9,\n    "2023-01-01T14:02:00+00:00": 27.1,\n    "2023-01-01T15:14:00+00:00": 24.2,\n    "2023-01-01T16:09:00+00:00": 22.1,\n    "2023-01-01T17:01:00+00:00": 21.0,\n    "2023-01-01T18:06:00+00:00": 20.2,\n    "2023-01-01T19:10:00+00:00": 19.0,\n    "2023-01-01T20:04:00+00:00": 18.0,\n    "2023-01-01T21:16:00+00:00": 19.1,\n    "2023-01-01T22:05:00+00:00": 20.0,\n    "2023-01-01T23:12:00+00:00": 21.0,\n    "2023-01-02T00:04:00+00:00": 20.5,\n    "2023-01-02T01:11:00+00:00": 22.4,\n    "2023-01-02T02:06:00+00:00": 25.6,\n    "2023-01-02T03:13:00+00:00": 27.6,\n    "2023-01-02T04:03:00+00:00": 26.6,\n    "2023-01-02T05:08:00+00:00": 23.6,\n    "2023-01-02T06:04:00+00:00": 21.6,\n    "2023-01-02T07:12:00+00:00": 20.6,\n    "2023-01-02T08:03:00+00:00": 19.7,\n    "2023-01-02T09:15:00+00:00": 21.6,\n    "2023-01-02T10:07:00+00:00": 24.6,\n    "2023-01-02T11:09:00+00:00": 28.6,\n    "2023-01-02T12:02:00+00:00": 30.6,\n    "2023-01-02T13:11:00+00:00": 29.5,\n    "2023-01-02T14:05:00+00:00": 27.6,\n    "2023-01-02T15:10:00+00:00": 24.6,\n    "2023-01-02T16:04:00+00:00": 22.6,\n    "2023-01-02T17:08:00+00:00": 21.6,\n    "2023-01-02T18:01:00+00:00": 20.6,\n    "2023-01-02T19:14:00+00:00": 19.6,\n    "2023-01-02T20:06:00+00:00": 18.6,\n    "2023-01-02T21:12:00+00:00": 19.6,\n    "2023-01-02T22:08:00+00:00": 20.6,\n    "2023-01-02T23:05:00+00:00": 21.6\n}'
+                "value": '{\n    "2026-01-01T00:03:00+00:00": 20.0,\n    "2026-01-01T01:08:00+00:00": 22.0,\n    "2026-01-01T02:05:00+00:00": 25.0,\n    "2026-01-01T03:12:00+00:00": 27.0,\n    "2026-01-01T04:04:00+00:00": 26.1,\n    "2026-01-01T05:09:00+00:00": 23.2,\n    "2026-01-01T06:02:00+00:00": 21.1,\n    "2026-01-01T07:15:00+00:00": 20.0,\n    "2026-01-01T08:07:00+00:00": 19.0,\n    "2026-01-01T09:11:00+00:00": 21.0,\n    "2026-01-01T10:05:00+00:00": 24.1,\n    "2026-01-01T11:10:00+00:00": 28.0,\n    "2026-01-01T12:06:00+00:00": 30.2,\n    "2026-01-01T13:08:00+00:00": 28.9,\n    "2026-01-01T14:02:00+00:00": 27.1,\n    "2026-01-01T15:14:00+00:00": 24.2,\n    "2026-01-01T16:09:00+00:00": 22.1,\n    "2026-01-01T17:01:00+00:00": 21.0,\n    "2026-01-01T18:06:00+00:00": 20.2,\n    "2026-01-01T19:10:00+00:00": 19.0,\n    "2026-01-01T20:04:00+00:00": 18.0,\n    "2026-01-01T21:16:00+00:00": 19.1,\n    "2026-01-01T22:05:00+00:00": 20.0,\n    "2026-01-01T23:12:00+00:00": 21.0,\n    "2026-01-02T00:04:00+00:00": 20.5,\n    "2026-01-02T01:11:00+00:00": 22.4,\n    "2026-01-02T02:06:00+00:00": 25.6,\n    "2026-01-02T03:13:00+00:00": 27.6,\n    "2026-01-02T04:03:00+00:00": 26.6,\n    "2026-01-02T05:08:00+00:00": 23.6,\n    "2026-01-02T06:04:00+00:00": 21.6,\n    "2026-01-02T07:12:00+00:00": 20.6,\n    "2026-01-02T08:03:00+00:00": 19.7,\n    "2026-01-02T09:15:00+00:00": 21.6,\n    "2026-01-02T10:07:00+00:00": 24.6,\n    "2026-01-02T11:09:00+00:00": 28.6,\n    "2026-01-02T12:02:00+00:00": 30.6,\n    "2026-01-02T13:11:00+00:00": 29.5,\n    "2026-01-02T14:05:00+00:00": 27.6,\n    "2026-01-02T15:10:00+00:00": 24.6,\n    "2026-01-02T16:04:00+00:00": 22.6,\n    "2026-01-02T17:08:00+00:00": 21.6,\n    "2026-01-02T18:01:00+00:00": 20.6,\n    "2026-01-02T19:14:00+00:00": 19.6,\n    "2026-01-02T20:06:00+00:00": 18.6,\n    "2026-01-02T21:12:00+00:00": 19.6,\n    "2026-01-02T22:08:00+00:00": 20.6,\n    "2026-01-02T23:05:00+00:00": 21.6\n}'
             },
         },
         {"workflow_input_name": "forecast_horizon", "filters": {"value": "2D"}},
         {"workflow_input_name": "method", "filters": {"value": "auto_select"}},
         {
             "workflow_input_name": "plot_confidence_interval",
-            "filters": {"value": "True"},
+            "filters": {"value": "False"},
         },
     ]
 }
@@ -1013,14 +1032,14 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n    "2023-01-01T00:03:00+00:00": 20.0,\n    "2023-01-01T01:08:00+00:00": 22.0,\n    "2023-01-01T02:05:00+00:00": 25.0,\n    "2023-01-01T03:12:00+00:00": 27.0,\n    "2023-01-01T04:04:00+00:00": 26.1,\n    "2023-01-01T05:09:00+00:00": 23.2,\n    "2023-01-01T06:02:00+00:00": 21.1,\n    "2023-01-01T07:15:00+00:00": 20.0,\n    "2023-01-01T08:07:00+00:00": 19.0,\n    "2023-01-01T09:11:00+00:00": 21.0,\n    "2023-01-01T10:05:00+00:00": 24.1,\n    "2023-01-01T11:10:00+00:00": 28.0,\n    "2023-01-01T12:06:00+00:00": 30.2,\n    "2023-01-01T13:08:00+00:00": 28.9,\n    "2023-01-01T14:02:00+00:00": 27.1,\n    "2023-01-01T15:14:00+00:00": 24.2,\n    "2023-01-01T16:09:00+00:00": 22.1,\n    "2023-01-01T17:01:00+00:00": 21.0,\n    "2023-01-01T18:06:00+00:00": 20.2,\n    "2023-01-01T19:10:00+00:00": 19.0,\n    "2023-01-01T20:04:00+00:00": 18.0,\n    "2023-01-01T21:16:00+00:00": 19.1,\n    "2023-01-01T22:05:00+00:00": 20.0,\n    "2023-01-01T23:12:00+00:00": 21.0,\n    "2023-01-02T00:04:00+00:00": 20.5,\n    "2023-01-02T01:11:00+00:00": 22.4,\n    "2023-01-02T02:06:00+00:00": 25.6,\n    "2023-01-02T03:13:00+00:00": 27.6,\n    "2023-01-02T04:03:00+00:00": 26.6,\n    "2023-01-02T05:08:00+00:00": 23.6,\n    "2023-01-02T06:04:00+00:00": 21.6,\n    "2023-01-02T07:12:00+00:00": 20.6,\n    "2023-01-02T08:03:00+00:00": 19.7,\n    "2023-01-02T09:15:00+00:00": 21.6,\n    "2023-01-02T10:07:00+00:00": 24.6,\n    "2023-01-02T11:09:00+00:00": 28.6,\n    "2023-01-02T12:02:00+00:00": 30.6,\n    "2023-01-02T13:11:00+00:00": 29.5,\n    "2023-01-02T14:05:00+00:00": 27.6,\n    "2023-01-02T15:10:00+00:00": 24.6,\n    "2023-01-02T16:04:00+00:00": 22.6,\n    "2023-01-02T17:08:00+00:00": 21.6,\n    "2023-01-02T18:01:00+00:00": 20.6,\n    "2023-01-02T19:14:00+00:00": 19.6,\n    "2023-01-02T20:06:00+00:00": 18.6,\n    "2023-01-02T21:12:00+00:00": 19.6,\n    "2023-01-02T22:08:00+00:00": 20.6,\n    "2023-01-02T23:05:00+00:00": 21.6\n}'
+                "value": '{\n    "2026-01-01T00:03:00+00:00": 20.0,\n    "2026-01-01T01:08:00+00:00": 22.0,\n    "2026-01-01T02:05:00+00:00": 25.0,\n    "2026-01-01T03:12:00+00:00": 27.0,\n    "2026-01-01T04:04:00+00:00": 26.1,\n    "2026-01-01T05:09:00+00:00": 23.2,\n    "2026-01-01T06:02:00+00:00": 21.1,\n    "2026-01-01T07:15:00+00:00": 20.0,\n    "2026-01-01T08:07:00+00:00": 19.0,\n    "2026-01-01T09:11:00+00:00": 21.0,\n    "2026-01-01T10:05:00+00:00": 24.1,\n    "2026-01-01T11:10:00+00:00": 28.0,\n    "2026-01-01T12:06:00+00:00": 30.2,\n    "2026-01-01T13:08:00+00:00": 28.9,\n    "2026-01-01T14:02:00+00:00": 27.1,\n    "2026-01-01T15:14:00+00:00": 24.2,\n    "2026-01-01T16:09:00+00:00": 22.1,\n    "2026-01-01T17:01:00+00:00": 21.0,\n    "2026-01-01T18:06:00+00:00": 20.2,\n    "2026-01-01T19:10:00+00:00": 19.0,\n    "2026-01-01T20:04:00+00:00": 18.0,\n    "2026-01-01T21:16:00+00:00": 19.1,\n    "2026-01-01T22:05:00+00:00": 20.0,\n    "2026-01-01T23:12:00+00:00": 21.0,\n    "2026-01-02T00:04:00+00:00": 20.5,\n    "2026-01-02T01:11:00+00:00": 22.4,\n    "2026-01-02T02:06:00+00:00": 25.6,\n    "2026-01-02T03:13:00+00:00": 27.6,\n    "2026-01-02T04:03:00+00:00": 26.6,\n    "2026-01-02T05:08:00+00:00": 23.6,\n    "2026-01-02T06:04:00+00:00": 21.6,\n    "2026-01-02T07:12:00+00:00": 20.6,\n    "2026-01-02T08:03:00+00:00": 19.7,\n    "2026-01-02T09:15:00+00:00": 21.6,\n    "2026-01-02T10:07:00+00:00": 24.6,\n    "2026-01-02T11:09:00+00:00": 28.6,\n    "2026-01-02T12:02:00+00:00": 30.6,\n    "2026-01-02T13:11:00+00:00": 29.5,\n    "2026-01-02T14:05:00+00:00": 27.6,\n    "2026-01-02T15:10:00+00:00": 24.6,\n    "2026-01-02T16:04:00+00:00": 22.6,\n    "2026-01-02T17:08:00+00:00": 21.6,\n    "2026-01-02T18:01:00+00:00": 20.6,\n    "2026-01-02T19:14:00+00:00": 19.6,\n    "2026-01-02T20:06:00+00:00": 18.6,\n    "2026-01-02T21:12:00+00:00": 19.6,\n    "2026-01-02T22:08:00+00:00": 20.6,\n    "2026-01-02T23:05:00+00:00": 21.6\n}'
             },
         },
         {"workflow_input_name": "forecast_horizon", "filters": {"value": "2D"}},
         {"workflow_input_name": "method", "filters": {"value": "auto_select"}},
         {
             "workflow_input_name": "plot_confidence_interval",
-            "filters": {"value": "True"},
+            "filters": {"value": "False"},
         },
     ]
 }
