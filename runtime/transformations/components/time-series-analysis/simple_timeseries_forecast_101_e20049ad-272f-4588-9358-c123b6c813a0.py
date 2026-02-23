@@ -494,7 +494,7 @@ def compute_seasonal_pattern(
     seasonal_counts = np.zeros(season_length, dtype=int)
     origin = index[0]
     step_numbers = np.rint((index - origin) / frequency).astype(int)
-    for step_number, residual in zip(step_numbers, residuals):
+    for step_number, residual in zip(step_numbers, residuals, strict=True):
         slot = int(step_number % season_length)
         seasonal_pattern[slot] += residual
         seasonal_counts[slot] += 1
