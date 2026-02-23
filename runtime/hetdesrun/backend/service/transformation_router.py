@@ -30,6 +30,7 @@ from hetdesrun.backend.execution import (
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
     TrafoExecutionRuntimeConnectionError,
+    TrafoExecutionRuntimeHttpStatusError,
     perf_measured_execute_trafo_rev,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -1289,6 +1290,15 @@ async def handle_trafo_revision_execution_request(
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    except TrafoExecutionRuntimeHttpStatusError as err:
+        # actually 4xx or 5xx
+        msg = (
+            f"Https status error during execution of transformation {exec_by_id.id} in external"
+            f" runtime service:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     except TrafoExecutionRuntimeConnectionError as err:
         msg = f"Could not connect to runtime to execute transformation {exec_by_id.id}:\n{str(err)}"

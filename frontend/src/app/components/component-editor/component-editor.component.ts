@@ -35,6 +35,10 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     wordWrap: 'on'
   };
 
+  public saveStatus: 'saved' | 'unsaved' | 'saving' = 'saved';
+  public showIndicator = false;
+  private saveStatusTimer: any;
+
   // only temporary
   public codeCopy: string;
   public lastSavedCode: string;
@@ -66,6 +70,9 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     if (!this._isAutoSaved) {
       this.code = this.componentTransformation.content;
       this.lastSavedCode = this.componentTransformation.content;
+      this.saveStatus = 'saved';
+      this.showIndicator = false;
+      this.clearSaveStatusTimer();
     }
     if (this.componentTransformation.state !== RevisionState.DRAFT) {
       this.editorOptions = {
@@ -103,6 +110,8 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         switchMap(() => {
           if (this.lastSavedCode !== this.code) {
             this._isAutoSaved = true;
+            this.saveStatus = 'saving';
+            this.showIndicator = true; // Show during saving
             this.lastSavedCode = this.code;
             return this.transformationService.updateTransformation({
               ...this.componentTransformation,
@@ -112,7 +121,17 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
           return of(null);
         })
       )
-      .subscribe();
+      .subscribe(result => {
+        if (result !== null) {
+          this.saveStatus = 'saved';
+          this.showIndicator = true;
+          // Fade out after some time in saved state
+          this.clearSaveStatusTimer();
+          this.saveStatusTimer = setTimeout(() => {
+            this.showIndicator = false;
+          }, 2000);
+        }
+      });
   }
 
   public get code(): string {
@@ -120,7 +139,19 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   }
 
   public set code(code: string) {
+    const hasChanged = this.codeCopy !== code;
     this.codeCopy = code;
+
+    if (hasChanged && this.lastSavedCode !== code) {
+      this.saveStatus = 'unsaved';
+      this.showIndicator = true; // Show indicator when unsaved
+      this.clearSaveStatusTimer(); // Clear any existing timer
+    } else {
+      this.saveStatus = 'saved';
+      this.showIndicator = false; // Do not show indicator when there is no change
+      this.clearSaveStatusTimer(); // Clear any existing timer
+    }
+
     this._autoSave$.next();
   }
 
@@ -237,9 +268,17 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     return `/home?id=${uuid}`;
   }
 
+  private clearSaveStatusTimer() {
+    if (this.saveStatusTimer) {
+      clearTimeout(this.saveStatusTimer);
+      this.saveStatusTimer = null;
+    }
+  }
+
   ngOnDestroy() {
     if (this.linkDisposable) {
       this.linkDisposable.dispose();
     }
+    this.clearSaveStatusTimer();
   }
 }

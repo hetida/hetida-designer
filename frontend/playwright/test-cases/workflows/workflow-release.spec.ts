@@ -56,7 +56,7 @@ ${workflowInputData}
   );
 
   // Configure workflow I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );
@@ -92,7 +92,7 @@ ${workflowInputData}
     .innerText();
 
   // Add workflow documentation
-  await hetidaDesigner.clickIconInToolbar('Open documentation');
+  await hetidaDesigner.clickIconInToolbar('Open_documentation');
   await page.waitForSelector('hd-documentation-editor >> textarea');
   await hetidaDesigner.typeInDocumentationEditor(workflowDocumentation);
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
@@ -103,7 +103,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('publish workflow-confirm-dialog');
 
   // Get released workflow details
-  await hetidaDesigner.clickIconInToolbar('Edit workflow details');
+  await hetidaDesigner.clickIconInToolbar('Edit');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Edit workflow ${workflowName} ${workflowTag}")`
   );
@@ -114,7 +114,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('cancel-copy-transformation-dialog');
 
   // Get released workflow I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );
@@ -152,7 +152,7 @@ ${workflowInputData}
     .innerText();
 
   // Get released workflow documentation
-  await hetidaDesigner.clickIconInToolbar('Open documentation');
+  await hetidaDesigner.clickIconInToolbar('Open_documentation');
   await page.waitForSelector(
     'hd-documentation-editor >> .editor-and-preview__preview'
   );

@@ -71,6 +71,46 @@ def test_virtual_wiring_resolution_with_one_source_and_sink():
 
 
 @pytest.mark.usefixtures("_fill_db")
+def test_virtual_wiring_resolution_with_one_source_with_metadata():
+    """Test that meta_data field at structure sources reaches the VSt adapter wiring as attrs.
+
+    Together with a test for the component adapter
+        test_component_source_wiring_with_attrs_metadata_in_input_wiring
+    this guarantees, that this metadat will be attached to objects provided by
+    the target adapter.
+    """
+    sources = fetch_all_sources_from_db()
+    struct_src = VirtualStructureAdapterSource.from_structure_service_source(sources[0])
+
+    example_filters = {
+        "timestampFrom": "2024-07-10T09:36:00.000000000Z",
+        "timestampTo": "2024-07-11T09:36:00.000000000Z",
+    }
+    input_wiring = InputWiring(
+        workflow_input_name="nf",
+        adapter_id="virtual-structure-adapter",
+        ref_id=str(struct_src.id),
+        type=struct_src.type,
+        filters=example_filters,
+    )
+    wf_wiring = WorkflowWiring(input_wirings=[input_wiring])
+
+    # Replace wirings
+    resolve_virtual_structure_wirings(wf_wiring)
+
+    # Check if the wiring was correctly replaced
+    assert (
+        wf_wiring.input_wirings[0].adapter_id == sources[0].adapter_key
+    )  # Should replace virtual-structure-adapter
+    assert wf_wiring.input_wirings[0].workflow_input_name == "nf"  # Should keep the original name
+    assert (
+        wf_wiring.input_wirings[0].filters == sources[0].preset_filters | example_filters
+    )  # Should be a combination of preset and passthrough filters
+
+    assert wf_wiring.input_wirings[0].attrs == {"Influx": {"nf": 23}}
+
+
+@pytest.mark.usefixtures("_fill_db")
 def test_virtual_wiring_resolution_with_empty_workflow_wiring():
     wf_wiring = WorkflowWiring()
     original_wiring_id = id(wf_wiring)

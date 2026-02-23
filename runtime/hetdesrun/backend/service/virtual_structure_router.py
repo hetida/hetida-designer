@@ -4,6 +4,7 @@ from secrets import compare_digest
 from fastapi import HTTPException, Query, status
 
 from hetdesrun.backend.service.maintenance_router import MaintenancePayload
+from hetdesrun.structure.db.element_type_service import fetch_all_element_types_from_db
 from hetdesrun.structure.db.exceptions import (
     DBAssociationError,
     DBError,
@@ -12,11 +13,16 @@ from hetdesrun.structure.db.exceptions import (
     DBNotFoundError,
     DBUpdateError,
 )
+from hetdesrun.structure.db.source_sink_service import (
+    fetch_all_sinks_from_db,
+    fetch_all_sources_from_db,
+)
 from hetdesrun.structure.db.structure_service import (
     are_structure_tables_empty,
     delete_structure,
     update_structure,
 )
+from hetdesrun.structure.db.thing_node_service import fetch_all_thing_nodes_from_db
 from hetdesrun.structure.models import CompleteStructure
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -88,4 +94,30 @@ async def update_structure_endpoint(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         logger.error("Structure update request failed: %s", e)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@virtual_structure_router.get(
+    "/complete",
+    summary="Complete structure",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully fetched complete structure data."}
+    },
+    response_model=CompleteStructure,
+)
+async def provide_structure_source_definitions() -> CompleteStructure:
+    """Loads complete structure
+
+    Structure may be huge.
+    """
+    try:
+        return CompleteStructure(
+            element_types=fetch_all_element_types_from_db(),
+            thing_nodes=fetch_all_thing_nodes_from_db(),
+            sources=fetch_all_sources_from_db(),
+            sinks=fetch_all_sinks_from_db(),
+        )
+    except DBNotFoundError as e:
+        logger.error("Structure get request failed: %s", e)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e

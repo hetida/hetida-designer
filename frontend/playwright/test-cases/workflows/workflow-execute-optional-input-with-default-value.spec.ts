@@ -44,7 +44,7 @@ test('Execute workflow with Optional Input and Default Value', async ({
   );
 
   // Configure workflow I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );

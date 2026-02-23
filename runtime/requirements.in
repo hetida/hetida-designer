@@ -1,6 +1,7 @@
 -c requirements-base.txt
 SQLAlchemy-Utils
 aiokafka[snappy]
+aiomqtt
 alembic
 asyncstdlib
 black
@@ -9,11 +10,13 @@ boto3-stubs[essential]
 datashader
 dateparser
 dtexp
+duckdb
 fastapi>=0.65.2
 fastparquet
 gekko
 geojson
 geopandas
+glom
 gunicorn
 h5py
 holidays

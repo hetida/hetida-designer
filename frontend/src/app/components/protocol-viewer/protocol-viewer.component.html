@@ -23,7 +23,9 @@
         title="Switch between protocol and raw json view"
         >code</mat-icon
       >
-      <mat-icon class="clickable" (click)="closeDialog()">close</mat-icon>
+      <mat-icon class="clickable" (click)="closeDialog()" title="Close (ESC)"
+        >close</mat-icon
+      >
     </div>
   </div>
   @if (executionResponse && !displayRawValue) {
@@ -102,6 +104,7 @@
     [data]="plotlyItem.value.data"
     [layout]="plotlyItem.value.layout"
     [config]="plotlyItem.value.config"
+    [frames]="plotlyItem.value.frames"
   ></plotly-plot>
 </ng-template>
 

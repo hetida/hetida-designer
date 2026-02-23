@@ -1,6 +1,8 @@
 # frontend/.husky/pre-commit
 
-cd frontend
+if git status --porcelain | grep -e '^M' | grep -q 'frontend/'; then
+  cd frontend
 
-npm run lint
-npm run format:staged
+  npm run lint
+  npm run format:staged
+fi

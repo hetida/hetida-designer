@@ -34,7 +34,7 @@ test('Allow null value as default_value for primitive data types, if the value i
   );
 
   // Configure component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );

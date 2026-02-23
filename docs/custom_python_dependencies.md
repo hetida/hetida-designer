@@ -41,7 +41,7 @@ docker compose -f docker-compose-custom-dependencies.yml up -d
 
 To test availability of the xgboost library you may write a small component importing it (`import xgboost`) and verify that the component can be run.
 
-## Example 2: Adding libraries with pip-compile and pip-sync
+## Example 2: Adding libraries with uv pip compile and uv pip sync
 
 Using uv lock and uv sync guarantees that the installed versions of your custom dependencies are compatible with the pre-installed dependencies.
 
@@ -69,7 +69,7 @@ WORKDIR /app
 RUN uv pip compile --generate-hashes ./requirements-custom.in -o ./requirements-custom.txt
 RUN uv pip sync --system ./requirements-base.txt ./requirements.txt ./requirements-custom.txt
 
-USER hdrt_app
+USER hd_app
 ```
 
 Now save the `docker-compose.yml` file as a new file with name `docker-compose-custom-dependencies.yml` and edit the hetida designer runtime service section as follows:

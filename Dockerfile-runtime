@@ -1,5 +1,10 @@
-##### Build stage
-FROM --platform=linux/amd64 python:3.13.7-slim-trixie AS base
+##### Base stage
+
+# We explicitly target amd64 because our dependency stack is only tested and
+# validated on this architecture. Building for other platforms may succeed but
+# is unsupported.
+ARG TARGETPLATFORM=linux/amd64
+FROM --platform=${TARGETPLATFORM} python:3.13.7-slim-trixie AS base
 
 ENV TIMEOUT=900
 
@@ -31,9 +36,18 @@ RUN chmod -R a+rw /mnt/obj_repo
 RUN mkdir -p /mnt/autoimport
 RUN chmod -R a+rw /mnt/autoimport
 
-##### Production stage
-# making prod stage available early allows to build it without building test stage
-# since test stage is only necessary on build system
+
+##### Test stage
+# Note that in order to build the test stage you need to explicitly specify
+# the test stage via
+#     docker build --target test -f Dockerfile-runtime . -t hetdesrun_webservice
+FROM application_base AS test
+RUN ./pipt sync-system --dev
+RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
+RUN bash /app/scripts/gen_ruff_report.sh
+
+
+##### Pre-Prod stage
 FROM application_base AS pre-prod
 RUN useradd -m hd_app
 USER hd_app
@@ -41,8 +55,7 @@ ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
 
-
-# Syft stage - scan the complete production image
+##### Syft stage - scan the complete production image
 FROM anchore/syft:latest AS sbom-generator
 
 # Copy the entire production filesystem to scan everything
@@ -52,22 +65,14 @@ RUN ["/syft", "/scan-target",  "-o", "spdx-json=/tmp/sbom.spdx.json"]
 RUN ["/syft", "/scan-target",  "-o", "syft-json=/tmp/sbom.syft.json"]
 RUN ["/syft", "/scan-target",  "-o", "cyclonedx-json=/tmp/sbom.cyclonedx.json"]
 
+##### Grype stage
 FROM anchore/grype:latest AS grype-generator
 COPY --from=sbom-generator /tmp /tmp
 RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "json=/tmp/grype-report.json"]
 RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "cyclonedx-json=/tmp/grype-report-cyclonedx.json"]
 
-
-##### Test stage
-FROM application_base AS test
-RUN ./pipt sync-system --dev
-RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
-RUN bash /app/scripts/gen_ruff_report.sh
-
-# prod should still be the default build, this is why we close with FROM prod
-# Note that in order to really skip building the test stage you need to explicitly specify
-# the prod stage via
-#     docker build --target prod -f Dockerfile-runtime . -t hetdesrun_webservice
+##### Production stage
+# prod should be the default build, this is why we close with prod
 FROM pre-prod AS prod
 
 # Copy SBOM and grype files

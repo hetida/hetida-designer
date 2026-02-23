@@ -192,7 +192,7 @@ class ComputationNode:
                 input_values,
             )
             function_result = function_result if function_result is not None else {}
-        except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
+        except BaseException as exc:  # uncaught exceptions from user code  # noqa: BLE001
             if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(exc, "error_code"):
                 internal_runtime_execution_logger.warning(
                     "User raised a hetida designer exception in component code.",

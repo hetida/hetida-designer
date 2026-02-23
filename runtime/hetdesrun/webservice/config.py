@@ -513,6 +513,24 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    uri_wiring_shortcuts: dict[str, tuple[str, str]] = Field(
+        {},
+        validation_alias="HETIDA_DESIGNER_URI_WIRING_SHORTCUTS",
+        description=(
+            "Uri Wiring shortcuts: If the host part of the uri matches a key in this "
+            "dictionary, the first entry of the value pair will be used as host "
+            "(i.e. adapter_key) instead and the second part will be used as path (ref_id) "
+            "instead. E.g. you might configure this to \n"
+            '    {"pegel": ["component-adapter", "/230dfa9a-0efe-4418-a5b4-2ac3954ebd8f"]}\n'
+            "and a user can then use a uri wiring of the form\n"
+            "    hd://pegel?station=BONN&measurement=W\n"
+            "instead of the much longer\n"
+            "    hd://component-adapter/230dfa9a-0efe-4418-a5b4-2ac3954ebd8f?station=BONN&measurement=W\n"
+            "Furthermore this allows to configuratively switch to another version of a component"
+            " adapter source while keeping uri wirings as they are."
+        ),
+    )
+
     hd_runtime_engine_url: str = Field(
         "http://hetida-designer-runtime:8090/engine/",
         validation_alias="HETIDA_DESIGNER_RUNTIME_ENGINE_URL",

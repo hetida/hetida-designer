@@ -141,13 +141,15 @@ export class HetidaDesigner {
       .pressSequentially(searchTerm);
   }
 
-  public async clickIconInToolbar(iconTitle: string): Promise<void> {
-    if (iconTitle === '') {
-      throw new Error('ERROR: Icon title must not be empty');
+  public async clickIconInToolbar(dataTestId: string): Promise<void> {
+    if (dataTestId === '') {
+      throw new Error('ERROR: dataTestId must not be empty');
     }
 
     await this.page
-      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`)
+      .locator(
+        `hd-toolbar >> mat-icon[data-testid="${dataTestId}"]:not(.disabled)`
+      )
       .click();
   }
 

@@ -153,6 +153,7 @@ import datetime
 import io
 import json
 import logging
+from collections import defaultdict
 from enum import StrEnum
 from types import NoneType, UnionType
 from typing import Annotated, Any, Literal, TypedDict
@@ -1018,6 +1019,130 @@ def modify_timezone(
         exc.add_note(f"Column name {column_name} not in object_to_convert")
         raise
 
+
+def extract_sub_value(data: dict[str, Any], json_path: list[str]) -> Any | None:
+    """Extract a sub value of a nested dict structure
+
+    Returns either the found value, or None if it could not be found.
+    """
+    current: Any | None = data
+    for key in json_path:
+        if isinstance(current, dict):
+            current = current.get(key)
+            if current is None:
+                return None
+        else:
+            return None
+    return current
+
+
+def extract_sub_mapping(
+    dict_of_metadata: dict[str | int, dict[str, Any]], json_path: list[str]
+) -> dict[str | int, Any]:
+    return {
+        main_key: extract_sub_value(sub_dict, json_path)
+        for main_key, sub_dict in dict_of_metadata.items()
+    }
+
+
+def add_columns_from_metric_metadata(
+    multitsframe: pd.DataFrame,
+    keys: list[str | list[str]] | None = None,
+    replace_metric_col_with_key: str | list[str] | None = None,
+    default_value: Any = np.nan,
+) -> pd.DataFrame:
+    """Add columns (or replace metric column) from attrs metadata in a multitsframe
+
+    Expects a hetida designer multitsframe with metadata according to hetida designer
+    metadata conventions.
+
+    For replacing the metric col using replace_metric_col_with_key this expects a
+    value for each metric to be found in the metadata. If that is not the case it keeps
+    the existing metric entry!
+
+    For adding columns, a default_value can be specified that is used when no entry for
+    a key is found in the metadata for the corresponding metric.
+
+    Modifies in-place, but also returns the modified multitsframe.
+
+    keys is a list of json-path-like lists. For each entry a column is added, where
+    in the found metric metdata the field at subpath defined by this entry is assigned.
+    For convenience a str entry is interpreted as json path of length 1.
+
+    E.g. if your attrs looks like
+        "by_metric": {
+            "a": {
+                "structured_metadata": {
+                    "metric": {  # metadata associated to the current metric. These are
+                        "name": "AAAAA",
+                        "display_name": "some A",
+                        "short_display_name": "a",
+                        "description": "some descriptions",
+                        "external_id": "AA",
+                        "channel_id": "abc123-...",
+                    }
+                }
+            },
+            "b": {
+                "structured_metadata": {
+                    "metric": {  # metadata associated to the current metric. These are
+                        "name": "BBBBB",
+                        "display_name": "some B",
+                        "short_display_name": "b",
+                        "description": "some descriptions",
+                        "external_id": "BB",
+                        "channel_id": "abc123-...",
+                    }
+                }
+            },
+        }
+
+    then you can specify to add an external_id column and an additional channel id column via
+        add_columns_from_metric_metadata(
+            multitsframe, keys=[
+                ["structured_metadata", "metric", "external_id"],
+                ["structured_metadata", "metric", "channel_id"]
+            ]
+        )
+
+    Similarly replace_metric_col_with_key is a json-path-like list or interpreted as length 1 such
+    path if a single str.
+    """
+
+    metrics_metadata = extract_sub_value(multitsframe.attrs, ["by_metric"])
+
+    if metrics_metadata is None or all(
+        (x is None or len(x) == 0)
+        for x in metrics_metadata.values()  # nothin contained in the values
+    ):
+        metrics_metadata = extract_sub_value(multitsframe.attrs, ["metric_metadata"])
+
+    if metrics_metadata is None:
+        logger.warning("Did not found metric metadata for extracting data into columns.")
+        return multitsframe
+
+    if replace_metric_col_with_key is not None:
+        key_list = (
+            [replace_metric_col_with_key]
+            if isinstance(replace_metric_col_with_key, str)
+            else replace_metric_col_with_key
+        )
+
+        multitsframe["metric"] = multitsframe["metric"].replace(
+            extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
+        )
+    if keys is not None:
+        for key in keys:
+            key_list = [key] if isinstance(key, str) else key
+
+            mapping_dict = extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
+
+            mapping_dict = defaultdict(lambda: default_value, mapping_dict)
+
+            multitsframe[key_list[-1]] = multitsframe["metric"].map(mapping_dict)
+
+    return multitsframe
+
 END_HEREDOC
 )
 
@@ -1816,7 +1941,7 @@ _export_to_dir() {
         elif [[ "$extension" == "py" ]]; then
             touch "$EXPORT_DIRECTORY/components/__init__.py"
             touch "$(dirname "$_file_path")"/__init__.py
-            echo "$decoded_row" | jq -r '.content' >"$_file_path"
+            echo "$decoded_row" | jq -j '.content' >"$_file_path"
         fi
 
         end=$(date +%s%N)

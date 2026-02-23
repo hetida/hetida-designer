@@ -5,7 +5,8 @@ import {
   Component,
   HostBinding,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  HostListener
 } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { IOType } from 'hetida-flowchart';
@@ -144,6 +145,14 @@ export class ProtocolViewerComponent implements AfterViewInit {
     }
 
     return template;
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscapeKey(event: KeyboardEvent) {
+    if (this.isVisible) {
+      event.preventDefault();
+      this.closeDialog();
+    }
   }
 
   closeDialog() {

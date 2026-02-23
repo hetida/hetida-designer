@@ -38,3 +38,18 @@ def get_enumerated_ids_of_vst_sources_or_sinks(
             indices.append(i)
             ref_ids.append(wiring.ref_id)  # type: ignore[attr-defined]
     return indices, ref_ids
+
+
+def add_vst_metadata_to_input_wiring_attrs(
+    input_wirings: list[InputWiring],
+    relevant_indices: list[int],
+    virtual_sources: dict[UUID, StructureServiceSource],
+) -> None:
+    for idx, virtual_source in zip(relevant_indices, virtual_sources.values(), strict=True):
+        if virtual_source.meta_data is not None:
+            if input_wirings[idx].attrs:
+                input_wirings[idx].attrs.update(  # type: ignore[union-attr]
+                    virtual_source.meta_data
+                )
+            else:
+                input_wirings[idx].attrs = virtual_source.meta_data

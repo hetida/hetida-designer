@@ -1,5 +1,6 @@
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.utils import (
+    add_vst_metadata_to_input_wiring_attrs,
     get_enumerated_ids_of_vst_sources_or_sinks,
     get_virtual_sources_and_sinks_from_structure_service,
 )
@@ -57,29 +58,33 @@ def resolve_virtual_structure_wirings(
         workflow_wiring.output_wirings
     )
 
-    if input_ref_ids or output_ref_ids:
-        try:
-            virtual_sources, virtual_sinks = get_virtual_sources_and_sinks_from_structure_service(
-                input_ref_ids, output_ref_ids
-            )
-        except DBNotFoundError as e:
-            raise AdapterHandlingException(
-                "Atleast one source or sink referenced in the wirings was not found "
-                f"in the structure service database, during the wiring resolution: {str(e)}"
-            ) from e
+    if not (input_ref_ids or output_ref_ids):
+        # No virtual wirings to resolve
+        return
+    try:
+        virtual_sources, virtual_sinks = get_virtual_sources_and_sinks_from_structure_service(
+            input_ref_ids, output_ref_ids
+        )
+    except DBNotFoundError as e:
+        raise AdapterHandlingException(
+            "Atleast one source or sink referenced in the wirings was not found "
+            f"in the structure service database, during the wiring resolution: {str(e)}"
+        ) from e
 
-        # Update input wirings
-        for idx, virtual_source in zip(
-            input_indices_to_be_updated, virtual_sources.values(), strict=True
-        ):
-            workflow_wiring.input_wirings[idx] = update_wirings(
-                workflow_wiring.input_wirings[idx], virtual_source
-            )  # type: ignore
+    # Update input wirings
+    for idx, virtual_source in zip(
+        input_indices_to_be_updated, virtual_sources.values(), strict=True
+    ):
+        workflow_wiring.input_wirings[idx] = update_wirings(
+            workflow_wiring.input_wirings[idx], virtual_source
+        )  # type: ignore
 
-        # Update output wirings
-        for idx, virtual_sink in zip(
-            output_indices_to_be_updated, virtual_sinks.values(), strict=True
-        ):
-            workflow_wiring.output_wirings[idx] = update_wirings(
-                workflow_wiring.output_wirings[idx], virtual_sink
-            )  # type: ignore
+    # Update output wirings
+    for idx, virtual_sink in zip(output_indices_to_be_updated, virtual_sinks.values(), strict=True):
+        workflow_wiring.output_wirings[idx] = update_wirings(
+            workflow_wiring.output_wirings[idx], virtual_sink
+        )  # type: ignore
+
+    add_vst_metadata_to_input_wiring_attrs(
+        workflow_wiring.input_wirings, input_indices_to_be_updated, virtual_sources
+    )

@@ -5016,6 +5016,40 @@
           }
         }
       }
+    },
+    "/api/structure/complete": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Complete structure",
+        "description": "Loads complete structure\n\nStructure may be huge.",
+        "operationId": "provide_structure_source_definitions_api_structure_complete_get",
+        "responses": {
+          "200": {
+            "description": "Successfully fetched complete structure data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteStructure-Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5172,7 +5206,7 @@
             "$ref": "#/components/schemas/MaintenancePayload"
           },
           "new_structure": {
-            "$ref": "#/components/schemas/CompleteStructure"
+            "$ref": "#/components/schemas/CompleteStructure-Input"
           }
         },
         "type": "object",
@@ -5205,7 +5239,7 @@
         ],
         "title": "CodeModule"
       },
-      "CompleteStructure": {
+      "CompleteStructure-Input": {
         "properties": {
           "element_types": {
             "items": {
@@ -5225,7 +5259,7 @@
           },
           "sources": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSource"
+              "$ref": "#/components/schemas/StructureServiceSource-Input"
             },
             "type": "array",
             "title": "Sources",
@@ -5233,7 +5267,48 @@
           },
           "sinks": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSink"
+              "$ref": "#/components/schemas/StructureServiceSink-Input"
+            },
+            "type": "array",
+            "title": "Sinks",
+            "description": "All sinks of the structure"
+          }
+        },
+        "type": "object",
+        "required": [
+          "element_types"
+        ],
+        "title": "CompleteStructure"
+      },
+      "CompleteStructure-Output": {
+        "properties": {
+          "element_types": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceElementType"
+            },
+            "type": "array",
+            "title": "Element Types",
+            "description": "All element types of the structure"
+          },
+          "thing_nodes": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceThingNode"
+            },
+            "type": "array",
+            "title": "Thing Nodes",
+            "description": "All thingnodes of the structure"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceSource-Output"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "All sources of the structure"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceSink-Output"
             },
             "type": "array",
             "title": "Sinks",
@@ -6568,6 +6643,19 @@
             "type": "object",
             "title": "Filters",
             "default": {}
+          },
+          "attrs": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attrs",
+            "description": "Additional metadata that should update a attrs attribute of type dict the the loaded object after loading. This will be applied using a shallow dict update, so its entries may overwrite same-named entries in the attrs dict of the object provided by the adapter. This does only work for adapters that provide the correct object themself. E.g. It does not work for the direct_provisioning adapter which provides the filter \"value\" as is (e.g. string) and relies on parsing at a later stage in the execution process. The Virtual Structure adapter allows to set a meta_data attribute in virtual sources. Its value is provided as attrs to the actual adapter's wiring then."
           }
         },
         "type": "object",
@@ -7471,7 +7559,8 @@
           "ENSURE_RESULT_PARSABLE_AND_SERIALIZABLE",
           "SENDING_DATA_TO_ADAPTERS",
           "ENCODING_RESULTS_TO_JSON",
-          "SERIALIZING_EXEC_RESULT"
+          "SERIALIZING_EXEC_RESULT",
+          "UNKNOWN"
         ],
         "title": "ProcessStage",
         "description": "Stages of the execution process."
@@ -7858,7 +7947,7 @@
         ],
         "title": "StructureServiceElementType"
       },
-      "StructureServiceSink": {
+      "StructureServiceSink-Input": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -7988,7 +8077,137 @@
         ],
         "title": "StructureServiceSink"
       },
-      "StructureServiceSource": {
+      "StructureServiceSink-Output": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "title": "External Id",
+            "description": "Externally provided unique identifier"
+          },
+          "stakeholder_key": {
+            "type": "string",
+            "title": "Stakeholder Key",
+            "description": "Stakeholder key for the entity"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Unique name of the entity"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique identifier for the sink"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExternalType",
+            "description": "Type of the sink"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible",
+            "description": "Visibility of the sink",
+            "default": true
+          },
+          "display_path": {
+            "type": "string",
+            "title": "Display Path",
+            "description": "Displays all parent nodes in sequence in the designer frontend",
+            "default": ""
+          },
+          "preset_filters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preset Filters",
+            "description": "Preset filters for the sink",
+            "default": {}
+          },
+          "passthrough_filters": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Filter"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passthrough Filters",
+            "description": "Passthrough filters for the sink",
+            "default": []
+          },
+          "adapter_key": {
+            "type": "string",
+            "title": "Adapter Key",
+            "description": "Adapter key or identifier"
+          },
+          "sink_id": {
+            "type": "string",
+            "title": "Sink Id",
+            "description": "Referenced HD StructureServiceSink identifier"
+          },
+          "ref_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Key",
+            "description": "Key of the referenced metadatum, only used for sinks of type metadata(any)"
+          },
+          "ref_id": {
+            "type": "string",
+            "title": "Ref Id",
+            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if sink has type metadata(any)",
+            "default": ""
+          },
+          "meta_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Data",
+            "description": "Optional metadata for the StructureServiceSink"
+          },
+          "thing_node_external_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thing Node External Ids",
+            "description": "List of externally provided unique identifiers for the thing nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_id",
+          "stakeholder_key",
+          "name",
+          "type",
+          "adapter_key",
+          "sink_id"
+        ],
+        "title": "StructureServiceSink"
+      },
+      "StructureServiceSource-Input": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -8089,7 +8308,137 @@
               }
             ],
             "title": "Meta Data",
-            "description": "Optional metadata for the StructureServiceSource"
+            "description": "Optional metadata for the StructureServiceSource. This will be attached to the actual adapter wiring as attrs and then will override attrs metadata attached to objects provided by the actual adapter, if such an attrs attribute of type dict is present on the loaded object."
+          },
+          "thing_node_external_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thing Node External Ids",
+            "description": "List of externally provided unique identifiers for the thing nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_id",
+          "stakeholder_key",
+          "name",
+          "type",
+          "adapter_key",
+          "source_id"
+        ],
+        "title": "StructureServiceSource"
+      },
+      "StructureServiceSource-Output": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "title": "External Id",
+            "description": "Externally provided unique identifier"
+          },
+          "stakeholder_key": {
+            "type": "string",
+            "title": "Stakeholder Key",
+            "description": "Stakeholder key for the entity"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Unique name of the entity"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique identifier for the source"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExternalType",
+            "description": "Type of the source"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible",
+            "description": "Visibility of the source",
+            "default": true
+          },
+          "display_path": {
+            "type": "string",
+            "title": "Display Path",
+            "description": "Displays all parent nodes in sequence in the designer frontend",
+            "default": ""
+          },
+          "preset_filters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preset Filters",
+            "description": "Preset filters for the source",
+            "default": {}
+          },
+          "passthrough_filters": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Filter"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passthrough Filters",
+            "description": "Passthrough filters for the source",
+            "default": []
+          },
+          "adapter_key": {
+            "type": "string",
+            "title": "Adapter Key",
+            "description": "Adapter key or identifier"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id",
+            "description": "Referenced HD StructureServiceSource identifier"
+          },
+          "ref_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Key",
+            "description": "Key of the referenced metadatum, only used for sources of type metadata(any)"
+          },
+          "ref_id": {
+            "type": "string",
+            "title": "Ref Id",
+            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if source has type metadata(any)",
+            "default": ""
+          },
+          "meta_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Data",
+            "description": "Optional metadata for the StructureServiceSource. This will be attached to the actual adapter wiring as attrs and then will override attrs metadata attached to objects provided by the actual adapter, if such an attrs attribute of type dict is present on the loaded object."
           },
           "thing_node_external_ids": {
             "anyOf": [

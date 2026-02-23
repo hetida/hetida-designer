@@ -7,13 +7,23 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.dialects.sqlite.dml import Insert as sqlite_insert_typing
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession
+from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.structure_service_dbmodels import StructureServiceElementTypeDBModel
 from hetdesrun.structure.db.exceptions import DBIntegrityError, DBUpdateError
 from hetdesrun.structure.models import StructureServiceElementType
 from hetdesrun.structure.utils import is_postgresql, is_sqlite
 
 logger = logging.getLogger(__name__)
+
+
+def fetch_all_element_types_from_db() -> list[StructureServiceElementType]:
+    logger.debug("Fetching all element types from database")
+    with get_session()() as session:
+        all_ets = session.query(StructureServiceElementTypeDBModel).all()
+
+    logger.debug("Successfully fetched %d element types from the database.", len(all_ets))
+
+    return [StructureServiceElementType.from_orm_model(et) for et in all_ets]
 
 
 def upsert_element_types(
@@ -47,9 +57,9 @@ def upsert_element_types(
         upsert_stmt: sqlite_insert_typing | pg_insert_typing
 
         if is_postgresql(engine):
-            upsert_stmt = pg_insert(StructureServiceElementTypeDBModel).values(element_dicts)
+            upsert_stmt = pg_insert(StructureServiceElementTypeDBModel)
         elif is_sqlite(engine):
-            upsert_stmt = sqlite_insert(StructureServiceElementTypeDBModel).values(element_dicts)
+            upsert_stmt = sqlite_insert(StructureServiceElementTypeDBModel)
         else:
             raise ValueError(
                 f"Unsupported database engine: {engine}. Please use either Postgres or SQLite."
@@ -68,6 +78,7 @@ def upsert_element_types(
         # ORM models returned by the upsert query
         element_dbmodels = session.scalars(
             upsert_stmt,
+            element_dicts,
             execution_options={"populate_existing": True},
         )
 
