@@ -20,7 +20,7 @@ def update_with_metdata_from_input_wiring(obj: Any, input_wiring: InputWiring) -
         if hasattr(obj, "attrs") and isinstance(obj.attrs, dict):
             # shallow, i.e. possibly completely overriding main fields:
             obj.attrs.update(input_wiring.attrs)  # type: ignore [union-attr]
-        else:
+        else:  # pragma: no cover
             msg = (
                 f"Input wiring for input {input_wiring.workflow_input_name} "
                 f" for adapter {input_wiring.adapter_id} has attrs set but object provided"

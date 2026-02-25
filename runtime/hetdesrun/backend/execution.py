@@ -424,7 +424,7 @@ def add_runtime_request_response_reaction_times(
 
 
 async def run_execution_input(  # noqa: PLR0915
-    execution_input: WorkflowExecutionInput,
+    execution_input: WorkflowExecutionInput, scheduling_internal: bool = False
 ) -> ExecutionResponseFrontendDto:
     """Runs the provided execution input
 
@@ -450,7 +450,9 @@ async def run_execution_input(  # noqa: PLR0915
         execution_response = ExecutionResponseFrontendDto.model_construct(**dict(execution_result))
     else:
         try:
-            headers = await get_auth_headers(external=False)
+            headers = await get_auth_headers(
+                external=False, scheduling_internal=scheduling_internal
+            )
         except ServiceAuthenticationError as e:
             msg = (
                 "Failed to get auth headers for internal runtime execution request."
@@ -623,7 +625,7 @@ def exec_by_id_input_to_stub(exec_by_id_input: ExecByIdInput) -> ExecByIdInput:
 
 
 async def execute_transformation_revision(
-    exec_by_id_input: ExecByIdInput,
+    exec_by_id_input: ExecByIdInput, scheduling_internal: bool = False
 ) -> ExecutionResponseFrontendDto:
     """Execute transformation revision
 
@@ -692,14 +694,16 @@ async def execute_transformation_revision(
 
     prep_exec_input_measured_step.stop()
 
-    exec_resp_frontend_dto = await run_execution_input(execution_input)
+    exec_resp_frontend_dto = await run_execution_input(
+        execution_input, scheduling_internal=scheduling_internal
+    )
     exec_resp_frontend_dto.measured_steps.prepare_execution_input = prep_exec_input_measured_step
 
     return exec_resp_frontend_dto
 
 
 async def perf_measured_execute_trafo_rev(
-    exec_by_id: ExecByIdInput,
+    exec_by_id: ExecByIdInput, scheduling_internal: bool = False
 ) -> ExecutionResponseFrontendDto:
     """Wraps execution with performance measuring
 
@@ -708,7 +712,9 @@ async def perf_measured_execute_trafo_rev(
     internal_full_measured_step = PerformanceMeasuredStep.create_and_begin("internal_full")
 
     # following line may raise exceptions (TrafoExecutionError and subclasses):
-    exec_response = await execute_transformation_revision(exec_by_id)
+    exec_response = await execute_transformation_revision(
+        exec_by_id, scheduling_internal=scheduling_internal
+    )
 
     internal_full_measured_step.stop()
     exec_response.measured_steps.internal_full = internal_full_measured_step

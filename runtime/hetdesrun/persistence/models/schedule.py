@@ -1,13 +1,16 @@
 import datetime
-from enum import StrEnum
 from uuid import UUID
 
 from apscheduler.triggers.cron import CronTrigger
-from pydantic import BaseModel, Field, ValidationError, computed_field
+from pydantic import AwareDatetime, BaseModel, Field, ValidationError, computed_field
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbmodels import ScheduleDBModel
+from hetdesrun.persistence.dbmodels import (
+    ScheduleDBModel,
+    ScheduledJobState,
+    ScheduleExecutionDBModel,
+)
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 
 
@@ -16,8 +19,8 @@ class Schedule(BaseModel):
     name: str = Field("New Schedule")
     active: bool = True
     cron_expression: str = Field("*/5 * * * *")
-    transformation_id: UUID | None
-    wiring: WorkflowWiring | None
+    transformation_id: UUID | None = None
+    wiring: WorkflowWiring | None = None
 
     @computed_field
     def cron_expression_valid(self) -> bool:
@@ -56,13 +59,6 @@ class Schedule(BaseModel):
             raise DBIntegrityError(msg) from error
 
 
-class ScheduledJobState(StrEnum):
-    STARTED = "STARTED"
-    INVOCATION_ERROR = "INVOCATION_ERROR"
-    EXECUTION_ERROR = "EXECUTION_ERROR"
-    SUCCESS = "SUCCESS"
-
-
 class ScheduledJobInformation(BaseModel):
     state: ScheduledJobState
     schedule_job_id: str
@@ -70,3 +66,52 @@ class ScheduledJobInformation(BaseModel):
     trafo_exec_job_id: str
     error_message: str | None = None
     exec_result: ExecutionResponseFrontendDto | None = None
+
+
+class ScheduleExecution(BaseModel):
+    id: UUID
+    schedule_id: UUID
+    last_state_update: AwareDatetime
+    start: AwareDatetime | None = None
+    end: AwareDatetime | None = None
+    transformation_id: UUID
+    state: ScheduledJobState
+    trafo_exec_job_id: UUID
+    exec_result: ExecutionResponseFrontendDto | None = None
+    error_message: str | None = None
+
+    def to_orm_model(self) -> ScheduleExecutionDBModel:
+        return ScheduleExecutionDBModel(
+            id=self.id,
+            schedule_id=self.schedule_id,
+            last_state_update=self.last_state_update,
+            start=self.start,
+            end=self.end,
+            transformation_id=self.transformation_id,
+            state=self.state,
+            trafo_exec_job_id=self.trafo_exec_job_id,
+            exec_result=self.exec_result.model_dump(mode="json") if self.exec_result else None,
+            error_message=self.error_message,
+        )
+
+    @classmethod
+    def from_orm_model(cls, orm_model: ScheduleExecutionDBModel) -> "ScheduleExecution":
+        try:
+            return ScheduleExecution(
+                id=orm_model.id,
+                schedule_id=orm_model.schedule_id,
+                last_state_update=orm_model.last_state_update,
+                start=orm_model.start,
+                end=orm_model.end,
+                transformation_id=orm_model.transformation_id,
+                state=orm_model.state,
+                trafo_exec_job_id=orm_model.trafo_exec_job_id,
+                exec_result=orm_model.exec_result,
+                error_message=orm_model.error_message,
+            )
+        except ValidationError as error:
+            msg = (
+                f"Could not validate db entry for schedule execution with id {orm_model.id}. "
+                f"Validation error was:\n{str(error)}"
+            )
+            raise DBIntegrityError(msg) from error

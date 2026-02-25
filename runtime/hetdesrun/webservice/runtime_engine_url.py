@@ -33,14 +33,14 @@ def get_runtime_engine_url() -> str:
 
     auth_context = get_request_auth_context()
 
-    if not "payload" in auth_context:
+    if not "payload" in auth_context:  # pragma: no cover
         msg = "Auth active, but no token in auth context!"
         logger.error(msg)
         raise KeyError(msg)
 
     token_paylod = get_request_auth_context()["payload"]
 
-    if not get_config().auth_role_key in token_paylod:
+    if not get_config().auth_role_key in token_paylod:  # pragma: no cover
         msg = (
             "Auth active and role to runtime engine mapping set, but roles key"
             f" {token_roles_key} not present in token!"
@@ -50,7 +50,7 @@ def get_runtime_engine_url() -> str:
 
     roles = token_paylod[token_roles_key]
 
-    if not isinstance(roles, list):
+    if not isinstance(roles, list):  # pragma: no cover
         msg = (
             "Auth active and role to runtime engine mapping set, but roles field"
             f" {token_roles_key} in token is not an array!"

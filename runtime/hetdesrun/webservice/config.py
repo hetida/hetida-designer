@@ -37,6 +37,13 @@ class InternalAuthMode(str, Enum):
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
+class SchedulingInternalAuthMode(str, Enum):
+    """Auth mode for scheduled execution requests to the runtime service"""
+
+    OFF = "OFF"
+    CLIENT = "CLIENT"
+
+
 class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
     pass
 
@@ -420,6 +427,7 @@ class RuntimeConfig(BaseSettings):
         ),
         validation_alias="HD_INTERNAL_AUTH_MODE",
     )
+
     internal_auth_client_credentials: ServiceCredentials | Json[ServiceCredentials] | None = Field(
         None,
         description=(
@@ -438,6 +446,40 @@ class RuntimeConfig(BaseSettings):
         ],
         validation_alias="HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
+
+    scheduling_internal_auth_mode: SchedulingInternalAuthMode = Field(
+        SchedulingInternalAuthMode.OFF,
+        description=(
+            "How outgoing requests to internal services should be handled if part of a"
+            " scheduled execution."
+            " For example from backend to runtime if both are run as separate services."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(SchedulingInternalAuthMode)])
+        ),
+        validation_alias="HD_SCHEDULING_INTERNAL_AUTH_MODE",
+    )
+
+    scheduling_internal_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
+        None,
+        description=(
+            "Client credentials as json encoded string."
+            " For details confer the ServiceCredentials model class in the auth_outgoing.py"
+            " file."
+        ),
+        examples=[
+            (
+                '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
+                ' "grant_credentials": {"grant_type": "client_credentials",'
+                ' "client_id": "my-scheduled-job-client",'
+                ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+                ' "post_kwargs": {}}'
+            )
+        ],
+        validation_alias="HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
+    )
+
     external_auth_mode: ExternalAuthMode = Field(
         ExternalAuthMode.FORWARD_OR_FIXED,
         description=(

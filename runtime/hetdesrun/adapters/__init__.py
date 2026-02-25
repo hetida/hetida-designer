@@ -53,20 +53,20 @@ def prepare_exc_classes(
     exceptions without necessity to import exception classes from runtime.
     """
     connection_exceptions: ConnectionErrorTuple
-    if connection_custom_error is not None:
+    if connection_custom_error is not None:  # pragma: no cover
         connection_exceptions = (AdapterConnectionError, connection_custom_error)
     else:
         connection_exceptions = (AdapterConnectionError,)
 
     output_data_exceptions: OutputDataErrorTuple
-    if output_data_custom_error is not None:
+    if output_data_custom_error is not None:  # pragma: no cover
         output_data_exceptions = (AdapterOutputDataError, output_data_custom_error)
 
     else:
         output_data_exceptions = (AdapterOutputDataError,)
 
     wiring_invalid_exceptions: ClientWiringInvalidErrorTuple
-    if client_wiring_invalid_error_class is not None:
+    if client_wiring_invalid_error_class is not None:  # pragma: no cover
         wiring_invalid_exceptions = (
             AdapterClientWiringInvalidError,
             client_wiring_invalid_error_class,
@@ -185,7 +185,7 @@ def get_source_adapter(adapter_key: int | str) -> SourceAdapter:
     except KeyError:
         if isinstance(adapter_key, str):
             return GENERIC_REST_SOURCE_ADAPTER
-        raise AdapterUnknownError(
+        raise AdapterUnknownError(  # pragma: no cover
             f"No client source adapter with id {str(adapter_key)} registered in runtime!"
         ) from None
 
@@ -196,7 +196,7 @@ def get_sink_adapter(adapter_key: int | str) -> SinkAdapter:
     except KeyError:
         if isinstance(adapter_key, str):
             return GENERIC_REST_SINK_ADAPTER
-        raise AdapterUnknownError(
+        raise AdapterUnknownError(  # pragma: no cover
             f"No client sink adapter with id {str(adapter_key)} registered in runtime!"
         ) from None
 

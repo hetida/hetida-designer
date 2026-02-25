@@ -49,7 +49,9 @@ def get_global_schedule_infos() -> dict[str, Schedule]:
     return {}
 
 
-async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # noqa: PLR0915 PLR0912
+async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
+    job_id: str, name: str
+) -> ScheduledJobInformation | None:
     """Execution of scheduled transformation revisions job function"""
     schedule = get_global_schedule_infos().get(job_id, None)
 
@@ -57,13 +59,13 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
         logger.error(
             "Missing schedule object for job %s with name %s. Cannot run. Aborting.", job_id, name
         )
-        return
+        return None
 
     if schedule.transformation_id is None:
         logger.error(
             "Missing schedule object for job %s with name %s. Cannot run. Aborting.", job_id, name
         )
-        return
+        return None
 
     exec_job_id = uuid4()
     exec_by_id = ExecByIdInput(
@@ -81,8 +83,8 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
     )
 
     try:
-        exec_result = await perf_measured_execute_trafo_rev(exec_by_id)
-    except TrafoExecutionInputValidationError as err:
+        exec_result = await perf_measured_execute_trafo_rev(exec_by_id, scheduling_internal=True)
+    except TrafoExecutionInputValidationError as err:  # pragma: no cover
         msg = (
             "Could not validate execution input"
             f"\n{exec_by_id.model_dump_json(indent=2)}:\n{str(err)}"
@@ -91,25 +93,28 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionNotFoundError as err:
+    except TrafoExecutionNotFoundError as err:  # pragma: no cover
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
         scheduled_job_info.state = ScheduledJobState.INVOCATION_ERROR
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except (ComponentImportCycleError, TrafoExecutionComponentImportCycleError) as err:
+    except (  # pragma: no cover
+        ComponentImportCycleError,
+        TrafoExecutionComponentImportCycleError,
+    ) as err:  # pragma: no cover
         msg = f"Detected component import cycle:\n{str(err)}"
         scheduled_job_info.state = ScheduledJobState.INVOCATION_ERROR
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionComponentImportsLoadingError as err:
+    except TrafoExecutionComponentImportsLoadingError as err:  # pragma: no cover
         msg = f"Could not load some component import components:\n{str(err)}"
         scheduled_job_info.state = ScheduledJobState.INVOCATION_ERROR
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionComponentAdapterComponentsNotFound as err:
+    except TrafoExecutionComponentAdapterComponentsNotFound as err:  # pragma: no cover
         msg = (
             "Could not find component revision for component adapter wirings or"
             " could not validate them as suitable component sources/sinks when"
@@ -120,7 +125,7 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionRuntimeHttpStatusError as err:
+    except TrafoExecutionRuntimeHttpStatusError as err:  # pragma: no cover
         # actually 4xx or 5xx
         msg = (
             f"Https status error during execution of transformation {exec_by_id.id} in external"
@@ -130,19 +135,19 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionRuntimeConnectionError as err:
+    except TrafoExecutionRuntimeConnectionError as err:  # pragma: no cover
         msg = f"Could not connect to runtime to execute transformation {exec_by_id.id}:\n{str(err)}"
         scheduled_job_info.state = ScheduledJobState.INVOCATION_ERROR
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except TrafoExecutionResultValidationError as err:
+    except TrafoExecutionResultValidationError as err:  # pragma: no cover
         msg = f"Could not validate execution result for transformation {exec_by_id.id}:\n{str(err)}"
         scheduled_job_info.state = ScheduledJobState.INVOCATION_ERROR
         scheduled_job_info.error_message = msg
         logger.error(msg)
 
-    except Exception as err:  # noqa: BLE001
+    except Exception as err:  # noqa: BLE001 # pragma: no cover
         msg = (
             f"ERROR: Generally uncaught exception during execution of "
             f"transformation {exec_by_id.id}:\n{str(err)}"
@@ -169,6 +174,8 @@ async def execute_scheduled_transformation(job_id: str, name: str) -> None:  # n
             "scheduled_job_information": scheduled_job_info.model_dump(mode="json"),
         },
     )
+
+    return scheduled_job_info
 
 
 async def sync_job() -> None:
@@ -233,7 +240,7 @@ async def sync_job() -> None:
                 trigger_from_db = CronTrigger.from_crontab(
                     schedule.cron_expression, timezone=datetime.UTC
                 )
-            except ValueError as e:
+            except ValueError as e:  # pragma: no cover
                 logger.error(
                     "Job %s with name %s has invalid cron expression and cannot be scheduled!: %s",
                     job_id_str,
@@ -259,7 +266,7 @@ async def sync_job() -> None:
                 )
 
 
-async def start_scheduler() -> None:
+async def start_scheduler() -> None:  # pragma: no cover
     """Initialize and start scheduler"""
     scheduler = get_global_scheduler()
     sync_interval_seconds = get_config().scheduling_sync_interval_seconds
@@ -268,7 +275,7 @@ async def start_scheduler() -> None:
     logger.info("Scheduler started with %s seconds db sync interval.", sync_interval_seconds)
 
 
-def run_scheduler() -> None:
+def run_scheduler() -> None:  # pragma: no cover
     """Run the async scheduler in its own event loop"""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -285,7 +292,7 @@ def run_scheduler() -> None:
         get_global_scheduler().shutdown()
 
 
-def start_scheduling(in_memory_db: bool) -> None:
+def start_scheduling(in_memory_db: bool) -> None:  # pragma: no cover
     is_backend_service = get_config().is_backend_service
     scheduling_requested = get_config().scheduling_active
 

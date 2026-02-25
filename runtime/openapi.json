@@ -8022,9 +8022,7 @@
         },
         "type": "object",
         "required": [
-          "id",
-          "transformation_id",
-          "wiring"
+          "id"
         ],
         "title": "Schedule"
       },
@@ -8081,8 +8079,6 @@
         "type": "object",
         "required": [
           "id",
-          "transformation_id",
-          "wiring",
           "cron_expression_valid"
         ],
         "title": "Schedule"
