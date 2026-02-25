@@ -125,7 +125,6 @@ class ComputationNode:
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
         )
-        self._in_computation = False
 
     def add_inputs(self, new_inputs: dict[str, tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)

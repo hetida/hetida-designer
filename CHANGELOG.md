@@ -1,3 +1,7 @@
+
+* fixing component adapter concurrency context handling, in particular logging
+* describe concurrency behaviour better in documentation
+
 ## 0.13.9
 * new metadata convention and helper functions to access structured metadata for MULTITSFRAME and SERIES object handling fallback behaviour. See [docs](./docs/metadata_attrs.md) for details.
 * add support for frames / animations for rendering Plotly plots

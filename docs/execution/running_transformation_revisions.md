@@ -298,3 +298,10 @@ See the documentation for
 * [Execution via Apache Kafka](./execution_via_kafka.md)
 * [Kafka Consumption Mode](./kafka_consumption_mode.md)
 
+## Technical notes on execution
+
+### Concurrent code execution
+While it is allowed to have async component main functions, during ordinary execution of a workflow, operators are not executed concurrently. Analytical operations are typically cpu bound and io bound operations (data loading / sending) should happen in an adapter anyway. This ensures a higher level of reproducibilty for workflow execution and makes it simpler to reason about operation order and state.
+
+On the other side, adapters should make use of async / concurrency for providing or sending data where appropriate. In particular component adapter wirings lead to concurrent execution of the component adapter sources/sinks. Async component main functions are recommended for component adapter components.
+
