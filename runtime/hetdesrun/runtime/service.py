@@ -1,6 +1,7 @@
 import resource
 from collections import deque
 from typing import cast
+from uuid import UUID
 
 from pydantic import ValidationError
 
@@ -52,11 +53,17 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> None:
+def prepare_runtime_context_bindings(
+    runtime_input: WorkflowExecutionInput, share_component_logs: bool = False
+) -> None:
     # make reproducibility reference available during runtime execution
     set_reproducibility_reference_context(runtime_input.reproducibility_reference)
 
     execution_config.set(runtime_input.configuration)
+    component_logs = execution_context_filter.get_value("gathered_component_code_logs")
+
+    # since contextvars are shallo-copied into subtasks, reset them explicitely:
+    execution_context_filter.clear_context()
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
 
     code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in runtime_input.code_modules}
@@ -67,7 +74,7 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
         str(c.uuid): hash_code(c.code) for c in runtime_input.code_modules
     }
 
-    currently_importing: dict[str, bool] = {str(c.uuid): False for c in runtime_input.code_modules}
+    currently_importing: dict[UUID, bool] = {c.uuid: False for c in runtime_input.code_modules}
 
     execution_context_filter.bind_context(
         current_code_modules=runtime_input.code_modules,
@@ -77,13 +84,16 @@ def prepare_runtime_context_bindings(runtime_input: WorkflowExecutionInput) -> N
         code_hash_dict=code_hash_dict,
         currently_importing=currently_importing,
     )
-    execution_context_filter.bind_context(trafo_id_to_code_hash_map={})
     execution_context_filter.bind_context(
         plot_target_settings=runtime_input.runtime_execution_context.plot_target_settings
     )
-    execution_context_filter.bind_context(gathered_component_code_logs=[])
+    execution_context_filter.bind_context(
+        gathered_component_code_logs=component_logs if share_component_logs else []
+    )
     set_runtime_exec_context(runtime_input.runtime_execution_context)
 
+    # since contextvars are shallo-copied into subtasks, reset them explicitely:
+    job_id_context_filter.clear_context()
     job_id_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,
@@ -131,18 +141,22 @@ def enrich_with_component_code_logs(
 
 
 async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
-    runtime_input: WorkflowExecutionInput, enforce_result_logging: bool = False
+    runtime_input: WorkflowExecutionInput,
+    enforce_result_logging: bool = False,
+    share_component_logs: bool = False,
 ) -> WorkflowExecutionResult:
     return enrich_with_component_code_logs(
         handle_runtime_exec_result_logging(
-            await runtime_service_handling(runtime_input),
+            await runtime_service_handling(
+                runtime_input, share_component_logs=share_component_logs
+            ),
             enforce_result_logging=enforce_result_logging,
         )
     )
 
 
 async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
-    runtime_input: WorkflowExecutionInput,
+    runtime_input: WorkflowExecutionInput, share_component_logs: bool = False
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing, performance measurement etc.
 
@@ -155,7 +169,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
     measured_steps.runtime_service_handling.begin()
 
     with measured_steps.start_and_wf_parsing:
-        prepare_runtime_context_bindings(runtime_input)
+        prepare_runtime_context_bindings(runtime_input, share_component_logs=share_component_logs)
 
         # maps to data_types
         inp_name_to_datatype_map = {

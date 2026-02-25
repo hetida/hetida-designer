@@ -89,7 +89,11 @@ async def send_data(
                 )
 
                 task = tg.create_task(
-                    runtime_service(runtime_input=wf_exec_input, enforce_result_logging=True)
+                    runtime_service(
+                        runtime_input=wf_exec_input,
+                        enforce_result_logging=True,
+                        share_component_logs=True,
+                    )
                 )
                 fetch_tasks[outp_name] = task
 

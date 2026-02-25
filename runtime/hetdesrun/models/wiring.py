@@ -132,6 +132,7 @@ class OutputWiring(BaseModel):
     ) -> ExternalType | None:
         if (
             v is not None
+            and info.data["adapter_id"] not in {"direct_provisioning", 1, "component-adapter"}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (info.data["ref_id_type"] is None or info.data["ref_key"] is None)
         ):
@@ -301,7 +302,7 @@ class InputWiring(BaseModel):
     ) -> ExternalType | None:
         if (
             v is not None
-            and info.data["adapter_id"] not in {"direct_provisioning", 1}
+            and info.data["adapter_id"] not in {"direct_provisioning", 1, "component-adapter"}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (info.data["ref_id_type"] is None or info.data["ref_key"] is None)
         ):
