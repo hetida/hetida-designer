@@ -19,6 +19,8 @@ async def test_concurrent_component_adapter_loading(
     components may have wrong execution context information if the execution_context_filter
     is not properly resetted / filled. This tests evokes a concurrent execution which
     will lead to errors if this is the case.
+
+    This test also ensures actual concurrency of execution by observing log message ordering.
     """
     with TrafoCollection(save_to_db=True) as tc:
         pt_string = tc.add_from_json_file(
@@ -109,6 +111,12 @@ async def test_non_concurrent_operator_execution(mocked_clean_test_db_session, a
 
     Operator's actions are typically cpu bound and not io bound. Data provisioning should
     happen via Adapter system and not as part of analytics.
+
+    The test ensures that execution context is correct by observing log message attached
+    information from the context.
+
+    This test also ensures non-concurrency of operator execution by observing log message
+    ordering.
     """
     with TrafoCollection(save_to_db=True) as tc:
         first_str_provider = tc.add_from_py_file(

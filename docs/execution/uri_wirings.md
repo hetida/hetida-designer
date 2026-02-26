@@ -39,3 +39,8 @@ Configuratively you can specify shortcuts via `HETIDA_DESIGNER_URI_WIRING_SHORTC
 allows to use uri wirings of form `hd://assets?recursive=true` as a shortcut for the full `hd://component-adapter/<id of some component adapter source component>?recursive=true`.
 
 Furthermore it allows to configuratively upgrade/change such wirings by simply changing it to pointing to another component adapter source id. Note: Doing this may negatively impact reproducibility if configuration changes are not carefully taken into account when trying to reproduce results.
+
+### Uri Wiring shortcuts in hetida platform
+Using [hetida platform](https://hetida.io/), typically the following wiring shortcuts are configured:
+* `hd://assets` — points to the hetida platform source component "Hetida Platform Assets" that provides assets as a dataframe at the current point in the hierarchy.
+* `hd://timeseries` — points to the hetida platform source component "Hetida Platform Channel Timeseries Data" that provides dynamic collections of timeseries data at and below the current asset as a multitsframe.
