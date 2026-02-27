@@ -1,4 +1,5 @@
-
+* fix overwriting during autodeployment
+* new version of hetida platform channel timeseries component adapter source component
 * fixing component adapter concurrency context handling, in particular logging
 * describe concurrency behaviour better in documentation
 
