@@ -1,11 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogModule
-} from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 interface DialogData {
   title: string;
@@ -14,10 +8,9 @@ interface DialogData {
 
 @Component({
   selector: 'app-result-dialog',
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
   templateUrl: './text-result-dialog.component.html',
   styleUrls: ['./text-result-dialog.component.scss'],
-  standalone: true
+  standalone: false
 })
 export class TextResultDialogComponent {
   constructor(

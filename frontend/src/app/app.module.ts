@@ -38,7 +38,10 @@ import {
   WiringTheme
 } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
-import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import {
+  MonacoEditorModule,
+  NgxMonacoEditorConfig
+} from 'ngx-monaco-editor-v2';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -77,6 +80,7 @@ import { OptionalFieldsDialogComponent } from './components/optional-fields-dial
 import { from, map } from 'rxjs';
 import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
+import { TextResultDialogComponent } from './components/text-result-dialog/text-result-dialog.component';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
@@ -96,6 +100,12 @@ const httpLoaderFactory = (configService: ConfigService) => {
   );
 
   return new StsConfigHttpLoader(authConfig);
+};
+
+const monacoConfig: NgxMonacoEditorConfig = {
+  // broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
+  // https://github.com/microsoft/monaco-editor/issues/4778
+  baseUrl: `${window.location.origin}/assets/monaco/min/vs`
 };
 
 @NgModule({
@@ -124,7 +134,8 @@ const httpLoaderFactory = (configService: ConfigService) => {
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
     TransformationContextMenuComponent,
-    OptionalFieldsDialogComponent
+    OptionalFieldsDialogComponent,
+    TextResultDialogComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -138,9 +149,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OwlMomentDateTimeModule,
     MaterialModule,
     HdWiringModule,
-    MonacoEditorModule.forRoot({
-      baseUrl: './assets'
-    }), // use forRoot() in main app module only.
+    MonacoEditorModule.forRoot(monacoConfig), // use forRoot() in main app module only.
     StoreModule.forRoot(appReducers, {
       runtimeChecks: {
         strictStateImmutability: false,
