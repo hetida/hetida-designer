@@ -3,6 +3,7 @@ from uuid import UUID
 
 from apscheduler.triggers.cron import CronTrigger
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError, computed_field
+from sqlalchemy import Row, RowMapping
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
@@ -71,7 +72,7 @@ class ScheduledJobInformation(BaseModel):
 class ScheduleExecution(BaseModel):
     id: UUID
     schedule_id: UUID
-    last_state_update: AwareDatetime
+    last_state_update: AwareDatetime | None = None
     start: AwareDatetime | None = None
     end: AwareDatetime | None = None
     transformation_id: UUID
@@ -95,14 +96,22 @@ class ScheduleExecution(BaseModel):
         )
 
     @classmethod
-    def from_orm_model(cls, orm_model: ScheduleExecutionDBModel) -> "ScheduleExecution":
+    def from_orm_model(
+        cls, orm_model: RowMapping | Row[tuple[ScheduleExecutionDBModel]] | ScheduleExecutionDBModel
+    ) -> "ScheduleExecution":
         try:
             return ScheduleExecution(
                 id=orm_model.id,
                 schedule_id=orm_model.schedule_id,
-                last_state_update=orm_model.last_state_update,
-                start=orm_model.start,
-                end=orm_model.end,
+                last_state_update=orm_model.last_state_update.replace(tzinfo=datetime.timezone.utc)
+                if orm_model.last_state_update is not None
+                else None,
+                start=orm_model.start.replace(tzinfo=datetime.timezone.utc)
+                if orm_model.start is not None
+                else None,
+                end=orm_model.end.replace(tzinfo=datetime.timezone.utc)
+                if orm_model.end is not None
+                else None,
                 transformation_id=orm_model.transformation_id,
                 state=orm_model.state,
                 trafo_exec_job_id=orm_model.trafo_exec_job_id,

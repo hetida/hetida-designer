@@ -22,11 +22,15 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.component.load import ComponentImportCycleError
 from hetdesrun.models.execution import ExecByIdInput
-from hetdesrun.persistence.dbservice.schedule import get_multiple_schedules
+from hetdesrun.persistence.dbservice.schedule import (
+    get_multiple_schedules,
+    update_or_create_single_schedule_execution,
+)
 from hetdesrun.persistence.models.schedule import (
     Schedule,
     ScheduledJobInformation,
     ScheduledJobState,
+    ScheduleExecution,
 )
 from hetdesrun.webservice.config import get_config
 
@@ -67,6 +71,8 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
         )
         return None
 
+    start_timestamp = datetime.datetime.now(datetime.UTC)
+
     exec_job_id = uuid4()
     exec_by_id = ExecByIdInput(
         job_id=exec_job_id,
@@ -81,6 +87,18 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
         schedule_name=name,
         trafo_exec_job_id=str(exec_job_id),
     )
+
+    schedule_execution = ScheduleExecution(
+        id=uuid4(),
+        schedule_id=schedule.id,
+        last_state_update=start_timestamp,
+        start=start_timestamp,
+        transformation_id=schedule.transformation_id,
+        state=ScheduledJobState.STARTED,
+        trafo_exec_job_id=exec_job_id,
+    )
+
+    update_or_create_single_schedule_execution(schedule_execution)
 
     try:
         exec_result = await perf_measured_execute_trafo_rev(exec_by_id, scheduling_internal=True)
@@ -174,6 +192,16 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
             "scheduled_job_information": scheduled_job_info.model_dump(mode="json"),
         },
     )
+
+    end_timestamp = datetime.datetime.now(datetime.UTC)
+
+    schedule_execution.state = scheduled_job_info.state
+    schedule_execution.error_message = scheduled_job_info.error_message
+    schedule_execution.exec_result = scheduled_job_info.exec_result
+    schedule_execution.last_state_update = end_timestamp
+    schedule_execution.end = end_timestamp
+
+    update_or_create_single_schedule_execution(schedule_execution)
 
     return scheduled_job_info
 

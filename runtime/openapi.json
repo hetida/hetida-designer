@@ -4962,6 +4962,340 @@
         }
       }
     },
+    "/api/schedules/executions": {
+      "post": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Creates a schedule execution.",
+        "description": "Store a Schedule Execution in the database",
+        "operationId": "create_schedule_execution_api_schedules_executions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleExecution-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleExecution-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns all schedule executions",
+        "operationId": "get_all_schedule_executions_api_schedules_executions_get",
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "exclude_exec_result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Result"
+            }
+          },
+          {
+            "name": "latest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Latest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got all schedule executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleExecution-Output"
+                  },
+                  "title": "Response Get All Schedule Executions Api Schedules Executions Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/executions/latest/{schedule_id}": {
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns latest schedule execution for a schedule",
+        "operationId": "get_latest_schedule_execution_api_schedules_executions_latest__schedule_id__get",
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "exclude_exec_result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Result"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got latest schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ScheduleExecution-Output"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Latest Schedule Execution Api Schedules Executions Latest  Schedule Id  Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/schedules/{id}": {
+      "put": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Updates a schedule execution.",
+        "description": "Update a schedule execution\n\nCreates schedule execution if it does not exist already (Upsert).",
+        "operationId": "update_schedule_execution_api_schedules_schedules__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleExecution-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully updated the schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleExecution-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Id from path does not match id from object in request body"
+          }
+        }
+      }
+    },
+    "/api/schedulesexecutions/{id}": {
+      "delete": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Deletes a schedule execution.",
+        "description": "Delete a schedule execution from the database.",
+        "operationId": "delete_schedule_execution_api_schedulesexecutions__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted the schedule execution"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}/dashboard": {
       "get": {
         "tags": [
@@ -8082,6 +8416,202 @@
           "cron_expression_valid"
         ],
         "title": "Schedule"
+      },
+      "ScheduleExecution-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "schedule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Id"
+          },
+          "last_state_update": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last State Update"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "transformation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transformation Id"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScheduledJobState"
+          },
+          "trafo_exec_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trafo Exec Job Id"
+          },
+          "exec_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schedule_id",
+          "transformation_id",
+          "state",
+          "trafo_exec_job_id"
+        ],
+        "title": "ScheduleExecution"
+      },
+      "ScheduleExecution-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "schedule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Id"
+          },
+          "last_state_update": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last State Update"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "transformation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transformation Id"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScheduledJobState"
+          },
+          "trafo_exec_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trafo Exec Job Id"
+          },
+          "exec_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schedule_id",
+          "transformation_id",
+          "state",
+          "trafo_exec_job_id"
+        ],
+        "title": "ScheduleExecution"
+      },
+      "ScheduledJobState": {
+        "type": "string",
+        "enum": [
+          "STARTED",
+          "INVOCATION_ERROR",
+          "EXECUTION_ERROR",
+          "SUCCESS"
+        ],
+        "title": "ScheduledJobState"
       },
       "SimplifiedLogRecord": {
         "properties": {

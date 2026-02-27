@@ -1,12 +1,17 @@
 import logging
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
-from hetdesrun.persistence.models.schedule import Schedule, ScheduleDBModel
+from hetdesrun.persistence.models.schedule import (
+    Schedule,
+    ScheduleDBModel,
+    ScheduleExecution,
+    ScheduleExecutionDBModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +84,7 @@ def select_schedule_by_id(
     ).scalar_one_or_none()
 
     if result is None:
-        msg = f"Found no transformation revision in database with id {id}"
+        msg = f"Found no schedule in database with id {id}"
         if log_error:
             logger.error(msg)
         raise DBNotFoundError(msg)
@@ -124,3 +129,268 @@ def delete_schedule(session: SQLAlchemySession, schedule_id: UUID) -> None:
 def delete_single_schedule(id: UUID) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         delete_schedule(session, id)
+
+
+# Schedule Executions
+
+
+def add_schedule_execution(
+    session: SQLAlchemySession, schedule_execution: ScheduleExecution
+) -> None:
+    try:
+        db_model = schedule_execution.to_orm_model()
+        session.add(db_model)
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to store schedule execution"
+            f"with id {schedule_execution.id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def update_schedule_execution(
+    session: SQLAlchemySession, schedule_execution: ScheduleExecution
+) -> None:
+    try:
+        db_model = schedule_execution.to_orm_model()
+
+        session.execute(
+            update(ScheduleExecutionDBModel)
+            .where(ScheduleExecutionDBModel.id == db_model.id)
+            .values(
+                schedule_id=db_model.schedule_id,
+                last_state_update=db_model.last_state_update,
+                start=db_model.start,
+                end=db_model.end,
+                transformation_id=db_model.transformation_id,
+                state=db_model.state,
+                trafo_exec_job_id=db_model.trafo_exec_job_id,
+                exec_result=db_model.exec_result,
+                error_message=db_model.error_message,
+            )
+        )
+
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to update "
+            f"schedule execution with id {schedule_execution.id}.\n"
+            f"Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def store_single_schedule_execution(
+    schedule_execution: ScheduleExecution,
+) -> None:
+    with get_session()() as session, session.begin():
+        add_schedule_execution(session, schedule_execution)
+
+
+def update_or_create_single_schedule_execution(
+    schedule_execution: ScheduleExecution,
+) -> ScheduleExecution:
+    with get_session()() as session, session.begin():
+        try:
+            select_schedule_execution_by_id(session, schedule_execution.id, log_error=False)
+        except DBNotFoundError:
+            add_schedule_execution(session, schedule_execution)
+        else:
+            update_schedule_execution(session, schedule_execution)
+
+        return select_schedule_execution_by_id(session, schedule_execution.id)
+
+
+def select_schedule_execution_by_id(
+    session: SQLAlchemySession,
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> ScheduleExecution:
+    result = session.execute(
+        select(ScheduleExecutionDBModel).where(ScheduleExecutionDBModel.id == id)
+    ).scalar_one_or_none()
+
+    if result is None:
+        msg = f"Found no schedule execution in database with id {id}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return ScheduleExecution.from_orm_model(result)
+
+
+def read_single_schedule_execution(
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
+) -> ScheduleExecution:
+    with get_session()() as session, session.begin():
+        return select_schedule_execution_by_id(session, id, log_error)
+
+
+def select_latest_schedule_execution_by_schedule_id(
+    session: SQLAlchemySession,
+    schedule_id: UUID,
+    exclude_exec_result: bool = False,
+) -> ScheduleExecution | None:
+    result = session.execute(
+        select(ScheduleExecutionDBModel)
+        .where(ScheduleExecutionDBModel.schedule_id == schedule_id)
+        .order_by(ScheduleExecutionDBModel.last_state_update.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if result is None:
+        return None
+    if exclude_exec_result:
+        result.exec_result = None
+    return ScheduleExecution.from_orm_model(result)
+
+
+def read_latest_schedule_execution_by_schedule_id(
+    schedule_id: UUID,  # noqa: A002
+    exclude_exec_result: bool = False,
+) -> ScheduleExecution | None:
+    with get_session()() as session, session.begin():
+        return select_latest_schedule_execution_by_schedule_id(
+            session, schedule_id, exclude_exec_result
+        )
+
+
+def select_multiple_schedule_executions(
+    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+) -> list[ScheduleExecution]:
+    with get_session()() as session, session.begin():
+        if not exclude_exec_result:
+            selection = select(ScheduleExecutionDBModel)
+        else:
+            selection = select(
+                ScheduleExecutionDBModel.id,
+                ScheduleExecutionDBModel.schedule_id,
+                ScheduleExecutionDBModel.last_state_update,
+                ScheduleExecutionDBModel.start,
+                ScheduleExecutionDBModel.end,
+                ScheduleExecutionDBModel.transformation_id,
+                ScheduleExecutionDBModel.state,
+                ScheduleExecutionDBModel.trafo_exec_job_id,
+                ScheduleExecutionDBModel.error_message,
+            )
+
+        if schedule_id is not None:
+            selection = selection.where(ScheduleExecutionDBModel.schedule_id == schedule_id)
+
+        results = (
+            session.execute(selection).all()
+            if exclude_exec_result
+            else session.execute(selection).scalars().all()
+        )
+        if not exclude_exec_result:
+            return [ScheduleExecution.from_orm_model(result) for result in results]
+
+        return [
+            ScheduleExecution.from_orm_model(
+                ScheduleExecutionDBModel(
+                    id=row.id,
+                    schedule_id=row.schedule_id,
+                    last_state_update=row.last_state_update,
+                    start=row.start,
+                    end=row.end,
+                    transformation_id=row.transformation_id,
+                    state=row.state,
+                    trafo_exec_job_id=row.trafo_exec_job_id,
+                    exec_result=None,  # set to None
+                    error_message=row.error_message,
+                )
+            )
+            for row in results
+        ]
+
+
+def get_multiple_schedule_executions(
+    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+) -> list[ScheduleExecution]:
+    """Selection of schedules from db"""
+    return select_multiple_schedule_executions(
+        exclude_exec_result=exclude_exec_result, schedule_id=schedule_id
+    )
+
+
+def select_latest_schedule_executions_per_schedule(
+    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+) -> list[ScheduleExecution]:
+    with get_session()() as session, session.begin():
+        if not exclude_exec_result:
+            base_query = select(ScheduleExecutionDBModel)
+        else:
+            base_query = select(
+                ScheduleExecutionDBModel.id,
+                ScheduleExecutionDBModel.schedule_id,
+                ScheduleExecutionDBModel.last_state_update,
+                ScheduleExecutionDBModel.start,
+                ScheduleExecutionDBModel.end,
+                ScheduleExecutionDBModel.transformation_id,
+                ScheduleExecutionDBModel.state,
+                ScheduleExecutionDBModel.trafo_exec_job_id,
+                ScheduleExecutionDBModel.error_message,
+            )
+
+        if schedule_id is not None:
+            base_query = base_query.where(ScheduleExecutionDBModel.schedule_id == schedule_id)
+
+        subquery = base_query.add_columns(
+            func.row_number()
+            .over(
+                partition_by=ScheduleExecutionDBModel.schedule_id,
+                order_by=ScheduleExecutionDBModel.last_state_update.desc(),
+            )
+            .label("rn")
+        ).subquery()
+
+        results = session.execute(select(subquery).where(subquery.c.rn == 1)).mappings().all()
+
+        if not exclude_exec_result:
+            return [ScheduleExecution.from_orm_model(result) for result in results]
+        return [
+            ScheduleExecution.from_orm_model(
+                ScheduleExecutionDBModel(
+                    id=row.id,
+                    schedule_id=row.schedule_id,
+                    last_state_update=row.last_state_update,
+                    start=row.start,
+                    end=row.end,
+                    transformation_id=row.transformation_id,
+                    state=row.state,
+                    trafo_exec_job_id=row.trafo_exec_job_id,
+                    exec_result=None,
+                    error_message=row.error_message,
+                )
+            )
+            for row in results
+        ]
+
+
+def get_latest_schedule_executions(exclude_exec_result: bool = False) -> list[ScheduleExecution]:
+    """Selection of schedules from db"""
+    return select_latest_schedule_executions_per_schedule(
+        exclude_exec_result=exclude_exec_result,
+    )
+
+
+def delete_schedule_execution(session: SQLAlchemySession, schedule_execution_id: UUID) -> None:
+    try:
+        session.execute(
+            delete(ScheduleExecutionDBModel).where(
+                ScheduleExecutionDBModel.id == schedule_execution_id
+            )
+        )
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to delete schedule execution "
+            f"with id {schedule_execution_id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def delete_single_schedule_execution(id: UUID) -> None:  # noqa: A002
+    with get_session()() as session, session.begin():
+        delete_schedule_execution(session, id)

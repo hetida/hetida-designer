@@ -8,7 +8,6 @@ Create Date: 2026-02-18 17:12:45.493444
 
 import sqlalchemy as sa
 import sqlalchemy_utils
-from sqlalchemy.dialects import sqlite
 
 from alembic import op
 
@@ -33,6 +32,38 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
 
+    op.create_table(
+        "schedule_executions",
+        sa.Column("id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False),
+        sa.Column(
+            "schedule_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False
+        ),
+        sa.Column("last_state_update", sa.DateTime(), nullable=True),
+        sa.Column("start", sa.DateTime(), nullable=True),
+        sa.Column("end", sa.DateTime(), nullable=True),
+        sa.Column(
+            "transformation_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False
+        ),
+        sa.Column(
+            "state",
+            sa.Enum(
+                "STARTED",
+                "INVOCATION_ERROR",
+                "EXECUTION_ERROR",
+                "SUCCESS",
+                name="scheduledjobstate",
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "trafo_exec_job_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False
+        ),
+        sa.Column("exec_result", sa.JSON(none_as_null=True), nullable=True),
+        sa.Column("error_message", sa.String(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
 
 def downgrade():
     op.drop_table("schedules")
+    op.drop_table("schedule_executions")
