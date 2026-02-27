@@ -1,3 +1,28 @@
+## 0.13.10
+* fix overwriting during autodeployment
+* new version of hetida platform channel timeseries component adapter source component
+* fixing component adapter concurrency context handling, in particular logging
+* describe concurrency behaviour better in documentation
+
+## 0.13.9
+* new metadata convention and helper functions to access structured metadata for MULTITSFRAME and SERIES object handling fallback behaviour. See [docs](./docs/metadata_attrs.md) for details.
+* add support for frames / animations for rendering Plotly plots
+* add hetida platform data source base components
+
+## 0.13.8
+* Add hotkey for test execution dialog (Shift+Enter)
+* Add hotkey for quick test execution (using the current test wiring, without opening the execution/wiring dialog) (Alt+Enter)
+* Add hotkey (ESC) for closing the execution result / protocol view.
+* Add autosave status indicator
+* option to deprecate other revisions when releasing a new one
+* recommend semver patch version increase for version tag upon creating a new revision in frontend if previous revision has a simple semver version tag
+* add logging import + setup to default component code template
+
+## 0.13.7
+* compatibility fix for psycopg3 for structure upserting for large number of sources / sinks
+
+## 0.13.6
+* forward context into component adapter component execution
 
 ## 0.13.5
 * Execution dialog now allows to specify timeranges with relative dtexp expressions.

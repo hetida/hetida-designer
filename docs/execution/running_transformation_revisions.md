@@ -87,27 +87,8 @@ See the section 'Enumeration "type"' in the [description of webservice endpoints
 
 The input wirings and output wirings tie inputs of the workflow or component revision to data sources via an adapter (and analogously the outputs to data sinks). Typically `ref_id` is a source id for inputs (i.e. `ref_id_type` is "SOURCE") and it is a sink id for outputs (i.e. `ref_id_type` is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into an input the `ref_id_type` for this input is "SINK" instead, and the `ref_id` is the id of the sink the metadata is tied to.
 
-Note that input / output wirings can alternatively specified via only `workflow_input_name` (or `workflow_output_name`) and a `uri` field.
 
-If such a uri is provided, its information
-will override other wiring fields. The uri's filters (via query params) will update
-an supplement filters provided via the filters field, possibly overwriting
-them. I.e. filters set by uri have higher precedence.
-
-The format is
-
-    hd://<adapter_key>/<ref_id>?filter_key_1=filter_value_1&other_filter=other_value#ref_key=<ref_key>&ref_id_type=<ref_id_type>
-
-Notes on uri:
-* Schema must be "hd"
-* must be properly url encoded
-* multiple values for the same filter key will yield an json serialized array
-    (i.e. a string) to this filter. This string will then also override any
-    value possibly provided with the filters field.
-* ref_key and ref_id_type can be provided in the "fragment" part of the uri, if necessary
-
-E.g, an input wiring that uses the pass through int component via the component adapter can be specified via
-
+Input / output wirings can alternatively be specified more concisely via [uri wirings](./uri_wirings.md), e.g. an input wiring that uses the pass through int component via the component adapter can be specified via
 ```json
 {
     "uri": "hd://component-adapter/57eea09f-d28e-89af-4e81-2027697a3f0f?input=55",
@@ -316,4 +297,11 @@ The execution result is then sent to the specified callback url in the request b
 See the documentation for
 * [Execution via Apache Kafka](./execution_via_kafka.md)
 * [Kafka Consumption Mode](./kafka_consumption_mode.md)
+
+## Technical notes on execution
+
+### Concurrent code execution
+While it is allowed to have async component main functions, during ordinary execution of a workflow, operators are not executed concurrently. Analytical operations are typically cpu bound and io bound operations (data loading / sending) should happen in an adapter anyway. This ensures a higher level of reproducibilty for workflow execution and makes it simpler to reason about operation order and state.
+
+On the other side, adapters should make use of async / concurrency for providing or sending data where appropriate. In particular component adapter wirings lead to concurrent execution of the component adapter sources/sinks. Async component main functions are recommended for component adapter components.
 

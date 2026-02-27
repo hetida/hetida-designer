@@ -8,3 +8,40 @@
   color: inherit !important;
   pointer-events: none;
 }
+
+.save-indicator {
+  position: absolute;
+  top: 5px;
+  left: 150px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 10;
+  animation: fadeIn 0.3s ease;
+
+  &.saved {
+    background-color: #4caf50;
+    color: white;
+  }
+
+  &.unsaved {
+    background-color: #ff9800;
+    color: white;
+  }
+
+  &.saving {
+    background-color: #2196f3;
+    color: white;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

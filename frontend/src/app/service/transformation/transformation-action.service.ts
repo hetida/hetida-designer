@@ -7,14 +7,15 @@ import {
   WiringDialogComponent
 } from 'hd-wiring';
 import { Observable, lastValueFrom, of } from 'rxjs';
-import { finalize, first, map, switchMap, tap } from 'rxjs/operators';
+import { finalize, first, map, switchMap, take, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
   ComponentIoDialogData
 } from 'src/app/components/component-io-dialog/component-io-dialog.component';
 import {
   ConfirmDialogComponent,
-  ConfirmDialogData
+  ConfirmDialogData,
+  ConfirmDialogResult
 } from 'src/app/components/confirmation-dialog/confirm-dialog.component';
 import { CopyTransformationDialogComponent } from 'src/app/components/copy-transformation-dialog/copy-transformation-dialog.component';
 import {
@@ -34,12 +35,16 @@ import {
   ComponentTransformation,
   isComponentTransformation,
   isWorkflowTransformation,
+  TrafoUpdateState,
   Transformation,
   WorkflowTransformation
 } from '../../model/transformation';
 import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
-import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import {
+  selectTransformationById,
+  selectTransformationsByRevisionGroupId
+} from 'src/app/store/transformation/transformation.selectors';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { IOConnector } from 'src/app/model/io-connector';
 import { Link } from 'src/app/model/link';
@@ -51,6 +56,7 @@ import {
 import { Utils } from '../../utils/utils';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
 import { TextResultDialogService } from '../text-result-service/text-result-dialog.service';
+import { IOTypeOption } from 'hetida-flowchart/types/IOTypeOption';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -70,7 +76,10 @@ export class TransformationActionService {
     private readonly resultDialogService: TextResultDialogService
   ) {}
 
-  public async execute(transformation: Transformation) {
+  public async execute(
+    transformation: Transformation,
+    useCurrentTestWiring: boolean = false
+  ) {
     if (this.isIncomplete(transformation)) {
       return;
     }
@@ -86,6 +95,34 @@ export class TransformationActionService {
         'A new component type is introduced or the type property of item does not have the correct spelling'
       );
       title = 'Execute Unknown';
+    }
+
+    if (useCurrentTestWiring) {
+      // Validate that all required inputs have wirings in the current test_wiring
+      const requiredInputs = transformation.io_interface.inputs.filter(
+        input => input.type === IOTypeOption.REQUIRED
+      );
+
+      const wiredInputIds = new Set(
+        transformation.test_wiring.input_wirings.map(
+          wiring => wiring.workflow_input_name
+        )
+      );
+
+      const missingWirings = requiredInputs.filter(
+        input => !wiredInputIds.has(input.name)
+      );
+
+      if (missingWirings.length > 0) {
+        console.error('Missing wirings for required inputs:', missingWirings);
+        // continue with the normal procedure, i.e. open the wiring dialog
+      } else {
+        // execute with test wiring instead of the normal procedure.
+        this.transformationService
+          .testTransformation(transformation.id, transformation.test_wiring)
+          .subscribe();
+        return;
+      }
     }
 
     const adapterList = await lastValueFrom(
@@ -209,7 +246,8 @@ export class TransformationActionService {
       newId,
       groupId,
       'Draft',
-      transformation
+      transformation,
+      true
     );
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
@@ -245,7 +283,7 @@ export class TransformationActionService {
     const dialogRef = this.dialog.open<
       ConfirmDialogComponent,
       ConfirmDialogData,
-      boolean
+      ConfirmDialogResult
     >(ConfirmDialogComponent, {
       width: '640px',
       data: {
@@ -259,13 +297,13 @@ export class TransformationActionService {
     });
 
     return dialogRef.afterClosed().pipe(
-      switchMap(isConfirmed => {
-        if (isConfirmed) {
+      switchMap(result => {
+        if (result?.confirmed) {
           return this.doDeleteTransformation(transformation).pipe(
-            switchMap(() => of(isConfirmed))
+            switchMap(() => of(result?.confirmed))
           );
         }
-        return of(isConfirmed);
+        return of(result?.confirmed);
       })
     );
   }
@@ -346,25 +384,76 @@ export class TransformationActionService {
       const dialogRef = this.dialog.open<
         ConfirmDialogComponent,
         ConfirmDialogData,
-        boolean
+        ConfirmDialogResult
       >(ConfirmDialogComponent, {
         width: '640px',
         data: {
           title: `Publish component ${transformation.name} (${transformation.version_tag})`,
           content: `Do you want to publish this ${transformation.type.toLowerCase()}?`,
           actionOk: `Publish ${transformation.type.toLowerCase()}`,
-          actionCancel: 'Cancel'
+          actionCancel: 'Cancel',
+          checkboxes: [
+            {
+              key: 'deprecateAllOtherRevisions',
+              label: 'Deprecate all other revisions of this transformation',
+              checked: true
+            }
+          ]
         }
       });
 
       dialogRef
         .afterClosed()
         .pipe(
-          switchMap(isConfirmed => {
-            if (isConfirmed) {
-              return this.transformationService.releaseTransformation(
-                transformation
-              );
+          switchMap(result => {
+            if (result?.confirmed) {
+              const deprecateOtherRevisions =
+                result.checkboxValues?.deprecateAllOtherRevisions || false;
+              return this.transformationService
+                .releaseTransformation(transformation)
+                .pipe(
+                  switchMap(updatedTrafo => {
+                    if (
+                      updatedTrafo.update_state === TrafoUpdateState.SUCCESS &&
+                      deprecateOtherRevisions
+                    ) {
+                      // Successfully released, and now we want to deprecate other released revisions
+                      // of this transformation revision group
+                      return this.transformationStore
+                        .select(
+                          selectTransformationsByRevisionGroupId(
+                            updatedTrafo.type, // same type
+                            updatedTrafo.revision_group_id,
+                            false
+                          )
+                        )
+                        .pipe(
+                          take(1), // want to operate on whole list as provided once
+                          tap(filteredTrafos => {
+                            for (const filteredTrafo of filteredTrafos) {
+                              // disabled all released ones different from the newly released revision:
+                              if (
+                                filteredTrafo.state ===
+                                  RevisionState.RELEASED &&
+                                filteredTrafo.id !== transformation.id
+                              ) {
+                                this.transformationService
+                                  .disableTransformation(filteredTrafo)
+                                  .subscribe(disabledTrafo => {
+                                    console.warn(
+                                      `Disabled / deprecated: ${disabledTrafo.name} (${disabledTrafo.version_tag}) (${disabledTrafo.id})`
+                                    );
+                                  });
+                              }
+                            }
+                          }),
+                          map(() => updatedTrafo)
+                        );
+                    } else {
+                      return of(updatedTrafo);
+                    }
+                  })
+                );
             }
             return of(null);
           })
@@ -501,7 +590,7 @@ export class TransformationActionService {
     const dialogRef = this.dialog.open<
       ConfirmDialogComponent,
       ConfirmDialogData,
-      boolean
+      ConfirmDialogResult
     >(ConfirmDialogComponent, {
       width: '640px',
       data: {
@@ -517,8 +606,8 @@ export class TransformationActionService {
     dialogRef
       .afterClosed()
       .pipe(
-        switchMap(isConfirmed => {
-          if (isConfirmed) {
+        switchMap(result => {
+          if (result?.confirmed) {
             this.queryParameterService.deleteQueryParameter(transformation.id);
             return this.transformationService.disableTransformation(
               transformation
@@ -584,21 +673,49 @@ export class TransformationActionService {
       );
   }
 
+  protected incrementPatch(version: string): string | null {
+    // Regex for basic semver format: major.minor.patch
+    const semverRegex = /^(\d+)\.(\d+)\.(\d+)$/;
+    const match = version.match(semverRegex);
+
+    if (!match) {
+      return null; // Not a valid semver string
+    }
+
+    const major = match[1];
+    const minor = match[2];
+    const patch = parseInt(match[3], 10) + 1;
+
+    return `${major}.${minor}.${patch}`;
+  }
+
   // Visible for testing
   protected copyTransformation(
     newId: string,
     groupId: string,
     suffix: string,
-    transformation: Transformation
+    transformation: Transformation,
+    try_increase_version: boolean = false
   ): Transformation {
     let copy: Transformation = null;
+
+    let new_version = transformation.version_tag;
+    if (try_increase_version) {
+      const patchedVersion = this.incrementPatch(transformation.version_tag);
+      new_version =
+        patchedVersion !== null ? patchedVersion : transformation.version_tag;
+    }
+
+    if (new_version === transformation.version_tag) {
+      new_version = `${new_version} ${suffix}`;
+    }
 
     if (isWorkflowTransformation(transformation)) {
       copy = {
         ...transformation,
         id: newId,
         revision_group_id: groupId,
-        version_tag: `${transformation.version_tag} ${suffix}`,
+        version_tag: new_version,
         state: RevisionState.DRAFT,
         released_timestamp: null,
         disabled_timestamp: null,
@@ -614,7 +731,7 @@ export class TransformationActionService {
         ...transformation,
         id: newId,
         revision_group_id: groupId,
-        version_tag: `${transformation.version_tag} ${suffix}`,
+        version_tag: new_version,
         state: RevisionState.DRAFT,
         released_timestamp: null,
         disabled_timestamp: null,

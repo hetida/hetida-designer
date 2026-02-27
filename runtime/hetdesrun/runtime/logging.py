@@ -318,6 +318,7 @@ def logrecord_to_simplified_log_record(record: logging.LogRecord) -> SimplifiedL
     tr_id = (
         UUID(record.currently_executed_transformation_id)
         if hasattr(record, "currently_executed_transformation_id")
+        and record.currently_executed_transformation_id is not None
         else None
     )
     tr_name = (

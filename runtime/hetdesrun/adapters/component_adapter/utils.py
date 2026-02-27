@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -20,6 +21,7 @@ from hetdesrun.persistence.models.io import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.reference_context import get_deepcopy_of_reproducibility_reference_context
+from hetdesrun.runtime.context import get_runtime_exec_context
 from hetdesrun.utils import State, Type
 
 # need DataType (component output) to ExternalType mapping
@@ -191,6 +193,7 @@ def wf_exec_input_from_component_trafo_revision(
             job_id=uuid4() if job_id is None else job_id,
             trafo_id=component_trafo_rev.id,
             reproducibility_reference=get_deepcopy_of_reproducibility_reference_context(),
+            runtime_execution_context=deepcopy(get_runtime_exec_context()),
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e

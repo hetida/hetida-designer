@@ -758,6 +758,7 @@ async def test_get_transformation_revisions_strip_wirings(
                 "keep_only_wirings_with_adapter_id": "other",
                 "components_as_code": True,
                 "expand_component_code": True,
+                "update_component_code": True,
             },
         )
         assert resp.status_code == 200

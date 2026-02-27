@@ -33,7 +33,7 @@ test('Create a component with Optional Input and Default Value', async ({
   );
 
   // Configure component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
@@ -69,7 +69,7 @@ test('Create a component with Optional Input and Default Value', async ({
   await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
 
   // Get released component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );

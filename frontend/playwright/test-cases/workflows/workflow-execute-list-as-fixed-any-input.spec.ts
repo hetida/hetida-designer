@@ -42,7 +42,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   );
 
   // Configure workflow I/O
-  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );

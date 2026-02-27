@@ -1,9 +1,16 @@
-import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  Input,
+  OnInit,
+  HostListener
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
 import { of, ReplaySubject, timer } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
@@ -13,7 +20,7 @@ import {
   Transformation
 } from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
-
+import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 @Component({
   selector: 'hd-toolbar',
   templateUrl: './toolbar.component.html',
@@ -64,6 +71,47 @@ export class ToolbarComponent implements OnInit {
       });
   }
 
+  private isActiveTab(): boolean {
+    let isActive = false;
+
+    this.transformationStore
+      .select(selectActiveTabItem)
+      .pipe(take(1)) // Take only the current value
+      .subscribe(activeTabItem => {
+        // Check if this toolbar's transformation matches the active tab
+        isActive = activeTabItem?.transformationId === this.transformation?.id;
+      });
+
+    return isActive;
+  }
+
+  @HostListener('document:keydown.shift.enter', ['$event'])
+  handleExecuteHotkey(event: KeyboardEvent) {
+    event.preventDefault();
+
+    // Only execute if this toolbar belongs to the active tab
+    if (!this.isActiveTab()) {
+      return;
+    }
+
+    if (!this.incompleteFlag && this.transformation) {
+      this.execute();
+    }
+  }
+
+  @HostListener('document:keydown.alt.enter', ['$event'])
+  handleExecuteTestWiringHotkey(event: KeyboardEvent) {
+    event.preventDefault();
+
+    // Only execute if this toolbar belongs to the active tab
+    if (!this.isActiveTab()) {
+      return;
+    }
+
+    if (!this.incompleteFlag && this.transformation) {
+      this.transformationActionService.execute(this.transformation, true);
+    }
+  }
   zoomIn() {
     this.flowchartService.zoomIn(this.transformation.id);
   }
@@ -199,7 +247,7 @@ export class ToolbarComponent implements OnInit {
     if (this.incompleteFlag === true) {
       return `Cannot execute, because the ${this.transformation.type.toLowerCase()} is incomplete.`;
     }
-    return 'Execute';
+    return 'Execute (Shift+Enter) / Execute current test wiring (Alt + Enter)';
   }
 
   get deleteTooltip(): string {

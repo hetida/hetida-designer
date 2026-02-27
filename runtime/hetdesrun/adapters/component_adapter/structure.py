@@ -86,18 +86,12 @@ def get_all_component_sources(
     return sorted(
         [
             ComponentAdapterStructureSource(
-                type=(
-                    ext_type := data_type_to_external_type_map[
-                        component.io_interface.outputs[0].data_type
-                    ]
-                ),
-                id=str(component.id)
-                if not (is_metadatum := str(ext_type).lower().startswith("metadata"))
-                else component.category,  # metadata are regarded as attached to thingnodes
+                type=data_type_to_external_type_map[component.io_interface.outputs[0].data_type],
+                id=str(component.id),
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
-                metadataKey=str(component.id) if is_metadatum else None,
+                metadataKey=None,
                 filters=extract_filters_from_component(component),
             )
             for component in components
@@ -147,16 +141,12 @@ def get_all_component_sinks(
     return sorted(
         [
             ComponentAdapterStructureSink(
-                type=(
-                    ext_type := data_type_to_external_type_map[get_data_input(component).data_type]
-                ),
-                id=str(component.id)
-                if not (is_metadatum := str(ext_type).lower().startswith("metadata"))
-                else component.category,  # metadata are regarded as attached to thingnodes
+                type=data_type_to_external_type_map[get_data_input(component).data_type],
+                id=str(component.id),
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
-                metadataKey=str(component.id) if is_metadatum else None,
+                metadataKey=None,
                 filters=extract_filters_from_component(component, as_sink=True),
             )
             for component in components

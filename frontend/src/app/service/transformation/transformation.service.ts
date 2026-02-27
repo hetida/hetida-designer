@@ -11,7 +11,8 @@ import {
   Transformation,
   TrafoUpdateState,
   WorkflowTransformation,
-  UnitTestResults
+  UnitTestResults,
+  UpdatedTransformation
 } from '../../model/transformation';
 import {
   TransformationHttpService,
@@ -59,7 +60,7 @@ export class TransformationService {
 
   updateTransformation(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     return this.transformationHttpService
       .updateTransformation(transformation)
       .pipe(
@@ -245,7 +246,7 @@ export class TransformationService {
 
   releaseTransformation(
     transformation: Transformation
-  ): Observable<Transformation> {
+  ): Observable<UpdatedTransformation> {
     const copyOfTransformation = Utils.deepCopy(transformation);
     copyOfTransformation.state = RevisionState.RELEASED;
     copyOfTransformation.released_timestamp = new Date().toISOString();

@@ -214,3 +214,5 @@ def main(*, data, path):
 
 # %%
 ```
+## Technical hints
+Note, that unlike operators of a workflow, component wirings are executed concurrently. In particular it is recommed for source / sink components to use an `async def main` function to allow this and make use of async libraries, e.g when loading data from a web api.

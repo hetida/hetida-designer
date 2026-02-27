@@ -15,10 +15,13 @@
     <mat-tab #matTab>
       @if (_isDocumentation(tabItem)) {
         <ng-template mat-tab-label>
-          <span class="d-flex">
+          <span class="d-flex" (mousedown)="_onMiddleClick($event, tabItem)">
             <mat-icon>description</mat-icon>
           </span>
-          <div class="tab-item__title">
+          <div
+            class="tab-item__title"
+            (mousedown)="_onMiddleClick($event, tabItem)"
+          >
             <span class="text-ellipsis" [title]="tabItem.transformation.name">{{
               tabItem.transformation.name
             }}</span>
@@ -26,7 +29,11 @@
               ({{ tabItem.transformation.version_tag }})</span
             >
           </div>
-          <button (click)="_onTabClose(tabItem)" mat-icon-button>
+          <button
+            (click)="_onTabClose(tabItem)"
+            (mousedown)="_onMiddleClick($event, tabItem)"
+            mat-icon-button
+          >
             <mat-icon>close</mat-icon>
           </button>
         </ng-template>
@@ -37,7 +44,7 @@
       }
       @if (_isTransformation(tabItem)) {
         <ng-template mat-tab-label>
-          <span class="d-flex">
+          <span class="d-flex" (mousedown)="_onMiddleClick($event, tabItem)">
             @if (tabItem.transformation.type === _ItemType.COMPONENT) {
               <mat-icon
                 svgIcon="icon-component"
@@ -66,7 +73,10 @@
               ></mat-icon>
             }
           </span>
-          <div class="tab-item__title">
+          <div
+            class="tab-item__title"
+            (mousedown)="_onMiddleClick($event, tabItem)"
+          >
             <span class="text-ellipsis" [title]="tabItem.transformation.name">{{
               tabItem.transformation.name
             }}</span>
@@ -74,7 +84,11 @@
               ({{ tabItem.transformation.version_tag }})</span
             >
           </div>
-          <button (click)="_onTabClose(tabItem)" mat-icon-button>
+          <button
+            (click)="_onTabClose(tabItem)"
+            (mousedown)="_onMiddleClick($event, tabItem)"
+            mat-icon-button
+          >
             <mat-icon>close</mat-icon>
           </button>
         </ng-template>
