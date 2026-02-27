@@ -59,7 +59,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
                 echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
                 if [[ "$_allow_overwrite_released" == $_true_equiv ]]; then
                     echo "INCLUDING RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
-                    python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, update_component_code=False);'
+                    python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, allow_overwrite_released=True, update_component_code=False);'
                 else
                     echo "EXCEPT FOR RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
                     python -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("./transformations/", directly_into_db=True, allow_overwrite_released=False, update_component_code=False);'
