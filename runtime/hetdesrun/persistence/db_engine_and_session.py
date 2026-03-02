@@ -58,6 +58,7 @@ def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engin
         db_url_to_use,
         future=True,
         json_serializer=dumps,
+        connect_args={"options": "-c timezone=utc"} if db_url_to_use.startswith("postgres") else {},
         **(
             {"pool_size": get_config().sqlalchemy_pool_size}
             if not str(db_url_to_use).startswith("sqlite://")
