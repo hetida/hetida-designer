@@ -743,10 +743,7 @@ class TransformationRevision(TransformationRevisionStub):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name=(
-                f"COMPONENT EXECUTION WRAPPER WORKFLOW for component {self.name}"
-                f" ({self.version_tag}) with id {self.id}"
-            ),
+            name=(f"WF-WRAPPED (id={self.id}) {self.name}"),
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

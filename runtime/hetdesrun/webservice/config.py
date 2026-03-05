@@ -1,7 +1,7 @@
 import datetime
 import os
 import re
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import Field, Json, RootModel, SecretStr, ValidationInfo, field_validator
@@ -15,7 +15,7 @@ from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     # https://docs.python.org/3/library/logging.html#logging-levels
     CRITICAL = "CRITICAL"
     ERROR = "ERROR"
@@ -25,19 +25,19 @@ class LogLevel(str, Enum):
     NOTSET = "NOTSET"
 
 
-class ExternalAuthMode(str, Enum):
+class ExternalAuthMode(StrEnum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
-class InternalAuthMode(str, Enum):
+class InternalAuthMode(StrEnum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
-class SchedulingInternalAuthMode(str, Enum):
+class SchedulingInternalAuthMode(StrEnum):
     """Auth mode for scheduled execution requests to the runtime service"""
 
     OFF = "OFF"
@@ -725,6 +725,22 @@ class RuntimeConfig(BaseSettings):
             "This defines the sync interval in seconds."
         ),
         validation_alias="HETIDA_DESIGNER_SCHEDULING_SYNC_INTERVAL_SECONDS",
+    )
+
+    scheduling_executions_retention_deletion_job_interval_seconds: int = Field(
+        300,
+        description="Time in seconds between two runs of the schedule executions"
+        " table cleanup r Retention job.",
+        alias="HETIDA_DESIGNER_SCHEDULING_RETENTION_JOB_TRIGGER_INTERVAL_SECONDS",
+    )
+
+    scheduling_executions_retention: datetime.timedelta = Field(
+        datetime.timedelta(days=2),
+        description="When the retention / cleanup job for schedule execution entries"
+        " is run, this determines which entries are deleted: Everything older than now"
+        " minus the specified timedelta. Accepts an ISO 8601 timedelta, see"
+        " https://en.wikipedia.org/wiki/ISO_8601#Durations. E.G. P14D for fourteen days.",
+        alias="HETIDA_DESIGNER_SCHEDULING_RETENTION_TIMEDELTA",
     )
 
     @field_validator("internal_auth_client_credentials")

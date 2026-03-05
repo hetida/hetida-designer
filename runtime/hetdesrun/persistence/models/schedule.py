@@ -6,6 +6,7 @@ from pydantic import AwareDatetime, BaseModel, Field, ValidationError, computed_
 from sqlalchemy import Row, RowMapping
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbmodels import (
     ScheduleDBModel,
@@ -13,6 +14,7 @@ from hetdesrun.persistence.dbmodels import (
     ScheduleExecutionDBModel,
 )
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
+from hetdesrun.utils import State, Type
 
 
 class Schedule(BaseModel):
@@ -76,8 +78,13 @@ class ScheduleExecution(BaseModel):
     start: AwareDatetime | None = None
     end: AwareDatetime | None = None
     transformation_id: UUID
+    transformation_name: str | None = None
+    transformation_version_tag: str | None = None
+    transformation_type: Type | None = None
+    transformation_state: State | None = None
     state: ScheduledJobState
     trafo_exec_job_id: UUID
+    exec_input: ExecByIdInput | None = None
     exec_result: ExecutionResponseFrontendDto | None = None
     error_message: str | None = None
 
@@ -89,8 +96,13 @@ class ScheduleExecution(BaseModel):
             start=self.start,
             end=self.end,
             transformation_id=self.transformation_id,
+            transformation_name=self.transformation_name,
+            transformation_version_tag=self.transformation_version_tag,
+            transformation_type=self.transformation_type,
+            transformation_state=self.transformation_state,
             state=self.state,
             trafo_exec_job_id=self.trafo_exec_job_id,
+            exec_input=self.exec_input.model_dump(mode="json") if self.exec_input else None,
             exec_result=self.exec_result.model_dump(mode="json") if self.exec_result else None,
             error_message=self.error_message,
         )
@@ -113,9 +125,14 @@ class ScheduleExecution(BaseModel):
                 if orm_model.end is not None
                 else None,
                 transformation_id=orm_model.transformation_id,
+                transformation_name=orm_model.transformation_name,
+                transformation_version_tag=orm_model.transformation_version_tag,
+                transformation_type=orm_model.transformation_type,
+                transformation_state=orm_model.transformation_state,
                 state=orm_model.state,
                 trafo_exec_job_id=orm_model.trafo_exec_job_id,
-                exec_result=orm_model.exec_result,
+                exec_input=orm_model.exec_input if hasattr(orm_model, "exec_input") else None,
+                exec_result=orm_model.exec_result if hasattr(orm_model, "exec_result") else None,
                 error_message=orm_model.error_message,
             )
         except ValidationError as error:

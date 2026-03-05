@@ -174,13 +174,19 @@ class ScheduleExecutionDBModel(Base):
     last_state_update: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-
     transformation_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
         UUIDType(binary=False), nullable=False
     )  # trafo may change in the schedule! This is the actual trafo used for this execution
+    transformation_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    transformation_version_tag: Mapped[str | None] = mapped_column(String, nullable=True)
+    transformation_state: Mapped[State | None] = mapped_column(Enum(State), nullable=True)
+    transformation_type: Mapped[Type | None] = mapped_column(Enum(Type), nullable=True)
     state: Mapped[ScheduledJobState] = mapped_column(Enum(ScheduledJobState), nullable=False)
     trafo_exec_job_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
         UUIDType(binary=False), nullable=False
+    )
+    exec_input: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
     )
     exec_result: Mapped[dict | None] = mapped_column(
         JSON(none_as_null=True), nullable=True, default=lambda: None

@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
@@ -8,7 +8,7 @@ from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
 from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 
 
-class WriteTableMode(str, Enum):
+class WriteTableMode(StrEnum):
     APPEND = "APPEND"
     REPLACE = "REPLACE"
     TIMSERIES_APPEND = "TIMESERIES_APPEND"

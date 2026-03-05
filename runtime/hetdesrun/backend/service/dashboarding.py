@@ -6,7 +6,7 @@ Generate HTML / Styles / Javascript for the experimental dashboarding feature.
 import datetime
 import json
 import os
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import pandas as pd
@@ -56,7 +56,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.config import get_config
 
 
-class OverrideMode(str, Enum):
+class OverrideMode(StrEnum):
     """Dashboard time range override mode
 
     Determines how time range filters in the wiring are overriden by dashboard

@@ -1,3 +1,4 @@
+import datetime
 import logging
 from uuid import UUID
 
@@ -164,6 +165,10 @@ def update_schedule_execution(
                 start=db_model.start,
                 end=db_model.end,
                 transformation_id=db_model.transformation_id,
+                transformation_name=db_model.transformation_name,
+                transformation_version_tag=db_model.transformation_version_tag,
+                transformation_type=db_model.transformation_type,
+                transformation_state=db_model.transformation_state,
                 state=db_model.state,
                 trafo_exec_job_id=db_model.trafo_exec_job_id,
                 exec_result=db_model.exec_result,
@@ -232,6 +237,7 @@ def select_latest_schedule_execution_by_schedule_id(
     session: SQLAlchemySession,
     schedule_id: UUID,
     exclude_exec_result: bool = False,
+    exclude_exec_input: bool = False,
 ) -> ScheduleExecution | None:
     result = session.execute(
         select(ScheduleExecutionDBModel)
@@ -243,48 +249,54 @@ def select_latest_schedule_execution_by_schedule_id(
         return None
     if exclude_exec_result:
         result.exec_result = None
+    if exclude_exec_input:
+        result.exec_input = None
     return ScheduleExecution.from_orm_model(result)
 
 
 def read_latest_schedule_execution_by_schedule_id(
     schedule_id: UUID,  # noqa: A002
     exclude_exec_result: bool = False,
+    exclude_exec_input: bool = False,
 ) -> ScheduleExecution | None:
     with get_session()() as session, session.begin():
         return select_latest_schedule_execution_by_schedule_id(
-            session, schedule_id, exclude_exec_result
+            session, schedule_id, exclude_exec_result, exclude_exec_input
         )
 
 
 def select_multiple_schedule_executions(
-    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+    exclude_exec_result: bool = False,
+    exclude_exec_input: bool = False,
+    schedule_id: UUID | None = None,
 ) -> list[ScheduleExecution]:
     with get_session()() as session, session.begin():
-        if not exclude_exec_result:
-            selection = select(ScheduleExecutionDBModel)
-        else:
-            selection = select(
-                ScheduleExecutionDBModel.id,
-                ScheduleExecutionDBModel.schedule_id,
-                ScheduleExecutionDBModel.last_state_update,
-                ScheduleExecutionDBModel.start,
-                ScheduleExecutionDBModel.end,
-                ScheduleExecutionDBModel.transformation_id,
-                ScheduleExecutionDBModel.state,
-                ScheduleExecutionDBModel.trafo_exec_job_id,
-                ScheduleExecutionDBModel.error_message,
+        selection = select(
+            *(
+                (
+                    ScheduleExecutionDBModel.id,
+                    ScheduleExecutionDBModel.schedule_id,
+                    ScheduleExecutionDBModel.last_state_update,
+                    ScheduleExecutionDBModel.start,
+                    ScheduleExecutionDBModel.end,
+                    ScheduleExecutionDBModel.transformation_id,
+                    ScheduleExecutionDBModel.transformation_name,
+                    ScheduleExecutionDBModel.transformation_version_tag,
+                    ScheduleExecutionDBModel.transformation_type,
+                    ScheduleExecutionDBModel.transformation_state,
+                    ScheduleExecutionDBModel.state,
+                    ScheduleExecutionDBModel.trafo_exec_job_id,
+                    ScheduleExecutionDBModel.error_message,
+                )
+                + ((ScheduleExecutionDBModel.exec_result,) if not exclude_exec_result else ())
+                + ((ScheduleExecutionDBModel.exec_input,) if not exclude_exec_input else ())
             )
+        )
 
         if schedule_id is not None:
             selection = selection.where(ScheduleExecutionDBModel.schedule_id == schedule_id)
 
-        results = (
-            session.execute(selection).all()
-            if exclude_exec_result
-            else session.execute(selection).scalars().all()
-        )
-        if not exclude_exec_result:
-            return [ScheduleExecution.from_orm_model(result) for result in results]
+        results = session.execute(selection).all()
 
         return [
             ScheduleExecution.from_orm_model(
@@ -295,9 +307,14 @@ def select_multiple_schedule_executions(
                     start=row.start,
                     end=row.end,
                     transformation_id=row.transformation_id,
+                    transformation_name=row.transformation_name,
+                    transformation_version_tag=row.transformation_version_tag,
+                    transformation_type=row.transformation_type,
+                    transformation_state=row.transformation_state,
                     state=row.state,
                     trafo_exec_job_id=row.trafo_exec_job_id,
-                    exec_result=None,  # set to None
+                    exec_result=None if exclude_exec_result else row.exec_result,
+                    exec_input=None if exclude_exec_input else row.exec_input,
                     error_message=row.error_message,
                 )
             )
@@ -306,32 +323,45 @@ def select_multiple_schedule_executions(
 
 
 def get_multiple_schedule_executions(
-    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+    exclude_exec_result: bool = False,
+    exclude_exec_input: bool = False,
+    schedule_id: UUID | None = None,
 ) -> list[ScheduleExecution]:
     """Selection of schedules from db"""
     return select_multiple_schedule_executions(
-        exclude_exec_result=exclude_exec_result, schedule_id=schedule_id
+        exclude_exec_result=exclude_exec_result,
+        exclude_exec_input=exclude_exec_input,
+        schedule_id=schedule_id,
     )
 
 
 def select_latest_schedule_executions_per_schedule(
-    exclude_exec_result: bool = False, schedule_id: UUID | None = None
+    exclude_exec_result: bool = False,
+    exclude_exec_input: bool = False,
+    schedule_id: UUID | None = None,
 ) -> list[ScheduleExecution]:
     with get_session()() as session, session.begin():
-        if not exclude_exec_result:
-            base_query = select(ScheduleExecutionDBModel)
-        else:
-            base_query = select(
-                ScheduleExecutionDBModel.id,
-                ScheduleExecutionDBModel.schedule_id,
-                ScheduleExecutionDBModel.last_state_update,
-                ScheduleExecutionDBModel.start,
-                ScheduleExecutionDBModel.end,
-                ScheduleExecutionDBModel.transformation_id,
-                ScheduleExecutionDBModel.state,
-                ScheduleExecutionDBModel.trafo_exec_job_id,
-                ScheduleExecutionDBModel.error_message,
+        base_query = select(
+            *(
+                (
+                    ScheduleExecutionDBModel.id,
+                    ScheduleExecutionDBModel.schedule_id,
+                    ScheduleExecutionDBModel.last_state_update,
+                    ScheduleExecutionDBModel.start,
+                    ScheduleExecutionDBModel.end,
+                    ScheduleExecutionDBModel.transformation_id,
+                    ScheduleExecutionDBModel.transformation_name,
+                    ScheduleExecutionDBModel.transformation_version_tag,
+                    ScheduleExecutionDBModel.transformation_type,
+                    ScheduleExecutionDBModel.transformation_state,
+                    ScheduleExecutionDBModel.state,
+                    ScheduleExecutionDBModel.trafo_exec_job_id,
+                    ScheduleExecutionDBModel.error_message,
+                )
+                + ((ScheduleExecutionDBModel.exec_result,) if not exclude_exec_result else ())
+                + ((ScheduleExecutionDBModel.exec_input,) if not exclude_exec_input else ())
             )
+        )
 
         if schedule_id is not None:
             base_query = base_query.where(ScheduleExecutionDBModel.schedule_id == schedule_id)
@@ -347,8 +377,6 @@ def select_latest_schedule_executions_per_schedule(
 
         results = session.execute(select(subquery).where(subquery.c.rn == 1)).mappings().all()
 
-        if not exclude_exec_result:
-            return [ScheduleExecution.from_orm_model(result) for result in results]
         return [
             ScheduleExecution.from_orm_model(
                 ScheduleExecutionDBModel(
@@ -358,9 +386,14 @@ def select_latest_schedule_executions_per_schedule(
                     start=row.start,
                     end=row.end,
                     transformation_id=row.transformation_id,
+                    transformation_name=row.transformation_name,
+                    transformation_version_tag=row.transformation_version_tag,
+                    transformation_type=row.transformation_type,
+                    transformation_state=row.transformation_state,
                     state=row.state,
                     trafo_exec_job_id=row.trafo_exec_job_id,
-                    exec_result=None,
+                    exec_result=None if exclude_exec_result else row.exec_result,
+                    exec_input=None if exclude_exec_input else row.exec_input,
                     error_message=row.error_message,
                 )
             )
@@ -394,3 +427,24 @@ def delete_schedule_execution(session: SQLAlchemySession, schedule_execution_id:
 def delete_single_schedule_execution(id: UUID) -> None:  # noqa: A002
     with get_session()() as session, session.begin():
         delete_schedule_execution(session, id)
+
+
+def delete_schedule_executions(session: SQLAlchemySession, older_than: datetime.datetime) -> None:
+    try:
+        session.execute(
+            delete(ScheduleExecutionDBModel).where(
+                ScheduleExecutionDBModel.last_state_update <= older_than
+            )
+        )
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to delete old schedule executions "
+            f"older than {older_than}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
+def delete_old_schedule_executions(older_than: datetime.datetime) -> None:
+    with get_session()() as session, session.begin():
+        delete_schedule_executions(session, older_than)

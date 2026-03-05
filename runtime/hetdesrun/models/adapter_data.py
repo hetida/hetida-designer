@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RefIdType(str, Enum):
+class RefIdType(StrEnum):
     """Reference Id type as required for some adapters (notably generic rest adapter)"""
 
     SOURCE = "SOURCE"

@@ -1,0 +1,183 @@
+<h2 mat-dialog-title>
+  <span class="dialog-title-content">
+    <mat-icon>history</mat-icon>
+    Executions — {{ data.schedule.name }}
+  </span>
+  <button mat-icon-button class="dialog-close-button" (click)="close()">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading executions…</span>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!isLoading && errorMessage" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <span>{{ errorMessage }}</span>
+    <button mat-button color="primary" (click)="loadExecutions()">Retry</button>
+  </div>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!isLoading && !errorMessage && executions.length === 0"
+    class="empty-container"
+  >
+    <mat-icon>inbox</mat-icon>
+    <span>No executions found for this schedule.</span>
+  </div>
+
+  <!-- Executions Table -->
+  <table
+    *ngIf="!isLoading && !errorMessage && executions.length > 0"
+    mat-table
+    [dataSource]="executions"
+    class="executions-table"
+  >
+    <!-- Last State Update Column -->
+    <ng-container matColumnDef="last_state_update">
+      <th mat-header-cell *matHeaderCellDef>Last Update</th>
+      <td mat-cell *matCellDef="let execution">
+        {{
+          execution.last_state_update
+            | date: 'yyyy-MM-dd HH:mm:ss' : localTimezone
+        }}
+      </td>
+    </ng-container>
+
+    <!-- Start Column -->
+    <ng-container matColumnDef="start">
+      <th mat-header-cell *matHeaderCellDef>Started At</th>
+      <td mat-cell *matCellDef="let execution">
+        <span *ngIf="execution.start">{{
+          execution.start | date: 'yyyy-MM-dd HH:mm:ss' : localTimezone
+        }}</span>
+        <span *ngIf="!execution.start">—</span>
+      </td>
+    </ng-container>
+
+    <!-- End Column 
+        <ng-container matColumnDef="end">
+            <th mat-header-cell *matHeaderCellDef>Finished At</th>
+            <td mat-cell *matCellDef="let execution">
+                <span *ngIf="execution.end">{{ execution.end | date: 'yyyy-MM-dd HH:mm:ss' : localTimezone }}</span>
+                <span *ngIf="!execution.end && execution.state === 'STARTED'" class="running-text">Running…</span>
+                <span *ngIf="!execution.end && execution.state !== 'STARTED'">—</span>
+            </td>
+        </ng-container>
+
+        -->
+
+    <!-- Duration Column -->
+    <ng-container matColumnDef="duration">
+      <th mat-header-cell *matHeaderCellDef>Duration</th>
+      <td mat-cell *matCellDef="let execution">
+        {{ getDuration(execution) }}
+      </td>
+    </ng-container>
+
+    <!-- Trafo Column -->
+    <ng-container matColumnDef="trafo">
+      <th mat-header-cell *matHeaderCellDef>Workflow / Component</th>
+      <td mat-cell *matCellDef="let execution">
+        <span *ngIf="execution.transformation_name">
+          {{ getTrafoName(execution.transformation_name) }} ({{
+            execution.transformation_version_tag
+          }})
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- State Column -->
+    <ng-container matColumnDef="state">
+      <th mat-header-cell *matHeaderCellDef>State</th>
+      <td mat-cell *matCellDef="let execution">
+        <span
+          class="status-badge"
+          [ngClass]="{
+            'status-success': execution.state === 'SUCCESS',
+            'status-failure':
+              execution.state === 'INVOCATION_ERROR' ||
+              execution.state === 'EXECUTION_ERROR',
+            'status-running': execution.state === 'STARTED'
+          }"
+        >
+          <mat-icon class="status-icon">
+            {{
+              execution.state === 'SUCCESS'
+                ? 'check_circle'
+                : execution.state === 'STARTED'
+                  ? 'pending'
+                  : 'cancel'
+            }}
+          </mat-icon>
+          {{ execution.state }}
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Exec Input Column -->
+    <ng-container matColumnDef="exec_input">
+      <th mat-header-cell *matHeaderCellDef>Execution Input</th>
+      <td mat-cell *matCellDef="let execution">
+        <button
+          mat-icon-button
+          title="Show Exec Input"
+          color="primary"
+          (click)="onShowExecInput(execution)"
+        >
+          <mat-icon>data_object</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Exec Result Column -->
+    <ng-container matColumnDef="exec_result">
+      <th mat-header-cell *matHeaderCellDef>Result</th>
+      <td mat-cell *matCellDef="let execution">
+        <button
+          mat-icon-button
+          title="Show Result"
+          color="primary"
+          [disabled]="
+            execution.state === 'STARTED' ||
+            execution.state === 'INVOCATION_ERROR'
+          "
+          (click)="onShowExecResult(execution)"
+        >
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Error Message Column -->
+    <ng-container matColumnDef="error_message">
+      <th mat-header-cell *matHeaderCellDef>Error Msg</th>
+      <td mat-cell *matCellDef="let execution">
+        <span
+          *ngIf="execution.error_message"
+          class="error-message"
+          [title]="execution.error_message"
+        >
+          {{ execution.error_message }}
+        </span>
+        <span *ngIf="!execution.error_message">—</span>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="loadExecutions()" [disabled]="isLoading">
+    <mat-icon>refresh</mat-icon>
+    Refresh
+  </button>
+  <button mat-raised-button color="primary" (click)="close()">Close</button>
+</mat-dialog-actions>

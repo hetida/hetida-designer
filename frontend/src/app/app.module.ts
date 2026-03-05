@@ -79,7 +79,7 @@ import { OptionalFieldsDialogComponent } from './components/optional-fields-dial
 import { from, map } from 'rxjs';
 import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
-
+import { ScheduleExecutionsDialogComponent } from './components/schedule-executions-dialog/schedule-executions-dialog.component';
 @Injectable({ providedIn: 'root' })
 export class WiringConfigService implements HdWiringConfig {
   // Implement all HdWiringConfig properties
@@ -151,7 +151,8 @@ const httpLoaderFactory = (configService: ConfigService) => {
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
     TransformationContextMenuComponent,
-    OptionalFieldsDialogComponent
+    OptionalFieldsDialogComponent,
+    ScheduleExecutionsDialogComponent
   ],
   bootstrap: [AppComponent],
   imports: [

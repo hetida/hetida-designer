@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 from functools import cache, cached_property
 from pathlib import Path
 from typing import Annotated, Literal
@@ -40,7 +40,7 @@ BucketName = Annotated[
 ]
 
 
-class FileExtension(str, Enum):
+class FileExtension(StrEnum):
     """BLOB storage adapter file extensions.
 
     These are the allowed file extensions for objects covered by the adapter hierarchy.

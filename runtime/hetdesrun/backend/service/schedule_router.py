@@ -192,16 +192,21 @@ async def create_schedule_execution(schedule_execution: ScheduleExecution) -> Sc
 async def get_all_schedule_executions(
     schedule_id: UUID | None = Query(None),
     exclude_exec_result: bool = Query(False),
+    exclude_exec_input: bool = Query(False),
     latest: bool = Query(False),
 ) -> list[ScheduleExecution]:
     try:
         if latest:
             schedule_execution_list = select_latest_schedule_executions_per_schedule(
-                exclude_exec_result=exclude_exec_result, schedule_id=schedule_id
+                exclude_exec_result=exclude_exec_result,
+                exclude_exec_input=exclude_exec_input,
+                schedule_id=schedule_id,
             )
         else:
             schedule_execution_list = get_multiple_schedule_executions(
-                exclude_exec_result=exclude_exec_result, schedule_id=schedule_id
+                exclude_exec_result=exclude_exec_result,
+                exclude_exec_input=exclude_exec_input,
+                schedule_id=schedule_id,
             )
     except DBIntegrityError as err:
         msg = f"At least one entry in the DB is no valid schedule execution:\n{str(err)}"
@@ -212,6 +217,26 @@ async def get_all_schedule_executions(
 
 
 @schedule_router.get(
+    "/executions/{id}",
+    response_model=ScheduleExecution,
+    summary="Returns a specific schedule execution",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got schedule execution"},
+        status.HTTP_404_NOT_FOUND: {"description": "Schedule execution not found"},
+    },
+)
+async def get_schedule_execution(id: UUID) -> ScheduleExecution:  # noqa: A002
+    try:
+        schedule_exec = read_single_schedule_execution(id)
+    except DBNotFoundError as err:
+        msg = f"Could not find schedule execution {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    return schedule_exec
+
+
+@schedule_router.get(
     "/executions/latest/{schedule_id}",
     response_model=ScheduleExecution | None,
     summary="Returns latest schedule execution for a schedule",
@@ -219,11 +244,15 @@ async def get_all_schedule_executions(
     responses={status.HTTP_200_OK: {"description": "Successfully got latest schedule execution"}},
 )
 async def get_latest_schedule_execution(
-    schedule_id: UUID, exclude_exec_result: bool = Query(False)
+    schedule_id: UUID,
+    exclude_exec_result: bool = Query(False),
+    exclude_exec_input: bool = Query(False),
 ) -> ScheduleExecution | None:
     try:
         latest_schedule_execution = read_latest_schedule_execution_by_schedule_id(
-            schedule_id, exclude_exec_result=exclude_exec_result
+            schedule_id,
+            exclude_exec_result=exclude_exec_result,
+            exclude_exec_input=exclude_exec_input,
         )
     except DBIntegrityError as err:
         msg = f"Error during latest schedule execution read:\n{str(err)}"
@@ -276,7 +305,7 @@ async def update_schedule_execution(
 
 
 @schedule_router.delete(
-    "executions/{id}",
+    "/executions/{id}",
     summary="Deletes a schedule execution.",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={

@@ -22,7 +22,7 @@
         >
           Cron Expression
         </th>
-        <th>Actions</th>
+        <th class="actions_col">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -72,7 +72,11 @@
               (click)="openTrafoOfScheduleInTab(schedule)"
             >
               <mat-icon
-                svgIcon="icon-workflow"
+                [svgIcon]="
+                  schedule.transformation_type === 'COMPONENT'
+                    ? 'icon-component'
+                    : 'icon-workflow'
+                "
                 [ngClass]="{
                   'mat-icon-svg-disabled':
                     schedule.transformation_state === 'DISABLED',
@@ -137,7 +141,7 @@
           />
         </td>
         <!-- Status / Buttons -->
-        <td>
+        <td class="actions_col">
           <button
             mat-icon-button
             title="Execute Now"
@@ -149,7 +153,15 @@
           </button>
           <button
             mat-icon-button
-            title="Delete"
+            title="View Executions"
+            color="primary"
+            (click)="openExecutionsDialog(schedule)"
+          >
+            <mat-icon>history</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            title=" Delete"
             color="primary"
             (click)="delete(schedule).subscribe()"
           >

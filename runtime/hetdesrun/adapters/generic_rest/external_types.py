@@ -38,7 +38,7 @@ def df_empty(
     return df
 
 
-class ValueDataType(str, Enum):
+class ValueDataType(StrEnum):
     """Represents an external value datatype"""
 
     INT = "int", int, int, "integer"

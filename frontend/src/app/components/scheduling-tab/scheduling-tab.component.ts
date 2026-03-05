@@ -41,7 +41,10 @@ import {
 import { ScheduleHttpService } from '../../service/http-service/schedule-http.service';
 import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
-
+import {
+  ScheduleExecutionsDialogComponent,
+  ScheduleExecutionsDialogData
+} from '../schedule-executions-dialog/schedule-executions-dialog.component';
 @Component({
   selector: 'hd-scheduling-tab',
   templateUrl: './scheduling-tab.component.html',
@@ -124,6 +127,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
             this.schedules[index].transformation_version_tag =
               transformation.version_tag;
             this.schedules[index].transformation_state = transformation.state;
+            this.schedules[index].transformation_type = transformation.type;
             this.updateScheduleInApi(this.schedules[index]);
           } else if (
             (transformation === null ||
@@ -135,6 +139,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
             this.schedules[index].transformation_name = null;
             this.schedules[index].transformation_version_tag = null;
             this.schedules[index].transformation_state = null;
+            this.schedules[index].transformation_type = null;
             this.updateScheduleInApi(this.schedules[index]);
           }
         });
@@ -156,6 +161,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       transformation_name: null,
       transformation_version_tag: null,
       transformation_state: null,
+      transformation_type: null,
       wiring: { input_wirings: [], output_wirings: [] },
       cron_expression_valid: null
     };
@@ -192,6 +198,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
         schedule.transformation_name = transformation.name;
         schedule.transformation_version_tag = transformation.version_tag;
         schedule.transformation_state = transformation.state;
+        schedule.transformation_type = transformation.type;
 
         this.refreshTransformationSubscriptions();
 
@@ -400,5 +407,17 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     this.transformationService
       .testTransformation(schedule.transformation_id, schedule.wiring)
       .subscribe();
+  }
+
+  openExecutionsDialog(schedule: Schedule): void {
+    this.dialog.open<
+      ScheduleExecutionsDialogComponent,
+      ScheduleExecutionsDialogData
+    >(ScheduleExecutionsDialogComponent, {
+      width: '100%',
+      height: '80vh',
+      maxHeight: '80vh',
+      data: { schedule }
+    });
   }
 }

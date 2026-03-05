@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {
   HttpClient,
   HttpErrorResponse,
+  HttpParams,
   HttpResponse
 } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
@@ -10,6 +11,7 @@ import { catchError, throwError, Observable, of, map } from 'rxjs';
 import { Schedule } from '../../model/schedule';
 
 import { NotificationService } from 'src/app/service/notifications/notification.service';
+import { ScheduleExecution } from 'src/app/components/schedule-executions-dialog/schedule-executions-dialog.component';
 
 export interface DeleteResult {
   success: boolean;
@@ -70,5 +72,25 @@ export class ScheduleHttpService {
         });
       })
     );
+  }
+  public fetchScheduleExecutions(
+    scheduleId: string,
+    exclude_exec_result: boolean,
+    exclude_exec_input: boolean
+  ): Observable<ScheduleExecution[]> {
+    const params = new HttpParams()
+      .set('schedule_id', scheduleId)
+      .set('exclude_exec_result', exclude_exec_result)
+      .set('exclude_exec_input', exclude_exec_input);
+
+    const url = `${this.apiEndpoint}/schedules/executions`;
+    return this.httpClient.get<ScheduleExecution[]>(url, { params });
+  }
+  public fetchScheduleExecution(
+    scheduleExecutionId: string
+  ): Observable<ScheduleExecution> {
+    const url = `${this.apiEndpoint}/schedules/executions/${scheduleExecutionId}`;
+
+    return this.httpClient.get<ScheduleExecution>(url);
   }
 }

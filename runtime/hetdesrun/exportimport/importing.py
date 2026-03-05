@@ -1,7 +1,7 @@
 import logging
 import os
 from collections.abc import Iterable
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -35,7 +35,7 @@ from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
 logger = logging.getLogger(__name__)
 
 
-class UpdateProcessStatus(str, Enum):
+class UpdateProcessStatus(StrEnum):
     NOT_TRIED = "NOT_TRIED"
     FAILED = "FAILED"
     SUCCESS = "SUCCESS"

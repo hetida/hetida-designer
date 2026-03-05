@@ -277,7 +277,7 @@ def test_wrap_component_in_tr_workflow():
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
-    assert tr_workflow.name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
+    assert tr_workflow.name.startswith("WF-WRAPPED")
     assert valid_component_tr_dict["category"] == tr_workflow.category
     assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
     assert valid_component_tr_dict["state"] == tr_workflow.state
@@ -310,8 +310,8 @@ def test_to_workflow_node():
     assert len(workflow_node.outputs) == len(valid_component_tr_dict["io_interface"]["outputs"])
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
-    assert workflow_node.name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
-    assert workflow_node.tr_name.startswith("COMPONENT EXECUTION WRAPPER WORKFLOW for")
+    assert workflow_node.name.startswith("WF-WRAPPED ")
+    assert workflow_node.tr_name.startswith("WF-WRAPPED ")
 
 
 def test_transformation_validation_for_change_dynamic_input_to_constant(

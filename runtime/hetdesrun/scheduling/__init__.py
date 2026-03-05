@@ -23,6 +23,7 @@ from hetdesrun.backend.execution import (
 from hetdesrun.component.load import ComponentImportCycleError
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.persistence.dbservice.schedule import (
+    delete_old_schedule_executions,
     get_multiple_schedules,
     update_or_create_single_schedule_execution,
 )
@@ -78,7 +79,9 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
         job_id=exec_job_id,
         id=schedule.transformation_id,
         wiring=schedule.wiring,
-        run_pure_plot_operators=False,
+        # plots should be generated, since past schedule execution results can be seen
+        # in the ui via the result protocol viewer:
+        run_pure_plot_operators=True,
     )
 
     scheduled_job_info = ScheduledJobInformation(
@@ -96,6 +99,7 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
         transformation_id=schedule.transformation_id,
         state=ScheduledJobState.STARTED,
         trafo_exec_job_id=exec_job_id,
+        exec_input=exec_by_id,
     )
 
     update_or_create_single_schedule_execution(schedule_execution)
@@ -179,6 +183,7 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
             scheduled_job_info.state = ScheduledJobState.SUCCESS
         else:
             scheduled_job_info.state = ScheduledJobState.EXECUTION_ERROR
+            scheduled_job_info.error_message = exec_result.error.message
 
         scheduled_job_info.exec_result = exec_result
 
@@ -198,6 +203,9 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
     schedule_execution.state = scheduled_job_info.state
     schedule_execution.error_message = scheduled_job_info.error_message
     schedule_execution.exec_result = scheduled_job_info.exec_result
+    if schedule_execution.exec_result is not None:
+        schedule_execution.transformation_name = schedule_execution.exec_result.tr_name
+        schedule_execution.transformation_version_tag = schedule_execution.exec_result.tr_tag
     schedule_execution.last_state_update = end_timestamp
     schedule_execution.end = end_timestamp
 
@@ -294,11 +302,30 @@ async def sync_job() -> None:
                 )
 
 
+async def executions_retention_job() -> None:
+    """Deletes schedule executions older than configured retention"""
+    older_than = datetime.datetime.now(datetime.UTC) - get_config().scheduling_executions_retention
+    logger.info("Deleting schedule executions older than %s", older_than)
+    delete_old_schedule_executions(older_than)
+
+
 async def start_scheduler() -> None:  # pragma: no cover
     """Initialize and start scheduler"""
     scheduler = get_global_scheduler()
+
+    # sync job
     sync_interval_seconds = get_config().scheduling_sync_interval_seconds
     scheduler.add_job(sync_job, trigger="interval", seconds=sync_interval_seconds)
+
+    # retention job
+    executions_retention_seconds = (
+        get_config().scheduling_executions_retention_deletion_job_interval_seconds
+    )
+    scheduler.add_job(
+        executions_retention_job, trigger="interval", seconds=executions_retention_seconds
+    )
+
+    # start scheduler
     scheduler.start()
     logger.info("Scheduler started with %s seconds db sync interval.", sync_interval_seconds)
 

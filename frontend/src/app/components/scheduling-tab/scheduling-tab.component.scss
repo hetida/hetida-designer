@@ -21,6 +21,13 @@
   align-items: center;
 }
 
+td:nth-child(2),
+th:nth-child(2),
+td:nth-child(3),
+th:nth-child(3) {
+  width: 50%;
+}
+
 .scheduling-header {
   flex-shrink: 0;
   display: flex;
@@ -58,8 +65,9 @@
 }
 
 .col-cron {
-  flex: 1;
-  font-family: monospace;
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .col-actions {
@@ -68,10 +76,23 @@
   gap: 4px;
 }
 
+th.actions_col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+}
+
+td.actions_col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+  cursor: default;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 
   thead {
     position: sticky;
@@ -122,12 +143,14 @@ th.active_col {
 }
 
 th.wiring_col {
-  width: 100px;
+  width: 1%;
+  white-space: nowrap;
   text-align: center;
 }
 
 th.cron_col {
-  width: 140px;
+  width: 1%;
+  white-space: nowrap;
   text-align: center;
 }
 
@@ -154,12 +177,14 @@ td.active_col {
 }
 
 td.wiring_col {
-  width: 100px;
+  width: 1%;
+  white-space: nowrap;
   text-align: center;
 }
 
 td.cron_col {
-  width: 140px;
+  width: 1%;
+  white-space: nowrap;
   text-align: center;
 }
 

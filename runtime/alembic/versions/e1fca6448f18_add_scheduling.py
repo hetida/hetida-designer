@@ -44,6 +44,18 @@ def upgrade():
         sa.Column(
             "transformation_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False
         ),
+        sa.Column("transformation_name", sa.String(), nullable=True),
+        sa.Column("transformation_version_tag", sa.String(), nullable=True),
+        sa.Column(
+            "transformation_state",
+            sa.Enum("DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state"),
+            nullable=True,
+        ),
+        sa.Column(
+            "transformation_type",
+            sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type"),
+            nullable=True,
+        ),
         sa.Column(
             "state",
             sa.Enum(
@@ -58,6 +70,7 @@ def upgrade():
         sa.Column(
             "trafo_exec_job_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False
         ),
+        sa.Column("exec_input", sa.JSON(none_as_null=True), nullable=True),
         sa.Column("exec_result", sa.JSON(none_as_null=True), nullable=True),
         sa.Column("error_message", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
