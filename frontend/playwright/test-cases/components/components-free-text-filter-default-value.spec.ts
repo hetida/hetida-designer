@@ -11,15 +11,12 @@ test('Send a default_value via adapter for the free_text filter to initialise, i
   const componentInputName = 'series';
   const adapter = 'Python-Demo-Adapter';
   const source = 'Influx Temperature';
-  const defaultValue = '1h';
+  const defaultValue = '3h';
 
   // Act
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.doubleClickItemInNavigation(
-    componentCategory,
-    componentName
-  );
+  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
 
   // Configure Execute
   await hetidaDesigner.clickIconInToolbar('Execute');

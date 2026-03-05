@@ -4,12 +4,13 @@ test('Open component on double-click', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
+  const componentTag = '1.0.0';
 
   // Act
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
-  await hetidaDesigner.doubleClickItemInNavigation(categoryName, componentName);
+  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
   await page.waitForSelector('hd-component-editor');
 
   // Assert

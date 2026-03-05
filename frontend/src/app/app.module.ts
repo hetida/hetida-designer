@@ -103,7 +103,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
 };
 
 const monacoConfig: NgxMonacoEditorConfig = {
-  // broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
+  // TODO: Broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
   // https://github.com/microsoft/monaco-editor/issues/4778
   baseUrl: `${window.location.origin}/assets/monaco/min/vs`
 };

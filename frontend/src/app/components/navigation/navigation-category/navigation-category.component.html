@@ -3,6 +3,7 @@
     [collapsedHeight]="'33px'"
     [expandedHeight]="'33px'"
     (mouseenter)="closePopover()"
+    attr.data-testid="{{ category + '-navigation-category' | lowercase }}"
   >
     <mat-panel-title>{{ category }}</mat-panel-title>
     <mat-panel-description></mat-panel-description>
@@ -12,6 +13,9 @@
     <div
       class="unselectable expansion-panel-content"
       [ngClass]="{ active: transformation.id === activeTransformationId }"
+      attr.data-testid="{{
+        category + '-expansion-panel-navigation-category' | lowercase
+      }}"
     >
       <hd-navigation-item
         [transformation]="transformation"

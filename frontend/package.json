@@ -73,7 +73,7 @@
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
     "@ngrx/store-devtools": "^19.2.1",
-    "@playwright/test": "^1.58.0",
+    "@playwright/test": "^1.58.2",
     "@stylistic/eslint-plugin": "^5.7.1",
     "@types/jasmine": "^6.0.0",
     "@types/katex": "^0.16.8",
