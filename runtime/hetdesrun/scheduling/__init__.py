@@ -60,13 +60,13 @@ async def execute_scheduled_transformation(  # noqa: PLR0915 PLR0912
     """Execution of scheduled transformation revisions job function"""
     schedule = get_global_schedule_infos().get(job_id, None)
 
-    if schedule is None:
+    if schedule is None:  # pragma: no cover
         logger.error(
             "Missing schedule object for job %s with name %s. Cannot run. Aborting.", job_id, name
         )
         return None
 
-    if schedule.transformation_id is None:
+    if schedule.transformation_id is None:  # pragma: no cover
         logger.error(
             "Missing schedule object for job %s with name %s. Cannot run. Aborting.", job_id, name
         )

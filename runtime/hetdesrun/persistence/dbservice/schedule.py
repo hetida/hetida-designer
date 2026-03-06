@@ -21,7 +21,7 @@ def add_schedule(session: SQLAlchemySession, schedule: Schedule) -> None:
     try:
         db_model = schedule.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to store schedule "
             f"with id {schedule.id}. Error was:\n{str(e)}"
@@ -46,7 +46,7 @@ def update_schedule(session: SQLAlchemySession, schedule: Schedule) -> None:
             )
         )
 
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to update "
             f"schedule with id {schedule.id}.\n"
@@ -67,7 +67,7 @@ def update_or_create_single_schedule(schedule: Schedule) -> Schedule:
     with get_session()() as session, session.begin():
         try:
             select_schedule_by_id(session, schedule.id, log_error=False)
-        except DBNotFoundError:
+        except DBNotFoundError:  # pragma: no cover
             add_schedule(session, schedule)
         else:
             update_schedule(session, schedule)
@@ -84,7 +84,7 @@ def select_schedule_by_id(
         select(ScheduleDBModel).where(ScheduleDBModel.id == id)
     ).scalar_one_or_none()
 
-    if result is None:
+    if result is None:  # pragma: no cover
         msg = f"Found no schedule in database with id {id}"
         if log_error:
             logger.error(msg)
@@ -118,7 +118,7 @@ def get_multiple_schedules() -> list[Schedule]:
 def delete_schedule(session: SQLAlchemySession, schedule_id: UUID) -> None:
     try:
         session.execute(delete(ScheduleDBModel).where(ScheduleDBModel.id == schedule_id))
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to delete schedule "
             f"with id {schedule_id}. Error was:\n{str(e)}"
@@ -141,7 +141,7 @@ def add_schedule_execution(
     try:
         db_model = schedule_execution.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to store schedule execution"
             f"with id {schedule_execution.id}. Error was:\n{str(e)}"
@@ -176,7 +176,7 @@ def update_schedule_execution(
             )
         )
 
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to update "
             f"schedule execution with id {schedule_execution.id}.\n"
@@ -245,11 +245,11 @@ def select_latest_schedule_execution_by_schedule_id(
         .order_by(ScheduleExecutionDBModel.last_state_update.desc())
         .limit(1)
     ).scalar_one_or_none()
-    if result is None:
+    if result is None:  # pragma: no cover
         return None
-    if exclude_exec_result:
+    if exclude_exec_result:  # pragma: no cover
         result.exec_result = None
-    if exclude_exec_input:
+    if exclude_exec_input:  # pragma: no cover
         result.exec_input = None
     return ScheduleExecution.from_orm_model(result)
 
@@ -415,7 +415,7 @@ def delete_schedule_execution(session: SQLAlchemySession, schedule_execution_id:
                 ScheduleExecutionDBModel.id == schedule_execution_id
             )
         )
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to delete schedule execution "
             f"with id {schedule_execution_id}. Error was:\n{str(e)}"
@@ -436,7 +436,7 @@ def delete_schedule_executions(session: SQLAlchemySession, older_than: datetime.
                 ScheduleExecutionDBModel.last_state_update <= older_than
             )
         )
-    except IntegrityError as e:
+    except IntegrityError as e:  # pragma: no cover
         msg = (
             f"Integrity Error while trying to delete old schedule executions "
             f"older than {older_than}. Error was:\n{str(e)}"

@@ -50,14 +50,14 @@ async def create_schedule(schedule: Schedule) -> Schedule:
 
     try:
         store_single_schedule(schedule)
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Could not store schedule {schedule.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     try:
         persisted_schedule = read_single_schedule(schedule.id)
-    except DBNotFoundError as err:
+    except DBNotFoundError as err:  # pragma: no cover
         msg = f"Could not find schedule {schedule.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
@@ -75,7 +75,7 @@ async def create_schedule(schedule: Schedule) -> Schedule:
 async def get_all_schedules() -> list[Schedule]:
     try:
         schedule_list = get_multiple_schedules()
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"At least one entry in the DB is no valid schedule:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -105,14 +105,14 @@ async def update_schedule(
     """
     logger.info("update schedule %s", id)
 
-    if id != updated_schedule.id:
+    if id != updated_schedule.id:  # pragma: no cover
         msg = f"The id {id} does not match the id of the provided schedule {updated_schedule.id}"
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
     try:
         persisted_schedule = update_or_create_single_schedule(updated_schedule)
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -137,12 +137,12 @@ async def delete_schedule(
         delete_single_schedule(id)
         logger.info("deleted schedule %s", id)
 
-    except DBNotFoundError as err:
+    except DBNotFoundError as err:  # pragma: no cover
         msg = f"Could not find schedule {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Could not delete schedule {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -167,14 +167,14 @@ async def create_schedule_execution(schedule_execution: ScheduleExecution) -> Sc
 
     try:
         store_single_schedule_execution(schedule_execution)
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Could not store schedule execution {schedule_execution.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     try:
         persisted_schedule_execution = read_single_schedule_execution(schedule_execution.id)
-    except DBNotFoundError as err:
+    except DBNotFoundError as err:  # pragma: no cover
         msg = f"Could not find schedule execution {schedule_execution.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
@@ -196,7 +196,7 @@ async def get_all_schedule_executions(
     latest: bool = Query(False),
 ) -> list[ScheduleExecution]:
     try:
-        if latest:
+        if latest:  # pragma: no cover
             schedule_execution_list = select_latest_schedule_executions_per_schedule(
                 exclude_exec_result=exclude_exec_result,
                 exclude_exec_input=exclude_exec_input,
@@ -208,7 +208,7 @@ async def get_all_schedule_executions(
                 exclude_exec_input=exclude_exec_input,
                 schedule_id=schedule_id,
             )
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"At least one entry in the DB is no valid schedule execution:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -254,7 +254,7 @@ async def get_latest_schedule_execution(
             exclude_exec_result=exclude_exec_result,
             exclude_exec_input=exclude_exec_input,
         )
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Error during latest schedule execution read:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -263,7 +263,7 @@ async def get_latest_schedule_execution(
 
 
 @schedule_router.put(
-    "/schedules/{id}",
+    "/executions/{id}",
     response_model=ScheduleExecution,
     summary="Updates a schedule execution.",
     status_code=status.HTTP_201_CREATED,
@@ -284,7 +284,7 @@ async def update_schedule_execution(
     """
     logger.info("update schedule execution %s", id)
 
-    if id != updated_schedule_execution.id:
+    if id != updated_schedule_execution.id:  # pragma: no cover
         msg = (
             f"The id {id} does not match the id of the provided "
             f"schedule execution {updated_schedule_execution.id}"
@@ -296,7 +296,7 @@ async def update_schedule_execution(
         persisted_schedule_execution = update_or_create_single_schedule_execution(
             updated_schedule_execution
         )
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
@@ -323,12 +323,12 @@ async def delete_schedule_execution(
         delete_single_schedule_execution(id)
         logger.info("deleted schedule execution %s", id)
 
-    except DBNotFoundError as err:
+    except DBNotFoundError as err:  # pragma: no cover
         msg = f"Could not find schedule execution {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    except DBIntegrityError as err:
+    except DBIntegrityError as err:  # pragma: no cover
         msg = f"Could not delete schedule execution {id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err

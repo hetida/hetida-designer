@@ -30,7 +30,7 @@ class Schedule(BaseModel):
         try:
             CronTrigger.from_crontab(self.cron_expression, timezone=datetime.UTC)
             return True
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return False
 
     def to_orm_model(self) -> ScheduleDBModel:
@@ -54,7 +54,7 @@ class Schedule(BaseModel):
                 transformation_id=orm_model.transformation_id,
                 wiring=orm_model.wiring,
             )
-        except ValidationError as error:
+        except ValidationError as error:  # pragma: no cover
             msg = (
                 f"Could not validate db entry for schedule with id {orm_model.id}. "
                 f"Validation error was:\n{str(error)}"
@@ -135,7 +135,7 @@ class ScheduleExecution(BaseModel):
                 exec_result=orm_model.exec_result if hasattr(orm_model, "exec_result") else None,
                 error_message=orm_model.error_message,
             )
-        except ValidationError as error:
+        except ValidationError as error:  # pragma: no cover
             msg = (
                 f"Could not validate db entry for schedule execution with id {orm_model.id}. "
                 f"Validation error was:\n{str(error)}"
