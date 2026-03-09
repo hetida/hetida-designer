@@ -86,12 +86,18 @@ def get_all_component_sources(
     return sorted(
         [
             ComponentAdapterStructureSource(
-                type=data_type_to_external_type_map[component.io_interface.outputs[0].data_type],
+                type=(
+                    external_type := data_type_to_external_type_map[
+                        component.io_interface.outputs[0].data_type
+                    ]
+                ),
                 id=str(component.id),
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
-                metadataKey=None,
+                metadataKey=str(component.id)
+                if str(external_type).lower().startswith("metadata(")
+                else None,
                 filters=extract_filters_from_component(component),
             )
             for component in components
@@ -141,12 +147,18 @@ def get_all_component_sinks(
     return sorted(
         [
             ComponentAdapterStructureSink(
-                type=data_type_to_external_type_map[get_data_input(component).data_type],
+                type=(
+                    external_type := data_type_to_external_type_map[
+                        get_data_input(component).data_type
+                    ]
+                ),
                 id=str(component.id),
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
-                metadataKey=None,
+                metadataKey=str(component.id)
+                if str(external_type).lower().startswith("metadata(")
+                else None,
                 filters=extract_filters_from_component(component, as_sink=True),
             )
             for component in components

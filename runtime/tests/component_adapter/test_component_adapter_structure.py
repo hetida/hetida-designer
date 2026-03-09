@@ -130,7 +130,11 @@ def test_component_adapter_structure(  # noqa: PLR0915
     assert len(structure_results.sinks) == 1
     possible_sinks = get_sinks(filter_str="Markdown")
     assert len(possible_sinks) == 1
-    assert possible_sinks[0] == get_sink_by_id(possible_sinks[0].id)
+    assert possible_sinks[0] == get_sink_by_id(
+        possible_sinks[0].metadataKey
+        if possible_sinks[0].metadataKey is not None
+        else possible_sinks[0].id
+    )
 
     possible_sinks = get_sinks(filter_str="Nothing")
     assert len(possible_sinks) == 0
