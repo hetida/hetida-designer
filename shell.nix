@@ -257,6 +257,7 @@ let
     export HETIDA_DESIGNER_SCHEDULING_ACTIVE=true
     export DEVELOPMENT_MODE=true # activate uvicorn reload
     export HD_MAINTENANCE_SECRET="maintenance"
+    export MODEL_REPO_PATH="$(mktemp -d)"
     echo "WAIT FOR POSTGRES DB"
     sleep 5 # wait for stopping possibly existing postgres instances before trying
     # wait for postgres to be up using the pg_isready utility
