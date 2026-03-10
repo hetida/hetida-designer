@@ -37,7 +37,7 @@ We refer to the backend interactive OpenAPI documentation (Available at http://l
 Alternatively you can also send an execution request in the format of the `/api/transformations/execute-latest` API endpoint to execute the latest released transformation of a transformation revision group.
 
 ## Technical details on the Kafka execution consumer and scaling
-The Kafka execution consumer (and producer for sending results) runs in the backend web service application: One consumer / producer pair is initialized per gunicorn/uvicorn worker process. Consumers are part of a consumer group specified via configuration (see above). By default messages are distributed to topic partitions automatically using the key of the Kafka message. Therefore it makes sense to use something like a job name or job id as message key.
+The Kafka execution consumer (and producer for sending results) runs in the backend web service application: One consumer / producer pair is initialized per uvicorn worker process. Consumers are part of a consumer group specified via configuration (see above). By default messages are distributed to topic partitions automatically using the key of the Kafka message. Therefore it makes sense to use something like a job name or job id as message key.
 
 To actually make use of all these consumer instances for scaling, the corresponding topic in your Kafka cluster should be configured to have at least as many partitions as the designer backend has worker processes.
 

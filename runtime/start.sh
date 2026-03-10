@@ -47,7 +47,8 @@ else
         python main.py
     else
         # Start Gunicorn
-        echo "Starting in gunicorn mode!"
+        echo "WARNING: Gunicorn mode is deprecated and will be removed in a future version"
+        echo "Starting in (deprecated!) gunicorn mode!"
         exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
     fi
 
