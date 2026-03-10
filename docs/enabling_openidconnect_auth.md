@@ -120,6 +120,11 @@ You can configure how these internal requests are equipped with valid bearer acc
 ```
 See the config.py file or the auth_outgoing.py file in this repository for further details.
 
+#### Scheduling
+Scheduling has its own internal auth mode `HD_SCHEDULING_INTERNAL_AUTH_MODE` which can be either `OFF` or `CLIENT`. There is no `FORWARD_OR_FIXED` since schedule executions are not triggered by (user) events. If set to `CLIENT` it expects `HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` to contain client service credentials that are used when accessing the runtime while running scheduled jobs.
+
+Note, that since all users are allowed to create and edit schedules, they effectively can perform actions with the rights / authority of these service credentials. This may elevate the user's privileges if the service user has more rights.
+
 ### External
 hetida designer runtime is making external http requests when communicating with adapters or when used for exporting/importing components/workflows from another designer instance (scripting).
 

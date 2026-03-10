@@ -1,3 +1,7 @@
+* add [scheduling](./docs/execution/scheduling.md)
+* **MIGRATION NOTE**: If you have multiple backend service instances, e.g. if using additional [restricted webservices](./docs/execution/restricted_webservice.md) you need to ensure that only the one frontend facing backend instance has `HETIDA_DESIGNER_SCHEDULING_ACTIVE=true` and all others have `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`. See [scheduling docs](./docs/execution/scheduling.md) for details.
+* **MIGRATION NOTE**: In order for scheduling to work in authenticated setups you need to configure `HD_SCHEDULING_INTERNAL_AUTH_MODE=CLIENT` and `HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` to some service user credentials.
+* Proper obj / model repo path directory in nix shell setup
 * fix component adapter metadata wiring handling
 
 ## 0.13.10

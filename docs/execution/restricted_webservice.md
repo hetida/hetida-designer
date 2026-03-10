@@ -12,6 +12,8 @@ Using this, you probably want to let both `HD_IS_BACKEND` and `HD_IS_RUNTIME` re
 
 Furthermore it is recommended to enable the caching of non-draft transformations for execution in order to avoid reloading non-draft transformation revisions on handling each request: This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
 
+Additionally you should deactivate [scheduling](./scaling.md) for such an additional backend service by setting `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`.
+
 A typical setup consists of
-* An ordinary designer backend and runtime only reachable internally by your data scientists for exploration and development
+* An ordinary designer backend (with active scheduling) and runtime only reachable internally by your data scientists for exploration and development
 * Some production ready (RELEASED) workflows running via this mode as separate containers / services which then are configured to be reachable by relevant other services, even across the open internet if necessary with authentication enabled of course!
