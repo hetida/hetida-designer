@@ -113,7 +113,7 @@ class AdditionalLoggingRoute(APIRoute):
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail
                 ) from exc
 
         return custom_route_handler
@@ -627,7 +627,7 @@ async def timeseries(
                 ts_df = ts_df.resample(frequency).first(numeric_only=False)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
@@ -675,7 +675,7 @@ async def post_timeseries(
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
         if "timestamp" not in df.columns:
             raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
                 "Timeseries records need timestamp values!",
             )
         df.index = df["timestamp"]
@@ -684,7 +684,7 @@ async def post_timeseries(
                 df = df.resample(frequency).mean(numeric_only=False)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
@@ -803,14 +803,14 @@ async def dataframe(
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 df = df[column_name_list]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
@@ -856,14 +856,14 @@ async def post_dataframe(
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 df = df[column_name_list]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
@@ -918,7 +918,7 @@ async def multitsframe(
                 lower_threshold_value = float(lower_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Cannot cast lower threshold '{lower_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] > lower_threshold_value]
@@ -927,7 +927,7 @@ async def multitsframe(
                 upper_threshold_value = float(upper_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
@@ -1013,14 +1013,14 @@ async def post_multitsframe(
             metric_name_list, error_msg = parse_string_to_list(metric_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 mtsf = mtsf.loc[mtsf["metric"].isin(metric_name_list)]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {mtsf_id} contains columns {list(mtsf)} "
                     f"but does not contain all columns of {metric_name_list}.",
                 ) from error
