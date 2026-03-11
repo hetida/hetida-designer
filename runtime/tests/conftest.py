@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator, Generator
+from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any
 from unittest import mock
@@ -264,3 +265,57 @@ def input_json_with_wiring_with_input() -> Any:
         ],
     }
     return json_with_wiring
+
+
+@contextmanager
+def mock_httpx_ctx(
+    *,
+    json=None,
+    status_code=200,
+    response=None,
+    target="hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient",
+    text="",
+    method="get",
+):
+    if response is None:
+        response = mock.Mock()
+        response.status_code = status_code
+        response.text = text
+        if json is not None:
+            response.json = mock.Mock(return_value=json)
+
+    mock_client = mock.AsyncMock()
+    if method == "get":
+        mock_client.get = mock.AsyncMock(return_value=response)
+    elif method == "post":
+        mock_client.post = mock.AsyncMock(return_value=response)
+    elif method == "put":
+        mock_client.put = mock.AsyncMock(return_value=response)
+    elif method == "delete":
+        mock_client.delete = mock.AsyncMock(return_value=response)
+    mock_client.__aenter__ = mock.AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = mock.AsyncMock(return_value=False)
+
+    with mock.patch(target, return_value=mock_client):
+        yield mock_client
+
+
+@pytest.fixture
+def mock_httpx():
+    """Mock httpx requests contextmanager factory fixture
+
+    Usage:
+
+    async def my_test(mock_httpx):
+        with mock_httpx(
+            json={"some": "json"},
+            target="hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient",
+            status_code=200,
+            method="get",
+            text="text if accessed"
+        ):
+            ... # test code
+
+
+    """
+    return mock_httpx_ctx

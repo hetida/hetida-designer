@@ -68,6 +68,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
                 )
                 for adapter_dto in adapter_list
             ]
+
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)
 
@@ -76,6 +77,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
     else:
         try:
             headers = await get_generic_rest_adapter_auth_headers(external=False)
+
         except ServiceAuthenticationError as e:
             msg = (
                 "Failure trying to get auth headers for adapter base url request. Error was:\n"
@@ -94,6 +96,7 @@ async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestA
         ) as client:
             try:
                 resp = await client.get(url, headers=headers)
+
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd backend adapters endpoint ({url}): " + str(e)
                 logger.info(msg)

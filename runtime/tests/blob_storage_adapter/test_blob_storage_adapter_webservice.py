@@ -1,7 +1,6 @@
 from copy import deepcopy
 from unittest import mock
 
-import nest_asyncio
 import pytest
 from httpx import AsyncClient
 
@@ -12,8 +11,6 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 )
 from hetdesrun.adapters.blob_storage.models import AdapterHierarchy
 from hetdesrun.adapters.exceptions import AdapterConnectionError
-
-nest_asyncio.apply()
 
 
 @pytest.mark.asyncio

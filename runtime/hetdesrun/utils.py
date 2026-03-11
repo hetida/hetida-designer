@@ -1,7 +1,7 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
-import asyncio
 import datetime
+import inspect
 import json
 import logging
 import random
@@ -143,7 +143,7 @@ def cache_conditionally(condition_func: Callable) -> Callable:
     ) -> Callable | Coroutine:
         cache: dict = {}
 
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
 
             @wraps(func)
             async def async_cache_wrapper(arg: Any, *args: Any, **kwargs: Any) -> Any:
@@ -207,7 +207,7 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
     ) -> Callable | Coroutine:
         cache: dict = {}
 
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
 
             @wraps(func)
             async def async_cache_wrapper(keys: tuple[Any], **kwargs: Any) -> Any:

@@ -118,16 +118,17 @@ def credentials() -> Credentials:
 
 @pytest.mark.asyncio
 async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_api(
-    access_token: str,
-    credentials: Credentials,
+    access_token: str, credentials: Credentials, mock_httpx
 ) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.get_access_token",
         return_value=mock.AsyncMock(return_value=access_token),
     ):
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
-            return_value=mock.Mock(status_code=200, text="text"),
+        with mock_httpx(
+            method="post",
+            target="hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient",
+            status_code=200,
+            text="text",
         ):
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
@@ -151,11 +152,11 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
             ):
                 await obtain_credential_info_from_sts_rest_api()
 
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
-            return_value=mock.Mock(
-                status_code=400,
-                text="""
+        with mock_httpx(
+            method="post",
+            target="hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient",
+            status_code=400,
+            text="""
                 <ErrorResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
                     <Error>
                         <Type></Type>
@@ -165,7 +166,6 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
                     <RequestId>17467834FFE4296F</RequestId>
                 </ErrorResponse>
                 """,
-            ),
         ):
             with pytest.raises(StorageAuthenticationError) as exc_info:
                 await obtain_credential_info_from_sts_rest_api()
