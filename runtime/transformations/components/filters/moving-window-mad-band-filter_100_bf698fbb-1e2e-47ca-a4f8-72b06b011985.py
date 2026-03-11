@@ -304,8 +304,6 @@ The expected output is
 ```
 """
 
-from typing import Dict, Union
-
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -383,7 +381,7 @@ def calculate_band_filter_statistics(
     min_num_datapoints_in_window: int,
     mad_scaling_factor: float,
     min_band_width_factor: float,
-) -> Dict[str, Union[pd.DataFrame, pd.Series]]:
+) -> dict[str, pd.DataFrame | pd.Series]:
     """Calculate the moving window band filter statistics.
 
     Function to perform the calculation of band filter statistics using moving windows.

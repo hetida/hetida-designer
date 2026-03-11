@@ -50,7 +50,6 @@ The json input of a typical call of this component is
 
 # add your own imports here
 import pandas as pd
-import plotly.express as px
 import plotly.io as pio
 from plotly.graph_objects import Figure
 
@@ -72,13 +71,11 @@ def handle_substitutions(original_series, substitution_series):
     """
 
     new = original_series.copy().astype(float)
-    deleted = new.loc[substitution_series.isnull().reindex(new.index, fill_value=False)]
+    deleted = new.loc[substitution_series.notna().reindex(new.index, fill_value=False)]
 
-    kept_before_replacing = new.loc[
-        substitution_series.notnull().reindex(new.index, fill_value=True)
-    ]
+    kept_before_replacing = new.loc[substitution_series.notna().reindex(new.index, fill_value=True)]  # noqa: F841
 
-    replaced_originals = new.loc[substitution_series.notnull().reindex(new.index, fill_value=False)]
+    replaced_originals = new.loc[substitution_series.notna().reindex(new.index, fill_value=False)]
 
     replacements = substitution_series.reindex(original_series.index).dropna()
 
@@ -86,7 +83,7 @@ def handle_substitutions(original_series, substitution_series):
 
     completely_handled_series = new.copy()
     completely_handled_series = completely_handled_series.loc[
-        substitution_series.notnull().reindex(completely_handled_series.index, fill_value=True)
+        substitution_series.notna().reindex(completely_handled_series.index, fill_value=True)
     ]
     completely_handled_series.update(substitution_series)
     completely_handled_series = pd.concat([completely_handled_series, new_values])
@@ -103,15 +100,15 @@ def handle_substitutions(original_series, substitution_series):
 def substituted_data_plot(
     raw_values: pd.Series,
     substitutions: pd.Series,
-    message_series: pd.Series = None,
-    traces_opts: dict = {},
-    layout_opts: dict = {
+    message_series: pd.Series = None,  # noqa: ARG001
+    traces_opts: dict = {},  # noqa: B006
+    layout_opts: dict = {  # noqa: B006
         "xaxis_title": "Time",
         "yaxis_title": "Values",
         "autosize": True,
         "height": 200,
     },
-    line_opts: dict = {},
+    line_opts: dict = {},  # noqa: B006, ARG001
 ) -> Figure:
     """Create a single time series line plot Plotly figure
 
@@ -149,7 +146,7 @@ def substituted_data_plot(
         mode="markers",
         name="replaced raw values",
         line_color="orange",
-        marker=dict(size=10, opacity=0.6),
+        marker={"size": 10, "opacity": 0.6},
     )  # Not what is desired - need a line
 
     fig.add_scatter(
@@ -158,7 +155,7 @@ def substituted_data_plot(
         mode="markers",
         name="ignored raw values",
         line_color="red",
-        marker=dict(symbol="x", size=10, opacity=0.6),
+        marker={"symbol": "x", "size": 10, "opacity": 0.6},
     )  # Not what is desired - need a line
 
     fig.add_scatter(
@@ -167,13 +164,13 @@ def substituted_data_plot(
         mode="markers",
         name="added values",
         line_color="green",
-        marker=dict(symbol="cross", size=10, opacity=0.6),
+        marker={"symbol": "cross", "size": 10, "opacity": 0.6},
     )  # Not what is desired - need a line
 
     fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/
     fig.update_traces(traces_opts)  # set line color?
 
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))
+    fig.update_layout(margin={"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0})
 
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
