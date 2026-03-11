@@ -44,7 +44,7 @@ class Schedule(BaseModel):
         )
 
     @classmethod
-    def from_orm_model(cls, orm_model: ScheduleDBModel) -> "Schedule":
+    def from_orm_model(cls, orm_model: ScheduleDBModel) -> Schedule:
         try:
             return Schedule(
                 id=orm_model.id,
@@ -110,7 +110,7 @@ class ScheduleExecution(BaseModel):
     @classmethod
     def from_orm_model(
         cls, orm_model: RowMapping | Row[tuple[ScheduleExecutionDBModel]] | ScheduleExecutionDBModel
-    ) -> "ScheduleExecution":
+    ) -> ScheduleExecution:
         try:
             return ScheduleExecution(
                 id=orm_model.id,

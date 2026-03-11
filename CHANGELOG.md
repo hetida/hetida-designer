@@ -4,6 +4,8 @@
 * **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if still using gunicorn mode.
 * Proper obj / model repo path directory in nix shell setup
 * fix component adapter metadata wiring handling
+* Upgrade to Python 3.14
+* **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x> to major release 3.x. This may affect / break component code in multiple ways.
 
 ## 0.13.10
 * fix overwriting during autodeployment

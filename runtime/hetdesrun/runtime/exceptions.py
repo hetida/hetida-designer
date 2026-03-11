@@ -18,7 +18,7 @@ class RuntimeExecutionError(Exception):
 
     def set_context(
         self, context: ExecutionContext, job_id: str = "UNKNOWN"
-    ) -> "RuntimeExecutionError":
+    ) -> RuntimeExecutionError:
         self.currently_executed_transformation_id = context.currently_executed_transformation_id
         self.currently_executed_transformation_name = context.currently_executed_transformation_name
         self.currently_executed_transformation_tag = context.currently_executed_transformation_tag

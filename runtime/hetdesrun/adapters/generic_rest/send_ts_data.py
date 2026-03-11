@@ -80,11 +80,13 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
             {
                 "value": series.to_numpy(),
                 "timestamp": pd.Series(series.index, index=series.index).apply(
-                    lambda x: x.strftime(
-                        "%Y-%m-%dT%H:%M:%S.%f"
-                    )  # We want to be able to send nanoseconds:
-                    + "{:03d}".format(x.nanosecond)  # noqa: UP032
-                    + "+00:00"  # we guaranteed UTC time zone some lines above!
+                    lambda x: (
+                        x.strftime(
+                            "%Y-%m-%dT%H:%M:%S.%f"
+                        )  # We want to be able to send nanoseconds:
+                        + "{:03d}".format(x.nanosecond)  # noqa: UP032
+                        + "+00:00"
+                    )  # we guaranteed UTC time zone some lines above!
                 ),
             }
         )

@@ -2,16 +2,12 @@ import asyncio
 from unittest import mock
 from uuid import UUID
 
-import nest_asyncio
 import pytest
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import TrafoExecutionError
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.webservice.config import get_config
-
-nest_asyncio.apply()
-
 
 exec_by_id_input_msg = r"""
 {
@@ -193,13 +189,12 @@ async def run_kafka_msg(msg_str, exec_func_mock=mock_successful_execute_transfor
             kafka_ctx = get_kafka_worker_context()
             kafka_ctx.last_unhandled_exception = None  # reset
             await kafka_ctx.start()
-            loop = asyncio.get_event_loop()
 
             with mock.patch(
                 "hetdesrun.backend.kafka.consumer.perf_measured_execute_trafo_rev",
                 exec_func_mock,
             ):
-                results = loop.run_until_complete(asyncio.gather(kafka_ctx.consumer_task))
+                results = await asyncio.gather(kafka_ctx.consumer_task)
                 await kafka_ctx.stop()
 
     return results, kafka_ctx, mocked_ctx_producer

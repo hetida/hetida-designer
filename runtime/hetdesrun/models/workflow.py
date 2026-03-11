@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
@@ -73,7 +73,7 @@ class WorkflowConnection(BaseModel):
 
 
 class WorkflowNode(AbstractNode):
-    sub_nodes: list[Union["WorkflowNode", ComponentNode]] = Field(
+    sub_nodes: list[WorkflowNode | ComponentNode] = Field(
         ..., examples=[[ComponentNode(component_uuid="1234", id="1000")]]
     )
     connections: list[WorkflowConnection]

@@ -10,7 +10,7 @@ See the hetdesrun_config.py file in runtime main directory for hints / docs
 on registering your own data adapters.
 """
 
-import asyncio
+import inspect
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -218,7 +218,7 @@ async def load_data_from_adapter(
 
     try:
         loaded_data: dict[str, Any]
-        if asyncio.iscoroutinefunction(adapter_func):
+        if inspect.iscoroutinefunction(adapter_func):
             loaded_data = await adapter_func(
                 wf_input_name_to_filtered_source_mapping_dict,
                 adapter_key=str(adapter_key),
@@ -260,7 +260,7 @@ async def send_data_with_adapter(
 
     try:
         data_not_sent: dict[str, Any] | None = {}
-        if asyncio.iscoroutinefunction(adapter_func):
+        if inspect.iscoroutinefunction(adapter_func):
             data_not_sent = await adapter_func(
                 wf_output_name_to_filtered_sink_mapping_dict,
                 result_data,

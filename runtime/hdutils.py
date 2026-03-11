@@ -570,7 +570,7 @@ data_type_map: dict[DataType | None, type] = {
     None: NoneType,
 }
 
-optional_data_type_map: dict[DataType | None, UnionType] = {
+optional_data_type_map: dict[DataType | None, Any] = {
     DataType.Integer: ParsedInt | None,
     DataType.Float: ParsedFloat | None,
     DataType.String: ParsedStr | None,

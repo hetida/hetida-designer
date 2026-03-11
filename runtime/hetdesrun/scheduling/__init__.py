@@ -341,7 +341,7 @@ def run_scheduler() -> None:  # pragma: no cover
     # Keep the loop running
     try:
         loop.run_forever()
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt, SystemExit:
         pass
     finally:
         get_global_scheduler().shutdown()

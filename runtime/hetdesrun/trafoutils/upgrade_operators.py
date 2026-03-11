@@ -816,7 +816,10 @@ def upgrade_operators_in_workflow(
         if op.state is State.DRAFT:
             draft_trafo_ids.append(op.transformation_id)
         if (
-            trafo_revision_group_ids_to_check_for_newer_released_revs.get(op.transformation_id)
+            trafo_revision_group_ids_to_check_for_newer_released_revs.get(  # noqa: SIM910
+                op.transformation_id,
+                None,
+            )
             is None
         ):
             trafo_revision_group_ids_to_check_for_newer_released_revs[op.revision_group_id] = []

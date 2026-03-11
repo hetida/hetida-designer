@@ -113,7 +113,7 @@ class AdditionalLoggingRoute(APIRoute):
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail
                 ) from exc
 
         return custom_route_handler
@@ -298,7 +298,7 @@ async def source(source_id: str) -> StructureSource:
         msg = f"Requested source with id {source_id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureSource.parse_obj(requested_sources[0])
+    return StructureSource.model_validate(requested_sources[0])
 
 
 @demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
@@ -381,7 +381,7 @@ async def sink(sink_id: str) -> StructureSink:
         msg = f"Requested sink with id {sink_id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureSink.parse_obj(requested_sinks[0])
+    return StructureSink.model_validate(requested_sinks[0])
 
 
 @demo_adapter_main_router.get("/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum])
@@ -530,7 +530,7 @@ async def thing_node(
         msg = f"Requested ThingNode with id {id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureThingNode.parse_obj(requested_thing_nodes[0])
+    return StructureThingNode.model_validate(requested_thing_nodes[0])
 
 
 def encode_attributes(data_attrs: Any) -> str:
@@ -595,9 +595,7 @@ async def timeseries(
     collected_attrs = {}
     io_stream = StringIO()
 
-    dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="1h", tz=datetime.timezone.utc
-    )
+    dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="1h")
     for ts_id in ids:
         logger.debug("loading timeseries dataframe with id %s", str(ts_id))
         ts_df = None
@@ -627,7 +625,7 @@ async def timeseries(
                 ts_df = ts_df.resample(frequency).first(numeric_only=False)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
@@ -672,10 +670,10 @@ async def post_timeseries(
 ) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
-        df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
+        df = pd.DataFrame.from_dict((x.model_dump() for x in ts_body), orient="columns")
         if "timestamp" not in df.columns:
             raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
                 "Timeseries records need timestamp values!",
             )
         df.index = df["timestamp"]
@@ -684,7 +682,7 @@ async def post_timeseries(
                 df = df.resample(frequency).mean(numeric_only=False)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
@@ -803,14 +801,14 @@ async def dataframe(
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 df = df[column_name_list]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
@@ -856,14 +854,14 @@ async def post_dataframe(
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 df = df[column_name_list]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
@@ -891,9 +889,7 @@ async def multitsframe(
     lower_threshold: str = Query("", examples=["93.4"]),
     upper_threshold: str = Query("", examples=["107.9"]),
 ) -> StreamingResponse | HTTPException:
-    dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="h", tz=datetime.timezone.utc
-    )
+    dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
     mtsf = None
     if mtsf_id.endswith("temperatures"):
         offset = 100.0 if "plantA" in mtsf_id else 30.0
@@ -918,7 +914,7 @@ async def multitsframe(
                 lower_threshold_value = float(lower_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Cannot cast lower threshold '{lower_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] > lower_threshold_value]
@@ -927,7 +923,7 @@ async def multitsframe(
                 upper_threshold_value = float(upper_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
@@ -1013,14 +1009,14 @@ async def post_multitsframe(
             metric_name_list, error_msg = parse_string_to_list(metric_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     error_msg,
                 )
             try:
                 mtsf = mtsf.loc[mtsf["metric"].isin(metric_name_list)]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Dataframe with id {mtsf_id} contains columns {list(mtsf)} "
                     f"but does not contain all columns of {metric_name_list}.",
                 ) from error

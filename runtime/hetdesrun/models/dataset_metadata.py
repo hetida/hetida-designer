@@ -44,7 +44,7 @@ class DatasetMetadata(BaseModel):
     new_data_invalidation_date: datetime | None = None
 
     @model_validator(mode="after")
-    def validate_constraints(self) -> "DatasetMetadata":
+    def validate_constraints(self) -> DatasetMetadata:
         if self.only_invalidate and not self.invalidate_dataset:
             raise ValueError("only_invalidate can only be true if invalidate_dataset is also true.")
 

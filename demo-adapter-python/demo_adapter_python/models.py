@@ -84,5 +84,7 @@ class Metadatum(BaseModel):
 
 
 class TimeseriesRecord(BaseModel):
-    timestamp: datetime.datetime = Field(..., example=datetime.datetime.now(datetime.timezone.utc))
+    timestamp: datetime.datetime = Field(
+        ..., examples=[datetime.datetime.now(datetime.timezone.utc)]
+    )
     value: Any = Field(..., examples=[0.25])

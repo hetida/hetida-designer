@@ -5,7 +5,6 @@ coverage
 ipykernel
 moto
 mypy
-nest_asyncio
 pytest
 pytest-asyncio
 pytest-cov

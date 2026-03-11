@@ -50,7 +50,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/b4c2c57c31e68544982226d07e4719a2d86302a8.tar.gz")
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/871b9fd269ff6246794583ce4ee1031e1da71895.tar.gz")
 {
   config = {
     permittedInsecurePackages = [
@@ -61,7 +61,7 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/b4c2c57c31e6
 };
 
 let
-  pythonPackages = python313Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python314Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -326,7 +326,7 @@ pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python313Packages.python
+    python314Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib
