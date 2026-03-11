@@ -74,7 +74,7 @@ def main(*, data, t):
     data_date = data.copy()
     try:
         data_date.index = pd.to_datetime(data_date.index)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise TypeError("indices of data must be datetime") from None
 
     if not data.index.is_monotonic_increasing:

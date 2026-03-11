@@ -58,7 +58,7 @@ class PerformanceMeasuredStep(BaseModel):
     model_config = ConfigDict(ser_json_timedelta="float")  # seconds
 
     @classmethod
-    def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
+    def create_and_begin(cls, name: str) -> PerformanceMeasuredStep:
         new_step = cls(name=name)
         new_step.begin()
         return new_step
@@ -106,7 +106,7 @@ class RuntimeMemoryInfo(BaseModel):
     kb_diff_end_minus_start: int
 
     @classmethod
-    def complete_now(cls, kb_at_start: int) -> "RuntimeMemoryInfo":
+    def complete_now(cls, kb_at_start: int) -> RuntimeMemoryInfo:
         memory_at_runtime_service_end_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_diff_runtime_service_end_minus_start_kb = (
             memory_at_runtime_service_end_kb - kb_at_start
@@ -309,7 +309,7 @@ class HierarchyInWorkflow(BaseModel):
     @classmethod
     def from_hierarchy_strings(
         cls, hierarchical_name_string: str, hierarchical_id_string: str
-    ) -> "HierarchyInWorkflow":
+    ) -> HierarchyInWorkflow:
         if (
             hierarchical_name_string.count(HIERARCHY_SEPARATOR) < 2
             or hierarchical_id_string.count(HIERARCHY_SEPARATOR) < 2
@@ -333,7 +333,7 @@ class OperatorInfo(BaseModel):
     hierarchy_in_workflow: HierarchyInWorkflow
 
     @classmethod
-    def from_runtime_execution_error(cls, error: RuntimeExecutionError) -> "OperatorInfo":
+    def from_runtime_execution_error(cls, error: RuntimeExecutionError) -> OperatorInfo:
         return OperatorInfo(
             transformation_info=TransformationInfo(
                 id=error.currently_executed_transformation_id,
@@ -430,7 +430,7 @@ class WorkflowExecutionInfo(BaseModel):
         cause: BaseException | None = None,
         measured_steps: AllMeasuredSteps | None = None,
         mem_info: RuntimeMemoryInfo | None = None,
-    ) -> "WorkflowExecutionInfo":
+    ) -> WorkflowExecutionInfo:
         if measured_steps is not None and mem_info is not None:
             measured_steps.runtime_memory_info = mem_info
         return WorkflowExecutionInfo(
@@ -585,7 +585,7 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         measured_steps: AllMeasuredSteps | None = None,
         mem_info: RuntimeMemoryInfo | None = None,
         node_results: str | None = None,
-    ) -> "WorkflowExecutionResult":
+    ) -> WorkflowExecutionResult:
         # Access the current context to retrieve resolved reproducibility references
         repr_reference = get_deepcopy_of_reproducibility_reference_context()
 

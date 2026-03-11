@@ -48,7 +48,7 @@ class ValueDataType(StrEnum):
     BOOLEAN = "boolean", bool, bool, "bool"
     ANY = "any", Any, object, "object"
 
-    def __new__(cls, *values: Any) -> "ValueDataType":
+    def __new__(cls, *values: Any) -> ValueDataType:
         obj = str.__new__(cls, values[0])  # type: ignore
 
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
@@ -151,7 +151,7 @@ class ExternalType(StrEnum):
 
     PLOTLYJSON = "plotlyjson"
 
-    def __new__(cls, *values: Any) -> "ExternalType":
+    def __new__(cls, *values: Any) -> ExternalType:
         obj = str.__new__(cls, values[0])  # type: ignore
 
         # first value is canonical value
@@ -176,7 +176,7 @@ class ExternalType(StrEnum):
         )
 
     @classmethod
-    def store_value_datatypes(cls, member: "ExternalType") -> None:
+    def store_value_datatypes(cls, member: ExternalType) -> None:
         """Use the first value string to obtain the ValueDataType of values
 
         Stores this ValueDataType on the member attribute "value_datatype".
@@ -199,7 +199,7 @@ class ExternalType(StrEnum):
             member.value_datatype = None
 
     @classmethod
-    def store_general_type(cls, member: "ExternalType") -> None:
+    def store_general_type(cls, member: ExternalType) -> None:
         general_type_str = member.value.split("(", 1)[0]
         member.general_type = GeneralType(general_type_str)
 

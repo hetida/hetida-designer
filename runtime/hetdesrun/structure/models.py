@@ -107,7 +107,7 @@ class StructureServiceElementType(StructureServiceCommonFieldsModel):
     @classmethod
     def from_orm_model(
         cls, orm_model: StructureServiceElementTypeDBModel
-    ) -> "StructureServiceElementType":
+    ) -> StructureServiceElementType:
         try:
             return cls(
                 id=orm_model.id,
@@ -169,7 +169,7 @@ class StructureServiceThingNode(StructureServiceCommonFieldsModel):
     @classmethod
     def from_orm_model(
         cls, orm_model: StructureServiceThingNodeDBModel
-    ) -> "StructureServiceThingNode":
+    ) -> StructureServiceThingNode:
         try:
             return StructureServiceThingNode(
                 id=orm_model.id,
@@ -253,7 +253,7 @@ class StructureServiceSource(StructureServiceCommonFieldsModel):
         )
 
     @classmethod
-    def from_orm_model(cls, orm_model: StructureServiceSourceDBModel) -> "StructureServiceSource":
+    def from_orm_model(cls, orm_model: StructureServiceSourceDBModel) -> StructureServiceSource:
         return StructureServiceSource(
             id=orm_model.id,
             external_id=orm_model.external_id,
@@ -379,7 +379,7 @@ class StructureServiceSink(StructureServiceCommonFieldsModel):
         )
 
     @classmethod
-    def from_orm_model(cls, orm_model: StructureServiceSinkDBModel) -> "StructureServiceSink":
+    def from_orm_model(cls, orm_model: StructureServiceSinkDBModel) -> StructureServiceSink:
         return StructureServiceSink(
             id=orm_model.id,
             external_id=orm_model.external_id,

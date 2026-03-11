@@ -16,7 +16,7 @@ class WriteTableMode(StrEnum):
     @classmethod  # noqa: RET503
     def from_table_type_str(
         cls, table_type: Literal["append_table", "replace_table", "appendable_ts_table"]
-    ) -> "WriteTableMode":
+    ) -> WriteTableMode:
         if table_type == "append_table":
             return cls.APPEND
 
@@ -68,7 +68,7 @@ class WriteTable(BaseModel):
         return v
 
     @classmethod
-    def from_sink_id(cls, sink_id: str) -> "WriteTable":
+    def from_sink_id(cls, sink_id: str) -> WriteTable:
         """Create WriteTable from sink id
 
         Raises pydantic ValidationError if id is somehow invalid.

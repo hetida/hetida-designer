@@ -80,7 +80,7 @@ class TokenType(StrEnum):
 
     bearer = "bearer", str, "Bearer", "BEARER"
 
-    def __new__(cls, *values: Any) -> "TokenType":
+    def __new__(cls, *values: Any) -> TokenType:
         obj = str.__new__(cls, values[0])  #  type: ignore
 
         # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)

@@ -78,7 +78,7 @@ def get_station(station: str) -> dict:
     """
     try:
         station_uuid = UUID(station)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return find_station_by_shortname(station)
     else:
         return load_station_by_uuid(station_uuid)
