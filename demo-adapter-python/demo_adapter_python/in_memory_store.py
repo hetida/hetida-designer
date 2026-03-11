@@ -1,3 +1,4 @@
+import multiprocessing
 from collections.abc import MutableMapping
 from multiprocessing import Manager
 from typing import Any
@@ -6,6 +7,7 @@ import pandas as pd
 
 from demo_adapter_python.models import Metadatum
 
+multiprocessing.set_start_method("fork", force=True)
 manager = Manager()
 
 store = manager.dict()

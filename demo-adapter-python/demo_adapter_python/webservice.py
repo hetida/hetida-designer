@@ -298,7 +298,7 @@ async def source(source_id: str) -> StructureSource:
         msg = f"Requested source with id {source_id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureSource.parse_obj(requested_sources[0])
+    return StructureSource.model_validate(requested_sources[0])
 
 
 @demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
@@ -381,7 +381,7 @@ async def sink(sink_id: str) -> StructureSink:
         msg = f"Requested sink with id {sink_id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureSink.parse_obj(requested_sinks[0])
+    return StructureSink.model_validate(requested_sinks[0])
 
 
 @demo_adapter_main_router.get("/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum])
@@ -530,7 +530,7 @@ async def thing_node(
         msg = f"Requested ThingNode with id {id} not found."
         logger.info(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
-    return StructureThingNode.parse_obj(requested_thing_nodes[0])
+    return StructureThingNode.model_validate(requested_thing_nodes[0])
 
 
 def encode_attributes(data_attrs: Any) -> str:
@@ -595,9 +595,7 @@ async def timeseries(
     collected_attrs = {}
     io_stream = StringIO()
 
-    dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="1h", tz=datetime.timezone.utc
-    )
+    dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="1h")
     for ts_id in ids:
         logger.debug("loading timeseries dataframe with id %s", str(ts_id))
         ts_df = None
@@ -672,7 +670,7 @@ async def post_timeseries(
 ) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
-        df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
+        df = pd.DataFrame.from_dict((x.model_dump() for x in ts_body), orient="columns")
         if "timestamp" not in df.columns:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -891,9 +889,7 @@ async def multitsframe(
     lower_threshold: str = Query("", examples=["93.4"]),
     upper_threshold: str = Query("", examples=["107.9"]),
 ) -> StreamingResponse | HTTPException:
-    dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="h", tz=datetime.timezone.utc
-    )
+    dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
     mtsf = None
     if mtsf_id.endswith("temperatures"):
         offset = 100.0 if "plantA" in mtsf_id else 30.0
