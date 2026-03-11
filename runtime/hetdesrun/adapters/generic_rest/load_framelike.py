@@ -34,7 +34,7 @@ def create_empty_ts_df(data_type: ExternalType, attrs: Any | None = None) -> pd.
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: dict[str, type | str] = {
         "timeseriesId": str,
-        "timestamp": "datetime64[ns, UTC]",
+        "timestamp": "datetime64[us, UTC]",
     }
 
     value_datatype = data_type.value_datatype
