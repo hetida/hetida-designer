@@ -409,7 +409,7 @@ def validate_multits_properties(  # noqa:PLR0912
             f"Got {str(df['timestamp'].dtype)} index dtype instead."
         )
 
-    if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+    if df["timestamp"].dt.tz not in (pytz.UTC, datetime.timezone.utc):
         raise ValueError(
             "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
             f"Got {str(df['timestamp'].dt.tz)} timezone instead."
@@ -814,7 +814,7 @@ def plotly_fig_to_json_dict(
 
     fig_dict_obj = serialize_plotly_fig(fig)
 
-    if not "config" in fig_dict_obj:
+    if "config" not in fig_dict_obj:
         fig_dict_obj["config"] = {}
 
     if add_config_settings and plot_target_settings.plot_target_locale is not None:
