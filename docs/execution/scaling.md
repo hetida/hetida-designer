@@ -15,28 +15,28 @@ The default docker-compose setup described via the docker-compose.yml file inclu
 
 ### Understanding how the runtime service works
 
-The runtime service starts worker processes via Gunicorn which then wait/listen for execution requests from the backend. By default one such process is started for each available CPU core. This can be controlled by the `WORKERS_PER_CORE` and `MAX_WORKERS` environment variables, see the `gunicorn_conf.py` file in the runtime subdirectory of this repository. Make sure to read the respective [gunicorn documentation](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Note that Gunicorn uses "OS level load balancing" to assign requests to worker processes.
+The runtime service starts worker processes via uvicorn which then wait/listen for execution requests from the backend. The number of worker processes can be controlled via the `WEB_CONCURRENCY` environment variable, see the [uvicorn documentation](https://uvicorn.dev/settings/#production).
 
 Now these worker processes handle requests asynchronously (via Python's asyncio capabilities) and they run Python code in one thread on one CPU if no GIL-releasing system/library code (e.g. from numpy) is involved.
 
-If GIL-releasing code is involved (which typically happens at some point in computation-heavy Data Science code), all available CPUs can be used. Note that this means that a container running the runtime with MAX_WORKERS=1 can stil access all the underlying nodes' CPUs by default if no limits are enforced. Thus a computation-heavy workflow can completely consume all available CPU resources on a k8s node. More often this is desired because it increases workflow execution speed. Sometimes this is regarded as detrimental in particular if other services run on the same node.
+If GIL-releasing code is involved (which typically happens at some point in computation-heavy Data Science code), all available CPUs can be used. Note that this means that a container running the runtime with WEB_CONCURRENCY=1 can stil access all the underlying nodes' CPUs by default if no limits are enforced. Thus a computation-heavy workflow can completely consume all available CPU resources on a k8s node. More often this is desired because it increases workflow execution speed. Sometimes this is regarded as detrimental in particular if other services run on the same node.
 
 For each worker process, Python libraries are imported separately. Since Python Data Science libraries sometimes have a large memory footprint you may end with lot of memory overhead if using multiple workers.
 
 ### Scaling vertically and horizontally
 
-In particular one runtime container per cluster node, even with `MAX_WORKERS=1` via GIL-releasing code, can be enough to make good use of available CPU resources. Generally 
+In particular one runtime container per cluster node, even with `WEB_CONCURRENCY=1` via GIL-releasing code, can be enough to make good use of available CPU resources. Generally 
 
 > scaling vertically, i.e. increasing available CPU / memory on nodes running runtime containers is a viable, valid and recommended scaling approach that should be considered.
 
 For horizontal scaling the following patterns have proven their worth:
 
-1. One runtime container per node with ``MAX_WORKERS=""` explicitely unset (resulting in one worker per node cpu as per the default gunicorn settings).
-2. One runtime container per node with `MAX_WORKERS=1`, the default.
-3. One runtime container per cpu core on each node with `MAX_WORKERS=1`. For example if you have 3 cluster nodes with each 4 cpu cores you should employ 12 runtime replicas.
+1. One runtime container per node with `WEB_CONCURRENCY` set to 2 times number of available CPU cores.
+2. One runtime container per node with `WEB_CONCURRENCY=1`, the default.
+3. One runtime container per cpu core on each node with `WEB_CONCURRENCY=1`. For example if you have 3 cluster nodes with each 4 cpu cores you should employ 12 runtime replicas.
 
 
-The first pattern is a good starting setup if you do not yet know the specifics of your workloads. It has the disadvantage that the two load balancing methods involved, i.e. the kubernetes inter-service http "load balancing" and Gunicorn's "OS-level load balancing", may lead to non-optimal distribution to workers as described below. Another disadvantage is increased memory usage.
+The first pattern is a good starting setup if you do not yet know the specifics of your workloads. It has the disadvantage that the two load balancing methods involved, i.e. the kubernetes inter-service http "load balancing" and uvicorns's "OS-level load balancing", may lead to non-optimal distribution to workers as described below. Another disadvantage is increased memory usage.
 
 The second pattern is strong if your workloads are CPU-heavy and do release the GIL and in particular if you have enough nodes available and know in advance how many parallel executions might occur. It prioritizes kubernetes inter-service load balancing which leads to a good distribution of controlled amounts of tasks.
 
@@ -60,7 +60,7 @@ By default, on a k8s cluster, inter-service "load balancing" is quite simple: re
 
 When doing many requests in parallel, the frequent effect is that some "workers" finish their assigned tasks long before others which just happen to live on a heavier-used cluster node or get less resources from the OS. So at the beginning lots of jobs are run in parallel but later the "slow" workers run their remaining jobs one after another while the fast workers are idle.
 
-This non-optimal distribution in particular happens when both "load balancing" methods, i.e. the inter-service distribution of requests on k8s and the "OS-level" load balancing to the worker processes used by Gunicorn are active.
+This non-optimal distribution in particular happens when both "load balancing" methods, i.e. the inter-service distribution of requests on k8s and the "OS-level" load balancing to the worker processes are active.
 
 > If you are affected by this "remaining slow worker" problem we recommend to switch to horizontal scaling pattern 2 or 3 in order to reduce the amount of "moving parts" involved in distributing load.
 
@@ -70,7 +70,7 @@ Additionally it is recommended to
 
 > distribute scheduled executions over time instead of sending all jobs at once. For example, instead of starting all hourly jobs at xx:00, distribute them evenly over each hour. 
 
-This allows gunicorn to assign requests to the worker processes that are idle. And it allows more sphisticated inter-service load balancing to take current load better into account, see below.
+This allows uvicorn to assign requests to the worker processes that are idle. And it allows more sphisticated inter-service load balancing to take current load better into account, see below.
 
 ### Inter-service load balancing
 An ideal solution would be to
