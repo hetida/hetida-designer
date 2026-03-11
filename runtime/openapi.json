@@ -19,7 +19,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
+                  "$ref": "#/components/schemas/InfoResponse"
                 }
               }
             }
@@ -448,7 +448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
+                  "$ref": "#/components/schemas/InfoResponse"
                 }
               }
             }
@@ -877,7 +877,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
+                  "$ref": "#/components/schemas/InfoResponse"
                 }
               }
             }
@@ -1306,7 +1306,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
+                  "$ref": "#/components/schemas/InfoResponse"
                 }
               }
             }
@@ -1839,7 +1839,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/hetdesrun__adapters__component_adapter__models__InfoResponse"
+                  "$ref": "#/components/schemas/InfoResponse"
                 }
               }
             }
@@ -6533,6 +6533,29 @@
         "title": "IOInterface",
         "description": "Represents combination of inputs and outputs.\n\nNote: The names in the list of inputs and outputs must be unique, respectively."
       },
+      "InfoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version"
+        ],
+        "title": "InfoResponse"
+      },
       "InputType": {
         "type": "string",
         "enum": [
@@ -9304,6 +9327,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -10623,29 +10653,6 @@
         },
         "type": "object",
         "title": "WorkflowWiring"
-      },
-      "hetdesrun__adapters__component_adapter__models__InfoResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "version"
-        ],
-        "title": "InfoResponse"
       },
       "hetdesrun__adapters__component_adapter__models__MultipleSinksResponse": {
         "properties": {

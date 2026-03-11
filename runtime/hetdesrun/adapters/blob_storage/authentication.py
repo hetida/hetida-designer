@@ -38,7 +38,7 @@ class CredentialInfo(BaseModel):
 
 
 def extract_namespace_from_root_tag(root_tag: str) -> str:
-    return root_tag.split("}")[0].strip("{")
+    return root_tag.split("}", maxsplit=1)[0].strip("{")
 
 
 def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) -> CredentialInfo:

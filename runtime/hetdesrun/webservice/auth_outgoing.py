@@ -10,7 +10,7 @@ import datetime
 import json
 import logging
 import threading
-from enum import Enum
+from enum import StrEnum
 from functools import cache
 from posixpath import join as posix_urljoin
 from typing import Any, Literal
@@ -75,7 +75,7 @@ class ServiceCredentials(BaseModel):
     )
 
 
-class TokenType(str, Enum):
+class TokenType(StrEnum):
     """Supported token types"""
 
     bearer = "bearer", str, "Bearer", "BEARER"
