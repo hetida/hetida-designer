@@ -27,8 +27,8 @@
     </thead>
     <tbody>
       <tr
-        *ngFor="let schedule of schedules"
-        (dragover)="onDragOver($event, schedule)"
+        *ngFor="let schedule of schedules; trackBy: trackById"
+        (dragover)="onDragOver($event)"
         (drop)="onDrop($event, schedule)"
       >
         <!-- Active Toggle -->
@@ -94,7 +94,7 @@
             </span>
           </ng-container>
           <ng-template #dragPrompt>
-            <span style="color: #999">Drag a workflow / component here!</span>
+            <span class="drag-prompt">Drag a workflow / component here!</span>
           </ng-template>
         </td>
 
@@ -163,7 +163,7 @@
             mat-icon-button
             title=" Delete"
             color="primary"
-            (click)="delete(schedule).subscribe()"
+            (click)="delete(schedule)"
           >
             <mat-icon>delete_forever</mat-icon>
           </button>

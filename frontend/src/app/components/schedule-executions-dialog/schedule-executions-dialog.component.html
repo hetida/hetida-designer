@@ -113,7 +113,9 @@
                 ? 'check_circle'
                 : execution.state === 'STARTED'
                   ? 'pending'
-                  : 'cancel'
+                  : execution.state === 'SKIPPED'
+                    ? 'skip_next'
+                    : 'cancel'
             }}
           </mat-icon>
           {{ execution.state }}

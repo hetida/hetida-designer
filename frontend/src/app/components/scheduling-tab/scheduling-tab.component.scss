@@ -5,13 +5,6 @@
   overflow: hidden;
 }
 
-.schedule-row {
-  display: flex;
-  align-items: center;
-  padding: 4px 24px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
 .trafo-item {
   cursor: pointer;
   user-select: none;
@@ -19,6 +12,10 @@
   font-size: 13px;
   display: flex;
   align-items: center;
+}
+
+.drag-prompt {
+  color: #999;
 }
 
 td:nth-child(2),
@@ -31,9 +28,8 @@ th:nth-child(3) {
 .scheduling-header {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
   gap: 16px;
-  justify-content: space-between; // Add this line
+  justify-content: space-between;
   font-weight: 600;
   align-items: center;
   text-align: left;
@@ -41,39 +37,15 @@ th:nth-child(3) {
   padding: 16px 24px 16px 24px;
 
   h1 {
-    margin: 0; // Remove default h1 margins
+    margin: 0;
   }
 }
 
 .schedule-table {
   flex: 1;
-  padding: 0 0px 0px 0px;
+  padding: 0;
   overflow-y: auto;
   overflow-x: auto;
-}
-
-.col-active {
-  width: 100px;
-}
-
-.col-name {
-  flex: 1;
-}
-
-.col-trafo {
-  flex: 1;
-}
-
-.col-cron {
-  width: 1%;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.col-actions {
-  width: 120px;
-  display: flex;
-  gap: 4px;
 }
 
 th.actions_col {
@@ -127,14 +99,7 @@ table {
 
 th,
 td {
-  padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
-  background-color: #f5f5f5;
-  font-weight: 600;
 }
 
 th.active_col {
@@ -162,10 +127,6 @@ td {
   vertical-align: middle;
 }
 
-td:hover {
-  background-color: #f9f9f9;
-}
-
 td.editing {
   background-color: #e3f2fd;
   cursor: default;
@@ -174,12 +135,14 @@ td.editing {
 td.active_col {
   width: 50px;
   text-align: center;
+  cursor: default;
 }
 
 td.wiring_col {
   width: 1%;
   white-space: nowrap;
   text-align: center;
+  cursor: default;
 }
 
 td.cron_col {
@@ -192,9 +155,7 @@ td.cron_col {
   display: block;
   min-height: 20px;
   padding: 6px 8px;
-  /* Match input padding */
   line-height: 20px;
-  /* Match input line height */
 }
 
 .cell-input {
@@ -207,9 +168,7 @@ td.cron_col {
   box-sizing: border-box;
   font-family: inherit;
   line-height: 20px;
-  /* Explicit line height */
   height: 28px;
-  /* Explicit height */
 }
 
 .cron-error {

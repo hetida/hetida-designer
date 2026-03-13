@@ -1,6 +1,6 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { ScheduleHttpService } from '../../service/http-service/schedule-http.service';
 import { Schedule } from '../../model/schedule';
 import { IAppState } from '../../store/app.state';
@@ -9,6 +9,7 @@ import { setExecutionProtocol } from 'src/app/store/execution-protocol/execution
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { TextResultDialogService } from 'src/app/service/text-result-service/text-result-dialog.service';
 import { TestWiring } from 'hd-wiring';
+import { Subject } from 'rxjs';
 
 export type ScheduledJobState =
   | 'STARTED'
@@ -50,11 +51,13 @@ export interface ScheduleExecutionsDialogData {
   templateUrl: './schedule-executions-dialog.component.html',
   styleUrls: ['./schedule-executions-dialog.component.scss']
 })
-export class ScheduleExecutionsDialogComponent implements OnInit {
+export class ScheduleExecutionsDialogComponent implements OnInit, OnDestroy {
   executions: ScheduleExecution[] = [];
   isLoading = false;
   errorMessage: string | null = null;
   readonly localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  private readonly destroy$ = new Subject<void>();
 
   displayedColumns: string[] = [
     'last_state_update',
@@ -127,21 +130,27 @@ export class ScheduleExecutionsDialogComponent implements OnInit {
   }
 
   getTrafoName(name: string): string {
+    // during execution hd runtime wraps components in workflows and
+    // the name in the execution result has this in its name.
+    // As we want to show the original name, we unwrap the name string.
     const match = name?.match(/^WF-WRAPPED\s*\(id=[^)]+\)\s*(.*)/);
     return match ? match[1] : name;
   }
 
   onShowExecResult(execution: ScheduleExecution): void {
-    // need to fetch full schedule execution which includes exec_result
-    this.scheduleHttpService.fetchScheduleExecution(execution.id).subscribe({
-      next: full_execution => {
-        this.store.dispatch(setExecutionProtocol(full_execution.exec_result));
-        this.close();
-      },
-      error: err => {
-        console.error('Failed to load execution:', err);
-      }
-    });
+    // need to fetch full schedule execution including exec_result
+    this.scheduleHttpService
+      .fetchScheduleExecution(execution.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: full_execution => {
+          this.store.dispatch(setExecutionProtocol(full_execution.exec_result));
+          this.close();
+        },
+        error: err => {
+          console.error('Failed to load execution:', err);
+        }
+      });
   }
 
   onShowExecInput(execution: ScheduleExecution): void {
@@ -167,5 +176,10 @@ export class ScheduleExecutionsDialogComponent implements OnInit {
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

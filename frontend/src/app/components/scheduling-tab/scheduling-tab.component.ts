@@ -7,7 +7,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { lastValueFrom, Observable, of, combineLatest, Subject } from 'rxjs';
+import { Observable, of, combineLatest, Subject, EMPTY } from 'rxjs';
 import {
   tap,
   finalize,
@@ -54,6 +54,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   @ViewChild('scheduleTableContainer') scheduleTableContainer: ElementRef;
 
   private readonly destroy$ = new Subject<void>();
+  private readonly transformationSub$ = new Subject<void>();
 
   constructor(
     private readonly dialog: MatDialog,
@@ -70,7 +71,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   schedules: Schedule[] = [];
   isLoading = false;
 
-  editingCell: { scheduleId: number; field: keyof Schedule } | null = null;
+  editingCell: { scheduleId: string; field: keyof Schedule } | null = null;
   editValue = '';
 
   ngOnInit() {
@@ -94,6 +95,12 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.transformationSub$.next();
+    this.transformationSub$.complete();
+  }
+
+  trackById(_index: number, schedule: Schedule): string {
+    return schedule.id;
   }
 
   private updateScheduleInApi(schedule: Schedule): void {
@@ -119,35 +126,56 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       combineLatest(transformationObservables),
       this.transformationStore.select(selectTransformationsLoaded)
     ])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.transformationSub$))
       .subscribe(([results, transformationsLoaded]) => {
-        results.forEach(({ schedule, transformation, index }) => {
+        results.forEach(({ schedule, transformation }) => {
           if (transformation) {
-            this.schedules[index].transformation_name = transformation.name;
-            this.schedules[index].transformation_version_tag =
-              transformation.version_tag;
-            this.schedules[index].transformation_state = transformation.state;
-            this.schedules[index].transformation_type = transformation.type;
-            this.updateScheduleInApi(this.schedules[index]);
+            // initially the trafo detail information on the schedule object may be null
+            // since the backend does not provide it. So if unset, we initialize it from
+            // the trafo store transformation object
+            schedule.transformation_name ??= transformation.name;
+            schedule.transformation_version_tag ??= transformation.version_tag;
+            schedule.transformation_state ??= transformation.state;
+            schedule.transformation_type ??= transformation.type;
+
+            // only now it makes sense to check if changes occured
+            // otherwise the initial assignement would trigger a change
+            // and would lead sending an update request for every schedule
+            // to the backend at first loading of the frontend!
+
+            const changed =
+              transformation?.name !== schedule.transformation_name ||
+              transformation?.version_tag !==
+                schedule.transformation_version_tag ||
+              transformation?.state !== schedule.transformation_state ||
+              transformation?.type !== schedule.transformation_type;
+
+            if (changed) {
+              schedule.transformation_name = transformation.name;
+              schedule.transformation_version_tag = transformation.version_tag;
+              schedule.transformation_state = transformation.state;
+              schedule.transformation_type = transformation.type;
+              this.updateScheduleInApi(schedule);
+            }
           } else if (
             (transformation === null ||
               transformation === undefined ||
               schedule.transformation_id === null) &&
             transformationsLoaded
           ) {
-            this.schedules[index].transformation_id = null;
-            this.schedules[index].transformation_name = null;
-            this.schedules[index].transformation_version_tag = null;
-            this.schedules[index].transformation_state = null;
-            this.schedules[index].transformation_type = null;
-            this.updateScheduleInApi(this.schedules[index]);
+            schedule.transformation_id = null;
+            schedule.transformation_name = null;
+            schedule.transformation_version_tag = null;
+            schedule.transformation_state = null;
+            schedule.transformation_type = null;
+            this.updateScheduleInApi(schedule);
           }
         });
       });
   }
 
   private refreshTransformationSubscriptions(): void {
-    this.destroy$.next();
+    this.transformationSub$.next();
     this.subscribeToTransformationUpdates();
   }
 
@@ -187,7 +215,7 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
     event.dataTransfer.dropEffect = 'copy';
   }
 
-  public async onDrop(event: DragEvent, schedule: Schedule): Promise<void> {
+  public onDrop(event: DragEvent, schedule: Schedule): void {
     event.preventDefault();
 
     const data = event.dataTransfer.getData('hetida/transformation');
@@ -208,123 +236,124 @@ export class SchedulingTabComponent implements OnInit, OnDestroy {
       }
     }
 
-    await this.openWiringDialog(schedule);
+    this.openWiringDialog(schedule);
   }
 
-  getScheduleTrafo(schedule: Schedule): Observable<Transformation> {
+  private getScheduleTrafo(schedule: Schedule): Observable<Transformation> {
     return this.transformationStore
       .select(selectTransformationById(schedule.transformation_id))
       .pipe(first());
   }
 
-  async openWiringDialog(schedule: Schedule): Promise<void> {
-    const adapterList = await lastValueFrom(
-      this.transformationHttpService.getAdapterList()
-    );
-    this.transformationStore
-      .select(selectTransformationById(schedule.transformation_id))
-      .pipe(first())
-      .subscribe(transformation => {
-        if (!transformation) {
-          return;
-        }
-
-        const dialogTitle = 'Change Wiring —';
-
-        this.wiringConfigService.confirmationButtonText = 'Save Wiring';
-
-        const dialogRef = this.dialog.open<
-          WiringDialogComponent,
-          ExecutionDialogData,
-          never
-        >(WiringDialogComponent, {
-          data: {
-            title: dialogTitle,
-            wiringItem: {
-              name: transformation.name,
-              test_wiring: schedule.wiring,
-              id: transformation.id,
-              version_tag: transformation.version_tag,
-              io_interface: transformation.io_interface
-            },
-            adapterList
+  openWiringDialog(schedule: Schedule): void {
+    combineLatest([
+      this.transformationHttpService.getAdapterList(),
+      this.transformationStore
+        .select(selectTransformationById(schedule.transformation_id))
+        .pipe(first())
+    ])
+      .pipe(
+        switchMap(([adapterList, transformation]) => {
+          if (!transformation) {
+            return EMPTY;
           }
-        });
 
-        dialogRef.componentInstance.cancelDialogClick.subscribe(() => {
-          dialogRef.close();
-        });
+          const dialogRef = this.dialog.open<
+            WiringDialogComponent,
+            ExecutionDialogData,
+            never
+          >(WiringDialogComponent, {
+            data: {
+              title: 'Change Wiring —',
+              wiringItem: {
+                name: transformation.name,
+                test_wiring: schedule.wiring,
+                id: transformation.id,
+                version_tag: transformation.version_tag,
+                io_interface: transformation.io_interface
+              },
+              adapterList
+            }
+          });
 
-        dialogRef.componentInstance.confirmClick
-          .pipe(
-            tap(() => dialogRef.close()),
+          this.wiringConfigService.confirmationButtonText = 'Save Wiring';
 
+          dialogRef.componentInstance.cancelDialogClick.subscribe(() =>
+            dialogRef.close()
+          );
+
+          return dialogRef.componentInstance.confirmClick.pipe(
+            first(), // complete after first confirmation click
             tap(({ test_wiring }) => {
               schedule.wiring = test_wiring;
               this.updateScheduleInApi(schedule);
+              dialogRef.close();
             }),
-            finalize(() => dialogRef.close())
-          )
-          .subscribe();
-
-        dialogRef.afterClosed().subscribe(() => {
-          this.wiringConfigService.resetToDefaults();
-        });
-      });
-  }
-
-  delete(schedule: Schedule): Observable<boolean> {
-    const dialogRef = this.dialog.open<
-      ConfirmDialogComponent,
-      ConfirmDialogData,
-      ConfirmDialogResult
-    >(ConfirmDialogComponent, {
-      width: '640px',
-      data: {
-        title: `Delete Schedule ${schedule.name}`,
-        content: `Do you want to delete the schedule ${schedule.name} permanently?`,
-        actionOk: 'Delete Schedule',
-        actionCancel: 'Cancel'
-      }
-    });
-
-    return dialogRef.afterClosed().pipe(
-      switchMap(result => {
-        if (result?.confirmed) {
-          return this.scheduleHttpService.deleteSchedule(schedule.id).pipe(
-            map(deleteResult => {
-              if (deleteResult.success) {
-                const index = this.schedules.findIndex(
-                  r => r.id === schedule.id
-                );
-                if (index !== -1) {
-                  this.schedules.splice(index, 1);
-                  this.refreshTransformationSubscriptions();
-                }
-              } else {
-                console.error('Failed to delete schedule:', deleteResult.error);
-              }
-              return deleteResult.success;
+            finalize(() => {
+              this.wiringConfigService.resetToDefaults();
             })
           );
-        }
-        return of(result?.confirmed);
-      })
-    );
+        })
+      )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
   }
 
-  startEdit(scheduleId: number, field: keyof Schedule, currentValue: string) {
+  delete(schedule: Schedule): void {
+    this.dialog
+      .open<ConfirmDialogComponent, ConfirmDialogData, ConfirmDialogResult>(
+        ConfirmDialogComponent,
+        {
+          width: '640px',
+          data: {
+            title: `Delete Schedule ${schedule.name}`,
+            content: `Do you want to delete the schedule ${schedule.name} permanently?`,
+            actionOk: 'Delete Schedule',
+            actionCancel: 'Cancel'
+          }
+        }
+      )
+      .afterClosed()
+      .pipe(
+        switchMap((result: ConfirmDialogResult | undefined) => {
+          if (result?.confirmed) {
+            return this.scheduleHttpService.deleteSchedule(schedule.id).pipe(
+              tap(deleteResult => {
+                if (deleteResult.success) {
+                  const index = this.schedules.findIndex(
+                    r => r.id === schedule.id
+                  );
+                  if (index !== -1) {
+                    this.schedules.splice(index, 1);
+                    this.refreshTransformationSubscriptions();
+                  }
+                } else {
+                  console.error(
+                    'Failed to delete schedule:',
+                    deleteResult.error
+                  );
+                }
+              })
+            );
+          }
+          return of(void 0);
+        })
+      )
+      .subscribe();
+  }
+
+  startEdit(scheduleId: string, field: keyof Schedule, currentValue: string) {
     this.editingCell = { scheduleId, field };
     this.editValue = currentValue;
-    // Focus after Angular renders the input
+
     setTimeout(() => {
       const input = document.querySelector<HTMLInputElement>('.cell-input');
       input?.focus();
-      input?.select(); // select all existing text
+      input?.select(); // select all text
     }, 0);
   }
 
-  isEditing(scheduleId: number, field: keyof Schedule): boolean {
+  isEditing(scheduleId: string, field: keyof Schedule): boolean {
     return (
       this.editingCell?.scheduleId === scheduleId &&
       this.editingCell?.field === field

@@ -1,6 +1,6 @@
-import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { TestWiring } from 'hd-wiring';
 import { TransformationType } from '../enums/transformation-type';
+import { RevisionState } from '../enums/revision-state';
 
 export interface Schedule {
   id: string;
@@ -9,7 +9,7 @@ export interface Schedule {
   transformation_id: string;
   transformation_name: string;
   transformation_version_tag: string;
-  transformation_state: TransformationState;
+  transformation_state: RevisionState;
   transformation_type: TransformationType;
   cron_expression: string;
   wiring: TestWiring | null;
