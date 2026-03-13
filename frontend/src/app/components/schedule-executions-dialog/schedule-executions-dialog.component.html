@@ -100,6 +100,7 @@
           class="status-badge"
           [ngClass]="{
             'status-success': execution.state === 'SUCCESS',
+            'status-skipped': execution.state === 'SKIPPED',
             'status-failure':
               execution.state === 'INVOCATION_ERROR' ||
               execution.state === 'EXECUTION_ERROR',
@@ -154,9 +155,9 @@
       </td>
     </ng-container>
 
-    <!-- Error Message Column -->
+    <!-- Message Column -->
     <ng-container matColumnDef="error_message">
-      <th mat-header-cell *matHeaderCellDef>Error Msg</th>
+      <th mat-header-cell *matHeaderCellDef>Message</th>
       <td mat-cell *matCellDef="let execution">
         <span
           *ngIf="execution.error_message"

@@ -8,9 +8,7 @@
   "paths": {
     "/adapters/localfile/info": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_localfile_info_get",
         "responses": {
@@ -29,9 +27,7 @@
     },
     "/adapters/localfile/structure": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Structure Endpoint",
         "operationId": "get_structure_endpoint_adapters_localfile_structure_get",
         "parameters": [
@@ -78,9 +74,7 @@
     },
     "/adapters/localfile/sources": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_localfile_sources_get",
         "parameters": [
@@ -127,9 +121,7 @@
     },
     "/adapters/localfile/sinks": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_localfile_sinks_get",
         "parameters": [
@@ -176,9 +168,7 @@
     },
     "/adapters/localfile/sources/{sourceId}/metadata": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Sources Metadata",
         "description": "Get metadata attached to sources\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sources_metadata_adapters_localfile_sources__sourceId__metadata_get",
@@ -221,9 +211,7 @@
     },
     "/adapters/localfile/sources/{source_id}": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Single Source",
         "operationId": "get_single_source_adapters_localfile_sources__source_id__get",
         "parameters": [
@@ -263,9 +251,7 @@
     },
     "/adapters/localfile/sinks/{sinkId}/metadata": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Sinks Metadata",
         "description": "Get metadata attached to sinks\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sinks_metadata_adapters_localfile_sinks__sinkId__metadata_get",
@@ -308,9 +294,7 @@
     },
     "/adapters/localfile/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Single Sink",
         "operationId": "get_single_sink_adapters_localfile_sinks__sink_id__get",
         "parameters": [
@@ -350,9 +334,7 @@
     },
     "/adapters/localfile/thingNodes/{thingNodeId}/metadata": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Thing Nodes Metadata",
         "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_thing_nodes_metadata_adapters_localfile_thingNodes__thingNodeId__metadata_get",
@@ -395,9 +377,7 @@
     },
     "/adapters/localfile/thingNodes/{id}": {
       "get": {
-        "tags": [
-          "local file adapter"
-        ],
+        "tags": ["local file adapter"],
         "summary": "Get Single Thingnode",
         "operationId": "get_single_thingNode_adapters_localfile_thingNodes__id__get",
         "parameters": [
@@ -437,9 +417,7 @@
     },
     "/adapters/kafka/info": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_kafka_info_get",
         "responses": {
@@ -458,9 +436,7 @@
     },
     "/adapters/kafka/structure": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Structure Endpoint",
         "operationId": "get_structure_endpoint_adapters_kafka_structure_get",
         "parameters": [
@@ -507,9 +483,7 @@
     },
     "/adapters/kafka/sources": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_kafka_sources_get",
         "parameters": [
@@ -556,9 +530,7 @@
     },
     "/adapters/kafka/sinks": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_kafka_sinks_get",
         "parameters": [
@@ -605,9 +577,7 @@
     },
     "/adapters/kafka/sources/{sourceId}/metadata": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Sources Metadata",
         "description": "Get metadata attached to sources\n\nThis adapter does not implement metadata attached to sources.\n Therefore this will always result in an empty list!",
         "operationId": "get_sources_metadata_adapters_kafka_sources__sourceId__metadata_get",
@@ -650,9 +620,7 @@
     },
     "/adapters/kafka/sources/{source_id}": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Single Source",
         "operationId": "get_single_source_adapters_kafka_sources__source_id__get",
         "parameters": [
@@ -692,9 +660,7 @@
     },
     "/adapters/kafka/sinks/{sinkId}/metadata": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Sinks Metadata",
         "description": "Get metadata attached to sinks\n\nThis adapter does not implement metadata attached to sinks.\nTherefore this will always result in an empty list!",
         "operationId": "get_sinks_metadata_adapters_kafka_sinks__sinkId__metadata_get",
@@ -737,9 +703,7 @@
     },
     "/adapters/kafka/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Single Sink",
         "operationId": "get_single_sink_adapters_kafka_sinks__sink_id__get",
         "parameters": [
@@ -779,9 +743,7 @@
     },
     "/adapters/kafka/thingNodes/{thingNodeId}/metadata": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Thing Nodes Metadata",
         "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement metadata attached to thingnodes.\nTherefore this will always result in an empty list!",
         "operationId": "get_thing_nodes_metadata_adapters_kafka_thingNodes__thingNodeId__metadata_get",
@@ -824,9 +786,7 @@
     },
     "/adapters/kafka/thingNodes/{id}": {
       "get": {
-        "tags": [
-          "kafka adapter"
-        ],
+        "tags": ["kafka adapter"],
         "summary": "Get Single Thingnode",
         "operationId": "get_single_thingNode_adapters_kafka_thingNodes__id__get",
         "parameters": [
@@ -866,9 +826,7 @@
     },
     "/adapters/sql/info": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_sql_info_get",
         "responses": {
@@ -887,9 +845,7 @@
     },
     "/adapters/sql/structure": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Structure Endpoint",
         "operationId": "get_structure_endpoint_adapters_sql_structure_get",
         "parameters": [
@@ -936,9 +892,7 @@
     },
     "/adapters/sql/sources": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_sql_sources_get",
         "parameters": [
@@ -985,9 +939,7 @@
     },
     "/adapters/sql/sinks": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_sql_sinks_get",
         "parameters": [
@@ -1034,9 +986,7 @@
     },
     "/adapters/sql/sources/{sourceId}/metadata": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Sources Metadata",
         "description": "Get metadata attached to sources\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sources_metadata_adapters_sql_sources__sourceId__metadata_get",
@@ -1079,9 +1029,7 @@
     },
     "/adapters/sql/sources/{source_id}": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Single Source",
         "operationId": "get_single_source_adapters_sql_sources__source_id__get",
         "parameters": [
@@ -1121,9 +1069,7 @@
     },
     "/adapters/sql/sinks/{sinkId}/metadata": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Sinks Metadata",
         "description": "Get metadata attached to sinks\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sinks_metadata_adapters_sql_sinks__sinkId__metadata_get",
@@ -1166,9 +1112,7 @@
     },
     "/adapters/sql/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Single Sink",
         "operationId": "get_single_sink_adapters_sql_sinks__sink_id__get",
         "parameters": [
@@ -1208,9 +1152,7 @@
     },
     "/adapters/sql/thingNodes/{thingNodeId}/metadata": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Thing Nodes Metadata",
         "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_thing_nodes_metadata_adapters_sql_thingNodes__thingNodeId__metadata_get",
@@ -1253,9 +1195,7 @@
     },
     "/adapters/sql/thingNodes/{id}": {
       "get": {
-        "tags": [
-          "sql adapter"
-        ],
+        "tags": ["sql adapter"],
         "summary": "Get Single Thingnode",
         "operationId": "get_single_thingNode_adapters_sql_thingNodes__id__get",
         "parameters": [
@@ -1295,9 +1235,7 @@
     },
     "/adapters/external_sources/info": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_external_sources_info_get",
         "responses": {
@@ -1316,9 +1254,7 @@
     },
     "/adapters/external_sources/structure": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Structure Endpoint",
         "operationId": "get_structure_endpoint_adapters_external_sources_structure_get",
         "parameters": [
@@ -1365,9 +1301,7 @@
     },
     "/adapters/external_sources/sources": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_external_sources_sources_get",
         "parameters": [
@@ -1414,9 +1348,7 @@
     },
     "/adapters/external_sources/sinks": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_external_sources_sinks_get",
         "parameters": [
@@ -1463,9 +1395,7 @@
     },
     "/adapters/external_sources/sources/{sourceId}/metadata": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Sources Metadata",
         "description": "Get metadata attached to sources\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sources_metadata_adapters_external_sources_sources__sourceId__metadata_get",
@@ -1508,9 +1438,7 @@
     },
     "/adapters/external_sources/sources/{source_id}": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Single Source",
         "operationId": "get_single_source_adapters_external_sources_sources__source_id__get",
         "parameters": [
@@ -1550,9 +1478,7 @@
     },
     "/adapters/external_sources/sinks/{sinkId}/metadata": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Sinks Metadata",
         "description": "Get metadata attached to sinks\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sinks_metadata_adapters_external_sources_sinks__sinkId__metadata_get",
@@ -1595,9 +1521,7 @@
     },
     "/adapters/external_sources/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Single Sink",
         "operationId": "get_single_sink_adapters_external_sources_sinks__sink_id__get",
         "parameters": [
@@ -1637,9 +1561,7 @@
     },
     "/adapters/external_sources/thingNodes/{thingNodeId}/metadata": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Thing Nodes Metadata",
         "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_thing_nodes_metadata_adapters_external_sources_thingNodes__thingNodeId__metadata_get",
@@ -1682,9 +1604,7 @@
     },
     "/adapters/external_sources/thingNodes/{id}": {
       "get": {
-        "tags": [
-          "external sources adapter"
-        ],
+        "tags": ["external sources adapter"],
         "summary": "Get Single Thingnode",
         "operationId": "get_single_thingNode_adapters_external_sources_thingNodes__id__get",
         "parameters": [
@@ -1724,9 +1644,7 @@
     },
     "/engine/runtime": {
       "post": {
-        "tags": [
-          "runtime"
-        ],
+        "tags": ["runtime"],
         "summary": "Runtime Endpoint",
         "operationId": "runtime_endpoint_engine_runtime_post",
         "requestBody": {
@@ -1765,9 +1683,7 @@
     },
     "/engine/info": {
       "get": {
-        "tags": [
-          "runtime"
-        ],
+        "tags": ["runtime"],
         "summary": "Info Service",
         "description": "Version Info Endpoint\n\nUnauthorized, may be used for readiness probes.",
         "operationId": "info_service_engine_info_get",
@@ -1787,9 +1703,7 @@
     },
     "/engine/unittest": {
       "post": {
-        "tags": [
-          "runtime"
-        ],
+        "tags": ["runtime"],
         "summary": "Unittest Component",
         "operationId": "unittest_component_engine_unittest_post",
         "requestBody": {
@@ -1828,9 +1742,7 @@
     },
     "/adapters/component/info": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_component_info_get",
         "responses": {
@@ -1849,9 +1761,7 @@
     },
     "/adapters/component/structure": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Structure Endpoint",
         "operationId": "get_structure_endpoint_adapters_component_structure_get",
         "parameters": [
@@ -1898,9 +1808,7 @@
     },
     "/adapters/component/sources": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_component_sources_get",
         "parameters": [
@@ -1947,9 +1855,7 @@
     },
     "/adapters/component/sources/{sourceId}/metadata": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Sources Metadata",
         "description": "Get metadata attached to sources\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sources_metadata_adapters_component_sources__sourceId__metadata_get",
@@ -1992,9 +1898,7 @@
     },
     "/adapters/component/sources/{source_id}": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Single Source",
         "operationId": "get_single_source_adapters_component_sources__source_id__get",
         "parameters": [
@@ -2034,9 +1938,7 @@
     },
     "/adapters/component/sinks": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_component_sinks_get",
         "parameters": [
@@ -2083,9 +1985,7 @@
     },
     "/adapters/component/sink/{sinkId}/metadata": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Sinks Metadata",
         "description": "Get metadata attached to sinks\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_sinks_metadata_adapters_component_sink__sinkId__metadata_get",
@@ -2128,9 +2028,7 @@
     },
     "/adapters/component/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Single Sink",
         "operationId": "get_single_sink_adapters_component_sinks__sink_id__get",
         "parameters": [
@@ -2170,9 +2068,7 @@
     },
     "/adapters/component/thingNodes/{thingNodeId}/metadata": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Thing Nodes Metadata",
         "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement metadata. Therefore this will always result\nin an empty list!",
         "operationId": "get_thing_nodes_metadata_adapters_component_thingNodes__thingNodeId__metadata_get",
@@ -2215,9 +2111,7 @@
     },
     "/adapters/component/thingNodes/{id}": {
       "get": {
-        "tags": [
-          "component adapter"
-        ],
+        "tags": ["component adapter"],
         "summary": "Get Single Thingnode",
         "operationId": "get_single_thingNode_adapters_component_thingNodes__id__get",
         "parameters": [
@@ -2257,9 +2151,7 @@
     },
     "/adapters/virtual_structure/info": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Info Endpoint",
         "operationId": "get_info_endpoint_adapters_virtual_structure_info_get",
         "responses": {
@@ -2278,9 +2170,7 @@
     },
     "/adapters/virtual_structure/structure": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Structure Endpoint",
         "description": "Returns one level of the thingnode hierarchy for lazy-loading in the frontend.",
         "operationId": "get_structure_endpoint_adapters_virtual_structure_structure_get",
@@ -2329,9 +2219,7 @@
     },
     "/adapters/virtual_structure/thingNodes/{node_id}/metadata": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Thingnode Metadata Endpoint",
         "description": "Get metadata attached to thing nodes.\n\nThis adapter does not implement metadata yet.",
         "operationId": "get_thingnode_metadata_endpoint_adapters_virtual_structure_thingNodes__node_id__metadata_get",
@@ -2375,9 +2263,7 @@
     },
     "/adapters/virtual_structure/thingNodes/{node_id}": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Single Thingnode Endpoint",
         "operationId": "get_single_thingnode_endpoint_adapters_virtual_structure_thingNodes__node_id__get",
         "parameters": [
@@ -2418,9 +2304,7 @@
     },
     "/adapters/virtual_structure/sources": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Sources Endpoint",
         "operationId": "get_sources_endpoint_adapters_virtual_structure_sources_get",
         "parameters": [
@@ -2467,9 +2351,7 @@
     },
     "/adapters/virtual_structure/sources/{source_id}/metadata": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Source Metadata Endpoint",
         "description": "Get metadata attached to sources.\n\nThis adapter does not implement metadata yet.",
         "operationId": "get_source_metadata_endpoint_adapters_virtual_structure_sources__source_id__metadata_get",
@@ -2513,9 +2395,7 @@
     },
     "/adapters/virtual_structure/sources/{source_id}": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Single Source Endpoint",
         "operationId": "get_single_source_endpoint_adapters_virtual_structure_sources__source_id__get",
         "parameters": [
@@ -2556,9 +2436,7 @@
     },
     "/adapters/virtual_structure/sinks": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Sinks Endpoint",
         "operationId": "get_sinks_endpoint_adapters_virtual_structure_sinks_get",
         "parameters": [
@@ -2605,9 +2483,7 @@
     },
     "/adapters/virtual_structure/sinks/{sink_id}/metadata": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Sink Metadata Endpoint",
         "description": "Get metadata attached to sinks.\n\nThis adapter does not implement metadata yet.",
         "operationId": "get_sink_metadata_endpoint_adapters_virtual_structure_sinks__sink_id__metadata_get",
@@ -2651,9 +2527,7 @@
     },
     "/adapters/virtual_structure/sinks/{sink_id}": {
       "get": {
-        "tags": [
-          "virtual structure adapter"
-        ],
+        "tags": ["virtual structure adapter"],
         "summary": "Get Single Sink Endpoint",
         "operationId": "get_single_sink_endpoint_adapters_virtual_structure_sinks__sink_id__get",
         "parameters": [
@@ -2694,9 +2568,7 @@
     },
     "/api/adapters": {
       "get": {
-        "tags": [
-          "adapters"
-        ],
+        "tags": ["adapters"],
         "summary": "Returns all adapters",
         "description": "Get all adapters.",
         "operationId": "get_all_adapters_api_adapters_get",
@@ -2732,9 +2604,7 @@
     },
     "/api/info": {
       "get": {
-        "tags": [
-          "info"
-        ],
+        "tags": ["info"],
         "summary": "Returns a sign of life",
         "description": "Show readiness and provide version info.\n\nIf Kafka consumer execution is enabled this will also show\nsome information of the consumer instance running in the web service worker\ninstance which is selected to answer this http request.",
         "operationId": "get_info_api_info_get",
@@ -2765,9 +2635,7 @@
     },
     "/api/transformations": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Creates a transformation revision.",
         "description": "Store a transformation revision in the data base.",
         "operationId": "create_transformation_revision_api_transformations_post",
@@ -2820,9 +2688,7 @@
         }
       },
       "get": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Returns combined list of all transformation revisions (components and workflows)",
         "description": "Get all transformation revisions from the data base.\n\nUsed by frontend for initial loading of all transformations to populate the sidebar\nand to export selected transformation revisions.\n\nThe parameters filtering the transformation revisions are logically combined as follows\n* OR for the same filter, e.g. providing two ids will yield both trafos.\n* AND between different filters.",
         "operationId": "get_all_transformation_revisions_api_transformations_get",
@@ -3184,9 +3050,7 @@
         }
       },
       "put": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Update (import) a list of transformation revisions",
         "description": "Update/store multiple transformation revisions\n\nThis updates or creates the given transformation revisions. Automatically\ndetermines correct order (by dependency / nesting) so that depending trafo\nrevisions can be provided in arbitrary order to this endpoint.\n\nReturns detailed info about success/failure for each transformation revision.\n\nThis endpoint can be used to import related sets of transformation revisions.\nSuch a set does not have to be closed under dependency relation, e.g. elements\nof it can refer base components.\n\nThis endpoint allows for filltering transformation revisions like the corresponding\nget endpoint. This means of all provided trafos in the payload only those matching the\nfilter parameters will be updated/stored. Transformation revisions that where excluded\nwill be marked as ignored in the response.\n\nThe parameters filtering the transformation revisions are logically combined as follows\n* OR for the same filter, e.g. providing two ids will store both trafos.\n* AND between different filters.",
         "operationId": "update_transformation_revisions_api_transformations_put",
@@ -3610,9 +3474,7 @@
     },
     "/api/transformations/stubs": {
       "get": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Returns combined list of all transformation revision stubs (components and workflows)",
         "description": "Get all transformation revision stubs from the data base.\n\nThis can be used to load available trafos as stubs, i.e.\n* including name, id, description, type, category, version_tag, state and so on\n* including io_interface\n* excluding test_wiring, release_wiring, documentation, content (component code\n  or workflow internal structure)\n\nThis endpoint can be used for example to find fitting (io_interface) trafos\nand offer them for configuration / usage in 3rd party applications.\n\nThe parameters filtering the transformation revision stubs are logically combined as follows\n* OR for the same filter, e.g. providing two ids will yield both trafos.\n* AND between different filters.",
         "operationId": "get_all_transformation_revision_stubs_api_transformations_stubs_get",
@@ -3816,9 +3678,7 @@
     },
     "/api/transformations/{id}": {
       "get": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Returns the transformation revision with the given id.",
         "operationId": "get_transformation_revision_by_id_api_transformations__id__get",
         "parameters": [
@@ -3829,9 +3689,7 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
+              "examples": ["123e4567-e89b-12d3-a456-426614174000"],
               "title": "Id"
             }
           }
@@ -3875,9 +3733,7 @@
         }
       },
       "put": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Updates a transformation revision.",
         "description": "Update or store a transformation revision in the database.\n\nIf no DB entry with the provided id is found, it will be created.\n\nUpdating a transformation revision is only possible if it is in state DRAFT\nor to change the state from RELEASED to DISABLED.\n\nUnset attributes of the json sent in the request body will be set to default values,\npossibly changing the attribute saved in the DB.",
         "operationId": "update_transformation_revision_api_transformations__id__put",
@@ -3983,9 +3839,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Deletes a transformation revision.",
         "description": "Delete a transformation revision from the data base.\n\nDeleting a transformation revision is only possible if it is in state DRAFT.",
         "operationId": "delete_transformation_revision_api_transformations__id__delete",
@@ -4047,9 +3901,7 @@
     },
     "/api/transformations/{id}/upgrade_operators/{operator_id}": {
       "put": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Upgrade an operator in a DRAFT workflow transformation revision to a provided revision.",
         "operationId": "upgrade_workflow_operator_with_new_rev_api_transformations__id__upgrade_operators__operator_id__put",
         "parameters": [
@@ -4178,9 +4030,7 @@
     },
     "/api/transformations/{id}/upgrade_operators": {
       "put": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Upgrade operators in a DRAFT workflow transformation revision.",
         "operationId": "upgrade_workflow_operators_api_transformations__id__upgrade_operators_put",
         "parameters": [
@@ -4287,9 +4137,7 @@
     },
     "/api/transformations/execute": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Executes a transformation revision",
         "description": "Execute a transformation revision.\n\nThe transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_transformation_revision_endpoint_api_transformations_execute_post",
@@ -4344,9 +4192,7 @@
     },
     "/api/transformations/{id}/test": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "RUn unit tests for a transformation revision.",
         "operationId": "test_transformation_revision_api_transformations__id__test_post",
         "parameters": [
@@ -4395,9 +4241,7 @@
     },
     "/api/transformations/execute-async": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Executes a transformation revision asynchronously",
         "description": "Execute a transformation revision of asynchronously.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_asynchronous_transformation_revision_endpoint_api_transformations_execute_async_post",
@@ -4510,9 +4354,7 @@
     },
     "/api/transformations/execute-latest": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Executes the latest transformation revision of a revision group",
         "description": "Execute the latest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_latest_transformation_revision_endpoint_api_transformations_execute_latest_post",
@@ -4567,9 +4409,7 @@
     },
     "/api/transformations/execute-latest-async": {
       "post": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Executes the latest transformation revision of a revision group asynchronously",
         "description": "Execute the latest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_asynchronous_latest_transformation_revision_endpoint_api_transformations_execute_latest_async_post",
@@ -4682,9 +4522,7 @@
     },
     "/api/transformations/{id}/dashboard/positioning": {
       "put": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "Update dashboard positions for a trafo revision",
         "operationId": "update_transformation_dashboard_positioning_api_transformations__id__dashboard_positioning_put",
         "parameters": [
@@ -4695,9 +4533,7 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
+              "examples": ["123e4567-e89b-12d3-a456-426614174000"],
               "title": "Id"
             }
           }
@@ -4757,9 +4593,7 @@
     },
     "/api/schedules": {
       "get": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Returns all schedules",
         "operationId": "get_all_schedules_api_schedules_get",
         "responses": {
@@ -4795,9 +4629,7 @@
         }
       },
       "post": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Creates a schedule.",
         "description": "Store a Schedule in the database",
         "operationId": "create_schedule_api_schedules_post",
@@ -4852,9 +4684,7 @@
     },
     "/api/schedules/{id}": {
       "put": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Updates a schedule.",
         "description": "Update a schedule\n\nCreates schedule if it does not exist already (Upsert).",
         "operationId": "update_schedule_api_schedules__id__put",
@@ -4912,9 +4742,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Deletes a schedule.",
         "description": "Delete a schedule from the database.",
         "operationId": "delete_schedule_api_schedules__id__delete",
@@ -4964,9 +4792,7 @@
     },
     "/api/schedules/executions": {
       "post": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Creates a schedule execution.",
         "description": "Store a Schedule Execution in the database",
         "operationId": "create_schedule_execution_api_schedules_executions_post",
@@ -5019,9 +4845,7 @@
         }
       },
       "get": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Returns all schedule executions",
         "operationId": "get_all_schedule_executions_api_schedules_executions_get",
         "parameters": [
@@ -5118,9 +4942,7 @@
     },
     "/api/schedules/executions/{id}": {
       "get": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Returns a specific schedule execution",
         "operationId": "get_schedule_execution_api_schedules_executions__id__get",
         "parameters": [
@@ -5174,9 +4996,7 @@
         }
       },
       "put": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Updates a schedule execution.",
         "description": "Update a schedule execution\n\nCreates schedule execution if it does not exist already (Upsert).",
         "operationId": "update_schedule_execution_api_schedules_executions__id__put",
@@ -5234,9 +5054,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Deletes a schedule execution.",
         "description": "Delete a schedule execution from the database.",
         "operationId": "delete_schedule_execution_api_schedules_executions__id__delete",
@@ -5286,9 +5104,7 @@
     },
     "/api/schedules/executions/latest/{schedule_id}": {
       "get": {
-        "tags": [
-          "schedules"
-        ],
+        "tags": ["schedules"],
         "summary": "Returns latest schedule execution for a schedule",
         "operationId": "get_latest_schedule_execution_api_schedules_executions_latest__schedule_id__get",
         "parameters": [
@@ -5372,9 +5188,7 @@
     },
     "/api/transformations/{id}/dashboard": {
       "get": {
-        "tags": [
-          "transformations"
-        ],
+        "tags": ["transformations"],
         "summary": "A dashboard generated from the transformation and its test wiring.",
         "description": "Dashboard fed by transformation revision plot outputs\n\nWARNING: This is an experimental feature / prototype. It may not work as\nexpected.\n\nGenerates a html page containing the result plots in movable and resizable\nrectangles, i.e. an elementary dashboard.\n\nThe dashboard uses this same endpoint to update itself when configuration is\nchanged or autoreload is active.\n\nNotes:\n* The dashboard uses the stored test wiring of the transformation revision. In\n  particular after changing a trafo it must be executed at least once in order to\n  have a working test wiring as basis for the dashboard. Otherwise dashboarding will\n  fail to generate a working dashboard.\n* Timeranges of the wiring can be overriden from the dashboard UI. For every other\n  aspect of the test wiring, the test wiring itself needs to be adapted by other means\n  (usually by executing the trafo from inside the designer UI)\n* Positioning / Layout of the dashboard is automatically stored (autosave) as part of\n  the test wiring\n* Timerange overrides / selections can be stored by copying the resulting URL.",
         "operationId": "transformation_dashboard_api_transformations__id__dashboard_get",
@@ -5386,9 +5200,7 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
+              "examples": ["123e4567-e89b-12d3-a456-426614174000"],
               "title": "Id"
             }
           },
@@ -5573,9 +5385,7 @@
     },
     "/api/structure/update": {
       "put": {
-        "tags": [
-          "structure"
-        ],
+        "tags": ["structure"],
         "summary": "Updates a structure of the virtual structure adapter",
         "description": "Endpoint to update the structure of the virtual structure adapter.\n\nFor security purposes this endpoint can only be accessed with a maintenance secret.",
         "operationId": "update_structure_endpoint_api_structure_update_put",
@@ -5634,9 +5444,7 @@
     },
     "/api/structure/complete": {
       "get": {
-        "tags": [
-          "structure"
-        ],
+        "tags": ["structure"],
         "summary": "Complete structure",
         "description": "Loads complete structure\n\nStructure may be huge.",
         "operationId": "provide_structure_source_definitions_api_structure_complete_get",
@@ -5689,12 +5497,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "url",
-          "internalUrl"
-        ],
+        "required": ["id", "name", "url", "internalUrl"],
         "title": "AdapterFrontendDto"
       },
       "AllMeasuredSteps": {
@@ -5825,10 +5628,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "maintenance_payload",
-          "new_structure"
-        ],
+        "required": ["maintenance_payload", "new_structure"],
         "title": "Body_update_structure_endpoint_api_structure_update_put"
       },
       "CodeModule": {
@@ -5848,10 +5648,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "code",
-          "uuid"
-        ],
+        "required": ["code", "uuid"],
         "title": "CodeModule"
       },
       "CompleteStructure-Input": {
@@ -5890,9 +5687,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "element_types"
-        ],
+        "required": ["element_types"],
         "title": "CompleteStructure"
       },
       "CompleteStructure-Output": {
@@ -5931,9 +5726,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "element_types"
-        ],
+        "required": ["element_types"],
         "title": "CompleteStructure"
       },
       "ComponentAdapterStructureSink": {
@@ -5993,13 +5786,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "ComponentAdapterStructureSink"
       },
       "ComponentAdapterStructureSource": {
@@ -6059,13 +5846,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "ComponentAdapterStructureSource"
       },
       "ComponentInput": {
@@ -6078,17 +5859,13 @@
           "type": {
             "$ref": "#/components/schemas/DataType",
             "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
-            "examples": [
-              "FLOAT"
-            ]
+            "examples": ["FLOAT"]
           },
           "name": {
             "type": "string",
             "title": "Name",
             "description": "must be a valid Python identifier",
-            "examples": [
-              "x"
-            ]
+            "examples": ["x"]
           },
           "default": {
             "type": "boolean",
@@ -6102,11 +5879,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "type",
-          "name"
-        ],
+        "required": ["id", "type", "name"],
         "title": "ComponentInput",
         "description": "Component Input\n\nRepresents an input of a Component."
       },
@@ -6135,10 +5908,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "component_uuid"
-        ],
+        "required": ["id", "component_uuid"],
         "title": "ComponentNode"
       },
       "ComponentOutput": {
@@ -6152,24 +5922,16 @@
             "type": "string",
             "title": "Name",
             "description": "must be a valid Python identifier",
-            "examples": [
-              "z"
-            ]
+            "examples": ["z"]
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
             "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
-            "examples": [
-              "INT"
-            ]
+            "examples": ["INT"]
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "type"
-        ],
+        "required": ["id", "name", "type"],
         "title": "ComponentOutput"
       },
       "ComponentRevision": {
@@ -6205,9 +5967,7 @@
             "type": "string",
             "title": "Entry point function name",
             "description": "The name of the function in the provided code modulewhich is the entrypoint for this component",
-            "examples": [
-              "main"
-            ]
+            "examples": ["main"]
           },
           "inputs": {
             "items": {
@@ -6253,9 +6013,7 @@
             "$ref": "#/components/schemas/ExecutionEngine",
             "description": "one of \"plain\"",
             "default": "plain",
-            "examples": [
-              "plain"
-            ]
+            "examples": ["plain"]
           },
           "run_pure_plot_operators": {
             "type": "boolean",
@@ -6300,10 +6058,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "data_type",
-          "position"
-        ],
+        "required": ["data_type", "position"],
         "title": "Connector"
       },
       "DataType": {
@@ -6338,11 +6093,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "file",
-          "function_name",
-          "line_number"
-        ],
+        "required": ["file", "function_name", "line_number"],
         "title": "ErrorLocation"
       },
       "ExecByIdInput-Input": {
@@ -6385,9 +6136,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "title": "ExecByIdInput"
       },
       "ExecByIdInput-Output": {
@@ -6430,9 +6179,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "title": "ExecByIdInput"
       },
       "ExecLatestByGroupIdInput": {
@@ -6459,18 +6206,13 @@
           }
         },
         "type": "object",
-        "required": [
-          "revision_group_id",
-          "wiring"
-        ],
+        "required": ["revision_group_id", "wiring"],
         "title": "ExecLatestByGroupIdInput",
         "description": "Payload for execute-latest kafka endpoint\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nlatest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the last revision with the same input as before will not work, but will result in\nerrors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
       },
       "ExecutionEngine": {
         "type": "string",
-        "enum": [
-          "plain"
-        ],
+        "enum": ["plain"],
         "title": "ExecutionEngine"
       },
       "ExecutionResponseFrontendDto-Input": {
@@ -6616,13 +6358,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "job_id",
-          "tr_tag",
-          "tr_name",
-          "tr_id",
-          "result"
-        ],
+        "required": ["job_id", "tr_tag", "tr_name", "tr_id", "result"],
         "title": "ExecutionResponseFrontendDto"
       },
       "ExecutionResponseFrontendDto-Output": {
@@ -6767,13 +6503,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "job_id",
-          "tr_tag",
-          "tr_name",
-          "tr_id",
-          "result"
-        ],
+        "required": ["job_id", "tr_tag", "tr_name", "tr_id", "result"],
         "title": "ExecutionResponseFrontendDto"
       },
       "ExternalSourcesStructureSink": {
@@ -6835,12 +6565,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "name", "type", "path"],
         "title": "ExternalSourcesStructureSink"
       },
       "ExternalSourcesStructureSource": {
@@ -6902,12 +6627,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "name", "type", "path"],
         "title": "ExternalSourcesStructureSource"
       },
       "ExternalType": {
@@ -6961,18 +6681,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "type",
-          "required"
-        ],
+        "required": ["name", "type", "required"],
         "title": "Filter"
       },
       "FilterType": {
         "type": "string",
-        "enum": [
-          "free_text"
-        ],
+        "enum": ["free_text"],
         "title": "FilterType"
       },
       "GridstackItemPositioning": {
@@ -7044,17 +6758,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "title": "GridstackItemPositioning"
       },
       "GridstackPositioningType": {
         "type": "string",
-        "enum": [
-          "INPUT",
-          "OUTPUT"
-        ],
+        "enum": ["INPUT", "OUTPUT"],
         "title": "GridstackPositioningType"
       },
       "HTTPValidationError": {
@@ -7091,10 +6800,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "by_name",
-          "by_id"
-        ],
+        "required": ["by_name", "by_id"],
         "title": "HierarchyInWorkflow"
       },
       "HierarchyObject": {
@@ -7209,19 +6915,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "version"
-        ],
+        "required": ["id", "name", "version"],
         "title": "InfoResponse"
       },
       "InputType": {
         "type": "string",
-        "enum": [
-          "REQUIRED",
-          "OPTIONAL"
-        ],
+        "enum": ["REQUIRED", "OPTIONAL"],
         "title": "InputType"
       },
       "InputWiring": {
@@ -7342,9 +7041,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "workflow_input_name"
-        ],
+        "required": ["workflow_input_name"],
         "title": "InputWiring"
       },
       "KafkaAdapterStructureSink": {
@@ -7404,13 +7101,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "KafkaAdapterStructureSink"
       },
       "KafkaAdapterStructureSource": {
@@ -7470,13 +7161,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "KafkaAdapterStructureSource"
       },
       "Link-Input": {
@@ -7502,10 +7187,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "start",
-          "end"
-        ],
+        "required": ["start", "end"],
         "title": "Link",
         "description": "Links determine how parameter values are passed through the workflow.\n\nNote: The data types at both sides must match, i.e. be the same or\nat least one must be of type ANY.\nA link cannot start and end at the same connector."
       },
@@ -7532,10 +7214,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "start",
-          "end"
-        ],
+        "required": ["start", "end"],
         "title": "Link",
         "description": "Links determine how parameter values are passed through the workflow.\n\nNote: The data types at both sides must match, i.e. be the same or\nat least one must be of type ANY.\nA link cannot start and end at the same connector."
       },
@@ -7596,12 +7275,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "path"],
         "title": "LocalFileStructureSink"
       },
       "LocalFileStructureSource": {
@@ -7661,12 +7335,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "path"],
         "title": "LocalFileStructureSource"
       },
       "MaintenancePayload": {
@@ -7680,9 +7349,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "maintenance_secret"
-        ],
+        "required": ["maintenance_secret"],
         "title": "MaintenancePayload"
       },
       "MultipleVirtualStructureAdapterSinksResponse": {
@@ -7700,10 +7367,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleVirtualStructureAdapterSinksResponse"
       },
       "MultipleVirtualStructureAdapterSourcesResponse": {
@@ -7721,10 +7385,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleVirtualStructureAdapterSourcesResponse"
       },
       "Operator-Input": {
@@ -7873,10 +7534,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "transformation_info",
-          "hierarchy_in_workflow"
-        ],
+        "required": ["transformation_info", "hierarchy_in_workflow"],
         "title": "OperatorInfo"
       },
       "OperatorInfo-Output": {
@@ -7889,10 +7547,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "transformation_info",
-          "hierarchy_in_workflow"
-        ],
+        "required": ["transformation_info", "hierarchy_in_workflow"],
         "title": "OperatorInfo"
       },
       "OperatorInput": {
@@ -7940,10 +7595,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "data_type",
-          "position"
-        ],
+        "required": ["data_type", "position"],
         "title": "OperatorInput"
       },
       "OperatorOutput": {
@@ -7973,10 +7625,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "data_type",
-          "position"
-        ],
+        "required": ["data_type", "position"],
         "title": "OperatorOutput"
       },
       "OutputWiring": {
@@ -8079,9 +7728,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "workflow_output_name"
-        ],
+        "required": ["workflow_output_name"],
         "title": "OutputWiring"
       },
       "PerformanceMeasuredStep": {
@@ -8127,9 +7774,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "title": "PerformanceMeasuredStep"
       },
       "PlotTargetSettings": {
@@ -8145,9 +7790,7 @@
             ],
             "title": "Plot Target Timezone",
             "description": "The timezone plot components should use for datetime axes etc. Usually via s.index=pd.to_datetime(s.index, utc=True).tz_convert(plot_target_timezone)",
-            "examples": [
-              "Europe/Berlin"
-            ]
+            "examples": ["Europe/Berlin"]
           },
           "plot_target_locale": {
             "anyOf": [
@@ -8178,9 +7821,7 @@
             ],
             "title": "Datetime Tick Format",
             "description": "Tickformat to use for datetime axes",
-            "examples": [
-              "%H:%M<br>%d.%m.%Y"
-            ]
+            "examples": ["%H:%M<br>%d.%m.%Y"]
           },
           "datetime_x_axes_range_start": {
             "anyOf": [
@@ -8225,10 +7866,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "x",
-          "y"
-        ],
+        "required": ["x", "y"],
         "title": "Position"
       },
       "ProcessStage": {
@@ -8250,11 +7888,7 @@
       },
       "RefIdType": {
         "type": "string",
-        "enum": [
-          "SOURCE",
-          "SINK",
-          "THINGNODE"
-        ],
+        "enum": ["SOURCE", "SINK", "THINGNODE"],
         "title": "RefIdType",
         "description": "Reference Id type as required for some adapters (notably generic rest adapter)"
       },
@@ -8272,10 +7906,7 @@
       },
       "Result": {
         "type": "string",
-        "enum": [
-          "ok",
-          "failure"
-        ],
+        "enum": ["ok", "failure"],
         "title": "Result"
       },
       "RuntimeExecutionContext": {
@@ -8377,12 +8008,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "path"],
         "title": "SQLAdapterStructureSink"
       },
       "SQLAdapterStructureSource": {
@@ -8443,12 +8069,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "path"],
         "title": "SQLAdapterStructureSource"
       },
       "Schedule-Input": {
@@ -8497,9 +8118,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "title": "Schedule"
       },
       "Schedule-Output": {
@@ -8553,10 +8172,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "cron_expression_valid"
-        ],
+        "required": ["id", "cron_expression_valid"],
         "title": "Schedule"
       },
       "ScheduleExecution-Input": {
@@ -8855,6 +8471,7 @@
           "STARTED",
           "INVOCATION_ERROR",
           "EXECUTION_ERROR",
+          "SKIPPED",
           "SUCCESS"
         ],
         "title": "ScheduledJobState"
@@ -8954,21 +8571,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "timestamp",
-          "log_level",
-          "lineno",
-          "message"
-        ],
+        "required": ["timestamp", "log_level", "lineno", "message"],
         "title": "SimplifiedLogRecord"
       },
       "State": {
         "type": "string",
-        "enum": [
-          "DRAFT",
-          "RELEASED",
-          "DISABLED"
-        ],
+        "enum": ["DRAFT", "RELEASED", "DISABLED"],
         "title": "State",
         "description": "Representing state of component/workflow"
       },
@@ -8987,11 +8595,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "type",
-          "required"
-        ],
+        "required": ["name", "type", "required"],
         "title": "StructureFilter"
       },
       "StructureServiceElementType": {
@@ -9031,11 +8635,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "external_id",
-          "stakeholder_key",
-          "name"
-        ],
+        "required": ["external_id", "stakeholder_key", "name"],
         "title": "StructureServiceElementType"
       },
       "StructureServiceSink-Input": {
@@ -9709,9 +9309,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "TrafoUpdateProcessSummary"
       },
       "TrafoUpdateState": {
@@ -9747,12 +9345,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "tag",
-          "type"
-        ],
+        "required": ["id", "name", "tag", "type"],
         "title": "TransformationInfo"
       },
       "TransformationInput": {
@@ -9792,9 +9385,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "data_type"
-        ],
+        "required": ["data_type"],
         "title": "TransformationInput"
       },
       "TransformationOutput": {
@@ -9821,9 +9412,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "data_type"
-        ],
+        "required": ["data_type"],
         "title": "TransformationOutput"
       },
       "TransformationRevision-Input": {
@@ -9877,9 +9466,7 @@
             ],
             "title": "Disabled Timestamp",
             "description": "If the revision is DISABLED then this should be disable/deprecation timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "released_timestamp": {
             "anyOf": [
@@ -9893,9 +9480,7 @@
             ],
             "title": "Released Timestamp",
             "description": "If the revision is RELEASED then this should be release timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "state": {
             "$ref": "#/components/schemas/State",
@@ -10009,9 +9594,7 @@
             ],
             "title": "Disabled Timestamp",
             "description": "If the revision is DISABLED then this should be disable/deprecation timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "released_timestamp": {
             "anyOf": [
@@ -10025,9 +9608,7 @@
             ],
             "title": "Released Timestamp",
             "description": "If the revision is RELEASED then this should be release timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "state": {
             "$ref": "#/components/schemas/State",
@@ -10141,9 +9722,7 @@
             ],
             "title": "Disabled Timestamp",
             "description": "If the revision is DISABLED then this should be disable/deprecation timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "released_timestamp": {
             "anyOf": [
@@ -10157,9 +9736,7 @@
             ],
             "title": "Released Timestamp",
             "description": "If the revision is RELEASED then this should be release timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "state": {
             "$ref": "#/components/schemas/State",
@@ -10189,10 +9766,7 @@
       },
       "Type": {
         "type": "string",
-        "enum": [
-          "COMPONENT",
-          "WORKFLOW"
-        ],
+        "enum": ["COMPONENT", "WORKFLOW"],
         "title": "Type"
       },
       "UnitTestPayload": {
@@ -10203,9 +9777,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "component_code"
-        ],
+        "required": ["component_code"],
         "title": "UnitTestPayload"
       },
       "UnitTestResults": {
@@ -10220,20 +9792,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "pytest_stdout_str",
-          "pytest_stderr_str"
-        ],
+        "required": ["pytest_stdout_str", "pytest_stderr_str"],
         "title": "UnitTestResults"
       },
       "UpdateProcessStatus": {
         "type": "string",
-        "enum": [
-          "NOT_TRIED",
-          "FAILED",
-          "SUCCESS",
-          "IGNORED"
-        ],
+        "enum": ["NOT_TRIED", "FAILED", "SUCCESS", "IGNORED"],
         "title": "UpdateProcessStatus"
       },
       "UpdatedTransformationRevision": {
@@ -10287,9 +9851,7 @@
             ],
             "title": "Disabled Timestamp",
             "description": "If the revision is DISABLED then this should be disable/deprecation timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "released_timestamp": {
             "anyOf": [
@@ -10303,9 +9865,7 @@
             ],
             "title": "Released Timestamp",
             "description": "If the revision is RELEASED then this should be release timestamp.",
-            "examples": [
-              "2025-09-05T13:06:59.760469Z"
-            ]
+            "examples": ["2025-09-05T13:06:59.760469Z"]
           },
           "state": {
             "$ref": "#/components/schemas/State",
@@ -10405,11 +9965,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "VersionInfo": {
@@ -10421,9 +9977,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "version"
-        ],
+        "required": ["version"],
         "title": "VersionInfo"
       },
       "Vertex-Input": {
@@ -10446,9 +10000,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "connector"
-        ],
+        "required": ["connector"],
         "title": "Vertex",
         "description": "Represents start or end point of a link."
       },
@@ -10472,9 +10024,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "connector"
-        ],
+        "required": ["connector"],
         "title": "Vertex",
         "description": "Represents start or end point of a link."
       },
@@ -10494,11 +10044,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "version"
-        ],
+        "required": ["id", "name", "version"],
         "title": "VirtualStructureAdapterInfoResponse"
       },
       "VirtualStructureAdapterResponse": {
@@ -10534,13 +10080,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "VirtualStructureAdapterResponse"
       },
       "VirtualStructureAdapterSink": {
@@ -10602,13 +10142,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "VirtualStructureAdapterSink"
       },
       "VirtualStructureAdapterSource": {
@@ -10670,13 +10204,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "thingNodeId",
-          "name",
-          "type",
-          "path"
-        ],
+        "required": ["id", "thingNodeId", "name", "type", "path"],
         "title": "VirtualStructureAdapterSource"
       },
       "VirtualStructureAdapterThingNode": {
@@ -10708,11 +10236,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description"
-        ],
+        "required": ["id", "name", "description"],
         "title": "VirtualStructureAdapterThingNode"
       },
       "WorkflowConnection": {
@@ -11170,11 +10694,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "message",
-          "location"
-        ],
+        "required": ["type", "message", "location"],
         "title": "WorkflowExecutionError"
       },
       "WorkflowExecutionError-Output": {
@@ -11238,11 +10758,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "message",
-          "location"
-        ],
+        "required": ["type", "message", "location"],
         "title": "WorkflowExecutionError"
       },
       "WorkflowExecutionInput": {
@@ -11422,9 +10938,7 @@
           "result": {
             "$ref": "#/components/schemas/Result",
             "description": "one of \"ok\", \"failure\"",
-            "examples": [
-              "ok"
-            ]
+            "examples": ["ok"]
           },
           "node_results": {
             "anyOf": [
@@ -11473,9 +10987,7 @@
           "type": {
             "$ref": "#/components/schemas/DataType",
             "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
-            "examples": [
-              "FLOAT"
-            ]
+            "examples": ["FLOAT"]
           },
           "name": {
             "anyOf": [
@@ -11488,9 +11000,7 @@
             ],
             "title": "Name",
             "description": "Must be a valid Python identifier. Can be None if constant data is provided.",
-            "examples": [
-              "x"
-            ]
+            "examples": ["x"]
           },
           "id_of_sub_node": {
             "type": "string",
@@ -11523,12 +11033,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "type",
-          "id_of_sub_node",
-          "name_in_subnode"
-        ],
+        "required": ["id", "type", "id_of_sub_node", "name_in_subnode"],
         "title": "WorkflowInput"
       },
       "WorkflowNode": {
@@ -11631,16 +11136,12 @@
             "type": "string",
             "title": "Name",
             "description": "must be a valid Python identifier",
-            "examples": [
-              "z"
-            ]
+            "examples": ["z"]
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
             "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
-            "examples": [
-              "INT"
-            ]
+            "examples": ["INT"]
           },
           "id_of_sub_node": {
             "type": "string",
@@ -11653,13 +11154,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "type",
-          "id_of_sub_node",
-          "name_in_subnode"
-        ],
+        "required": ["id", "name", "type", "id_of_sub_node", "name_in_subnode"],
         "title": "WorkflowOutput"
       },
       "WorkflowWiring-Input": {
@@ -11737,10 +11232,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleSinksResponse"
       },
       "hetdesrun__adapters__component_adapter__models__MultipleSourcesResponse": {
@@ -11758,10 +11250,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleSourcesResponse"
       },
       "hetdesrun__adapters__component_adapter__models__StructureResponse": {
@@ -11797,13 +11286,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "StructureResponse"
       },
       "hetdesrun__adapters__component_adapter__models__StructureThingNode": {
@@ -11833,11 +11316,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description"
-        ],
+        "required": ["id", "name", "description"],
         "title": "StructureThingNode"
       },
       "hetdesrun__adapters__external_sources__models__MultipleSinksResponse": {
@@ -11855,10 +11334,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleSinksResponse"
       },
       "hetdesrun__adapters__external_sources__models__MultipleSourcesResponse": {
@@ -11876,10 +11352,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleSourcesResponse"
       },
       "hetdesrun__adapters__external_sources__models__StructureResponse": {
@@ -11915,13 +11388,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "StructureResponse"
       },
       "hetdesrun__adapters__external_sources__models__StructureThingNode": {
@@ -11965,10 +11432,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleSinksResponse"
       },
       "hetdesrun__adapters__kafka__models__MultipleSourcesResponse": {
@@ -11986,10 +11450,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleSourcesResponse"
       },
       "hetdesrun__adapters__kafka__models__StructureResponse": {
@@ -12025,13 +11486,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "StructureResponse"
       },
       "hetdesrun__adapters__kafka__models__StructureThingNode": {
@@ -12061,11 +11516,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description"
-        ],
+        "required": ["id", "name", "description"],
         "title": "StructureThingNode"
       },
       "hetdesrun__adapters__local_file__models__MultipleSinksResponse": {
@@ -12083,10 +11534,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleSinksResponse"
       },
       "hetdesrun__adapters__local_file__models__MultipleSourcesResponse": {
@@ -12104,10 +11552,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleSourcesResponse"
       },
       "hetdesrun__adapters__local_file__models__StructureResponse": {
@@ -12143,13 +11588,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "StructureResponse"
       },
       "hetdesrun__adapters__local_file__models__StructureThingNode": {
@@ -12179,11 +11618,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description"
-        ],
+        "required": ["id", "name", "description"],
         "title": "StructureThingNode"
       },
       "hetdesrun__adapters__sql_adapter__models__MultipleSinksResponse": {
@@ -12201,10 +11636,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sinks"
-        ],
+        "required": ["resultCount", "sinks"],
         "title": "MultipleSinksResponse"
       },
       "hetdesrun__adapters__sql_adapter__models__MultipleSourcesResponse": {
@@ -12222,10 +11654,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "resultCount",
-          "sources"
-        ],
+        "required": ["resultCount", "sources"],
         "title": "MultipleSourcesResponse"
       },
       "hetdesrun__adapters__sql_adapter__models__StructureResponse": {
@@ -12261,13 +11690,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "thingNodes",
-          "sources",
-          "sinks"
-        ],
+        "required": ["id", "name", "thingNodes", "sources", "sinks"],
         "title": "StructureResponse"
       },
       "hetdesrun__adapters__sql_adapter__models__StructureThingNode": {
@@ -12297,11 +11720,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description"
-        ],
+        "required": ["id", "name", "description"],
         "title": "StructureThingNode"
       }
     }

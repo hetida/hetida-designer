@@ -14,6 +14,7 @@ export type ScheduledJobState =
   | 'STARTED'
   | 'INVOCATION_ERROR'
   | 'EXECUTION_ERROR'
+  | 'SKIPPED'
   | 'SUCCESS';
 
 export interface ScheduleExecution {

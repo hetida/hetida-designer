@@ -94,6 +94,11 @@ mat-dialog-content {
     color: #2e7d32;
   }
 
+  &.status-skipped {
+    background-color: #fef9e7;
+    color: #e2af22;
+  }
+
   &.status-failure {
     background-color: #fdecea;
     color: #c62828;

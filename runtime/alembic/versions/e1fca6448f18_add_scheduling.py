@@ -62,6 +62,7 @@ def upgrade():
                 "STARTED",
                 "INVOCATION_ERROR",
                 "EXECUTION_ERROR",
+                "SKIPPED",
                 "SUCCESS",
                 name="scheduledjobstate",
             ),

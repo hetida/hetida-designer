@@ -6,11 +6,11 @@ import pytest
 
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.schedule import Schedule, ScheduledJobState, ScheduleExecution
-from hetdesrun.scheduling import (
-    execute_scheduled_transformation,
-    executions_retention_job,
+from hetdesrun.scheduling.execution import execute_scheduled_transformation
+from hetdesrun.scheduling.job_sync import sync_job
+from hetdesrun.scheduling.retention import executions_retention_job
+from hetdesrun.scheduling.scheduler import (
     get_global_scheduler,
-    sync_job,
 )
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 

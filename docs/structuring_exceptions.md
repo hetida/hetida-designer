@@ -1,8 +1,8 @@
 # Structuring Exceptions
 
-When a workflow/component raises an exception during execution, this exception is captured by hetida designers and suitable information about the error (like its message) is attached to the execution response json.
+When a workflow/component raises an exception during execution, this exception is captured by hetida designer and suitable information about the error (like its message, traceback, ...) is attached to the execution response json.
 
-In production scenarios it is often necessary to react programmatically to certain situations / errors. For this, parsing the error message text for details is not optimal. The service/component triggering the execution often needs a more structured access to such details and component code authors need a way to provide this information.
+It is often necessary for services invoking execution in designer to react programmatically to exceptional situations / errors. For this, parsing the error message text for details is of course not optimal.
 
 Therefore hetida designer provides the following ways to component code authors to raise their own exceptions explicitely enriched with information to pe propagated in a structured way into the execution json response.
 
@@ -10,7 +10,7 @@ Therefore hetida designer provides the following ways to component code authors 
 
 Generally, a `ComponentException` class is available, which can be enriched with an optional error code and optional extra information besides the error message itself.
 
-The error code can be either an integer or a string. The extra information must be a JSON serializable dictionary. Both will then be accessible in the response.
+The error code can be either an integer or a string. The extra information must be a JSON serializable dictionary. Both will then be accessible in the execution response.
 
 The following example shows how this exception can be used in component code:
 
@@ -66,12 +66,13 @@ Executing a component with the above code and inputs `1` and `0` results in a js
 Since the exception is raised within the component code, the `file` attribute of the `location` is just `COMPONENT CODE` (in all other cases it is the path to the corresponding file).
 
 The `process_stage` attribute can take one of the following values:
-* PARSING_WORKFLOW
-* LOADING_DATA_FROM_ADAPTERS
-* PARSING_LOADED_DATA
-* EXECUTING_COMPONENT_CODE
-* SENDING_DATA_TO_ADAPTERS 
-* ENCODING_RESULTS_TO_JSON
+
+- PARSING_WORKFLOW
+- LOADING_DATA_FROM_ADAPTERS
+- PARSING_LOADED_DATA
+- EXECUTING_COMPONENT_CODE
+- SENDING_DATA_TO_ADAPTERS
+- ENCODING_RESULTS_TO_JSON
 
 Of course, only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` cause errors with the `operator_info` attribute.
 
@@ -146,6 +147,7 @@ def main(*, series):
 ```
 
 ### Insufficient Data for Plotting
+
 For plotting components whose results are embedded in other Software it makes sense to raise a `InsufficientPlottingData` exception:
 
 ```python
@@ -158,7 +160,16 @@ from hdutils import InsufficientPlottingData
 
 This allows the external software to handle this situation in its preferred way, for example by showing an adequate message instead of an empty plot.
 
+### Intentionally aborting execution
+
+Often execution of a workflow or a single component should not be carried out if a condition computed on some input data does not hold. E.g. a rainfall flood forecast does not have to be computed if there was no rain at all in the last days. To communicate this intention to 3rd party systems and make it clear that this is not an error situation we recommended to use `IntentionallyAbortedExecution` exception which is importable via
+
+```python
+from hdutils import IntentionallyAbortedExecution
+```
+
 ## Not using the predefined classes
+
 To develop the component code independently of the hetdesrun library, exceptions that are handled similarly can be defined locally in the component code as follows.
 
 First, such an exception must of course enable initialization with a message and an error code.

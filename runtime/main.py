@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
 
 from hetdesrun import configure_logging
-from hetdesrun.scheduling import start_scheduling
+from hetdesrun.scheduling.management import start_scheduling
 
 logger = logging.getLogger(__name__)
 configure_logging(logger)
