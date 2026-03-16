@@ -147,7 +147,7 @@ class OutputWiring(BaseModel):
     def ref_id_set_for_non_direct_provisioning(
         cls, v: str | None, info: ValidationInfo
     ) -> str | None:
-        if info.data["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+        if info.data["adapter_id"] not in {"direct_provisioning", 1, "drop"} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning output wirings")
         return v
 
@@ -317,7 +317,7 @@ class InputWiring(BaseModel):
     def ref_id_set_for_non_direct_provisioning(
         cls, v: str | None, info: ValidationInfo
     ) -> str | None:
-        if info.data["adapter_id"] not in {"direct_provisioning", 1} and v is None:
+        if info.data["adapter_id"] not in {"direct_provisioning", 1, "drop"} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning input wirings")
         return v
 

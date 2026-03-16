@@ -36,6 +36,7 @@ from hetdesrun.adapters.generic_rest import send_data as generic_rest_adapter_se
 from hetdesrun.adapters.local_file import load_data as local_file_load_data
 from hetdesrun.adapters.local_file import send_data as local_file_send_data
 from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisioned_data
+from hetdesrun.adapters.sink.drop import send_drop_data
 from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
@@ -169,6 +170,11 @@ register_sink_adapter(
 register_sink_adapter(
     adapter_key="direct_provisioning",
     send_func=send_directly_provisioned_data,
+)
+
+register_sink_adapter(
+    adapter_key="drop",
+    send_func=send_drop_data,
 )
 
 

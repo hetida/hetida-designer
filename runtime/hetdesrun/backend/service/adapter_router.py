@@ -33,6 +33,8 @@ async def get_all_adapters() -> list[AdapterFrontendDto]:
     logger.info("get adapters")
     adapter_list: list[AdapterFrontendDto] = []
 
+    adapter_list.append(AdapterFrontendDto(id="drop", name="Drop", url="", internalUrl=""))
+
     adapters = get_config().hd_adapters
 
     if adapters is None or adapters == "":
