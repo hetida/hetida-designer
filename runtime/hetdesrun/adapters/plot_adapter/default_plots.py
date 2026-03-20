@@ -48,7 +48,7 @@ def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: 
 
     if isinstance(value, pd.DataFrame) and filtered_sink_type == DataType.MultiTSFrame:
         try:
-            plotly_json_obj = plotly_fig_to_json_dict(multi_series_with_multi_yaxis(value))
+            plotly_json_obj = multi_series_plotly_json(value)
         except Exception as e:  # pragma: no cover
             msg = (
                 f"Plot adapter could not generate multitsframe plot for value"
@@ -78,7 +78,7 @@ def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: 
                 pass
 
         try:
-            plotly_json_obj = plotly_fig_to_json_dict(table_fig_plotly_json(value))
+            plotly_json_obj = table_plotly_json(value)
         except Exception as e:  # pragma: no cover
             msg = (
                 f"Plot adapter could not generate dataframe table for value"
@@ -167,7 +167,10 @@ def single_plotly_timeseries_plot(
     fig.update_layout(**layout_opts)  # see https://plotly.com/python/figure-labels/
     fig.update_traces(traces_opts)  # set line color?
 
-    fig.update_layout(margin={"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0})
+    fig.update_layout(
+        margin={"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
+        template="none",
+    )
 
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
@@ -176,7 +179,9 @@ def single_plotly_timeseries_plot(
 
 
 def single_series_plotly_json(series: pd.Series) -> Any:
-    return plotly_fig_to_json_dict(single_plotly_timeseries_plot(series))
+    plotly_fig_dict = plotly_fig_to_json_dict(single_plotly_timeseries_plot(series))
+    plotly_fig_dict["config"]["displaylogo"] = False
+    return plotly_fig_dict
 
 
 def compute_plot_positions(
@@ -265,6 +270,12 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
+def multi_series_plotly_json(df: pd.DataFrame) -> Any:
+    plotly_fig_dict = plotly_fig_to_json_dict(multi_series_with_multi_yaxis(df))
+    plotly_fig_dict["config"]["displaylogo"] = False
+    return plotly_fig_dict
+
+
 def auto_col_with(series: pd.Series) -> int:
     """Try to guess a good column width for the table visualization
 
@@ -324,7 +335,8 @@ def table_fig_plotly_json(data: pd.DataFrame, auto_col_width: bool = True) -> An
         "xaxis_title": "Time",
         "yaxis_title": "Values",
         "autosize": True,
-        "height": 400,
+        "height": 200,
+        "template": "none",
     }
     # scrollbars should be visible:
     fig.update_layout(margin=dict(l=0, r=15.0, b=15.0, t=5, pad=0))  # noqa: C408
@@ -333,3 +345,9 @@ def table_fig_plotly_json(data: pd.DataFrame, auto_col_width: bool = True) -> An
     fig.update_xaxes(automargin=True)
 
     return fig
+
+
+def table_plotly_json(df: pd.DataFrame) -> Any:
+    plotly_fig_dict = plotly_fig_to_json_dict(table_fig_plotly_json(df))
+    plotly_fig_dict["config"]["displayModeBar"] = False
+    return plotly_fig_dict
