@@ -91,6 +91,7 @@ def handle_frontend_exec_response_dict_serialisation(
         dict_like_json_serializable_obj = exec_resp_frontend_dto.model_dump(
             mode="json", context={"naive_result_serialization": use_naive_result_serialization}
         )
+
     except (PydanticSerializationError, PydanticSerializationUnexpectedValue) as exc:
         exec_resp_frontend_dto_with_serialization_errors = (
             ExecutionResponseFrontendDto.from_exception(

@@ -2,15 +2,17 @@ import logging
 from collections import defaultdict
 from typing import Any
 
+from hdutils import DataType
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
-from hetdesrun.adapters.generic_rest.external_types import to_correct_obj
+from hetdesrun.adapters.generic_rest.external_types import ExternalType, to_correct_obj
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
+from hetdesrun.models.workflow import WorkflowOutput
 
 logger = logging.getLogger(__name__)
 
 
-def update_with_metdata_from_input_wiring(obj: Any, input_wiring: InputWiring) -> None:
+def update_with_metadata_from_input_wiring(obj: Any, input_wiring: InputWiring) -> None:
     """Updates an attrs dict attribute if it exists and input wirings has attrs set
 
     Warns (logging) if the input wiring has attrs, but the object does not have an "attrs"
@@ -69,7 +71,7 @@ async def resolve_and_load_data_from_wiring(
             # loads data as string and it is parsed into the adequate object later.
             # However for direct provisioning, you can provide metadata directly as well.
             obj = loaded_data_from_adapter.get(input_wiring.workflow_input_name)
-            update_with_metdata_from_input_wiring(obj, input_wiring)
+            update_with_metadata_from_input_wiring(obj, input_wiring)
 
         loaded_data.update(loaded_data_from_adapter)
 
@@ -77,7 +79,9 @@ async def resolve_and_load_data_from_wiring(
 
 
 async def resolve_and_send_data_from_wiring(
-    workflow_wiring: WorkflowWiring, result_data: dict[str, Any]
+    workflow_wiring: WorkflowWiring,
+    result_data: dict[str, Any],
+    wf_node_outputs: list[WorkflowOutput],
 ) -> dict[str, Any]:
     """Sends data to sinks
 
@@ -88,6 +92,10 @@ async def resolve_and_send_data_from_wiring(
 
     for output_wiring in workflow_wiring.output_wirings:
         wirings_by_adapter[output_wiring.adapter_id].append(output_wiring)
+
+    wf_output_types_by_output_name: dict[str, DataType] = {
+        wf_output.name: wf_output.type for wf_output in wf_node_outputs
+    }
 
     all_data_not_send_by_adapter = {}
     # data is loaded adapter-wise:
@@ -100,7 +108,10 @@ async def resolve_and_send_data_from_wiring(
                     ref_id=output_wiring.ref_id,
                     ref_id_type=output_wiring.ref_id_type,
                     ref_key=output_wiring.ref_key,
-                    type=output_wiring.type,
+                    type=output_wiring.type
+                    if output_wiring.adapter_id != "plot"
+                    # plot adapter needs DataType of output to decide how to plot
+                    else wf_output_types_by_output_name[output_wiring.workflow_output_name],
                     filters=output_wiring.filters,
                 )
                 for output_wiring in output_wirings_of_adapter
@@ -112,7 +123,9 @@ async def resolve_and_send_data_from_wiring(
             all_data_not_send_by_adapter.update(data_not_send_by_adapter)
 
     external_type_by_outp_name = {
-        output_wiring.workflow_output_name: output_wiring.type
+        output_wiring.workflow_output_name: (
+            ExternalType.PLOTLYJSON if output_wiring.adapter_id == "plot" else output_wiring.type
+        )
         for output_wiring in workflow_wiring.output_wirings
     }
 
