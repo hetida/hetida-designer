@@ -26,10 +26,10 @@ payload = {
 }
 
 
-def pt_payload(id: UUID, value_str: str) -> Any:  # noqa: A002
+def pt_payload(id: UUID, value_str: str, run_pure_plot_operators: bool = True) -> Any:  # noqa: A002
     payload = {
         "id": str(id),
-        "run_pure_plot_operators": True,
+        "run_pure_plot_operators": run_pure_plot_operators,
         "wiring": {
             "dashboard_positionings": [],
             "input_wirings": [
@@ -157,3 +157,25 @@ async def test_plot_wiring_payload(mocked_clean_test_db_session, async_test_clie
         )
 
         assert_resp_has_plot_output(resp)
+
+        # Test setting run_pure_plot_adapters to false
+
+        resp = await client.post(
+            "/api/transformations/execute",
+            json=pt_payload(
+                pt_mtfs.id,
+                '{    "value": [        1,        1.2,        0.5    ],    "metric": [        "a",        "b",        "c"    ],    "timestamp": [        "2019-08-01T15:45:36.000Z",        "2019-08-01T15:48:36.000Z",        "2019-08-01T15:42:36.000Z"    ]}',  # noqa: E501
+                run_pure_plot_operators=False,
+            ),
+        )
+        assert resp.status_code == 200
+        resp_json = resp.json()
+        assert resp_json["error"] is None
+
+        # output type was appropriately adapted:
+        assert resp_json["output_types_by_output_name"]["output"] == "PLOTLYJSON"
+
+        # result is a plotly json dict object
+        plot_result = resp_json["output_results_by_output_name"]["output"]
+        assert isinstance(plot_result, dict)
+        assert len(plot_result) == 0  # empty dict
