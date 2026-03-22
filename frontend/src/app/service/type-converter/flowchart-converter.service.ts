@@ -67,7 +67,8 @@ export class FlowchartConverterService {
           return {
             ...input,
             exposed: input.exposed,
-            is_default_value: input.type === IOTypeOption.OPTIONAL,
+            is_default_value:
+              (input.type as IOTypeOption) === IOTypeOption.OPTIONAL,
             position: null
           };
         }),
