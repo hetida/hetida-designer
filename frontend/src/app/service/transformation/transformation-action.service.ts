@@ -101,7 +101,7 @@ export class TransformationActionService {
       // Validate that all required inputs have wirings in the current test_wiring
 
       const requiredInputs = transformation.io_interface.inputs.filter(
-        input => (input.type as IOTypeOption) === IOTypeOption.REQUIRED
+        input => input.type === IOTypeOption.REQUIRED
       );
 
       const wiredInputIds = new Set(
