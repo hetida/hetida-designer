@@ -1,7 +1,5 @@
 # Contributing to the hetida designer
 
-We greatly appreciate your contribution to hetida designer!
-
 There are many ways you can help us to make hetida designer even better:
 
 - [Ask a question or request support](#question)
@@ -21,7 +19,7 @@ issues for bug reports and feature requests. Don't hesitate to contact us via
 If you find a bug in the source code or a mistake in the documentation, you can help us by
 [submitting an issue](#submit-issue) to our [GitHub Repository][github].
 
-You can help the team even more and [submit a Pull Request](#submit-pr) with a fix.
+You can help the team even more and [submit a Pull Request](#submit-pr) with a fix. For non-trivial fixes and even more so, new features, we kindly ask to submit an issue first, describing your planned work and let us provide guidance in order to avoid work being done in the wrong direction.
 
 ## <a name="feature"></a> Missing a Feature?
 
