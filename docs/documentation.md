@@ -49,7 +49,7 @@ Further information about developing, deploying, connecting, using and running h
 
 ## Creating Components and Workflows
 
-- [Versioning in hetida designer](./versioning_in_hetida_designer.md)
+- [Versioning in hetida designer](./versioning_and_lifecycle.md)
 - [Using Default Values](./default_parameters.md)
 - [Structuring Exceptions](./structuring_exceptions.md)
 - [Tips and Tricks](./tips_and_tricks.md)

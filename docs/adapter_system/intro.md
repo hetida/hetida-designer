@@ -1,5 +1,11 @@
 # Introduction to hetida designer adapter system
 
+hetida designer provides a flexible adapter system allowing integration of arbitrary data sources and sinks. It allows you to write your own custom adapters and makes them available in user interfaces making it possible to discover, browse and search data sources and sinks. One example for such a user interface is the hetida designer test execution dialog.
+
+The adapter system allows to execute the exact same workflow on local csv files as inputs during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
+
+![wiring-concept](../diagrams/wiring-concept.excalidraw.svg)
+
 ## Why not in/egestion operators?
 
 Some graphical analytical workflow tools have "Load table from Postgres" or "Write to csv file" data **in/egestion operators** that you pull into your analytical workflows. This couples analytics with data engineering in a way that makes it cumbersome and difficult to employ the same workflow in different contexts.

@@ -27,7 +27,7 @@ to start all services. You can abort overmind using ctrl+s and leave the nix-she
 
 ## Containerized development setup
 
-#### Setting up a docker development environment
+### Setting up a docker development environment
 
 Make sure you have read and understood how to set up and start hetida designer using docker compose (see [Readme](../README.md)) and [docker](./standalone-docker-setup.md).
 
@@ -46,6 +46,10 @@ docker compose -f docker-compose-dev.yml up -d
 
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
+
+You may also read [standalone docker setup](./standalone-docker-setup.md) if you do not want to use docker-compose.
+
+### Running single services in development mode
 
 Depending on whether you want to work on the frontend, backend, or runtime, find the
 instructions on setting up one of these modules for development below.
