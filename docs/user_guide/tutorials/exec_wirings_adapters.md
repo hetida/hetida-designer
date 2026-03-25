@@ -8,13 +8,13 @@ hetida designer provides a flexible adapter system allowing integration of arbit
 
 The adapter system allows to execute the exact same workflow on local csv files as inputs during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
 
+![wiring](../../diagrams/wiring-concept.excalidraw.svg)
+
 An adapter is a piece of software providing actual access to data sources and sinks as well as make these sources and sinks discoverable. See the [introduction to the adapter system](../../adapter_system/intro.md) for detailed explanations/documentation.
 
 hetida designer comes with a set of built-in adapters for files in a mounted volume, SQL databases, Kafka or Cloud "blob" storage and more.
 
 Here for demonstration purposes we utilize the Demo Adapter that is provided with the docker compose setup.
-
-![wiring](../../diagrams/wiring-concept.excalidraw.svg)
 
 ## What happens during execution?
 We open the component "Simple Volatility Score", make a copy of it for testing purposes

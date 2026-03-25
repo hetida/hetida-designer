@@ -14,6 +14,8 @@ Additionally, the latest released revision of a revision group can be executed t
 
 :warning: **Warning:** Depending on the latest revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
 
+See [api](../api.md) for details about the full REST API.
+
 ## The JSON payload and response for execution
 
 The payload for the two endpoints is almost the same. The only difference is that either the revision id is provided with the key "id" or the id of the revision group with the key "revision_group_id".

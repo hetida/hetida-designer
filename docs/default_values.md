@@ -4,7 +4,7 @@
 hetida designer component and workflow inputs can be either REQUIRED or OPTIONAL. REQUIRED means a value has to be provided every time when the transformation is invoked (e.g. via manual input / direct provisioning or by specifiying a source from an adapter).
 
 OPTIONAL means two things:
-* **nullable**: The input value can be null which will be parsed as Python's `None`.
+* **nullable**: The input value can be `null` which will be parsed as Python's `None`.
 * **default value**: The input has a default value (which can be null / `None`, but also (json) value fitting the input data type). This default value is used if no explicit value is provided for this input during execution.
 
 ## Setting default values
@@ -20,7 +20,7 @@ Change the input type from "REQUIRED" to "OPTIONAL", then the input field for th
 Just as with [manual input](./adapter_system/manual_input.md) in the execution dialog, for simple data types (such as `STRING`, `FLOAT`, `INT`) the data can be entered directly in the input field, while for `SERIES`, `DATAFRAME`, `MULTITSFRAME` or `ANY` json-data can be entered.
 No quotation marks need to be entered for default values for inputs of the `STRING` data type, but if you want to enter a string as the default value for an `ANY` input, it must be enclosed in quotation marks.
 
-If you do not enter a value (by not touching the input field), the default value for all data types is set to `null` which will be parsed as `None` as mentioned above. Note that for optional string inputs a default value of `null` will be parsed as `None` as well.
+If you do not enter a value (by not touching the input field), the default value for all data types is set to `null` which will be parsed as `None` as mentioned above. Also an explicit `null` in the default value field will set the default value to `None` and we recommend to do that. Note that for optional string inputs a default value of `null` will be parsed as `None` as well.
 
 To get an empty string as the default value instead, enter any string and remove it again before clicking `Save`.
 
