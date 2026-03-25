@@ -4,6 +4,7 @@
 * **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if still using gunicorn mode.
 * Proper obj / model repo path directory in nix shell setup
 * fix component adapter metadata wiring handling
+* fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 * Upgrade to Python 3.14
 * **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x> to major release 3.x. This may affect / break component code in multiple ways.
 
