@@ -1,18 +1,18 @@
 # Execution, Wirings and Adapters
 
-The [Component and Workflow Tutorial](./component_workflow_tutorial.md) describes how to develop and test execute transformations via the hetida designer user interface. Here we want to dive deeper into the necessary ingredients for transformation execution.
+The [Component and Workflow Tutorial](./component_workflow_tutorial.md) describes how to develop and test-execute transformations via the hetida designer user interface. Here we want to dive deeper into the necessary ingredients for transformation execution.
 
 ## The Adapter System
 
 hetida designer provides a flexible adapter system allowing integration of arbitrary data sources and sinks. It allows you to write your own custom adapters and makes them available in user interfaces making it possible to discover, browse and search data sources and sinks. One example for such a user interface is the hetida designer test execution dialog itself.
 
-The adapter system allows to execute the exact same workflow on local csv files as inputs during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
+The decoupling provided by the adapter system allows to execute the exact same workflow on local csv files during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
 
 ![wiring](../../diagrams/wiring-concept.excalidraw.svg)
 
 An adapter is a piece of software providing actual access to data sources and sinks as well as make these sources and sinks discoverable. See the [introduction to the adapter system](../../adapter_system/intro.md) for detailed explanations/documentation.
 
-hetida designer comes with a set of built-in adapters for files in a mounted volume, SQL databases, Kafka or Cloud "blob" storage and more.
+hetida designer comes with a set of built-in adapters for files in a mounted volume, SQL databases, Kafka or Cloud / Blob storage and more.
 
 Here for demonstration purposes we utilize the Demo Adapter that is provided with the docker compose setup.
 
@@ -28,11 +28,11 @@ As Timestamp Range we select the last two weeks and for frequency we set `2h`. F
 
 Executing with this setting yields a timeseries of volatility scores where input data is coming from the Demo adapter.
 
-Again we enter the execution dialog and for the `volatilities` we select the Python-Demo-Adapter navigate to Plants -> Plant A -> Pickling Unit -> Influx Anomaly Score and assign the `Influx Anomaly Score` sink and set frequency to `6h`.
+Again we enter the execution dialog and for the `volatilities` output we select the Python-Demo-Adapter navigate to Plants -> Plant A -> Pickling Unit -> Influx Anomaly Score and assign the `Influx Anomaly Score` sink and set frequency to `6h`.
 
 Before execution we open the Browser Developer Tools (e.g. F12 using Firefox) and navigate to the Network analysis tab.
 
-Executing we first note, that no output is shown. Examining the POST request to the `/api/transformations/execute` endpoint that happend yields a payload
+Executing we first note, that no output is shown in the execution result view. Instead, examining the POST request to the `/api/transformations/execute` endpoint, we see a payload
 ```json
 {
 	"id": "0ca411cc-4761-4833-a167-ee46d79f351c",
@@ -99,7 +99,7 @@ and a response
 	}
 }
 ```
-Analyzing the execution request payload we observe that actually two things are relvant: The transformation id in the field `id` and the `wiring` consisting basically of `input_wirings` and `output_wirings`.
+Analyzing the execution request payload we observe that actually two things are relevant: The transformation id in the field `id` and the `wiring` consisting basically of `input_wirings` and `output_wirings`.
 
 Each input wiring tells hetida designer over what adapter data should be fetched and which data source is requested from that adapter for the respective input.
 
@@ -107,13 +107,11 @@ Here two adapters are mentioned, the Python-Demo-Adapter and a `direct_provision
 
 Similarly for the output a sink with `ref_id` `root.plantA.picklingUnit.influx.anomaly_score` from the Python-Demo-Adapter adapter is wired as expected.
 
-The response basically says everything is okay.
+The response basically says everything is okay: In particular the result data for `volatilities` has been sent to the configured Demo adapter sink.
 
-When we run execution again removing the output wiring the response actually contains the output data.
+When we run execution again after removing the output wiring the HTTP response again contains the output data. This is because not providing an output wiring makes it default to `direct_provisioning` which in the case of outputs returns the result as part of the execution response.
 
 ## Summary
-We have seen how a wiring using adapters together with the transformation id is merely all it takes to run a transformation revision via the `/api/transformations/execute` endpoint of the hetdia designer backend.
+We have seen how a wiring using different adapters allows to control where input data comes from and where output data should go to at execution time.
 
-Running via this API endpoint is one viable way to run transformations regularly or event-driven in production.
-
-For complete details we refer to the [Running Transformation Revisions documentation](../../execution/running_transformation_revisions.md).
+Running via the `/api/transformations/execute` [API](../../integration_guide/api.md) endpoint is one viable way to run transformations regularly or event-driven in production.

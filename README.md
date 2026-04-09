@@ -7,7 +7,7 @@ hetida designer is an open source, scalable analytics engine for people wanting 
 ![screenshots](./docs/assets/hd_screenshots.png)
 
 ### From a user point of view
-On the one hand, hetida designer is aimed at **data scientists** and **subject matter experts** who can write Python data science code and want to deploy it productively. Once hetida designer is set up, these users can develop, test, manage, document and employ their Data Science artifacts in its UI on their own without having to aquire professional software engineering knowledge (git, yaml files, Dockerfiles / containerization, deployment and ci / cd, devops, writing Rest APIs ...). 
+On the one hand, hetida designer is aimed at **data scientists** and **subject matter experts** who can write Python data science code and want to deploy it productively. Once hetida designer is set up, these users can develop, test, manage, document and employ their Data Science artifacts in its UI on their own without having to acquire professional software engineering knowledge (git, yaml files, Dockerfiles / containerization, deployment and ci / cd, devops, writing Rest APIs ...). 
 
 On the other hand, it enables **professional software or data engineers** to invoke, use, automate and integrate these artifacts and provide and receive data to/from them: Executing is just a REST call away, immediately. Adapters can be written to provide controlled and discoverable access to development as well as production data sources and sinks.
 
@@ -123,7 +123,7 @@ From here we recommend working through the tutorials.
 ### Some more advanced topics
 
 * [Adapter system](./docs/adapter_system/intro.md)
-* [Rest API](./docs/api.md)
+* [Rest API](./docs/integration_guide/api.md)
 * [Kafka integration](./docs/kafka_integration.md)
 * [Kubernetes setup](./docs/user_guide/advanced_topics/kubernetes.md)
 * [Security hints](#security-hints)

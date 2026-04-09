@@ -1,11 +1,14 @@
+---
+icon: lucide/book-text
+---
 
-## <a name="glossary"></a> Glossary
+# Glossary
 
-Important concepts that help you understand how the hetida designer works.
+## Terms and Concepts
 
-* **Hetida designer**: The software developed in this repository consisting of the web user interface, the backend, and the runtime.
-* **Hetida**: A analytical iot/timeseries platform (see https://hetida.io/en/). Hetida designer is a (stand-alone, open source) module of the hetida platform.
-* **Workflow, Workflow Revision**: A composition of analytical operations where outputs can be linked to inputs. Also has some IO configuration. Workflows have revisions and in the workflow editor one actually edits a workflow revision.
+* **hetida designer**: The software developed in this repository consisting of the web user interface, the backend, the runtime, builtin adapters and more.
+* **hetida**: A analytical iot/timeseries platform (see https://hetida.io/en/). Hetida designer is a (stand-alone, open source) module of the hetida platform.
+* **Workflow, Workflow Revision**: A [DAG](https://en.wikipedia.org/wiki/Directed_acyclic_graph) composition of analytical operations where outputs can be linked to inputs. Also has some IO configuration. Workflows have revisions and in the workflow editor one actually edits a workflow revision.
 * **Component, Component Revision**: A piece of code together with some IO configuration that can be used/instantiated as operator in a workflow revision. Components have revisions and in the Component editor one actually edits a component revision.
 * **Operator** An instance of either a workflow revision or a component revision used in a workflow. These are the "boxes" you can drag into the workflow editor. A workflow can contain multiple operators belonging to the same component or workflow revision.
 * **Transformation, Transformation Revision**: An umbrella term for the entities “Workflow” and “Component” or respectively "Workflow Revision" and "Component Revision".
@@ -17,9 +20,12 @@ Important concepts that help you understand how the hetida designer works.
 * **Delete**: Component and Workflow revisions in Draft Mode can be deleted fully.
 * **Documentation**: To every workflow and component revision a markdown documentation can be written and used.
 
-We recommend to also read [basic concepts](./user_guide/tutorials/basic_concepts.md) and [versioning and lifecycle](./versioning_and_lifecycle.md).
 
-## Some explaining diagrams connecting the concepts above
+To explore these concepts in greater depth read [basic concepts](./user_guide/tutorials/basic_concepts.md) and [versioning and lifecycle](./versioning_and_lifecycle.md).
+
+## Diagrams
+
+The following diagrams help to connect terms and concepts mentioned above.
 
 ### Adapters and Wirings
 ![wiring-concept](./diagrams/wiring-concept.excalidraw.svg)

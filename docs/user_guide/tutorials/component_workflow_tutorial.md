@@ -1,7 +1,7 @@
-# Component and Workflow Tutorial
-This tutorial explains how to develop components and workflows and to execute them using the hetida designer user interface.
+# Component and Workflow development
+This tutorial explains how to create components and workflows and how to execute them using the hetida designer user interface.
 
-### How to build and execute your first workflow with hetida designer
+### First workflow
 
 In the hetida designer web user interface, click on "Add Workflow" in the Workflow side bar. 
 
@@ -21,17 +21,25 @@ Some Notes:
 
 * You can delete connections by right-clicking on them and selecting "Delete Link". You can also delete operators (boxes) through their right-click menu.
 
-* Connection lines can be subdivided by left-clicking on them and dragging one of the appearing handles to make them go around boxes. 
+* Connection lines can be subdivided by left-clicking on them and dragging one of the appearing handles, e.g. to make them go around boxes.
   
   ![connection_handles](./../../assets/first_workflow/connection_handles.png)
 
 * Connections must respect types of inputs / outputs (indicated by color). However, some inputs /outputs have type "Any" which means that everything can go out/into them.
 
-* You can also drag Workflows from the Workflow sidebar as operators into a workflow (this can be nested!). For example, consider a workflow containing a data preparation pipeline that you want to use in an arbitrary amount of modeling workflows.
+* You can also drag workflows from the Workflow sidebar as operators into a workflow, i.e. workflows can be nested. For example, consider a workflow containing a common data preparation pipeline that you want to use in several modeling workflows.
 
-* You can drag *draft* components/workflows onto the workflow pane, but you can only release a workflow if all contained operators refer to released revisions. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. This way, workflow executions can be reproduced at all points in time. To edit a released component/workflow a new revision has to be created.
+* You can drag *DRAFT* components/workflows onto the workflow pane, but you can only release a workflow if all contained operators refer to released revisions. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. To edit a released component/workflow a new revision has to be created.
 
-Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. This is a point where hetida designer significantly differs from some similar-looking graphical analytics tools you may know: Data ingestion (and data egestion) is decoupled from the analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
+
+Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. 
+
+!!! abstract "Decoupling analytics and data provisioning"
+    This is a point where hetida designer significantly differs from some similar-looking workflow tools you may know: Data ingestion (and data egestion) is decoupled from analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
+
+!!! tip "All inputs/outputs at a glance"
+
+    Another point where hetida designer's workflow view/editor differs from similar tools: It always shows all inputs and outputs at first glance. You can see immediately what output goes into what input.
 
 #### Configuring IO
 
@@ -60,7 +68,7 @@ The execution dialog offers two modes for data ingestion into the workflow's dyn
 * **Manual**: Here you can enter data directly or upload some JSON or CSV file from your computer.
 * **Adapter**: Adapters allow to connect data sources (e.g. databases) to dynamic workflow input (and similar for outputs and sinks). They are small pieces of software which can be written individually for your specific data sources and data structures. They may present business views on data for easy selection in the execution dialog. More on that in documentation on the hetida designer adapter system
 
-In your local installation, there probably is either no adapter or only the demo adapters  installed/available, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](./runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
+In your local installation, there probably is either no adapter or only the demo adapters  installed/available, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](https://github.com/hetida/hetida-designer/blob/release/runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
 
 ![input_series_demo_data_upload_dialog](./../../assets/first_workflow/upload_demo_data_json.png)
 
@@ -72,11 +80,11 @@ Click "Save" and run "Execute". The result pops up after short time:
 
 ### Editing and writing components
 
-#### Looking into components
+#### Viewing components
 
-Hetida designer makes it easy to look into / edit / create components. Components consist of Python code and an input / output configuration.
+Hetida designer makes it easy to examine, edit or create components. Components consist of Python code and an input / output configuration.
 
-If you followed the tutorial above about workflow creation, you may have a direct look into a used component by right-clicking on an operator in your workflow, choosing "Show Details" and expanding the view
+If you followed the tutorial above about workflow creation, you may directly view one of the employed components by right-clicking on an operator in your workflow, choosing "Show Details" and expanding the view
 
 ![expand_component_details](./../../assets/first_workflow/expand_component_details.png)
 
@@ -84,7 +92,7 @@ This opens the component editor
 
 ![component_editor](./../../assets/first_workflow/component_editor.png)
 
-Note that this component revision is "released" (remember that you should use released component revisions in a workflow to be able to later release it). Therefore, the code editor does not allow to edit the code and you cannot change anything in the input / output configuration dialog either. You need to either create a new revision or a copy via one of the following buttons:
+Note that this component revision is "RELEASED" (remember that you should use released component revisions in a workflow to be able to later release it). Therefore, the code editor does not allow to edit the code and you cannot change anything in the input / output configuration dialog either. You need to either create a new revision or a copy via one of the following buttons:
 
 ![new_revision_and_copy_button](./../../assets/first_workflow/new_revision_and_copy_button.png)
 
@@ -164,7 +172,7 @@ resulting in a visualisation of "what it learned":
 
 #### Releasing components
 
-To be able to actually use your component in workflows and release them the component must be "released". "Releasing" puts the component revision from "Draft Mode" to "Released Mode". A component revision in draft mode can be edited ad libitum but if it is used in a workflow that prohibits releasing of the workflow. A released component revision can not be edited anymore but allows to release workflows where it is used. One has to create a new revision of a released component if one wants to change how it works.
+"Releasing" (or "publishing") puts the component revision from "DRAFT" state to "RELEASED" state. A component revision in DRAFT state can be edited ad libitum. A RELEASED component revision can not be edited anymore but allows to release workflows where it is used. One has to create a new revision of a released component if one wants to change how it works.
 
 To release a component revision click on the "Publish" button
 
