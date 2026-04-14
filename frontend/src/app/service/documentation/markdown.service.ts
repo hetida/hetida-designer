@@ -12,7 +12,7 @@ export class MarkdownService {
   constructor(private readonly domSanitizer: DomSanitizer) {}
 
   public parseMarkdown(text: string): SafeHtml {
-    let markdown: string;
+    let markdown = '';
     try {
       markdown = marked.parse(text, { async: false });
       // parsing katex math expression
@@ -30,12 +30,18 @@ export class MarkdownService {
   }
 
   private renderMathExpression(expression: string): string {
+    // There are two used styles of math expressions, one is inline and starts, ends with '$'.
+    // The other one is a block style and starts, ends with '$$' to flag them.
+    // 'displayStyle' verifies for inline or block expression and
+    // removes starting and trailing '$' signs from the content, so it can be rendered later.
     const displayStyle =
       expression[0] === expression[1] && expression[0] === '$';
     let content = expression.substr(
       displayStyle ? 2 : 1,
       expression.length - (displayStyle ? 4 : 2)
     );
+    // The first replace matches HTML opening and closing tags and removes them,
+    // marked will add them if he detects an '<', '>' or '/>' in the math expression.
     content = content
       .replace(/<\/?[^>]+>/g, '')
       .replace(/&amp;/g, '&')

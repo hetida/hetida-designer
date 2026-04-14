@@ -2,7 +2,7 @@
   "name": "hetida-designer-frontend",
   "description": "Hetida Designer Frontend",
   "version": "0.1.0",
-  "homepage": "https://fuseki.com/",
+  "homepage": "https://fuseki.com/data-science/hetida-designer/",
   "license": "MIT",
   "engines": {
     "node": "22.22.0"
@@ -45,18 +45,19 @@
     "angular-plotly.js": "^6.0.0",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",
-    "hd-wiring": "0.9.3",
-    "hetida-flowchart": "0.9.3",
+    "hd-wiring": "0.10.0",
+    "hetida-flowchart": "0.10.0",
     "js-sha256": "^0.11.0",
     "katex": "^0.16.28",
     "marked": "^17.0.1",
     "material-design-icons-iconfont": "^6.7.0",
     "monaco-editor": "^0.52.2",
-    "ng-hetida-flowchart": "0.9.3",
+    "ng-hetida-flowchart": "0.10.0",
     "ngx-monaco-editor-v2": "^19.0.2",
     "plotly.js": "^3.0.1",
     "plotly.js-locales": "^3.3.1",
     "rxjs": "^7.8.2",
+    "uuid": "^13.0.0",
     "zone.js": "^0.15.1"
   },
   "devDependencies": {
@@ -105,7 +106,6 @@
     "pretty-quick": "^4.2.2",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
-    "typescript": "^5.6.3",
-    "uuid": "^13.0.0"
+    "typescript": "^5.6.3"
   }
 }

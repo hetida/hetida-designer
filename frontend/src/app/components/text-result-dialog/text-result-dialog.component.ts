@@ -1,5 +1,10 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogContent,
+  MatDialogActions
+} from '@angular/material/dialog';
 
 interface DialogData {
   title: string;
@@ -10,7 +15,8 @@ interface DialogData {
   selector: 'app-result-dialog',
   templateUrl: './text-result-dialog.component.html',
   styleUrls: ['./text-result-dialog.component.scss'],
-  standalone: false
+  standalone: true,
+  imports: [MatDialogContent, MatDialogActions]
 })
 export class TextResultDialogComponent {
   constructor(

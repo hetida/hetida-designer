@@ -80,7 +80,6 @@ import { OptionalFieldsDialogComponent } from './components/optional-fields-dial
 import { from, map } from 'rxjs';
 import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
-import { TextResultDialogComponent } from './components/text-result-dialog/text-result-dialog.component';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(
@@ -134,8 +133,7 @@ const monacoConfig: NgxMonacoEditorConfig = {
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
     TransformationContextMenuComponent,
-    OptionalFieldsDialogComponent,
-    TextResultDialogComponent
+    OptionalFieldsDialogComponent
   ],
   bootstrap: [AppComponent],
   imports: [
