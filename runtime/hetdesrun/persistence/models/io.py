@@ -105,7 +105,7 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
-    def matches_connector(self, other: "Connector") -> bool:
+    def matches_connector(self, other: Connector) -> bool:
         return (
             self.id == other.id
             and self.name == other.name
@@ -122,7 +122,7 @@ class OperatorOutput(Connector):
     @classmethod
     def from_transformation_output(
         cls, transformation_output: TransformationOutput, pos_x: int = 0, pos_y: int = 0
-    ) -> "OperatorOutput":
+    ) -> OperatorOutput:
         """Transform transformation revision output into operator output.
 
         Needed to transform a component into an operator which can be wrapped into an workflow
@@ -159,7 +159,7 @@ class OperatorInput(InputTypeMixIn, Connector):
         input: TransformationInput,  # noqa: A002
         pos_x: int = 0,
         pos_y: int = 0,
-    ) -> "OperatorInput":
+    ) -> OperatorInput:
         """Transform transformation revision input into operator input.
 
         Needed to transform a component into an operator which can be wrapped into an workflow
@@ -246,7 +246,7 @@ class WorkflowContentOutput(WorkflowContentIO):
     @classmethod
     def from_operator_output(
         cls, operator_output: OperatorOutput, operator_id: UUID, operator_name: str
-    ) -> "WorkflowContentOutput":
+    ) -> WorkflowContentOutput:
         """Transform operator output into workflow output.
 
         Needed to wrap a component into a workflow for execution.
@@ -311,7 +311,7 @@ class WorkflowContentDynamicInput(InputTypeMixIn, WorkflowContentIO):
         operator_input: OperatorInput,
         operator_id: UUID,
         operator_name: str,
-    ) -> "WorkflowContentDynamicInput":
+    ) -> WorkflowContentDynamicInput:
         """Transform operator input into workflow input.
 
         Needed to wrap a component into a workflow for execution.

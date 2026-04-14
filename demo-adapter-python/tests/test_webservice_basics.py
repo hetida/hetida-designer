@@ -150,7 +150,7 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
 
             if md.isSink is not None and md.isSink is True:
                 assert response_obj["isSink"] is True
-                resp = await client.post(f"/sources/{src_id}/metadata/{key}", json=md.dict())
+                resp = await client.post(f"/sources/{src_id}/metadata/{key}", json=md.model_dump())
                 assert resp.status_code == 200
 
         for (snk_id, key), md in snk_attached_metadata_dict.items():
@@ -162,7 +162,7 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
 
             if md.isSink is not None and md.isSink is True:
                 assert response_obj["isSink"] is True
-                resp = await client.post(f"/sinks/{snk_id}/metadata/{key}", json=md.dict())
+                resp = await client.post(f"/sinks/{snk_id}/metadata/{key}", json=md.model_dump())
                 assert resp.status_code == 200
 
         for (tn_id, key), md in tn_attached_metadata_dict.items():
@@ -174,7 +174,9 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
 
             if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
-                resp = await client.post(f"/thingNodes/{tn_id}/metadata/{key}", json=md.dict())
+                resp = await client.post(
+                    f"/thingNodes/{tn_id}/metadata/{key}", json=md.model_dump()
+                )
                 assert resp.status_code == 200
 
         # all metadata that is a source in the tree is also found

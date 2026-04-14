@@ -8,7 +8,7 @@ on:
   # push:
   #   branches: [ ]
   pull_request:
-    branches: [ "develop" ]
+    branches: ["develop"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -24,12 +24,12 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5.0.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
-          python-version: "3.13"
+          python-version: "3.14"
           # Used to specify a package manager for caching in the default directory. Supported values: pip, pipenv, poetry.
           cache: pip
 
@@ -41,9 +41,8 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"/runtime
-          export PIPT_PYTHON_INTERPRETER="python3.13"
+          export PIPT_PYTHON_INTERPRETER="python3.14"
           echo "Syncinc dependencies"
           ./pipt sync
           echo "Running checks..."
           ./pipt run ./run check
-

@@ -57,11 +57,11 @@ def validate_inputs(
             invalid_component_inputs=["wide_format_timeseries_dataframe"],
         )
 
-    if wide_format_timeseries_dataframe["timestamp"].dtype != "datetime64[ns, UTC]":
+    if wide_format_timeseries_dataframe["timestamp"].dtype != "datetime64[us, UTC]":
         raise ComponentInputValidationException(
             (
                 f'{wide_format_timeseries_dataframe["timestamp"].dtype} is an inappropriate dtype for the "timestamp"'
-                " column of a MultiTSFrame. It should be datetime64[ns, UTC] instead."
+                " column of a MultiTSFrame. It should be datetime64[us, UTC] instead."
             ),
             invalid_component_inputs=["wide_format_timeseries_dataframe"],
         )

@@ -290,9 +290,7 @@ class TransformationRevisionStub(BaseModel):
         return io_interface
 
     @classmethod
-    def from_orm_model(
-        cls, orm_model: TransformationRevisionDBModel
-    ) -> "TransformationRevisionStub":
+    def from_orm_model(cls, orm_model: TransformationRevisionDBModel) -> TransformationRevisionStub:
         try:
             return TransformationRevisionStub(
                 id=orm_model.id,
@@ -713,7 +711,7 @@ class TransformationRevision(TransformationRevisionStub):
             disabled_timestamp=self.disabled_timestamp,
         )
 
-    def wrap_component_in_tr_workflow(self) -> "TransformationRevision":
+    def wrap_component_in_tr_workflow(self) -> TransformationRevision:
         operator = self.to_operator()
 
         wf_inputs: list[WorkflowContentDynamicInput] = []
@@ -772,7 +770,7 @@ class TransformationRevision(TransformationRevisionStub):
         )
 
     @classmethod
-    def from_orm_model(cls, orm_model: TransformationRevisionDBModel) -> "TransformationRevision":
+    def from_orm_model(cls, orm_model: TransformationRevisionDBModel) -> TransformationRevision:
         try:
             return TransformationRevision(
                 id=orm_model.id,

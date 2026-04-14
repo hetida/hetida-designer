@@ -1,5 +1,5 @@
 ##### Base stage
-FROM --platform=linux/amd64 python:3.13.7-slim-trixie AS base
+FROM --platform=linux/amd64 python:3.14.3-slim-trixie AS base
 
 ENV TIMEOUT=60
 

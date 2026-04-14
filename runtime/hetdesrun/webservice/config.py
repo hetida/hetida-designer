@@ -1,7 +1,7 @@
 import datetime
 import os
 import re
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import Field, Json, RootModel, SecretStr, ValidationInfo, field_validator
@@ -15,7 +15,7 @@ from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     # https://docs.python.org/3/library/logging.html#logging-levels
     CRITICAL = "CRITICAL"
     ERROR = "ERROR"
@@ -25,13 +25,13 @@ class LogLevel(str, Enum):
     NOTSET = "NOTSET"
 
 
-class ExternalAuthMode(str, Enum):
+class ExternalAuthMode(StrEnum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
-class InternalAuthMode(str, Enum):
+class InternalAuthMode(StrEnum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"

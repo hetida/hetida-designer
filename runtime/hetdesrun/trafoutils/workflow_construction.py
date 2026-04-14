@@ -217,7 +217,7 @@ class WorkflowConstructor:
         self.operator_content_vertical_free_space_base_height: float = 10.0
         self.operator_output_rect_height: float = 20.0
 
-    def __enter__(self) -> "WorkflowConstructor":
+    def __enter__(self) -> WorkflowConstructor:
         return self
 
     def __exit__(

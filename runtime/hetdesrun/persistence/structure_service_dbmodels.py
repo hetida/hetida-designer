@@ -63,7 +63,7 @@ class StructureServiceElementTypeDBModel(Base):
     stakeholder_key: Mapped[str] = mapped_column(String(36), nullable=False)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(String(1024), nullable=True)
-    thing_nodes: Mapped[list["StructureServiceThingNodeDBModel"]] = relationship(
+    thing_nodes: Mapped[list[StructureServiceThingNodeDBModel]] = relationship(
         "StructureServiceThingNodeDBModel",
         back_populates="element_type",
         # 'back_populates' specifies reciprocal relationship in
@@ -109,7 +109,7 @@ class StructureServiceSourceDBModel(Base):
     thing_node_external_ids: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
     # Defines Many-to-Many relationship with StructureServiceThingNodeDBModel
-    thing_nodes: Mapped[list["StructureServiceThingNodeDBModel"]] = relationship(
+    thing_nodes: Mapped[list[StructureServiceThingNodeDBModel]] = relationship(
         "StructureServiceThingNodeDBModel",
         # Association table for Many-to-Many relation:
         secondary=thingnode_source_association,
@@ -155,7 +155,7 @@ class StructureServiceSinkDBModel(Base):
     thing_node_external_ids: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
     # Defines Many-to-Many relationship with StructureServiceThingNodeDBModel
-    thing_nodes: Mapped[list["StructureServiceThingNodeDBModel"]] = relationship(
+    thing_nodes: Mapped[list[StructureServiceThingNodeDBModel]] = relationship(
         "StructureServiceThingNodeDBModel",
         # Association table for Many-to-Many relation:
         secondary=thingnode_sink_association,
@@ -200,12 +200,12 @@ class StructureServiceThingNodeDBModel(Base):
     )
     element_type_external_id: Mapped[str] = mapped_column(String(255), nullable=False)
     meta_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    element_type: Mapped["StructureServiceElementTypeDBModel"] = relationship(
+    element_type: Mapped[StructureServiceElementTypeDBModel] = relationship(
         "StructureServiceElementTypeDBModel", back_populates="thing_nodes", uselist=False
     )
 
     # Defines Many-to-Many relationship with StructureServiceSourceDBModel
-    sources: Mapped[list["StructureServiceSourceDBModel"]] = relationship(
+    sources: Mapped[list[StructureServiceSourceDBModel]] = relationship(
         "StructureServiceSourceDBModel",
         # Association table for Many-to-Many relation:
         secondary=thingnode_source_association,
@@ -218,7 +218,7 @@ class StructureServiceThingNodeDBModel(Base):
     )
 
     # Defines Many-to-Many relationship with StructureServiceSinkDBModel
-    sinks: Mapped[list["StructureServiceSinkDBModel"]] = relationship(
+    sinks: Mapped[list[StructureServiceSinkDBModel]] = relationship(
         "StructureServiceSinkDBModel",
         # Association table for Many-to-Many relation:
         secondary=thingnode_sink_association,

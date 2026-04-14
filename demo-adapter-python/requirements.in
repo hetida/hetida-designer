@@ -5,7 +5,8 @@ httptools
 httpx
 numpy
 pandas
-pydantic[dotenv]>=1.8.2,<2
+pydantic[dotenv]
+pydantic-settings
 python-jose[cryptography]
 uvicorn>=0.17.2
 uvloop

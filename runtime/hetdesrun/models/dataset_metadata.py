@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError, model_validator
 logger = logging.getLogger(__name__)
 
 
-class IntervalType(str, Enum):
+class IntervalType(StrEnum):
     CLOSED = "closed"
     LEFT_CLOSED = "left_closed"
     RIGHT_CLOSED = "right_closed"
@@ -44,7 +44,7 @@ class DatasetMetadata(BaseModel):
     new_data_invalidation_date: datetime | None = None
 
     @model_validator(mode="after")
-    def validate_constraints(self) -> "DatasetMetadata":
+    def validate_constraints(self) -> DatasetMetadata:
         if self.only_invalidate and not self.invalidate_dataset:
             raise ValueError("only_invalidate can only be true if invalidate_dataset is also true.")
 

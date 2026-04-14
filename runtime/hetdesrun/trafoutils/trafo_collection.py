@@ -32,11 +32,11 @@ class TrafoCollection:
         self.store_into_directory = store_into_directory
         self.registered_trafos: list[TransformationRevision] = []
 
-    def __enter__(self: "TrafoCollection") -> "TrafoCollection":
+    def __enter__(self: TrafoCollection) -> TrafoCollection:
         return self
 
     def __exit__(
-        self: "TrafoCollection",
+        self: TrafoCollection,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,

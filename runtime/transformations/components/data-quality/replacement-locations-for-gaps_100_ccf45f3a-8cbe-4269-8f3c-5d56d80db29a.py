@@ -736,8 +736,8 @@ no_gap_intervals = pd.DataFrame(
     ],
 ).astype(
     {
-        "start_time": "datetime64[ns, UTC]",
-        "end_time": "datetime64[ns, UTC]",
+        "start_time": "datetime64[us, UTC]",
+        "end_time": "datetime64[us, UTC]",
         "start_inclusive": bool,
         "end_inclusive": bool,
     }

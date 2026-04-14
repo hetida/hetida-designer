@@ -519,14 +519,14 @@ def test_direct_provisioning_output_handling():
     s = "2025-05-19T08:27:13+00:00"
     series = pd.Series([s], index=[s])
 
-    assert series.dtype == object
-    assert series.index.dtype == object
+    assert pd.api.types.is_string_dtype(series.dtype)
+    assert pd.api.types.is_string_dtype(series.index.dtype)
 
     round_trip_series = pd.read_json(StringIO(series.to_json()), typ="series")
 
     # round trip is not identity
-    assert str(round_trip_series.dtype) == "datetime64[ns, UTC]"
-    assert str(round_trip_series.index.dtype) == "datetime64[ns, UTC]"
+    assert str(round_trip_series.dtype) == "datetime64[us, UTC]"
+    assert str(round_trip_series.index.dtype) == "datetime64[us, UTC]"
 
     # So we have an example where a second serialization / deserialization
     # would be harmful!
@@ -536,8 +536,8 @@ def test_direct_provisioning_output_handling():
         StringIO(series.to_json()), typ="series", convert_axes=False, convert_dates=False
     )
 
-    assert round_trip_series_without_inference.dtype == object
-    assert round_trip_series_without_inference.index.dtype == object
+    assert pd.api.types.is_string_dtype(round_trip_series_without_inference.dtype)
+    assert pd.api.types.is_string_dtype(round_trip_series_without_inference.index.dtype)
 
     assert round_trip_series_without_inference.iloc[0] == s
     assert round_trip_series_without_inference.index[0] == s

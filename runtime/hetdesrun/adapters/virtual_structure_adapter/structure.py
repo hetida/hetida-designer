@@ -35,7 +35,7 @@ def get_children_from_structure_service(
     """
     try:
         thing_nodes, sources, sinks = get_children(parent_id)
-    except (DBNotFoundError, DBIntegrityError):
+    except DBNotFoundError, DBIntegrityError:
         raise
 
     struct_thing_nodes = [

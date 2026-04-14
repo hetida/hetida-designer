@@ -134,7 +134,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False, "default_value": "1h"}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "default_value": "1h",
+            }
+        },
     },
     {
         "id": "root.plantC.picklingUnit.influx.anomaly_score",

@@ -7,7 +7,7 @@ Uses the pandas pivot method to convert a MultiTsFrame to a wide format DataFram
 
 ## Inputs
 * **multitsframe** (Pandas DataFrame): The input DataFrame in the format of a MultiTSFrame: The DataFrame should contain the columns "timestamp", "metric", "value", and possibly more
-(e.g. "longitude", "latitude"). The timestamp column should have dtype datetime64[ns, UTC], the "metric" column dtype string, and all other columns dtype float64.
+(e.g. "longitude", "latitude"). The timestamp column should have dtype datetime64[us, UTC], the "metric" column dtype string, and all other columns dtype float64.
 * **handle_multiple_value_columns** (String):  Should be one of ["drop", "flatten", "hierarchical"]. Use this parameter to specify how to handle columns additional to "timestamp", "metric", and "value" (e.g. "longitude", "latitude"). If this parameter is set to "drop", additional columns are ignored. Otherwise a MultiIndex is constructed. If "hierarchical", the MultiIndex is left hierarchical, if "flatten" it's flattened to a one-level index using the flattening_delimiter (e.g., "value.a", "value.b", "value.c", "longitude.a", ...). Default: "drop".
 * **flattening_delimiter** (String): The delimiter used to flatten the index if handle_multiple_value_columns is "flatten". Default: ".".
 

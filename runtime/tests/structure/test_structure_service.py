@@ -611,67 +611,6 @@ def test_update_structure_modified_source_thing_node_relation():
         assert updated_source_relationship_id == root_node_from_db_initial.id
 
 
-@pytest.mark.skip(
-    reason="This tests whether a partial update is possible. Currently it is not supported"
-)
-@pytest.mark.usefixtures("_db_test_structure")
-def test_update_structure_modified_source_thing_node_relation_with_missing_thing_node():
-    # Verify structure before update
-    with get_session()() as session:
-        source_from_db_initial = (
-            session.query(StructureServiceSourceDBModel)
-            .filter_by(external_id="EnergyUsage_PumpSystem_StorageTank")
-            .first()
-        )
-
-        print("\n---  DB structure before update:")
-        print(f"Source ID in DB: {source_from_db_initial.id}")
-        print(f"Thing node external IDs in DB: {source_from_db_initial.thing_node_external_ids}")
-        print(f"Thing nodes in DB: {source_from_db_initial.thing_nodes}")
-
-    # Define paths to the JSON files
-    file_path = "tests/structure/data/db_test_incomplete_structure3.json"
-
-    # Load structure from new JSON file
-    updated_structure = load_structure_from_json_file(file_path)
-    source_from_structure = updated_structure.sources[0]
-
-    print("\n--- New JSON partial structure before update:")
-    print(
-        f"Thing node external IDs in new structure: {source_from_structure.thing_node_external_ids}"
-    )
-
-    # Update the structure in the database with new structure
-    # The new structure links a single source (EnergyUsage_PumpSystem_StorageTank)
-    # to thing node 'Plant1' that is not contained in the new structure
-    # but in the existing DB structure.
-    update_structure(updated_structure)
-
-    # Verify structure after update
-    with get_session()() as session:
-        source_from_db_updated = (
-            session.query(StructureServiceSourceDBModel)
-            .filter_by(external_id="EnergyUsage_PumpSystem_StorageTank")
-            .first()
-        )
-
-        print("\n---  DB structure after update:")
-        print(f"Updated Source ID in DB: {source_from_db_updated.id}")
-        print(
-            "Updated thing node external IDs in DB: "
-            f"{source_from_db_updated.thing_node_external_ids}"
-        )
-        print(f"Thing nodes in DB: {source_from_db_updated.thing_nodes}")
-
-        # Verify that the targeted source was updated
-        assert source_from_db_updated.id == source_from_db_initial.id
-
-        # Verify that thing nodes relationship was updated
-        # TODO improve assertions
-        assert source_from_db_updated.thing_nodes != []
-        assert len(source_from_db_updated.thing_nodes) == 1
-
-
 def test_are_structure_tables_empty_when_empty(mocked_clean_test_db_session):
     assert are_structure_tables_empty(), "Database should be empty but is not."
 

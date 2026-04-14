@@ -108,7 +108,7 @@ async def test_auth_without_access_token_fails(
 ):
     client = open_async_test_client_with_auth
     response = await client.get("/api/transformations/", headers={})
-    assert response.status_code == 403
+    assert response.status_code == 401
     # empty auth header should fail before trying to update public key:
     assert mocked_public_key_fetching.called == 0
 

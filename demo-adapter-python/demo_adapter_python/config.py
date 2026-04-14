@@ -1,7 +1,8 @@
 import os
 from enum import Enum
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class LogLevel(str, Enum):
@@ -17,13 +18,13 @@ class LogLevel(str, Enum):
 class PythonDemoAdapterConfig(BaseSettings):
     log_level: LogLevel = Field(
         LogLevel.INFO,
-        env="LOG_LEVEL",
+        alias="LOG_LEVEL",
         description="Python logging level as string, i.e. one of "
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
     swagger_prefix: str = Field(
         "",
-        env="OPENAPI_PREFIX",
+        alias="OPENAPI_PREFIX",
         description="root path (necessary for OpenAPI UI if behind proxy)",
     )
     allowed_origins: str = Field(
@@ -32,8 +33,8 @@ class PythonDemoAdapterConfig(BaseSettings):
             ",http://localhost,hetida-designer-demo-adapter-python"
         ),
         description="Comma separated allowed origins (CORS)",
-        env="ALLOWED_ORIGINS",
-        example="http://exampledomain.com,http://anotherexampledomain.de",
+        alias="ALLOWED_ORIGINS",
+        examples=["http://exampledomain.com,http://anotherexampledomain.de"],
     )
 
 

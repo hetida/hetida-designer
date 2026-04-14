@@ -40,7 +40,7 @@ def format_code_with_black(code: str) -> str:
             code,
             fast=False,
             mode=black.Mode(
-                target_versions={black.TargetVersion.PY313},  # python3.13
+                target_versions={black.TargetVersion.PY314},  # python3.14
             ),
         )
     except black.NothingChanged:

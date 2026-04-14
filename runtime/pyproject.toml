@@ -3,8 +3,8 @@
 # allow longer lines than the default (88, same as black)
 line-length = 100
 
-# Assume python313
-target-version = "py313"
+# Assume python314
+target-version = "py314"
 
 lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
 

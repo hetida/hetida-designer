@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 from functools import cache, cached_property
 from pathlib import Path
 from typing import Annotated, Literal
@@ -40,7 +40,7 @@ BucketName = Annotated[
 ]
 
 
-class FileExtension(str, Enum):
+class FileExtension(StrEnum):
     """BLOB storage adapter file extensions.
 
     These are the allowed file extensions for objects covered by the adapter hierarchy.
@@ -71,7 +71,7 @@ class StructureBucket(BaseModel):
 
 def get_structure_bucket_and_object_key_prefix_from_id(
     id: IdString,  # noqa: A002
-) -> tuple[StructureBucket, "IdString"]:
+) -> tuple[StructureBucket, IdString]:
     if OBJECT_KEY_DIR_SEPARATOR not in id:
         raise ValueError(
             f"Cannot create bucket name and object key prefix based on an id {id} "
@@ -212,7 +212,7 @@ class ObjectKey(BaseModel):
     @classmethod
     def from_name_and_job_id(
         cls, name: IdString, job_id: UUID, file_extension: FileExtension
-    ) -> "ObjectKey":
+    ) -> ObjectKey:
         now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
             string=name
@@ -231,7 +231,7 @@ class ObjectKey(BaseModel):
     @classmethod
     def from_name_and_time_and_job_id(
         cls, name: IdString, time: datetime, job_id: UUID, file_extension: FileExtension
-    ) -> "ObjectKey":
+    ) -> ObjectKey:
         return ObjectKey(
             string=name
             + IDENTIFIER_SEPARATOR
@@ -247,7 +247,7 @@ class ObjectKey(BaseModel):
         )
 
     @classmethod
-    def from_string(cls, string: IdString) -> "ObjectKey":
+    def from_string(cls, string: IdString) -> ObjectKey:
         file_extension = ""
         try:
             name, time_string, job_id_string = string.rsplit(IDENTIFIER_SEPARATOR, maxsplit=2)
@@ -276,7 +276,7 @@ class ObjectKey(BaseModel):
         thing_node_id: IdString,
         metadata_key: str,
         file_extension: FileExtension | None = None,
-    ) -> "ObjectKey":
+    ) -> ObjectKey:
         if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
             raise ValueError(
                 f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
@@ -310,7 +310,7 @@ class ObjectKey(BaseModel):
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
         return IdString(bucket.name + OBJECT_KEY_DIR_SEPARATOR + self.name)
 
-    def to_custom_objects_object_key(self) -> "ObjectKey":
+    def to_custom_objects_object_key(self) -> ObjectKey:
         return ObjectKey.from_name_and_time_and_job_id(
             name=self.name,
             time=self.time,
@@ -500,7 +500,7 @@ class BlobStorageStructureSource(BaseModel):
     @classmethod
     def from_structure_bucket_and_object_key(
         cls, bucket: StructureBucket, object_key: ObjectKey
-    ) -> "BlobStorageStructureSource":
+    ) -> BlobStorageStructureSource:
         name = (
             object_key.name.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[-1]
             + HIERARCHY_END_NODE_NAME_SEPARATOR
@@ -641,7 +641,7 @@ class BlobStorageStructureSink(BaseModel):
         return metadataKey
 
     @classmethod
-    def from_thing_node(cls, thing_node: StructureThingNode) -> "BlobStorageStructureSink":
+    def from_thing_node(cls, thing_node: StructureThingNode) -> BlobStorageStructureSink:
         return BlobStorageStructureSink(
             id=thing_node.id + IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX,
             thingNodeId=thing_node.id,
@@ -680,7 +680,7 @@ class StructureResponse(BaseModel):
 class HierarchyNode(BaseModel):
     name: ThingNodeName
     description: str
-    substructure: tuple["HierarchyNode", ...] | None = None
+    substructure: tuple[HierarchyNode, ...] | None = None
     below_structure_defines_object_key: bool = False
     model_config = ConfigDict(frozen=True)
 
@@ -887,7 +887,7 @@ class AdapterHierarchy(BaseModel):
     def from_file(
         cls,
         path: str = get_blob_adapter_config().adapter_hierarchy_location,
-    ) -> "AdapterHierarchy":
+    ) -> AdapterHierarchy:
         try:
             return AdapterHierarchy.model_validate_json(Path(path).read_text())
         except FileNotFoundError as error:

@@ -61,7 +61,7 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
 
 
 @pytest.mark.asyncio
-async def test_load_metadata_request():
+async def test_load_metadata_request(mock_httpx):
     with mock.patch(
         "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
@@ -82,72 +82,103 @@ async def test_load_metadata_request():
             ),
         }
 
-        with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
-            return_value=resp_mock,
-        ) as mocked_async_client_get:
+        with mock_httpx(
+            target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+            json={"key": "serial", "value": 24567, "dataType": "int"},
+            status_code=200,
+        ) as mocked_async_client:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
             )
 
             assert loaded_metadata["wf_input_1"] == 24567
-            _, args, kwargs = mocked_async_client_get.mock_calls[0]
+            _, args, kwargs = mocked_async_client.get.mock_calls[0]
 
             assert args[0] == "https://hetida.de/sources/id_1/metadata/serial"
             assert kwargs["params"] == [("filter_key", "filter_value")]
-
-            resp_mock.status_code = 400
-            resp_mock.text = "my adapter error"
-            with pytest.raises(AdapterConnectionError, match="my adapter error"):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
-
-            resp_mock.status_code = 200
-            resp_mock.json = mock.Mock(
-                return_value={"keyyyy": "serial", "value": 24567, "dataType": "int"}
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json={"key": "serial", "value": 24567, "dataType": "int"},
+                status_code=400,
+                text="my adapter error",
+            ) as mocked_async_client,
+            pytest.raises(AdapterConnectionError, match="my adapter error"),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
             )
-            with pytest.raises(AdapterHandlingException):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
-            resp_mock.json = mock.Mock(
-                return_value={"key": "desc", "value": 24567, "dataType": "int"},
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json={"keyyyy": "serial", "value": 24567, "dataType": "int"},
+                status_code=200,
+                text="my adapter error",
+            ) as mocked_async_client,
+            pytest.raises(AdapterHandlingException),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
             )
-            with pytest.raises(AdapterHandlingException):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
-            resp_mock.json = mock.Mock(
-                return_value={"key": "serial", "value": 24567, "dataType": "string"}
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json={"key": "desc", "value": 24567, "dataType": "int"},
+                status_code=200,
+                text="my adapter error",
+            ) as mocked_async_client,
+            pytest.raises(AdapterHandlingException, match=".*wrong key.*"),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
             )
-            with pytest.raises(AdapterHandlingException):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
-            resp_mock.json = mock.Mock(
-                return_value={
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json={"key": "serial", "value": 24567, "dataType": "string"},
+                status_code=200,
+                text="my adapter error",
+            ),
+            pytest.raises(AdapterHandlingException, match=".*wrong value dataType.*"),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
+            )
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json={
                     "key": "serial",
                     "value": "some string",
                     "dataType": "int",
-                }
+                },
+                status_code=200,
+                text="my adapter error",
+            ),
+            pytest.raises(AdapterHandlingException, match=".*should be a valid integer.*"),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
             )
-            with pytest.raises(AdapterHandlingException):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
-            resp_mock.json = mock.Mock(return_value=[])
-            with pytest.raises(AdapterHandlingException):
-                loaded_metadata = await load_multiple_metadata(
-                    data_to_load,
-                    adapter_key="test_load_metadata_adapter_key",
-                )
+        with (
+            mock_httpx(
+                target="hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient",
+                json=[],
+                status_code=200,
+                text="my adapter error",
+            ),
+            pytest.raises(AdapterHandlingException, match=".*should be a valid dictionary.*"),
+        ):
+            loaded_metadata = await load_multiple_metadata(
+                data_to_load,
+                adapter_key="test_load_metadata_adapter_key",
+            )
 
 
 @pytest.mark.asyncio

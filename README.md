@@ -224,7 +224,7 @@ Dependencies: Node 22.22.0 and npm 10.9.x (other versions are not tested).
 The frontend subdirectory also contains end-to-end tests via playwright documented [here](./frontend/end2end_tests.md).
 
 #### Runtime and Backend
-Dependencies: Python 3.13 (other versions are not
+Dependencies: Python 3.14 (other versions are not
 tested, but higher versions will probably work as well). 
 
 You may need additional packages like a C compiler (e.g. gcc) depending on your

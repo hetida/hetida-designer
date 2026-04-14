@@ -1,7 +1,7 @@
 """Component entrypoint registration utilities"""
 
-import asyncio
 import functools
+import inspect
 from collections.abc import Callable
 
 from hetdesrun.datatypes import DataType
@@ -35,7 +35,7 @@ def register(
     """
 
     def wrapper_func(func: Callable) -> Callable:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
 
             @functools.wraps(func)
             def return_func_or_coro(*args, **kwargs):  # type: ignore

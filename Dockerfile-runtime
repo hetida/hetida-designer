@@ -4,7 +4,7 @@
 # validated on this architecture. Building for other platforms may succeed but
 # is unsupported.
 ARG TARGETPLATFORM=linux/amd64
-FROM --platform=${TARGETPLATFORM} python:3.13.7-slim-trixie AS base
+FROM --platform=${TARGETPLATFORM} python:3.14.3-slim-trixie AS base
 
 ENV TIMEOUT=900
 
