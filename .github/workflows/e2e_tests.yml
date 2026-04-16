@@ -6,9 +6,9 @@ name: End2End tests
 on:
   # Triggers the workflow on push or pull request events but only for the "develop" branch
   push:
-     branches: [ "develop" ]
+    branches: ["develop"]
   pull_request:
-    branches: [ "develop" ]
+    branches: ["develop"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -27,24 +27,22 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.13.0
+          node-version: 22.22.0
 
       - uses: cachix/install-nix-action@v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-
 
       # Runs a single command using the runners shell
       - name: Start_designer
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
-          
+
           echo "START designer in background using overmind"
           # Start designer in background
           nix-shell --run 'echo "Running for dep buildup"'
           nix-shell --run 'overmind s > overmind_log.txt' &
-
 
       - name: Prepare_Playwright
         run: |
@@ -57,7 +55,7 @@ jobs:
           npx playwright install-deps
 
       - name: Wait_for_designer_being_up_and_running
-        run: | 
+        run: |
           set -e
           cd "$GITHUB_WORKSPACE"
 
@@ -104,14 +102,14 @@ jobs:
           set -e
           cd "$GITHUB_WORKSPACE/frontend"
           export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/playwright_browsers"
-          
+
           echo "RUN PLAYWRIGHT TESTS"
           DEBUG=pw:browser,pw:api,pw:webserver PLAYWRIGHT_TARGET_URL="http://localhost:4200" npm run e2e-all
 
       - name: Cleanup
         run: |
           set -e
-          
+
           cd "$GITHUB_WORKSPACE"
 
           echo "Kill running designer services"

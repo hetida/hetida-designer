@@ -94,7 +94,8 @@ function ioIsConstant(io: IO | Constant): io is Constant {
 @Component({
   templateUrl: 'workflow-io-dialog.component.html',
   styleUrls: ['./workflow-io-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class WorkflowIODialogComponent implements AfterViewInit {
   ioItemForm: FormGroup;
@@ -435,7 +436,7 @@ export class WorkflowIODialogComponent implements AfterViewInit {
   }
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
-    // TODO do not mutate the dialog data, take a copy from form control
+    // TODO: do not mutate the dialog data, take a copy from form control
     const foundInput = this.data.workflowTransformation.content.inputs.find(
       (ref: IOConnector) => ref.id === data.id
     );

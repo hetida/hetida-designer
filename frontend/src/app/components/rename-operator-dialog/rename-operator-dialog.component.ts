@@ -10,7 +10,8 @@ export interface RenameOperatorDialogData {
 @Component({
   selector: 'hd-rename-operator-dialog',
   templateUrl: './rename-operator-dialog.component.html',
-  styleUrls: ['./rename-operator-dialog.component.scss']
+  styleUrls: ['./rename-operator-dialog.component.scss'],
+  standalone: false
 })
 export class RenameOperatorDialogComponent implements OnInit {
   constructor(

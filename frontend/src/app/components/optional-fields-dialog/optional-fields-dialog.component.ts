@@ -13,7 +13,8 @@ export interface OptionalFieldsDialogData {
 @Component({
   selector: 'hd-optional-fields-dialog',
   templateUrl: './optional-fields-dialog.component.html',
-  styleUrls: ['./optional-fields-dialog.component.scss']
+  styleUrls: ['./optional-fields-dialog.component.scss'],
+  standalone: false
 })
 export class OptionalFieldsDialogComponent {
   optionalFieldsForm: FormGroup;

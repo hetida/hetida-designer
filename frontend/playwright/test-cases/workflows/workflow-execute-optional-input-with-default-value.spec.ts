@@ -37,11 +37,12 @@ test('Execute workflow with Optional Input and Default Value', async ({
 
   // Add a component to the workflow
   await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(componentName);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemFromNavigationToFlowchart(
-    componentCategory,
-    `${componentName} (${componentTag})`
+    `${componentName}(${componentTag})`
   );
+  await hetidaDesigner.searchInNavigation(`Test execute a workflow ${browserName}`);
 
   // Configure workflow I/O
   await hetidaDesigner.clickIconInToolbar('Configure_IO');
@@ -90,10 +91,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
 
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    workflowCategory,
-    workflowName
-  );
+  await hetidaDesigner.rightClickItemInNavigation(`${workflowName}(${workflowTag})`);
   await page.locator('.mat-mdc-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Delete');
   await page.waitForSelector(

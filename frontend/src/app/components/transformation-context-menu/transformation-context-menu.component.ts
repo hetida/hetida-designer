@@ -20,7 +20,8 @@ import {
   selector: 'hd-transformation-context-menu',
   templateUrl: './transformation-context-menu.component.html',
   styleUrls: ['./transformation-context-menu.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class TransformationContextMenuComponent
   implements AfterViewInit, OnDestroy

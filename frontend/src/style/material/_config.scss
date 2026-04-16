@@ -1,51 +1,53 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
-@import 'theme';
-@import '../colors';
+@use 'theme';
+@use '../colors';
 
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 // Colors
 
 $mg-primary-palette: (
-  100: $hd-grey,
-  200: $hd-blue-dark,
-  300: $hd-blue-light,
-  400: $hd-pink,
-  500: $hd-black,
-  700: $hd-grey-dark,
-  A100: $hd-white,
-  A200: $hd-grey-dark,
-  A400: $hd-grey,
+  100: colors.$hd-grey,
+  200: colors.$hd-blue-dark,
+  300: colors.$hd-blue-light,
+  400: colors.$hd-pink,
+  500: colors.$hd-black,
+  700: colors.$hd-grey-dark,
+  A100: colors.$hd-white,
+  A200: colors.$hd-grey-dark,
+  A400: colors.$hd-grey,
   contrast: (
-    100: $hd-black,
-    200: $hd-white,
-    300: $hd-white,
-    400: $hd-white,
-    500: $hd-white,
-    700: $hd-white
+    100: colors.$hd-black,
+    200: colors.$hd-white,
+    300: colors.$hd-white,
+    400: colors.$hd-white,
+    500: colors.$hd-white,
+    700: colors.$hd-white
   )
 );
 
 $mg-secondary-palette: (
-  100: $hd-grey,
-  200: $hd-grey-dark,
-  300: $hd-blue-light,
-  400: $hd-black,
-  500: $hd-white,
-  700: $hd-grey,
+  100: colors.$hd-grey,
+  200: colors.$hd-grey-dark,
+  300: colors.$hd-blue-light,
+  400: colors.$hd-black,
+  500: colors.$hd-white,
+  700: colors.$hd-grey,
   contrast: (
-    100: $hd-yellow,
-    200: $hd-yellow,
-    300: $hd-yellow,
-    400: $hd-yellow,
-    500: $hd-black,
-    700: $hd-black
+    100: colors.$hd-yellow,
+    200: colors.$hd-yellow,
+    300: colors.$hd-yellow,
+    400: colors.$hd-yellow,
+    500: colors.$hd-black,
+    700: colors.$hd-black
   )
 );
 
 // Typography
 
-$light-primary-text: map_get($mg-primary-palette, 700);
+$light-primary-text: map.get($mg-primary-palette, 700);
 
 $mg-typography: mat.m2-define-typography-config(
   $font-family: 'Roboto, "Helvetica Neue", sans-serif',
@@ -72,38 +74,38 @@ $mg-typography: mat.m2-define-typography-config(
 // Light Theme
 
 mat.$m2-light-theme-foreground-palette: (
-  base: map_get($mg-primary-palette, 500),
-  divider: map_get($mg-primary-palette, 100),
-  dividers: map_get($mg-primary-palette, 100),
-  disabled: map_get($mg-secondary-palette, 100),
-  disabled-button: map_get($mg-secondary-palette, 400),
-  disabled-text: map_get($mg-secondary-palette, 700),
-  elevation: map_get($mg-secondary-palette, 700),
-  hint-text: map_get($mg-primary-palette, 100),
-  secondary-text: map_get($mg-primary-palette, 500),
-  icon: map_get($mg-primary-palette, 700),
-  icons: map_get($mg-primary-palette, 700),
-  text: map_get($mg-primary-palette, 500),
-  slider-min: map_get($mg-primary-palette, 700),
-  slider-off: map_get($mg-primary-palette, 100),
-  slider-off-active: map_get($mg-primary-palette, 400)
+  base: map.get($mg-primary-palette, 500),
+  divider: map.get($mg-primary-palette, 100),
+  dividers: map.get($mg-primary-palette, 100),
+  disabled: map.get($mg-secondary-palette, 100),
+  disabled-button: map.get($mg-secondary-palette, 400),
+  disabled-text: map.get($mg-secondary-palette, 700),
+  elevation: map.get($mg-secondary-palette, 700),
+  hint-text: map.get($mg-primary-palette, 100),
+  secondary-text: map.get($mg-primary-palette, 500),
+  icon: map.get($mg-primary-palette, 700),
+  icons: map.get($mg-primary-palette, 700),
+  text: map.get($mg-primary-palette, 500),
+  slider-min: map.get($mg-primary-palette, 700),
+  slider-off: map.get($mg-primary-palette, 100),
+  slider-off-active: map.get($mg-primary-palette, 400)
 );
 
 mat.$m2-light-theme-background-palette: (
-  status-bar: map_get($mg-secondary-palette, 400),
-  app-bar: map_get($mg-secondary-palette, 400),
-  background: map_get($mg-secondary-palette, 500),
-  hover: map_get($mg-primary-palette, 700),
-  card: map_get($mg-secondary-palette, 500),
-  dialog: map_get($mg-secondary-palette, 500),
-  disabled-button: map_get($mg-secondary-palette, 700),
-  raised-button: map_get($mg-primary-palette, 700),
-  focused-button: map_get($mg-primary-palette, 700),
-  selected-button: map_get($mg-primary-palette, 500),
-  selected-disabled-button: map_get($mg-secondary-palette, 700),
-  disabled-button-toggle: map_get(mat.$m2-grey-palette, 200),
-  unselected-chip: map_get(mat.$m2-grey-palette, 300),
-  disabled-list-option: map_get(mat.$m2-grey-palette, 200)
+  status-bar: map.get($mg-secondary-palette, 400),
+  app-bar: map.get($mg-secondary-palette, 400),
+  background: map.get($mg-secondary-palette, 500),
+  hover: map.get($mg-primary-palette, 700),
+  card: map.get($mg-secondary-palette, 500),
+  dialog: map.get($mg-secondary-palette, 500),
+  disabled-button: map.get($mg-secondary-palette, 700),
+  raised-button: map.get($mg-primary-palette, 700),
+  focused-button: map.get($mg-primary-palette, 700),
+  selected-button: map.get($mg-primary-palette, 500),
+  selected-disabled-button: map.get($mg-secondary-palette, 700),
+  disabled-button-toggle: map.get(mat.$m2-grey-palette, 200),
+  unselected-chip: map.get(mat.$m2-grey-palette, 300),
+  disabled-list-option: map.get(mat.$m2-grey-palette, 200)
 );
 
 $hd-primary: mat.m2-define-palette($mg-primary-palette);
@@ -120,43 +122,43 @@ $hd-theme: mat.m2-define-light-theme(
 );
 
 @include mat.all-component-themes($hd-theme);
-@include hd-material-theme($hd-theme);
+@include theme.hd-material-theme($hd-theme);
 
 // Dark Theme
 
 mat.$m2-dark-theme-foreground-palette: (
-  base: map_get($mg-secondary-palette, 500),
-  divider: map_get($mg-secondary-palette, 700),
-  dividers: map_get($mg-secondary-palette, 700),
-  disabled: map_get($mg-primary-palette, 500),
-  disabled-button: map_get($mg-primary-palette, 100),
-  disabled-text: map_get($mg-primary-palette, 700),
-  elevation: map_get($mg-primary-palette, 500),
-  hint-text: map_get($mg-secondary-palette, 100),
-  secondary-text: map_get($mg-secondary-palette, 500),
-  icon: map_get($mg-secondary-palette, 700),
-  icons: map_get($mg-secondary-palette, 700),
-  text: map_get($mg-secondary-palette, 500),
-  slider-min: map_get($mg-secondary-palette, 700),
-  slider-off: map_get($mg-secondary-palette, 100),
-  slider-off-active: map_get($mg-secondary-palette, 400)
+  base: map.get($mg-secondary-palette, 500),
+  divider: map.get($mg-secondary-palette, 700),
+  dividers: map.get($mg-secondary-palette, 700),
+  disabled: map.get($mg-primary-palette, 500),
+  disabled-button: map.get($mg-primary-palette, 100),
+  disabled-text: map.get($mg-primary-palette, 700),
+  elevation: map.get($mg-primary-palette, 500),
+  hint-text: map.get($mg-secondary-palette, 100),
+  secondary-text: map.get($mg-secondary-palette, 500),
+  icon: map.get($mg-secondary-palette, 700),
+  icons: map.get($mg-secondary-palette, 700),
+  text: map.get($mg-secondary-palette, 500),
+  slider-min: map.get($mg-secondary-palette, 700),
+  slider-off: map.get($mg-secondary-palette, 100),
+  slider-off-active: map.get($mg-secondary-palette, 400)
 );
 
 mat.$m2-dark-theme-background-palette: (
-  status-bar: map_get($mg-primary-palette, 400),
-  app-bar: map_get($mg-primary-palette, 400),
-  background: map_get($mg-primary-palette, 500),
-  hover: map_get($mg-secondary-palette, 200),
-  card: map_get($mg-primary-palette, 500),
-  dialog: map_get($mg-primary-palette, 500),
-  disabled-button: map_get($mg-primary-palette, 500),
-  raised-button: map_get($mg-secondary-palette, 700),
-  focused-button: map_get($mg-secondary-palette, 700),
-  selected-button: map_get($mg-primary-palette, 500),
-  selected-disabled-button: map_get($mg-primary-palette, 500),
-  disabled-button-toggle: map_get(mat.$m2-grey-palette, 200),
-  unselected-chip: map_get(mat.$m2-grey-palette, 300),
-  disabled-list-option: map_get(mat.$m2-grey-palette, 200)
+  status-bar: map.get($mg-primary-palette, 400),
+  app-bar: map.get($mg-primary-palette, 400),
+  background: map.get($mg-primary-palette, 500),
+  hover: map.get($mg-secondary-palette, 200),
+  card: map.get($mg-primary-palette, 500),
+  dialog: map.get($mg-primary-palette, 500),
+  disabled-button: map.get($mg-primary-palette, 500),
+  raised-button: map.get($mg-secondary-palette, 700),
+  focused-button: map.get($mg-secondary-palette, 700),
+  selected-button: map.get($mg-primary-palette, 500),
+  selected-disabled-button: map.get($mg-primary-palette, 500),
+  disabled-button-toggle: map.get(mat.$m2-grey-palette, 200),
+  unselected-chip: map.get(mat.$m2-grey-palette, 300),
+  disabled-list-option: map.get(mat.$m2-grey-palette, 200)
 );
 
 $hd-dark-primary: mat.m2-define-palette($mg-secondary-palette);
@@ -174,5 +176,5 @@ $hd-dark-theme: mat.m2-define-dark-theme(
 
 .dark-theme {
   @include mat.all-component-colors($hd-dark-theme);
-  @include hd-material-theme($hd-dark-theme);
+  @include theme.hd-material-theme($hd-dark-theme);
 }
