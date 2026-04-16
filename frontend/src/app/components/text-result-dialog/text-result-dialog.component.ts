@@ -1,11 +1,13 @@
 import { Component, Inject } from '@angular/core';
+
 import {
   MAT_DIALOG_DATA,
   MatDialogRef,
   MatDialogContent,
-  MatDialogActions
+  MatDialogActions,
+  MatDialogTitle
 } from '@angular/material/dialog';
-
+import { MatButtonModule } from '@angular/material/button';
 interface DialogData {
   title: string;
   message: string;
@@ -16,7 +18,7 @@ interface DialogData {
   templateUrl: './text-result-dialog.component.html',
   styleUrls: ['./text-result-dialog.component.scss'],
   standalone: true,
-  imports: [MatDialogContent, MatDialogActions]
+  imports: [MatDialogContent, MatDialogActions, MatDialogTitle, MatButtonModule]
 })
 export class TextResultDialogComponent {
   constructor(
