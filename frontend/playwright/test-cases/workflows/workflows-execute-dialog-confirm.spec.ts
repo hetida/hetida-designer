@@ -4,11 +4,14 @@ test('Confirm "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
+  const workflowTag = '1.0.0';
 
   // Act
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');

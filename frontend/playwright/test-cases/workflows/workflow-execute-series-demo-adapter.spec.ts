@@ -19,7 +19,9 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   // Open workflow
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   // Open execute workflow dialog
   await hetidaDesigner.clickIconInToolbar('Execute');

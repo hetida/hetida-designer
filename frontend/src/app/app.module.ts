@@ -4,10 +4,11 @@ import {
   withInterceptorsFromDi
 } from '@angular/common/http';
 import {
-  APP_INITIALIZER,
   ErrorHandler,
-  Injectable,
-  NgModule
+  NgModule,
+  inject,
+  provideAppInitializer,
+  Injectable
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -38,7 +39,10 @@ import {
   WiringTheme
 } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
-import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import {
+  MonacoEditorModule,
+  NgxMonacoEditorConfig
+} from 'ngx-monaco-editor-v2';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -124,6 +128,12 @@ const httpLoaderFactory = (configService: ConfigService) => {
   return new StsConfigHttpLoader(authConfig);
 };
 
+const monacoConfig: NgxMonacoEditorConfig = {
+  // TODO: Broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
+  // https://github.com/microsoft/monaco-editor/issues/4778
+  baseUrl: `${window.location.origin}/assets/monaco/min/vs`
+};
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -166,9 +176,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OwlMomentDateTimeModule,
     MaterialModule,
     HdWiringModule,
-    MonacoEditorModule.forRoot({
-      baseUrl: './assets'
-    }), // use forRoot() in main app module only.
+    MonacoEditorModule.forRoot(monacoConfig), // use forRoot() in main app module only.
     StoreModule.forRoot(appReducers, {
       runtimeChecks: {
         strictStateImmutability: false,
@@ -211,17 +219,14 @@ const httpLoaderFactory = (configService: ConfigService) => {
     },
     { provide: MatDialogRef, useValue: {} },
     ConfigService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: (appConfig: ConfigService) => {
+    provideAppInitializer(() => {
+      const initializerFn = ((appConfig: ConfigService) => {
         return async () => {
           await appConfig.loadConfig();
         };
-      },
-      multi: true,
-      deps: [ConfigService]
-    },
-    WiringConfigService,
+      })(inject(ConfigService));
+      return initializerFn();
+    }),
     {
       provide: HD_WIRING_CONFIG,
       useExisting: WiringConfigService // Use the service instance itself

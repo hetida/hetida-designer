@@ -57,7 +57,6 @@ export class ScheduleHttpService {
   }
   public deleteSchedule(id: string): Observable<DeleteResult> {
     const url = `${this.apiEndpoint}/schedules/${id}`;
-    // eslint-disable-next-line
 
     return this.httpClient.delete<void>(url, { observe: 'response' }).pipe(
       map((response: HttpResponse<void>) => ({

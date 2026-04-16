@@ -48,7 +48,8 @@ import {
 @Component({
   selector: 'hd-scheduling-tab',
   templateUrl: './scheduling-tab.component.html',
-  styleUrls: ['./scheduling-tab.component.scss']
+  styleUrls: ['./scheduling-tab.component.scss'],
+  standalone: false
 })
 export class SchedulingTabComponent implements OnInit, OnDestroy {
   @ViewChild('scheduleTableContainer') scheduleTableContainer: ElementRef;

@@ -23,7 +23,8 @@ import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 @Component({
   selector: 'hd-component-editor',
   templateUrl: './component-editor.component.html',
-  styleUrls: ['./component-editor.component.scss']
+  styleUrls: ['./component-editor.component.scss'],
+  standalone: false
 })
 export class ComponentEditorComponent implements OnInit, OnDestroy {
   @ViewChild('monacoEditor', { static: false }) monacoEditorComponent: any;

@@ -15,7 +15,8 @@ describe('ErrorVisualDirective', () => {
     template: ` <form [formGroup]="formGroup">
       <input formControlName="name" matInput type="text" />
       <mat-error id="error" [hdErrorVisual]="formGroup.get('name')"></mat-error>
-    </form>`
+    </form>`,
+    standalone: false
   })
   class TestComponent {
     @Input()

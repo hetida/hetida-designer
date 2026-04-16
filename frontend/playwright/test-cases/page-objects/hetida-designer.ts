@@ -15,7 +15,7 @@ export class HetidaDesigner {
     await this.browserContext.clearCookies();
   }
 
-  // TODO use test ids
+  // TODO: use test ids
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
       throw new Error(
@@ -28,12 +28,12 @@ export class HetidaDesigner {
 
   // Left navigation
   public async clickWorkflowsInNavigation(): Promise<void> {
-    await this.page.locator('button:has-text("Workflows")').click();
+    await this.page.getByTestId('workflows-navigation-container').click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
   public async clickComponentsInNavigation(): Promise<void> {
-    await this.page.locator('button:has-text("Components")').click();
+    await this.page.getByTestId('components-navigation-container').click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
@@ -42,7 +42,9 @@ export class HetidaDesigner {
       throw new Error('ERROR: Button text must not be empty');
     }
 
-    await this.page.locator(`.add-button:has-text("${buttonText}")`).click();
+    await this.page
+      .getByTestId(`${buttonText.toLowerCase()}-navigation-container`)
+      .click();
     await this.page.waitForSelector('mat-dialog-container');
   }
 
@@ -51,67 +53,56 @@ export class HetidaDesigner {
       throw new Error('ERROR: Category name must not be empty');
     }
 
-    await this.page.click(
-      `mat-expansion-panel-header[role="button"]:has-text("${categoryName}")`
-    );
+    await this.page
+      .getByTestId(`${categoryName.toLowerCase()}-navigation-category`)
+      .click();
+    await this.page
+      .getByTestId(
+        `${categoryName.toLowerCase()}-expansion-panel-navigation-category`
+      )
+      .first()
+      .waitFor({ state: 'visible' });
   }
 
-  public async hoverItemInNavigation(
-    categoryName: string,
-    itemName: string
-  ): Promise<void> {
-    if (categoryName === '' || itemName === '') {
-      throw new Error('ERROR: Category name and item name must not be empty');
+  public async hoverItemInNavigation(itemName: string): Promise<void> {
+    if (itemName === '') {
+      throw new Error('ERROR: Item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`)
-      .first()
+      .getByTestId(`${itemName.toLowerCase()}-navigation-item`)
       .hover();
   }
 
-  public async doubleClickItemInNavigation(
-    categoryName: string,
-    itemName: string
-  ): Promise<void> {
-    if (categoryName === '' || itemName === '') {
-      throw new Error('ERROR: Category name and item name must not be empty');
+  public async doubleClickItemInNavigation(itemName: string): Promise<void> {
+    if (itemName === '') {
+      throw new Error('ERROR: Item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`)
-      .first()
+      .getByTestId(`${itemName.toLowerCase()}-navigation-item`)
       .dblclick();
   }
 
-  public async rightClickItemInNavigation(
-    categoryName: string,
-    itemName: string
-  ): Promise<void> {
-    if (categoryName === '' || itemName === '') {
-      throw new Error('ERROR: Category name and item name must not be empty');
+  public async rightClickItemInNavigation(itemName: string): Promise<void> {
+    if (itemName === '') {
+      throw new Error('ERROR: Item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`)
-      .first()
+      .getByTestId(`${itemName.toLowerCase()}-navigation-item`)
       .click({ button: 'right' });
   }
 
   public async dragAndDropItemFromNavigationToFlowchart(
-    categoryName: string,
     itemName: string
   ): Promise<void> {
-    if (categoryName === '' || itemName === '') {
-      throw new Error('ERROR: Category and item name must not be empty');
+    if (itemName === '') {
+      throw new Error('ERROR: Item name must not be empty');
     }
 
     const source = this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`)
+      .getByTestId(`${itemName.toLowerCase()}-navigation-item`)
       .first();
 
     const flowChartGrid = this.page.locator(
@@ -136,9 +127,10 @@ export class HetidaDesigner {
       throw new Error('ERROR: Search term must not be empty');
     }
 
-    await this.page
-      .locator('.navigation-container__search >> input')
-      .pressSequentially(searchTerm);
+    const inputSearch = this.page.getByTestId('search-navigation-container');
+    await inputSearch.click();
+    await inputSearch.press('Control+a');
+    await inputSearch.pressSequentially(searchTerm);
   }
 
   public async clickIconInToolbar(dataTestId: string): Promise<void> {

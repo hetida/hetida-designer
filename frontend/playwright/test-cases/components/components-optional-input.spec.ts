@@ -96,8 +96,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   await hetidaDesigner.searchInNavigation(componentName);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.rightClickItemInNavigation(
-    componentCategory,
-    componentName
+    `${componentName}(${componentTag})`
   );
   await page.locator('.mat-mdc-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Deprecate');

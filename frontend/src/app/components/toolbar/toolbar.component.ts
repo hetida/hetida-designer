@@ -24,7 +24,8 @@ import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 @Component({
   selector: 'hd-toolbar',
   templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.scss']
+  styleUrls: ['./toolbar.component.scss'],
+  standalone: false
 })
 export class ToolbarComponent implements OnInit {
   public transformation: Transformation | undefined;

@@ -2,7 +2,10 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { ImportDialogComponent } from './import-trafo-dialog.component';
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi
+} from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { appReducers } from 'src/app/store/app.reducers';
 import { FormsModule } from '@angular/forms';
@@ -13,19 +16,15 @@ describe('ConfirmImportTrafoDialog', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        HttpClientModule,
-        FormsModule,
-        StoreModule.forRoot(appReducers)
-      ],
+      imports: [BasicTestModule, FormsModule, StoreModule.forRoot(appReducers)],
       declarations: [ImportDialogComponent],
       providers: [
         {
           provide: MAT_DIALOG_DATA,
           useValue: {}
         },
-        { provide: MatDialogRef, useValue: {} }
+        { provide: MatDialogRef, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi())
       ]
     }).compileComponents();
   }));

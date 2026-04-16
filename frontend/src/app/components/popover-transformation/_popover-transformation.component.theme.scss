@@ -1,10 +1,11 @@
+@use 'sass:map';
 @mixin popover-transformation-theme($primary, $secondary) {
   hd-popover-transformation {
-    outline: map-get($secondary, 700) solid 1px;
+    outline: map.get($secondary, 700) solid 1px;
 
     .popover {
-      background-color: map_get($secondary, 500);
-      color: map_get($primary, 500);
+      background-color: map.get($secondary, 500);
+      color: map.get($primary, 500);
     }
   }
 }

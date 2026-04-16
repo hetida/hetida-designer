@@ -49,7 +49,8 @@ export interface ScheduleExecutionsDialogData {
 @Component({
   selector: 'hd-schedule-executions-dialog',
   templateUrl: './schedule-executions-dialog.component.html',
-  styleUrls: ['./schedule-executions-dialog.component.scss']
+  styleUrls: ['./schedule-executions-dialog.component.scss'],
+  standalone: false
 })
 export class ScheduleExecutionsDialogComponent implements OnInit, OnDestroy {
   executions: ScheduleExecution[] = [];
