@@ -31,3 +31,15 @@ For example, loading a persisted trained model that uses a custom class, you can
 
 !!! tip
     Only a released component has a fixed import path (depending on a hash of its then unchangeable code). If the imported training component is still in DRAFT state, you may experience non-working deserialization after code changes in the training component and need to re-train and persist your model.
+
+
+## Technical Notes
+During execution every workflow is resolved into the underlying component operators. Component imports are resolved from those underlying component revisions:
+
+<figure markdown="span">
+![](../../diagrams/resolve_execution_component_imports.excalidraw.svg){height=200 width=300}
+</figure>
+
+The underlying component revisions together with component revisions of the closure of the import relations are then provided to the runtime for execution.
+
+Component code is imported in each worker process in each runtime instance where an execution using this component is actually run. Component imports happen at during this import exactly when `import_comp` is called during import.

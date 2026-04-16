@@ -16,7 +16,7 @@ On the one hand, hetida designer is aimed at **data scientists** and **subject m
 On the other hand, it enables **professional software or data engineers** to invoke, use, automate and integrate these artifacts and provide and receive data to/from them: Executing is just a REST call away, immediately. Adapters can be written to provide controlled and discoverable access to development as well as production data sources and sinks.
 
 ### From a technical point of view
-hetida designer manages (versioning, lifecycle), exposes (Rest, Kafka) and scalably runs Python code and workflows while decoupling data access and result extraction via its adapter system. It furthermore integrates metadata in an opinionated way and treats visualization as a first class output, even for automated production runs.
+hetida designer manages (versioning, lifecycle), exposes (Rest, Kafka) and scalably runs Python code and workflows while decoupling data access and egress via its adapter system. It furthermore integrates metadata in an opinionated way and treats visualization as a first class output, even for automated production runs.
 
 hetida designer typically runs on Kubernetes to enable appropriate scaling, in particular for its runtime. Often it is part of a larger data (iot, timeseries) platform setup, like https://hetida.io/en/. A docker-compose setup is provided for small installations and trying out hetida designer.
 
@@ -24,10 +24,10 @@ hetida designer comes with a web UI, a backend / API, a runtime, a CLI Tool (hdc
 
 ### Main features
 * managing Python data science code artifacts and workflows in a UI including versioning, lifecycle and documentation
-* decoupling data provisioning from analytics
-* no extra deployment steps required: Components (code) and workflows managed in the hetida designer UI are immediately usable / invokable via REST API or Kafka.
-* visualization outputs (Plotly) are first-class citizens. One (surprisingly prevalent) use case for hetida designer is to provide custom Plotly visualizations for other applications' dashboarding.
-* Data Scientists and Subject Matter Experts not required to learn git, yaml, ci/cd, devops, ... they can do everything in the UI. This enables collaboration with and between team members having varied skill level and exposure to software engineering. 
+* decoupling data provisioning and delivery from analytics
+* zero deployment overhead: anything built in hetida designer is immediately invokable via REST or Kafka 
+* visualization outputs (Plotly) are first-class citizens. A surprisingly prevalent use case for hetida designer is to provide custom Plotly visualizations for other applications' dashboarding.
+* Data Scientists and Subject Matter Experts not required to learn git, yaml, ci/cd, devops, ... they can do everything in the UI. This enables collaboration with and between team members having varied skill level and exposure to software engineering.
 * modularity and reusability through nestable workflows and components being able to import other components.
 * pytest unittesting and standard Python logging
 * maintainable data science through versioning and lifecycle management
