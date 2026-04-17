@@ -1,4 +1,5 @@
 $material-design-icons-font-directory-path: '../dist/fonts/';
+// TODO: migration with @use throws errors, try it again with sass > v1.85.0 and Angular v20.x
 @import 'material-design-icons-iconfont/src/material-design-icons';
 
 /* roboto-300 - latin */

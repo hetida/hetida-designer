@@ -18,7 +18,8 @@ import { TransformationContextMenuComponent } from '../transformation-context-me
 @Component({
   selector: 'hd-home-tab',
   templateUrl: './home-tab.component.html',
-  styleUrls: ['./home-tab.component.scss']
+  styleUrls: ['./home-tab.component.scss'],
+  standalone: false
 })
 export class HomeTabComponent implements OnInit {
   constructor(

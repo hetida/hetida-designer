@@ -1,11 +1,10 @@
 import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
   MAT_DIALOG_DATA,
   MatDialogRef,
-  MatDialogModule
+  MatDialogContent,
+  MatDialogActions
 } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
 
 interface DialogData {
   title: string;
@@ -14,10 +13,10 @@ interface DialogData {
 
 @Component({
   selector: 'app-result-dialog',
-  standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
   templateUrl: './text-result-dialog.component.html',
-  styleUrls: ['./text-result-dialog.component.scss']
+  styleUrls: ['./text-result-dialog.component.scss'],
+  standalone: true,
+  imports: [MatDialogContent, MatDialogActions]
 })
 export class TextResultDialogComponent {
   constructor(

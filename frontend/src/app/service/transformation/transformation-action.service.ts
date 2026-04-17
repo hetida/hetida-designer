@@ -808,6 +808,7 @@ export class TransformationActionService {
           if (foundOperatorInput.exposed) {
             noValidNameAndLink = hasValidNameAndLink(input.name, input.id);
           }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           // Due to the hetida-flowchart component destroying / removing operators
           // and links recursively this can race with the isIncomplete check and
@@ -890,7 +891,7 @@ export class TransformationActionService {
           width: '95%',
           minHeight: '200px',
           data: {
-            // TODO refactor all mutations in workflow dialog component and remove stringify.
+            // TODO: refactor all mutations in workflow dialog component and remove stringify
             workflowTransformation: Utils.deepCopy(
               selectedTransformation
             ) as WorkflowTransformation,

@@ -4,7 +4,7 @@ import { Transformation } from '../../model/transformation';
 export const transformationEntityAdapter =
   createEntityAdapter<Transformation>();
 
-export interface TransformationState extends EntityState<Transformation> {}
+export type TransformationState = EntityState<Transformation>;
 
 export const initialTransformationState: TransformationState =
   transformationEntityAdapter.getInitialState();

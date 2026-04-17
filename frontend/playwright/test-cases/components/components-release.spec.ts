@@ -174,10 +174,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
 
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    componentCategory,
-    componentName
-  );
+  await hetidaDesigner.rightClickItemInNavigation(`${componentName}(${componentTag})`);
   await page.locator('.mat-mdc-menu-panel').hover();
 
   if (

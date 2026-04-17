@@ -19,7 +19,11 @@ import {
   withInterceptorsFromDi
 } from '@angular/common/http';
 
-@Component({ selector: 'hd-home-tab', template: '' })
+@Component({
+  selector: 'hd-home-tab',
+  template: '',
+  standalone: false
+})
 class HomeStubComponent {}
 
 describe('ContentViewComponent', () => {

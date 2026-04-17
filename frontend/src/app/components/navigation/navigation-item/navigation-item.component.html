@@ -5,6 +5,10 @@
   (dblclick)="editComponent()"
   (mouseover)="selectComponent()"
   (contextmenu)="$event.preventDefault(); openContextMenu($event)"
+  attr.data-testid="{{
+    transformation.name + '(' + transformation.version_tag + ')-navigation-item'
+      | lowercase
+  }}"
 >
   <div class="navigation-item__label" attr.data-id="{{ transformation.id }}">
     <span class="text-ellipsis" [title]="transformation.name">{{

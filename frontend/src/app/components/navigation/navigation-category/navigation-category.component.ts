@@ -9,7 +9,8 @@ import { Transformation } from '../../../model/transformation';
 @Component({
   selector: 'hd-navigation-category',
   templateUrl: './navigation-category.component.html',
-  styleUrls: ['./navigation-category.component.scss']
+  styleUrls: ['./navigation-category.component.scss'],
+  standalone: false
 })
 export class NavigationCategoryComponent implements OnInit {
   private _transformations: Transformation[];

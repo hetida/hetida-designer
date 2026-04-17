@@ -16,10 +16,7 @@ test('Send a default_value via adapter for the free_text filter to initialise, i
   // Act
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.doubleClickItemInNavigation(
-    componentCategory,
-    componentName
-  );
+  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
 
   // Configure Execute
   await hetidaDesigner.clickIconInToolbar('Execute');

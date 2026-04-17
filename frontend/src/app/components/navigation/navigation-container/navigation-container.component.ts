@@ -17,7 +17,8 @@ import { Utils } from '../../../utils/utils';
 @Component({
   selector: 'hd-navigation-container',
   templateUrl: './navigation-container.component.html',
-  styleUrls: ['./navigation-container.component.scss']
+  styleUrls: ['./navigation-container.component.scss'],
+  standalone: false
 })
 export class NavigationContainerComponent implements OnInit {
   constructor(

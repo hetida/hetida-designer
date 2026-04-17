@@ -2,9 +2,9 @@ name: nodejs CI
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: ["develop"]
   pull_request:
-    branches: [ "develop" ]
+    branches: ["develop"]
 
 jobs:
   build:
@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.13.0]
+        node-version: [22.22.0]
 
     steps:
       - uses: actions/checkout@v4

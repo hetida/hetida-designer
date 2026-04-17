@@ -117,6 +117,8 @@ def metric_metadata_from_child(child, attrs_from_adapter):
     metric_object.pop("outputDefinitions", None)
     metric_object["hierarchy_object"] = child
 
+    metric_object["relativeNamePath"] = child["relativeNamePath"]
+
     try:  # noqa: SIM105
         metric_object["inherited"] = attrs_from_adapter[child["referenceId"]][
             "single_metric_metadata"

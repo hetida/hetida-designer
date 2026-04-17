@@ -40,7 +40,8 @@ export interface ExecutionResponse {
   selector: 'hd-protocol-viewer',
   templateUrl: './protocol-viewer.component.html',
   styleUrls: ['./protocol-viewer.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class ProtocolViewerComponent implements AfterViewInit {
   private readonly HOST_HEIGHT_SHRINKED = '250px';
