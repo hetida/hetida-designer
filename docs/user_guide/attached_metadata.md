@@ -242,7 +242,8 @@ We include the default values that each fiels should be considered to have if mi
         # is inferred from the provided datapoints (taking first and last and building
         # a closed interval from their timestamps, possibly with length 0). If no dataset is
         # specified and no datapoints provided, no invalidation can occur.
-        "invalidate_dataset": true # bool, should be considered true, if missing!
+        "invalidate_dataset": true # Optional[bool]. Should be handled as null if missing.
+        # What null means depends on the adapter: It can decide to default to invalidation or not.
 
         "delete_invalidated": null, # Optional[bool]. Whether invalidated data should be 
         # deleted instead. What null means depends on the adapter: It can decide to default to
