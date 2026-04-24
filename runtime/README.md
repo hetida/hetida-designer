@@ -116,7 +116,7 @@ Some of the qa tools mentioned above are run as part of github actions to ensure
 Documentation is built via [zensical](https://zensical.org/) from the markdown files in `/docs`. Activate the runtime virtual environment as described above from within the `/runtime` directory. Than change to the git repo main directory and run
 
 ```
-zensical servce
+zensical serve
 ```
 
 Now a preview of the generated site is available under http://localhost:8000.
