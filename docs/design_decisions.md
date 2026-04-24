@@ -18,7 +18,7 @@ The rationale for the described design decisions on this page assumes familiarit
 ![Basic architecture overview](../diagrams/basic-architecture-overview.excalidraw.svg)
  
 !!! tip "Combined Backend+Runtime"
-    Backend and runtime can be run combined as a single container from the same image to support secarios like exposing a fixed set of workflows (e.g. a single workflow) as a separate [restricted webservice](./integration_guide/trafo_exec_guide/restricted_webservice.md).
+    Backend and runtime can be run combined as a single container from the same image to support scenarios like exposing a fixed set of workflows (e.g. a single workflow) as a separate [restricted webservice](./integration_guide/trafo_exec_guide/restricted_webservice.md).
 
 !!! abstract "Runtime Variants / Claim Based Routing"
     Multiple runtime deployments, each with its own runtime image / dependency set / environment variables and separately scaled can coexist with the backend doing [claim based routing](./deployment_operation/varying_runtime_services.md) (i.e. using role from access token) to decide which one to invoke.
@@ -27,7 +27,7 @@ The rationale for the described design decisions on this page assumes familiarit
 
 ### Rationale
 
-Workflow engines provide modularity and reusability, which makes them attractive for general automation but also data science. However, deploying them in production, especially for automated pipelines and scalability, requires careful thought about how execution is technically handled. The following points are worth considering, in particular with respect to doing data science and machine learning:
+Workflow engines provide visible and inspectable modularity and reusability, which makes them attractive for general automation but also data science. However, deploying them in production, especially for automated pipelines and scalability, requires careful thought about how execution is technically handled. The following points are worth considering, in particular with respect to doing data science and machine learning:
 
 **Process management**
 
@@ -53,9 +53,11 @@ Workflow engines provide modularity and reusability, which makes them attractive
 
 ### hetida designer's Approach
 
-hetida designer is built for **scalable production data science**. This requires minimizing worker process memory footprint, serialization overhead, and startup latency. The goal is that workflow step execution adds zero overhead compared to a direct function call.
 
-hetida designer is not a general business automation engine, it specifically targets conscientious and responsible data scienctists and Python capable domain experts. "inter-execution" isolation / sandboxing is decidedly not a primary goal.
+hetida designer is built for **scalable production data science**. This requires minimizing worker process memory footprint, serialization overhead, and startup latency. The goal is that workflow step execution adds zero/minimal overhead compared to a direct Python function call.
+
+!!! info "Isolation / Sandboxing"
+    hetida designer is not a general business automation engine, it specifically targets conscientious and responsible data scienctists and Python capable domain experts. "inter-execution" isolation / sandboxing is decidedly not a primary goal.
 
 Therefore hetida designer makes the following deliberate and opinionated trade-offs:
 

@@ -10,7 +10,7 @@ Often the shorter term transformation is used to denote a transformation revisio
 
 Transformations come in two variants: Components, which actually consist of Python code and have a `main` function, and therefore are the basic building blocks. And workflows which are compositions of components and other workflows.
 
-The user interface typically displays a preview for a transformation revision showingits name and version and indicating its IO interface:
+The user interface typically displays a preview for a transformation revision showing its name and version and indicating its IO interface:
 
 
 <figure markdown="span">

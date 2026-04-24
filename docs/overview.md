@@ -31,7 +31,7 @@ hetida designer comes with a web UI, a backend / API, a runtime, a CLI Tool (hdc
 * modularity and reusability through nestable workflows and components being able to import other components.
 * pytest unittesting and standard Python logging
 * maintainable data science through versioning and lifecycle management
-* clear and precise visualization of data flow in workflows: See at a glance which output connects to which input
+* clear and precise visualization of data flow in workflows: See at a glance which output connects to which input.
 * simple cron scheduling
 * experimental dashboarding: Every component/workflow defines a dashboard.
 
@@ -39,8 +39,9 @@ hetida designer comes with a web UI, a backend / API, a runtime, a CLI Tool (hdc
 * an orchestration and automation framwork or platform (despite having simple built-in cron scheduling.)
 * a low-code / no-code graphical programming environment:
     * User's are expected to write their own components using Python at an early point.
-    * hetida designer is far from providing a comprehensive and complete set of core components and workflows for data science.
+    * hetida designer is far from providing a comprehensive and complete set of core components and workflows for data science. The included base components and workflows mostly serve as examples and starting point.
     * workflows in hetida designer are just [DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph): Looping and conditional logic need to be done in component code.
+* a Data Science model management or experiment management solution
 * a database
 * a dashboarding solution
 * a data platform. See https://hetida.io/en/ for a platform that integrates hetida designer as its analytics engine.
