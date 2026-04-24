@@ -101,7 +101,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
 
   // Publish workflow
-  await hetidaDesigner.clickTabInNavigation(1);
+  await hetidaDesigner.clickTabInNavigation(2);
   await hetidaDesigner.clickIconInToolbar('Publish');
   await hetidaDesigner.clickByTestId('publish workflow-confirm-dialog');
 

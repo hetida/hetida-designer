@@ -91,7 +91,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
 
   // Publish component
-  await hetidaDesigner.clickTabInNavigation(1);
+  await hetidaDesigner.clickTabInNavigation(2);
   await hetidaDesigner.clickIconInToolbar('Publish');
   await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
 
