@@ -476,10 +476,7 @@ def detect_robust_zscore_on_diff(
 COMPONENT_INFO = {
     "inputs": {
         "timeseries": {"data_type": "SERIES"},
-        "method": {
-            "data_type": "STRING",
-            "default_value": "robust_zscore_on_diff",
-        },
+        "method": {"data_type": "STRING", "default_value": "robust_zscore_on_diff"},
         "sensitivity": {"data_type": "STRING", "default_value": "medium"},
         "min_distance": {"data_type": "INT", "default_value": 2},
         "direction": {"data_type": "STRING", "default_value": "both"},
@@ -495,18 +492,20 @@ COMPONENT_INFO = {
     "id": "8701e13f-faf4-4a7e-bb5b-724da41d4508",
     "revision_group_id": "70ce7c79-ce2d-4ca2-81a1-80a0920b5bd8",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     timeseries,
-    method=parse_default_value(COMPONENT_INFO, "method"),
-    sensitivity=parse_default_value(COMPONENT_INFO, "sensitivity"),
-    min_distance=parse_default_value(COMPONENT_INFO, "min_distance"),
-    direction=parse_default_value(COMPONENT_INFO, "direction"),
-    smoothing_before=parse_default_value(COMPONENT_INFO, "smoothing_before"),
+    method="robust_zscore_on_diff",
+    sensitivity="medium",
+    min_distance=2,
+    direction="both",
+    smoothing_before=False,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -589,7 +588,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '{\n    "2026-03-01T00:00:00Z": 10.0,\n    "2026-03-01T01:00:00Z": 10.1,\n    "2026-03-01T02:00:00Z": 10.0,\n    "2026-03-01T03:00:00Z": 10.2,\n    "2026-03-01T04:00:00Z": 10.1,\n    "2026-03-01T05:00:00Z": 10.0,\n    "2026-03-01T06:00:00Z": 10.2,\n    "2026-03-01T07:00:00Z": 10.1,\n    "2026-03-01T08:00:00Z": 10.0,\n    "2026-03-01T15:00:00Z": 18.0,\n    "2026-03-01T16:00:00Z": 18.1,\n    "2026-03-01T17:00:00Z": 18.0,\n    "2026-03-01T18:00:00Z": 18.2,\n    "2026-03-01T19:00:00Z": 18.1,\n    "2026-03-01T20:00:00Z": 18.0,\n    "2026-03-01T21:00:00Z": 18.1,\n    "2026-03-01T22:00:00Z": 18.0,\n    "2026-03-01T23:00:00Z": 31.0,\n    "2026-03-02T00:00:00Z": 31.2,\n    "2026-03-02T01:00:00Z": 31.1,\n    "2026-03-02T02:00:00Z": 31.0,\n    "2026-03-02T03:00:00Z": 31.1,\n    "2026-03-02T04:00:00Z": 31.0,\n    "2026-03-02T05:00:00Z": 31.2\n}'
             },
-        },
+        }
     ]
 }
 
@@ -600,6 +599,6 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '{\n    "2026-03-01T00:00:00Z": 10.0,\n    "2026-03-01T01:00:00Z": 10.1,\n    "2026-03-01T02:00:00Z": 10.0,\n    "2026-03-01T03:00:00Z": 10.2,\n    "2026-03-01T04:00:00Z": 10.1,\n    "2026-03-01T05:00:00Z": 10.0,\n    "2026-03-01T06:00:00Z": 10.2,\n    "2026-03-01T07:00:00Z": 10.1,\n    "2026-03-01T08:00:00Z": 10.0,\n    "2026-03-01T15:00:00Z": 18.0,\n    "2026-03-01T16:00:00Z": 18.1,\n    "2026-03-01T17:00:00Z": 18.0,\n    "2026-03-01T18:00:00Z": 18.2,\n    "2026-03-01T19:00:00Z": 18.1,\n    "2026-03-01T20:00:00Z": 18.0,\n    "2026-03-01T21:00:00Z": 18.1,\n    "2026-03-01T22:00:00Z": 18.0,\n    "2026-03-01T23:00:00Z": 31.0,\n    "2026-03-02T00:00:00Z": 31.2,\n    "2026-03-02T01:00:00Z": 31.1,\n    "2026-03-02T02:00:00Z": 31.0,\n    "2026-03-02T03:00:00Z": 31.1,\n    "2026-03-02T04:00:00Z": 31.0,\n    "2026-03-02T05:00:00Z": 31.2\n}'
             },
-        },
+        }
     ]
 }

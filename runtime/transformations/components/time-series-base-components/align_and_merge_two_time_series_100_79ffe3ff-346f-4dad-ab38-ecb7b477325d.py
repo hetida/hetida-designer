@@ -377,19 +377,21 @@ COMPONENT_INFO = {
     "id": "79ffe3ff-346f-4dad-ab38-ecb7b477325d",
     "revision_group_id": "212ead20-b2e7-4ca7-9eb5-c38c6f32e23b",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     timeseries_1,
     timeseries_2,
-    align_strategy=parse_default_value(COMPONENT_INFO, "align_strategy"),
-    join_type=parse_default_value(COMPONENT_INFO, "join_type"),
-    tolerance=parse_default_value(COMPONENT_INFO, "tolerance"),
-    missing_policy=parse_default_value(COMPONENT_INFO, "missing_policy"),
-    merge_operation=parse_default_value(COMPONENT_INFO, "merge_operation"),
+    align_strategy="exact",
+    join_type="inner",
+    tolerance=None,
+    missing_policy="keep_nan",
+    merge_operation="sum",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****

@@ -279,22 +279,24 @@ COMPONENT_INFO = {
     },
     "name": "Resample Multi Time Series",
     "category": "Time Series Base Components",
-    "description": "Bring several time series from one MultiTSFrame onto the same target time grid.",
+    "description": "Bring several time series from one MultiTSFrame onto the same target time grid.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "5f26134a-4e2d-4ec7-bbb3-85443c36cb37",
     "revision_group_id": "3fe9e72c-9cb6-47f5-a509-0e420ee4522b",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     multitsframe,
     target_frequency,
-    aggregation_method=parse_default_value(COMPONENT_INFO, "aggregation_method"),
-    label_position=parse_default_value(COMPONENT_INFO, "label_position"),
-    closed=parse_default_value(COMPONENT_INFO, "closed"),
+    aggregation_method="mean",
+    label_position="left",
+    closed="left",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****

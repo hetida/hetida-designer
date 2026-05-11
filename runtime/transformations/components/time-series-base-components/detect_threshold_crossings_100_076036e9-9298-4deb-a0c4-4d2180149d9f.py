@@ -262,17 +262,13 @@ COMPONENT_INFO = {
     "id": "076036e9-9298-4deb-a0c4-4d2180149d9f",
     "revision_group_id": "cd3d8d41-05ae-4bb4-9266-6350981d08fd",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
 
-def main(
-    *,
-    timeseries,
-    threshold,
-    crossing_type=parse_default_value(COMPONENT_INFO, "crossing_type"),
-    inclusiveness=parse_default_value(COMPONENT_INFO, "inclusiveness"),
-):
+
+def main(*, timeseries, threshold, crossing_type="both", inclusiveness="strict"):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # Step 1: Validate inputs and parse the threshold.

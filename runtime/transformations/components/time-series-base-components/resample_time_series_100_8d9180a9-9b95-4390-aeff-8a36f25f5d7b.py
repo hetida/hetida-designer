@@ -228,17 +228,19 @@ COMPONENT_INFO = {
     "id": "8d9180a9-9b95-4390-aeff-8a36f25f5d7b",
     "revision_group_id": "b4aa144e-cdfe-4ff5-8337-a5b8e35c1f15",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     timeseries,
     target_frequency,
-    aggregation_method=parse_default_value(COMPONENT_INFO, "aggregation_method"),
-    label_position=parse_default_value(COMPONENT_INFO, "label_position"),
-    closed=parse_default_value(COMPONENT_INFO, "closed"),
+    aggregation_method="mean",
+    label_position="left",
+    closed="left",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****

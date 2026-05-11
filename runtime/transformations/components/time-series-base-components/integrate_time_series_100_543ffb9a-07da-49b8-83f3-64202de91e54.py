@@ -515,10 +515,7 @@ def calculate_integrated_series_and_period_sums(
 COMPONENT_INFO = {
     "inputs": {
         "timeseries": {"data_type": "SERIES"},
-        "output_mode": {
-            "data_type": "STRING",
-            "default_value": "series_integrated",
-        },
+        "output_mode": {"data_type": "STRING", "default_value": "series_integrated"},
         "method": {"data_type": "STRING", "default_value": "trapezoidal"},
         "gap_handling": {"data_type": "STRING", "default_value": "break"},
         "max_gap": {"data_type": "STRING", "default_value": None},
@@ -535,19 +532,21 @@ COMPONENT_INFO = {
     "id": "543ffb9a-07da-49b8-83f3-64202de91e54",
     "revision_group_id": "3f56cedc-4241-4ae3-be5c-b85c1987fded",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     timeseries,
-    output_mode=parse_default_value(COMPONENT_INFO, "output_mode"),
-    method=parse_default_value(COMPONENT_INFO, "method"),
-    gap_handling=parse_default_value(COMPONENT_INFO, "gap_handling"),
-    max_gap=parse_default_value(COMPONENT_INFO, "max_gap"),
-    reset=parse_default_value(COMPONENT_INFO, "reset"),
-    time_unit=parse_default_value(COMPONENT_INFO, "time_unit"),
+    output_mode="series_integrated",
+    method="trapezoidal",
+    gap_handling="break",
+    max_gap=None,
+    reset=None,
+    time_unit="h",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -594,7 +593,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '{\n    "2026-03-01T20:00:00Z": 5.0,\n    "2026-03-01T21:00:00Z": 5.5,\n    "2026-03-01T22:00:00Z": 5.2,\n    "2026-03-01T23:00:00Z": null,\n    "2026-03-02T00:00:00Z": 6.0,\n    "2026-03-02T01:00:00Z": 5.8,\n    "2026-03-02T02:00:00Z": 6.1,\n    "2026-03-02T03:00:00Z": 5.9,\n    "2026-03-02T04:00:00Z": 6.1,\n    "2026-03-02T05:00:00Z": 5.8,\n    "2026-03-02T06:00:00Z": 5.6,\n    "2026-03-02T07:00:00Z": 5.5,\n    "2026-03-02T08:00:00Z": 5.7\n}'
             },
-        },
+        }
     ]
 }
 
@@ -605,6 +604,6 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '{\n    "2026-03-01T20:00:00Z": 5.0,\n    "2026-03-01T21:00:00Z": 5.5,\n    "2026-03-01T22:00:00Z": 5.2,\n    "2026-03-01T23:00:00Z": null,\n    "2026-03-02T00:00:00Z": 6.0,\n    "2026-03-02T01:00:00Z": 5.8,\n    "2026-03-02T02:00:00Z": 6.1,\n    "2026-03-02T03:00:00Z": 5.9,\n    "2026-03-02T04:00:00Z": 6.1,\n    "2026-03-02T05:00:00Z": 5.8,\n    "2026-03-02T06:00:00Z": 5.6,\n    "2026-03-02T07:00:00Z": 5.5,\n    "2026-03-02T08:00:00Z": 5.7\n}'
             },
-        },
+        }
     ]
 }

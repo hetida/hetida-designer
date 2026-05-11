@@ -253,12 +253,8 @@ def validate_inputs(
 
     # Let version 1.0.0 validate the exact tolerance syntax, so behavior stays identical.
     align_and_merge_two_time_series.validate_inputs(
-        pd.Series(
-            [1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])
-        ),
-        pd.Series(
-            [1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])
-        ),
+        pd.Series([1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])),
+        pd.Series([1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])),
         align_strategy,
         join_type,
         tolerance,
@@ -329,23 +325,25 @@ COMPONENT_INFO = {
     },
     "name": "Align and Merge Multi Time Series",
     "category": "Time Series Base Components",
-    "description": "Align several time series from one MultiTSFrame and merge them into one result series.",
+    "description": "Align several time series from one MultiTSFrame and merge them into one result series.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "25c84239-0ce5-4264-b042-225392539c6c",
     "revision_group_id": "fa44fdf3-cd42-48ba-bd20-fab94288bd65",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
     *,
     multitsframe,
-    align_strategy=parse_default_value(COMPONENT_INFO, "align_strategy"),
-    join_type=parse_default_value(COMPONENT_INFO, "join_type"),
-    tolerance=parse_default_value(COMPONENT_INFO, "tolerance"),
-    missing_policy=parse_default_value(COMPONENT_INFO, "missing_policy"),
-    merge_operation=parse_default_value(COMPONENT_INFO, "merge_operation"),
+    align_strategy="exact",
+    join_type="inner",
+    tolerance=None,
+    missing_policy="keep_nan",
+    merge_operation="sum",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -388,7 +386,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '[\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_1", "value": 100.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_1", "value": 105.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_1", "value": 110.0},\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_2", "value": 20.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_2", "value": 22.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_2", "value": 24.0},\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_3", "value": 5.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_3", "value": 6.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_3", "value": 7.0}\n]'
             },
-        },
+        }
     ]
 }
 
@@ -399,6 +397,6 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '[\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_1", "value": 100.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_1", "value": 105.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_1", "value": 110.0},\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_2", "value": 20.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_2", "value": 22.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_2", "value": 24.0},\n  {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_3", "value": 5.0},\n  {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_3", "value": 6.0},\n  {"timestamp": "2026-03-01T10:10:00Z", "metric": "inverter_3", "value": 7.0}\n]'
             },
-        },
+        }
     ]
 }

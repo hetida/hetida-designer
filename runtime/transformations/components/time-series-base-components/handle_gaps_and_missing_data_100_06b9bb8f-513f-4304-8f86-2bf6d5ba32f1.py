@@ -567,7 +567,7 @@ COMPONENT_INFO = {
     "id": "06b9bb8f-513f-4304-8f86-2bf6d5ba32f1",
     "revision_group_id": "2c3fb56e-5288-42a0-aa91-4417b29fb2af",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401

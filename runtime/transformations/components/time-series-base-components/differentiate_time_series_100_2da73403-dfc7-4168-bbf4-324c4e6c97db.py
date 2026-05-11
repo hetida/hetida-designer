@@ -332,18 +332,13 @@ COMPONENT_INFO = {
     "id": "2da73403-dfc7-4168-bbf4-324c4e6c97db",
     "revision_group_id": "0bc7b6d3-f607-4c7d-8c96-85188d09bdb1",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-11T08:00:00+02:00",
+    "released_timestamp": "2026-05-11T06:00:00+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
 
-def main(
-    *,
-    timeseries,
-    output_mode=parse_default_value(COMPONENT_INFO, "output_mode"),
-    time_unit=parse_default_value(COMPONENT_INFO, "time_unit"),
-    gap_handling=parse_default_value(COMPONENT_INFO, "gap_handling"),
-    max_gap=parse_default_value(COMPONENT_INFO, "max_gap"),
-):
+
+def main(*, timeseries, output_mode="rate", time_unit="h", gap_handling="break", max_gap=None):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # Step 1: Validate inputs and parse the optional maximum gap.
@@ -380,7 +375,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '{\n    "2026-03-01T00:00:00Z": 10.0,\n    "2026-03-01T01:00:00Z": 11.0,\n    "2026-03-01T02:00:00Z": 11.5,\n    "2026-03-01T03:00:00Z": null,\n    "2026-03-01T04:00:00Z": 15.5,\n    "2026-03-01T05:00:00Z": 16.0\n}'
             },
-        },
+        }
     ]
 }
 
@@ -391,6 +386,6 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '{\n    "2026-03-01T00:00:00Z": 10.0,\n    "2026-03-01T01:00:00Z": 11.0,\n    "2026-03-01T02:00:00Z": 11.5,\n    "2026-03-01T03:00:00Z": null,\n    "2026-03-01T04:00:00Z": 15.5,\n    "2026-03-01T05:00:00Z": 16.0\n}'
             },
-        },
+        }
     ]
 }
