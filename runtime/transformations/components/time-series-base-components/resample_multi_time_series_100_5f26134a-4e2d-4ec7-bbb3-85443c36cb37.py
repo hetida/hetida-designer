@@ -98,7 +98,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 from hetdesrun.component.load import import_comp
 
 resample_time_series = import_comp("8d9180a9-9b95-4390-aeff-8a36f25f5d7b")

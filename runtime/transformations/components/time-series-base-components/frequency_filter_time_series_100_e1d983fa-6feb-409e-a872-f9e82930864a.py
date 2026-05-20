@@ -387,7 +387,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt, lfilter
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 
 FILTER_TYPES = {"lowpass": "low", "highpass": "high"}
 

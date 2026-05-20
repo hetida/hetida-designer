@@ -121,7 +121,7 @@ import numpy.typing as npt
 import pandas as pd
 from numba import njit
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 
 LARGE_SERIES_NUMBA_THRESHOLD = 10000
 INFER_WINDOW_SIZE_BUFFER_FACTOR = 1.4

@@ -111,7 +111,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 
 AGGREGATION_FUNCTIONS = {
     "mean": "mean",

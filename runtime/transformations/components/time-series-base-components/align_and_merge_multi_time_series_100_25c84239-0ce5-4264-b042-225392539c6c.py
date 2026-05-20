@@ -138,7 +138,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 from hetdesrun.component.load import import_comp
 
 align_and_merge_two_time_series = import_comp("79ffe3ff-346f-4dad-ab38-ecb7b477325d")

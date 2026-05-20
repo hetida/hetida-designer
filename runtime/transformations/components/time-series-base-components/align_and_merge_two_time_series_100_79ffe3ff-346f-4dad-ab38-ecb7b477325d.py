@@ -147,7 +147,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hdutils import ComponentInputValidationException, parse_default_value
+from hdutils import ComponentInputValidationException
 
 ALIGN_STRATEGIES = {"exact", "nearest", "forward_fill"}
 JOIN_TYPES = {"inner", "left", "right"}
