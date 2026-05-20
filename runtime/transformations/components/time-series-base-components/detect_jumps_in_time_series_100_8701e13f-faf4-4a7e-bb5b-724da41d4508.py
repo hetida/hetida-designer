@@ -1,6 +1,6 @@
-"""Documentation for Jump Detection
+"""Documentation for Detect Jumps in Time Series
 
-# Jump Detection
+# Detect Jumps in Time Series
 
 ## Description
 Component to detect jumps in time series data.
@@ -485,7 +485,7 @@ COMPONENT_INFO = {
     "outputs": {
         "jump_mask": {"data_type": "SERIES"},
     },
-    "name": "Jump Detection",
+    "name": "Detect Jumps in Time Series",
     "category": "Time Series Base Components",
     "description": "Detect jumps and return a jump mask.",
     "version_tag": "1.0.0",

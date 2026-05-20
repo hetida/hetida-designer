@@ -1,6 +1,6 @@
-"""Documentation for Outlier Detection
+"""Documentation for Detect Outliers in Time Series
 
-# Outlier Detection
+# Detect Outliers in Time Series
 
 ## Description
 Component to detect outliers using a moving-window median absolute deviation
@@ -385,7 +385,7 @@ COMPONENT_INFO = {
     "outputs": {
         "outlier_mask": {"data_type": "SERIES"},
     },
-    "name": "Outlier Detection",
+    "name": "Detect Outliers in Time Series",
     "category": "Time Series Base Components",
     "description": "Detect outliers using a moving-window MAD band filter.",
     "version_tag": "1.0.0",

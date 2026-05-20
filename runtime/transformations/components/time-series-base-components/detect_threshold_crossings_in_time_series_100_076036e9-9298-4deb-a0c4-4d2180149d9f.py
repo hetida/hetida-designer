@@ -1,6 +1,6 @@
-"""Documentation for Detect Threshold Crossings
+"""Documentation for Detect Threshold Crossings in Time Series
 
-# Detect Threshold Crossings
+# Detect Threshold Crossings in Time Series
 
 ## Description
 Component to detect when a time series crosses a fixed threshold. It can detect
@@ -255,7 +255,7 @@ COMPONENT_INFO = {
     "outputs": {
         "crossing_mask": {"data_type": "SERIES"},
     },
-    "name": "Detect Threshold Crossings",
+    "name": "Detect Threshold Crossings in Time Series",
     "category": "Time Series Base Components",
     "description": "Detect upward and downward threshold crossings on a time series.",
     "version_tag": "1.0.0",

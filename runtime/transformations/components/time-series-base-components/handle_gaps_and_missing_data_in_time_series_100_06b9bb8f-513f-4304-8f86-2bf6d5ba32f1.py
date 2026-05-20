@@ -1,6 +1,6 @@
-"""Documentation for Handle Gaps and Missing Data
+"""Documentation for Handle Gaps and Missing Data in Time Series
 
-# Handle Gaps and Missing Data
+# Handle Gaps and Missing Data in Time Series
 
 ## Description
 Single-point component to detect gaps (missing values and missing timestamps),
@@ -560,7 +560,7 @@ COMPONENT_INFO = {
     "outputs": {
         "corrected_timeseries": {"data_type": "SERIES"},
     },
-    "name": "Handle Gaps and Missing Data",
+    "name": "Handle Gaps and Missing Data in Time Series",
     "category": "Time Series Base Components",
     "description": "Detect and optionally fill gaps in time series.",
     "version_tag": "1.0.0",

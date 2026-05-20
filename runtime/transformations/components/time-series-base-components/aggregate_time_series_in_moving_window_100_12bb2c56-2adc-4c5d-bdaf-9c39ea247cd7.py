@@ -1,6 +1,6 @@
-"""Documentation for Moving Time Window Aggregation
+"""Documentation for Aggregate Time Series in Moving Window
 
-# Moving Time Window Aggregation
+# Aggregate Time Series in Moving Window
 
 ## Description
 This component calculates aggregation values on fixed time windows that move
@@ -526,7 +526,7 @@ COMPONENT_INFO = {
     "outputs": {
         "window_values": {"data_type": "SERIES"},
     },
-    "name": "Moving Time Window Aggregation",
+    "name": "Aggregate Time Series in Moving Window",
     "category": "Time Series Base Components",
     "description": "Calculate moving time window aggregation values.",
     "version_tag": "1.0.0",
