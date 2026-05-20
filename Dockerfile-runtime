@@ -51,6 +51,7 @@ RUN bash /app/scripts/gen_ruff_report.sh
 FROM application_base AS pre-prod
 RUN useradd -m hd_app
 USER hd_app
+ENV HOST=0.0.0.0
 ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
@@ -74,6 +75,9 @@ RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "cyclonedx-json=/tmp/grype-rep
 ##### Production stage
 # prod should be the default build, this is why we close with prod
 FROM pre-prod AS prod
+ENV HOST=0.0.0.0
+ENV PORT=8090
+EXPOSE 8090
 
 # Copy SBOM and grype files
 COPY --from=grype-generator /tmp/sbom.*.json ./sbom/
