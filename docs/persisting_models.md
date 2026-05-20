@@ -33,7 +33,7 @@ You can of course establish analytical steps of model management like for exampl
 But the "management" part, i.e. selecting the current/prod model, fallback procedures on declining performance and so on has to be implemented around the systems which invoke hetida designer from the outside.
 
 ### Note on custom classes
-Custom classes can be defined in components, which return the class via a component output. If it is only necessary to ensure that such a class has been imported it is sufficient to include the exact same component in the respective workflow. The output of the component may be routed to the "Forget" component.
+Custom classes can be defined in components, which return the class via a component output. If it is only necessary to ensure that such a class has been imported it is sufficient to include the exact same component in the respective workflow. The output of the component may be routed to the "Forget" component or dropped via the [drop adapter](./adapter_system/drop_result_adapter.md).
 
 A minimal example is provided in the [Tips and Tricks](./tips_and_tricks.md).
 

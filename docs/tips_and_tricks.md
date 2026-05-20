@@ -111,7 +111,7 @@ When loading the stored object in a worklfow the exactly same component must be 
 
 <img src="./assets/store_object_with_class.png" height="150" width=750 data-align="center">
 
-Usually the class is not needed explicitly so that the there is no reason to link the component with the class definition to any input, instead it can be linked to the component "Forget" from the category "Connectors".
+Usually the class is not needed explicitly so that the there is no reason to link the component with the class definition to any input, instead it can be linked to the component "Forget" from the category "Connectors" or wired to the [drop adapter](./adapter_system/drop_result_adapter.md).
 
 <img src="./assets/load_object_with_class.png" height="225" width=750 data-align="center">
 
