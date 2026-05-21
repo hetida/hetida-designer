@@ -54,7 +54,7 @@ def dataframe() -> pd.DataFrame:
 
 def test_modify_timezone_good_dataframe(dataframe):
     local_summertime = modify_timezone(
-        dataframe, to_timezone="Europe/Berlin", column_name="timestamp"
+        dataframe, to_timezone="Europe/Berlin", column_names=["timestamp"]
     )
 
     # German summer time starts in last Sunday in March at 2 am. --> UTC 1am
@@ -93,21 +93,21 @@ def test_modify_timezone_good_series(series_summer, series_winter):
 
 
 def test_modify_timezone_wrong_tzname(series_summer):
-    with pytest.raises(ZoneInfoNotFoundError, match="No time zone found*"):
+    with pytest.raises(ValueError, match="Timezone not known, please choose from*"):
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin2")
 
 
 def test_named_series(series_summer):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
-    modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name="timestamp")
+    modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_names=["timestamp"])
     assert modified_data[1].utcoffset() == datetime.timedelta(seconds=3600)
 
 
 def test_named_series_using_index(series_summer):
     data = series_summer
     data.name = "timestamp"
-    modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name=None)
+    modified_data = modify_timezone(data, to_timezone="Europe/Berlin")
     assert modified_data.index[0].utcoffset() == datetime.timedelta(seconds=3600)
 
 
@@ -115,11 +115,11 @@ def test_column_not_known(series_summer, dataframe):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
 
-    with pytest.raises(KeyError, match="Column name*"):
-        _ = modify_timezone(data, to_timezone="Europe/Berlin", column_name="timestamp2")
+    with pytest.raises(KeyError, match="At least one column name of*"):
+        _ = modify_timezone(data, to_timezone="Europe/Berlin", column_names=["timestamp2"])
 
-    with pytest.raises(KeyError, match="Column name*"):
-        _ = modify_timezone(dataframe, to_timezone="Europe/Berlin", column_name="timestamp2")
+    with pytest.raises(KeyError, match="At least one column name of*"):
+        _ = modify_timezone(dataframe, to_timezone="Europe/Berlin", column_names=["timestamp2"])
 
 
 def test_modify_timezone_no_tz_known(series_summer):
@@ -129,6 +129,7 @@ def test_modify_timezone_no_tz_known(series_summer):
 
 
 def test_modify_timezone_no_tz_in_index(series_summer):
-    series_summer.index = series_summer.reset_index(drop=True)
+    # integers and float will be interpreted as seconds from 01-01-1970 00:00:00
+    series_summer.index = series_summer.index.tz_localize(None)
     with pytest.raises(TypeError, match="Entries to convert do not contain valid timestamps*"):
-        _ = modify_timezone(series_summer, to_timezone="Europe/Berlin")
+        _ = modify_timezone(series_summer, to_timezone="Europe/Berlin", convert_index=True)

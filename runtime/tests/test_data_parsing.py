@@ -525,8 +525,8 @@ def test_direct_provisioning_output_handling():
     round_trip_series = pd.read_json(StringIO(series.to_json()), typ="series")
 
     # round trip is not identity
-    assert str(round_trip_series.dtype) == "datetime64[us, UTC]"
-    assert str(round_trip_series.index.dtype) == "datetime64[us, UTC]"
+    assert str(round_trip_series.dtype) == "datetime64[ns, UTC]"
+    assert str(round_trip_series.index.dtype) == "datetime64[ns, UTC]"
 
     # So we have an example where a second serialization / deserialization
     # would be harmful!
