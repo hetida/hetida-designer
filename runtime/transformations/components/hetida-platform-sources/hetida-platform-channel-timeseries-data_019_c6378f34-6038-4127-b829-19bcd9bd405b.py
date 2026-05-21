@@ -220,11 +220,11 @@ async def main(
         child
         for child in all_children
         if (
-            child["nodeType"] == "CHANNEL"
+            child["nodeType"] == "SIGNAL"
             and (include_ingestion_channels or (include_ingestion_channels is None))
         )
         or (
-            child["nodeType"] == "VIRTUAL_CHANNEL"
+            child["nodeType"] == "VIRTUAL_SIGNAL"
             and (include_virtual_channels or (include_virtual_channels is None))
         )
     ]
