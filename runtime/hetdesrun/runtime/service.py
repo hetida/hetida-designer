@@ -1,5 +1,6 @@
 import resource
 from collections import deque
+from copy import deepcopy
 from typing import cast
 from uuid import UUID
 
@@ -457,7 +458,7 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
     try:
         with measured_steps.send_data:
             direct_return_data: dict = await resolve_and_send_data_from_wiring(
-                runtime_input.workflow_wiring, workflow_result
+                runtime_input.workflow_wiring, workflow_result, runtime_input.workflow.outputs
             )
 
     except AdapterHandlingException as exc:
@@ -481,11 +482,19 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
 
     currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
 
+    plot_adapter_corrected_outp_name_to_datatype_map = deepcopy(outp_name_to_datatype_map)
+
+    for outp_wiring in runtime_input.workflow_wiring.output_wirings:
+        if outp_wiring.adapter_id == "plot":
+            plot_adapter_corrected_outp_name_to_datatype_map[outp_wiring.workflow_output_name] = (
+                DataType.PlotlyJson
+            )
+
     try:
         wf_exec_result = WorkflowExecutionResult(
             result="ok",
             node_results=node_results,
-            output_types_by_output_name=outp_name_to_datatype_map,
+            output_types_by_output_name=plot_adapter_corrected_outp_name_to_datatype_map,
             output_results_by_output_name=direct_return_data,
             job_id=runtime_input.job_id,
             tr_name=runtime_input.workflow.tr_name,

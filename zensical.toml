@@ -106,6 +106,8 @@ nav = [
           { "Kafka Adapter" = "integration_guide/adapter_system/builtin_adapters/kafka_adapter.md"},
           { "External Sources Adapter" = "integration_guide/adapter_system/builtin_adapters/external_sources_adapter.md"},
           { "Virtual Structure Adapter" = "integration_guide/adapter_system/builtin_adapters/virtual_structure_adapter.md"},
+          { "Drop Adapter" = "integration_guide/adapter_system/builtin_adapters/drop_result_adapter.md"},
+          { "Plot Adapter" = "integration_guide/adapter_system/builtin_adapters/plot_adapter.md"}
       ]},
       { "Adapter API Specification" = "integration_guide/adapter_system/adapter_rest_api_interface.md" },
       { "Adapter Registration" = "integration_guide/adapter_system/adapter_registration.md" },

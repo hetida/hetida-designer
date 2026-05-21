@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 import httpx
 from pydantic import ValidationError
 
+from hdutils import DataType
 from hetdesrun.adapters.component_adapter.validate import (
     validate_sink_trafos_for_component_adapter,
     validate_source_trafos_for_component_adapter,
@@ -574,6 +575,24 @@ async def run_execution_input(  # noqa: PLR0915
 
     run_execution_input_measured_step.stop()
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
+
+    plot_wired_output_names = {
+        outp_wiring.workflow_output_name
+        for outp_wiring in execution_input.workflow_wiring.output_wirings
+        if outp_wiring.adapter_id == "plot"
+    }
+
+    plot_wiring_corrected_output_types_by_output_name = deepcopy(
+        execution_response.output_types_by_output_name
+    )
+
+    for outp_name in execution_response.output_types_by_output_name:
+        if outp_name in plot_wired_output_names:
+            plot_wiring_corrected_output_types_by_output_name[outp_name] = DataType.PlotlyJson
+
+    execution_response.output_types_by_output_name = (
+        plot_wiring_corrected_output_types_by_output_name
+    )
 
     logger.info(
         "Execution Result Response",

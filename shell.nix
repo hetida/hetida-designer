@@ -415,7 +415,7 @@ pkgs.mkShell rec {
         echo "    and restart nix shell."
     else
         current_dir=$(pwd)
-        cd ./frontend && rm -rf node_modules && npm ci
+        cd ./frontend && rm -rf node_modules /tmp/empty_cache ./angular/cache && npm install --cache /tmp/empty_cache
         # npm-ci = sync with package-lock.json. Could be improved:
         # Does not intelligently check by using
         # hashes
