@@ -1,6 +1,10 @@
 <div class="navigation-container__filter">
   <form>
-    <mat-button-toggle-group [multiple]="false" [formControl]="typeFilter">
+    <mat-button-toggle-group
+      [multiple]="false"
+      [hideSingleSelectionIndicator]="true"
+      [formControl]="typeFilter"
+    >
       <mat-button-toggle
         value="WORKFLOW"
         [ngClass]="{ active: getFilterState('WORKFLOW') }"

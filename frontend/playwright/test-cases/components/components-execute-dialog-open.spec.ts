@@ -1,34 +1,34 @@
 import { expect, test } from '../fixtures/fixture';
 
 test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
-    // Arrange
-    const categoryName = 'Arithmetic';
-    const componentName = 'Pi';
-    const componentTag = '1.0.0';
+  // Arrange
+  const categoryName = 'Arithmetic';
+  const componentName = 'Pi';
+  const componentTag = '1.0.0';
 
-    // Act
-    await hetidaDesigner.clickComponentsInNavigation();
-    await hetidaDesigner.clickCategoryInNavigation(categoryName);
-    await hetidaDesigner.doubleClickItemInNavigation(
-        `${componentName}(${componentTag})`
-    );
+  // Act
+  await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
 
-    await hetidaDesigner.clickIconInToolbar('Execute');
-    await page.waitForSelector('mat-dialog-container');
+  await hetidaDesigner.clickIconInToolbar('Execute');
+  await page.waitForSelector('mat-dialog-container');
 
-    // Assert
-    const countDialogContainer = await page
-        .locator('mat-dialog-container')
-        .count();
-    expect(countDialogContainer).toEqual(1);
+  // Assert
+  const countDialogContainer = await page
+    .locator('mat-dialog-container')
+    .count();
+  expect(countDialogContainer).toEqual(1);
 
-    // Check for equal substrings in dialog-title and opened tab
-    const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
-    const componentTabName = await page
-        .locator('div[role="tab"] >> nth=2')
-        .locator('.text-ellipsis')
-        .innerText();
-    await expect(dialogTitle).toContainText(`${componentTabName}`);
+  // Check for equal substrings in dialog-title and opened tab
+  const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
+  const componentTabName = await page
+    .locator('div[role="tab"] >> nth=2')
+    .locator('.text-ellipsis')
+    .innerText();
+  await expect(dialogTitle).toContainText(`${componentTabName}`);
 
-    await hetidaDesigner.clearTest();
+  await hetidaDesigner.clearTest();
 });
