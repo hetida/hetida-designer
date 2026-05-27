@@ -67,20 +67,11 @@ ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
 
-##### Syft stage
-FROM anchore/syft:latest AS sbom-generator
+##### sbom stage
+FROM aquasec/trivy:0.70.0 AS sbom-generator
 COPY --from=pre-prod / /scan-target
-RUN ["/syft", "/scan-target", "-o", "spdx-json=/tmp/sbom.spdx.json"]
-RUN ["/syft", "/scan-target", "-o", "syft-json=/tmp/sbom.syft.json"]
-RUN ["/syft", "/scan-target", "-o", "cyclonedx-json=/tmp/sbom.cyclonedx.json"]
-
-##### Grype stage
-FROM anchore/grype:latest AS grype-generator
-COPY --from=sbom-generator /tmp /tmp
-RUN ["/grype", "sbom:/tmp/sbom.syft.json", "-o", "json=/tmp/grype-report.json"]
-RUN ["/grype", "sbom:/tmp/sbom.syft.json", "-o", "cyclonedx-json=/tmp/grype-report-cyclonedx.json"]
+RUN trivy fs --format cyclonedx --output /sbom.cdx.json /scan-target
 
 ##### Production stage
 FROM pre-prod AS prod
-COPY --from=grype-generator /tmp/sbom.*.json ./sbom/
-COPY --from=grype-generator /tmp/grype-*.json ./grype/
+COPY --from=sbom-generator /sbom.cdx.json /var/lib/sbom/sbom.cdx.json
