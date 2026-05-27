@@ -1,14 +1,8 @@
-##### Base stage
-
-# We explicitly target amd64 because our dependency stack is only tested and
-# validated on this architecture. Building for other platforms may succeed but
-# is unsupported.
+##### Base stage - build-time deps only
 ARG TARGETPLATFORM=linux/amd64
-FROM --platform=${TARGETPLATFORM} python:3.14.3-slim-trixie AS base
-
+FROM --platform=${TARGETPLATFORM} python:3.14.5-slim-trixie AS base
 ENV TIMEOUT=900
 
-# Copy relevant files
 COPY ./runtime/pipt_locks.env /app/pipt_locks.env
 COPY ./runtime/pipt_config.env /app/pipt_config.env
 COPY ./runtime/requirements-base.txt /app/requirements-base.txt
@@ -17,35 +11,53 @@ COPY ./runtime/requirements-dev.txt /app/requirements-dev.txt
 COPY ./runtime/pipt /app/pipt
 COPY ./hdctl /hdctl
 
-RUN apt-get -y update && apt-get -y install curl libpq-dev gcc libsnappy-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+#### Python dependencies build-time deps
+RUN apt-get -y update && apt-get -y install --no-install-recommends \
+    libpq-dev \
+    python3-dev \
+    gcc \
+    libsnappy-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 ENV PIPT_PIP_INSTALL_ARGS="--no-cache-dir"
 ENV PIPT_PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
 RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --prod
 
+##### Only Python dependencies runtime deps
+FROM --platform=${TARGETPLATFORM} python:3.14.5-slim-trixie AS runtime_base
+ENV TIMEOUT=900
+
+RUN apt-get -y update && apt-get -y install --no-install-recommends \
+    libpq5 \
+    libsnappy1v5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=base /usr/local/lib/python3.14 /usr/local/lib/python3.14
+COPY --from=base /usr/local/bin /usr/local/bin
+
 ##### Intermediate stage with actual application content
-FROM base AS application_base
+FROM runtime_base AS application_base
+
+COPY ./runtime /app
+COPY ./VERSION /app/VERSION
+COPY ./hdctl /hdctl
+
+RUN chmod +x /app/start.sh
+RUN mkdir -p /mnt/obj_repo && chmod -R a+rw /mnt/obj_repo
+RUN mkdir -p /mnt/autoimport && chmod -R a+rw /mnt/autoimport
+
+WORKDIR /app
+
+##### Test stage, needs Python dependencies build-time deps to built dev dependencies
+FROM base AS test
 COPY ./runtime /app
 COPY ./VERSION /app/VERSION
 RUN chmod +x /app/start.sh
 
-RUN mkdir -p /mnt/obj_repo
-RUN chmod -R a+rw /mnt/obj_repo
-
-RUN mkdir -p /mnt/autoimport
-RUN chmod -R a+rw /mnt/autoimport
-
-
-##### Test stage
-# Note that in order to build the test stage you need to explicitly specify
-# the test stage via
-#     docker build --target test -f Dockerfile-runtime . -t hetdesrun_webservice
-FROM application_base AS test
-RUN ./pipt sync-system --dev
+RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --dev
 RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
 RUN bash /app/scripts/gen_ruff_report.sh
-
 
 ##### Pre-Prod stage
 FROM application_base AS pre-prod
@@ -55,26 +67,20 @@ ENV PORT=8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
 
-##### Syft stage - scan the complete production image
+##### Syft stage
 FROM anchore/syft:latest AS sbom-generator
-
-# Copy the entire production filesystem to scan everything
 COPY --from=pre-prod / /scan-target
-# Generate SBOM of the complete production image
-RUN ["/syft", "/scan-target",  "-o", "spdx-json=/tmp/sbom.spdx.json"]
-RUN ["/syft", "/scan-target",  "-o", "syft-json=/tmp/sbom.syft.json"]
-RUN ["/syft", "/scan-target",  "-o", "cyclonedx-json=/tmp/sbom.cyclonedx.json"]
+RUN ["/syft", "/scan-target", "-o", "spdx-json=/tmp/sbom.spdx.json"]
+RUN ["/syft", "/scan-target", "-o", "syft-json=/tmp/sbom.syft.json"]
+RUN ["/syft", "/scan-target", "-o", "cyclonedx-json=/tmp/sbom.cyclonedx.json"]
 
 ##### Grype stage
 FROM anchore/grype:latest AS grype-generator
 COPY --from=sbom-generator /tmp /tmp
-RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "json=/tmp/grype-report.json"]
-RUN ["/grype", "sbom:/tmp/sbom.syft.json",  "-o", "cyclonedx-json=/tmp/grype-report-cyclonedx.json"]
+RUN ["/grype", "sbom:/tmp/sbom.syft.json", "-o", "json=/tmp/grype-report.json"]
+RUN ["/grype", "sbom:/tmp/sbom.syft.json", "-o", "cyclonedx-json=/tmp/grype-report-cyclonedx.json"]
 
 ##### Production stage
-# prod should be the default build, this is why we close with prod
 FROM pre-prod AS prod
-
-# Copy SBOM and grype files
 COPY --from=grype-generator /tmp/sbom.*.json ./sbom/
 COPY --from=grype-generator /tmp/grype-*.json ./grype/
