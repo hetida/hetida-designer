@@ -5,6 +5,8 @@ We use trivy for security checks. Install trivy as recommended for your OS.
 
 Hint: You may add `--severity HIGH,CRITICAL` to trivy commands below to further filter for only higher level vulnerabilities.
 
+There is a `.trivyignore.yaml` file to handle CVE exceptions.
+
 
 ## During Development
 
