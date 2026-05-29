@@ -478,6 +478,12 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HD_BACKEND_AUTOIMPORT_DIRECTORY",
     )
 
+    otel_via_logfire_active: bool = Field(
+        False,
+        validation_alias="HD_OTEL_VIA_LOGFIRE_ACTIVE",
+        description="Activate opentelemtry support via pydantic logfire",
+    )
+
     hd_adapters: str = Field(
         "demo-adapter-python|Python-Demo-Adapter"
         "|http://localhost:8092"

@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from typing import Any
 
+import logfire
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -193,6 +194,10 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         root_path=get_config().swagger_prefix,
         middleware=middleware,
     )
+
+    if get_config().otel_via_logfire_active:
+        logfire.configure(send_to_logfire=False)
+        logfire.instrument_fastapi(app)
 
     app.router.route_class = AdditionalLoggingRoute
 

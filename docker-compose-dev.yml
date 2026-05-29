@@ -37,6 +37,9 @@ services:
       - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
       - LOG_DIRECT_PROVISIONING_OUTPUTS=true
+      - HD_OTEL_VIA_LOGFIRE_ACTIVE=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME="hetida-designer-backend"
 
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
@@ -70,6 +73,25 @@ services:
       LOG_HTTPX: "true"
       HETIDA_DESIGNER_PURE_UVICORN: "true"
       LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
+      HD_OTEL_VIA_LOGFIRE_ACTIVE: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_SERVICE_NAME: "hetida-designer-runtime"
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686" # UI
+      # - "4317:4317" # OTLP gRPC
+      # - "4318:4318" # OTLP HTTP
 
   hetida-designer-db:
     image: postgres:latest
