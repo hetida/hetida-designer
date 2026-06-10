@@ -8,6 +8,8 @@ from posixpath import join as posix_urljoin
 from uuid import UUID, uuid4
 
 import httpx
+import logfire
+import msgspec
 from pydantic import ValidationError
 
 from hdutils import DataType
@@ -435,143 +437,159 @@ async def run_execution_input(  # noqa: PLR0915
 
     Raises subtypes of TrafoExecutionError on errors.
     """
-    run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "run_execution_input"
-    )
-    execution_result: WorkflowExecutionResult
+    with logfire.span(
+        "run_execution_input", job_id=execution_input.job_id, trafo_id=execution_input.trafo_id
+    ):
+        run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+            "run_execution_input"
+        )
+        execution_result: WorkflowExecutionResult
 
-    if get_config().is_runtime_service:
-        start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
+        if get_config().is_runtime_service:
+            start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
 
-        execution_result = await runtime_service(execution_input)
+            execution_result = await runtime_service(execution_input)
 
-        # measure request / response delays
-        add_runtime_request_response_reaction_times(start_calling_runtime, execution_result)
+            # measure request / response delays
+            add_runtime_request_response_reaction_times(start_calling_runtime, execution_result)
 
-        execution_response = ExecutionResponseFrontendDto.model_construct(**dict(execution_result))
-    else:
-        try:
-            headers = await get_auth_headers(external=False)
-        except ServiceAuthenticationError as e:
-            msg = (
-                "Failed to get auth headers for internal runtime execution request."
-                f" Error was:\n{str(e)}"
+            execution_response = ExecutionResponseFrontendDto.model_construct(
+                **dict(execution_result)
             )
-            logger.info(msg)
-            raise TrafoExecutionRuntimeConnectionError(msg) from e
-
-        headers["Accept-Encoding"] = "gzip"
-
-        async with httpx.AsyncClient(
-            verify=get_config().hd_runtime_verify_certs,
-            timeout=get_config().external_request_timeout,
-        ) as client:
-            url = posix_urljoin(get_runtime_engine_url(), "runtime")
+        else:
             try:
-                pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
-                    "pure_runtime_request"
-                )
-                start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
-                response = await client.post(
-                    url,
-                    headers=headers,
-                    json=execution_input.model_dump(mode="json"),
-                    timeout=None,
-                )
-                response.raise_for_status()
-                response_received_time = datetime.datetime.now(datetime.timezone.utc)
-                logger.debug(
-                    "Runtime response content encoding: %s",
-                    str(response.headers.get("content-encoding", "n/a")),
-                )
-
-                pure_runtime_request_step.stop()
-            except httpx.HTTPStatusError as e:
-                # 4xx and 5xx
+                headers = await get_auth_headers(external=False)
+            except ServiceAuthenticationError as e:
                 msg = (
-                    "HTTPStatusError during runtime execution request for job"
-                    f" {execution_input.job_id}: {str(e)}"
-                )
-                logger.error(msg)
-                raise TrafoExecutionRuntimeHttpStatusError(msg) from e
-
-            except httpx.HTTPError as e:
-                # handle "unexpected" errors, that
-                # * are probably caused by what the executed trafo actually does, like
-                #   using too much memory
-                # * lead to a temrminated runtime worker process or a state, where the
-                #   the runtime cannot properly send a response any more.
-                #
-                # In this case we do not want to send a Http 500 error back but an actual
-                # structured error response that allows the user to review and handle situations
-                # probably triggered by their code / workflow or the amount of data
-                # requested or produced.
-                #
-                # Note: Can e.g. be triggered by running os._exit(1) in component code. But a test
-                # would of course require separated backend and runtime services and a runtime
-                # process management.
-                msg = f"Failed runtime execution request to hd runtime endpoint ({url}):\n{str(e)}"
-                logger.warning(msg)
-
-                trafo_failure_exc = TrafoExecutionRuntimeUnexpectedFailure(msg)
-                trafo_failure_exc.__cause__ = e
-                trafo_failure_exc.__traceback__ = e.__traceback__
-
-                wf_exec_info = WorkflowExecutionInfo.from_exception(
-                    exception=trafo_failure_exc,
-                    process_stage=ProcessStage.UNKNOWN,
-                    job_id=execution_input.job_id,
-                    tr_name=execution_input.workflow.tr_name,
-                    tr_tag=execution_input.workflow.tr_tag,
-                    tr_id=execution_input.trafo_id,
-                    cause=None,
-                    measured_steps=None,
-                    mem_info=None,
-                )
-
-                wf_exec_info_error = wf_exec_info.error
-                assert wf_exec_info_error is not None  # for mypy # noqa: S101
-
-                wf_exec_info_error.message = (
-                    UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE + f"\n\nThe actual error was:\n{str(e)}"
-                )
-                execution_response = ExecutionResponseFrontendDto(
-                    **(wf_exec_info.model_dump()),
-                    result="failure",
-                    resolved_reproducibility_references=get_deepcopy_of_reproducibility_reference_context(),
-                )
-
-                return execution_response
-            try:
-                runtime_request_response_parsing_step = PerformanceMeasuredStep.create_and_begin(
-                    "runtime_request_response_parsing"
-                )
-
-                json_obj = response.json()
-                execution_response = ExecutionResponseFrontendDto.model_validate(
-                    json_obj, context={"result_validation": False}
-                )
-                add_runtime_request_response_reaction_times(
-                    start_calling_runtime,
-                    execution_response,
-                    response_received_time=response_received_time,
-                )
-
-                runtime_request_response_parsing_step.stop()
-
-            except ValidationError as e:
-                msg = (
-                    f"Could not validate hd runtime result object. Exception:\n{str(e)}"
-                    f"\nJson Object is:\n{str(json_obj)}"
+                    "Failed to get auth headers for internal runtime execution request."
+                    f" Error was:\n{str(e)}"
                 )
                 logger.info(msg)
-                raise TrafoExecutionResultValidationError(msg) from e
-            execution_response.measured_steps.runtime_request_response_parsing = (
-                runtime_request_response_parsing_step
-            )
-            execution_response.measured_steps.pure_runtime_request = pure_runtime_request_step
+                raise TrafoExecutionRuntimeConnectionError(msg) from e
 
-    run_execution_input_measured_step.stop()
+            headers["Accept-Encoding"] = "gzip"
+            headers["Content-Type"] = "application/json"
+
+            async with httpx.AsyncClient(
+                verify=get_config().hd_runtime_verify_certs,
+                timeout=get_config().external_request_timeout,
+            ) as client:
+                url = posix_urljoin(get_runtime_engine_url(), "runtime")
+                try:
+                    with logfire.span("pure_runtime_request"):
+                        pure_runtime_request_step = PerformanceMeasuredStep.create_and_begin(
+                            "pure_runtime_request"
+                        )
+                        start_calling_runtime = datetime.datetime.now(datetime.timezone.utc)
+                        response = await client.post(
+                            url,
+                            headers=headers,
+                            content=execution_input.model_dump_json(),
+                            timeout=None,
+                        )
+                        response.raise_for_status()
+                        response_received_time = datetime.datetime.now(datetime.timezone.utc)
+                        logger.debug(
+                            "Runtime response content encoding: %s",
+                            str(response.headers.get("content-encoding", "n/a")),
+                        )
+
+                        pure_runtime_request_step.stop()
+                except httpx.HTTPStatusError as e:
+                    # 4xx and 5xx
+                    msg = (
+                        "HTTPStatusError during runtime execution request for job"
+                        f" {execution_input.job_id}: {str(e)}"
+                    )
+                    logger.error(msg)
+                    raise TrafoExecutionRuntimeHttpStatusError(msg) from e
+
+                except httpx.HTTPError as e:
+                    # handle "unexpected" errors, that
+                    # * are probably caused by what the executed trafo actually does, like
+                    #   using too much memory
+                    # * lead to a temrminated runtime worker process or a state, where the
+                    #   the runtime cannot properly send a response any more.
+                    #
+                    # In this case we do not want to send a Http 500 error back but an actual
+                    # structured error response that allows the user to review and handle situations
+                    # probably triggered by their code / workflow or the amount of data
+                    # requested or produced.
+                    #
+                    # Note: Can e.g. be triggered by running os._exit(1) in component code. But a
+                    # test would of course require separated backend and runtime services and a
+                    # runtime process management.
+                    msg = (
+                        f"Failed runtime execution request to hd runtime "
+                        f"endpoint ({url}):\n{str(e)}"
+                    )
+                    logger.warning(msg)
+
+                    trafo_failure_exc = TrafoExecutionRuntimeUnexpectedFailure(msg)
+                    trafo_failure_exc.__cause__ = e
+                    trafo_failure_exc.__traceback__ = e.__traceback__
+
+                    wf_exec_info = WorkflowExecutionInfo.from_exception(
+                        exception=trafo_failure_exc,
+                        process_stage=ProcessStage.UNKNOWN,
+                        job_id=execution_input.job_id,
+                        tr_name=execution_input.workflow.tr_name,
+                        tr_tag=execution_input.workflow.tr_tag,
+                        tr_id=execution_input.trafo_id,
+                        cause=None,
+                        measured_steps=None,
+                        mem_info=None,
+                    )
+
+                    wf_exec_info_error = wf_exec_info.error
+                    assert wf_exec_info_error is not None  # for mypy # noqa: S101
+
+                    wf_exec_info_error.message = (
+                        UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE
+                        + f"\n\nThe actual error was:\n{str(e)}"
+                    )
+                    execution_response = ExecutionResponseFrontendDto(
+                        **(wf_exec_info.model_dump()),
+                        result="failure",
+                        resolved_reproducibility_references=get_deepcopy_of_reproducibility_reference_context(),
+                    )
+
+                    return execution_response
+                try:
+                    with logfire.span("runtime_request_response_parsing"):
+                        runtime_request_response_parsing_step = (
+                            PerformanceMeasuredStep.create_and_begin(
+                                "runtime_request_response_parsing"
+                            )
+                        )
+
+                        json_obj = msgspec.json.decode(
+                            response.content
+                        )  # use msgspec for json parsing speed instead of response.json()
+                        execution_response = ExecutionResponseFrontendDto.model_validate(
+                            json_obj, context={"result_validation": False}
+                        )
+                        add_runtime_request_response_reaction_times(
+                            start_calling_runtime,
+                            execution_response,
+                            response_received_time=response_received_time,
+                        )
+
+                        runtime_request_response_parsing_step.stop()
+
+                except ValidationError as e:
+                    msg = (
+                        f"Could not validate hd runtime result object. Exception:\n{str(e)}"
+                        f"\nJson Object is:\n{str(json_obj)}"
+                    )
+                    logger.info(msg)
+                    raise TrafoExecutionResultValidationError(msg) from e
+                execution_response.measured_steps.runtime_request_response_parsing = (
+                    runtime_request_response_parsing_step
+                )
+                execution_response.measured_steps.pure_runtime_request = pure_runtime_request_step
+
+        run_execution_input_measured_step.stop()
     execution_response.measured_steps.run_execution_input = run_execution_input_measured_step
 
     plot_wired_output_names = {
@@ -678,19 +696,20 @@ async def execute_transformation_revision(
     # Resolve virtual wirings if necessary
     if exec_by_id_input.wiring:
         try:
-            resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
-                "resolve_virtual_wirings_if_contained"
-            )
-
-            resolve_virtual_structure_wirings(exec_by_id_input.wiring)  # modifies wiring!
-
-            if get_config().log_resolved_virtual_structure_wirings:
-                logger.debug(
-                    "Resolved virtual structure wirings: \n%s",
-                    exec_by_id_input.wiring,
+            with logfire.span("resolve_virtual_wirings_if_contained"):
+                resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
+                    "resolve_virtual_wirings_if_contained"
                 )
 
-            resolve_wirings_measured_step.stop()
+                resolve_virtual_structure_wirings(exec_by_id_input.wiring)  # modifies wiring!
+
+                if get_config().log_resolved_virtual_structure_wirings:
+                    logger.debug(
+                        "Resolved virtual structure wirings: \n%s",
+                        exec_by_id_input.wiring,
+                    )
+
+                resolve_wirings_measured_step.stop()
         except AdapterHandlingException as exc:
             logger.info(
                 "Adapter Handling Exception during the resolution of the virtual wirings",
@@ -703,13 +722,14 @@ async def execute_transformation_revision(
             raise TrafoExecutionError() from exc
 
     # prepare execution input
-    prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "prepare_execution_input"
-    )
+    with logfire.span("prepare_execution_input"):
+        prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+            "prepare_execution_input"
+        )
 
-    execution_input = prepare_execution_input(exec_by_id_input)
+        execution_input = prepare_execution_input(exec_by_id_input)
 
-    prep_exec_input_measured_step.stop()
+        prep_exec_input_measured_step.stop()
 
     exec_resp_frontend_dto = await run_execution_input(execution_input)
     exec_resp_frontend_dto.measured_steps.prepare_execution_input = prep_exec_input_measured_step
@@ -724,12 +744,13 @@ async def perf_measured_execute_trafo_rev(
 
     Propagates all exceptions (expected: TrafoExecutionError and subclasses).
     """
-    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin("internal_full")
+    with logfire.span("internal_full"):
+        internal_full_measured_step = PerformanceMeasuredStep.create_and_begin("internal_full")
 
-    # following line may raise exceptions (TrafoExecutionError and subclasses):
-    exec_response = await execute_transformation_revision(exec_by_id)
+        # following line may raise exceptions (TrafoExecutionError and subclasses):
+        exec_response = await execute_transformation_revision(exec_by_id)
 
-    internal_full_measured_step.stop()
+        internal_full_measured_step.stop()
     exec_response.measured_steps.internal_full = internal_full_measured_step
     if get_config().advanced_performance_measurement_active:
         exec_response.process_id = os.getpid()

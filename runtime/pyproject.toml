@@ -41,3 +41,7 @@ src = [".", "runtime", "demo-adapter-python"]
 # explicitely add known first party names for import sorting
 # (somehow duplicating the src setting above??)
 known-first-party = ["hetdesrun", "demo_adapter_python"]
+
+
+[tool.logfire]
+ignore_no_config=true

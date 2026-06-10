@@ -198,6 +198,13 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     if get_config().otel_via_logfire_active:
         logfire.configure(send_to_logfire=False)
         logfire.instrument_fastapi(app)
+        logfire.instrument_httpx()
+        logfire.instrument_requests()
+        logfire.instrument_system_metrics()
+
+        from hetdesrun.persistence.db_engine_and_session import get_db_engine
+
+        logfire.instrument_sqlalchemy(engine=get_db_engine())
 
     app.router.route_class = AdditionalLoggingRoute
 

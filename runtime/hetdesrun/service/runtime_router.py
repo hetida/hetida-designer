@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+import logfire
+
 from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import (
@@ -30,16 +32,19 @@ runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
 ) -> MsgSpecJSONResponse:
-    received_backend_request = datetime.datetime.now(datetime.timezone.utc)
-    result = await runtime_service(runtime_input)
-    result.measured_steps.backend_calling_runtime_request_start.end = received_backend_request
+    with logfire.span("runtime execution request handling without fastapi parsing"):
+        received_backend_request = datetime.datetime.now(datetime.timezone.utc)
+        result = await runtime_service(runtime_input)
+        result.measured_steps.backend_calling_runtime_request_start.end = received_backend_request
 
-    dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
+        with logfire.span("runtime execution result serialization without fastapi"):
+            dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
 
-    dict_like_json_serializable_obj["measured_steps"]["runtime_sending_response_start"]["start"] = (
-        datetime.datetime.now(datetime.timezone.utc).isoformat()
-    )
-    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
+            dict_like_json_serializable_obj["measured_steps"]["runtime_sending_response_start"][
+                "start"
+            ] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            msgspec_result = MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
+    return msgspec_result
 
 
 @runtime_router.get("/info", response_model=VersionInfo)

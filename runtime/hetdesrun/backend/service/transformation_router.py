@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 import httpx
+import logfire
 from dtexp import DtexpParsingError
 from fastapi import (
     APIRouter,
@@ -1332,11 +1333,15 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+    with logfire.span("backend execution request handling without fastapi parsing"):
+        exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+        with logfire.span("backend execution result serialization without fastapi"):
+            dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(
+                exec_result
+            )
+            msgspec_result = MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
 
-    exec_result = await handle_trafo_revision_execution_request(exec_by_id)
-    dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
-
-    return MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
+    return msgspec_result
 
 
 @transformation_router.post(
