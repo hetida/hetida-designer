@@ -1,5 +1,6 @@
 import logging
 
+import logfire
 import structlog
 from structlog.types import Processor
 
@@ -67,6 +68,7 @@ def get_formatter(
                 CustomAttributeProcessor(),
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 FieldRenamer(),
+                logfire.StructlogProcessor(),
                 structlog.processors.JSONRenderer(
                     default=MinimallyMoreCapableJsonEncoder().default
                 ),

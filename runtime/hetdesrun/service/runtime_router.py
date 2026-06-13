@@ -39,11 +39,11 @@ async def runtime_endpoint(
 
         with logfire.span("runtime execution result serialization without fastapi"):
             dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
-
             dict_like_json_serializable_obj["measured_steps"]["runtime_sending_response_start"][
                 "start"
             ] = datetime.datetime.now(datetime.timezone.utc).isoformat()
             msgspec_result = MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
+
     return msgspec_result
 
 

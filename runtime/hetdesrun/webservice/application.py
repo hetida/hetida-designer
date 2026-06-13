@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from typing import Any
 
+import httpx
 import logfire
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -45,16 +46,18 @@ class AdditionalLoggingRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
-            try:
-                json_data = await request.json()
-            except json.decoder.JSONDecodeError:
-                body = await request.body()
-                logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
-            else:
-                logger.info(
-                    "RECEIVED JSON BODY: \n%s",
-                    json.dumps(json_data, indent=2, sort_keys=True),
-                )
+            if get_config().log_route_parsed_json_bodies:
+                try:
+                    json_data = await request.json()
+                except json.decoder.JSONDecodeError:
+                    body = await request.body()
+                    logger.info("RECEIVED BODY (could not parse as json):\n%s", body.decode())
+                else:
+                    logger.info(
+                        "RECEIVED JSON BODY: \n%s",
+                        json.dumps(json_data, indent=2, sort_keys=True),
+                    )
+
             try:
                 return await original_route_handler(request)
             except RequestValidationError as exc:
@@ -81,12 +84,18 @@ middleware = [
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     logger.info("Initializing application ...")
+    app.state.runtime_http_client = httpx.AsyncClient(
+        verify=get_config().hd_runtime_verify_certs,
+        timeout=get_config().external_request_timeout,
+        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+    )
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Initializing Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()
         await kakfa_worker_context.start()
     yield
     logger.info("Shutting down application...")
+    await app.state.runtime_http_client.aclose()
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Shutting down Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()
@@ -195,17 +204,6 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         middleware=middleware,
     )
 
-    if get_config().otel_via_logfire_active:
-        logfire.configure(send_to_logfire=False)
-        logfire.instrument_fastapi(app)
-        logfire.instrument_httpx()
-        logfire.instrument_requests()
-        logfire.instrument_system_metrics()
-
-        from hetdesrun.persistence.db_engine_and_session import get_db_engine
-
-        logfire.instrument_sqlalchemy(engine=get_db_engine())
-
     app.router.route_class = AdditionalLoggingRoute
 
     @app.exception_handler(RequestValidationError)
@@ -280,6 +278,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             and len(possible_maintenance_secret.get_secret_value()) > 0
         ):
             app.include_router(maintenance_router, prefix="/api", dependencies=get_auth_deps())
+
     if len(get_config().restrict_to_trafo_exec_service) != 0:
         app.include_router(info_router, prefix="/api")  # reachable without authorization
         app.include_router(
@@ -287,5 +286,26 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             prefix="/api",
             dependencies=get_auth_deps(),
         )
+
+    if get_config().otel_via_logfire_active:
+        logfire.configure(send_to_logfire=False)
+
+        # we use the asgi instrumentation, not the fastapi instrumentation:
+        # Reason is that typical execution requests of e.g. the "Volatility Detection Example"
+        # workflow got ~80ms additional duration (doubling request duratioN!)
+        # from just activating the fastapi instrumentation,
+        # even with completely deactivated pydantic insturmentations. This overhead does not occur
+        # using the asgi instrumentation!
+
+        # logfire.instrument_fastapi(app, record_send_receive=False, extra_spans=False) # noqa ERA001
+        app = logfire.instrument_asgi(app)  # type: ignore
+
+        logfire.instrument_httpx()
+        logfire.instrument_requests()
+        logfire.instrument_system_metrics()
+
+        from hetdesrun.persistence.db_engine_and_session import get_db_engine
+
+        logfire.instrument_sqlalchemy(engine=get_db_engine())
 
     return app

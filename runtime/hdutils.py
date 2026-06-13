@@ -11,6 +11,7 @@ from uuid import UUID
 import numpy as np
 import pandas as pd
 import pytz
+from logfire.integrations.pydantic import PluginSettings
 from plotly.graph_objects import Figure
 from pydantic import (
     BaseModel,

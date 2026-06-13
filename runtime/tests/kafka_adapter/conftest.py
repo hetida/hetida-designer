@@ -3,6 +3,7 @@ from unittest import mock
 
 import pytest
 import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
@@ -52,12 +53,13 @@ def app_without_auth() -> FastAPI:
         return init_app()
 
 
-@pytest.fixture
-def async_test_client_with_kafka_adapter(
+@pytest_asyncio.fixture
+async def async_test_client_with_kafka_adapter(
     two_kafka_configs,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
-    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
+    async with LifespanManager(app_without_auth) as manager:
+        return AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test")
 
 
 @pytest_asyncio.fixture

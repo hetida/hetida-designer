@@ -75,6 +75,15 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    log_route_parsed_json_bodies: bool = Field(
+        False,
+        validation_alias="LOG_ROUTE_PARSED_JSON_BODIES",
+        description=(
+            "Whether in each http route the content is tried to be parsed as json and the result"
+            " is logged. This may add parsing overhead and should only be activated for debugging"
+        ),
+    )
+
     log_httpx: bool = Field(
         False,
         description=(
@@ -106,10 +115,12 @@ class RuntimeConfig(BaseSettings):
             "currently_executed_transformation_type": "tr_type",
             "currently_executed_operator_hierarchical_id": "op_id",
             "currently_executed_operator_hierarchical_name": "op_name",
-            "event": "message",
+            # "event": "message", if you do rename event, it will not be found by logfire anymore!
         },
         description="Dict of log field names to be renamed, before the log is rendered as a JSON. "
-        "Keys are looked up in the event dict and replaced with the corresponding value.",
+        "Keys are looked up in the event dict and replaced with the corresponding value. "
+        'If "event" is renamed, it will not be found by logfire anymore and you ill not get '
+        "log messages in the generated events / spans!",
         validation_alias="LOG_FIELDS_TO_RENAME",
     )
 

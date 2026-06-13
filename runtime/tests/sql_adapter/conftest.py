@@ -5,6 +5,8 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
@@ -237,9 +239,10 @@ def async_test_client_with_sql_adapter(
     return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
 
 
-@pytest.fixture
-def async_test_client_with_sql_adapter_with_timeseries_table(
+@pytest_asyncio.fixture
+async def async_test_client_with_sql_adapter_with_timeseries_table(
     three_sqlite_dbs_configured,
     app_without_auth: FastAPI,
 ) -> AsyncClient:
-    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
+    async with LifespanManager(app_without_auth) as manager:
+        return AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test")

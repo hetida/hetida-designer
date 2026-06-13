@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
@@ -77,9 +78,10 @@ def apply_fixes(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("apply_fixes")
 
 
-@pytest.fixture
-def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
-    return AsyncClient(transport=ASGITransport(app=app_without_auth), base_url="http://test")
+@pytest_asyncio.fixture
+async def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
+    async with LifespanManager(app_without_auth) as manager:
+        return AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test")
 
 
 @pytest_asyncio.fixture

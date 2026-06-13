@@ -45,3 +45,6 @@ known-first-party = ["hetdesrun", "demo_adapter_python"]
 
 [tool.logfire]
 ignore_no_config=true
+# pydantic instrumenting, even if on "failure" only adds too much overhead
+# if fastapi instrumentation is active!
+pydantic_plugin_record = "off"

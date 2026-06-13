@@ -3,6 +3,7 @@ import logging
 from uuid import uuid4
 
 import aiokafka
+import httpx
 from pydantic import ValidationError
 
 from hetdesrun.adapters.kafka.context import bind_kafka_messages
@@ -16,6 +17,10 @@ from hetdesrun.adapters.kafka.utils import parse_value_and_msg_identifier
 from hetdesrun.backend.execution import (
     TrafoExecutionError,
     perf_measured_execute_trafo_rev,
+)
+from hetdesrun.backend.runtime_http_client import get_runtime_http_client
+from hetdesrun.backend.runtime_http_client import (
+    runtime_http_client as runtime_http_client_context_var,
 )
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.wiring import FilterKey
@@ -196,7 +201,6 @@ def create_aiokafka_consumer(topic: str, consumer_config: dict) -> aiokafka.AIOK
 
 async def start_consumption_mode() -> None:
     # extract unique kafka_config from input wirings in respective config
-
     (
         relevant_kafka_config_key,
         relevant_kafka_config,
@@ -208,6 +212,18 @@ async def start_consumption_mode() -> None:
     )
 
     group_id = relevant_kafka_config.consumer_config.get("group_id", None)
+
+    # initialize runtim httpx client
+
+    runtime_http_client = httpx.AsyncClient(
+        verify=get_config().hd_runtime_verify_certs,
+        timeout=get_config().external_request_timeout,
+        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+    )
+
+    runtime_http_client_context_var.set(runtime_http_client)
+
+    # start consumer
 
     consumption_mode_exec_base = get_config().hd_kafka_consumption_mode
 
@@ -270,3 +286,4 @@ async def start_consumption_mode() -> None:
             not msg_handling_exception_occured
         ) or relevant_kafka_config.call_consumer_stop_method_after_exception:
             await consumer.stop()
+            await get_runtime_http_client().aclose()

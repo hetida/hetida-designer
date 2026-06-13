@@ -35,6 +35,7 @@ from hetdesrun.backend.execution import (
     perf_measured_execute_trafo_rev,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.backend.runtime_http_client import inject_runtime_http_client
 from hetdesrun.backend.service.dashboarding import (
     OverrideMode,
     calculate_timerange_timestamps,
@@ -1322,6 +1323,7 @@ async def handle_trafo_revision_execution_request(
     responses={
         status.HTTP_200_OK: {"description": "Successfully executed the transformation revision"}
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def execute_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
