@@ -1335,8 +1335,16 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
-    with logfire.span("backend execution request handling without fastapi parsing"):
+    with logfire.span(
+        "backend execution request handling without fastapi parsing",
+        trafo_id=str(exec_by_id.id),
+        job_id=str(exec_by_id.job_id),
+    ) as backend_exec_span:
         exec_result = await handle_trafo_revision_execution_request(exec_by_id)
+
+        backend_exec_span.set_attribute("trafo_name", exec_result.tr_name)
+        backend_exec_span.set_attribute("trafo_tag", exec_result.tr_tag)
+
         with logfire.span("backend execution result serialization without fastapi"):
             dict_like_json_serializable_obj = handle_frontend_exec_response_dict_serialisation(
                 exec_result
@@ -1448,7 +1456,9 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
-    dict_like_obj = handle_frontend_exec_response_dict_serialisation(result)
+
+    with logfire.span("backend execution result serialization without fastapi"):
+        dict_like_obj = handle_frontend_exec_response_dict_serialisation(result)
 
     try:
         headers = await get_auth_headers(external=True)
@@ -1479,8 +1489,17 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
     try:
         try:
-            result = await handle_trafo_revision_execution_request(exec_by_id)
-            logger.info("Finished execution with job_id=%s", str(exec_by_id.job_id))
+            with logfire.span(
+                "backend execution request handling without fastapi parsing",
+                trafo_id=str(exec_by_id.id),
+                job_id=str(exec_by_id.job_id),
+            ) as backend_exec_span:
+                result = await handle_trafo_revision_execution_request(exec_by_id)
+
+                backend_exec_span.set_attribute("trafo_name", result.tr_name)
+                backend_exec_span.set_attribute("trafo_tag", result.tr_tag)
+
+                logger.info("Finished execution with job_id=%s", str(exec_by_id.job_id))
         except HTTPException as http_exc:
             logger.error(
                 "Execution with job_id=%s as background task failed:\n%s",
@@ -1489,8 +1508,9 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             )
             # no re-raise reasonable due to issue mentioned above
         else:
-            await send_result_to_callback_url(callback_url, result)
-            logger.info("Sent result of execution with job_id=%s", str(exec_by_id.job_id))
+            with logfire.span("Send exec result to callback_url"):
+                await send_result_to_callback_url(callback_url, result)
+                logger.info("Sent result of execution with job_id=%s", str(exec_by_id.job_id))
     except Exception as e:
         logger.error(
             "An unexpected error occurred during execution with job_id=%s as background task:\n%s",
@@ -1582,12 +1602,23 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    exec_result = await handle_latest_trafo_revision_execution_request(
-        exec_latest_by_group_id_input
-    )
-    dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+    with logfire.span(
+        "backend execution request handling without fastapi parsing",
+        revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
+        job_id=str(exec_latest_by_group_id_input.job_id),
+    ) as backend_exec_span:
+        exec_result = await handle_latest_trafo_revision_execution_request(
+            exec_latest_by_group_id_input
+        )
+        backend_exec_span.set_attribute("trafo_id", exec_result.tr_id)
+        backend_exec_span.set_attribute("trafo_name", exec_result.tr_name)
+        backend_exec_span.set_attribute("trafo_tag", exec_result.tr_tag)
 
-    return MsgSpecJSONResponse(content=dict_like_obj)
+        with logfire.span("backend execution result serialization without fastapi"):
+            dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+            msgspec_result = MsgSpecJSONResponse(content=dict_like_obj)
+
+    return msgspec_result
 
 
 async def execute_latest_and_post(
@@ -1597,13 +1628,22 @@ async def execute_latest_and_post(
     # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
     try:
         try:
-            result = await handle_latest_trafo_revision_execution_request(
-                exec_latest_by_group_id_input
-            )
-            logger.info(
-                "Finished execution with job_id=%s",
-                str(exec_latest_by_group_id_input.job_id),
-            )
+            with logfire.span(
+                "backend execution request handling without fastapi parsing",
+                revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
+                job_id=str(exec_latest_by_group_id_input.job_id),
+            ) as backend_exec_span:
+                result = await handle_latest_trafo_revision_execution_request(
+                    exec_latest_by_group_id_input
+                )
+                backend_exec_span.set_attribute("trafo_id", result.tr_id)
+                backend_exec_span.set_attribute("trafo_name", result.tr_name)
+                backend_exec_span.set_attribute("trafo_tag", result.tr_tag)
+
+                logger.info(
+                    "Finished execution with job_id=%s",
+                    str(exec_latest_by_group_id_input.job_id),
+                )
         except HTTPException as http_exc:
             logger.error(
                 "Execution with job_id=%s as background task failed:\n%s",
@@ -1612,11 +1652,12 @@ async def execute_latest_and_post(
             )
             # no re-raise reasonable due to issue mentioned above
         else:
-            await send_result_to_callback_url(callback_url, result)
-            logger.info(
-                "Sent result of execution with job_id %s",
-                str(exec_latest_by_group_id_input.job_id),
-            )
+            with logfire.span("Send exec result to callback_url"):
+                await send_result_to_callback_url(callback_url, result)
+                logger.info(
+                    "Sent result of execution with job_id %s",
+                    str(exec_latest_by_group_id_input.job_id),
+                )
     except Exception as e:
         logger.error(
             "An unexpected error occurred during execution with job_id=%s as background task:\n%s",

@@ -5,6 +5,8 @@ volumes:
     driver: local
   local_files:
     driver: local
+  tempo-data:
+  grafana-data:
 
 services:
   hetida-designer-frontend:
@@ -33,13 +35,13 @@ services:
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
       - MAX_WORKERS=1
-      - LOG_LEVEL=DEBUG
+      #- LOG_LEVEL=DEBUG
       - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
-      - LOG_DIRECT_PROVISIONING_OUTPUTS=true
+      #- LOG_DIRECT_PROVISIONING_OUTPUTS=true
       - HD_OTEL_VIA_LOGFIRE_ACTIVE=true
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
-      - OTEL_SERVICE_NAME="hetida-designer-backend"
+      - OTEL_SERVICE_NAME=hetida-designer-backend
 
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
@@ -69,10 +71,10 @@ services:
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
       MAX_WORKERS: 1
-      LOG_LEVEL: "DEBUG"
+      #LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
       HETIDA_DESIGNER_PURE_UVICORN: "true"
-      LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
+      #LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
       HD_OTEL_VIA_LOGFIRE_ACTIVE: "true"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
       OTEL_SERVICE_NAME: "hetida-designer-runtime"
@@ -85,6 +87,32 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     command: ["--config=/etc/otel-collector-config.yaml"]
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    #ports:
+    # - "3200:3200" # Tempo HTTP API
+    # - "4317:4317" # OTLP gRPC
+    # - "4318:4318" # OTLP HTTP
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
 
   jaeger:
     image: jaegertracing/all-in-one:latest

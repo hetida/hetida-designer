@@ -18,13 +18,17 @@ exporters:
     endpoint: "jaeger:4317"
     tls:
       insecure: true
+  otlp/tempo:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug, otlp/jaeger]
+      exporters: [debug, otlp/jaeger, otlp/tempo]
     metrics:
       receivers: [otlp]
       processors: [batch]

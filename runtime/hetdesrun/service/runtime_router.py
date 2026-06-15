@@ -32,7 +32,11 @@ runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
 ) -> MsgSpecJSONResponse:
-    with logfire.span("runtime execution request handling without fastapi parsing"):
+    with logfire.span(
+        "runtime execution request handling without fastapi parsing",
+        trafo_id=str(runtime_input.trafo_id),
+        job_id=str(runtime_input.job_id),
+    ):
         received_backend_request = datetime.datetime.now(datetime.timezone.utc)
         result = await runtime_service(runtime_input)
         result.measured_steps.backend_calling_runtime_request_start.end = received_backend_request
