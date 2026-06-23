@@ -1965,10 +1965,10 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
             "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
             "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.py",
             "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
-            "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
+            "./transformations/components/visualization/single_timeseries_plot_101_d180674a_41af_4f67_aee3_c4c037ccc6b3.py",
             "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
             "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
-            "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
+            "./transformations/workflows/examples/linear_rul_from_last_positive_step_102_07b04b08_d381_4f10_b9bb_3200735ed6b1.json",
         ]
 
         tr_list = [
@@ -1993,7 +1993,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
         )
 
         # linear rul from last positive step
-        workflow_id = UUID("3d504361-e351-4d52-8734-391aa47e8f24")
+        workflow_id = UUID("07b04b08-d381-4f10-b9bb-3200735ed6b1")
         tr_workflow = read_single_transformation_revision(workflow_id)
 
         exec_by_id_input = ExecByIdInput(id=workflow_id, wiring=tr_workflow.test_wiring)

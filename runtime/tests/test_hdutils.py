@@ -1,5 +1,4 @@
 import datetime
-from zoneinfo import ZoneInfoNotFoundError
 
 import numpy as np
 import pandas as pd
@@ -101,7 +100,7 @@ def test_named_series(series_summer):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
     modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_names=["timestamp"])
-    assert modified_data[1].utcoffset() == datetime.timedelta(seconds=3600)
+    assert modified_data.iloc[1].utcoffset() == datetime.timedelta(seconds=3600)
 
 
 def test_named_series_using_index(series_summer):
