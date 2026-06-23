@@ -1,9 +1,9 @@
 import datetime
+import zoneinfo
 
 import numpy as np
 import pandas as pd
 import pytest
-import zoneinfo
 
 from hdutils import modify_timezone
 
@@ -93,7 +93,9 @@ def test_modify_timezone_good_series(series_summer, series_winter):
 
 
 def test_modify_timezone_wrong_tzname(series_summer):
-    with pytest.raises(zoneinfo._common.ZoneInfoNotFoundError, match="No time zone found with key*"):
+    with pytest.raises(
+        zoneinfo._common.ZoneInfoNotFoundError, match="No time zone found with key*"
+    ):
         _ = modify_timezone(series_summer, to_timezone="Europe/Berlin2")
 
 
