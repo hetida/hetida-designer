@@ -1339,6 +1339,7 @@ async def execute_transformation_revision_endpoint(
         "backend execution request handling without fastapi parsing",
         trafo_id=str(exec_by_id.id),
         job_id=str(exec_by_id.job_id),
+        hierarchy_object=exec_by_id.runtime_execution_context.hierarchy_object,
     ) as backend_exec_span:
         exec_result = await handle_trafo_revision_execution_request(exec_by_id)
 
@@ -1493,6 +1494,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
                 "backend execution request handling without fastapi parsing",
                 trafo_id=str(exec_by_id.id),
                 job_id=str(exec_by_id.job_id),
+                hierarchy_object=exec_by_id.runtime_execution_context.hierarchy_object,
             ) as backend_exec_span:
                 result = await handle_trafo_revision_execution_request(exec_by_id)
 
@@ -1606,6 +1608,7 @@ async def execute_latest_transformation_revision_endpoint(
         "backend execution request handling without fastapi parsing",
         revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
         job_id=str(exec_latest_by_group_id_input.job_id),
+        hierarchy_object=exec_latest_by_group_id_input.runtime_execution_context.hierarchy_object,
     ) as backend_exec_span:
         exec_result = await handle_latest_trafo_revision_execution_request(
             exec_latest_by_group_id_input
@@ -1632,6 +1635,7 @@ async def execute_latest_and_post(
                 "backend execution request handling without fastapi parsing",
                 revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
                 job_id=str(exec_latest_by_group_id_input.job_id),
+                hierarchy_object=exec_latest_by_group_id_input.runtime_execution_context.hierarchy_object,
             ) as backend_exec_span:
                 result = await handle_latest_trafo_revision_execution_request(
                     exec_latest_by_group_id_input
