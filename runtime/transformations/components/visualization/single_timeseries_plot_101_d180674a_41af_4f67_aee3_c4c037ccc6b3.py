@@ -296,6 +296,7 @@ RELEASE_WIRING = {
 
 try:
     import json
+
     import pytest
 except ModuleNotFoundError:
     pass
@@ -303,14 +304,14 @@ else:
 
     def result_is_json(data):
         try:
-            json.loads(data["plot"])
+            json.dumps(data["plot"])
             return True
-            except json.JSONDecodeError:
-        return False
+        except json.JSONDecodeError:
+            return False
 
     def test_empty_series():
         result = main(series=pd.Series())
-        assert result_is_json(result)
+        assert result_is_json(result) # noqa: S101
 
 
     @pytest.mark.parametrize(
@@ -329,13 +330,13 @@ else:
     def test_using_keywords_no_metadata(optional_arguments):
         rng = np.random.default_rng(seed=42)
         length = 100
-        dates = pd.date_range("2024-01-01", periods=1000, freq="1min")[rng.integers(low=0, high=1000, size=100)]
+        dates = pd.date_range("2024-01-01", periods=length*10, freq="1min")[rng.choice(length*10, size=length, replace=False)]
         series = pd.Series(
-            rng.random(100)
+            rng.random(length),
             index=dates
         )
 
         result = main(series=series, **optional_arguments)
-        assert result_is_json(result)
+        assert result_is_json(result) # noqa S101
 
 
