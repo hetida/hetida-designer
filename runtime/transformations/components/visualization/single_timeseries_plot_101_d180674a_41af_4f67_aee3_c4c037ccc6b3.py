@@ -127,9 +127,7 @@ def get_x_range(series: pd.Series, xmin: str | None, xmax: str | None) -> tuple[
     else:
         xmax_to_use = DEFAULT_EMPTY_XMAX
 
-    return modify_timezone(pd.to_datetime(xmin_to_use)), modify_timezone(
-        pd.to_datetime(xmax_to_use)
-    )
+    return modify_timezone(xmin_to_use), modify_timezone(xmax_to_use)
 
 
 def get_y_range(series: pd.Series, ymin: float | None, ymax: float | None) -> tuple[float]:
@@ -240,9 +238,7 @@ def main(
     series_with_gaps = apply_maximum_gap_size(series=series, maximum_gap_size=maximum_gap_size)
 
     # timezone handling for series
-    series_with_tz = (
-        modify_timezone(series_with_gaps) if not series_with_gaps.empty else series_with_gaps
-    )
+    series_with_tz = modify_timezone(series_with_gaps)
 
     # first plotting version
     mode = "lines" if len(series) > MARKER_THRESHOLD else "lines+markers"
@@ -268,7 +264,7 @@ def main(
 
     json_to_return = plotly_fig_to_json_dict(fig)
 
-    # set language if available
+    # set locale if available
     plot_target_locale = get_plot_target_settings().plot_target_locale
     if plot_target_locale is not None:
         json_to_return["config"] = {"locale": plot_target_locale}
@@ -296,3 +292,50 @@ RELEASE_WIRING = {
         }
     ]
 }
+
+
+try:
+    import json
+    import pytest
+except ModuleNotFoundError:
+    pass
+else:
+
+    def result_is_json(data):
+        try:
+            json.loads(data["plot"])
+            return True
+            except json.JSONDecodeError:
+        return False
+
+    def test_empty_series():
+        result = main(series=pd.Series())
+        assert result_is_json(result)
+
+
+    @pytest.mark.parametrize(
+        ("optional_arguments"),
+        [
+            pytest.param({"ymin": -1}, id="only ymin"),
+            pytest.param({"ymin": -1, "ymax":2}, id="ymin+ymax"),
+            pytest.param({"colour": "green"}, id="color is name"),
+            pytest.param({"colour": "#F54927"}, id="color is hex"),
+            pytest.param({"xmin": "now-1d"}, id="only xmin"),
+            pytest.param({"xmin": "now-1d", "xmax": "now+1d"}, id="xmin and xmax"),
+            pytest.param({"connection_type": "backward_steps"}, id="connection_type"),
+            pytest.param({"maximum_gap_size": "5min"}, id="maximum_gap_size"),
+        ],
+    )
+    def test_using_keywords_no_metadata(optional_arguments):
+        rng = np.random.default_rng(seed=42)
+        length = 100
+        dates = pd.date_range("2024-01-01", periods=1000, freq="1min")[rng.integers(low=0, high=1000, size=100)]
+        series = pd.Series(
+            rng.random(100)
+            index=dates
+        )
+
+        result = main(series=series, **optional_arguments)
+        assert result_is_json(result)
+
+
