@@ -1,3 +1,4 @@
+* new version of hetida platform timeseries signal component
 * fix component adapter metadata wiring handling
 * fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 * Upgrade to Python 3.14
