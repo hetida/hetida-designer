@@ -76,8 +76,6 @@ The JSON input of a typical component invocation is:
 ```
 """
 
-
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -106,6 +104,7 @@ CONNECTION_TYPE_MAP = {
     "backward_steps": "vh",
 }
 
+
 def get_x_range(series: pd.Series, xmin: str | None, xmax: str | None) -> tuple[pd.Timestamp]:
 
     requested_xmin, requested_xmax = get_queried_interval(series)
@@ -128,7 +127,9 @@ def get_x_range(series: pd.Series, xmin: str | None, xmax: str | None) -> tuple[
     else:
         xmax_to_use = DEFAULT_EMPTY_XMAX
 
-    return modify_timezone(pd.to_datetime(xmin_to_use)), modify_timezone(pd.to_datetime(xmax_to_use))
+    return modify_timezone(pd.to_datetime(xmin_to_use)), modify_timezone(
+        pd.to_datetime(xmax_to_use)
+    )
 
 
 def get_y_range(series: pd.Series, ymin: float | None, ymax: float | None) -> tuple[float]:
@@ -140,17 +141,16 @@ def get_y_range(series: pd.Series, ymin: float | None, ymax: float | None) -> tu
     if ymin is not None:
         ymin_to_use = ymin
     elif not series.empty:
-        ymin_to_use = data_min - delta*Y_AXIS_PADDING
+        ymin_to_use = data_min - delta * Y_AXIS_PADDING
     else:
         ymin_to_use = DEFAULT_EMPTY_YMIN
 
     if ymax is not None:
         ymax_to_use = ymax
     elif not series.empty:
-        ymax_to_use = data_max + delta*Y_AXIS_PADDING
+        ymax_to_use = data_max + delta * Y_AXIS_PADDING
     else:
         ymax_to_use = DEFAULT_EMPTY_YMAX
-
 
     return ymin_to_use, ymax_to_use
 
@@ -162,14 +162,18 @@ def apply_maximum_gap_size(series: pd.Series, maximum_gap_size: str | None) -> p
 
     gap_size = abs(series.index.diff(-1).total_seconds())
     max_gap_size = pd.Timedelta(maximum_gap_size).total_seconds()
-    entries_to_avoid_connection = series.index[gap_size>max_gap_size] + pd.Timedelta(seconds=max(max_gap_size - 0.01, 0))
+    entries_to_avoid_connection = series.index[gap_size > max_gap_size] + pd.Timedelta(
+        seconds=max(max_gap_size - 0.01, 0)
+    )
 
-    nan_series = pd.Series([np.nan]*len(entries_to_avoid_connection), index=entries_to_avoid_connection)
+    nan_series = pd.Series(
+        [np.nan] * len(entries_to_avoid_connection), index=entries_to_avoid_connection
+    )
 
     return series.combine_first(nan_series)
 
 
-def get_y_title(series: pd.Series, ylabel: str|None) -> str:
+def get_y_title(series: pd.Series, ylabel: str | None) -> str:
 
     if ylabel is not None:
         return ylabel
@@ -182,6 +186,7 @@ def get_y_title(series: pd.Series, ylabel: str|None) -> str:
     if name is not None:
         return name
     return ""
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -235,23 +240,31 @@ def main(
     series_with_gaps = apply_maximum_gap_size(series=series, maximum_gap_size=maximum_gap_size)
 
     # timezone handling for series
-    series_with_tz = modify_timezone(series_with_gaps) if not series_with_gaps.empty else series_with_gaps
+    series_with_tz = (
+        modify_timezone(series_with_gaps) if not series_with_gaps.empty else series_with_gaps
+    )
 
     # first plotting version
     mode = "lines" if len(series) > MARKER_THRESHOLD else "lines+markers"
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
-    fig = go.Figure([go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)])
+    fig = go.Figure(
+        [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
+    )
 
-    fig.update_traces({"line_color": colour, "line_width": 1, "line_dash": "solid", "line_shape": shape})
+    fig.update_traces(
+        {"line_color": colour, "line_width": 1, "line_dash": "solid", "line_shape": shape}
+    )
     fig.update_yaxes(automargin=True, range=[ymin_to_use, ymax_to_use])
     fig.update_xaxes(automargin=True, range=[xmin_to_use, xmax_to_use], type="date")
 
-    fig.update_layout({
-        "autosize": True,
-        "height": 200,
-        "yaxis_title": ytitle,
-        "margin": {"l":0, "r":0, "b":0, "t":5, "pad":0}
-    })
+    fig.update_layout(
+        {
+            "autosize": True,
+            "height": 200,
+            "yaxis_title": ytitle,
+            "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
+        }
+    )
 
     json_to_return = plotly_fig_to_json_dict(fig)
 
@@ -259,7 +272,6 @@ def main(
     plot_target_locale = get_plot_target_settings().plot_target_locale
     if plot_target_locale is not None:
         json_to_return["config"] = {"locale": plot_target_locale}
-
 
     return {"plot": json_to_return}
 
