@@ -76,6 +76,7 @@ check() {
     # If everything is okay this will have 0 exits status
     echo "--> Running ruff format in check mode" && ruff format hetdesrun transformations/components tests --check &&
         echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
+        echo "--> Running base component tests" &&  python -m pytest --cov=transformations/components --cov-report=term-missing transformations/components/*/*.py &&
         echo "--> Running mypy" && mypy hetdesrun &&
         echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&
         echo "--> Running bandit" && bandit -r hetdesrun --skip B101 &&
