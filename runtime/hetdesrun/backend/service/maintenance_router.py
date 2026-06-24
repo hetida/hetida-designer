@@ -1,6 +1,7 @@
 import logging
 import secrets
 from collections.abc import Callable
+from typing import Any
 
 from fastapi import HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, SecretStr
@@ -47,6 +48,7 @@ def handle_maintenance_operation_request(
     secret_str: SecretStr,
     func: Callable[..., None],
     response: Response,
+    **kwargs: Any
 ) -> MaintenanceActionResult:
     """Handle maintenance request
 
@@ -68,7 +70,7 @@ def handle_maintenance_operation_request(
             detail={"authorization_error": "maintenance secret check failed"},
         )
     try:
-        func(directly_in_db=True)
+        func(directly_in_db=True, **kwargs)
     except Exception as exc:  # noqa: BLE001
         msg = f"Exception during maintenance operation {maintenance_operation_name}:\n" + str(exc)
         logger.error(msg)
@@ -153,7 +155,7 @@ async def maintenance_delete_drafts(
     summary="delete all unused deprecated transformation revisions",
 )
 async def maintenance_delete_unused_deprecated(
-    maintenance_payload: MaintenancePayload, response: Response
+    maintenance_payload: MaintenancePayload, response: Response, exclude: list[str] = None, since: str = None,
 ) -> MaintenanceActionResult:
     """Delete all unused deprecated transformation revisions
 
@@ -171,6 +173,8 @@ async def maintenance_delete_unused_deprecated(
         maintenance_payload.maintenance_secret,
         delete_unused_deprecated,
         response=response,
+        exclude=exclude,
+        since=since
     )
 
 

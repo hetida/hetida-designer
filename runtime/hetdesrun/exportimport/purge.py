@@ -64,11 +64,16 @@ def delete_drafts(directly_in_db: bool = False) -> None:
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
 
-def delete_unused_deprecated(directly_in_db: bool = False) -> None:
+def delete_unused_deprecated(directly_in_db: bool = False, exclude: list[str] = None, since: str = None) -> None:
     tr_list = get_transformation_revisions(
         params=FilterParams(state=State.DISABLED, include_dependencies=False, unused=True),
         directly_from_db=directly_in_db,
     )
+
+    # here i have to filter
+    logger.info(f"exclude: {exclude}")
+    logger.info(f"since: {since}")
+    logger.info(f"tr_list: {tr_list}")
 
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
