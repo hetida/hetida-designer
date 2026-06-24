@@ -16,10 +16,11 @@ As an example a simple Tensorflow Keras model with a custom AntirectificationLay
 
 This component cannot be executed with manual input. It is intended to be used with stored objects or within a workflow.
 """
-try:
+
+import contextlib
+
+with contextlib.suppress(ModuleNotFoundError):
     import tensorflow as tf
-except ModuleNotFoundError:
-    pass
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
