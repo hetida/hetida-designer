@@ -311,14 +311,13 @@ else:
 
     def test_empty_series():
         result = main(series=pd.Series())
-        assert result_is_json(result) # noqa: S101
-
+        assert result_is_json(result)  # noqa: S101
 
     @pytest.mark.parametrize(
         ("optional_arguments"),
         [
             pytest.param({"ymin": -1}, id="only ymin"),
-            pytest.param({"ymin": -1, "ymax":2}, id="ymin+ymax"),
+            pytest.param({"ymin": -1, "ymax": 2}, id="ymin+ymax"),
             pytest.param({"colour": "green"}, id="color is name"),
             pytest.param({"colour": "#F54927"}, id="color is hex"),
             pytest.param({"xmin": "now-1d"}, id="only xmin"),
@@ -330,13 +329,10 @@ else:
     def test_using_keywords_no_metadata(optional_arguments):
         rng = np.random.default_rng(seed=42)
         length = 100
-        dates = pd.date_range("2024-01-01", periods=length*10, freq="1min")[rng.choice(length*10, size=length, replace=False)]
-        series = pd.Series(
-            rng.random(length),
-            index=dates
-        )
+        dates = pd.date_range("2024-01-01", periods=length * 10, freq="1min")[
+            rng.choice(length * 10, size=length, replace=False)
+        ]
+        series = pd.Series(rng.random(length), index=dates)
 
         result = main(series=series, **optional_arguments)
-        assert result_is_json(result) # noqa S101
-
-
+        assert result_is_json(result)  # noqa S101
