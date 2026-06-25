@@ -19,6 +19,8 @@ This component cannot be executed with manual input. It is intended to be used w
 
 import contextlib
 
+# Tensorflow currently not available in standard designer version.
+# Example exists to show how to use keras models with custom layers without the component adapter and to make pytest runnable on all tranformation.
 with contextlib.suppress(ModuleNotFoundError):
     import tensorflow as tf
 

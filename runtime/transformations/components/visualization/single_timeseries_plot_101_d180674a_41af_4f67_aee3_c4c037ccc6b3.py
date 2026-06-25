@@ -8,18 +8,19 @@ Creates an interactive Plotly line chart for a single time series.
 
 ## Inputs
 
-* **series** (*Pandas Series*): Time series to be plotted. Values must be numeric and the index must be a `DateTimeIndex`.
+* **series** (*Pandas Series*): Timeseries to be plotted. Values must be numeric and the index must be a `DateTimeIndex`.
 * **ymin** (*float, optional*): Lower limit of the y-axis. If not specified, the minimum value is determined automatically from the data.
 * **ymax** (*float, optional*): Upper limit of the y-axis. If not specified, the maximum value is determined automatically from the data.
 * **colour** (*string, optional*): Line color of the plotted series. Defaults to `#89CE6E` (light green).
 * **ylabel** (*string, optional*): Label of the y-axis. If not specified, the metric name and unit are extracted from the series metadata, if available.
 * **xmin** (*string, optional*): Lower x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the minimum timestamp of the series is used.
 * **xmax** (*string, optional*): Upper x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the maximum timestamp of the series is used.
-* **connection_type** (*string, optional*): Defines how consecutive data points are connected. Supported values are:
+* **connection_type** (*string, optional*): Defines how consecutive data points are connected. As default a linear line is drawn between consecutive datapoints. Supported values are:
   * `linear` (default): Straight line segments between points.
   * `forward_steps`: Step plot with horizontal segments followed by vertical transitions.
   * `backward_steps`: Step plot with vertical transitions followed by horizontal segments.
-* **maximum_gap_size** (*string, optional*): Maximum allowed time gap between two consecutive data points that are connected by a line. The value must be specified as a pandas frequency string (e.g. `5min`, `1h`, `2d`). Gaps larger than the specified value are visualized as breaks in the line.
+* **maximum_gap_size** (*string, optional*): Maximum allowed time gap between two consecutive data points that are connected by a line. The value must be specified as a pandas frequency string (e.g. `5min`, `1h`, `2d`). Gaps larger than the specified value are visualized as breaks in the line. Per default no check for long gaps between consecutive timestamps is performed.
+* **marker_threshold** (integer, optional): Parameter that controls when to add markers to the line plot. By default, markers are displayed until the series length is smaller than 300. In case markers should never be drawn, please define 0. In case markers should always be drawn please define a negative number, .e.g, -1. (Note that this might reduce the processing speed of this component.)
 
 ## Outputs
 
@@ -28,14 +29,13 @@ Creates an interactive Plotly line chart for a single time series.
 ## Details
 
 * The component visualizes the input **series** as a Plotly line chart.
-* By default, markers are displayed in addition to the line.
-* For performance reasons, markers are omitted when the series contains more than 300 data points.
 * If **ymin** and **ymax** are not specified, the y-axis range is automatically extended by 5% above and below the data range.
 * If the series is empty:
   * the x-axis range defaults to `1970-01-01 00:00:00 UTC` to `1970-01-02 00:00:00 UTC`,
   * the y-axis range defaults to `0` to `1`.
 * If **maximum_gap_size** is specified, gaps larger than the given threshold are rendered as disconnected line segments.
 * **maximum_gap_size** must represent an unambiguous interval that can be converted to a pandas `Timedelta`.
+* If NaN exists in consecutive timestamps of **series** a gap is drawn.
 
 ## Example
 
@@ -43,31 +43,69 @@ The JSON input of a typical component invocation is:
 
 ```json
 {
-  "series": {
-    "__hd_wrapped_data_object__": "SERIES",
-    "__metadata__": {
-      "dataset_metadata": {
-        "ref_interval_start_timestamp": "2019-11-30T09:00:00.000Z",
-        "ref_interval_end_timestamp": "2019-11-30T13:00:00.000Z",
-        "ref_interval_type": "closed"
-      },
-      "single_metric_metadata": {
-        "structured_metadata": {
-          "metric": {
-            "name": "Aktueller Niederschlag",
-            "description": "Aktuelle mittlere Niederschlagsrate.",
-            "unit": "mm/h",
-            "external_id": "precipitation_in_mmh",
-            "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"
-          }
-        }
-      }
+  "__hd_wrapped_data_object__": "SERIES",
+  "__metadata__": {
+    "dataset_metadata": {
+      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",
+      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",
+      "ref_interval_type": "closed"
     },
-    "__data__": {
-      "2019-11-30T09:00:00.000Z": 0,
-      "2019-11-30T10:00:00.000Z": 1,
-      "2019-11-30T11:00:00.000Z": 0
+    "single_metric_metadata": {
+      "structured_metadata": {
+        "metric": {
+          "name": "Tagesmittelwert",
+          "display_name": null,
+          "short_display_name": null,
+          "description": "Abfluss",
+          "unit": "l/s",
+          "measurement": null,
+          "value_data_type": null,
+          "external_id": "precipitation_in_mm_h",
+          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"
+        },
+        "comments": [],
+        "inherited": {}
+      }
     }
+  },
+  "__data__": {
+    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
+    "index": [
+      "2026-06-01T22:00:00.000Z",
+      "2026-06-02T22:00:00.000Z",
+      "2026-06-03T22:00:00.000Z",
+      "2026-06-04T22:00:00.000Z",
+      "2026-06-05T22:00:00.000Z",
+      "2026-06-06T22:00:00.000Z",
+      "2026-06-07T22:00:00.000Z",
+      "2026-06-08T22:00:00.000Z",
+      "2026-06-16T22:00:00.000Z",
+      "2026-06-17T22:00:00.000Z",
+      "2026-06-18T22:00:00.000Z",
+      "2026-06-19T22:00:00.000Z",
+      "2026-06-20T22:00:00.000Z",
+      "2026-06-21T22:00:00.000Z",
+      "2026-06-22T22:00:00.000Z",
+      "2026-06-23T22:00:00.000Z"
+    ],
+    "data": [
+      567.8958333333,
+      588.36875,
+      575.3597222222,
+      592.5548611111,
+      568.5895104895,
+      573.8763888889,
+      553.086170952,
+      561.0198300283,
+      568.2150411281,
+      582.1902777778,
+      572.9930555556,
+      575.7409722222,
+      568.7248088951,
+      556.4777777778,
+      538.7477414871,
+      549.191104934
+    ]
   },
   "__data_parsing_options__": {
     "orient": "split"
@@ -76,10 +114,13 @@ The JSON input of a typical component invocation is:
 ```
 """
 
+import json
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
+import pytest
 from dtexp import parse_dtexp
 from hdhelpers.helpers import modify_timezone
 from hdhelpers.metadata import get_queried_interval, get_series_name, get_series_unit
@@ -96,7 +137,6 @@ DEFAULT_EMPTY_YMIN = 0
 DEFAULT_EMPTY_YMAX = 1
 
 Y_AXIS_PADDING = 0.05
-MARKER_THRESHOLD = 300
 
 CONNECTION_TYPE_MAP = {
     "linear": "linear",
@@ -199,6 +239,7 @@ COMPONENT_INFO = {
         "xmax": {"data_type": "STRING", "default_value": None},
         "connection_type": {"data_type": "STRING", "default_value": "linear"},
         "maximum_gap_size": {"data_type": "STRING", "default_value": None},
+        "marker_threshold": {"data_type": "INT", "default_value": 300},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
@@ -210,7 +251,7 @@ COMPONENT_INFO = {
     "id": "d180674a-41af-4f67-aee3-c4c037ccc6b3",
     "revision_group_id": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
     "state": "RELEASED",
-    "released_timestamp": "2026-06-23T11:18:44.024111+00:00",
+    "released_timestamp": "2026-06-25T12:15:25.419404+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
@@ -227,6 +268,7 @@ def main(
     xmax=None,
     connection_type="linear",
     maximum_gap_size=None,
+    marker_threshold=300,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -240,15 +282,23 @@ def main(
     # timezone handling for series
     series_with_tz = modify_timezone(series_with_gaps)
 
-    # first plotting version
-    mode = "lines" if len(series) > MARKER_THRESHOLD else "lines+markers"
+    mode = (
+        "lines"
+        if ((len(series) > marker_threshold) and (marker_threshold >= 0))
+        else "lines+markers"
+    )
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
     fig = go.Figure(
         [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
     )
 
     fig.update_traces(
-        {"line_color": colour, "line_width": 1, "line_dash": "solid", "line_shape": shape}
+        {
+            "line_color": colour,
+            "line_width": 1,
+            "line_dash": "solid",
+            "line_shape": shape,
+        }
     )
     fig.update_yaxes(automargin=True, range=[ymin_to_use, ymax_to_use])
     fig.update_xaxes(automargin=True, range=[xmin_to_use, xmax_to_use], type="date")
@@ -277,9 +327,50 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2019-11-30T09:00:00.000Z",\n      "ref_interval_end_timestamp": "2019-11-30T13:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Aktueller Niederschlag",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Aktuelle mittlere Niederschlagsrate",\n          "unit": "mm/h",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n      "name": "test",\n      "index": ["2019-11-30T09:00:00.000Z", "2019-11-30T10:00:00.000Z",   "2019-11-30T11:00:00.000Z"],\n      "data": [0,1,0]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
+                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Tagesmittelwert",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Abfluss",\n          "unit": "l/s",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
             },
-        }
+        },
+        {
+            "workflow_input_name": "ymin",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "ymax",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "colour",
+            "use_default_value": True,
+            "filters": {"value": "#89CE6E"},
+        },
+        {
+            "workflow_input_name": "ylabel",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "xmin",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "xmax",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "connection_type",
+            "use_default_value": True,
+            "filters": {"value": "linear"},
+        },
+        {
+            "workflow_input_name": "maximum_gap_size",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {"workflow_input_name": "marker_threshold", "filters": {"value": "0"}},
     ]
 }
 RELEASE_WIRING = {
@@ -287,52 +378,87 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2019-11-30T09:00:00.000Z",\n      "ref_interval_end_timestamp": "2019-11-30T13:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Aktueller Niederschlag",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Aktuelle mittlere Niederschlagsrate",\n          "unit": "mm/h",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n      "name": "test",\n      "index": ["2019-11-30T09:00:00.000Z", "2019-11-30T10:00:00.000Z",   "2019-11-30T11:00:00.000Z"],\n      "data": [0,1,0]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
+                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Tagesmittelwert",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Abfluss",\n          "unit": "l/s",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
             },
-        }
+        },
+        {
+            "workflow_input_name": "ymin",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "ymax",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "colour",
+            "use_default_value": True,
+            "filters": {"value": "#89CE6E"},
+        },
+        {
+            "workflow_input_name": "ylabel",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "xmin",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "xmax",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "connection_type",
+            "use_default_value": True,
+            "filters": {"value": "linear"},
+        },
+        {
+            "workflow_input_name": "maximum_gap_size",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {"workflow_input_name": "marker_threshold", "filters": {"value": "0"}},
     ]
 }
 
 
-try:
-    import json
+def result_is_valid_json(data):
+    try:
+        json.dumps(data["plot"])
+        return True
+    except json.JSONDecodeError:
+        return False
 
-    import pytest
-except ModuleNotFoundError:
-    pass
-else:
 
-    def result_is_json(data):
-        try:
-            json.dumps(data["plot"])
-            return True
-        except json.JSONDecodeError:
-            return False
+def test_empty_series():
+    result = main(series=pd.Series())
+    assert result_is_valid_json(result)  # noqa: S101
 
-    def test_empty_series():
-        result = main(series=pd.Series())
-        assert result_is_json(result)  # noqa: S101
 
-    @pytest.mark.parametrize(
-        ("optional_arguments"),
-        [
-            pytest.param({"ymin": -1}, id="only ymin"),
-            pytest.param({"ymin": -1, "ymax": 2}, id="ymin+ymax"),
-            pytest.param({"colour": "green"}, id="color is name"),
-            pytest.param({"colour": "#F54927"}, id="color is hex"),
-            pytest.param({"xmin": "now-1d"}, id="only xmin"),
-            pytest.param({"xmin": "now-1d", "xmax": "now+1d"}, id="xmin and xmax"),
-            pytest.param({"connection_type": "backward_steps"}, id="connection_type"),
-            pytest.param({"maximum_gap_size": "5min"}, id="maximum_gap_size"),
-        ],
-    )
-    def test_using_keywords_no_metadata(optional_arguments):
-        rng = np.random.default_rng(seed=42)
-        length = 100
-        dates = pd.date_range("2024-01-01", periods=length * 10, freq="1min")[
-            rng.choice(length * 10, size=length, replace=False)
-        ]
-        series = pd.Series(rng.random(length), index=dates)
+@pytest.mark.parametrize(
+    ("optional_arguments"),
+    [
+        pytest.param({"ymin": -1}, id="only ymin"),
+        pytest.param({"ymin": -1, "ymax": 2}, id="ymin+ymax"),
+        pytest.param({"colour": "green"}, id="color is name"),
+        pytest.param({"colour": "#F54927"}, id="color is hex"),
+        pytest.param({"xmin": "now-1d"}, id="only xmin"),
+        pytest.param({"xmin": "now-1d", "xmax": "now+1d"}, id="xmin and xmax"),
+        pytest.param({"connection_type": "backward_steps"}, id="connection_type"),
+        pytest.param({"maximum_gap_size": "5min"}, id="maximum_gap_size"),
+    ],
+)
+def test_using_keywords_no_metadata(optional_arguments):
+    rng = np.random.default_rng(seed=42)
+    length = 100
+    dates = pd.date_range("2024-01-01", periods=length * 10, freq="1min")[
+        rng.choice(length * 10, size=length, replace=False)
+    ]
+    series = pd.Series(rng.random(length), index=dates)
 
-        result = main(series=series, **optional_arguments)
-        assert result_is_json(result)  # noqa S101
+    result = main(series=series, **optional_arguments)
+    assert result_is_valid_json(result)  # noqa S101
