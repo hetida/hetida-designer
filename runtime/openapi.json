@@ -5646,7 +5646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompleteStructure-Output"
+                  "$ref": "#/components/schemas/CompleteStructure"
                 }
               }
             }
@@ -5821,7 +5821,7 @@
             "$ref": "#/components/schemas/MaintenancePayload"
           },
           "new_structure": {
-            "$ref": "#/components/schemas/CompleteStructure-Input"
+            "$ref": "#/components/schemas/CompleteStructure"
           }
         },
         "type": "object",
@@ -5854,7 +5854,7 @@
         ],
         "title": "CodeModule"
       },
-      "CompleteStructure-Input": {
+      "CompleteStructure": {
         "properties": {
           "element_types": {
             "items": {
@@ -5874,7 +5874,7 @@
           },
           "sources": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSource-Input"
+              "$ref": "#/components/schemas/StructureServiceSource"
             },
             "type": "array",
             "title": "Sources",
@@ -5882,48 +5882,7 @@
           },
           "sinks": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSink-Input"
-            },
-            "type": "array",
-            "title": "Sinks",
-            "description": "All sinks of the structure"
-          }
-        },
-        "type": "object",
-        "required": [
-          "element_types"
-        ],
-        "title": "CompleteStructure"
-      },
-      "CompleteStructure-Output": {
-        "properties": {
-          "element_types": {
-            "items": {
-              "$ref": "#/components/schemas/StructureServiceElementType"
-            },
-            "type": "array",
-            "title": "Element Types",
-            "description": "All element types of the structure"
-          },
-          "thing_nodes": {
-            "items": {
-              "$ref": "#/components/schemas/StructureServiceThingNode"
-            },
-            "type": "array",
-            "title": "Thing Nodes",
-            "description": "All thingnodes of the structure"
-          },
-          "sources": {
-            "items": {
-              "$ref": "#/components/schemas/StructureServiceSource-Output"
-            },
-            "type": "array",
-            "title": "Sources",
-            "description": "All sources of the structure"
-          },
-          "sinks": {
-            "items": {
-              "$ref": "#/components/schemas/StructureServiceSink-Output"
+              "$ref": "#/components/schemas/StructureServiceSink"
             },
             "type": "array",
             "title": "Sinks",
@@ -6355,7 +6314,7 @@
           "wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring-Input"
+                "$ref": "#/components/schemas/WorkflowWiring"
               },
               {
                 "type": "null"
@@ -6443,7 +6402,7 @@
             "title": "Revision Group Id"
           },
           "wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring-Input"
+            "$ref": "#/components/schemas/WorkflowWiring"
           },
           "run_pure_plot_operators": {
             "type": "boolean",
@@ -6478,7 +6437,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError-Input"
+                "$ref": "#/components/schemas/WorkflowExecutionError"
               },
               {
                 "type": "null"
@@ -6630,7 +6589,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError-Output"
+                "$ref": "#/components/schemas/WorkflowExecutionError"
               },
               {
                 "type": "null"
@@ -7147,30 +7106,7 @@
         "type": "object",
         "title": "HierarchyObject"
       },
-      "IOInterface-Input": {
-        "properties": {
-          "inputs": {
-            "items": {
-              "$ref": "#/components/schemas/TransformationInput"
-            },
-            "type": "array",
-            "title": "Inputs",
-            "default": []
-          },
-          "outputs": {
-            "items": {
-              "$ref": "#/components/schemas/TransformationOutput"
-            },
-            "type": "array",
-            "title": "Outputs",
-            "default": []
-          }
-        },
-        "type": "object",
-        "title": "IOInterface",
-        "description": "Represents combination of inputs and outputs.\n\nNote: The names in the list of inputs and outputs must be unique, respectively."
-      },
-      "IOInterface-Output": {
+      "IOInterface": {
         "properties": {
           "inputs": {
             "items": {
@@ -7479,7 +7415,7 @@
         ],
         "title": "KafkaAdapterStructureSource"
       },
-      "Link-Input": {
+      "Link": {
         "properties": {
           "id": {
             "type": "string",
@@ -7487,40 +7423,10 @@
             "title": "Id"
           },
           "start": {
-            "$ref": "#/components/schemas/Vertex-Input"
+            "$ref": "#/components/schemas/Vertex"
           },
           "end": {
-            "$ref": "#/components/schemas/Vertex-Input"
-          },
-          "path": {
-            "items": {
-              "$ref": "#/components/schemas/Position"
-            },
-            "type": "array",
-            "title": "Path",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": [
-          "start",
-          "end"
-        ],
-        "title": "Link",
-        "description": "Links determine how parameter values are passed through the workflow.\n\nNote: The data types at both sides must match, i.e. be the same or\nat least one must be of type ANY.\nA link cannot start and end at the same connector."
-      },
-      "Link-Output": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "start": {
-            "$ref": "#/components/schemas/Vertex-Output"
-          },
-          "end": {
-            "$ref": "#/components/schemas/Vertex-Output"
+            "$ref": "#/components/schemas/Vertex"
           },
           "path": {
             "items": {
@@ -7727,7 +7633,7 @@
         ],
         "title": "MultipleVirtualStructureAdapterSourcesResponse"
       },
-      "Operator-Input": {
+      "Operator": {
         "properties": {
           "id": {
             "type": "string",
@@ -7795,91 +7701,7 @@
         "title": "Operator",
         "description": "Represents components or workflows within a workflow.\n\nContains all information about the transformation revision needed for display in the workflow as\nwell as the id, so that the transformation itself can be loaded if more information is needed."
       },
-      "Operator-Output": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "revision_group_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Revision Group Id"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
-            "title": "Name"
-          },
-          "type": {
-            "$ref": "#/components/schemas/Type"
-          },
-          "state": {
-            "$ref": "#/components/schemas/State"
-          },
-          "version_tag": {
-            "type": "string",
-            "maxLength": 20,
-            "minLength": 1,
-            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
-            "title": "Version Tag"
-          },
-          "transformation_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Transformation Id"
-          },
-          "inputs": {
-            "items": {
-              "$ref": "#/components/schemas/OperatorInput"
-            },
-            "type": "array",
-            "title": "Inputs"
-          },
-          "outputs": {
-            "items": {
-              "$ref": "#/components/schemas/OperatorOutput"
-            },
-            "type": "array",
-            "title": "Outputs"
-          },
-          "position": {
-            "$ref": "#/components/schemas/Position"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "type",
-          "state",
-          "version_tag",
-          "transformation_id",
-          "inputs",
-          "outputs",
-          "position"
-        ],
-        "title": "Operator",
-        "description": "Represents components or workflows within a workflow.\n\nContains all information about the transformation revision needed for display in the workflow as\nwell as the id, so that the transformation itself can be loaded if more information is needed."
-      },
-      "OperatorInfo-Input": {
-        "properties": {
-          "transformation_info": {
-            "$ref": "#/components/schemas/TransformationInfo"
-          },
-          "hierarchy_in_workflow": {
-            "$ref": "#/components/schemas/HierarchyInWorkflow"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transformation_info",
-          "hierarchy_in_workflow"
-        ],
-        "title": "OperatorInfo"
-      },
-      "OperatorInfo-Output": {
+      "OperatorInfo": {
         "properties": {
           "transformation_info": {
             "$ref": "#/components/schemas/TransformationInfo"
@@ -9039,7 +8861,7 @@
         ],
         "title": "StructureServiceElementType"
       },
-      "StructureServiceSink-Input": {
+      "StructureServiceSink": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -9169,267 +8991,7 @@
         ],
         "title": "StructureServiceSink"
       },
-      "StructureServiceSink-Output": {
-        "properties": {
-          "external_id": {
-            "type": "string",
-            "title": "External Id",
-            "description": "Externally provided unique identifier"
-          },
-          "stakeholder_key": {
-            "type": "string",
-            "title": "Stakeholder Key",
-            "description": "Stakeholder key for the entity"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Unique name of the entity"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "Unique identifier for the sink"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ExternalType",
-            "description": "Type of the sink"
-          },
-          "visible": {
-            "type": "boolean",
-            "title": "Visible",
-            "description": "Visibility of the sink",
-            "default": true
-          },
-          "display_path": {
-            "type": "string",
-            "title": "Display Path",
-            "description": "Displays all parent nodes in sequence in the designer frontend",
-            "default": ""
-          },
-          "preset_filters": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Preset Filters",
-            "description": "Preset filters for the sink",
-            "default": {}
-          },
-          "passthrough_filters": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/Filter"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Passthrough Filters",
-            "description": "Passthrough filters for the sink",
-            "default": []
-          },
-          "adapter_key": {
-            "type": "string",
-            "title": "Adapter Key",
-            "description": "Adapter key or identifier"
-          },
-          "sink_id": {
-            "type": "string",
-            "title": "Sink Id",
-            "description": "Referenced HD StructureServiceSink identifier"
-          },
-          "ref_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref Key",
-            "description": "Key of the referenced metadatum, only used for sinks of type metadata(any)"
-          },
-          "ref_id": {
-            "type": "string",
-            "title": "Ref Id",
-            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if sink has type metadata(any)",
-            "default": ""
-          },
-          "meta_data": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Meta Data",
-            "description": "Optional metadata for the StructureServiceSink"
-          },
-          "thing_node_external_ids": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Thing Node External Ids",
-            "description": "List of externally provided unique identifiers for the thing nodes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "external_id",
-          "stakeholder_key",
-          "name",
-          "type",
-          "adapter_key",
-          "sink_id"
-        ],
-        "title": "StructureServiceSink"
-      },
-      "StructureServiceSource-Input": {
-        "properties": {
-          "external_id": {
-            "type": "string",
-            "title": "External Id",
-            "description": "Externally provided unique identifier"
-          },
-          "stakeholder_key": {
-            "type": "string",
-            "title": "Stakeholder Key",
-            "description": "Stakeholder key for the entity"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Unique name of the entity"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "Unique identifier for the source"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ExternalType",
-            "description": "Type of the source"
-          },
-          "visible": {
-            "type": "boolean",
-            "title": "Visible",
-            "description": "Visibility of the source",
-            "default": true
-          },
-          "display_path": {
-            "type": "string",
-            "title": "Display Path",
-            "description": "Displays all parent nodes in sequence in the designer frontend",
-            "default": ""
-          },
-          "preset_filters": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Preset Filters",
-            "description": "Preset filters for the source",
-            "default": {}
-          },
-          "passthrough_filters": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/Filter"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Passthrough Filters",
-            "description": "Passthrough filters for the source",
-            "default": []
-          },
-          "adapter_key": {
-            "type": "string",
-            "title": "Adapter Key",
-            "description": "Adapter key or identifier"
-          },
-          "source_id": {
-            "type": "string",
-            "title": "Source Id",
-            "description": "Referenced HD StructureServiceSource identifier"
-          },
-          "ref_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref Key",
-            "description": "Key of the referenced metadatum, only used for sources of type metadata(any)"
-          },
-          "ref_id": {
-            "type": "string",
-            "title": "Ref Id",
-            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if source has type metadata(any)",
-            "default": ""
-          },
-          "meta_data": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Meta Data",
-            "description": "Optional metadata for the StructureServiceSource. This will be attached to the actual adapter wiring as attrs and then will override attrs metadata attached to objects provided by the actual adapter, if such an attrs attribute of type dict is present on the loaded object."
-          },
-          "thing_node_external_ids": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Thing Node External Ids",
-            "description": "List of externally provided unique identifiers for the thing nodes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "external_id",
-          "stakeholder_key",
-          "name",
-          "type",
-          "adapter_key",
-          "source_id"
-        ],
-        "title": "StructureServiceSource"
-      },
-      "StructureServiceSource-Output": {
+      "StructureServiceSource": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -9907,7 +9469,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Input",
+            "$ref": "#/components/schemas/IOInterface",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -9929,13 +9491,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring-Input",
+            "$ref": "#/components/schemas/WorkflowWiring",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring-Input"
+                "$ref": "#/components/schemas/WorkflowWiring"
               },
               {
                 "type": "null"
@@ -10039,7 +9601,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Output",
+            "$ref": "#/components/schemas/IOInterface",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -10061,13 +9623,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring-Output",
+            "$ref": "#/components/schemas/WorkflowWiring",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring-Output"
+                "$ref": "#/components/schemas/WorkflowWiring"
               },
               {
                 "type": "null"
@@ -10171,7 +9733,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Output",
+            "$ref": "#/components/schemas/IOInterface",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           }
         },
@@ -10317,7 +9879,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface-Output",
+            "$ref": "#/components/schemas/IOInterface",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -10339,13 +9901,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring-Output",
+            "$ref": "#/components/schemas/WorkflowWiring",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring-Output"
+                "$ref": "#/components/schemas/WorkflowWiring"
               },
               {
                 "type": "null"
@@ -10427,33 +9989,7 @@
         ],
         "title": "VersionInfo"
       },
-      "Vertex-Input": {
-        "properties": {
-          "operator": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Operator"
-          },
-          "connector": {
-            "$ref": "#/components/schemas/Connector",
-            "description": "Full connector including name and data type instead of only the id to simplify execution of the workflow"
-          }
-        },
-        "type": "object",
-        "required": [
-          "connector"
-        ],
-        "title": "Vertex",
-        "description": "Represents start or end point of a link."
-      },
-      "Vertex-Output": {
+      "Vertex": {
         "properties": {
           "operator": {
             "anyOf": [
@@ -10748,7 +10284,7 @@
         "properties": {
           "operators": {
             "items": {
-              "$ref": "#/components/schemas/Operator-Input"
+              "$ref": "#/components/schemas/Operator"
             },
             "type": "array",
             "title": "Operators",
@@ -10774,7 +10310,7 @@
           },
           "links": {
             "items": {
-              "$ref": "#/components/schemas/Link-Input"
+              "$ref": "#/components/schemas/Link"
             },
             "type": "array",
             "title": "Links",
@@ -10784,7 +10320,7 @@
           "links_by_start_id_tuple_dict": {
             "additionalProperties": {
               "items": {
-                "$ref": "#/components/schemas/Link-Input"
+                "$ref": "#/components/schemas/Link"
               },
               "type": "array"
             },
@@ -10795,7 +10331,7 @@
           },
           "link_by_end_id_tuple_dict": {
             "additionalProperties": {
-              "$ref": "#/components/schemas/Link-Input"
+              "$ref": "#/components/schemas/Link"
             },
             "type": "object",
             "title": "Link By End Id Tuple Dict",
@@ -10837,7 +10373,7 @@
         "properties": {
           "operators": {
             "items": {
-              "$ref": "#/components/schemas/Operator-Output"
+              "$ref": "#/components/schemas/Operator"
             },
             "type": "array",
             "title": "Operators",
@@ -10845,7 +10381,7 @@
           },
           "links": {
             "items": {
-              "$ref": "#/components/schemas/Link-Output"
+              "$ref": "#/components/schemas/Link"
             },
             "type": "array",
             "title": "Links",
@@ -11110,7 +10646,7 @@
         ],
         "title": "WorkflowContentOutput"
       },
-      "WorkflowExecutionError-Input": {
+      "WorkflowExecutionError": {
         "properties": {
           "type": {
             "type": "string",
@@ -11159,75 +10695,7 @@
           "operator_info": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/OperatorInfo-Input"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "location": {
-            "$ref": "#/components/schemas/ErrorLocation"
-          }
-        },
-        "type": "object",
-        "required": [
-          "type",
-          "message",
-          "location"
-        ],
-        "title": "WorkflowExecutionError"
-      },
-      "WorkflowExecutionError-Output": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
-          "extra_information": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Extra Information"
-          },
-          "process_stage": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ProcessStage"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "operator_info": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OperatorInfo-Output"
+                "$ref": "#/components/schemas/OperatorInfo"
               },
               {
                 "type": "null"
@@ -11274,7 +10742,7 @@
             "description": "Configuration for the open ends of a workflow"
           },
           "workflow_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring-Input",
+            "$ref": "#/components/schemas/WorkflowWiring",
             "description": "Note that also workflow_wiring can provide inputs directly."
           },
           "job_id": {
@@ -11312,7 +10780,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError-Output"
+                "$ref": "#/components/schemas/WorkflowExecutionError"
               },
               {
                 "type": "null"
@@ -11663,37 +11131,7 @@
         ],
         "title": "WorkflowOutput"
       },
-      "WorkflowWiring-Input": {
-        "properties": {
-          "input_wirings": {
-            "items": {
-              "$ref": "#/components/schemas/InputWiring"
-            },
-            "type": "array",
-            "title": "Input Wirings",
-            "default": []
-          },
-          "output_wirings": {
-            "items": {
-              "$ref": "#/components/schemas/OutputWiring"
-            },
-            "type": "array",
-            "title": "Output Wirings",
-            "default": []
-          },
-          "dashboard_positionings": {
-            "items": {
-              "$ref": "#/components/schemas/GridstackItemPositioning"
-            },
-            "type": "array",
-            "title": "Dashboard Positionings",
-            "default": []
-          }
-        },
-        "type": "object",
-        "title": "WorkflowWiring"
-      },
-      "WorkflowWiring-Output": {
+      "WorkflowWiring": {
         "properties": {
           "input_wirings": {
             "items": {

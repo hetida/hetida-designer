@@ -10,9 +10,10 @@ This component allows to fetch a single such timeseries from the API.
 
 ## Inputs
 * station (STRING): Either a station's UUID or its shortname
-* timestampFrom (STRING): time interval start as isoformat timestamp string
-* timestampTo (STRING): time interval end as isoformat timestamp string
+* timestampFrom (STRING): time interval start as isoformat timestamp string or dtexp expression (e.g. "now - 2h")
+* timestampTo (STRING): time interval end as isoformat timestamp string or dtexp expression (e.g "now")
 * measurement (STRING): Either "W" for water level or "Q" for discharge
+* to_utc (BOOLEAN, optional, default: True): Whether data should be converted to UTC timestamps
 
 ## Outputs
 * timeseries (SERIES): The loaded timeseries. Station metadata is made available via the .attrs attribute.
@@ -25,12 +26,15 @@ This component allows to fetch a single such timeseries from the API.
 E.g https://pegelonline.wsv.de/webservices/rest-api/v2/stations/593647aa-9fea-43ec-a7d6-6476a76ae868.json is a station that provides water level data which you can query either using the UUID or its shortname "BONN".
 """
 
+import logging
 from uuid import UUID
 
 import pandas as pd
 import requests
 
 from hetdesrun.dt_utils import resolve_interval
+
+logger = logging.getLogger(__name__)
 
 
 def load_station_by_uuid(station_uuid: UUID) -> dict:
@@ -85,7 +89,11 @@ def get_station(station: str) -> dict:
 
 
 def load_pegelonline_timeseries(
-    station_uuid: UUID, timestamp_from: str, timestamp_to: str, measurement: str = "W"
+    station_uuid: UUID,
+    timestamp_from: str,
+    timestamp_to: str,
+    measurement: str = "W",
+    to_utc: bool = True,
 ) -> pd.Series:
     """
     Load single timeseries data from Pegelonline API.
@@ -95,6 +103,7 @@ def load_pegelonline_timeseries(
         timestamp_from: Start timestamp (ISO format)
         timestamp_to: End timestamp (ISO format)
         measurement: 'W' for water level, 'Q' for discharge
+        to_utc: Convert timestamps to UTC
 
     Returns:
         pd.Series with DatetimeIndex and values
@@ -113,7 +122,7 @@ def load_pegelonline_timeseries(
     response.raise_for_status()
 
     data = pd.DataFrame(response.json())
-    data["timestamp"] = pd.to_datetime(data["timestamp"])
+    data["timestamp"] = pd.to_datetime(data["timestamp"], utc=to_utc)
 
     return pd.Series(
         data=data["value"].values,
@@ -131,6 +140,7 @@ COMPONENT_INFO = {
         "timestampFrom": {"data_type": "STRING"},
         "timestampTo": {"data_type": "STRING"},
         "measurement": {"data_type": "STRING", "default_value": "W"},
+        "to_utc": {"data_type": "BOOLEAN", "default_value": True},
     },
     "outputs": {
         "timeseries": {"data_type": "SERIES"},
@@ -138,19 +148,22 @@ COMPONENT_INFO = {
     "name": "Load Pegelonline Timeseries",
     "category": "Data Sources",
     "description": "Load single timeseries from Pegelonline",
-    "version_tag": "0.1.0",
-    "id": "230dfa9a-0efe-4418-a5b4-2ac3954ebd8f",
+    "version_tag": "0.1.1",
+    "id": "c68b80e2-68d4-49dd-9949-5b3488b49fad",
     "revision_group_id": "17eb8a67-fbce-452c-a1b7-2403a6834ce2",
     "state": "RELEASED",
-    "released_timestamp": "2025-10-29T12:53:20.842136+00:00",
+    "released_timestamp": "2026-05-22T13:32:47.333118+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
 
 
-def main(*, station, timestampFrom, timestampTo, measurement="W"):
+def main(*, station, timestampFrom, timestampTo, measurement="W", to_utc=True):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
+
+    if to_utc is None:
+        to_utc = True
 
     station = get_station(station)
     timeseries = load_pegelonline_timeseries(
@@ -158,6 +171,7 @@ def main(*, station, timestampFrom, timestampTo, measurement="W"):
         timestamp_from=timestampFrom,
         timestamp_to=timestampTo,
         measurement=measurement,
+        to_utc=to_utc,
     )
     timeseries.name = station["shortname"] + "_" + station["uuid"]
     timeseries.attrs["station"] = station
@@ -171,18 +185,17 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "station",
             "filters": {"value": "593647aa-9fea-43ec-a7d6-6476a76ae868"},
         },
-        {
-            "workflow_input_name": "timestampFrom",
-            "filters": {"value": "2025-10-15T00:00:00Z"},
-        },
-        {
-            "workflow_input_name": "timestampTo",
-            "filters": {"value": "2025-10-30T00:00:00Z"},
-        },
+        {"workflow_input_name": "timestampFrom", "filters": {"value": "now - 12h"}},
+        {"workflow_input_name": "timestampTo", "filters": {"value": "now"}},
         {
             "workflow_input_name": "measurement",
             "use_default_value": True,
             "filters": {"value": "W"},
+        },
+        {
+            "workflow_input_name": "to_utc",
+            "use_default_value": True,
+            "filters": {"value": "true"},
         },
     ]
 }
@@ -192,18 +205,17 @@ RELEASE_WIRING = {
             "workflow_input_name": "station",
             "filters": {"value": "593647aa-9fea-43ec-a7d6-6476a76ae868"},
         },
-        {
-            "workflow_input_name": "timestampFrom",
-            "filters": {"value": "2025-10-15T00:00:00Z"},
-        },
-        {
-            "workflow_input_name": "timestampTo",
-            "filters": {"value": "2025-10-30T00:00:00Z"},
-        },
+        {"workflow_input_name": "timestampFrom", "filters": {"value": "now - 12h"}},
+        {"workflow_input_name": "timestampTo", "filters": {"value": "now"}},
         {
             "workflow_input_name": "measurement",
             "use_default_value": True,
             "filters": {"value": "W"},
+        },
+        {
+            "workflow_input_name": "to_utc",
+            "use_default_value": True,
+            "filters": {"value": "true"},
         },
     ]
 }

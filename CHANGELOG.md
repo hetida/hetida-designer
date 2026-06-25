@@ -1,9 +1,4 @@
-* documentation rewrite + documentation building via static site generator
-* add simple cron-based scheduling.
-* **MIGRATION NOTE**: If you have multiple backend service instances, e.g. if using additional restricted webservices you need to ensure that only the one frontend facing backend instance has `HETIDA_DESIGNER_SCHEDULING_ACTIVE=true` and all others have `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`. See the scheduling docs for details.
-* **MIGRATION NOTE**: In order for scheduling to work in authenticated setups you need to configure `HD_SCHEDULING_INTERNAL_AUTH_MODE=CLIENT` and `HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` to some service user credentials.
-* **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if still using gunicorn mode.
-* Proper obj / model repo path directory in nix shell setup
+* new version of hetida platform timeseries signal component
 * fix component adapter metadata wiring handling
 * fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 * Upgrade to Python 3.14
