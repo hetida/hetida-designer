@@ -3,52 +3,57 @@
     <mat-icon
       class="clickable unselectable"
       title="Edit {{ transformation.type | lowercase }} details"
-      data-testid="Edit"
       (click)="editDetails()"
+      attr.data-testid="Edit"
     >
       edit
     </mat-icon>
     <mat-icon
       class="clickable unselectable"
       title="Configure I/O"
-      data-testid="Configure_IO"
       (click)="configureIO()"
       [ngClass]="{
         disabled: isWorkflowWithoutIo
       }"
-      >settings_input_component
+      attr.data-testid="Configure_IO"
+    >
+      settings_input_component
     </mat-icon>
     <mat-icon
       class="clickable unselectable"
       title="{{ executeTooltip }}"
-      data-testid="Execute"
       (click)="execute()"
       [ngClass]="{ disabled: incompleteFlag }"
-      >play_circle_outline</mat-icon
+      attr.data-testid="Execute"
     >
+      play_circle_outline
+    </mat-icon>
     @if (isWorkflow) {
       <mat-divider vertical></mat-divider>
       <mat-icon
         class="clickable unselectable"
         title="Show entire workflow"
-        data-testid="Show_entire_workflow"
         (click)="showWorkflow()"
-        >zoom_out_map</mat-icon
+        attr.data-testid="Show_entire_workflow"
       >
+        zoom_out_map
+      </mat-icon>
       <mat-icon
         class="clickable unselectable"
         title="Zoom in"
-        data-testid="Zoom_in"
         (click)="zoomIn()"
-        >zoom_in</mat-icon
+        attr.data-testid="Zoom_in"
       >
+        zoom_in
+      </mat-icon>
       <mat-icon
         class="clickable unselectable"
         title="Zoom out"
-        data-testid="Zoom_out"
         (click)="zoomOut()"
-        >zoom_out</mat-icon
+        attr.data-testid="Zoom_out"
       >
+        zoom_out
+      </mat-icon>
     }
   </span>
   <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
@@ -57,85 +62,92 @@
     }}
   </span>
   <span>
-    <mat-icon
-      class="clickable unselectable"
-      title="{{ upgradeWorkflowOperatorsTooltip }}"
-      data-testid="Upgrade_workflow_operators"
-      (click)="upgradeWorkflowOperators()"
-      *ngIf="isWorkflow"
-      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-    >
-      auto_awesome</mat-icon
-    >
-
-    <mat-icon
-      class="clickable unselectable"
-      title="{{ updateExpandTooltip }}"
-      data-testid="Update_and_Expand_code"
-      (click)="updateExpand()"
-      *ngIf="isComponent"
-      [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-    >
-      cleaning_services</mat-icon
-    >
-    <mat-icon
-      class="clickable unselectable"
-      title="{{ unitTestTooltip }}"
-      data-testid="Run_Unit_Tests"
-      (click)="unitTestComponent()"
-      *ngIf="isComponent"
-    >
-      bug_report</mat-icon
-    >
+    @if (isWorkflow) {
+      <mat-icon
+        class="clickable unselectable"
+        title="{{ upgradeWorkflowOperatorsTooltip }}"
+        (click)="upgradeWorkflowOperators()"
+        [ngClass]="{ disabled: isReleasedOrDeprecated() }"
+        attr.data-testid="Upgrade_workflow_operators"
+      >
+        auto_awesome
+      </mat-icon>
+    }
+    @if (isComponent) {
+      <mat-icon
+        class="clickable unselectable"
+        title="{{ updateExpandTooltip }}"
+        (click)="updateExpand()"
+        [ngClass]="{ disabled: isReleasedOrDeprecated() }"
+        attr.data-testid="Update_and_Expand_code"
+      >
+        cleaning_services
+      </mat-icon>
+    }
+    @if (isComponent) {
+      <mat-icon
+        class="clickable unselectable"
+        title="{{ unitTestTooltip }}"
+        (click)="unitTestComponent()"
+        attr.data-testid="Run_Unit_Tests"
+      >
+        bug_report
+      </mat-icon>
+    }
     <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ publishTooltip }}"
-      data-testid="Publish"
       (click)="publish()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
+      attr.data-testid="Publish"
     >
-      share</mat-icon
-    >
+      share
+    </mat-icon>
     <mat-icon
       class="clickable unselectable"
       title="{{ newRevisionTooltip }}"
-      data-test-id="New_revision"
       (click)="newRevision()"
       [ngClass]="{ disabled: !isReleasedOrDeprecated() }"
-      >plus_one</mat-icon
+      attr.data-test-id="New_revision"
     >
+      plus_one
+    </mat-icon>
     <mat-icon
       class="clickable unselectable"
       title="Copy"
-      data-testid="Copy"
       (click)="copy()"
-      >file_copy</mat-icon
+      attr.data-testid="Copy"
     >
+      file_copy
+    </mat-icon>
     <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="{{ deprecateTooltip }}"
-      data-testid="Deprecate"
       (click)="deprecate()"
       [ngClass]="{ disabled: !isReleased() }"
-      >desktop_access_disabled</mat-icon
+      attr.data-testid="Deprecate"
     >
+      desktop_access_disabled
+    </mat-icon>
     <mat-icon
       class="clickable unselectable"
       title="{{ deleteTooltip }}"
-      data-testid="Delete"
       (click)="delete()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-      >delete_forever</mat-icon
+      attr.data-testid="Delete"
     >
+      delete_forever
+    </mat-icon>
     <mat-divider vertical></mat-divider>
     <mat-icon
       class="clickable unselectable"
       title="Open documentation"
-      data-testid="Open_documentation"
       (click)="showDocumentation()"
-      >description
+      attr.data-testid="Open_documentation"
+    >
+      description
     </mat-icon>
   </span>
 }

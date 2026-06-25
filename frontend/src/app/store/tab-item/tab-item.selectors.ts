@@ -27,7 +27,7 @@ export const selectOrderedTabItemsWithTransformation = createSelector(
     orderedTabItems.map((tabItem): TabItemWithTransformation => {
       const transformation = transformations[tabItem.transformationId];
       if (!transformation) {
-        throw Error(
+        throw new Error(
           'Inconsistent state: Found a tab item whose transformation is not in store.'
         );
       }

@@ -117,7 +117,7 @@ export class PopoverTransformationComponent implements OnInit {
   public RevisionState = RevisionState;
   public showPopoverData: ShowPopover | null = null;
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.popoverService.onPopover
       .pipe(
         switchMap((showPopoverData: ShowPopover | undefined) => {

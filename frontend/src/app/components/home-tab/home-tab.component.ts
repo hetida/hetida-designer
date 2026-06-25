@@ -36,7 +36,7 @@ export class HomeTabComponent implements OnInit {
   public version: string;
   public _userInfoText: string;
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.httpClient
       .get<string>('assets/VERSION', { responseType: 'text' as 'json' })
       .subscribe((version: string) => {

@@ -6,11 +6,11 @@ export interface Schedule {
   id: string;
   active: boolean;
   name: string;
-  transformation_id: string;
-  transformation_name: string;
-  transformation_version_tag: string;
-  transformation_state: RevisionState;
-  transformation_type: TransformationType;
+  transformation_id: string | null;
+  transformation_name: string | null;
+  transformation_version_tag: string | null;
+  transformation_state: RevisionState | null;
+  transformation_type: TransformationType | null;
   cron_expression: string;
   wiring: TestWiring | null;
   cron_expression_valid: boolean | null;

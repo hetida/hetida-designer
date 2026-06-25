@@ -11,8 +11,7 @@ export class TextResultDialogService {
   openDialog(title: string, message: string, width = '95vh') {
     return this.dialog.open(TextResultDialogComponent, {
       width,
-      data: { title, message },
-      disableClose: true
+      data: { title, message }
     });
   }
 }

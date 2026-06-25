@@ -7,8 +7,7 @@ import {
   ErrorHandler,
   NgModule,
   inject,
-  provideAppInitializer,
-  Injectable
+  provideAppInitializer
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -32,12 +31,7 @@ import {
   StsConfigLoader
 } from 'angular-auth-oidc-client';
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
-import {
-  HD_WIRING_CONFIG,
-  HdWiringConfig,
-  HdWiringModule,
-  WiringTheme
-} from 'hd-wiring';
+import { HD_WIRING_CONFIG, HdWiringModule } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import {
   MonacoEditorModule,
@@ -58,7 +52,6 @@ import { DocumentationEditorComponent } from './components/documentation-editor-
 import { HomeComponent } from './components/home/home.component';
 import { HomeTabComponent } from './components/home-tab/home-tab.component';
 import { SchedulingTabComponent } from './components/scheduling-tab/scheduling-tab.component';
-
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
@@ -77,36 +70,13 @@ import { AppErrorHandler } from './service/error-handler/app-error-handler.servi
 import { HttpErrorInterceptor } from './service/http-interceptors/http-error.interceptor';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { NotificationService } from './service/notifications/notification.service';
-import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 import { from, map } from 'rxjs';
 import { ImportTrafosButtonComponent } from './components/import-trafo/import-trafos-button.component';
 import { ImportDialogComponent } from './components/import-trafo/import-trafo-dialog.component';
 import { ScheduleExecutionsDialogComponent } from './components/schedule-executions-dialog/schedule-executions-dialog.component';
-@Injectable({ providedIn: 'root' })
-export class WiringConfigService implements HdWiringConfig {
-  // Implement all HdWiringConfig properties
-  allowOutputWiring = true;
-  showDownloadExampleJsonButton = true;
-  showUploadJsonButton = true;
-  allowManualWiring = true;
-  monacoEditorTheme: WiringTheme;
-  showDialogHeader = true;
-  confirmationButtonText = 'Execute';
-  enableDateRangeSelectionOnSeriesTypes = true;
-
-  constructor(private readonly themeService: ThemeService) {
-    this.monacoEditorTheme = this.themeService.activeTheme as WiringTheme;
-  }
-
-  // Method to reset to defaults
-  resetToDefaults(): void {
-    this.confirmationButtonText = 'Execute';
-    this.showDialogHeader = true;
-    // ... reset other properties
-  }
-}
+import { WiringConfigService } from './service/wiring-config/wiring-config.service';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   const authConfig = from(configService.getConfig()).pipe(

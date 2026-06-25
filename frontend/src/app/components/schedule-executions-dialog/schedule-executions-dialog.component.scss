@@ -1,33 +1,4 @@
-h2[mat-dialog-title] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0;
-  padding: 8px 8px 8px 24px;
-}
-
-.dialog-close-button {
-  flex-shrink: 0;
-  color: #666;
-}
-
-.dialog-title-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.2rem;
-
-  mat-icon {
-    flex-shrink: 0;
-  }
-}
-
-mat-dialog-content {
-  min-width: 720px;
-  //max-height: 500px;
-  overflow-y: auto;
-  padding: 0 24px;
-}
+@use '../../../style/colors';
 
 .loading-container,
 .error-container,
@@ -37,7 +8,7 @@ mat-dialog-content {
   justify-content: center;
   gap: 12px;
   padding: 40px 0;
-  color: #666;
+  color: colors.$hd-grey-dark;
 }
 
 .error-container mat-icon {
@@ -50,27 +21,7 @@ mat-dialog-content {
   font-size: 40px;
   height: 40px;
   width: 40px;
-  color: #bbb;
-}
-
-.executions-table {
-  width: 100%;
-  flex: 1;
-
-  th.mat-header-cell {
-    font-weight: 600;
-    color: #333;
-    white-space: nowrap;
-  }
-
-  td.mat-cell {
-    padding: 8px 16px;
-    vertical-align: middle;
-  }
-
-  tr.mat-row:hover {
-    background-color: #f5f5f5;
-  }
+  color: colors.$hd-grey;
 }
 
 .status-badge {
@@ -81,7 +32,6 @@ mat-dialog-content {
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 12px;
-  text-transform: uppercase;
 
   .status-icon {
     font-size: 16px;
@@ -90,29 +40,28 @@ mat-dialog-content {
   }
 
   &.status-success {
-    background-color: #e6f4ea;
-    color: #2e7d32;
+    background-color: rgba(colors.$hd-green, 0.1);
+    color: colors.$hd-green;
   }
 
   &.status-skipped {
-    background-color: #fef9e7;
-    color: #e2af22;
+    background-color: rgba(colors.$hd-yellow, 0.1);
+    color: colors.$hd-yellow;
   }
 
   &.status-failure {
-    background-color: #fdecea;
-    color: #c62828;
+    background-color: rgba(colors.$hd-red, 0.1);
+    color: colors.$hd-red;
   }
 
   &.status-running {
-    background-color: #e3f2fd;
-    color: #1565c0;
+    background-color: rgba(colors.$hd-blue, 0.1);
+    color: colors.$hd-blue;
   }
 }
 
 .running-text {
-  font-style: italic;
-  color: #1565c0;
+  color: colors.$hd-blue;
 }
 
 .error-message {
@@ -121,12 +70,7 @@ mat-dialog-content {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #c62828;
+  color: colors.$hd-red;
   font-size: 0.85rem;
   cursor: help;
-}
-
-mat-dialog-actions {
-  padding: 12px 24px;
-  gap: 8px;
 }

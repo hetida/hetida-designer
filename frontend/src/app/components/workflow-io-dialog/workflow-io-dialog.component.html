@@ -5,7 +5,7 @@
     {{ data.workflowTransformation.version_tag }}
   </h4>
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     mat-icon-button
     attr.data-testid="close-workflow-io-dialog"
   >
@@ -310,7 +310,7 @@
 
 <div mat-dialog-actions>
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     mat-raised-button
     color="primary"
     attr.data-testid="{{
@@ -320,7 +320,7 @@
     {{ data.actionCancel }}
   </button>
   <button
-    (click)="onOk()"
+    (click)="_onOk()"
     mat-raised-button
     color="primary"
     [disabled]="!valid"

@@ -500,7 +500,7 @@ export class WorkflowIODialogComponent implements AfterViewInit {
     this.createPreview();
   }
 
-  onOk(): void {
+  _onOk(): void {
     if (this.data.editMode === false) {
       this.dialogRef.close(false);
     } else {
@@ -512,7 +512,7 @@ export class WorkflowIODialogComponent implements AfterViewInit {
     }
   }
 
-  onCancel(): void {
+  _onCancel(): void {
     this.dialogRef.close(false);
   }
 

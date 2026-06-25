@@ -1,8 +1,6 @@
-// import-dialog.component.ts
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { TransformationService } from '../../service/transformation/transformation.service';
-
 import { TextResultDialogService } from '../../service/text-result-service/text-result-dialog.service';
 import { NotificationService } from '../../service/notifications/notification.service';
 
@@ -25,14 +23,6 @@ export class ImportDialogComponent {
     private readonly resultDialogService: TextResultDialogService,
     private readonly notificationService: NotificationService
   ) {}
-
-  closeDialog(): void {
-    this.dialogRef.close();
-  }
-
-  onCancel(): void {
-    this.dialogRef.close(false);
-  }
 
   importTrafos(): void {
     if (!this.importText.trim()) {
@@ -62,5 +52,13 @@ export class ImportDialogComponent {
           this.notificationService.warn(`Trafo Import failed: ${error}`);
         }
       });
+  }
+
+  _closeDialog(): void {
+    this.dialogRef.close();
+  }
+
+  _onCancel(): void {
+    this.dialogRef.close(false);
   }
 }

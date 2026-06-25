@@ -37,7 +37,7 @@ const getTabItemHash = (
 
 interface ContentViewStoreState {
   orderedTabItemsWithTransformation: TabItemWithTransformation[];
-  activeTabItem: TabItem;
+  activeTabItem: TabItem | null;
 }
 
 // This selector is not generally re-usable but use case
@@ -83,7 +83,7 @@ export class ContentViewComponent implements OnInit {
     private readonly notificationService: NotificationService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.store
       .select(selectContentViewStoreState)
       .pipe(takeUntilDestroyed(this._destroyRef))

@@ -3,7 +3,11 @@ import { TransformationService } from '../transformation/transformation.service'
 import { TabItem, TabItemType } from '../../model/tab-item';
 import { Store } from '@ngrx/store';
 import { IAppState } from '../../store/app.state';
-import { addTabItem, setHomeTab } from '../../store/tab-item/tab-item.actions';
+import {
+  addTabItem,
+  setHomeTab,
+  unsetActiveTabItem
+} from '../../store/tab-item/tab-item.actions';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { Transformation } from '../../model/transformation';
 import { QueryParameterService } from '../query-parameter/query-parameter.service';
@@ -30,7 +34,7 @@ export class TabItemService {
   addDocumentationTab(
     transformationId: string,
     initialDocumentationEditMode: boolean
-  ) {
+  ): void {
     this.addTabItem({
       transformationId,
       tabItemType: TabItemType.DOCUMENTATION,
@@ -38,7 +42,8 @@ export class TabItemService {
     });
   }
 
-  deselectActiveTabItem() {
+  deselectActiveTabItem(): void {
+    this.store.dispatch(unsetActiveTabItem());
     this.store.dispatch(setHomeTab());
   }
 

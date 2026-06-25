@@ -7,9 +7,7 @@ import {
 } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { catchError, throwError, Observable, of, map } from 'rxjs';
-
 import { Schedule } from '../../model/schedule';
-
 import { NotificationService } from 'src/app/service/notifications/notification.service';
 import { ScheduleExecution } from 'src/app/components/schedule-executions-dialog/schedule-executions-dialog.component';
 
@@ -34,6 +32,7 @@ export class ScheduleHttpService {
       this.apiEndpoint = runtimeConfig.apiEndpoint;
     });
   }
+
   public fetchSchedules(): Observable<Array<Schedule>> {
     const url = `${this.apiEndpoint}/schedules`;
     return this.httpClient.get<Array<Schedule>>(url);
@@ -46,6 +45,7 @@ export class ScheduleHttpService {
 
   public updateSchedule(schedule: Schedule): Observable<Schedule> {
     const url = `${this.apiEndpoint}/schedules/${schedule.id}`;
+
     return this.httpClient.put<Schedule>(url, schedule).pipe(
       catchError((error: HttpErrorResponse) => {
         this.notificationService.error('Failed to update schedule!');
@@ -55,6 +55,7 @@ export class ScheduleHttpService {
       })
     );
   }
+
   public deleteSchedule(id: string): Observable<DeleteResult> {
     const url = `${this.apiEndpoint}/schedules/${id}`;
 
@@ -72,6 +73,7 @@ export class ScheduleHttpService {
       })
     );
   }
+
   public fetchScheduleExecutions(
     scheduleId: string,
     exclude_exec_result: boolean,
@@ -83,13 +85,14 @@ export class ScheduleHttpService {
       .set('exclude_exec_input', exclude_exec_input);
 
     const url = `${this.apiEndpoint}/schedules/executions`;
+
     return this.httpClient.get<ScheduleExecution[]>(url, { params });
   }
+
   public fetchScheduleExecution(
     scheduleExecutionId: string
   ): Observable<ScheduleExecution> {
     const url = `${this.apiEndpoint}/schedules/executions/${scheduleExecutionId}`;
-
     return this.httpClient.get<ScheduleExecution>(url);
   }
 }
