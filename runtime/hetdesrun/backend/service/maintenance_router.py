@@ -48,7 +48,7 @@ def handle_maintenance_operation_request(
     secret_str: SecretStr,
     func: Callable[..., None],
     response: Response,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> MaintenanceActionResult:
     """Handle maintenance request
 
@@ -58,9 +58,7 @@ def handle_maintenance_operation_request(
 
     configured_maintenance_secret = get_config().maintenance_secret
 
-    assert configured_maintenance_secret is not None  # for mypy # noqa: S101
-
-    if not secrets.compare_digest(
+    if configured_maintenance_secret is None or not secrets.compare_digest(
         secret_str.get_secret_value(),
         configured_maintenance_secret.get_secret_value(),
     ):
@@ -70,7 +68,7 @@ def handle_maintenance_operation_request(
             detail={"authorization_error": "maintenance secret check failed"},
         )
     try:
-        func(directly_in_db=True, **kwargs)
+        func(**kwargs)
     except Exception as exc:  # noqa: BLE001
         msg = f"Exception during maintenance operation {maintenance_operation_name}:\n" + str(exc)
         logger.error(msg)
@@ -99,6 +97,7 @@ async def maintenance_reset_test_wiring_to_release_wiring(
         maintenance_payload.maintenance_secret,
         reset_test_wiring_to_release_wiring,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -125,6 +124,7 @@ async def maintenance_deprecate_all_but_latest_per_group(
         maintenance_payload.maintenance_secret,
         deprecate_all_but_latest_per_group,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -146,6 +146,7 @@ async def maintenance_delete_drafts(
         maintenance_payload.maintenance_secret,
         delete_drafts,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -155,26 +156,40 @@ async def maintenance_delete_drafts(
     summary="delete all unused deprecated transformation revisions",
 )
 async def maintenance_delete_unused_deprecated(
-    maintenance_payload: MaintenancePayload, response: Response, exclude: list[str] = None, since: str = None,
+    maintenance_payload: MaintenancePayload,
+    response: Response,
+    exclude: list[str] | None = None,
+    cutoff_date: str | None = None,
 ) -> MaintenanceActionResult:
     """Delete all unused deprecated transformation revisions
 
     "Unused" deprecated transformation revisions are those that are either not used in any workflow
     or only in workflows that themselves are deprecated (and hence will be deleted as well).
 
-    This handles nesting, i.e. a deprecated trafo rev will not be deleted if it is used indirectly
-    across multiple nesting levels in a workflow which is not deprecated.
+    This handles nesting, i.e. a deprecated transformation revision will not be deleted if it is
+    used indirectly across multiple nesting levels in a workflow which is not deprecated.
+
+    To avoid deleting certain transformation, use the exclude parameter by listing the uuids
+    of these transformations, e.g., &exclude=[uuid1,uuid2,...]. By default all unused deprecated
+    transformations are deleted.
+
+    To avoid that recently deprecated transformations are deleted, use the parameter cutoff_date
+    that enables deleting only transformations that have been disabled before the given date.
+    the parameter must be a n iso-formatted date in UTC, e.g., ?cutoff_date="2026-01-01 00:00:00Z".
+    By default all unused deprecated transformations are deleted.
 
     **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
     exporting / getting all transformation revisions before using this action!
     """
+
     return handle_maintenance_operation_request(
         "delete_unused_deprecated",
         maintenance_payload.maintenance_secret,
         delete_unused_deprecated,
         response=response,
+        directly_in_db=True,
         exclude=exclude,
-        since=since
+        cutoff_date=cutoff_date,
     )
 
 
@@ -200,6 +215,7 @@ async def maintenance_purge(
         maintenance_payload.maintenance_secret,
         delete_all_and_refill,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -261,10 +277,11 @@ async def deploy_base_trafos(
         maintenance_payload.maintenance_secret,
         handle_base_deployment,
         response=response,
+        directly_in_db=True,
     )
 
 
-def autoimport(directly_in_db: bool = True) -> None:  # noqa: ARG001
+def autoimport() -> None:
     autoimport_dir = get_config().autoimport_directory
     logger.info("Trying autoimport from %s", autoimport_dir)
 
@@ -273,7 +290,7 @@ def autoimport(directly_in_db: bool = True) -> None:  # noqa: ARG001
 
 
 @maintenance_router.post(
-    "/trigger_automimport",
+    "/trigger_autoimport",
     response_model=MaintenanceActionResult,
     summary="Trigger autoimport",
 )
@@ -288,7 +305,7 @@ async def trigger_autoimport(
     configured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.
     """
     return handle_maintenance_operation_request(
-        "trigger_automimport",
+        "trigger_autoimport",
         maintenance_payload.maintenance_secret,
         autoimport,
         response=response,

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from hetdesrun.exportimport.importing import import_transformations_from_dir
@@ -64,18 +65,36 @@ def delete_drafts(directly_in_db: bool = False) -> None:
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
 
-def delete_unused_deprecated(directly_in_db: bool = False, exclude: list[str] = None, since: str = None) -> None:
+def delete_unused_deprecated(
+    directly_in_db: bool = False, exclude: list[str] | None = None, cutoff_date: str | None = None
+) -> None:
+
     tr_list = get_transformation_revisions(
         params=FilterParams(state=State.DISABLED, include_dependencies=False, unused=True),
         directly_from_db=directly_in_db,
     )
 
-    # here i have to filter
-    logger.info(f"exclude: {exclude}")
-    logger.info(f"since: {since}")
-    logger.info(f"tr_list: {tr_list}")
+    excluded_ids = [UUID(entry) for entry in exclude] if exclude else []
+    cutoff_date_dt = (
+        datetime.fromisoformat(cutoff_date)
+        if cutoff_date
+        else datetime.fromisoformat("1970-01-01 00:00:00Z")
+    )
 
-    delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
+    tr_list_reduced = []
+
+    for trafo in tr_list:
+        # Skip explicitly excluded entries
+        if trafo.id in excluded_ids:
+            continue
+
+        # Skip entries newer than the cutoff date
+        if trafo.disabled_timestamp and trafo.disabled_timestamp > cutoff_date_dt:
+            continue
+
+        tr_list_reduced.append(trafo)
+
+    delete_transformation_revisions(tr_list_reduced, directly_in_db=directly_in_db)
 
 
 def delete_all_and_refill(directly_in_db: bool = False) -> None:

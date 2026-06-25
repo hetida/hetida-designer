@@ -1672,8 +1672,20 @@ delete_drafts() {
 #     "Unused" deprecated transformation revisions are those that are either not used in any workflow
 #     or only in workflows that themselves are deprecated (and hence will be deleted as well).
 
-#     This handles nesting, i.e. a deprecated trafo rev will not be deleted if it is used indirectly
-#     across multiple nesting levels in a workflow which is not deprecated.
+#     This handles nesting, i.e. a deprecated transformation revision will not be deleted if it is used
+#     indirectly across multiple nesting levels in a workflow which is not deprecated.
+
+#     To avoid deleting certain transformation, use the exclude parameter by listing the uuids
+#     of these transformations, e.g., &exclude=[uuid1,uuid2,...]. By default all unused deprecated
+#     transformations are deleted.
+
+#     To avoid that recently deprecated transformations are deleted, use the parameter cutoff_date
+#     that enables deleting only transformations that have been disabled before the given date.
+#     the parameter must be a n iso-formatted date in UTC, e.g., ?cutoff_date="2026-01-01 00:00:00Z".
+#     By default all unused deprecated transformations are deleted.
+
+#     **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
+#     exporting / getting all transformation revisions before using this action!
 delete_unused_deprecated() {
     _setup "${@}"
     _ensure_maintenance_secret
