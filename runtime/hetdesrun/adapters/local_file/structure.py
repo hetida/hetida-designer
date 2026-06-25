@@ -189,7 +189,15 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
     # One level in fiel hierarchy
     current_dir = from_url_representation(parent_id)
 
-    if not len([current_dir.startswith(root_dir) for root_dir in local_root_dirs]) > 0:
+    real_path = os.path.realpath(current_dir)
+
+    if not any(
+        (
+            real_path.startswith((root_dir_real_path := os.path.realpath(root_dir)) + os.sep)
+            or real_path == root_dir_real_path
+        )
+        for root_dir in local_root_dirs
+    ):
         raise AdapterHandlingException(
             f"Requested local file dir {current_dir} not contained in configured "
             f"root directories {str(local_root_dirs)}"

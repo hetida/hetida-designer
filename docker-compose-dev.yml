@@ -83,6 +83,7 @@ services:
     container_name: lgtm
     ports:
       - "3000:3000" # Grafana UI
+      - "3200:3200" # Tempo API
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
     environment:

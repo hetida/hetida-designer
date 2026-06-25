@@ -76,6 +76,11 @@ class ExecLatestByGroupIdInput(BaseModel):
 
     revision_group_id: UUID
     wiring: WorkflowWiring
+    resolved_reproducibility_references: ReproducibilityReference = Field(
+        default_factory=get_deepcopy_of_reproducibility_reference_context,
+        description="Resolved references to information needed to reproduce an execution result."
+        "The provided data can be used to replace data that would usually be produced at runtime.",
+    )
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
     )
@@ -83,6 +88,26 @@ class ExecLatestByGroupIdInput(BaseModel):
         default_factory=uuid4,
         description="Optional job id, that can be used to track an execution job.",
     )
+    runtime_execution_context: RuntimeExecutionContext = Field(
+        default_factory=RuntimeExecutionContext,
+        description=(
+            "Settings provided by the execution request that may influence"
+            " execution and can be accessed in component code."
+        ),
+    )
+
+    @field_validator("runtime_execution_context", mode="before")
+    @classmethod
+    def handle_null_fields(cls, v: Any) -> Any:
+        """Allow to initialize explicitely with null/None
+
+        Fields should not be optional / nullable typed and always be proper objects,
+        but the case that null / None is provided should just call the default_factory
+        and provide the default values.
+        """
+        if v is None:
+            return {}  # will be passed to default_factory
+        return v
 
     def to_exec_by_id(self, id: UUID) -> ExecByIdInput:  # noqa: A002
         return ExecByIdInput(
@@ -90,4 +115,6 @@ class ExecLatestByGroupIdInput(BaseModel):
             wiring=self.wiring,
             run_pure_plot_operators=self.run_pure_plot_operators,
             job_id=self.job_id,
+            runtime_execution_context=self.runtime_execution_context,
+            resolved_reproducibility_references=self.resolved_reproducibility_references,
         )

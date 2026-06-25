@@ -5744,6 +5744,10 @@
           "wiring": {
             "$ref": "#/components/schemas/WorkflowWiring"
           },
+          "resolved_reproducibility_references": {
+            "$ref": "#/components/schemas/ReproducibilityReference",
+            "description": "Resolved references to information needed to reproduce an execution result.The provided data can be used to replace data that would usually be produced at runtime."
+          },
           "run_pure_plot_operators": {
             "type": "boolean",
             "title": "Run Pure Plot Operators",
@@ -5755,6 +5759,10 @@
             "format": "uuid",
             "title": "Job Id",
             "description": "Optional job id, that can be used to track an execution job."
+          },
+          "runtime_execution_context": {
+            "$ref": "#/components/schemas/RuntimeExecutionContext",
+            "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
           }
         },
         "type": "object",

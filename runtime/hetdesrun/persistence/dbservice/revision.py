@@ -640,10 +640,12 @@ def delete_single_transformation_revision(
 
 
 def is_unused(transformation_id: UUID) -> bool:
-    """Determine if transformation revision is unused.
+    """Determine if transformation revision is unused in non-deprecated workflows.
 
     More precisely: Determine if specified transformation revision is only contained in
     transformation revisions which are deprecated, i.e. have the state DISABLED.
+
+    This does not check for component imports!
     """
 
     with get_session()() as session, session.begin():
@@ -657,7 +659,7 @@ def is_unused(transformation_id: UUID) -> bool:
             .where(TransformationRevisionDBModel.state != State.DISABLED)
         )
 
-    results = session.execute(selection).scalars().all()
+        results = session.execute(selection).scalars().all()
     return len(results) == 0
 
 
@@ -674,8 +676,9 @@ def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
             .filter(TransformationRevisionDBModel.type.in_(types_to_query))
             .distinct()
         )
+        results = list(categories.scalars().all())
 
-    return list(categories.scalars().all())
+    return results
 
 
 def multiple_trafo_select_filtered(
