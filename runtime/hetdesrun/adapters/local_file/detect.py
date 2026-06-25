@@ -2,12 +2,13 @@ import json
 import logging
 import os
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, ValidationInfo, field_validator
 
 from hetdesrun.adapters.local_file.extensions import (
     FileSupportHandler,
     get_file_support_handler,
 )
+from hetdesrun.adapters.local_file.utils import is_subpath
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,20 @@ class LocalFile(BaseModel):
 
     def file_support_handler(self) -> FileSupportHandler | None:
         return get_file_support_handler(self.path)
+
+    @field_validator("path")
+    @classmethod
+    def path_trustable(cls, v: str, info: ValidationInfo) -> str:
+        try:
+            root_path = info.data["root_path"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if the path is trustable if the attribute 'root_path' is missing!"
+            ) from error
+
+        if not is_subpath(root_path, v):
+            raise ValueError(f"Path {v} is not a trusted subpath of root path {root_path}")
+        return v
 
 
 def parse_settings_file(

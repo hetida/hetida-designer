@@ -20,6 +20,8 @@ from hetdesrun.adapters.local_file.models import (
 )
 from hetdesrun.adapters.local_file.utils import (
     from_url_representation,
+    is_subpath,
+    is_trusted_path,
     to_url_representation,
 )
 from hetdesrun.adapters.models import FilterType
@@ -191,13 +193,7 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
 
     real_path = os.path.realpath(current_dir)
 
-    if not any(
-        (
-            real_path.startswith((root_dir_real_path := os.path.realpath(root_dir)) + os.sep)
-            or real_path == root_dir_real_path
-        )
-        for root_dir in local_root_dirs
-    ):
+    if not is_trusted_path(real_path, local_root_dirs):
         raise AdapterHandlingException(
             f"Requested local file dir {current_dir} not contained in configured "
             f"root directories {str(local_root_dirs)}"
@@ -287,9 +283,19 @@ def get_valid_top_dir(path: str) -> str | None:
 
     local_root_dirs = local_file_adapter_config.local_dirs
 
+    if not is_trusted_path(path, local_root_dirs):
+        raise AdapterHandlingException(
+            f"Path {path} is not a trusted subpath of any of the configured root directories"
+        )
+
     top_dir = None
     for local_root_dir in local_root_dirs:
         if path.startswith(local_root_dir):
+            if not is_subpath(local_root_dir, path):
+                raise AdapterHandlingException(
+                    f"Path {path} is not a trusted subpath of the "
+                    f"found local_root_dir {local_root_dir}"
+                )
             top_dir = local_root_dir
             break
 
