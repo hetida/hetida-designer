@@ -1,26 +1,26 @@
-"""Documentation for Hetida Platform Signal Timeseries Data
+"""Documentation for Hetida Platform Channel Timeseries Data
 
-# Hetida Platform Signal Timeseries Data
+# Hetida Platform Channel Timeseries Data
 
 ## Description
-This component is meant to be used via the [component adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/component_adapter.md) via [URI Wirings](https://github.com/hetida/hetida-designer/blob/release/docs/execution/uri_wirings.md) in [hetida platform](https://hetida.io/). It enables fetching timeseries data of dynamically resolved collections of multiple hetida platform signals into a MULTITSFRAME.
+This component is meant to be used via the [component adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/component_adapter.md) via [URI Wirings](https://github.com/hetida/hetida-designer/blob/release/docs/execution/uri_wirings.md) in [hetida platform](https://hetida.io/). It enables fetching timeseries data of dynamically resolved collections of multiple hetida platform channels into a MULTITSFRAME.
 
-As an example, you might want to load all timeseries data of those signals under a certain asset in your hierarchy, that represent an energy consumption measurement, e.g. in order to sum them up.
+As an example, you might want to load all timeseries data of those channels under a certain asset in your hierarchy, that represent an energy consumption measurement, e.g. in order to sum them up.
 
 Note that typically a URI Wiring shortcut `hd://timeseries` points to the newest revision of this component.
 
 ## Inputs
-* **asset_node_id** (str, optional, default value `None`): Asset node id. If None, will be inferred from execution context which the hetida platform provides: The parent asset of the currently executed virtual signal or workflow configuration. If not provided either way, a ValueError will be raised.
+* **asset_node_id** (str, optional, default value `None`): Asset node id. If None, will be inferred from execution context which the hetida platform provides: The parent asset of the currently executed virtual channel or workflow configuration. If not provided either way, a ValueError will be raised.
 * **timestampFrom** (str): Isoformat timestamp or [dtexp](https://github.com/stewit/dtexp) expression defining start of interval to load. hetida platform will provide this automatically, but it can be overriden through an explicit value.
 * **timestampTo** (str):  Isoformat timestamp or [dtexp](https://github.com/stewit/dtexp) expression defining end of interval to load. hetida platform will provide this automatically, but it can be overriden through an explicit value.
-* **recursive** (bool, optional, default value True): If True signals are collected recursively. If False, only signals directly under the asset of `asset_node_id` are considered.
-* **starts_with** (str, optional, default value None): If set, restrict to signals with name starting with this string. Case-sensitive.
-* **name_regexp** (str, optional, default value None). If not None, only signals whose name match the provided regexp will be considered.
-* **relative_name_path_regexp** (str, optional, default value None). If not None, only signals whose explorer "relative name path" match the provided regexp will be considered.
-* **measurement** (ANY, expects str or list of strings, optional, default value `None`): Either a single string or an array of strings or null. If not null, only signals having one of the provided measurements are collected.
-* **include_ingestion_signals** (bool, optional, default value True): Whether ingestion signals should be included
-* **include_virtual_signals** (bool, optional, default value True): Whether virtual signals should be included
-* **use_as_metric** (str, optional, default value "externalTimeSeriesId"): Which field of the signal is used to identify its metric. In the resulting multitsframe this will define what is used in the metric column. Make sure to select a field with unique value per metric (e.g. "id"). Note that the values "externalTimeSeriesId" or "relativeNamePath", while being more verbose, do not necessarily have to be unique. The component aborts with a ValueError if the selected field does not uniquely identify the actually loaded metrics.
+* **recursive** (bool, optional, default value True): If True channels are collected recursively. If False, only channels directly under the asset of `asset_node_id` are considered.
+* **starts_with** (str, optional, default value None): If set, restrict to channels with name starting with this string. Case-sensitive.
+* **name_regexp** (str, optional, default value None). If not None, only channels whose name match the provided regexp will be considered.
+* **relative_name_path_regexp** (str, optional, default value None). If not None, only channels whose explorer "relative name path" match the provided regexp will be considered.
+* **measurement** (ANY, expects str or list of strings, optional, default value `None`): Either a single string or an array of strings or null. If not null, only channels having one of the provided measurements are collected.
+* **include_ingestion_channels** (bool, optional, default value True): Whether ingestion channels should be included
+* **include_virtual_channels** (bool, optional, default value True): Whether virtual channels should be included
+* **use_as_metric** (str, optional, default value "externalTimeSeriesId"): Which field of the channel is used to identify its metric. In the resulting multitsframe this will define what is used in the metric column. Make sure to select a field with unique value per metric (e.g. "id"). Note that the values "externalTimeSeriesId" or "relativeNamePath", while being more verbose, do not necessarily have to be unique. The component aborts with a ValueError if the selected field does not uniquely identify the actually loaded metrics.
 
 ## Outputs
 
@@ -28,7 +28,7 @@ Note that typically a URI Wiring shortcut `hd://timeseries` points to the newest
 
 ## Details
 
-For trafos employed via the hetida platform at a specific point in its asset hierarchy, e.g. in virtual signals or workflow configurations, it automatically infers the current asset node id from the invocation context and collects data from there. In hetida platform you typically employ it using an URI wiring in such a configuration.
+For trafos employed via the hetida platform at a specific point in its asset hierarchy, e.g. in virtual channels or workflow configurations, it automatically infers the current asset node id from the invocation context and collects data from there. In hetida platform you typically employ it using an URI wiring in such a configuration.
 
 Requires the env variable `HETIDA_PLATFORM_API_URL` to be set for the designer runtime to point to the hetida platform core api, e.g. "http://test-hetida-platform-core-backend-svc:8080/api" in a K8S setup or "http://core-backend:8080/api" in a docker-compose setup.
 
@@ -36,20 +36,20 @@ Since it uses the hetida platform hetida designer adapter REST service to fetch 
 
 Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://github.com/hetida/hetida-designer/blob/release/docs/metadata_attrs.md).
 
-You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
+You may also use this component as a good starting point to write your own variant for dynamical selection of channel timeseries data which fits your specific hetida platform setup and use cases.
 
 ## Examples
 
 E.g. the URI wiring
 ```
-hd://component-adapter/<ID_OF_THIS_COMPONENT>?measurement=energyconsumption?include_virtual_signals=false
+hd://component-adapter/<ID_OF_THIS_COMPONENT>?measurement=energyconsumption?include_virtual_channels=false
 ```
 or
 ```
-hd://timeseries?measurement=energyconsumption?include_virtual_signals=false
+hd://timeseries?measurement=energyconsumption?include_virtual_channels=false
 ```
 
-will load all ingestion signals (but not virtual signals) that have "energyconsumption" configured as measurement.
+will load all ingestion channels (but not virtual channels) that have "energyconsumption" configured as measurement.
 """
 
 import logging
@@ -148,8 +148,8 @@ COMPONENT_INFO = {
         "name_regexp": {"data_type": "STRING", "default_value": None},
         "relative_name_path_regexp": {"data_type": "STRING", "default_value": None},
         "measurement": {"data_type": "ANY", "default_value": None},
-        "include_ingestion_signals": {"data_type": "BOOLEAN", "default_value": True},
-        "include_virtual_signals": {"data_type": "BOOLEAN", "default_value": True},
+        "include_ingestion_channels": {"data_type": "BOOLEAN", "default_value": True},
+        "include_virtual_channels": {"data_type": "BOOLEAN", "default_value": True},
         "use_as_metric": {
             "data_type": "STRING",
             "default_value": "externalTimeSeriesId",
@@ -158,14 +158,14 @@ COMPONENT_INFO = {
     "outputs": {
         "ts_data": {"data_type": "MULTITSFRAME"},
     },
-    "name": "Hetida Platform Signal Timeseries Data",
+    "name": "Hetida Platform Channel Timeseries Data",
     "category": "hetida platform Sources",
-    "description": "Load multiple signal timeseries data from hetida platform",
-    "version_tag": "0.1.10",
-    "id": "29fde92e-7d0e-463a-9e83-2f9fff36308f",
+    "description": "Load multiple channel timeseries data from hetida platform",
+    "version_tag": "0.1.9",
+    "id": "c6378f34-6038-4127-b829-19bcd9bd405b",
     "revision_group_id": "c8c22f6a-b046-4c50-9364-5cbb517cfb97",
     "state": "RELEASED",
-    "released_timestamp": "2026-05-21T11:51:58.567829+00:00",
+    "released_timestamp": "2026-02-26T21:12:06.748882+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
@@ -181,8 +181,8 @@ async def main(
     name_regexp=None,
     relative_name_path_regexp=None,
     measurement=parse_default_value(COMPONENT_INFO, "measurement"),
-    include_ingestion_signals=True,
-    include_virtual_signals=True,
+    include_ingestion_channels=True,
+    include_virtual_channels=True,
     use_as_metric="externalTimeSeriesId",
 ):
     # entrypoint function for this component
@@ -216,20 +216,20 @@ async def main(
 
     all_children = resp.json()
 
-    signal_children = [
+    channel_children = [
         child
         for child in all_children
         if (
-            child["nodeType"] == "SIGNAL"
-            and (include_ingestion_signals or (include_ingestion_signals is None))
+            child["nodeType"] == "CHANNEL"
+            and (include_ingestion_channels or (include_ingestion_channels is None))
         )
         or (
-            child["nodeType"] == "VIRTUAL_SIGNAL"
-            and (include_virtual_signals or (include_virtual_signals is None))
+            child["nodeType"] == "VIRTUAL_CHANNEL"
+            and (include_virtual_channels or (include_virtual_channels is None))
         )
     ]
 
-    selected_children = signal_children
+    selected_children = channel_children
 
     id_name_dict = {child["id"]: child["name"] for child in all_children}
     for child in selected_children:
@@ -278,7 +278,7 @@ async def main(
         ]
 
     if len(selected_children) == 0:
-        logger.info("No children selected at all for loading signal data.")
+        logger.info("No children selected at all for loading channel data.")
         loaded_ts_data = pd.DataFrame()
 
     else:
@@ -288,7 +288,7 @@ async def main(
                 FilteredSource(
                     ref_id=child["referenceObject"][
                         "id"
-                    ],  # signal id => will become timeseriesId column
+                    ],  # channel id => will become timeseriesId column
                     ref_id_type="SOURCE",
                     filters={"timestampFrom": start, "timestampTo": end},
                     type=ExternalType.TIMESERIES_NUMERIC,
@@ -354,8 +354,8 @@ async def main(
     # log loaded data per timeseries
 
     loaded_data_points_per_metric = {
-        metric_mapping_dict[signal_id := child["referenceObject"]["id"]]: len(
-            loaded_ts_data[loaded_ts_data.metric == metric_mapping_dict[signal_id]]
+        metric_mapping_dict[channel_id := child["referenceObject"]["id"]]: len(
+            loaded_ts_data[loaded_ts_data.metric == metric_mapping_dict[channel_id]]
         )
         for child in selected_children
     }
@@ -409,12 +409,12 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": "null"},
         },
         {
-            "workflow_input_name": "include_ingestion_signals",
+            "workflow_input_name": "include_ingestion_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
         {
-            "workflow_input_name": "include_virtual_signals",
+            "workflow_input_name": "include_virtual_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
@@ -464,12 +464,12 @@ RELEASE_WIRING = TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": "null"},
         },
         {
-            "workflow_input_name": "include_ingestion_signals",
+            "workflow_input_name": "include_ingestion_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
         {
-            "workflow_input_name": "include_virtual_signals",
+            "workflow_input_name": "include_virtual_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
@@ -519,12 +519,12 @@ RELEASE_WIRING = {
             "filters": {"value": "null"},
         },
         {
-            "workflow_input_name": "include_ingestion_signals",
+            "workflow_input_name": "include_ingestion_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
         {
-            "workflow_input_name": "include_virtual_signals",
+            "workflow_input_name": "include_virtual_channels",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
