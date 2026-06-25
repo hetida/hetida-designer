@@ -1,4 +1,6 @@
+from datetime import datetime
 from unittest import mock
+from uuid import UUID
 
 import pytest
 from fastapi import HTTPException
@@ -56,8 +58,8 @@ def test_maintenance_with_kwargs(maintenance_secret_set, mocked_clean_test_db_se
         func=delete_unused_deprecated,
         response=mock.Mock,
         directly_in_db=True,
-        exclude=["1946d5f8-44a8-724c-176f-123456aaaa22"],
-        cutoff_date="2026-01-01 00:00:00Z",
+        exclude=[UUID("1946d5f8-44a8-724c-176f-123456aaaa22")],
+        cutoff_date=datetime.fromisoformat("2026-01-01 00:00:00Z"),
     )
 
     # check that function works successfully

@@ -2,6 +2,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from pydantic import AwareDatetime
+
 from hetdesrun.exportimport.importing import import_transformations_from_dir
 from hetdesrun.exportimport.utils import (
     delete_transformation_revisions,
@@ -66,7 +68,9 @@ def delete_drafts(directly_in_db: bool = False) -> None:
 
 
 def delete_unused_deprecated(
-    directly_in_db: bool = False, exclude: list[str] | None = None, cutoff_date: str | None = None
+    directly_in_db: bool = False,
+    exclude: list[UUID] | None = None,
+    cutoff_date: AwareDatetime | None = None,
 ) -> None:
 
     tr_list = get_transformation_revisions(
@@ -74,24 +78,29 @@ def delete_unused_deprecated(
         directly_from_db=directly_in_db,
     )
 
-    excluded_ids = [UUID(entry) for entry in exclude] if exclude else []
-    cutoff_date_dt = (
-        datetime.fromisoformat(cutoff_date)
-        if cutoff_date
-        else datetime.now(timezone.utc) + timedelta(days=1)
-    )
-
+    logger.debug(f"list exclude parameter: {exclude}")
+    excluded_ids = exclude if exclude is not None else []
+    cutoff_date_dt = cutoff_date if cutoff_date else datetime.now(timezone.utc) + timedelta(days=1)
+    logger.debug(f"list exclude-ids parameter: {exclude}")
     tr_list_reduced = []
 
     for trafo in tr_list:
         # Skip explicitly excluded entries
         if trafo.id in excluded_ids:
-            logger.debug("Deleting disabled ... Skipping %s, trafo.name")
+            logger.debug(
+                "Transformation %s (%s) not deleted - it was explicitly excluded",
+                trafo.name,
+                trafo.version_tag,
+            )
             continue
 
         # Skip entries newer than the cutoff date
         if trafo.disabled_timestamp and trafo.disabled_timestamp > cutoff_date_dt:
-            logger.debug("Deleting disabled ... Skipping %s", trafo.name)
+            logger.debug(
+                "Transformation %s (%s) not deleted - deprecation later than specified cutoff date",
+                trafo.name,
+                trafo.version_tag,
+            )
             continue
 
         tr_list_reduced.append(trafo)

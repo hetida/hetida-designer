@@ -1,10 +1,11 @@
 import logging
 import secrets
 from collections.abc import Callable
-from typing import Any
+from typing import Annotated, Any
+from uuid import UUID
 
-from fastapi import HTTPException, Query, Response, status
-from pydantic import BaseModel, Field, SecretStr
+from fastapi import Body, HTTPException, Query, Response, status
+from pydantic import AwareDatetime, BaseModel, Field, SecretStr
 
 from hetdesrun.exportimport.importing import import_importables, import_transformations_from_dir
 from hetdesrun.exportimport.purge import (
@@ -158,29 +159,34 @@ async def maintenance_delete_drafts(
 async def maintenance_delete_unused_deprecated(
     maintenance_payload: MaintenancePayload,
     response: Response,
-    exclude: list[str] | None = None,
-    cutoff_date: str | None = None,
+    exclude: Annotated[list[UUID] | None, Body()] = None,
+    cutoff_date: Annotated[AwareDatetime | None, Body()] = None,
 ) -> MaintenanceActionResult:
     """Delete all unused deprecated transformation revisions
 
-    "Unused" deprecated transformation revisions are those that are either not used in any workflow
-    or only in workflows that themselves are deprecated (and hence will be deleted as well).
+    'Unused' deprecated transformation revisions are those that are either not used in any workflow
+    or are used only in workflows that are themselves deprecated (and therefore will be deleted as
+    well).
 
-    This handles nesting, i.e. a deprecated transformation revision will not be deleted if it is
+    This handles nesting, i.e., a deprecated transformation revision will not be deleted if it is
     used indirectly across multiple nesting levels in a workflow which is not deprecated.
 
-    To avoid deleting certain transformation, use the exclude parameter by listing the uuids
-    of these transformations, e.g., &exclude=[uuid1,uuid2,...]. By default all unused deprecated
-    transformations are deleted.
+    To prevent certain transformations from being deleted, use the exclude parameter and provide
+    a list of transformation UUIDs, for example: &exclude=[uuid1,uuid2,...]. By default, all unused
+    deprecated transformations are deleted.
 
-    To avoid that recently deprecated transformations are deleted, use the parameter cutoff_date
-    that enables deleting only transformations that have been disabled before the given date.
-    the parameter must be a n iso-formatted date in UTC, e.g., ?cutoff_date="2026-01-01 00:00:00Z".
-    By default all unused deprecated transformations are deleted.
+    To prevent recently deprecated transformations from being deleted, use the cutoff_date
+    parameter. This parameter restricts deletion to transformations that were disabled before
+    the specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:
+    &cutoff_date=2026-01-01T00:00:00Z. By default, all unused deprecated transformations are
+    deleted.
 
-    **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
-    exporting / getting all transformation revisions before using this action!
+    **Warning**: This action permanently deletes transformation revisions. We recommend creating
+    a backup (for example, by exporting all transformation revisions) before using this action.
     """
+
+    logger.debug(f"list exclude parameter in endpoint: {exclude}")
+    logger.debug(f"cutoff_date: {cutoff_date}")
 
     return handle_maintenance_operation_request(
         "delete_unused_deprecated",
