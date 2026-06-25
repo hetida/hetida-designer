@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from uuid import UUID
 
 from hetdesrun.exportimport.importing import import_transformations_from_dir
@@ -78,7 +78,7 @@ def delete_unused_deprecated(
     cutoff_date_dt = (
         datetime.fromisoformat(cutoff_date)
         if cutoff_date
-        else datetime.fromisoformat("1970-01-01 00:00:00Z")
+        else datetime.now(timezone.utc) + timedelta(days=1)
     )
 
     tr_list_reduced = []
@@ -86,10 +86,12 @@ def delete_unused_deprecated(
     for trafo in tr_list:
         # Skip explicitly excluded entries
         if trafo.id in excluded_ids:
+            logger.debug(f"Deleting disabled ... Skipping {trafo.name}")
             continue
 
         # Skip entries newer than the cutoff date
         if trafo.disabled_timestamp and trafo.disabled_timestamp > cutoff_date_dt:
+            logger.debug(f"Deleting disabled ... Skipping {trafo.name}")
             continue
 
         tr_list_reduced.append(trafo)
