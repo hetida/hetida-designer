@@ -4,7 +4,15 @@ import re
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import Field, Json, RootModel, SecretStr, ValidationInfo, field_validator
+from pydantic import (
+    AliasChoices,
+    Field,
+    Json,
+    RootModel,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
+)
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
@@ -345,6 +353,18 @@ class RuntimeConfig(BaseSettings):
         "http://hetida-designer-keycloak:8080/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
         description="URL to endpoint providing public keys for verifying bearer token signature",
         validation_alias="HD_AUTH_PUBLIC_KEY_URL",
+    )
+
+    auth_audience: str | None = Field(
+        "account",
+        description="Expected audience in tokens.",
+        validation_alias=AliasChoices("HD_AUTH_AUDIENCE", "JWT_AUDIENCE"),
+    )
+
+    auth_issuer: str | None = Field(
+        None,
+        description="Expected issuer in tokens.",
+        validation_alias=AliasChoices("HD_AUTH_ISSUER", "JWT_ISSUER"),
     )
 
     auth_verify_certs: bool = Field(True, validation_alias="HD_AUTH_VERIFY_CERTS")

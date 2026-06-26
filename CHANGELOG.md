@@ -3,6 +3,7 @@
 * fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 * Upgrade to Python 3.14
 * **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x> to major release 3.x. This may affect / break component code in multiple ways.
+* **BREAKING CHANGE**: When using auth, audience and issuer checks are now active by default and will be carried out if environment variables `HD_AUTH_AUDIENCE` (defaults to `account`) or respectively `HD_AUTH_ISSUER` are set, which we recommend to always do.
 
 ## 0.13.10
 * fix overwriting during autodeployment
