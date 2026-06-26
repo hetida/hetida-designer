@@ -4,7 +4,7 @@
       class="clickable unselectable"
       title="Edit {{ transformation.type | lowercase }} details"
       (click)="editDetails()"
-      attr.data-testid="Edit"
+      data-testid="Edit"
     >
       edit
     </mat-icon>
@@ -15,7 +15,7 @@
       [ngClass]="{
         disabled: isWorkflowWithoutIo
       }"
-      attr.data-testid="Configure_IO"
+      data-testid="Configure_IO"
     >
       settings_input_component
     </mat-icon>
@@ -24,7 +24,7 @@
       title="{{ executeTooltip }}"
       (click)="execute()"
       [ngClass]="{ disabled: incompleteFlag }"
-      attr.data-testid="Execute"
+      data-testid="Execute"
     >
       play_circle_outline
     </mat-icon>
@@ -34,7 +34,7 @@
         class="clickable unselectable"
         title="Show entire workflow"
         (click)="showWorkflow()"
-        attr.data-testid="Show_entire_workflow"
+        data-testid="Show_entire_workflow"
       >
         zoom_out_map
       </mat-icon>
@@ -42,7 +42,7 @@
         class="clickable unselectable"
         title="Zoom in"
         (click)="zoomIn()"
-        attr.data-testid="Zoom_in"
+        data-testid="Zoom_in"
       >
         zoom_in
       </mat-icon>
@@ -50,7 +50,7 @@
         class="clickable unselectable"
         title="Zoom out"
         (click)="zoomOut()"
-        attr.data-testid="Zoom_out"
+        data-testid="Zoom_out"
       >
         zoom_out
       </mat-icon>
@@ -68,7 +68,7 @@
         title="{{ upgradeWorkflowOperatorsTooltip }}"
         (click)="upgradeWorkflowOperators()"
         [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-        attr.data-testid="Upgrade_workflow_operators"
+        data-testid="Upgrade_workflow_operators"
       >
         auto_awesome
       </mat-icon>
@@ -79,7 +79,7 @@
         title="{{ updateExpandTooltip }}"
         (click)="updateExpand()"
         [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-        attr.data-testid="Update_and_Expand_code"
+        data-testid="Update_and_Expand_code"
       >
         cleaning_services
       </mat-icon>
@@ -89,7 +89,7 @@
         class="clickable unselectable"
         title="{{ unitTestTooltip }}"
         (click)="unitTestComponent()"
-        attr.data-testid="Run_Unit_Tests"
+        data-testid="Run_Unit_Tests"
       >
         bug_report
       </mat-icon>
@@ -100,7 +100,7 @@
       title="{{ publishTooltip }}"
       (click)="publish()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-      attr.data-testid="Publish"
+      data-testid="Publish"
     >
       share
     </mat-icon>
@@ -109,7 +109,7 @@
       title="{{ newRevisionTooltip }}"
       (click)="newRevision()"
       [ngClass]="{ disabled: !isReleasedOrDeprecated() }"
-      attr.data-test-id="New_revision"
+      data-test-id="New_revision"
     >
       plus_one
     </mat-icon>
@@ -117,7 +117,7 @@
       class="clickable unselectable"
       title="Copy"
       (click)="copy()"
-      attr.data-testid="Copy"
+      data-testid="Copy"
     >
       file_copy
     </mat-icon>
@@ -127,7 +127,7 @@
       title="{{ deprecateTooltip }}"
       (click)="deprecate()"
       [ngClass]="{ disabled: !isReleased() }"
-      attr.data-testid="Deprecate"
+      data-testid="Deprecate"
     >
       desktop_access_disabled
     </mat-icon>
@@ -136,7 +136,7 @@
       title="{{ deleteTooltip }}"
       (click)="delete()"
       [ngClass]="{ disabled: isReleasedOrDeprecated() }"
-      attr.data-testid="Delete"
+      data-testid="Delete"
     >
       delete_forever
     </mat-icon>
@@ -145,7 +145,7 @@
       class="clickable unselectable"
       title="Open documentation"
       (click)="showDocumentation()"
-      attr.data-testid="Open_documentation"
+      data-testid="Open_documentation"
     >
       description
     </mat-icon>

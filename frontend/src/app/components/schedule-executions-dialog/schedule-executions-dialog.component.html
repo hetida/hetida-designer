@@ -6,7 +6,7 @@
   <button
     (click)="_onCancel()"
     mat-icon-button
-    attr.data-testid="close-executions-history-dialog"
+    data-testid="close-executions-history-dialog"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -183,7 +183,7 @@
     (click)="_onCancel()"
     color="primary"
     mat-raised-button
-    attr.data-testid="cancel-schedule-execution-dialog"
+    data-testid="cancel-schedule-execution-dialog"
   >
     Cancel
   </button>
@@ -192,7 +192,7 @@
     color="primary"
     mat-raised-button
     [disabled]="isLoading"
-    attr.data-testid="refresh-schedule-execution-dialog"
+    data-testid="refresh-schedule-execution-dialog"
   >
     <mat-icon>refresh</mat-icon>
     Refresh

@@ -8,7 +8,7 @@
       <mat-button-toggle
         value="WORKFLOW"
         [ngClass]="{ active: getFilterState('WORKFLOW') }"
-        attr.data-testid="{{ 'workflows-navigation-container' }}"
+        data-testid="workflows-navigation-container"
       >
         <mat-icon svgIcon="icon-workflow" class="mat-icon-svg"></mat-icon>
         Workflows
@@ -16,7 +16,7 @@
       <mat-button-toggle
         value="COMPONENT"
         [ngClass]="{ active: getFilterState('COMPONENT') }"
-        attr.data-testid="{{ 'components-navigation-container' }}"
+        data-testid="components-navigation-container"
       >
         <mat-icon svgIcon="icon-component" class="mat-icon-svg"></mat-icon>
         Components
@@ -30,7 +30,7 @@
     <div
       class="add-button clickable"
       (click)="newWorkflow()"
-      attr.data-testid="{{ 'add workflow-navigation-container' }}"
+      data-testid="add workflow-navigation-container"
     >
       <button mat-icon-button>
         <mat-icon>add_circle_outline</mat-icon>
@@ -42,7 +42,7 @@
     <div
       class="add-button clickable"
       (click)="newComponent()"
-      attr.data-testid="{{ 'add component-navigation-container' }}"
+      data-testid="add component-navigation-container"
     >
       <button mat-icon-button>
         <mat-icon>add_circle_outline</mat-icon>
@@ -53,7 +53,7 @@
   <div class="right-aligned-toggle mr-1">
     <mat-slide-toggle
       [formControl]="showDeprecatedFilter"
-      attr.data-testid="{{ 'show deprecated-navigation-container' }}"
+      data-testid="show deprecated-navigation-container"
     >
       Show deprecated
     </mat-slide-toggle>
@@ -68,7 +68,7 @@
       matInput
       placeholder="Type to search..."
       [formControl]="searchFilter"
-      attr.data-testid="{{ 'search-navigation-container' }}"
+      data-testid="search-navigation-container"
     />
   </mat-form-field>
 </form>

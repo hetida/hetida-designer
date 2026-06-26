@@ -173,6 +173,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   const componentTag = '0.1.0';
 
   await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(`${componentName}`);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.rightClickItemInNavigation(
     `${componentName}(${componentTag})`

@@ -3,7 +3,7 @@
   <button
     (click)="_onCancel()"
     mat-icon-button
-    attr.data-testid="close-confirm-dialog"
+    data-testid="close-confirm-dialog"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -18,7 +18,7 @@
         <div class="mb-2">
           <mat-checkbox
             [(ngModel)]="checkbox.checked"
-            attr.data-testid="'checkbox-' + checkbox.key"
+            attr.data-testid="{{ 'checkbox-' + checkbox.key }}"
           >
             {{ checkbox.label }}
           </mat-checkbox>
