@@ -116,7 +116,7 @@ class BearerVerifier:
                 options=options,
             )
         except JOSEError as e:  # this is the base exception class of jose
-            logger.info("Failing to verify Bearer Token: %s\nError: %s", access_token, str(e))
+            logger.info("Failing to verify Bearer Token:\nError: %s", str(e))
             if not force_loading_keys:
                 logger.info("Trying to load current public key")
                 if self.verifier_options.reload_public_key and self.is_key_old():

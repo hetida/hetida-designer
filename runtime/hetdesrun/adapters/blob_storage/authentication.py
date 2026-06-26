@@ -148,7 +148,8 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
         msg = msg + parse_xml_error_response(response.text)
         msg = msg + (
             f"When calling URL: {get_blob_adapter_config().endpoint_url} "
-            f"with query parameters: {params_string}"
+            f"with Action {params['Action']}, "
+            f"and sts params {str(get_blob_adapter_config().sts_params)}"
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
