@@ -33,7 +33,7 @@ def upgrade():
         "EXECUTION_ERROR",
         "SKIPPED",
         "SUCCESS",
-        name="scheduledjobstate",
+        name="scheduled_job_state",
     )
 
     trafo_revision_state.create(op.get_bind(), checkfirst=True)
@@ -74,7 +74,8 @@ def upgrade():
                 "EXECUTION_ERROR",
                 "SKIPPED",
                 "SUCCESS",
-                name="scheduledjobstate",
+                name="scheduled_job_state",
+                create_type=False,
             ),
             nullable=False,
         ),
@@ -91,3 +92,5 @@ def upgrade():
 def downgrade():
     op.drop_table("schedule_executions")
     op.drop_table("schedules")
+
+    sa.Enum(name="scheduled_job_state").drop(op.get_bind(), checkfirst=True)
