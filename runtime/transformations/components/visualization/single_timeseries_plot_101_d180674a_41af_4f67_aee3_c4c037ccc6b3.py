@@ -282,11 +282,7 @@ def main(
     # timezone handling for series
     series_with_tz = modify_timezone(series_with_gaps)
 
-    mode = (
-        "lines"
-        if ((len(series) > marker_threshold) and (marker_threshold >= 0))
-        else "lines+markers"
-    )
+    mode = "lines" if 0 <= marker_threshold < len(series) else "lines+markers"
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
     fig = go.Figure(
         [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
