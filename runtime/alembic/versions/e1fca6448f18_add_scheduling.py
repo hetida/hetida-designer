@@ -49,11 +49,13 @@ def upgrade():
                 "DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state", create_type=False
             ),
             nullable=True,
+            create_type=False,
         ),
         sa.Column(
             "transformation_type",
             sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type", create_type=False),
             nullable=True,
+            create_type=False,
         ),
         sa.Column(
             "state",
