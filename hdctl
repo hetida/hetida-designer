@@ -1487,7 +1487,24 @@ usage() {
     echo "      $0 purge"
     echo "      $0 deploy_base_trafos"
     echo "      $0 autoimport"
-    echo
+    echo ""
+    echo "    Execution examples:"
+    echo ""
+    echo "        ./hdctl delete_drafts -i hd-docker-compose -m test123"
+    echo ""
+    echo "    This applies the delete_drafts command and defining instance file"
+    echo "    and maintenance secret."
+    echo ""
+    echo ""
+    echo "        ./hdctl delete_unused_deprecated -i hd-docker-compose -m test123"
+    echo "             -cutoff 2026-05-05 10:00:00Z"
+    echo "             -exclude uuid1 -exclude uud2"
+    echo ""
+    echo "    This applies the delete_unused_deprecated command defining instance file"
+    echo "    and maintenance secret and using the arguments cutoff_date and exclude."
+    echo "    For the documentation of the effect of these parameter please have a look"
+    echo "    at openapi.yaml/Swagger UI of the backend."
+    echo ""
 }
 
 help() {
@@ -1687,6 +1704,8 @@ delete_drafts() {
 #     **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
 #     exporting / getting all transformation revisions before using this action!
 delete_unused_deprecated() {
+
+    # Global set up
     _setup "${@}"
     _ensure_maintenance_secret
     ensure_access_token
@@ -1695,12 +1714,25 @@ delete_unused_deprecated() {
     if [[ $VERIFY_BACKEND_API_URL = false ]]; then
         curl_args+=("--insecure")
     fi
-    curl "${curl_args[@]}" -X POST \
+
+    # function set up
+    _parse_delete_unused_deprecated_args "${@}"
+    _build_body_delete_unused_deprecated_args
+
+    # excecute CURL-command
+    local cmd=(
+        curl \
+        "${curl_args[@]}" \
+        -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+        -d "$BODY" \
         "$HD_BACKEND_API_URL/maintenance/delete_unused_deprecated$QUERY_URL_APPEND" \
         "${REMAINING_ARGS[@]}"
+    )
+
+    "${cmd[@]}" # printf '%q ' "${cmd[@]}" for dry-run
+
 }
 
 # Purge and reinstall base components/workflows
@@ -2383,6 +2415,57 @@ _setup() {
     _validate_global_parameters
 }
 
+_parse_delete_unused_deprecated_args() {
+
+    CUTOFF_DATE=""
+    EXCLUDE_UUIDS=()
+
+    set -- "${REMAINING_ARGS[@]}"
+
+    REMAINING_ARGS=()
+    while [[ "$#" -gt 0 ]];
+        do case "$1" in
+            -exclude)
+                EXCLUDE_UUIDS+=("$2")
+                shift 2
+                ;;
+            -cutoff)
+                CUTOFF_DATE="$2"
+                shift 2
+                ;;
+            *)
+            REMAINING_ARGS+=("$1")
+            shift
+        ;;
+        esac
+    done
+    REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}")
+}
+
+_build_body_delete_unused_deprecated_args() {
+
+    BODY='{
+        "maintenance_payload": {
+            "maintenance_secret": "'"$MAINTENANCE_SECRET"'"
+    }'
+
+    if [[ -n "$CUTOFF_DATE" ]]; then
+        BODY+=',
+    "cutoff_date": "'"$CUTOFF_DATE"'"'
+    fi
+
+    if ((${#EXCLUDE_UUIDS[@]})); then
+        BODY+=',
+        "exclude": ['
+        for i in "${!EXCLUDE_UUIDS[@]}"; do
+            [[ $i -gt 0 ]] && BODY+=","
+            BODY+="\"${EXCLUDE_UUIDS[$i]}\""
+        done
+        BODY+=']'
+    fi
+
+    BODY+="}"
+}
 ###############################################################################
 #                                                                             #
 #                             Subcommand Execution                            #
