@@ -171,22 +171,19 @@ async def maintenance_delete_unused_deprecated(
     This handles nesting, i.e., a deprecated transformation revision will not be deleted if it is
     used indirectly across multiple nesting levels in a workflow which is not deprecated.
 
-    To prevent certain transformations from being deleted, use the exclude parameter and provide
-    a list of transformation UUIDs, for example: &exclude=[uuid1,uuid2,...]. By default, all unused
-    deprecated transformations are deleted.
+    To prevent certain transformations from being deleted, use the exclude body-parameter and
+    provide a list of transformation UUIDs, for example: "exclude":["uuid1","uuid2",...].
+    By default, all unused deprecated transformations are deleted.
 
     To prevent recently deprecated transformations from being deleted, use the cutoff_date
-    parameter. This parameter restricts deletion to transformations that were disabled before
+    body-parameter. This parameter restricts deletion to transformations that were disabled after
     the specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:
-    &cutoff_date=2026-01-01T00:00:00Z. By default, all unused deprecated transformations are
+    "cutoff_date":"2026-01-01T00:00:00Z". By default, all unused deprecated transformations are
     deleted.
 
     **Warning**: This action permanently deletes transformation revisions. We recommend creating
     a backup (for example, by exporting all transformation revisions) before using this action.
     """
-
-    logger.debug(f"list exclude parameter in endpoint: {exclude}")
-    logger.debug(f"cutoff_date: {cutoff_date}")
 
     return handle_maintenance_operation_request(
         "delete_unused_deprecated",

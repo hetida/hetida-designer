@@ -78,10 +78,8 @@ def delete_unused_deprecated(
         directly_from_db=directly_in_db,
     )
 
-    logger.debug(f"list exclude parameter: {exclude}")
     excluded_ids = exclude if exclude is not None else []
     cutoff_date_dt = cutoff_date if cutoff_date else datetime.now(timezone.utc) + timedelta(days=1)
-    logger.debug(f"list exclude-ids parameter: {exclude}")
     tr_list_reduced = []
 
     for trafo in tr_list:
