@@ -29,6 +29,13 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
 
+    trafo_state_enum = sa.Enum(
+        "DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state", create_type=False
+    )
+    trafo_type_enum = sa.Enum(
+        "COMPONENT", "WORKFLOW", name="trafo_revision_type", create_type=False
+    )
+
     op.create_table(
         "schedule_executions",
         sa.Column("id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False),
@@ -45,17 +52,13 @@ def upgrade():
         sa.Column("transformation_version_tag", sa.String(), nullable=True),
         sa.Column(
             "transformation_state",
-            sa.Enum(
-                "DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state", create_type=False
-            ),
+            trafo_state_enum,
             nullable=True,
-            create_type=False,
         ),
         sa.Column(
             "transformation_type",
-            sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type", create_type=False),
+            trafo_type_enum,
             nullable=True,
-            create_type=False,
         ),
         sa.Column(
             "state",
