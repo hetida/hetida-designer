@@ -1,9 +1,7 @@
 """add scheduling
-
 Revision ID: e1fca6448f18
 Revises: 5cfafc3cf470
 Create Date: 2026-02-18 17:12:45.493444
-
 """
 
 import sqlalchemy as sa
@@ -11,7 +9,6 @@ import sqlalchemy_utils
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e1fca6448f18"
 down_revision = "5cfafc3cf470"
 branch_labels = None
@@ -21,24 +18,16 @@ depends_on = None
 def upgrade():
     op.create_table(
         "schedules",
-        # ... your columns unchanged
+        sa.Column("id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False),
+        sa.Column("name", sa.String(), nullable=False),
+        sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("cron_expression", sa.String(), nullable=False),
+        sa.Column(
+            "transformation_id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=True
+        ),
+        sa.Column("wiring", sa.JSON(none_as_null=True), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
     )
-
-    # Create enums only if they don't exist
-    trafo_revision_state = sa.Enum("DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state")
-    trafo_revision_type = sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type")
-    scheduled_job_state = sa.Enum(
-        "STARTED",
-        "INVOCATION_ERROR",
-        "EXECUTION_ERROR",
-        "SKIPPED",
-        "SUCCESS",
-        name="scheduled_job_state",
-    )
-
-    trafo_revision_state.create(op.get_bind(), checkfirst=True)
-    trafo_revision_type.create(op.get_bind(), checkfirst=True)
-    scheduled_job_state.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "schedule_executions",
@@ -75,7 +64,6 @@ def upgrade():
                 "SKIPPED",
                 "SUCCESS",
                 name="scheduled_job_state",
-                create_type=False,
             ),
             nullable=False,
         ),
@@ -92,5 +80,6 @@ def upgrade():
 def downgrade():
     op.drop_table("schedule_executions")
     op.drop_table("schedules")
-
     sa.Enum(name="scheduled_job_state").drop(op.get_bind(), checkfirst=True)
+    # Note: trafo_revision_state and trafo_revision_type are intentionally left
+    # alone here since they predate this migration and may be used elsewhere.
