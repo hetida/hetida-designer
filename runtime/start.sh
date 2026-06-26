@@ -8,6 +8,8 @@ if [ -f /app/app/main.py ]; then
     DEFAULT_MODULE_NAME=app.main
 elif [ -f /app/main.py ]; then
     DEFAULT_MODULE_NAME=main
+elif [ -f ./main.py ]; then
+    DEFAULT_MODULE_NAME=main    
 fi
 MODULE_NAME=${MODULE_NAME:-$DEFAULT_MODULE_NAME}
 VARIABLE_NAME=${VARIABLE_NAME:-app}
@@ -41,10 +43,12 @@ else
     if [[ "$_is_pure_uvicorn" == $_true_equiv ]]; then
         # Pure uvicorn mode
         echo "Starting in pure uvicorn mode!"
-        exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"80"}" --log-level "${UVICORN_LOG_LEVEL:-"info"}" "$APP_MODULE"
+        # exec uvicorn --host "${HOST:-"0.0.0.0"}" --port "${PORT:-"8090"}" --log-level "${UVICORN_LOG_LEVEL:-"info"}" "$APP_MODULE"
+        python main.py
     else
         # Start Gunicorn
-        echo "Starting in gunicorn mode!"
+        echo "WARNING: Gunicorn mode is deprecated and will be removed in a future version"
+        echo "Starting in (deprecated!) gunicorn mode!"
         exec gunicorn -k "$WORKER_CLASS" -c "$GUNICORN_CONF" "$APP_MODULE"
     fi
 

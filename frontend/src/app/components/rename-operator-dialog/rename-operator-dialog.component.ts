@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Operator } from 'src/app/model/operator';
@@ -13,7 +13,7 @@ export interface RenameOperatorDialogData {
   styleUrls: ['./rename-operator-dialog.component.scss'],
   standalone: false
 })
-export class RenameOperatorDialogComponent implements OnInit {
+export class RenameOperatorDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<
       RenameOperatorDialogComponent,
@@ -27,13 +27,11 @@ export class RenameOperatorDialogComponent implements OnInit {
     Validators.maxLength(60)
   ]);
 
-  ngOnInit() {}
-
-  onCancel(): void {
+  _onCancel(): void {
     this.dialogRef.close();
   }
 
-  onOk(): void {
+  _onOk(): void {
     this.dialogRef.close(this.name.value);
   }
 }

@@ -13,7 +13,9 @@ test('Open context-menu via right-click on a workflow in navigation-menu', async
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   // Open context-menu via right-click on a workflow
-  await hetidaDesigner.rightClickItemInNavigation(`${workflowName}(${workflowTag})`);
+  await hetidaDesigner.rightClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   // Assert
   const countItemsContextMenu = await page

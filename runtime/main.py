@@ -11,6 +11,7 @@ Usage: Call with activated virtual environment via
 from project directory.
 """
 
+import asyncio
 import logging
 import os
 
@@ -21,6 +22,7 @@ if __name__ == "__main__":
 
 
 from hetdesrun import configure_logging
+from hetdesrun.scheduling.management import start_scheduling
 
 logger = logging.getLogger(__name__)
 configure_logging(logger)
@@ -166,14 +168,36 @@ if __name__ == "__main__":
 
         import uvicorn
 
+        start_scheduling(in_memory_db)
+
         host = os.environ.get("HOST", "127.0.0.1")
-        port = int(os.environ.get("PORT", 8000))
-        logger.info("Start app as host %s with port %s", str(host), str(port))
+
+        explicit_development_mode = os.environ.get("DEVELOPMENT_MODE", "")
+        explicit_no_development_mode = explicit_development_mode.lower() in {
+            "false",
+            "no",
+            "n",
+            "0",
+        }
+        explicit_development_mode = explicit_development_mode.lower() in {"true", "yes", "y", "1"}
+
+        reload_mode = (
+            host.lower() in {"localhost", "127.0.0.1"} or explicit_development_mode
+        ) and not explicit_no_development_mode
+        port = int(os.environ.get("PORT", "8000"))
+        log_level = os.environ.get("UVICORN_LOG_LEVEL", "info")
+        logger.info(
+            "Start uvicorn app as host %s with port %s with uvicorn log level %s%s",
+            str(host),
+            str(port),
+            log_level,
+            " in reload/development mode" if reload_mode else "",
+        )
+
         uvicorn.run(
             "main:app",
-            log_level="debug",
-            reload=True,
-            app_dir="hetdesrun",
+            log_level=log_level,
+            reload=explicit_development_mode,
             host=host,
             port=port,
         )

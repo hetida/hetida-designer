@@ -82,7 +82,7 @@ export class WorkflowEditorComponent implements OnInit {
     private readonly contextMenuService: ContextMenuService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     // Only save updates every 500ms.
     timer(500, 500)
       .pipe(takeUntilDestroyed(this._destroyRef))

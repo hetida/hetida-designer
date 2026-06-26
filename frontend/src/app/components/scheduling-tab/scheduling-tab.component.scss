@@ -1,0 +1,115 @@
+@use '../../../style/colors';
+
+.scheduling-content {
+  display: flex;
+  flex-flow: column;
+  height: calc(100vh - 116px);
+  overflow: auto;
+}
+
+.scheduling-title {
+  gap: 32px;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  padding: 16px 24px;
+}
+
+.scheduling-header {
+  align-items: center;
+  text-align: left;
+  white-space: nowrap;
+  padding: 12px 0px;
+}
+
+.border-bottom {
+  border-bottom: solid 1px colors.$hd-grey;
+}
+
+.scheduling-row {
+  align-items: center;
+  text-align: left;
+  white-space: nowrap;
+  padding: 12px 0px;
+}
+
+.active_col {
+  flex: 0 0 50px;
+  text-align: center;
+  padding: 0px 4px 0px 8px;
+}
+
+.name_col {
+  flex: 1;
+  min-width: 224px;
+  padding: 0px 4px 0px 4px;
+}
+
+.transformation_col {
+  flex: 1;
+  min-width: 224px;
+  padding: 0px 4px 0px 4px;
+}
+
+.wiring_col {
+  flex: 0 0 100px;
+  text-align: center;
+  padding: 0px 4px 0px 4px;
+}
+
+.cron_col {
+  flex: 0 0 124px;
+  text-align: center;
+  padding: 0px 4px 0px 4px;
+}
+
+.actions_col {
+  flex: 0 0 150px;
+  text-align: center;
+  padding: 0px 8px 0px 4px;
+}
+
+.cell-content {
+  cursor: pointer;
+  display: block;
+  padding: 12px 0px;
+  min-height: 20px;
+  line-height: 20px;
+}
+
+.cell-input {
+  width: 100%;
+  padding: 12px 0px;
+  border: 1px solid colors.$hd-black;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+  height: 28px;
+  line-height: 20px;
+  outline: none;
+}
+
+.drag-prompt {
+  display: block;
+  user-select: none;
+  height: 34px;
+  text-align: center;
+  align-content: center;
+  color: rgba(colors.$hd-grey-dark, 0.8);
+  border: 1px dashed rgba(colors.$hd-grey-dark, 0.8);
+  border-radius: 4px;
+}
+
+.trafo-item {
+  cursor: pointer;
+  user-select: none;
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+}
+
+.cron-error {
+  font-size: 0.75rem;
+  color: colors.$hd-red;
+  margin-top: 1px;
+}

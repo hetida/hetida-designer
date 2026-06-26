@@ -77,6 +77,16 @@ class InsufficientPlottingData(ComponentException):
     """
 
 
+class IntentionallyAbortedExecution(ComponentException):
+    """Execution of this component or workflow is intentionally aborted
+
+    Often execution of a workflow should stop if a certain condition is not
+    fulfilled. This can of course be done by raising an exception. To communicate
+    this intention to 3rd party systems and make it clear that this is not an actual error
+    situation it is recommended to use this exception.
+    """
+
+
 class PlotTargetSettings(BaseModel):
     """Settings that plot components can/should use
 

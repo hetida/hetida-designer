@@ -20,13 +20,12 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 if __name__ == "__main__":
-
     import os
 
     import uvicorn
 
-    host = os.environ.get("HOST", "127.0.0.1")
-    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8090"))
     logger.info("Start app as host %s with port %s", str(host), str(port))
     uvicorn.run(
         "demo_adapter_python.webservice:app",

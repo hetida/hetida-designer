@@ -51,7 +51,7 @@ export class AppComponent implements OnInit {
     this.setupPlotlyWithGermanLocale();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.themeService.currentTheme.subscribe(theme => {
       this.localStorage.setItem('theme', theme);
       this.overlayContainer

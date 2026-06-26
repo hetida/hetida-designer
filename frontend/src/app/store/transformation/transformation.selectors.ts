@@ -100,3 +100,8 @@ export const selectTransformationsByRevisionGroupId = (
     }
   );
 };
+
+export const selectTransformationsLoaded = createSelector(
+  selectTransformationState,
+  (state: TransformationState) => state.loaded
+);

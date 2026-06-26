@@ -9,7 +9,9 @@ test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
   // Act
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
@@ -23,7 +25,7 @@ test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
   // Check for equal substrings in dialog-title and opened tab
   const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
   const componentTabName = await page
-    .locator('div[role="tab"] >> nth=1')
+    .locator('div[role="tab"] >> nth=2')
     .locator('.text-ellipsis')
     .innerText();
   await expect(dialogTitle).toContainText(`${componentTabName}`);

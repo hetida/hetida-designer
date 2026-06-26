@@ -45,7 +45,7 @@ export class ToolbarComponent implements OnInit {
     private readonly transformationActionService: TransformationActionService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     timer(0, 100)
       .pipe(
         takeUntilDestroyed(this._destroyRef),

@@ -13,7 +13,7 @@ import { Transformation } from '../../../model/transformation';
   standalone: false
 })
 export class NavigationCategoryComponent implements OnInit {
-  private _transformations: Transformation[];
+  private _transformations: Transformation[] = [];
 
   @Input()
   set transformations(transformations: Transformation[]) {
@@ -37,7 +37,7 @@ export class NavigationCategoryComponent implements OnInit {
     private readonly popover: PopoverService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.store.select(selectActiveTabItem).subscribe(activeTabItem => {
       if (activeTabItem === null) {
         this.activeTransformationId = '';

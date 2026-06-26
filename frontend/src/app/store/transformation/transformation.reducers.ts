@@ -13,7 +13,10 @@ import {
 export const transformationReducers = createReducer(
   initialTransformationState,
   on(setAllTransformations, (state, action) => {
-    return transformationEntityAdapter.setAll(action.payload, state);
+    return {
+      ...transformationEntityAdapter.setAll(action.payload, state),
+      loaded: true
+    };
   }),
   on(addTransformation, (state, action) => {
     return transformationEntityAdapter.setOne(action.payload, state);

@@ -9,7 +9,9 @@ test('Confirm "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Act
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(`${workflowName}(${workflowTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');

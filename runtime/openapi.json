@@ -4297,7 +4297,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExecByIdInput"
+                "$ref": "#/components/schemas/ExecByIdInput-Input"
               }
             }
           },
@@ -4422,7 +4422,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExecByIdInput"
+                "$ref": "#/components/schemas/ExecByIdInput-Input"
               }
             }
           }
@@ -4755,6 +4755,621 @@
         }
       }
     },
+    "/api/schedules": {
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns all schedules",
+        "operationId": "get_all_schedules_api_schedules_get",
+        "responses": {
+          "200": {
+            "description": "Successfully got all schedules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Schedule-Output"
+                  },
+                  "type": "array",
+                  "title": "Response Get All Schedules Api Schedules Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Creates a schedule.",
+        "description": "Store a Schedule in the database",
+        "operationId": "create_schedule_api_schedules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schedule-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the schedule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/{id}": {
+      "put": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Updates a schedule.",
+        "description": "Update a schedule\n\nCreates schedule if it does not exist already (Upsert).",
+        "operationId": "update_schedule_api_schedules__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schedule-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully updated the schedule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Id from path does not match id from object in request body"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Deletes a schedule.",
+        "description": "Delete a schedule from the database.",
+        "operationId": "delete_schedule_api_schedules__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted the schedule"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/executions": {
+      "post": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Creates a schedule execution.",
+        "description": "Store a Schedule Execution in the database",
+        "operationId": "create_schedule_execution_api_schedules_executions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleExecution-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleExecution-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns all schedule executions",
+        "operationId": "get_all_schedule_executions_api_schedules_executions_get",
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "exclude_exec_result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Result"
+            }
+          },
+          {
+            "name": "exclude_exec_input",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Input"
+            }
+          },
+          {
+            "name": "latest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Latest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got all schedule executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleExecution-Output"
+                  },
+                  "title": "Response Get All Schedule Executions Api Schedules Executions Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/executions/{id}": {
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns a specific schedule execution",
+        "operationId": "get_schedule_execution_api_schedules_executions__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleExecution-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Schedule execution not found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Updates a schedule execution.",
+        "description": "Update a schedule execution\n\nCreates schedule execution if it does not exist already (Upsert).",
+        "operationId": "update_schedule_execution_api_schedules_executions__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleExecution-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully updated the schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleExecution-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Id from path does not match id from object in request body"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Deletes a schedule execution.",
+        "description": "Delete a schedule execution from the database.",
+        "operationId": "delete_schedule_execution_api_schedules_executions__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted the schedule execution"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/executions/latest/{schedule_id}": {
+      "get": {
+        "tags": [
+          "schedules"
+        ],
+        "summary": "Returns latest schedule execution for a schedule",
+        "operationId": "get_latest_schedule_execution_api_schedules_executions_latest__schedule_id__get",
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "exclude_exec_result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Result"
+            }
+          },
+          {
+            "name": "exclude_exec_input",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Exclude Exec Input"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got latest schedule execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ScheduleExecution-Output"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Latest Schedule Execution Api Schedules Executions Latest  Schedule Id  Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}/dashboard": {
       "get": {
         "tags": [
@@ -5031,7 +5646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompleteStructure"
+                  "$ref": "#/components/schemas/CompleteStructure-Output"
                 }
               }
             }
@@ -5206,7 +5821,7 @@
             "$ref": "#/components/schemas/MaintenancePayload"
           },
           "new_structure": {
-            "$ref": "#/components/schemas/CompleteStructure"
+            "$ref": "#/components/schemas/CompleteStructure-Input"
           }
         },
         "type": "object",
@@ -5239,7 +5854,7 @@
         ],
         "title": "CodeModule"
       },
-      "CompleteStructure": {
+      "CompleteStructure-Input": {
         "properties": {
           "element_types": {
             "items": {
@@ -5259,7 +5874,7 @@
           },
           "sources": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSource"
+              "$ref": "#/components/schemas/StructureServiceSource-Input"
             },
             "type": "array",
             "title": "Sources",
@@ -5267,7 +5882,48 @@
           },
           "sinks": {
             "items": {
-              "$ref": "#/components/schemas/StructureServiceSink"
+              "$ref": "#/components/schemas/StructureServiceSink-Input"
+            },
+            "type": "array",
+            "title": "Sinks",
+            "description": "All sinks of the structure"
+          }
+        },
+        "type": "object",
+        "required": [
+          "element_types"
+        ],
+        "title": "CompleteStructure"
+      },
+      "CompleteStructure-Output": {
+        "properties": {
+          "element_types": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceElementType"
+            },
+            "type": "array",
+            "title": "Element Types",
+            "description": "All element types of the structure"
+          },
+          "thing_nodes": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceThingNode"
+            },
+            "type": "array",
+            "title": "Thing Nodes",
+            "description": "All thingnodes of the structure"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceSource-Output"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "All sources of the structure"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/StructureServiceSink-Output"
             },
             "type": "array",
             "title": "Sinks",
@@ -5689,7 +6345,7 @@
         ],
         "title": "ErrorLocation"
       },
-      "ExecByIdInput": {
+      "ExecByIdInput-Input": {
         "properties": {
           "id": {
             "type": "string",
@@ -5699,7 +6355,52 @@
           "wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring"
+                "$ref": "#/components/schemas/WorkflowWiring-Input"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The wiring to be used. If no wiring is provided the stored test wiring will be used."
+          },
+          "resolved_reproducibility_references": {
+            "$ref": "#/components/schemas/ReproducibilityReference",
+            "description": "Resolved references to information needed to reproduce an execution result.The provided data can be used to replace data that would usually be produced at runtime."
+          },
+          "run_pure_plot_operators": {
+            "type": "boolean",
+            "title": "Run Pure Plot Operators",
+            "description": "Whether pure plot components should be run.",
+            "default": false
+          },
+          "runtime_execution_context": {
+            "$ref": "#/components/schemas/RuntimeExecutionContext",
+            "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id",
+            "description": "Id to identify an individual execution job, will be generated if it is not provided."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ExecByIdInput"
+      },
+      "ExecByIdInput-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "wiring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowWiring-Output"
               },
               {
                 "type": "null"
@@ -5742,7 +6443,7 @@
             "title": "Revision Group Id"
           },
           "wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring"
+            "$ref": "#/components/schemas/WorkflowWiring-Input"
           },
           "run_pure_plot_operators": {
             "type": "boolean",
@@ -5777,7 +6478,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError"
+                "$ref": "#/components/schemas/WorkflowExecutionError-Input"
               },
               {
                 "type": "null"
@@ -5929,7 +6630,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError"
+                "$ref": "#/components/schemas/WorkflowExecutionError-Output"
               },
               {
                 "type": "null"
@@ -6446,7 +7147,30 @@
         "type": "object",
         "title": "HierarchyObject"
       },
-      "IOInterface": {
+      "IOInterface-Input": {
+        "properties": {
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/TransformationInput"
+            },
+            "type": "array",
+            "title": "Inputs",
+            "default": []
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/TransformationOutput"
+            },
+            "type": "array",
+            "title": "Outputs",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "IOInterface",
+        "description": "Represents combination of inputs and outputs.\n\nNote: The names in the list of inputs and outputs must be unique, respectively."
+      },
+      "IOInterface-Output": {
         "properties": {
           "inputs": {
             "items": {
@@ -6755,7 +7479,7 @@
         ],
         "title": "KafkaAdapterStructureSource"
       },
-      "Link": {
+      "Link-Input": {
         "properties": {
           "id": {
             "type": "string",
@@ -6763,10 +7487,40 @@
             "title": "Id"
           },
           "start": {
-            "$ref": "#/components/schemas/Vertex"
+            "$ref": "#/components/schemas/Vertex-Input"
           },
           "end": {
-            "$ref": "#/components/schemas/Vertex"
+            "$ref": "#/components/schemas/Vertex-Input"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            },
+            "type": "array",
+            "title": "Path",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "Link",
+        "description": "Links determine how parameter values are passed through the workflow.\n\nNote: The data types at both sides must match, i.e. be the same or\nat least one must be of type ANY.\nA link cannot start and end at the same connector."
+      },
+      "Link-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "start": {
+            "$ref": "#/components/schemas/Vertex-Output"
+          },
+          "end": {
+            "$ref": "#/components/schemas/Vertex-Output"
           },
           "path": {
             "items": {
@@ -6973,7 +7727,7 @@
         ],
         "title": "MultipleVirtualStructureAdapterSourcesResponse"
       },
-      "Operator": {
+      "Operator-Input": {
         "properties": {
           "id": {
             "type": "string",
@@ -7041,7 +7795,91 @@
         "title": "Operator",
         "description": "Represents components or workflows within a workflow.\n\nContains all information about the transformation revision needed for display in the workflow as\nwell as the id, so that the transformation itself can be loaded if more information is needed."
       },
-      "OperatorInfo": {
+      "Operator-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "revision_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Group Id"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
+            "title": "Name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "version_tag": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$",
+            "title": "Version Tag"
+          },
+          "transformation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transformation Id"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/OperatorInput"
+            },
+            "type": "array",
+            "title": "Inputs"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/OperatorOutput"
+            },
+            "type": "array",
+            "title": "Outputs"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "state",
+          "version_tag",
+          "transformation_id",
+          "inputs",
+          "outputs",
+          "position"
+        ],
+        "title": "Operator",
+        "description": "Represents components or workflows within a workflow.\n\nContains all information about the transformation revision needed for display in the workflow as\nwell as the id, so that the transformation itself can be loaded if more information is needed."
+      },
+      "OperatorInfo-Input": {
+        "properties": {
+          "transformation_info": {
+            "$ref": "#/components/schemas/TransformationInfo"
+          },
+          "hierarchy_in_workflow": {
+            "$ref": "#/components/schemas/HierarchyInWorkflow"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transformation_info",
+          "hierarchy_in_workflow"
+        ],
+        "title": "OperatorInfo"
+      },
+      "OperatorInfo-Output": {
         "properties": {
           "transformation_info": {
             "$ref": "#/components/schemas/TransformationInfo"
@@ -7613,6 +8451,415 @@
         ],
         "title": "SQLAdapterStructureSource"
       },
+      "Schedule-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "New Schedule"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "cron_expression": {
+            "type": "string",
+            "title": "Cron Expression",
+            "default": "*/5 * * * *"
+          },
+          "transformation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Id"
+          },
+          "wiring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowWiring-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "Schedule"
+      },
+      "Schedule-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "New Schedule"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "cron_expression": {
+            "type": "string",
+            "title": "Cron Expression",
+            "default": "*/5 * * * *"
+          },
+          "transformation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Id"
+          },
+          "wiring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowWiring-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cron_expression_valid": {
+            "type": "boolean",
+            "title": "Cron Expression Valid",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cron_expression_valid"
+        ],
+        "title": "Schedule"
+      },
+      "ScheduleExecution-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "schedule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Id"
+          },
+          "last_state_update": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last State Update"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "transformation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transformation Id"
+          },
+          "transformation_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Name"
+          },
+          "transformation_version_tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Version Tag"
+          },
+          "transformation_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Type"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transformation_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/State"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScheduledJobState"
+          },
+          "trafo_exec_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trafo Exec Job Id"
+          },
+          "exec_input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecByIdInput-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exec_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schedule_id",
+          "transformation_id",
+          "state",
+          "trafo_exec_job_id"
+        ],
+        "title": "ScheduleExecution"
+      },
+      "ScheduleExecution-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "schedule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Id"
+          },
+          "last_state_update": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last State Update"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "transformation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transformation Id"
+          },
+          "transformation_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Name"
+          },
+          "transformation_version_tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transformation Version Tag"
+          },
+          "transformation_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Type"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transformation_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/State"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/ScheduledJobState"
+          },
+          "trafo_exec_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trafo Exec Job Id"
+          },
+          "exec_input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecByIdInput-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exec_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schedule_id",
+          "transformation_id",
+          "state",
+          "trafo_exec_job_id"
+        ],
+        "title": "ScheduleExecution"
+      },
+      "ScheduledJobState": {
+        "type": "string",
+        "enum": [
+          "STARTED",
+          "INVOCATION_ERROR",
+          "EXECUTION_ERROR",
+          "SKIPPED",
+          "SUCCESS"
+        ],
+        "title": "ScheduledJobState"
+      },
       "SimplifiedLogRecord": {
         "properties": {
           "timestamp": {
@@ -7792,7 +9039,7 @@
         ],
         "title": "StructureServiceElementType"
       },
-      "StructureServiceSink": {
+      "StructureServiceSink-Input": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -7922,7 +9169,267 @@
         ],
         "title": "StructureServiceSink"
       },
-      "StructureServiceSource": {
+      "StructureServiceSink-Output": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "title": "External Id",
+            "description": "Externally provided unique identifier"
+          },
+          "stakeholder_key": {
+            "type": "string",
+            "title": "Stakeholder Key",
+            "description": "Stakeholder key for the entity"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Unique name of the entity"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique identifier for the sink"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExternalType",
+            "description": "Type of the sink"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible",
+            "description": "Visibility of the sink",
+            "default": true
+          },
+          "display_path": {
+            "type": "string",
+            "title": "Display Path",
+            "description": "Displays all parent nodes in sequence in the designer frontend",
+            "default": ""
+          },
+          "preset_filters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preset Filters",
+            "description": "Preset filters for the sink",
+            "default": {}
+          },
+          "passthrough_filters": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Filter"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passthrough Filters",
+            "description": "Passthrough filters for the sink",
+            "default": []
+          },
+          "adapter_key": {
+            "type": "string",
+            "title": "Adapter Key",
+            "description": "Adapter key or identifier"
+          },
+          "sink_id": {
+            "type": "string",
+            "title": "Sink Id",
+            "description": "Referenced HD StructureServiceSink identifier"
+          },
+          "ref_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Key",
+            "description": "Key of the referenced metadatum, only used for sinks of type metadata(any)"
+          },
+          "ref_id": {
+            "type": "string",
+            "title": "Ref Id",
+            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if sink has type metadata(any)",
+            "default": ""
+          },
+          "meta_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Data",
+            "description": "Optional metadata for the StructureServiceSink"
+          },
+          "thing_node_external_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thing Node External Ids",
+            "description": "List of externally provided unique identifiers for the thing nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_id",
+          "stakeholder_key",
+          "name",
+          "type",
+          "adapter_key",
+          "sink_id"
+        ],
+        "title": "StructureServiceSink"
+      },
+      "StructureServiceSource-Input": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "title": "External Id",
+            "description": "Externally provided unique identifier"
+          },
+          "stakeholder_key": {
+            "type": "string",
+            "title": "Stakeholder Key",
+            "description": "Stakeholder key for the entity"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Unique name of the entity"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique identifier for the source"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExternalType",
+            "description": "Type of the source"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible",
+            "description": "Visibility of the source",
+            "default": true
+          },
+          "display_path": {
+            "type": "string",
+            "title": "Display Path",
+            "description": "Displays all parent nodes in sequence in the designer frontend",
+            "default": ""
+          },
+          "preset_filters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preset Filters",
+            "description": "Preset filters for the source",
+            "default": {}
+          },
+          "passthrough_filters": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Filter"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passthrough Filters",
+            "description": "Passthrough filters for the source",
+            "default": []
+          },
+          "adapter_key": {
+            "type": "string",
+            "title": "Adapter Key",
+            "description": "Adapter key or identifier"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id",
+            "description": "Referenced HD StructureServiceSource identifier"
+          },
+          "ref_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Key",
+            "description": "Key of the referenced metadatum, only used for sources of type metadata(any)"
+          },
+          "ref_id": {
+            "type": "string",
+            "title": "Ref Id",
+            "description": "ID of the thingnode in the mapped adapter hierarchy, which the mapped source references if source has type metadata(any)",
+            "default": ""
+          },
+          "meta_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Data",
+            "description": "Optional metadata for the StructureServiceSource. This will be attached to the actual adapter wiring as attrs and then will override attrs metadata attached to objects provided by the actual adapter, if such an attrs attribute of type dict is present on the loaded object."
+          },
+          "thing_node_external_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thing Node External Ids",
+            "description": "List of externally provided unique identifiers for the thing nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_id",
+          "stakeholder_key",
+          "name",
+          "type",
+          "adapter_key",
+          "source_id"
+        ],
+        "title": "StructureServiceSource"
+      },
+      "StructureServiceSource-Output": {
         "properties": {
           "external_id": {
             "type": "string",
@@ -8400,7 +9907,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface",
+            "$ref": "#/components/schemas/IOInterface-Input",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -8422,13 +9929,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring",
+            "$ref": "#/components/schemas/WorkflowWiring-Input",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring"
+                "$ref": "#/components/schemas/WorkflowWiring-Input"
               },
               {
                 "type": "null"
@@ -8532,7 +10039,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface",
+            "$ref": "#/components/schemas/IOInterface-Output",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -8554,13 +10061,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring",
+            "$ref": "#/components/schemas/WorkflowWiring-Output",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring"
+                "$ref": "#/components/schemas/WorkflowWiring-Output"
               },
               {
                 "type": "null"
@@ -8664,7 +10171,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface",
+            "$ref": "#/components/schemas/IOInterface-Output",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           }
         },
@@ -8810,7 +10317,7 @@
             "description": "one of \"COMPONENT\", \"WORKFLOW\""
           },
           "io_interface": {
-            "$ref": "#/components/schemas/IOInterface",
+            "$ref": "#/components/schemas/IOInterface-Output",
             "description": "In case of type WORKFLOW determined from content. To change from state DRAFT to state RELEASED all inputs and outputs must have names."
           },
           "documentation": {
@@ -8832,13 +10339,13 @@
             "description": "Code as string in case of type COMPONENT, WorkflowContent in case of type WORKFLOW."
           },
           "test_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring",
+            "$ref": "#/components/schemas/WorkflowWiring-Output",
             "description": "To enable execution the input and output wirings must match the inputs and outputs of the io_interface, which is validated in the scope of the execution."
           },
           "release_wiring": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowWiring"
+                "$ref": "#/components/schemas/WorkflowWiring-Output"
               },
               {
                 "type": "null"
@@ -8920,7 +10427,33 @@
         ],
         "title": "VersionInfo"
       },
-      "Vertex": {
+      "Vertex-Input": {
+        "properties": {
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "connector": {
+            "$ref": "#/components/schemas/Connector",
+            "description": "Full connector including name and data type instead of only the id to simplify execution of the workflow"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connector"
+        ],
+        "title": "Vertex",
+        "description": "Represents start or end point of a link."
+      },
+      "Vertex-Output": {
         "properties": {
           "operator": {
             "anyOf": [
@@ -9215,7 +10748,7 @@
         "properties": {
           "operators": {
             "items": {
-              "$ref": "#/components/schemas/Operator"
+              "$ref": "#/components/schemas/Operator-Input"
             },
             "type": "array",
             "title": "Operators",
@@ -9241,7 +10774,7 @@
           },
           "links": {
             "items": {
-              "$ref": "#/components/schemas/Link"
+              "$ref": "#/components/schemas/Link-Input"
             },
             "type": "array",
             "title": "Links",
@@ -9251,7 +10784,7 @@
           "links_by_start_id_tuple_dict": {
             "additionalProperties": {
               "items": {
-                "$ref": "#/components/schemas/Link"
+                "$ref": "#/components/schemas/Link-Input"
               },
               "type": "array"
             },
@@ -9262,7 +10795,7 @@
           },
           "link_by_end_id_tuple_dict": {
             "additionalProperties": {
-              "$ref": "#/components/schemas/Link"
+              "$ref": "#/components/schemas/Link-Input"
             },
             "type": "object",
             "title": "Link By End Id Tuple Dict",
@@ -9304,7 +10837,7 @@
         "properties": {
           "operators": {
             "items": {
-              "$ref": "#/components/schemas/Operator"
+              "$ref": "#/components/schemas/Operator-Output"
             },
             "type": "array",
             "title": "Operators",
@@ -9312,7 +10845,7 @@
           },
           "links": {
             "items": {
-              "$ref": "#/components/schemas/Link"
+              "$ref": "#/components/schemas/Link-Output"
             },
             "type": "array",
             "title": "Links",
@@ -9577,7 +11110,7 @@
         ],
         "title": "WorkflowContentOutput"
       },
-      "WorkflowExecutionError": {
+      "WorkflowExecutionError-Input": {
         "properties": {
           "type": {
             "type": "string",
@@ -9626,7 +11159,75 @@
           "operator_info": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/OperatorInfo"
+                "$ref": "#/components/schemas/OperatorInfo-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "$ref": "#/components/schemas/ErrorLocation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "message",
+          "location"
+        ],
+        "title": "WorkflowExecutionError"
+      },
+      "WorkflowExecutionError-Output": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "extra_information": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Information"
+          },
+          "process_stage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessStage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operator_info": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperatorInfo-Output"
               },
               {
                 "type": "null"
@@ -9673,7 +11274,7 @@
             "description": "Configuration for the open ends of a workflow"
           },
           "workflow_wiring": {
-            "$ref": "#/components/schemas/WorkflowWiring",
+            "$ref": "#/components/schemas/WorkflowWiring-Input",
             "description": "Note that also workflow_wiring can provide inputs directly."
           },
           "job_id": {
@@ -9711,7 +11312,7 @@
           "error": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/WorkflowExecutionError"
+                "$ref": "#/components/schemas/WorkflowExecutionError-Output"
               },
               {
                 "type": "null"
@@ -10062,7 +11663,37 @@
         ],
         "title": "WorkflowOutput"
       },
-      "WorkflowWiring": {
+      "WorkflowWiring-Input": {
+        "properties": {
+          "input_wirings": {
+            "items": {
+              "$ref": "#/components/schemas/InputWiring"
+            },
+            "type": "array",
+            "title": "Input Wirings",
+            "default": []
+          },
+          "output_wirings": {
+            "items": {
+              "$ref": "#/components/schemas/OutputWiring"
+            },
+            "type": "array",
+            "title": "Output Wirings",
+            "default": []
+          },
+          "dashboard_positionings": {
+            "items": {
+              "$ref": "#/components/schemas/GridstackItemPositioning"
+            },
+            "type": "array",
+            "title": "Dashboard Positionings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "WorkflowWiring"
+      },
+      "WorkflowWiring-Output": {
         "properties": {
           "input_wirings": {
             "items": {

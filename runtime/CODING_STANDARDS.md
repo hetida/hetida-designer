@@ -13,7 +13,7 @@ We prefer more explicit code over some very Python-idiomatic structures where th
 > **Note**: All described command line runs in this file assume that the runtime directory is the current working directory and a development virtual environment is set up and activated.
 
 ### Code formatting
-As code formatter, [black](https://github.com/ambv/black) is used. It is recommended to configure your editor/IDE to automatically format Python code with black during save. Currently black formatting is not enforced as part of the build process.
+As code formatter, [ruff](https://docs.astral.sh/ruff/) is used. It is recommended to configure your editor/IDE to automatically format Python code with ruff during save. Currently ruff formatting is not enforced as part of the build process but checked for pull requests.
 
 
 ### Code Quality Check
@@ -40,6 +40,6 @@ New code for the runtime should always come with appropriate unit tests and cont
 ### Type Hints
 Currently good part of the source code is equipped with [type hints](https://www.python.org/dev/peps/pep-0484/). Build processes do not include static type checking.
 
-For the hetdesrun package we are striving to gradually add more type hints during ongoing development and intend to fully employ [mypy](http://mypy-lang.org/) for static type checking. (hint: contributions are very welcome! You may start from `# type: ignore` comments). See the [Runtime Readme](./README.md) on running static type checks and configuration.
+For the hetdesrun package we are striving to gradually add more type hints during ongoing development and intend to fully employ [mypy](http://mypy-lang.org/) for static type checking. (hint: contributions are very welcome! You may start from `# type: ignore` comments or `Any` type annotations). See the [Runtime Readme](./README.md) on running static type checks and configuration.
 
 Note that we do not plan to add type hints to the code of base components, since they should provide easily readable / beginner friendly examples for starting out on writing custom components.

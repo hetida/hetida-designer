@@ -3,8 +3,11 @@ import {
   MAT_DIALOG_DATA,
   MatDialogRef,
   MatDialogContent,
-  MatDialogActions
+  MatDialogActions,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 
 interface DialogData {
   title: string;
@@ -16,7 +19,13 @@ interface DialogData {
   templateUrl: './text-result-dialog.component.html',
   styleUrls: ['./text-result-dialog.component.scss'],
   standalone: true,
-  imports: [MatDialogContent, MatDialogActions]
+  imports: [
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogTitle,
+    MatButtonModule,
+    MatIcon
+  ]
 })
 export class TextResultDialogComponent {
   constructor(
@@ -24,7 +33,7 @@ export class TextResultDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {}
 
-  close(): void {
+  _close(): void {
     this.dialogRef.close();
   }
 }

@@ -6,21 +6,3 @@
 @use 'utilities';
 @use 'colors';
 @use '@danielmoncada/angular-datetime-picker/assets/style/picker.min.css';
-
-.mat-icon-svg-disabled {
-  .cls-1 {
-    fill: colors.$hd-red;
-  }
-}
-
-.mat-icon-svg-released {
-  .cls-1 {
-    fill: colors.$hd-yellow;
-  }
-}
-
-.mat-icon-svg-draft {
-  .cls-1 {
-    fill: colors.$hd-black;
-  }
-}

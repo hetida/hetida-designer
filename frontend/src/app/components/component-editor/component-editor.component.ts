@@ -96,7 +96,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     private readonly themeService: ThemeService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.themeService.currentTheme
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe(theme => {

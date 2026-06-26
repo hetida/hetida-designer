@@ -271,7 +271,11 @@ export class TransformationService {
       switchMapTo(
         this.transformationHttpService.executeTransformation(id, test_wiring)
       ),
-      tap(result => this.store.dispatch(setExecutionProtocol(result))),
+      tap(result => {
+        if (result !== null && result !== undefined) {
+          this.store.dispatch(setExecutionProtocol(result));
+        }
+      }),
       finalize(() => this.store.dispatch(setExecutionFinished()))
     );
   }

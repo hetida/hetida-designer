@@ -57,9 +57,11 @@ export class HetidaDesigner {
       .getByTestId(`${categoryName.toLowerCase()}-navigation-category`)
       .click();
     await this.page
-      .getByTestId(`${categoryName.toLowerCase()}-expansion-panel-navigation-category`)
+      .getByTestId(
+        `${categoryName.toLowerCase()}-expansion-panel-navigation-category`
+      )
       .first()
-      .waitFor({ state: "visible" });
+      .waitFor({ state: 'visible' });
   }
 
   public async hoverItemInNavigation(itemName: string): Promise<void> {
@@ -92,7 +94,9 @@ export class HetidaDesigner {
       .click({ button: 'right' });
   }
 
-  public async dragAndDropItemFromNavigationToFlowchart(itemName: string): Promise<void> {
+  public async dragAndDropItemFromNavigationToFlowchart(
+    itemName: string
+  ): Promise<void> {
     if (itemName === '') {
       throw new Error('ERROR: Item name must not be empty');
     }

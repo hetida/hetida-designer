@@ -13,7 +13,7 @@ export function UniqueValueValidator(formControlName: string): ValidatorFn {
 
   return (control: AbstractControl): ValidationErrors | null => {
     if (!(control instanceof FormArray)) {
-      throw Error(invalidValidatorUsageErrorMessage);
+      throw new Error(invalidValidatorUsageErrorMessage);
     }
     const formArrayHasFormGroups = control.controls.some(
       c => c instanceof FormGroup

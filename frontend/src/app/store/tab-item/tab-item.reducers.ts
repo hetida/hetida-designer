@@ -5,6 +5,8 @@ import {
   addTabItem,
   removeTabItem,
   setActiveTabItem,
+  setSchedulingTab,
+  setHomeTab,
   unsetActiveTabItem
 } from './tab-item.actions';
 import {
@@ -94,8 +96,8 @@ export const tabItemReducers = createReducer(
   on(updateTransformation, (state, action) => {
     if (action.payload.state === RevisionState.DISABLED) {
       return state;
-      const transformationIdToRemove = action.payload.id;
-      return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
+      // const transformationIdToRemove = action.payload.id;
+      // return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
     }
     return state;
   }),
@@ -103,6 +105,20 @@ export const tabItemReducers = createReducer(
     const transformationIdToRemove = action.payload;
     return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
   }),
+  on(
+    setHomeTab,
+    (state): ITabItemState => ({
+      ...state,
+      activeTabItemId: 'HOME'
+    })
+  ),
+  on(
+    setSchedulingTab,
+    (state): ITabItemState => ({
+      ...state,
+      activeTabItemId: 'SCHEDULING'
+    })
+  ),
   on(
     setActiveTabItem,
     (state, action): ITabItemState => ({
