@@ -29,12 +29,16 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
 
+    bind = op.get_bind()
+
     trafo_state_enum = sa.Enum(
         "DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state", create_type=False
     )
+    trafo_state_enum.create(bind, checkfirst=True)
     trafo_type_enum = sa.Enum(
         "COMPONENT", "WORKFLOW", name="trafo_revision_type", create_type=False
     )
+    trafo_type_enum.create(bind, checkfirst=True)
 
     op.create_table(
         "schedule_executions",
