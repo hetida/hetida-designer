@@ -1,9 +1,7 @@
 """add scheduling
-
 Revision ID: e1fca6448f18
 Revises: 5cfafc3cf470
 Create Date: 2026-02-18 17:12:45.493444
-
 """
 
 import sqlalchemy as sa
@@ -11,7 +9,6 @@ import sqlalchemy_utils
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e1fca6448f18"
 down_revision = "5cfafc3cf470"
 branch_labels = None
@@ -32,6 +29,17 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
 
+    bind = op.get_bind()
+
+    trafo_state_enum = sa.Enum(
+        "DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state", create_type=False
+    )
+    trafo_state_enum.create(bind, checkfirst=True)
+    trafo_type_enum = sa.Enum(
+        "COMPONENT", "WORKFLOW", name="trafo_revision_type", create_type=False
+    )
+    trafo_type_enum.create(bind, checkfirst=True)
+
     op.create_table(
         "schedule_executions",
         sa.Column("id", sqlalchemy_utils.types.uuid.UUIDType(binary=False), nullable=False),
@@ -48,12 +56,12 @@ def upgrade():
         sa.Column("transformation_version_tag", sa.String(), nullable=True),
         sa.Column(
             "transformation_state",
-            sa.Enum("DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state"),
+            trafo_state_enum,
             nullable=True,
         ),
         sa.Column(
             "transformation_type",
-            sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type"),
+            trafo_type_enum,
             nullable=True,
         ),
         sa.Column(
@@ -64,7 +72,7 @@ def upgrade():
                 "EXECUTION_ERROR",
                 "SKIPPED",
                 "SUCCESS",
-                name="scheduledjobstate",
+                name="scheduled_job_state",
             ),
             nullable=False,
         ),
@@ -79,5 +87,8 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table("schedules")
     op.drop_table("schedule_executions")
+    op.drop_table("schedules")
+    sa.Enum(name="scheduled_job_state").drop(op.get_bind(), checkfirst=True)
+    # Note: trafo_revision_state and trafo_revision_type are intentionally left
+    # alone here since they predate this migration and may be used elsewhere.

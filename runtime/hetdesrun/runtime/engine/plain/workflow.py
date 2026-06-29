@@ -234,11 +234,13 @@ class ComputationNode:
             internal_runtime_execution_logger.debug("Starting computation")
 
         # Actual execution of current node
-        function_result = await self._run_comp_func(input_values)
-
-        # cleanup
-        self._in_computation = False
-        execution_context_filter.clear_context(keys=list(context_dict.keys()))
+        try:
+            function_result = await self._run_comp_func(input_values)
+        except Exception:
+            raise
+        finally:
+            self._in_computation = False
+            execution_context_filter.clear_context(keys=list(context_dict.keys()))
 
         return function_result
 

@@ -74,7 +74,6 @@ class KafkaWorkerContext:
         producer_topic: str,
         producer_options: dict,
     ):
-        self.event_loop = asyncio.get_event_loop()
         self.consumer_topic = consumer_topic
         self.consumer_options = consumer_options
         self.msg_handling_coroutine = msg_handling_coroutine

@@ -156,6 +156,8 @@ security = HTTPBearer()
 bearer_verifier = BearerVerifier.from_verifier_options(
     auth_url=get_config().auth_public_key_url or "",
     verify_ssl=get_config().auth_verify_certs,
+    audience=get_config().auth_audience,
+    issuer=get_config().auth_issuer,
 )
 
 
