@@ -37,8 +37,8 @@
       <!-- Active Cell -->
       <div class="active_col">
         <mat-slide-toggle
-          [(ngModel)]="schedule.active"
           (change)="_onActiveToggleChange(schedule)"
+          [(ngModel)]="schedule.active"
         >
         </mat-slide-toggle>
       </div>
@@ -48,16 +48,16 @@
           !_isEditing(schedule.id, 'name') &&
             _startEdit(schedule.id, 'name', schedule.name)
         "
-        class="name_col text-ellipsis"
         [class.editing]="_isEditing(schedule.id, 'name')"
+        class="name_col text-ellipsis"
       >
         @if (_isEditing(schedule.id, 'name')) {
           <input
-            matInput
-            type="text"
-            [(ngModel)]="_editValue"
             (blur)="_saveEdit(schedule)"
             (keydown)="_onKeyDown($event, schedule)"
+            [(ngModel)]="_editValue"
+            matInput
+            type="text"
             class="cell-input"
           />
         } @else {
@@ -70,12 +70,14 @@
       <div class="transformation_col text-ellipsis">
         @if (schedule.transformation_id) {
           <span
-            class="trafo-item"
+            (dragover)="_onDragOver($event)"
+            (drop)="_onDrop($event, schedule)"
             (contextmenu)="
               $event.preventDefault();
               _openTransformationContextMenu(schedule, $event)
             "
             (click)="_openTrafoOfScheduleInTab(schedule)"
+            class="trafo-item"
           >
             <mat-icon
               [svgIcon]="
@@ -109,22 +111,22 @@
       <!-- Wiring Cell -->
       <div class="wiring_col">
         <button
+          (click)="_openWiringDialog(schedule)"
+          [disabled]="!schedule.transformation_id"
           mat-raised-button
           color="primary"
-          [disabled]="!schedule.transformation_id"
-          (click)="_openWiringDialog(schedule)"
         >
           Edit Wiring
         </button>
       </div>
       <!-- Cron Expression Cell -->
       <div
-        class="cron_col"
         (click)="
           !_isEditing(schedule.id, 'cron_expression') &&
             _startEdit(schedule.id, 'cron_expression', schedule.cron_expression)
         "
         [class.editing]="_isEditing(schedule.id, 'cron_expression')"
+        class="cron_col"
       >
         @if (!_isEditing(schedule.id, 'cron_expression')) {
           <span class="cell-content">{{ schedule.cron_expression }}</span>
@@ -133,11 +135,11 @@
           }
         } @else {
           <input
-            matInput
-            type="text"
-            [(ngModel)]="_editValue"
             (blur)="_saveEdit(schedule)"
             (keydown)="_onKeyDown($event, schedule)"
+            [(ngModel)]="_editValue"
+            matInput
+            type="text"
             class="cell-input"
           />
         }
@@ -145,27 +147,27 @@
       <!-- Actions Cell -->
       <div class="actions_col">
         <button
-          mat-icon-button
-          title="Execute Now"
-          color="primary"
-          [disabled]="!schedule.transformation_id || !schedule.wiring"
           (click)="_run(schedule)"
+          [disabled]="!schedule.transformation_id || !schedule.wiring"
+          title="Execute Now"
+          mat-icon-button
+          color="primary"
         >
           <mat-icon>play_circle_outline</mat-icon>
         </button>
         <button
-          mat-icon-button
-          title="View Executions"
-          color="primary"
           (click)="_openExecutionsDialog(schedule)"
+          title="View Executions"
+          mat-icon-button
+          color="primary"
         >
           <mat-icon>history</mat-icon>
         </button>
         <button
-          mat-icon-button
-          title=" Delete"
-          color="primary"
           (click)="_delete(schedule)"
+          title=" Delete"
+          mat-icon-button
+          color="primary"
         >
           <mat-icon>delete</mat-icon>
         </button>
