@@ -763,6 +763,12 @@ class RuntimeConfig(BaseSettings):
         alias="HETIDA_DESIGNER_SCHEDULING_RETENTION_TIMEDELTA",
     )
 
+    target_alembic_revision: str = Field(
+        "head",
+        description="alembic revision towards which migrations are run.",
+        alias="HD_TARGET_ALEMBIC_REVISION",
+    )
+
     @field_validator("internal_auth_client_credentials")
     @classmethod
     def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(

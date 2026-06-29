@@ -37,6 +37,8 @@ services:
       - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
       - LOG_DIRECT_PROVISIONING_OUTPUTS=true
+      - HD_TARGET_ALEMBIC_REVISION=head
+        # e.g. 5cfafc3cf470 instead of head
 
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1

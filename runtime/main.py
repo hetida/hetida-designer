@@ -85,14 +85,18 @@ def run_migrations(
     else:
         connection_url_to_use = connection_url
 
-    logger.info("Running DB migrations in %s", alembic_dir)
+    logger.info(
+        "Running DB migrations in %s to revision %s ",
+        alembic_dir,
+        get_config().target_alembic_revision,
+    )
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", alembic_dir)
     # alembic_cfg.set_main_option("sqlalchemy.url", connection_url_to_use)
     # alembic_cfg.set_section_option("logger_root", "level", "DEBUG")
     # alembic_cfg.set_section_option("logger_alembic", "level", "DEBUG")
     # alembic_cfg.set_section_option("logger_sqlalchemy", "level", "DEBUG")
-    command.upgrade(alembic_cfg, "head")
+    command.upgrade(alembic_cfg, get_config().target_alembic_revision)
     logger.info("Finished running migrations.")
 
 
