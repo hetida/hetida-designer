@@ -190,10 +190,12 @@ export class SchedulingTabComponent implements OnInit {
 
             return dialogRef.componentInstance.confirmClick.pipe(
               first(),
-              tap(({ test_wiring }) => {
-                schedule.wiring = test_wiring;
-                this.updateScheduleInApi(schedule);
-                dialogRef.close();
+              tap({
+                next: ({ test_wiring }) => {
+                  schedule.wiring = test_wiring;
+                  this.updateScheduleInApi(schedule);
+                  dialogRef.close();
+                }
               }),
               finalize(() => {
                 this.wiringConfigService.resetToDefaults();
