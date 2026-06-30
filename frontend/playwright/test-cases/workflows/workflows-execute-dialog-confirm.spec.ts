@@ -4,7 +4,7 @@ test('Confirm "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
-  const workflowTag = '1.0.0';
+  const workflowTag = '1.0.1';
 
   // Act
   await hetidaDesigner.clickWorkflowsInNavigation();

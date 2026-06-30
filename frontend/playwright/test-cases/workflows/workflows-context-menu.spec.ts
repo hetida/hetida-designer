@@ -7,7 +7,7 @@ test('Open context-menu via right-click on a workflow in navigation-menu', async
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
-  const workflowTag = '1.0.0';
+  const workflowTag = '1.0.1';
 
   // Act
   await hetidaDesigner.clickWorkflowsInNavigation();

@@ -17,7 +17,12 @@ As an example a simple Tensorflow Keras model with a custom AntirectificationLay
 This component cannot be executed with manual input. It is intended to be used with stored objects or within a workflow.
 """
 
-import tensorflow as tf
+import contextlib
+
+# Tensorflow currently not available in standard designer version.
+# Example exists to show how to use keras models with custom layers without the component adapter and to make pytest runnable on all tranformation.
+with contextlib.suppress(ModuleNotFoundError):
+    import tensorflow as tf
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.

@@ -20,6 +20,7 @@ geopandas
 glom
 gunicorn
 h5py
+hdhelpers
 holidays
 htpy
 httptools
