@@ -102,10 +102,15 @@
 
 .trafo-item {
   cursor: pointer;
-  user-select: none;
-  padding: 5px 0;
   display: flex;
+  user-select: none;
+  height: 34px;
   align-items: center;
+
+  &.--drag {
+    border: 1px dashed rgba(colors.$hd-grey-dark, 0.8);
+    border-radius: 4px;
+  }
 }
 
 .cron-error {

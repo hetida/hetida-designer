@@ -40,12 +40,30 @@ export class NavigationItemComponent {
   }
 
   public dragComponent(event: DragEvent): void {
+    const trafoItems = document.querySelectorAll('.trafo-item');
+
+    if (trafoItems.length > 0) {
+      trafoItems.forEach(trafoItem => {
+        trafoItem.setAttribute('class', 'trafo-item --drag');
+      });
+    }
+
     event.dataTransfer.effectAllowed = 'all';
     event.dataTransfer.dropEffect = 'none';
     event.dataTransfer.setData(
       'hetida/transformation',
       JSON.stringify(this.transformation)
     );
+  }
+
+  public dragComponentFinished(): void {
+    const trafoItems = document.querySelectorAll('.trafo-item');
+
+    if (trafoItems.length > 0) {
+      trafoItems.forEach(trafoItem => {
+        trafoItem.setAttribute('class', 'trafo-item');
+      });
+    }
   }
 
   public openContextMenu(mouseEvent: MouseEvent): void {

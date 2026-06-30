@@ -1,6 +1,7 @@
 <div
   [draggable]="true"
   (dragstart)="dragComponent($event)"
+  (dragend)="dragComponentFinished()"
   class="navigation-item clickable"
   (dblclick)="editComponent()"
   (mouseover)="selectComponent()"
