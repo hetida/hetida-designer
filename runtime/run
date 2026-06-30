@@ -13,6 +13,7 @@ usage() {
     echo "  - lint            :    call ruff"
     echo "  - typecheck       :    run mypy static type check"
     echo "  - format          :    run ruff format"
+    echo "  - seccheck        :    run bandit security checks"
     echo "  - check           :    run format check, tests, typechecking"
 }
 

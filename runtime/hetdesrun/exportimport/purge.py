@@ -1,5 +1,8 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
+
+from pydantic import AwareDatetime
 
 from hetdesrun.exportimport.importing import import_transformations_from_dir
 from hetdesrun.exportimport.utils import (
@@ -64,13 +67,43 @@ def delete_drafts(directly_in_db: bool = False) -> None:
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
 
-def delete_unused_deprecated(directly_in_db: bool = False) -> None:
+def delete_unused_deprecated(
+    directly_in_db: bool = False,
+    exclude: list[UUID] | None = None,
+    cutoff_date: AwareDatetime | None = None,
+) -> None:
+
     tr_list = get_transformation_revisions(
         params=FilterParams(state=State.DISABLED, include_dependencies=False, unused=True),
         directly_from_db=directly_in_db,
     )
 
-    delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
+    excluded_ids = exclude if exclude is not None else []
+    cutoff_date_dt = cutoff_date if cutoff_date else datetime.now(timezone.utc) + timedelta(days=1)
+    tr_list_reduced = []
+
+    for trafo in tr_list:
+        # Skip explicitly excluded entries
+        if trafo.id in excluded_ids:
+            logger.debug(
+                "Transformation %s (%s) not deleted - it was explicitly excluded",
+                trafo.name,
+                trafo.version_tag,
+            )
+            continue
+
+        # Skip entries newer than the cutoff date
+        if trafo.disabled_timestamp and trafo.disabled_timestamp > cutoff_date_dt:
+            logger.debug(
+                "Transformation %s (%s) not deleted - deprecation later than specified cutoff date",
+                trafo.name,
+                trafo.version_tag,
+            )
+            continue
+
+        tr_list_reduced.append(trafo)
+
+    delete_transformation_revisions(tr_list_reduced, directly_in_db=directly_in_db)
 
 
 def delete_all_and_refill(directly_in_db: bool = False) -> None:
