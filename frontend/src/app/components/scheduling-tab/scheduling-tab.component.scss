@@ -106,8 +106,11 @@
   user-select: none;
   height: 34px;
   align-items: center;
-  border: 1px dashed rgba(colors.$hd-grey-dark, 0.8);
-  border-radius: 4px;
+
+  &.--drag {
+    border: 1px dashed rgba(colors.$hd-grey-dark, 0.8);
+    border-radius: 4px;
+  }
 }
 
 .cron-error {
