@@ -5,6 +5,7 @@ from functools import cache
 from uuid import uuid4
 
 import aiokafka
+import httpx
 import msgspec
 from pydantic import ValidationError
 
@@ -13,6 +14,7 @@ from hetdesrun.backend.execution import (
     perf_measured_execute_trafo_rev,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.backend.runtime_http_client import runtime_http_client
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
@@ -144,6 +146,14 @@ async def consume_execution_trigger_message(
     kafka_ctx: KafkaWorkerContext,
 ) -> None:
     """Executes transformation revisions as requested by Kafka messages to the respective topic"""
+
+    kafka_runtime_http_client = httpx.AsyncClient(
+        verify=get_config().hd_runtime_verify_certs,
+        timeout=get_config().external_request_timeout,
+        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+    )
+    runtime_http_client.set(kafka_runtime_http_client)
+
     async for msg in kafka_ctx.consumer:
         try:
             logger.debug("Consumed msg: %s", str(msg))

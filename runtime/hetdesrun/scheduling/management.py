@@ -3,6 +3,9 @@ import logging
 import threading
 import time
 
+import httpx
+
+from hetdesrun.backend.runtime_http_client import runtime_http_client
 from hetdesrun.scheduling.job_sync import sync_job
 from hetdesrun.scheduling.retention import executions_retention_job
 from hetdesrun.scheduling.scheduler import get_global_scheduler
@@ -14,6 +17,15 @@ logger = logging.getLogger(__name__)
 async def start_scheduler() -> None:  # pragma: no cover
     """Initialize and start scheduler"""
     scheduler = get_global_scheduler()
+
+    # initialize runtime http client
+
+    scheduling_runtime_http_client = httpx.AsyncClient(
+        verify=get_config().hd_runtime_verify_certs,
+        timeout=get_config().external_request_timeout,
+        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+    )
+    runtime_http_client.set(scheduling_runtime_http_client)
 
     # sync job
     sync_interval_seconds = get_config().scheduling_sync_interval_seconds

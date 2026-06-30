@@ -1360,13 +1360,14 @@ async def execute_transformation_revision_endpoint(
     response_model=UnitTestResults,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
-    summary="RUn unit tests for a transformation revision.",
+    summary="Run unit tests for a transformation revision.",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"description": "Successfully tested the transformation revision."},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Not a component."},
         status.HTTP_404_NOT_FOUND: {"description": "Could not find trafo rev in db."},
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def test_transformation_revision(
     id: UUID,  # noqa: A002
@@ -1530,6 +1531,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     responses={
         status.HTTP_202_ACCEPTED: {"description": "Accepted execution request"},
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def execute_asynchronous_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
@@ -1583,6 +1585,7 @@ async def handle_latest_trafo_revision_execution_request(
             "description": "Successfully executed the latest transformation revision"
         }
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def execute_latest_transformation_revision_endpoint(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
@@ -1681,6 +1684,7 @@ async def execute_latest_and_post(
             "description": "Accepted execution request for latest revision of revision group"
         },
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def execute_asynchronous_latest_transformation_revision_endpoint(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
@@ -1778,6 +1782,7 @@ async def update_transformation_dashboard_positioning(
     responses={
         status.HTTP_200_OK: {"description": "Successfully generated dashboard"},
     },
+    dependencies=[Depends(inject_runtime_http_client)],
 )
 async def transformation_dashboard(
     request: Request,

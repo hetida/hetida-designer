@@ -2,6 +2,8 @@ import json
 from unittest import mock
 
 import pytest
+import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.backend.service.dashboarding_utils import (
@@ -41,9 +43,10 @@ def app_with_auth(activate_auth):
     return init_app()
 
 
-@pytest.fixture
-def async_test_client_with_auth(app_with_auth):
-    return AsyncClient(transport=ASGITransport(app=app_with_auth), base_url="http://test")
+@pytest_asyncio.fixture
+async def async_test_client_with_auth(app_with_auth):
+    async with LifespanManager(app_with_auth) as manager:
+        return AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test")
 
 
 @pytest.mark.asyncio
