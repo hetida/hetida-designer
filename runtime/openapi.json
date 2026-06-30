@@ -4347,7 +4347,7 @@
         "tags": [
           "transformations"
         ],
-        "summary": "RUn unit tests for a transformation revision.",
+        "summary": "Run unit tests for a transformation revision.",
         "operationId": "test_transformation_revision_api_transformations__id__test_post",
         "parameters": [
           {

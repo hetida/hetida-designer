@@ -28,3 +28,4 @@ demo-adapter-python/**/venv
 demo-adapter-python/**/nix_venv_*
 .tmp
 **/.overmind.sock
+site
