@@ -10,7 +10,9 @@ test('Open component on double-click', async ({ page, hetidaDesigner }) => {
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
-  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
   await page.waitForSelector('hd-component-editor');
 
   // Assert
@@ -21,7 +23,7 @@ test('Open component on double-click', async ({ page, hetidaDesigner }) => {
     .locator('.text-ellipsis')
     .innerText();
   const componentTabName = await page
-    .locator('div[role="tab"] >> nth=1')
+    .locator('div[role="tab"] >> nth=2')
     .locator('.text-ellipsis')
     .innerText();
   expect(componentListName).toEqual(componentTabName);

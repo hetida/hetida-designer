@@ -137,12 +137,20 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     )
 
     try:  # noqa: SIM105
-        del sys.modules["hetdesrun.service.transformation_router"]
+        del sys.modules["hetdesrun.backend.service.transformation_router"]
     except KeyError:
         pass
     from hetdesrun.backend.service.transformation_router import (
         dashboard_router,
         transformation_router,
+    )
+
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.backend.service.schedule_router"]
+    except KeyError:
+        pass
+    from hetdesrun.backend.service.schedule_router import (
+        schedule_router,
     )
 
     try:  # noqa: SIM105
@@ -266,6 +274,8 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(info_router, prefix="/api")  # reachable without authorization
         app.include_router(transformation_router, prefix="/api", dependencies=get_auth_deps())
+        if get_config().scheduling_active:
+            app.include_router(schedule_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             dashboard_router,
             prefix="/api",  # individual auth dependency

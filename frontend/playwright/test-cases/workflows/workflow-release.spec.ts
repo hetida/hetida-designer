@@ -54,7 +54,9 @@ ${workflowInputData}
   await hetidaDesigner.dragAndDropItemFromNavigationToFlowchart(
     `${componentName}(${componentTag})`
   );
-  await hetidaDesigner.searchInNavigation(`Test release a workflow ${browserName}`);
+  await hetidaDesigner.searchInNavigation(
+    `Test release a workflow ${browserName}`
+  );
 
   // Configure workflow I/O
   await hetidaDesigner.clickIconInToolbar('Configure_IO');
@@ -99,7 +101,7 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
 
   // Publish workflow
-  await hetidaDesigner.clickTabInNavigation(1);
+  await hetidaDesigner.clickTabInNavigation(2);
   await hetidaDesigner.clickIconInToolbar('Publish');
   await hetidaDesigner.clickByTestId('publish workflow-confirm-dialog');
 
@@ -186,7 +188,9 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
 
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-  await hetidaDesigner.rightClickItemInNavigation(`${workflowName}(${workflowTag})`);
+  await hetidaDesigner.rightClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
   await page.locator('.mat-mdc-menu-panel').hover();
 
   if (

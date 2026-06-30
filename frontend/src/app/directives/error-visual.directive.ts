@@ -10,14 +10,14 @@ export class ErrorVisualDirective implements OnInit {
 
   constructor(private readonly element: ElementRef<HTMLElement>) {}
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     this._setMessageIfControlIsInvalid();
     this.control.statusChanges.subscribe(() =>
       this._setMessageIfControlIsInvalid()
     );
   }
 
-  private _setMessageIfControlIsInvalid() {
+  private _setMessageIfControlIsInvalid(): void {
     if (this.control.status === 'VALID') {
       this.element.nativeElement.style.visibility = 'none';
     } else {

@@ -8,7 +8,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
-  const workflowTag = '1.0.0';
+  const workflowTag = '1.0.1';
   const workflowInputName = 'input_series';
   const adapter = 'Python-Demo-Adapter';
   const source = 'Influx Pressure';
@@ -19,7 +19,9 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   // Open workflow
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(`${workflowName}(${workflowTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   // Open execute workflow dialog
   await hetidaDesigner.clickIconInToolbar('Execute');
@@ -81,7 +83,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
 test.afterEach(async ({ page, hetidaDesigner }) => {
   // Clear
   const workflowName = 'Volatility Detection Example';
-  const workflowTag = '1.0.0';
+  const workflowTag = '1.0.1';
   const workflowInputName = 'input_series';
 
   await hetidaDesigner.clickIconInToolbar('Execute');

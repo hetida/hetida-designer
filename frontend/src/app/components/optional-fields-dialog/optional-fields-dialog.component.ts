@@ -58,11 +58,11 @@ export class OptionalFieldsDialogComponent {
     return this.optionalFieldsForm.valid;
   }
 
-  onCancel(): void {
+  _onCancel(): void {
     this.dialogRef.close();
   }
 
-  onOk(): void {
+  _onOk(): void {
     this.dialogRef.close(this.data.operator.inputs);
   }
 }

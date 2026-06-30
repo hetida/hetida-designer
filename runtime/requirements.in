@@ -3,6 +3,7 @@ SQLAlchemy-Utils
 aiokafka[snappy]
 aiomqtt
 alembic
+apscheduler
 asyncstdlib
 black
 boto3
@@ -19,6 +20,7 @@ geopandas
 glom
 gunicorn
 h5py
+hdhelpers
 holidays
 htpy
 httptools

@@ -13,7 +13,9 @@ test('Open context-menu via right-click on a component in navigation-menu', asyn
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   // Open context-menu via right-click on a component
-  await hetidaDesigner.rightClickItemInNavigation(`${componentName}(${componentTag})`);
+  await hetidaDesigner.rightClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
 
   // Assert
   const countItemsContextMenu = await page

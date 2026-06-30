@@ -5,13 +5,14 @@ import {
   selectTransformationsByCategoryAndName
 } from './transformation.selectors';
 import { TransformationType } from '../../enums/transformation-type';
-import { EntityState } from '@ngrx/entity';
-import { Transformation } from '../../model/transformation';
+
 import { RevisionState } from '../../enums/revision-state';
+import { TransformationState } from './transformation.state';
 
 describe('Transformation selectors', () => {
-  function createMockEntityState(): EntityState<Transformation> {
+  function createMockEntityState(): TransformationState {
     return {
+      loaded: true,
       ids: ['mockId0', 'mockId1', 'mockId2', 'mockId3', 'mockId4', 'mockId5'],
       entities: {
         mockId0: {

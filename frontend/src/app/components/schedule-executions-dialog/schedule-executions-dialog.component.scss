@@ -1,0 +1,76 @@
+@use '../../../style/colors';
+
+.loading-container,
+.error-container,
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: colors.$hd-grey-dark;
+}
+
+.error-container mat-icon {
+  font-size: 24px;
+  height: 24px;
+  width: 24px;
+}
+
+.empty-container mat-icon {
+  font-size: 40px;
+  height: 40px;
+  width: 40px;
+  color: colors.$hd-grey;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+
+  .status-icon {
+    font-size: 16px;
+    height: 16px;
+    width: 16px;
+  }
+
+  &.status-success {
+    background-color: rgba(colors.$hd-green, 0.1);
+    color: colors.$hd-green;
+  }
+
+  &.status-skipped {
+    background-color: rgba(colors.$hd-yellow, 0.1);
+    color: colors.$hd-yellow;
+  }
+
+  &.status-failure {
+    background-color: rgba(colors.$hd-red, 0.1);
+    color: colors.$hd-red;
+  }
+
+  &.status-running {
+    background-color: rgba(colors.$hd-blue, 0.1);
+    color: colors.$hd-blue;
+  }
+}
+
+.running-text {
+  color: colors.$hd-blue;
+}
+
+.error-message {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: colors.$hd-red;
+  font-size: 0.85rem;
+  cursor: help;
+}

@@ -91,7 +91,7 @@ ${componentInputData}
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
 
   // Publish component
-  await hetidaDesigner.clickTabInNavigation(1);
+  await hetidaDesigner.clickTabInNavigation(2);
   await hetidaDesigner.clickIconInToolbar('Publish');
   await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
 
@@ -173,8 +173,11 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   const componentTag = '0.1.0';
 
   await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(`${componentName}`);
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.rightClickItemInNavigation(`${componentName}(${componentTag})`);
+  await hetidaDesigner.rightClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
   await page.locator('.mat-mdc-menu-panel').hover();
 
   if (

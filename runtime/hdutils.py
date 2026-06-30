@@ -8,6 +8,7 @@ from types import NoneType, UnionType
 from typing import Annotated, Any, Literal, TypedDict
 from uuid import UUID
 
+from hdhelpers.helpers import modify_timezone # noqa F401
 import numpy as np
 import pandas as pd
 import pytz
@@ -25,6 +26,7 @@ from pydantic import (
     WrapValidator,
     create_model,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,16 @@ class InsufficientPlottingData(ComponentException):
     designer are integrated in other frontends. This allows the frontend to
     handle the case of e.g. no data to show in a sensible way, surpressing an
     empty plot and showing an adequate message instead.
+    """
+
+
+class IntentionallyAbortedExecution(ComponentException):
+    """Execution of this component or workflow is intentionally aborted
+
+    Often execution of a workflow should stop if a certain condition is not
+    fulfilled. This can of course be done by raising an exception. To communicate
+    this intention to 3rd party systems and make it clear that this is not an actual error
+    situation it is recommended to use this exception.
     """
 
 
@@ -823,51 +835,6 @@ def plotly_fig_to_json_dict(
 
     return fig_dict_obj
 
-
-def modify_timezone(
-    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str | None = None
-) -> pd.Series | pd.DataFrame:
-    """Modifies timestamps to a certain timezone
-
-    Keyword arguments:
-    object_to_convert -- pd.Series or pd.DataFrame where timezone in index or column is modified
-    to_timezone -- timezone into convert, e.g. for German time use Europe/Berlin. See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
-    column_name -- column_name to apply, default is index as pd.Series have timestamps in index
-    """
-    if not isinstance(object_to_convert, pd.Series | pd.DataFrame):
-        raise TypeError(
-            f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame"
-        )
-
-    try:
-        if isinstance(object_to_convert, pd.Series):
-            new_object = object_to_convert.to_frame(name=object_to_convert.name)
-        else:
-            new_object = object_to_convert.copy(deep=True)
-
-        if column_name is None:
-            new_object.index = new_object.index.tz_convert(to_timezone)
-        else:
-            new_object[column_name] = new_object[column_name].dt.tz_convert(to_timezone)
-
-        if isinstance(object_to_convert, pd.Series):
-            new_object = pd.Series(
-                new_object[object_to_convert.name],
-                index=new_object.index,
-                name=object_to_convert.name,
-            )
-
-        return new_object
-
-    except pytz.exceptions.UnknownTimeZoneError as e:
-        possible_timezone = pytz.all_timezones
-        raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from e
-    except (TypeError, AttributeError) as exc:
-        raise TypeError("Entries to convert do not contain valid timestamps") from exc
-
-    except KeyError as exc:
-        exc.add_note(f"Column name {column_name} not in object_to_convert")
-        raise
 
 
 def extract_sub_value(data: dict[str, Any], json_path: list[str]) -> Any | None:

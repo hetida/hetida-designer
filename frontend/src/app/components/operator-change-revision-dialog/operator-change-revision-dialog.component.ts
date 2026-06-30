@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Transformation } from 'src/app/model/transformation';
 
@@ -12,7 +12,7 @@ export interface OperatorChangeRevisionDialogData {
   styleUrls: ['./operator-change-revision-dialog.component.scss'],
   standalone: false
 })
-export class OperatorChangeRevisionDialogComponent implements OnInit {
+export class OperatorChangeRevisionDialogComponent {
   public selectedRevision: Transformation | null = null;
 
   constructor(
@@ -20,13 +20,11 @@ export class OperatorChangeRevisionDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: OperatorChangeRevisionDialogData
   ) {}
 
-  ngOnInit() {}
-
-  onCancel(): void {
+  _onCancel(): void {
     this.dialogRef.close();
   }
 
-  onOk(): void {
+  _onOk(): void {
     if (this.selectedRevision === null) {
       this.dialogRef.close();
     } else {

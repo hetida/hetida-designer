@@ -1,9 +1,9 @@
 <div class="d-flex content-space-between" mat-dialog-title>
   <h4 class="m-0">{{ data.title }}</h4>
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     mat-icon-button
-    attr.data-testid="close-copy-transformation-dialog"
+    data-testid="close-copy-transformation-dialog"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -132,7 +132,7 @@
     </button>
   }
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     color="primary"
     mat-raised-button
     attr.data-testid="{{
@@ -144,7 +144,7 @@
   <button
     mat-raised-button
     color="primary"
-    (click)="onOk()"
+    (click)="_onOk()"
     [disabled]="isAllDataPropertiesDisabled()"
     attr.data-testid="{{
       data.actionOk + '-copy-transformation-dialog' | lowercase

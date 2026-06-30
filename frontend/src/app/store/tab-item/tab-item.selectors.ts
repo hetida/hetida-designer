@@ -1,6 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { ITabItemState, tabItemEntityAdapter } from './tab-item.state';
-import { TabItem } from '../../model/tab-item';
+import { TabItem, TabItemType } from '../../model/tab-item';
 import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
 import { Transformation } from '../../model/transformation';
 
@@ -27,7 +27,7 @@ export const selectOrderedTabItemsWithTransformation = createSelector(
     orderedTabItems.map((tabItem): TabItemWithTransformation => {
       const transformation = transformations[tabItem.transformationId];
       if (!transformation) {
-        throw Error(
+        throw new Error(
           'Inconsistent state: Found a tab item whose transformation is not in store.'
         );
       }
@@ -47,8 +47,21 @@ export const selectActiveTabItem = createSelector(
   selectActiveTabItemId,
   selectTabItemState,
   (activeTabItemId, tabItemState): TabItem | null => {
-    return activeTabItemId === null
-      ? null
-      : selectEntities(tabItemState)[activeTabItemId];
+    if (activeTabItemId === null || activeTabItemId === 'HOME') {
+      return {
+        id: 'HOME',
+        transformationId: null,
+        tabItemType: TabItemType.HOME
+      };
+    } else if (activeTabItemId === 'SCHEDULING') {
+      return {
+        id: 'SCHEDULING',
+        transformationId: null,
+        tabItemType: TabItemType.SCHEDULING
+      };
+    } else {
+      const s = selectEntities(tabItemState)[activeTabItemId];
+      return s;
+    }
   }
 );

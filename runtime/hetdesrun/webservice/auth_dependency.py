@@ -9,7 +9,12 @@ from starlette.status import HTTP_403_FORBIDDEN
 
 from hetdesrun.webservice.auth import AuthentificationError, BearerVerifier
 from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_manager
-from hetdesrun.webservice.config import ExternalAuthMode, InternalAuthMode, get_config
+from hetdesrun.webservice.config import (
+    ExternalAuthMode,
+    InternalAuthMode,
+    SchedulingInternalAuthMode,
+    get_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +62,9 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
     return {"Authorization": "Bearer " + token}
 
 
-async def get_auth_headers(external: bool = False) -> dict[str, str]:
+async def get_auth_headers(  # noqa: PLR0911
+    external: bool = False, scheduling_internal: bool = False
+) -> dict[str, str]:
     """Auth header dict depending on outgoing request being external/internal
 
     Obtains auth headers for making an outgoing web request depending on
@@ -71,11 +78,21 @@ async def get_auth_headers(external: bool = False) -> dict[str, str]:
     Params:
         external: Whether the intended request is external (e.g to adapters or for
             export import), or internal (e.g. from backend to runtime)
+        scheduling_internal: For internal requests (execution on runtime) triggered by
+            a scheduled job. Here typically the fixed client credential grant is used
+            if auth is active.
 
     Raises:
         hetdesrun.webservice.auth_outgoing.ServiceAuthenticationError - if obtaining
             valid access tokens from auth provider fails somehow.
+        ValueError: If called with invalid or contradictory config / parameters
     """
+
+    if external and scheduling_internal:  # pragma: no cover
+        raise ValueError(
+            "Exactly one of external or scheduling internal auth headers can be requested,"
+            " not both. "
+        )
 
     if external:
         external_mode = get_config().external_auth_mode
@@ -95,6 +112,19 @@ async def get_auth_headers(external: bool = False) -> dict[str, str]:
         msg = f"Unknown config option for external_auth_mode: {external_mode}"
         logger.error(msg)
         raise ValueError(msg)
+
+    if scheduling_internal:
+        scheduling_internal_mode = get_config().scheduling_internal_auth_mode
+        if scheduling_internal_mode == SchedulingInternalAuthMode.OFF:
+            return {}
+        if scheduling_internal_mode == SchedulingInternalAuthMode.CLIENT:
+            service_credentials = get_config().scheduling_internal_auth_client_credentials
+            assert service_credentials is not None  # for mypy # noqa: S101
+            access_token_manager = create_or_get_named_access_token_manager(
+                "outgoing_scheduling_internal_auth", service_credentials
+            )
+            access_token = await access_token_manager.get_access_token()
+            return {"Authorization": "Bearer " + access_token}
 
     # internal
 

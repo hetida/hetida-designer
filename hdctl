@@ -159,6 +159,7 @@ from types import NoneType, UnionType
 from typing import Annotated, Any, Literal, TypedDict
 from uuid import UUID
 
+from hdhelpers.helpers import modify_timezone # noqa F401
 import numpy as np
 import pandas as pd
 import pytz
@@ -176,6 +177,7 @@ from pydantic import (
     WrapValidator,
     create_model,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +228,16 @@ class InsufficientPlottingData(ComponentException):
     designer are integrated in other frontends. This allows the frontend to
     handle the case of e.g. no data to show in a sensible way, surpressing an
     empty plot and showing an adequate message instead.
+    """
+
+
+class IntentionallyAbortedExecution(ComponentException):
+    """Execution of this component or workflow is intentionally aborted
+
+    Often execution of a workflow should stop if a certain condition is not
+    fulfilled. This can of course be done by raising an exception. To communicate
+    this intention to 3rd party systems and make it clear that this is not an actual error
+    situation it is recommended to use this exception.
     """
 
 
@@ -975,51 +987,6 @@ def plotly_fig_to_json_dict(
     return fig_dict_obj
 
 
-def modify_timezone(
-    object_to_convert: pd.Series | pd.DataFrame, to_timezone: str, column_name: str | None = None
-) -> pd.Series | pd.DataFrame:
-    """Modifies timestamps to a certain timezone
-
-    Keyword arguments:
-    object_to_convert -- pd.Series or pd.DataFrame where timezone in index or column is modified
-    to_timezone -- timezone into convert, e.g. for German time use Europe/Berlin. See possible timezone strings in pandas tz_convert method or pytz all_timezones list.
-    column_name -- column_name to apply, default is index as pd.Series have timestamps in index
-    """
-    if not isinstance(object_to_convert, pd.Series | pd.DataFrame):
-        raise TypeError(
-            f"object_to_convert is {type(object_to_convert)} not pd.Series | pd.DataFrame"
-        )
-
-    try:
-        if isinstance(object_to_convert, pd.Series):
-            new_object = object_to_convert.to_frame(name=object_to_convert.name)
-        else:
-            new_object = object_to_convert.copy(deep=True)
-
-        if column_name is None:
-            new_object.index = new_object.index.tz_convert(to_timezone)
-        else:
-            new_object[column_name] = new_object[column_name].dt.tz_convert(to_timezone)
-
-        if isinstance(object_to_convert, pd.Series):
-            new_object = pd.Series(
-                new_object[object_to_convert.name],
-                index=new_object.index,
-                name=object_to_convert.name,
-            )
-
-        return new_object
-
-    except pytz.exceptions.UnknownTimeZoneError as e:
-        possible_timezone = pytz.all_timezones
-        raise ValueError(f"""Timezone not known, please choose from {possible_timezone}""") from e
-    except (TypeError, AttributeError) as exc:
-        raise TypeError("Entries to convert do not contain valid timestamps") from exc
-
-    except KeyError as exc:
-        exc.add_note(f"Column name {column_name} not in object_to_convert")
-        raise
-
 
 def extract_sub_value(data: dict[str, Any], json_path: list[str]) -> Any | None:
     """Extract a sub value of a nested dict structure
@@ -1488,7 +1455,24 @@ usage() {
     echo "      $0 purge"
     echo "      $0 deploy_base_trafos"
     echo "      $0 autoimport"
-    echo
+    echo ""
+    echo "    Execution examples:"
+    echo ""
+    echo "        ./hdctl delete_drafts -i hd-docker-compose -m test123"
+    echo ""
+    echo "    This applies the delete_drafts command and defining instance file"
+    echo "    and maintenance secret."
+    echo ""
+    echo ""
+    echo "        ./hdctl delete_unused_deprecated -i hd-docker-compose -m test123"
+    echo "             -cutoff 2026-05-05 10:00:00Z"
+    echo "             -exclude uuid1 -exclude uud2"
+    echo ""
+    echo "    This applies the delete_unused_deprecated command defining instance file"
+    echo "    and maintenance secret and using the arguments cutoff_date and exclude."
+    echo "    For the documentation of the effect of these parameter please have a look"
+    echo "    at openapi.yaml/Swagger UI of the backend."
+    echo ""
 }
 
 help() {
@@ -1673,9 +1657,23 @@ delete_drafts() {
 #     "Unused" deprecated transformation revisions are those that are either not used in any workflow
 #     or only in workflows that themselves are deprecated (and hence will be deleted as well).
 
-#     This handles nesting, i.e. a deprecated trafo rev will not be deleted if it is used indirectly
-#     across multiple nesting levels in a workflow which is not deprecated.
+#     This handles nesting, i.e. a deprecated transformation revision will not be deleted if it is used
+#     indirectly across multiple nesting levels in a workflow which is not deprecated.
+
+#     To avoid deleting certain transformation, use the exclude parameter by listing the uuids
+#     of these transformations, e.g., &exclude=[uuid1,uuid2,...]. By default all unused deprecated
+#     transformations are deleted.
+
+#     To avoid that recently deprecated transformations are deleted, use the parameter cutoff_date
+#     that enables deleting only transformations that have been disabled before the given date.
+#     the parameter must be a n iso-formatted date in UTC, e.g., ?cutoff_date="2026-01-01 00:00:00Z".
+#     By default all unused deprecated transformations are deleted.
+
+#     **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
+#     exporting / getting all transformation revisions before using this action!
 delete_unused_deprecated() {
+
+    # Global set up
     _setup "${@}"
     _ensure_maintenance_secret
     ensure_access_token
@@ -1684,12 +1682,25 @@ delete_unused_deprecated() {
     if [[ $VERIFY_BACKEND_API_URL = false ]]; then
         curl_args+=("--insecure")
     fi
-    curl "${curl_args[@]}" -X POST \
+
+    # function set up
+    _parse_delete_unused_deprecated_args "${@}"
+    _build_body_delete_unused_deprecated_args
+
+    # excecute CURL-command
+    local cmd=(
+        curl \
+        "${curl_args[@]}" \
+        -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+        -d "$BODY" \
         "$HD_BACKEND_API_URL/maintenance/delete_unused_deprecated$QUERY_URL_APPEND" \
         "${REMAINING_ARGS[@]}"
+    )
+
+    "${cmd[@]}" # printf '%q ' "${cmd[@]}" for dry-run
+
 }
 
 # Purge and reinstall base components/workflows
@@ -2372,6 +2383,57 @@ _setup() {
     _validate_global_parameters
 }
 
+_parse_delete_unused_deprecated_args() {
+
+    CUTOFF_DATE=""
+    EXCLUDE_UUIDS=()
+
+    set -- "${REMAINING_ARGS[@]}"
+
+    REMAINING_ARGS=()
+    while [[ "$#" -gt 0 ]];
+        do case "$1" in
+            -exclude)
+                EXCLUDE_UUIDS+=("$2")
+                shift 2
+                ;;
+            -cutoff)
+                CUTOFF_DATE="$2"
+                shift 2
+                ;;
+            *)
+            REMAINING_ARGS+=("$1")
+            shift
+        ;;
+        esac
+    done
+    REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}")
+}
+
+_build_body_delete_unused_deprecated_args() {
+
+    BODY='{
+        "maintenance_payload": {
+            "maintenance_secret": "'"$MAINTENANCE_SECRET"'"
+    }'
+
+    if [[ -n "$CUTOFF_DATE" ]]; then
+        BODY+=',
+    "cutoff_date": "'"$CUTOFF_DATE"'"'
+    fi
+
+    if ((${#EXCLUDE_UUIDS[@]})); then
+        BODY+=',
+        "exclude": ['
+        for i in "${!EXCLUDE_UUIDS[@]}"; do
+            [[ $i -gt 0 ]] && BODY+=","
+            BODY+="\"${EXCLUDE_UUIDS[$i]}\""
+        done
+        BODY+=']'
+    fi
+
+    BODY+="}"
+}
 ###############################################################################
 #                                                                             #
 #                             Subcommand Execution                            #

@@ -7,7 +7,7 @@ test('Send a default_value via adapter for the free_text filter to initialise, i
   // Arrange
   const componentCategory = 'Visualization';
   const componentName = 'Single Timeseries Plot';
-  const componentTag = '1.0.0';
+  const componentTag = '1.0.1';
   const componentInputName = 'series';
   const adapter = 'Python-Demo-Adapter';
   const source = 'Influx Temperature';
@@ -16,7 +16,9 @@ test('Send a default_value via adapter for the free_text filter to initialise, i
   // Act
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.doubleClickItemInNavigation(`${componentName}(${componentTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${componentName}(${componentTag})`
+  );
 
   // Configure Execute
   await hetidaDesigner.clickIconInToolbar('Execute');

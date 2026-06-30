@@ -9,7 +9,8 @@ import { setExecutionProtocol } from 'src/app/store/execution-protocol/execution
 import {
   removeTabItem,
   setActiveTabItem,
-  unsetActiveTabItem
+  setSchedulingTab,
+  setHomeTab
 } from 'src/app/store/tab-item/tab-item.actions';
 import { TransformationType } from '../../enums/transformation-type';
 import { TabItem, TabItemType } from '../../model/tab-item';
@@ -26,6 +27,7 @@ import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 const HOME_TAB = 0;
+const SCHEDULING_TAB = 1;
 
 const getTabItemHash = (
   tabItemWithTransformation: TabItemWithTransformation
@@ -35,7 +37,7 @@ const getTabItemHash = (
 
 interface ContentViewStoreState {
   orderedTabItemsWithTransformation: TabItemWithTransformation[];
-  activeTabItem: TabItem;
+  activeTabItem: TabItem | null;
 }
 
 // This selector is not generally re-usable but use case
@@ -64,7 +66,7 @@ export class ContentViewComponent implements OnInit {
 
   // Component State
   public _selectedTabIndex = 0;
-
+  private isChangingTab = false;
   // ngrx State
   public _tabItems: TabItemWithTransformation[] = [];
 
@@ -81,23 +83,34 @@ export class ContentViewComponent implements OnInit {
     private readonly notificationService: NotificationService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.store
       .select(selectContentViewStoreState)
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe(({ orderedTabItemsWithTransformation, activeTabItem }) => {
         this._tabItems = orderedTabItemsWithTransformation;
 
-        const selectedTabItemIndex =
+        let selectedTabItemIndex = 0;
+
+        if (
           activeTabItem === null ||
-          orderedTabItemsWithTransformation.length === 0
-            ? HOME_TAB
-            : orderedTabItemsWithTransformation.findIndex(
-                tabItem =>
-                  tabItem.transformation.id ===
-                    activeTabItem.transformationId &&
-                  tabItem.tabItemType === activeTabItem.tabItemType
-              ) + 1;
+          activeTabItem.tabItemType === TabItemType.HOME
+        ) {
+          selectedTabItemIndex = 0;
+        } else if (activeTabItem.tabItemType === TabItemType.SCHEDULING) {
+          selectedTabItemIndex = 1;
+        } else {
+          selectedTabItemIndex =
+            activeTabItem === null ||
+            orderedTabItemsWithTransformation.length === 0
+              ? HOME_TAB
+              : orderedTabItemsWithTransformation.findIndex(
+                  tabItem =>
+                    tabItem.transformation.id ===
+                      activeTabItem.transformationId &&
+                    tabItem.tabItemType === activeTabItem.tabItemType
+                ) + 2;
+        }
 
         // We may only set the selected tab index once the corresponding
         // material tab component has been rendered. Otherwise the material
@@ -120,17 +133,24 @@ export class ContentViewComponent implements OnInit {
   }
 
   _onTabChange(event: MatTabChangeEvent) {
+    if (this.isChangingTab) {
+      return;
+    }
+    this.isChangingTab = true;
     if (event.index === HOME_TAB) {
-      this.store.dispatch(unsetActiveTabItem());
+      this.store.dispatch(setHomeTab());
+    } else if (event.index === SCHEDULING_TAB) {
+      this.store.dispatch(setSchedulingTab());
     } else {
       if (this._selectedTabIndex !== event.index) {
         this.store.dispatch(
-          setActiveTabItem(getTabItemHash(this._tabItems[event.index - 1]))
+          setActiveTabItem(getTabItemHash(this._tabItems[event.index - 2]))
         );
       }
     }
     this._closePopover();
     this.store.dispatch(setExecutionProtocol());
+    setTimeout(() => (this.isChangingTab = false));
   }
 
   _isDocumentation(tabItem: TabItemWithTransformation): boolean {

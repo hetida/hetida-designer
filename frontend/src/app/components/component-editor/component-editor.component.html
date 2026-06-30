@@ -1,19 +1,28 @@
 <div class="h-100 overflow-hidden position-relative">
-  <div
-    class="save-indicator"
-    *ngIf="showIndicator"
-    [ngClass]="{
-      saved: saveStatus === 'saved',
-      unsaved: saveStatus === 'unsaved',
-      saving: saveStatus === 'saving'
-    }"
-    [style.right.px]="minimapWidth"
-  >
-    <span *ngIf="saveStatus === 'saved'">✓ Saved</span>
-    <span *ngIf="saveStatus === 'unsaved'">● Unsaved changes</span>
-    <span *ngIf="saveStatus === 'saving'">⟳ Saving...</span>
-  </div>
-
+  @if (showIndicator) {
+    <div
+      class="save-indicator"
+      [ngClass]="{
+        saved: saveStatus === 'saved',
+        unsaved: saveStatus === 'unsaved',
+        saving: saveStatus === 'saving'
+      }"
+      [style.right.px]="minimapWidth"
+    >
+      @switch (saveStatus) {
+        @case ('saved') {
+          <span>✓ Saved</span>
+        }
+        @case ('unsaved') {
+          <span>● Unsaved changes</span>
+        }
+        @case ('saving') {
+          <span>⟳ Saving...</span>
+        }
+        @default {}
+      }
+    </div>
+  }
   <ngx-monaco-editor
     #monacoEditor
     [options]="editorOptions"

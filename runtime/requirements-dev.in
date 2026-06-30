@@ -11,9 +11,9 @@ pytest-asyncio
 pytest-cov
 pytest-random-order
 pytest-xdist
-rope
 ruff
 structlog
 types-pytz
 types-requests
 watchfiles
+zensical

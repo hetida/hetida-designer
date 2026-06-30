@@ -4,12 +4,14 @@ test('Open "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
-  const workflowTag = '1.0.0';
+  const workflowTag = '1.0.1';
 
   // Act
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
-  await hetidaDesigner.doubleClickItemInNavigation(`${workflowName}(${workflowTag})`);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${workflowName}(${workflowTag})`
+  );
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
@@ -23,7 +25,7 @@ test('Open "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Check for equal substrings in dialog-title and opened tab
   const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
   const workflowTabName = await page
-    .locator('div[role="tab"] >> nth=1')
+    .locator('div[role="tab"] >> nth=2')
     .locator('.text-ellipsis')
     .innerText();
   await expect(dialogTitle).toContainText(`${workflowTabName}`);

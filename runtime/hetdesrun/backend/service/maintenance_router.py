@@ -1,9 +1,11 @@
 import logging
 import secrets
 from collections.abc import Callable
+from typing import Annotated, Any
+from uuid import UUID
 
-from fastapi import HTTPException, Query, Response, status
-from pydantic import BaseModel, Field, SecretStr
+from fastapi import Body, HTTPException, Query, Response, status
+from pydantic import AwareDatetime, BaseModel, Field, SecretStr
 
 from hetdesrun.exportimport.importing import import_importables, import_transformations_from_dir
 from hetdesrun.exportimport.purge import (
@@ -47,6 +49,7 @@ def handle_maintenance_operation_request(
     secret_str: SecretStr,
     func: Callable[..., None],
     response: Response,
+    **kwargs: Any,
 ) -> MaintenanceActionResult:
     """Handle maintenance request
 
@@ -56,9 +59,7 @@ def handle_maintenance_operation_request(
 
     configured_maintenance_secret = get_config().maintenance_secret
 
-    assert configured_maintenance_secret is not None  # for mypy # noqa: S101
-
-    if not secrets.compare_digest(
+    if configured_maintenance_secret is None or not secrets.compare_digest(
         secret_str.get_secret_value(),
         configured_maintenance_secret.get_secret_value(),
     ):
@@ -68,7 +69,7 @@ def handle_maintenance_operation_request(
             detail={"authorization_error": "maintenance secret check failed"},
         )
     try:
-        func(directly_in_db=True)
+        func(**kwargs)
     except Exception as exc:  # noqa: BLE001
         msg = f"Exception during maintenance operation {maintenance_operation_name}:\n" + str(exc)
         logger.error(msg)
@@ -97,6 +98,7 @@ async def maintenance_reset_test_wiring_to_release_wiring(
         maintenance_payload.maintenance_secret,
         reset_test_wiring_to_release_wiring,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -123,6 +125,7 @@ async def maintenance_deprecate_all_but_latest_per_group(
         maintenance_payload.maintenance_secret,
         deprecate_all_but_latest_per_group,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -144,6 +147,7 @@ async def maintenance_delete_drafts(
         maintenance_payload.maintenance_secret,
         delete_drafts,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -153,24 +157,42 @@ async def maintenance_delete_drafts(
     summary="delete all unused deprecated transformation revisions",
 )
 async def maintenance_delete_unused_deprecated(
-    maintenance_payload: MaintenancePayload, response: Response
+    maintenance_payload: MaintenancePayload,
+    response: Response,
+    exclude: Annotated[list[UUID] | None, Body()] = None,
+    cutoff_date: Annotated[AwareDatetime | None, Body()] = None,
 ) -> MaintenanceActionResult:
     """Delete all unused deprecated transformation revisions
 
-    "Unused" deprecated transformation revisions are those that are either not used in any workflow
-    or only in workflows that themselves are deprecated (and hence will be deleted as well).
+    'Unused' deprecated transformation revisions are those that are either not used in any workflow
+    or are used only in workflows that are themselves deprecated (and therefore will be deleted as
+    well).
 
-    This handles nesting, i.e. a deprecated trafo rev will not be deleted if it is used indirectly
-    across multiple nesting levels in a workflow which is not deprecated.
+    This handles nesting, i.e., a deprecated transformation revision will not be deleted if it is
+    used indirectly across multiple nesting levels in a workflow which is not deprecated.
 
-    **Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.
-    exporting / getting all transformation revisions before using this action!
+    To prevent certain transformations from being deleted, use the exclude body-parameter and
+    provide a list of transformation UUIDs, for example: "exclude":["uuid1","uuid2",...].
+    By default, all unused deprecated transformations are deleted.
+
+    To prevent recently deprecated transformations from being deleted, use the cutoff_date
+    body-parameter. This parameter restricts deletion to transformations that were disabled after
+    the specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:
+    "cutoff_date":"2026-01-01T00:00:00Z". By default, all unused deprecated transformations are
+    deleted.
+
+    **Warning**: This action permanently deletes transformation revisions. We recommend creating
+    a backup (for example, by exporting all transformation revisions) before using this action.
     """
+
     return handle_maintenance_operation_request(
         "delete_unused_deprecated",
         maintenance_payload.maintenance_secret,
         delete_unused_deprecated,
         response=response,
+        directly_in_db=True,
+        exclude=exclude,
+        cutoff_date=cutoff_date,
     )
 
 
@@ -196,6 +218,7 @@ async def maintenance_purge(
         maintenance_payload.maintenance_secret,
         delete_all_and_refill,
         response=response,
+        directly_in_db=True,
     )
 
 
@@ -257,10 +280,11 @@ async def deploy_base_trafos(
         maintenance_payload.maintenance_secret,
         handle_base_deployment,
         response=response,
+        directly_in_db=True,
     )
 
 
-def autoimport(directly_in_db: bool = True) -> None:  # noqa: ARG001
+def autoimport() -> None:
     autoimport_dir = get_config().autoimport_directory
     logger.info("Trying autoimport from %s", autoimport_dir)
 
@@ -269,7 +293,7 @@ def autoimport(directly_in_db: bool = True) -> None:  # noqa: ARG001
 
 
 @maintenance_router.post(
-    "/trigger_automimport",
+    "/trigger_autoimport",
     response_model=MaintenanceActionResult,
     summary="Trigger autoimport",
 )
@@ -284,7 +308,7 @@ async def trigger_autoimport(
     configured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.
     """
     return handle_maintenance_operation_request(
-        "trigger_automimport",
+        "trigger_autoimport",
         maintenance_payload.maintenance_secret,
         autoimport,
         response=response,

@@ -66,3 +66,4 @@ log_data = {
     "port": port,
 }
 print(json.dumps(log_data))
+print("WARNING: Gunicorn mode is deprecated and will be removed in a future version")

@@ -30,11 +30,11 @@ export class ConfirmDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData
   ) {}
 
-  onCancel(): void {
+  _onCancel(): void {
     this.dialogRef.close({ confirmed: false });
   }
 
-  onOk(): void {
+  _onOk(): void {
     const result: ConfirmDialogResult = {
       confirmed: true
     };
