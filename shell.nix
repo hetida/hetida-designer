@@ -221,7 +221,7 @@ let
     source ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
     cd ${pythonDemoAdapterDir}
 
-    PORT=8092 python ./main.py
+    HOST=127.0.0.1 PORT=8092 python ./main.py
   '';
 
   start-runtime = writeShellScriptBin "start-hd-runtime" ''
@@ -257,6 +257,8 @@ let
     export HETIDA_DESIGNER_SCHEDULING_ACTIVE=true
     export DEVELOPMENT_MODE=true # activate uvicorn reload
     export HD_MAINTENANCE_SECRET="maintenance"
+    export HETIDA_DESIGNER_SCHEDULING_RETENTION_JOB_TRIGGER_INTERVAL_SECONDS=30 # for testing
+    export HETIDA_DESIGNER_SCHEDULING_RETENTION_TIMEDELTA=PT5M # 5 minutes for testing
     export MODEL_REPO_PATH="$(mktemp -d)"
     echo "WAIT FOR POSTGRES DB"
     sleep 5 # wait for stopping possibly existing postgres instances before trying
@@ -271,7 +273,7 @@ let
     python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence.db_engine_and_session import get_db_engine; create_database(get_db_engine().url);"
 
     echo "STARTING RUNTIME"
-    PORT=8080 \
+    HOST=127.0.0.1 PORT=8080 \
     LOG_LEVEL=DEBUG \
     HD_USE_AUTH=false \
     HD_KAFKA_CONFIGS='
@@ -299,7 +301,6 @@ let
         }
     }
     ' python main.py
-    PORT=8080 python ./main.py
   '';
 
   start-frontend = writeShellScriptBin "start-hd-frontend" ''

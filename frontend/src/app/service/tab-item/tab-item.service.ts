@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { IAppState } from '../../store/app.state';
 import {
   addTabItem,
+  setHomeTab,
   unsetActiveTabItem
 } from '../../store/tab-item/tab-item.actions';
 import { LocalStorageService } from '../local-storage/local-storage.service';
@@ -33,7 +34,7 @@ export class TabItemService {
   addDocumentationTab(
     transformationId: string,
     initialDocumentationEditMode: boolean
-  ) {
+  ): void {
     this.addTabItem({
       transformationId,
       tabItemType: TabItemType.DOCUMENTATION,
@@ -41,8 +42,9 @@ export class TabItemService {
     });
   }
 
-  deselectActiveTabItem() {
+  deselectActiveTabItem(): void {
     this.store.dispatch(unsetActiveTabItem());
+    this.store.dispatch(setHomeTab());
   }
 
   createTransformationAndOpenInNewTab(transformation: Transformation): void {

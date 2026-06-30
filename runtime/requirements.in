@@ -3,6 +3,7 @@ SQLAlchemy-Utils
 aiokafka[snappy]
 aiomqtt
 alembic
+apscheduler
 asyncstdlib
 black
 boto3

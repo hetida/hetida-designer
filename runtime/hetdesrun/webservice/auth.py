@@ -16,8 +16,8 @@ class AuthentificationError(Exception):
 
 DEFAULT_OPTIONS = {
     "verify_signature": True,
-    "verify_aud": False,
-    "verify_iss": False,
+    "verify_aud": True,
+    "verify_iss": True,
     "require": ["exp"],
     # expiration will only be checked by jose if it is present,
     # so we require it
@@ -39,6 +39,7 @@ class FrontendAuthOptions(BaseModel):
 class BearerVerifierOptions(BaseModel):
     auth_url: str
     audience: str = Field("account")
+    issuer: str | None = Field(None)
 
     reload_public_key: bool = Field(True)
     public_key_reloading_minimum_age: datetime.timedelta = Field(datetime.timedelta(seconds=15))
@@ -71,7 +72,8 @@ class BearerVerifier:
     def from_verifier_options(
         cls,
         auth_url: str,
-        audience: str = "account",
+        audience: str | None = "account",
+        issuer: str | None = None,
         reload_public_key: bool = True,
         public_key_reloading_minimum_age: datetime.timedelta = datetime.timedelta(seconds=15),
         default_decoding_options: dict = DEFAULT_OPTIONS,
@@ -82,6 +84,7 @@ class BearerVerifier:
             BearerVerifierOptions(
                 auth_url=auth_url,
                 audience=audience,
+                issuer=issuer,
                 reload_public_key=reload_public_key,
                 public_key_reloading_minimum_age=public_key_reloading_minimum_age,
                 default_decoding_options=default_decoding_options,
@@ -109,10 +112,11 @@ class BearerVerifier:
                 access_token,
                 key=self._public_key_data,
                 audience=self.verifier_options.audience,
+                issuer=self.verifier_options.issuer,
                 options=options,
             )
         except JOSEError as e:  # this is the base exception class of jose
-            logger.info("Failing to verify Bearer Token: %s\nError: %s", access_token, str(e))
+            logger.info("Failing to verify Bearer Token:\nError: %s", str(e))
             if not force_loading_keys:
                 logger.info("Trying to load current public key")
                 if self.verifier_options.reload_public_key and self.is_key_old():

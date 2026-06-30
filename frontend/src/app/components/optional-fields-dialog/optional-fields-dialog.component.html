@@ -1,6 +1,6 @@
 <div mat-dialog-title>
   <h4 class="m-0">Expose Inputs with Default value for ({{ workflowName }})</h4>
-  <button (click)="onCancel()" mat-icon-button>
+  <button (click)="_onCancel()" mat-icon-button>
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -22,11 +22,11 @@
 </div>
 
 <div mat-dialog-actions>
-  <button (click)="onCancel()" mat-raised-button color="primary">
+  <button (click)="_onCancel()" mat-raised-button color="primary">
     {{ data.actionCancel }}
   </button>
   <button
-    (click)="onOk()"
+    (click)="_onOk()"
     mat-raised-button
     color="primary"
     [disabled]="!valid"

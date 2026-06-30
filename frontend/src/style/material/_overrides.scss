@@ -1,5 +1,3 @@
-@use '../colors';
-
 .mat-mdc-tab-body-content {
   overflow: hidden !important;
 }
@@ -104,7 +102,11 @@ hd-copy-transformation-dialog {
     flex-grow: 0 !important;
 
     &[aria-posinset='1'] {
-      min-width: 80px;
+      min-width: 60px;
+    }
+
+    &[aria-posinset='2'] {
+      min-width: 60px;
     }
 
     .mdc-tab__content {
@@ -228,5 +230,20 @@ hd-copy-transformation-dialog {
     font-family: 'Roboto';
     font-size: 14px;
     font-weight: 500;
+  }
+
+  .mat-mdc-table {
+    width: 100%;
+
+    th.mat-mdc-header-cell {
+      font-size: 1rem;
+      font-weight: var(--font-weight-strong);
+      white-space: nowrap;
+    }
+
+    td.mat-mdc-cell {
+      padding: 8px 16px;
+      vertical-align: middle;
+    }
   }
 }

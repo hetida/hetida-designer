@@ -36,7 +36,7 @@ _true_equiv="@(|true|yes|y|ok|on|1)"
 _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
 echo "HD_IS_BACKEND_SERVICE=$HD_IS_BACKEND_SERVICE"
 if [[ "$_is_backend_service" == $_true_equiv ]]; then
-    retry 10 5 "alembic migrations" alembic upgrade head
+    retry 10 5 "alembic migrations" alembic upgrade "${HD_TARGET_ALEMBIC_REVISION:-head}"
 
     # Run autodeployment if autodeployment is wanted
     _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}"        # to lower case

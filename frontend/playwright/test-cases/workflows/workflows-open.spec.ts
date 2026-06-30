@@ -23,7 +23,7 @@ test('Open workflow on double-click', async ({ page, hetidaDesigner }) => {
     .locator('.text-ellipsis')
     .innerText();
   const workflowTabName = await page
-    .locator('div[role="tab"] >> nth=1')
+    .locator('div[role="tab"] >> nth=2')
     .locator('.text-ellipsis')
     .innerText();
   expect(workflowListName).toEqual(workflowTabName);

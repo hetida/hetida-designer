@@ -304,4 +304,12 @@
   .mat-mdc-dialog-actions {
     border-color: grey !important;
   }
+
+  .mat-mdc-table {
+    & .schedule-table {
+      tr.mat-mdc-row:hover {
+        background-color: rgba(colors.$hd-yellow, 0.33);
+      }
+    }
+  }
 }

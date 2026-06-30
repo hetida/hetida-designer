@@ -1,9 +1,11 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import NamedTuple
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -16,6 +18,14 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
+
+
+class ScheduledJobState(StrEnum):
+    STARTED = "STARTED"
+    INVOCATION_ERROR = "INVOCATION_ERROR"
+    EXECUTION_ERROR = "EXECUTION_ERROR"
+    SKIPPED = "SKIPPED"
+    SUCCESS = "SUCCESS"
 
 
 class Base(DeclarativeBase):
@@ -136,3 +146,50 @@ class Descendant(NamedTuple):
     depth: int
     transformation_id: UUID
     operator_id: UUID
+
+
+class ScheduleDBModel(Base):
+    __tablename__ = "schedules"
+    id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), primary_key=True, default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    cron_expression: Mapped[str] = mapped_column(String, nullable=False)
+    transformation_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), nullable=True, default=uuid4
+    )
+    wiring: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
+    )
+
+
+class ScheduleExecutionDBModel(Base):
+    __tablename__ = "schedule_executions"
+    id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), primary_key=True, default=uuid4
+    )
+    schedule_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), nullable=False
+    )
+    last_state_update: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    transformation_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), nullable=False
+    )  # trafo may change in the schedule! This is the actual trafo used for this execution
+    transformation_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    transformation_version_tag: Mapped[str | None] = mapped_column(String, nullable=True)
+    transformation_state: Mapped[State | None] = mapped_column(Enum(State), nullable=True)
+    transformation_type: Mapped[Type | None] = mapped_column(Enum(Type), nullable=True)
+    state: Mapped[ScheduledJobState] = mapped_column(Enum(ScheduledJobState), nullable=False)
+    trafo_exec_job_id: Mapped[UUIDType] = mapped_column(  # noqa: A003
+        UUIDType(binary=False), nullable=False
+    )
+    exec_input: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
+    )
+    exec_result: Mapped[dict | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True, default=lambda: None
+    )
+    error_message: Mapped[str | None] = mapped_column(String, nullable=True)

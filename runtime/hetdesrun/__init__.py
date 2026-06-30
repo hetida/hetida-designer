@@ -21,7 +21,7 @@ migrations_invoked_from_py = False
 
 try:
     with open("VERSION", encoding="utf8") as version_file:
-        VERSION = version_file.read().strip()
+        VERSION = version_file.read().strip()  # pragma: no cover
 except FileNotFoundError:
     VERSION = "dev snapshot"
 
@@ -155,7 +155,7 @@ def setup_third_party_loggers(
             configure_logging(third_party_logger, log_job_id_context=log_job_id_context)
 
 
-if get_config().log_httpx:
+if get_config().log_httpx:  # pragma: no cover
     setup_third_party_loggers(["httpx", "httpcore"], configure=True, log_job_id_context=True)
 
 # Always strip handlers from uvicorn loggers as they are enabled by default

@@ -70,11 +70,11 @@ export class CopyTransformationDialogComponent implements OnInit {
       });
   }
 
-  public onCancel(): void {
+  public _onCancel(): void {
     this.dialogRef.close();
   }
 
-  public onOk(): void {
+  public _onOk(): void {
     this.infoForm.markAllAsTouched();
     if (this.infoForm.invalid) {
       return;

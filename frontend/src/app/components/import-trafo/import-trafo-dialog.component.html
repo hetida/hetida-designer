@@ -1,9 +1,9 @@
 <div class="d-flex content-space-between" mat-dialog-title>
-  <h2 class="m-0">Import Transformation(s)</h2>
+  <h1 class="m-0">Import Transformation(s)</h1>
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     mat-icon-button
-    attr.data-testid="close-import-trafo-dialog"
+    data-testid="close-import-trafo-dialog"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -21,27 +21,29 @@
   </mat-form-field>
   <div>
     <label>
-      <input type="checkbox" [(ngModel)]="updateCode" /> Update Code
+      <mat-checkbox [(ngModel)]="updateCode">Update Code</mat-checkbox>
     </label>
   </div>
   <div>
     <label>
-      <input type="checkbox" [(ngModel)]="expandCode" /> Expand Code
+      <mat-checkbox [(ngModel)]="expandCode">Expand Code</mat-checkbox>
     </label>
   </div>
   <div>
     <label>
-      <input type="checkbox" [(ngModel)]="overwriteReleased" /> Overwrite
+      <mat-checkbox [(ngModel)]="overwriteReleased">Overwrite</mat-checkbox>
       Released (DANGER!)
     </label>
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="closeDialog()">Cancel</button>
+  <button (click)="_closeDialog()" color="primary" mat-raised-button>
+    Cancel
+  </button>
   <button
-    mat-raised-button
-    color="primary"
     (click)="importTrafos()"
+    color="primary"
+    mat-raised-button
     [disabled]="!importText.trim()"
   >
     Import

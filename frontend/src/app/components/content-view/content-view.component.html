@@ -11,6 +11,12 @@
     </ng-template>
     <hd-home-tab (click)="_closePopover()"></hd-home-tab>
   </mat-tab>
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon>calendar_month</mat-icon>
+    </ng-template>
+    <hd-scheduling-tab (click)="_closePopover()"></hd-scheduling-tab>
+  </mat-tab>
   @for (tabItem of _tabItems; track $index) {
     <mat-tab #matTab>
       @if (_isDocumentation(tabItem)) {

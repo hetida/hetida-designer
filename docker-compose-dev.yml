@@ -32,11 +32,13 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
-      - MAX_WORKERS=1
+      - WEB_CONCURRENCY=1
       - LOG_LEVEL=DEBUG
       - LOG_HTTPX=true
       - HETIDA_DESIGNER_PURE_UVICORN=true
       - LOG_DIRECT_PROVISIONING_OUTPUTS=true
+      - HD_TARGET_ALEMBIC_REVISION=head
+        # e.g. 5cfafc3cf470 instead of head
 
     healthcheck:
       test: curl --fail http://hetida-designer-backend:8090/api/info || exit 1
@@ -65,7 +67,7 @@ services:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
-      MAX_WORKERS: 1
+      WEB_CONCURRENCY: 1
       LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
       HETIDA_DESIGNER_PURE_UVICORN: "true"

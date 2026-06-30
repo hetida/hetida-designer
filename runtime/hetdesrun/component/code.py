@@ -256,16 +256,16 @@ def generate_function_header(component: TransformationRevision, is_coroutine: bo
     function_header = function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
-        name='"' + component.name + '"',
-        description='"' + component.description + '"',
+        name=repr(component.name),
+        description=repr(component.description),
         description_too_long_noqa=(
             "  # noqa: E501" if description_too_long(component.description) else ""
         ),
-        category='"' + component.category + '"',
-        version_tag='"' + component.version_tag + '"',
-        id='"' + str(component.id) + '"',
-        revision_group_id='"' + str(component.revision_group_id) + '"',
-        state='"' + component.state + '"',
+        category=repr(component.category),
+        version_tag=repr(component.version_tag),
+        id=repr(str(component.id)),
+        revision_group_id=repr(str(component.revision_group_id)),
+        state=repr(str(component.state)),
         timestamp=timestamp_str,
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,

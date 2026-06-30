@@ -1,0 +1,175 @@
+<div class="scheduling-title d-flex">
+  <h1 class="m-0">Scheduling</h1>
+  <button
+    (click)="_addNewSchedule()"
+    mat-raised-button
+    color="primary"
+    data-testid="add-new-schedule-scheduling-tab"
+  >
+    <mat-icon>add</mat-icon>
+    Add New Schedule
+  </button>
+</div>
+
+<mat-divider></mat-divider>
+
+<div class="scheduling-content" #schedulingContent>
+  <div class="scheduling-header d-flex">
+    <h3 class="active_col border-bottom text-strong m-0">Active</h3>
+    <h3 class="name_col border-bottom text-strong m-0">Name</h3>
+    <h3 class="transformation_col border-bottom text-strong m-0">
+      Workflow / Component
+    </h3>
+    <h3 class="wiring_col border-bottom text-strong m-0">Wiring</h3>
+    <h3
+      class="cron_col border-bottom text-strong m-0"
+      title="Set when to run automatically. Format: minute hour day month weekday
+'0 9 * * 1' runs Mondays at 9am
+'*/15 * * * *' runs every 15 minutes"
+    >
+      Cron Expression
+    </h3>
+    <h3 class="actions_col border-bottom text-strong m-0">Actions</h3>
+  </div>
+
+  @for (schedule of schedules; track schedule.id) {
+    <div class="scheduling-row d-flex">
+      <!-- Active Cell -->
+      <div class="active_col">
+        <mat-slide-toggle
+          [(ngModel)]="schedule.active"
+          (change)="_onActiveToggleChange(schedule)"
+        >
+        </mat-slide-toggle>
+      </div>
+      <!-- Name Cell -->
+      <div
+        (click)="
+          !_isEditing(schedule.id, 'name') &&
+            _startEdit(schedule.id, 'name', schedule.name)
+        "
+        class="name_col text-ellipsis"
+        [class.editing]="_isEditing(schedule.id, 'name')"
+      >
+        @if (_isEditing(schedule.id, 'name')) {
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="_editValue"
+            (blur)="_saveEdit(schedule)"
+            (keydown)="_onKeyDown($event, schedule)"
+            class="cell-input"
+          />
+        } @else {
+          <span class="cell-content text-ellipsis">
+            {{ schedule.name }}
+          </span>
+        }
+      </div>
+      <!-- Transformation Cell -->
+      <div class="transformation_col text-ellipsis">
+        @if (schedule.transformation_id) {
+          <span
+            class="trafo-item"
+            (contextmenu)="
+              $event.preventDefault();
+              _openTransformationContextMenu(schedule, $event)
+            "
+            (click)="_openTrafoOfScheduleInTab(schedule)"
+          >
+            <mat-icon
+              [svgIcon]="
+                schedule.transformation_type === 'COMPONENT'
+                  ? 'icon-component'
+                  : 'icon-workflow'
+              "
+              [ngClass]="{
+                'mat-icon-svg-disabled':
+                  schedule.transformation_state === 'DISABLED',
+                'mat-icon-svg-draft': schedule.transformation_state === 'DRAFT',
+                'mat-icon-svg-released':
+                  schedule.transformation_state === 'RELEASED'
+              }"
+            ></mat-icon>
+            <span class="text-ellipsis">
+              {{ schedule.transformation_name }} ({{
+                schedule.transformation_version_tag
+              }})
+            </span>
+          </span>
+        } @else {
+          <span
+            (dragover)="_onDragOver($event)"
+            (drop)="_onDrop($event, schedule)"
+            class="drag-prompt"
+            >Drag a workflow / component here!</span
+          >
+        }
+      </div>
+      <!-- Wiring Cell -->
+      <div class="wiring_col">
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="!schedule.transformation_id"
+          (click)="_openWiringDialog(schedule)"
+        >
+          Edit Wiring
+        </button>
+      </div>
+      <!-- Cron Expression Cell -->
+      <div
+        class="cron_col"
+        (click)="
+          !_isEditing(schedule.id, 'cron_expression') &&
+            _startEdit(schedule.id, 'cron_expression', schedule.cron_expression)
+        "
+        [class.editing]="_isEditing(schedule.id, 'cron_expression')"
+      >
+        @if (!_isEditing(schedule.id, 'cron_expression')) {
+          <span class="cell-content">{{ schedule.cron_expression }}</span>
+          @if (!schedule.cron_expression_valid) {
+            <div class="cron-error">Invalid cron expression</div>
+          }
+        } @else {
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="_editValue"
+            (blur)="_saveEdit(schedule)"
+            (keydown)="_onKeyDown($event, schedule)"
+            class="cell-input"
+          />
+        }
+      </div>
+      <!-- Actions Cell -->
+      <div class="actions_col">
+        <button
+          mat-icon-button
+          title="Execute Now"
+          color="primary"
+          [disabled]="!schedule.transformation_id || !schedule.wiring"
+          (click)="_run(schedule)"
+        >
+          <mat-icon>play_circle_outline</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          title="View Executions"
+          color="primary"
+          (click)="_openExecutionsDialog(schedule)"
+        >
+          <mat-icon>history</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          title=" Delete"
+          color="primary"
+          (click)="_delete(schedule)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -54,7 +54,8 @@ describe('DocumentationEditorComponent', () => {
     const mockStore = TestBed.inject(MockStore);
     mockStore.overrideSelector(selectTransformationState, {
       ids: ['mockId0'],
-      entities: { mockId0: transformation }
+      entities: { mockId0: transformation },
+      loaded: true
     });
     fixture = TestBed.createComponent(DocumentationEditorComponent);
     component = fixture.componentInstance;

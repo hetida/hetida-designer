@@ -25,7 +25,7 @@ test('Open "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Check for equal substrings in dialog-title and opened tab
   const dialogTitle = page.locator('.mat-mdc-dialog-title h4');
   const workflowTabName = await page
-    .locator('div[role="tab"] >> nth=1')
+    .locator('div[role="tab"] >> nth=2')
     .locator('.text-ellipsis')
     .innerText();
   await expect(dialogTitle).toContainText(`${workflowTabName}`);

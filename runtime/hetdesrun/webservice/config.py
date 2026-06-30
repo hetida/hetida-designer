@@ -4,7 +4,15 @@ import re
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import Field, Json, RootModel, SecretStr, ValidationInfo, field_validator
+from pydantic import (
+    AliasChoices,
+    Field,
+    Json,
+    RootModel,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
+)
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
@@ -35,6 +43,13 @@ class InternalAuthMode(StrEnum):
     OFF = "OFF"
     CLIENT = "CLIENT"
     FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
+
+
+class SchedulingInternalAuthMode(StrEnum):
+    """Auth mode for scheduled execution requests to the runtime service"""
+
+    OFF = "OFF"
+    CLIENT = "CLIENT"
 
 
 class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
@@ -347,6 +362,18 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HD_AUTH_PUBLIC_KEY_URL",
     )
 
+    auth_audience: str | None = Field(
+        "account",
+        description="Expected audience in tokens.",
+        validation_alias=AliasChoices("HD_AUTH_AUDIENCE", "JWT_AUDIENCE"),
+    )
+
+    auth_issuer: str | None = Field(
+        None,
+        description="Expected issuer in tokens.",
+        validation_alias=AliasChoices("HD_AUTH_ISSUER", "JWT_ISSUER"),
+    )
+
     auth_verify_certs: bool = Field(True, validation_alias="HD_AUTH_VERIFY_CERTS")
 
     auth_role_key: str = Field(
@@ -420,6 +447,7 @@ class RuntimeConfig(BaseSettings):
         ),
         validation_alias="HD_INTERNAL_AUTH_MODE",
     )
+
     internal_auth_client_credentials: ServiceCredentials | Json[ServiceCredentials] | None = Field(
         None,
         description=(
@@ -438,6 +466,40 @@ class RuntimeConfig(BaseSettings):
         ],
         validation_alias="HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
+
+    scheduling_internal_auth_mode: SchedulingInternalAuthMode = Field(
+        SchedulingInternalAuthMode.OFF,
+        description=(
+            "How outgoing requests to internal services should be handled if part of a"
+            " scheduled execution."
+            " For example from backend to runtime if both are run as separate services."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(SchedulingInternalAuthMode)])
+        ),
+        validation_alias="HD_SCHEDULING_INTERNAL_AUTH_MODE",
+    )
+
+    scheduling_internal_auth_client_credentials: (
+        ServiceCredentials | Json[ServiceCredentials] | None
+    ) = Field(
+        None,
+        description=(
+            "Client credentials as json encoded string."
+            " For details confer the ServiceCredentials model class in the auth_outgoing.py"
+            " file."
+        ),
+        examples=[
+            (
+                '{"realm": "my-realm", "auth_url": "https://test.com", "audience": "account",'
+                ' "grant_credentials": {"grant_type": "client_credentials",'
+                ' "client_id": "my-scheduled-job-client",'
+                ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+                ' "post_kwargs": {}}'
+            )
+        ],
+        validation_alias="HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
+    )
+
     external_auth_mode: ExternalAuthMode = Field(
         ExternalAuthMode.FORWARD_OR_FIXED,
         description=(
@@ -665,6 +727,46 @@ class RuntimeConfig(BaseSettings):
         "hd-execution-response-topic",
         description="The topic to which the execution consumer send execution results",
         validation_alias="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
+    )
+
+    scheduling_active: bool = Field(
+        True,
+        description=(
+            "Whether scheduling is activated for this service. "
+            "Requires is_backend_service to be true!"
+        ),
+        validation_alias="HETIDA_DESIGNER_SCHEDULING_ACTIVE",
+    )
+
+    scheduling_sync_interval_seconds: int = Field(
+        30,
+        description=(
+            "The scheduler syncs active jobs periodically from the database."
+            "This defines the sync interval in seconds."
+        ),
+        validation_alias="HETIDA_DESIGNER_SCHEDULING_SYNC_INTERVAL_SECONDS",
+    )
+
+    scheduling_executions_retention_deletion_job_interval_seconds: int = Field(
+        300,
+        description="Time in seconds between two runs of the schedule executions"
+        " table cleanup r Retention job.",
+        alias="HETIDA_DESIGNER_SCHEDULING_RETENTION_JOB_TRIGGER_INTERVAL_SECONDS",
+    )
+
+    scheduling_executions_retention: datetime.timedelta = Field(
+        datetime.timedelta(days=2),
+        description="When the retention / cleanup job for schedule execution entries"
+        " is run, this determines which entries are deleted: Everything older than now"
+        " minus the specified timedelta. Accepts an ISO 8601 timedelta, see"
+        " https://en.wikipedia.org/wiki/ISO_8601#Durations. E.G. P14D for fourteen days.",
+        alias="HETIDA_DESIGNER_SCHEDULING_RETENTION_TIMEDELTA",
+    )
+
+    target_alembic_revision: str = Field(
+        "head",
+        description="alembic revision towards which migrations are run.",
+        alias="HD_TARGET_ALEMBIC_REVISION",
     )
 
     @field_validator("internal_auth_client_credentials")

@@ -1,7 +1,26 @@
-<h2 mat-dialog-title>{{ data.title }}</h2>
+<div class="d-flex content-space-between" mat-dialog-title>
+  <h4 class="m-0 d-flex align-items-center">
+    <span>{{ data.title }}</span>
+  </h4>
+  <button
+    (click)="_close()"
+    mat-icon-button
+    data-testid="close-text-result-dialog"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
 <mat-dialog-content>
   <p>{{ data.message }}</p>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="close()">Close</button>
+  <button
+    color="primary"
+    mat-raised-button
+    (click)="_close()"
+    data-testid="close-btn-text-result-dialog"
+  >
+    Close
+  </button>
 </mat-dialog-actions>

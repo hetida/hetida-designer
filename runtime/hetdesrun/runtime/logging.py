@@ -313,7 +313,12 @@ def logrecord_to_simplified_log_record(record: logging.LogRecord) -> SimplifiedL
     line_no = record.lineno
 
     # applies formatting args:
-    message = record.getMessage() if hasattr(record, "getMessage") else str(record.msg)
+    try:
+        message = record.getMessage() if hasattr(record, "getMessage") else str(record.msg)
+    except Exception:  # noqa: BLE001
+        # We need to handle log formatting errors from user code, e.g. component code
+        # like `logger.error("abc {}", 42)`
+        message = "******LOGGING ERROR: FAILED TO FORMAT LOG MESSAGE******"
 
     tr_id = (
         UUID(record.currently_executed_transformation_id)
