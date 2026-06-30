@@ -14,6 +14,7 @@ dtexp
 duckdb
 fastapi>=0.65.2
 fastparquet
+fpdf2
 gekko
 geojson
 geopandas
