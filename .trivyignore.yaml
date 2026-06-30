@@ -1,0 +1,8 @@
+vulnerabilities:
+  - id: CVE-2024-23342
+    statement: "python ecdsa is WONT-FIX upstream and is not relevant for this project (we only need signatures verification)."
+  - id: CVE-2025-69720
+    statement: "ncurses: we do not expose a TUI in any image."
+  - id: CVE-2026-40356
+    statement: "to this project unrelevant kerberos mechanism."
+    expires: "2026-09-01"
