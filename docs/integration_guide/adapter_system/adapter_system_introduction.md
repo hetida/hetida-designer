@@ -7,7 +7,6 @@ The adapter system allows to execute the exact same transformation on csv files 
 ![wiring-concept](../../diagrams/wiring-concept.excalidraw.svg)
 
 ## Why not in/egestion operators?
-
 Often graphical workflow tools have "Load table from Postgres" or "Write to csv file" data **in/egestion operators** that you pull into your analytical workflows. This couples analytics with data engineering in a way that makes it cumbersome and difficult to employ the same workflow in different contexts.
 
 At its worst it requires the user to manage several variants of their workflow, e.g. one with CSV-loading operators for development and one with database operators for production. If a workflow is reused over several facilities with different backing database systems one may furthermore need to handle even more variants.
@@ -17,22 +16,22 @@ Another disadvantage is that with such operators your workflow has side effects 
 **data goes in** :arrow_right: **analytics** :arrow_right: **results go out**.
 
 !!! note "Note"
-It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows. Workflows in hetida designer are meant to contain only analytics and not data in/egestion, but this is not enforced.
+    It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows. Workflows in hetida designer are meant to contain only analytics and not data in/egestion, but this is not enforced.
 
-So in contrast to these tools, through its adapter system, hetida designer _decouples_ in/egestion from analytics and also allows to browse data sources and sinks in the hetida designer user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
+
+So in contrast to these tools, through its adapter system, hetida designer *decouples* in/egestion from analytics and also allows to browse data sources and sinks in the hetida designer user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
 
 ## Goals
 
 The hetida designer adapter system has the following **main goals**:
 
-- :dart: **Integration**: Allow flexible integration of arbitrary data sources and sinks
+* :dart: **Integration**: Allow flexible integration of arbitrary data sources and sinks
 
-- :dart: **Decoupling**: Separate data engineering and in particular data in/egestion from analytics
+* :dart: **Decoupling**: Separate data engineering and in particular data in/egestion from analytics
 
-- :dart: **Discoverability**: Make it easy to browse, filter and find data sources and sinks in (possibly external) user interfaces
+* :dart: **Discoverability**: Make it easy to browse, filter and find data sources and sinks in (possibly external) user interfaces
 
 ## How It Works
-
 A workflow or component exposes an interface consisting of its dynamic inputs and outputs. This is what you configure in the IO dialog. Inputs and outputs have types like "DATAFRAME" or "SERIES" or "FLOAT" that correspond to the Pandas/Python types used internally.
 
 ![](../../assets/inps_outps_io_dialog.png)
@@ -45,21 +44,25 @@ A wiring contains references to **adapters** which actually do the job of ingest
 
 Adapters need to be [registered](./adapter_registration.md) by the hetida designer backend. The hetida designer backend [API](../api.md) then provides an endpoint `/api/adapters` that gives information about available adapters und how to reach them, in particular urls to their REST API. Frontends or external services can use this to request and search available sources and sinks from these [adapters' APIs](./adapter_rest_api_interface.md) and to create wirings from them.
 
+
 !!! example
-E.g., what hetida designer's own test execution dialog actually does is creating a wiring from user selection/input and using this to execute a workflow.
+    E.g., what hetida designer's own test execution dialog actually does is creating a wiring from user selection/input and using this to execute a workflow.
 
 During execution the hetida designer runtime fetches data from the wired adapter data sources for each input, then executes the workflow with that data and at the end sends output data to the wired data sinks.
 
 How it fetches and sends the actual data depends on the adapter. Generally there are two types of adapters:
 
-- **Generic Rest adapters**: They provide and receive data via HTTP / their Rest [API in a specified fashion](./adapter_rest_api_interface.md).
-- **General Custom adapters**: Arbitrary Python code is supplied to the hetida designer runtime via a Plugin system. E.g. to directly access a database. Their API is only used for searching and selecting data sources and sinks.
+* **Generic Rest adapters**: They provide and receive data via HTTP / their Rest [API in a specified fashion](./adapter_rest_api_interface.md).
+* **General Custom adapters**: Arbitrary Python code is supplied to the hetida designer runtime via a Plugin system. E.g. to directly access a database. Their API is only used for searching and selecting data sources and sinks.
+
 
 !!! info
-Some of the [builtin adapters](./builtin_adapters/), like the [component adapter](./builtin_adapters/component_adapter.md) or [virtual structure adapter](./builtin_adapters/virtual_structure_adapter.md) work differently.
+    Some of the [builtin adapters](./builtin_adapters/), like the [component adapter](./builtin_adapters/component_adapter.md) or [virtual structure adapter](./builtin_adapters/virtual_structure_adapter.md) work differently.
+
 
 ## Next Steps
 
-- Use some of the [builtin adapters](./builtin_adapters/)
-- Write a component for the [component adapter](./builtin_adapters/component_adapter.md) to quickly integrate a custom source or sink.
-- Write and deploy your completely own [custom adapter](./custom_adapters/)
+* Use some of the [builtin adapters](./builtin_adapters/)
+* Write a component for the [component adapter](./builtin_adapters/component_adapter.md) to quickly integrate a custom source or sink.
+* Write and deploy your completely own [custom adapter](./custom_adapters/)
+

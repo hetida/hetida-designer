@@ -1,17 +1,15 @@
 # SQL Adapter
-
 The built-in sql adapter allows to access data from and write data to arbitrary sql databases.
 
 More specifically, it enables
 
-- Reading tables / arbitrary queries from sql databases thereby retrieving results as dataframes
-- Writing dataframes to tables, either replacing the complete target table or appending to it. Tables are created in both cases if necessary.
-- Reading and writing timeseries data from sql databases (e.g. timescale db).
+* Reading tables / arbitrary queries from sql databases thereby retrieving results as dataframes
+* Writing dataframes to tables, either replacing the complete target table or appending to it. Tables are created in both cases if necessary.
+* Reading and writing timeseries data from sql databases (e.g. timescale db).
 
 Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../../../deployment_operation/managing_python_dependencies.md). Sqlite support as well as postgres support via [psycopg3](https://pypi.org/project/psycopg/) are preinstalled.
 
 ## Limitations
-
 Under the hood this adapter simply invokes Pandas' built-in [read_sql_table](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_table.html), [read_sql_query](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_query.html) and [to_sql](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html) methods. In particular access is sequential and configurability of some possibly relevant aspects like connection management is limited. Additionally, parsing of data types is handled by Pandas automatically and cannot be configured in detail.
 
 While providing robust, basic sql connectivity, the sql adapter can be regarded as a good starting point / template for development of more individual sql adapters fitting project specific needs.
@@ -39,12 +37,12 @@ connect to. For each database an internal key, a human-readable name and an sqla
 
 Furthermore, the tables to be used as sinks can be configured:
 
-- "append_tables" generate sinks that allow to append tabular data to them.
-- "replace_tables" replace the complete table with the provided dataframe on each write!
+* "append_tables" generate sinks that allow to append tabular data to them.
+* "replace_tables" replace the complete table with the provided dataframe on each write!
 
 Additionally, timeseries tables, which can be used as sources or sinks, can be configured.  
 They must be listed under "timeseries_tables" in the database configuration.  
-An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in which the timeseries table can be configured further.
+An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in which the timeseries table can be configured further.  
 
 Timeseries tables can be configured to allow deletion of rows. Refer to [Metadata field conventions](../../../user_guide/attached_metadata.md#metadata-conventions) for more information on configuring invalidation or deletion using metadata.
 
@@ -126,14 +124,13 @@ Here we give an example configuration for mounting and accessing two sqlite data
 ```
 
 **Hint**: It is not possible to configure a postgres schema in an sqlalchemy connection url directly. We recommend to add all relevant schemas to the db user's search_path. E.g. if in the example above the timeseries table ts_table is in schema "timeseries", you can add that schema to the user's search path besides "public" by running the following SQL (with a sufficiently privileged user):
-
 ```sql
 alter role hetida_designer_dbuser set search_path = timeseries, public
 ```
 
 ### Configuring the backend
 
-Additionally, the sql adapter itself needs to be [registered](./adapter_registration.md) in the designer backend. In the default docker-compose setup the sql adapter is already configured. It's part of the environment variable `HETIDA_DESIGNER_ADAPTERS` is:
+Additionally, the sql adapter itself needs to be [registered](../adapter_registration.md) in the designer backend. In the default docker-compose setup the sql adapter is already configured. It's part of the environment variable `HETIDA_DESIGNER_ADAPTERS` is:
 
 ```
 sql-adapter|SQL Adapter|http://localhost:8090/adapters/sql|http://localhost:8090/adapters/sql
@@ -153,8 +150,8 @@ If you have not changed anything else in your setup you may just leave this as i
       - HETIDA_DESIGNER_ADAPTERS="sql-adapter|SQL Adapter|http://localhost:8090/adapters/sql|http://localhost:8090/adapters/sql"
     ...
 ```
-
 to explicitly activate only the sql adapter and no other adapters.
+
 
 ## Usage
 
@@ -170,10 +167,10 @@ docker compose -f docker-compose-sql-example.yml up
 In the execution dialog, you should now be able to select "SQL Adapter" for inputs and outputs of type DATAFRAME.
 
 As sources, the selection dialog offers for each database
-
-- All available tables. Choosing one will load the complete unfiltered table!
-- A special "SQL Query" source which when selected allows to enter an arbitrary SQL query.
+* All available tables. Choosing one will load the complete unfiltered table!
+* A special "SQL Query" source which when selected allows to enter an arbitrary SQL query.
 
 As sinks, it offers only the explicitely configured append and replace tables for each configured database.
 
 Similarly, for MULTITSFRAMEs you should be able to use the sql adapter's provided sources and sink for the configured timeseries tables. The example tables contain timeseries data for metrics `a`, `b` and `c` in august 2023. You can query all metrics by entering `ALL` into the filter.
+

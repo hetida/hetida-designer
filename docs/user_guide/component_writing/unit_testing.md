@@ -32,9 +32,7 @@ def test_run_with_test_wiring():
 ```
 
 ## Writing doctests
-
 You can enter doctests as [usual](https://docs.python.org/3/library/doctest.html) in your functions docstring. For the component's main function the docstring must be entered below the comment marking the end of the auto-generated function header:
-
 ```py
 ...
 def main(...)
@@ -54,3 +52,4 @@ In the hetida designer UI component unit tests can be run via the unit testing b
 <figure markdown="span">
 ![](../../assets/unit-testing-button.png){ width=30 }
 </figure>
+

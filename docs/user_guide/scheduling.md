@@ -1,7 +1,7 @@
 # Scheduling
 
-## Simple Cron Expression Scheduling
 
+## Simple Cron Expression Scheduling
 hetida designer offers basic cron expression based scheduling for running transformations regularly. Schedules are configured and observed in the scheduling tab of the hetida designer UI:
 
 ![scheduling tab](../assets/scheduling-tab.png)
@@ -19,11 +19,9 @@ The result may even contain plots, just like for test executions invoked manuall
 Scheduled executions are deleted regularly from the database. This "retention" is configurabe (see below).
 
 ### Configuration
-
 See [scheduling configuration docs](../deployment_operation/scheduling_configuration.md).
 
 ## Advanced production scheduling / automation / orchestration
-
 For advanced automation in production the integrated basic scheduling in hetida designer may not be sufficient. Ultimately, hetida designer is not a job engine / scheduler / orchestrator.
 
-We recommend to employ proper automation solutions like [hatchet](https://github.com/hatchet-dev/hatchet), [temporal](https://github.com/temporalio/temporal) or similar and invoke executions via the designer backend REST API execution endpoints or via [Kafka](./execution_via_kafka.md).
+We recommend to employ proper automation solutions like [hatchet](https://github.com/hatchet-dev/hatchet), [temporal](https://github.com/temporalio/temporal) or similar and invoke executions via the designer backend REST API execution endpoints or via [Kafka](../integration_guide/trafo_exec_guide/execution_via_kafka.md).

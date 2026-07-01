@@ -4,14 +4,14 @@ Components and workflows can be exported and imported flexibly and with a fine g
 
 Use Case examples:
 
-- Backup only certain collection of workflows / components (e.g. certain categories) and their dependencies
-- Keep a selection versioned in a git repository
-- [Syncing and hybrid working](./sync.md); I.e. export some trafos => work on them locally => import them, overwriting the existing trafos
+* Backup only certain collection of workflows / components (e.g. certain categories) and their dependencies
+* Keep a selection versioned in a git repository
+* [Syncing and hybrid working](./sync.md); I.e. export some trafos => work on them locally => import them, overwriting the existing trafos
 
-  !!! warning
-  This has some [pitfalls concerning reproducibility and deserializability](./repr_pitfalls.md)
+    !!! warning
+        This has some [pitfalls concerning reproducibility and deserializability](../../user_guide/repr_pitfalls.md)
 
-- transfer a subset of components/workflows from one hetida designer instance to another, e.g. from a test environment to a production environment.
+* transfer a subset of components/workflows from one hetida designer instance to another, e.g. from a test environment to a production environment.
 
 This guide assumes the default docker compose setup described in the project README.
 
@@ -40,7 +40,6 @@ The hetida designer backend [API](../../integration_guide/api.md) exposes a GET 
 Note that the [hdctl](./sync.md) cli tool and the docker based export / import how-to below basically access these endpoints / the same functions exposed by these endpoints.
 
 ## Export / Import via hdctl bash tool
-
 The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import.
 
 The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
@@ -54,7 +53,7 @@ hdctl supports the same parameters as the Pythons script variant discussed below
 ### Exporting all components and workflows
 
 Go to a directory where you want to store the exported components and workflows.
-Now run
+Now run 
 
 ```shell
 docker run --rm \
@@ -88,7 +87,7 @@ If more than one of these parameters is specified, only the components/workflows
 The exported JSON / .py files are automatically saved in subfolders corresponding to the categories of the exported components and workflows within subfolders corresponding to their type ("components" or "workflows").
 
 !!! note
-Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
+    Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
 
     Therefore, the export function also automatically exports all dependent transformation revisions, regardless of whether they match the filters.
 
@@ -107,7 +106,7 @@ docker run --rm \
 ### <a name="import"></a> Importing all components and workflows
 
 !!! warning "IMPORTANT"
-If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](../maintenance/backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
+    If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](../maintenance/backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
 
 To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can set the input parameter `allow_overwrite_released` to `False`. Components and workflows with status `DRAFT` will be overwritten in any case.
 
@@ -143,34 +142,31 @@ docker run --rm \
 Components can be imported not only from `.json` files, but also from `.py` files. Such Python files should contain the code itself defining a main function as well as a dictionary called `COMPONENT_INFO` containing the attributes of the corresponding component, just like the components created in the web application.
 
 Attributes that are not provided will be set to the following default values:
-
-- id: `<randomly generated UUID>`
-- revision_group_id: `<randomly generated UUID>`
-- name: `"Unnamed Component"`
-- version_tag: `"1.0.0"`
-- description: `"No description provided"`
-- category: `"Other"`
-- state: `"RELEASED"`
-- released_timestamp: `<time of import>`
-- inputs: `{}`
-- outputs: `{}`
+* id: `<randomly generated UUID>`
+* revision_group_id: `<randomly generated UUID>`
+* name: `"Unnamed Component"`
+* version_tag: `"1.0.0"`
+* description: `"No description provided"`
+* category: `"Other"`
+* state: `"RELEASED"`
+* released_timestamp: `<time of import>`
+* inputs: `{}`
+* outputs: `{}`
 
 #### Documentation
-
-If present, the module docstring (starting from its third line) is used as documentation.
+If present, the module docstring (starting from its third line) is used as documentation. 
 
 #### Test wiring
-
 For the import from a `.py` file, the initial test wiring can be provided as part of the Python code.
 
 !!! warning "Note"
-This only applies to the import from `.py` files and no other type of import!
-Futhermore, this initial test wiring in the component code will not be updated if the actual test wiring is changed.
+    This only applies to the import from `.py` files and no other type of import!
+    Futhermore, this initial test wiring in the component code will not be updated if the actual test wiring is changed.
 
 For this purpose, add another dictionary named `TEST_WIRING_FROM_PY_FILE_IMPORT`.
 Defining this dictionary below the main function is recommended, but the position does not influence the import.
 
-The same rules apply for the initial test wiring as for the wiring of the JSON payload for an [execution request via REST API](/execution/running_transformation_revisions.md).
+The same rules apply for the initial test wiring as for the wiring of the JSON payload for an [execution request via REST API](../../integration_guide/trafo_exec_guide/execution_via_api.md).
 A valid initial test wiring dictionary is for example
 
 ```python
@@ -207,18 +203,18 @@ You may want to ignore the test wirings stored in the component/workflow files d
 To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformation_from_dir` function in the commands documented above.
 
 #### More fine-granular wiring stripping
-
 The api endpoints which **hdctl** uses (`/api/transformations` GET and PUT) support more fine-granular control over wiring stripping behaviour. These options are not present in the `import_transformation_from_dir` functions. The addiitional url query parameters are:
 
-- `strip_wirings_with_adapter_id`: strip all input wirings and output wirings with that adapter id. Can be provided multiple times
-- `keep_only_wirings_with_adapter_id`: Keep only input wirings and output wirings with that adapter id. Can be specified multiple times and then keeps only wirings having one of the specified adapter ids.
+* `strip_wirings_with_adapter_id`: strip all input wirings and output wirings with that adapter id. Can be provided multiple times
+* `keep_only_wirings_with_adapter_id`: Keep only input wirings and output wirings with that adapter id. Can be specified multiple times and then keeps only wirings having one of the specified adapter ids.
 
 Note that for the GET endpoint, if `components_as_code` is set to `true`, you have to also activate `expand_component_code` in order to allow changing the test wiring stored in the component code that is returned.
 
 Typical use cases are:
 
-- Transfering trafos between hetida designer instance, where an adapter is present on the source instance but not on the target instance.
-- Backup without including test wirings that may not work when restoring dure to changed environment (adapters not present anymore)
+* Transfering trafos between hetida designer instance, where an adapter is present on the source instance but not on the target instance.
+* Backup without including test wirings that may not work when restoring dure to changed environment (adapters not present anymore)
+
 
 ### Deprecate older revisions when importing new ones
 
@@ -249,7 +245,7 @@ For a running backend container you can use the function `import_transformation_
 The base components and example workflows provided with hetida designer are contained in the `transformations/` directory within the docker container.
 
 !!! info "Note"
-The version of the components and workflows imported depends on the version of the image you use when running this command instead of the version of the hetida designer instance to which they are imported.
+    The version of the components and workflows imported depends on the version of the image you use when running this command instead of the version of the hetida designer instance to which they are imported.
 
 You can simply run the following command to import all components and workflows from there:
 

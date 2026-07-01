@@ -2,7 +2,7 @@
 
 There are cleanup options of varying scope:
 
-1. Restore Release Wirings
+1. Restore Release Wirings 
 
 2. Deprecate old transformation revisions
 
@@ -15,7 +15,7 @@ There are cleanup options of varying scope:
 The first two actions can easily be performed for individual transformation revisions via the user interface, doing so regularly is recommended. Apart from that, there are also functions for all four actions that automatically apply them to all matching transformation revisions.
 
 !!! note
-All commands listed below assume an external hetida designer installation, i.e. not the local docker compose setup. For the former you may need authentication configuration according to your setup. For the later you may need to add `--network hetida-designer-network ` and set `http://hetida-designer-backend:8090/api/` as `HETIDA_DESIGNER_BACKEND_API_URL`.
+    All commands listed below assume an external hetida designer installation, i.e. not the local docker compose setup. For the former you may need authentication configuration according to your setup. For the later you may need to add `--network hetida-designer-network ` and set `http://hetida-designer-backend:8090/api/` as `HETIDA_DESIGNER_BACKEND_API_URL`.
 
 Below we show how to execute these cleanup actions by running them from a docker container. Note that they also can be invoked through [other means](../maintenance/)
 
@@ -35,7 +35,7 @@ docker run --rm \
 
 ## 2. Deprecate Old Transformation Revisions
 
-In this case a transformation revision is considered "old" if it is released and there is another released transformation revision in the same revision group, which has a later release timestamp.
+In this case a transformation revision is considered "old" if it is released and there is another  released transformation revision in the same revision group, which has a later release timestamp.
 
 After inserting the hetida designer backend API URL of your instance you can use the following command to deprecate all these old transformation revisions:
 
@@ -71,7 +71,7 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_unused_deprecated; delete_unused_deprecated();'
 ```
 
-## 5. Purge
+## 5. Purge 
 
 To delete all transformation revisions and deploy the versions of base components and example workflows included in the executing image's code run:
 

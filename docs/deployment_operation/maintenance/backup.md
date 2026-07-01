@@ -1,11 +1,11 @@
 # Backup and Restore
 
-All
+All 
 
-- components and workflows
-- their current wirings and documentation
-- dashboarding configurations
-- schedules
+* components and workflows
+* their current wirings and documentation
+* dashboarding configurations
+* schedules
 
 reside in the Postgres database of your hetida designer installation. So usually you want to backup this database.
 

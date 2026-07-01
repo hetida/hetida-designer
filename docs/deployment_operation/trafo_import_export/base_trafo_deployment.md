@@ -4,6 +4,7 @@ If the hetida designer database is empty the included base components and workfl
 
 You can suppress the auto-deployment by setting the environment variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 
+
 ```yaml
 ...
 
@@ -18,7 +19,7 @@ You can suppress the auto-deployment by setting the environment variable `HD_BAC
 ```
 
 You can also activate auto-deployment behavior even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
-In that case the base components and workflows stored in your database are overwritten by the version in the image andthis might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
+In that case the base components and workflows stored in your database are overwritten by the  version in the image andthis might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
 
 You can disable overwriting released and disabled components and workflows during the auto-deployment by setting the environment variable `HD_BACKEND_ALLOW_OVERWRITE_RELEASED` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 
@@ -29,7 +30,6 @@ You can disable overwriting released and disabled components and workflows durin
 Not setting these environement variables has the same result as setting them to `true`.
 
 ## Manual Deployment of Base Component and Workflows
-
 If you de-activated auto-deployment of base components and workflows and want to deploy them now at a later stage, you should run
 
 ```shell
@@ -39,7 +39,6 @@ docker run --rm \
   --network hetida-designer-network \
   --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("./transformations/");'
 ```
-
 Check the documentation of [Export and Import of Components/Workflows](./import_export.md) for an introduction of the available options.
 
 Note that in the case of the development environment it makes sense to run the deployment command using the locally
