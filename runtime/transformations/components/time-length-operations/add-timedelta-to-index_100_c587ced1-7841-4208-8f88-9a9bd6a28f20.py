@@ -102,7 +102,7 @@ def main(*, df_or_series, timedelta):
     ...                 "2019-08-01T15:20:14",
     ...                 "2019-08-01T15:20:16"
     ...             ]
-                ),
+    ...         ),
     ...     ),
     ...     timedelta = "-4s",
     ... )["df_or_series"]
@@ -110,10 +110,11 @@ def main(*, df_or_series, timedelta):
     2019-08-01 15:20:07    22.0
     2019-08-01 15:20:10    18.0
     2019-08-01 15:20:12     2.0
-    dtype: float64
+    Name: col, dtype: float64
     """
     # write your function code here.
-    df_or_series = pd.DataFrame.from_dict(df_or_series, orient="index")
+    if isinstance(df_or_series, pd.Series):
+        df_or_series = pd.DataFrame({"col": df_or_series})
     df_or_series.index = pd.to_datetime(df_or_series.index)
     if df_or_series.columns.size < 2:
         df_or_series = df_or_series.squeeze("columns")

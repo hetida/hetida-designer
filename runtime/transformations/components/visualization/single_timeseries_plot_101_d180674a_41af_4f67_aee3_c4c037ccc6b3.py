@@ -303,7 +303,7 @@ def main(
         {
             "autosize": True,
             "height": 200,
-            "yaxis_title": ytitle,
+            "yaxis_title": None if not ytitle else {"text": ytitle, "standoff": 15},
             "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
         }
     )

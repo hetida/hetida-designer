@@ -3,13 +3,14 @@
 usage() {
     echo "$0 [COMMAND] [ARGS]"
     echo ""
-    echo "Hint: All commands expect a Python dev virtual environment to be active"
+    echo "Hint: Commands often expect a Python dev virtual environment to be active"
     echo ""
     echo "  Commands:"
     echo "  - deps:upgrade    :    resolves and locks Python dependencies, upgrading them all"
     echo "  - deps:sync       :    syncs currently activated virtual environment with locked Python dev dependencies."
     echo "  - shell           :    Activate virtual environment, thereby creating and syncing if necessary"
     echo "  - test            :    run pytest on hetdesrun code"
+    echo "  - comptest        :    run pytest base component tests"
     echo "  - lint            :    call ruff"
     echo "  - typecheck       :    run mypy static type check"
     echo "  - format          :    run ruff format"
@@ -47,9 +48,9 @@ test() {
     python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
 }
 
-# test_components() {
-#     python -m pytest --doctest-modules components
-# }
+comptest() {
+    python -m pytest --doctest-modules --cov=transformations/components --cov-report=term-missing transformations/components/*/*.py "$@" 
+}
 
 lint() {
     ruff check hetdesrun transformations/components tests "${@}"
@@ -77,15 +78,11 @@ check() {
     # If everything is okay this will have 0 exits status
     echo "--> Running ruff format in check mode" && ruff format hetdesrun transformations/components tests --check &&
         echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
-        echo "--> Running base component tests" &&  python -m pytest --cov=transformations/components --cov-report=term-missing transformations/components/*/*.py &&
+        echo "--> Running base component tests" &&  python -m pytest --doctest-modules --cov=transformations/components --cov-report=term-missing transformations/components/*/*.py &&
         echo "--> Running mypy" && mypy hetdesrun &&
         echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&
         echo "--> Running bandit" && bandit -r hetdesrun --skip B101 &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
-}
-
-export_api_html() {
-    python extract_openapi_html.py "${@}"
 }
 
 #----- Execution -----#
