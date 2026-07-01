@@ -64,6 +64,7 @@ FROM application_base AS pre-prod
 RUN useradd -m hd_app
 USER hd_app
 ENV PORT=8090
+ENV HOST=0.0.0.0
 EXPOSE 8090
 CMD ["/app/start.sh"]
 
