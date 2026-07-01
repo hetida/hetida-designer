@@ -1,6 +1,6 @@
 ---
 template: redirect.html
-location: /overview
+location: ./overview
 ---
 
 # Documentation
