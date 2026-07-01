@@ -41,7 +41,7 @@ COPY --from=build /app/package-lock.json .
 RUN trivy fs --format cyclonedx --output /sbom.cdx.json .
 
 ##### Production stage
-FROM nginxinc/nginx-unprivileged:1.31-alpine3.23-slim as prod
+FROM nginxinc/nginx-unprivileged:1.31.2-alpine3.23-slim as prod
 COPY --from=build /app/dist/out/browser /usr/share/nginx/html
 COPY --from=sbom /sbom.cdx.json /var/lib/sbom/sbom.cdx.json
 COPY ./frontend/nginx.conf /etc/nginx/nginx.conf
