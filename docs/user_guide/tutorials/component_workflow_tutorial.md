@@ -1,10 +1,9 @@
 # Component and Workflow development
-
 This tutorial explains how to create components and workflows and how to execute them using the hetida designer user interface.
 
 ### First workflow
 
-In the hetida designer web user interface, click on "Add Workflow" in the Workflow side bar.
+In the hetida designer web user interface, click on "Add Workflow" in the Workflow side bar. 
 
 ![add_workflow](./../../assets/first_workflow/add_workflow_button.png)
 
@@ -12,30 +11,31 @@ In the "Create new Workflow" dialog, enter a name (like "Demo") and for now leav
 
 ![create_workflow_dialog](./../../assets/first_workflow/create_workflow_dialog.png)
 
-Next, you see the workflow editor, which is empty. Switch to the component sidebar, open one of the category drawers, and drag and drop some components onto the workflow editor pane. Boxes appear indicating operators of your workflow (i.e. instances of the chosen components).
+Next, you see the workflow editor, which is empty. Switch to the component sidebar, open one of the category drawers, and drag and drop some components onto the workflow editor pane. Boxes appear indicating operators of your workflow (i.e. instances of the chosen components). 
 
 In this tutorial, we create an example workflow for a univariate anomaly detection: A simple volatility detection on a time series. We add connections between operators by clicking on outputs on the right side of the boxes and then clicking on an input on the left side of another box. You can easily find the components used in the picture below by using the search filter in the component sidebar.
 
 ![volatility_example_without_io](./../../assets/first_workflow/volatility_example_without_io.png)
 
-Some Notes:
+Some Notes: 
 
-- You can delete connections by right-clicking on them and selecting "Delete Link". You can also delete operators (boxes) through their right-click menu.
+* You can delete connections by right-clicking on them and selecting "Delete Link". You can also delete operators (boxes) through their right-click menu.
 
-- Connection lines can be subdivided by left-clicking on them and dragging one of the appearing handles, e.g. to make them go around boxes.
-
+* Connection lines can be subdivided by left-clicking on them and dragging one of the appearing handles, e.g. to make them go around boxes.
+  
   ![connection_handles](./../../assets/first_workflow/connection_handles.png)
 
-- Connections must respect types of inputs / outputs (indicated by color). However, some inputs /outputs have type "Any" which means that everything can go out/into them.
+* Connections must respect types of inputs / outputs (indicated by color). However, some inputs /outputs have type "Any" which means that everything can go out/into them.
 
-- You can also drag workflows from the Workflow sidebar as operators into a workflow, i.e. workflows can be nested. For example, consider a workflow containing a common data preparation pipeline that you want to use in several modeling workflows.
+* You can also drag workflows from the Workflow sidebar as operators into a workflow, i.e. workflows can be nested. For example, consider a workflow containing a common data preparation pipeline that you want to use in several modeling workflows.
 
-- You can drag _DRAFT_ components/workflows onto the workflow pane, but you can only release a workflow if all contained operators refer to released revisions. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. To edit a released component/workflow a new revision has to be created.
+* You can drag *DRAFT* components/workflows onto the workflow pane, but you can only release a workflow if all contained operators refer to released revisions. This guarantees revision safety, i.e. once a workflow is released this revision of the workflow is fixed and cannot be changed anymore. To edit a released component/workflow a new revision has to be created.
 
-Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow.
+
+Note that several inputs are unconnected and that one output (in our example this will be a result plot) is unconnected. There are no "Load Data from DB" or similar operators in our workflow. 
 
 !!! abstract "Decoupling analytics and data provisioning"
-This is a point where hetida designer significantly differs from some similar-looking workflow tools you may know: Data ingestion (and data egestion) is decoupled from analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
+    This is a point where hetida designer significantly differs from some similar-looking workflow tools you may know: Data ingestion (and data egestion) is decoupled from analytics and therefore fully flexible for production runs. Of course, this does not prevent you from writing components yourself that directly access data sources or data sinks -- but keep in mind that by doing this you lose the decoupling advantages and flexibility of the adapter system.
 
 !!! tip "All inputs/outputs at a glance"
 
@@ -65,10 +65,10 @@ To run the workflow, click on the "Execute" button
 
 The execution dialog offers two modes for data ingestion into the workflow's dynamic inputs (as configured via the IO Configuration dialog):
 
-- **Manual**: Here you can enter data directly or upload some JSON or CSV file from your computer.
-- **Adapter**: Adapters allow to connect data sources (e.g. databases) to dynamic workflow input (and similar for outputs and sinks). They are small pieces of software which can be written individually for your specific data sources and data structures. They may present business views on data for easy selection in the execution dialog. More on that in documentation on the hetida designer adapter system
+* **Manual**: Here you can enter data directly or upload some JSON or CSV file from your computer.
+* **Adapter**: Adapters allow to connect data sources (e.g. databases) to dynamic workflow input (and similar for outputs and sinks). They are small pieces of software which can be written individually for your specific data sources and data structures. They may present business views on data for easy selection in the execution dialog. More on that in documentation on the hetida designer adapter system
 
-In your local installation, there probably is either no adapter or only the demo adapters installed/available, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](https://github.com/hetida/hetida-designer/blob/release/runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
+In your local installation, there probably is either no adapter or only the demo adapters  installed/available, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](https://github.com/hetida/hetida-designer/blob/release/runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
 
 ![input_series_demo_data_upload_dialog](./../../assets/first_workflow/upload_demo_data_json.png)
 
@@ -130,7 +130,7 @@ Note how inputs and outputs (colored depending on selected type) appear in the d
 
 ![code_editor_generated](./../../assets/first_workflow/code_editor_generated.png)
 
-Note that the generated code is adapted to the added IO configuration: Hetida designer tries to support you as long as you do not change the main function definition and the accompanying comments.
+Note that the generated code is adapted to the added IO configuration: Hetida designer tries to support you as long as you do not change the main function definition and the accompanying comments. 
 
 #### Writing code
 

@@ -8,20 +8,20 @@ The rationale for the described design decisions on this page assumes familiarit
 
 ## Basic Architecture
 
-- backend manages code components and workflows
-- actual execution happens in runtime
-- frontend, backend and runtime containerized
-  - typically only runtime needs scaling
-- separation of analytics from data provisioning via adapter system
-- other systems / services trigger executions via backend
+* backend manages code components and workflows
+* actual execution happens in runtime
+* frontend, backend and runtime containerized
+    * typically only runtime needs scaling
+* separation of analytics from data provisioning via adapter system
+* other systems / services trigger executions via backend
 
 ![Basic architecture overview](../diagrams/basic-architecture-overview.excalidraw.svg)
-
+ 
 !!! tip "Combined Backend+Runtime"
-Backend and runtime can be run combined as a single container from the same image to support scenarios like exposing a fixed set of workflows (e.g. a single workflow) as a separate [restricted webservice](./integration_guide/trafo_exec_guide/restricted_webservice.md).
+    Backend and runtime can be run combined as a single container from the same image to support scenarios like exposing a fixed set of workflows (e.g. a single workflow) as a separate [restricted webservice](./integration_guide/trafo_exec_guide/restricted_webservice.md).
 
 !!! abstract "Runtime Variants / Claim Based Routing"
-Multiple runtime deployments, each with its own runtime image / dependency set / environment variables and separately scaled can coexist with the backend doing [claim based routing](./deployment_operation/varying_runtime_services.md) (i.e. using role from access token) to decide which one to invoke.
+    Multiple runtime deployments, each with its own runtime image / dependency set / environment variables and separately scaled can coexist with the backend doing [claim based routing](./deployment_operation/varying_runtime_services.md) (i.e. using role from access token) to decide which one to invoke.
 
 ## Execution Process
 
@@ -53,10 +53,11 @@ Workflow engines provide visible and inspectable modularity and reusability, whi
 
 ### hetida designer's Approach
 
+
 hetida designer is built for **scalable production data science**. This requires minimizing worker process memory footprint, serialization overhead, and startup latency. The goal is that workflow step execution adds zero/minimal overhead compared to a direct Python function call.
 
 !!! info "Isolation / Sandboxing"
-hetida designer is not a general business automation engine, it specifically targets conscientious and responsible data scienctists and Python capable domain experts. "inter-execution" isolation / sandboxing is decidedly not a primary goal.
+    hetida designer is not a general business automation engine, it specifically targets conscientious and responsible data scienctists and Python capable domain experts. "inter-execution" isolation / sandboxing is decidedly not a primary goal.
 
 Therefore hetida designer makes the following deliberate and opinionated trade-offs:
 
@@ -64,18 +65,19 @@ Therefore hetida designer makes the following deliberate and opinionated trade-o
 
 **Fixed dependency set per runtime image** Dependencies are baked into the runtime container image. This means no virtual environment needs to be built at startup or execution time, and imports are available immediately and can be reused across requests handled by the same runtime instance in the same worker process.
 
-- _No on-the-fly dependency addition_: Adding a new dependency [becomes a DevOps task](./deployment_operation/managing_python_dependencies.md) rather than something a user can do himself / in the UI. This is intentional: In production systems, ad-hoc dependency changes are undesirable among others for security reasons and hetida designer is explicitly designed for production use.
+- *No on-the-fly dependency addition*: Adding a new dependency [becomes a DevOps task](./deployment_operation/managing_python_dependencies.md) rather than something a user can do himself / in the UI. This is intentional: In production systems, ad-hoc dependency changes are undesirable among others for security reasons and hetida designer is explicitly designed for production use.
 - _Varying Dependencies:_ Different [Runtime Variants](./deployment_operation/varying_runtime_services.md) can provide different dependency sets when needed.
 
 **Workflow DAG operator execution is sync**, i.e. different operators of a workflow are not executed in parallel even if that was possible. Since hetida designer separates analytics from data provisioning through its adapter system, it can be assumed that the workflow itself primarily executes CPU-bound code. On the other side adapter data fetching/sending is typically io bound and uses Python's asyncio capabilities to load data for data sources in parallel (per adapter) if supported by the adapter (e.g. the builtin [component adapter](./integration_guide/adapter_system/builtin_adapters/component_adapter.md)).
+
 
 ## Coding Scope
 
 Data Scientists and in particular Python-capable subject matter experts are not professional software developers. Experience shows that often it is not the best idea to
 
-- let them write arbitrarily complex/nested code
-- let them write code for data ingestion / data engineering tasks etc.
-- let them write technical code (REST APIs, ...)
+* let them write arbitrarily complex/nested code
+* let them write code for data ingestion / data engineering tasks etc.
+* let them write technical code (REST APIs, ...)
 
 hetida designer in its UI deliberately limits code to [components](./user_guide/tutorials/basic_concepts.md#component-component-revision) representing a single Python module with one exposed main function, i.e. relatively small and reasonably maintainable portions of code. The goal is to encourage writing of reusable "do one thing and do it well" components.
 

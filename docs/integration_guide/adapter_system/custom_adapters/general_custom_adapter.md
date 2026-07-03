@@ -2,9 +2,9 @@
 
 As said in the introduction, to write a general custom adapter you have to create two code artifacts:
 
-- a web service with some of the endpoints that also occur in generic Rest adapters
+* a web service with some of the endpoints that also occur in generic Rest adapters
 
-- some Python code for actual data retrieval and data sending for the runtime (Runtime Plugin)
+* some Python code for actual data retrieval and data sending for the runtime (Runtime Plugin)
 
 ## Web service endpoints
 

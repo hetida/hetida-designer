@@ -34,47 +34,45 @@ This [file](https://github.com/hetida/hetida-designer/blob/release/runtime/demod
 
 ```json
 {
-  "structure": [
-    {
-      "name": "PlantA",
-      "description": "Plant A",
-      "substructure": [
+    "structure": [
         {
-          "name": "PicklingUnit",
-          "description": "Plant A Pickling Unit",
-          "below_structure_defines_object_key": true,
-          "substructure": [
-            {
-              "name": "Influx",
-              "description": "Plant A Pickling Unit Influx",
-              "substructure": [
+            "name": "PlantA",
+            "description": "Plant A",
+            "substructure": [
                 {
-                  "name": "Anomalies",
-                  "description": "Plant A Pickling Unit Influx Anomalies"
-                } //...
-              ]
-            }
-          ]
+                    "name": "PicklingUnit",
+                    "description": "Plant A Pickling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [
+                        {
+                            "name": "Influx",
+                            "description": "Plant A Pickling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Pickling Unit Influx Anomalies"
+                                }, //...
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "MillingUnit",
+                    "description": "Plant A Milling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [//...
+                    ]
+                }
+            ]
         },
         {
-          "name": "MillingUnit",
-          "description": "Plant A Milling Unit",
-          "below_structure_defines_object_key": true,
-          "substructure": [
-            //...
-          ]
+            "name": "PlantB",
+            "description": "Plant B",
+            "below_structure_defines_object_key": true,
+            "substructure": [//...
+            ]
         }
-      ]
-    },
-    {
-      "name": "PlantB",
-      "description": "Plant B",
-      "below_structure_defines_object_key": true,
-      "substructure": [
-        //...
-      ]
-    }
-  ]
+    ]
 }
 ```
 
@@ -86,28 +84,29 @@ If this attribute is set to "true" for a hierarchy node, the names of all lower 
 
 The buckets defined by the adapter structure must already be present in the blob storage. For the example adapter hierarchy these would be buckets with the following names:
 
-- `planta-picklingunit`
-- `planta-millingunit`
-- `plantb`
+* `planta-picklingunit`
+* `planta-millingunit`
+* `plantb`
 
 A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp, the job id of the execution and a file extension indication the serialization method are appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
 
 For the example adapter hierarchy e.g. the following objects would be available as source:
 
-- in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl`
-- in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.h5`
+* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl`
+* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.h5`
+
 
 ### Configuring the runtime
 
 The blob storage adapter is configured by the following environment variables:
 
-- BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
-- BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION
-- BLOB_STORAGE_ENDPOINT_URL
-- BLOB_STORAGE_STS_PARAMS
-- BLOB_STORAGE_ADAPTER_ANONYMOUS
-- BLOB_STORAGE_REGION_NAME
-- BLOB_STORAGE_CHECKSUM_ALGORITHM
+* BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
+* BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION
+* BLOB_STORAGE_ENDPOINT_URL
+* BLOB_STORAGE_STS_PARAMS
+* BLOB_STORAGE_ADAPTER_ANONYMOUS
+* BLOB_STORAGE_REGION_NAME
+* BLOB_STORAGE_CHECKSUM_ALGORITHM
 
 The location of the hierarchy JSON file within the runtime instance is specified with the environment variable `BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION`.
 
@@ -119,7 +118,7 @@ To send unsigned S3 requests set the `BLOB_STORAGE_ADAPTER_ANONYMOUS` environmen
 
 The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup. The default value is "eu-central-1".
 
-Per default checksums created with the SHA1 algorithm are used to check the integrity of send and loaded objects. The `BLOB_STORAGE_CHECKSUM_ALGORITHM` environment variable can instead be set to one of the strings 'SHA256', 'CRC32' or 'CRC32C' to change the used algorithm or to an empty string to deactivate the usage of checksums.
+Per default checksums created with the SHA1 algorithm are used to check the integrity of send and loaded objects. The `BLOB_STORAGE_CHECKSUM_ALGORITHM` environment variable can instead be set to one of the strings 'SHA256', 'CRC32' or 'CRC32C' to change the used algorithm or to an empty string to deactivate the usage of checksums. 
 
 An example using a minio instance as blob storage provider:
 
@@ -136,7 +135,6 @@ An example using a minio instance as blob storage provider:
 ### Configuring the backend
 
 The blob storage adapter needs to be [registered](../adapter_registration.md) in the designer backend. The blob storage adapter's part of the environment variable `HETIDA_DESIGNER_ADAPTERS` could for example look like this:
-
 ```
 blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|http://hetida-designer-runtime:8090/adapters/blob
 ```
@@ -148,14 +146,14 @@ Azure Blob Storage has its own API and currently does not directly support the S
 The transaction checksum algorithms supported by S3 and the algorithms supported by Azure Blob Storage have no common subset. Therefore, it is necessary to disable the use of transaction checksums by setting `BLOB_STORAGE_CHECKSUM_ALGORITHM` to an empty string.
 
 ## Usage
-
 All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
 
 By default, the `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs. Hence, the file extension ".pkl" is added to their object key.
 Since it is [not recommended to save Tensorflow Keras models via pickle](https://keras.io/getting_started/faq/#what-are-my-options-for-saving-models), such models are automatically identified by the adapter and serialized into the HDF5 format by the keras `save_model` method instead. In this case the file extension ".h5" is appended to the object key.
 
+
 !!! note
-The python module tensorflow (or keras) is not included in the standard hetida designer dependencies. To use tensorflow in the hetida designer components or workflows, you need to [add this dependency](../../../deployment_operation/managing_python_dependencies.md). The blob storage adapter is compatible with tensorflow version 2.12.0 or later.
+    The python module tensorflow (or keras) is not included in the standard hetida designer dependencies. To use tensorflow in the hetida designer components or workflows, you need to [add this dependency](../../../deployment_operation/managing_python_dependencies.md). The blob storage adapter is compatible with tensorflow version 2.12.0 or later.
 
 ### Basic Usage
 
@@ -201,11 +199,13 @@ For example, an inference / prediction component can import the model class from
 The wirings to a source or sink of the blob storage adapter must contain the path to the respective hierarchy end node as `ref_id` and the name of the sink or source as `ref_key`.
 E.g. for the examplary sources presented at the end of the section [Mounting the adapter hierarchy configuration](#mounting-the-adapter-hierarchy-configuration) these would be:
 
-- `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)"`
-- `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (h5)"`
+* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)"`
+* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (h5)"`
 
 For sinks the `ref_key` contains the suffix `Next Object` instead of time and job id, e.g. `ref_key="Anomalies - Next Object"`. Time and job id for the stored object will then be determined automatically.
 
 Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key. Note, that the time must have the timezone UTC.
 
 If an object with this object key already exists or either `ref_id` or `ref_key` are not allowed, this object will not be overwritten but an exception will be raised so that the response to the execution request will still have the HTTP status code 200 but the attriube `result` of response JSON will have the value `failure` and the attribute `error` will contain the according error message.
+
+

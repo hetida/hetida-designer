@@ -7,8 +7,7 @@ Depending on how much data is involved and how compute-intensive each execution 
 Of course it is impossible to describe all reasonable such setups here. The intention of this page is to rather provide some general hints and give some guidance which apply to the most typical scenarios.
 
 ## Scaling hetida designer on a k8s cluster
-
-hetida designer consists of interacting (micro)services and is meant to be scaled via a kubernetes (k8s) cluster in production.
+hetida designer consists of interacting (micro)services and is meant to be scaled via a kubernetes (k8s) cluster in production. 
 
 The default docker-compose setup described via the [docker-compose.yml](https://github.com/hetida/hetida-designer/blob/release/docker-compose.yml) file includes separate services for backend and runtime. This is also the recommended setup for scaling on a k8s cluster since it allows to scale the runtime separately. Typically only the runtime service needs to be scaled since most IO (loading and sending data from adapters) as well as computation heavy operations (the actually analytics / Data Science / Python code execution) happen there.
 
@@ -26,7 +25,7 @@ For each worker process, Python libraries are imported separately. Since Python 
 
 ### Scaling vertically and horizontally
 
-In particular one runtime container per cluster node, even with `WEB_CONCURRENCY=1` via GIL-releasing code, can be enough to make good use of available CPU resources. Generally
+In particular one runtime container per cluster node, even with `WEB_CONCURRENCY=1` via GIL-releasing code, can be enough to make good use of available CPU resources. Generally 
 
 > scaling vertically, i.e. increasing available CPU / memory on nodes running runtime containers is a viable, valid and recommended scaling approach that should be considered.
 
@@ -35,6 +34,7 @@ For horizontal scaling the following patterns have proven their worth:
 1. One runtime container per node with `WEB_CONCURRENCY` set to 2 times number of available CPU cores.
 2. One runtime container per node with `WEB_CONCURRENCY=1`, the default.
 3. One runtime container per cpu core on each node with `WEB_CONCURRENCY=1`. For example if you have 3 cluster nodes with each 4 cpu cores you employ 12 runtime replicas.
+
 
 The first pattern is a good starting setup if you do not yet know the specifics of your workloads. It has the disadvantage that the two load balancing methods involved, i.e. the kubernetes inter-service http "load balancing" and uvicorns's "OS-level load balancing", may lead to non-optimal distribution to workers as described below. Another disadvantage is increased memory usage.
 
@@ -66,26 +66,24 @@ This non-optimal distribution in particular happens when both "load balancing" m
 
 ### Distribute scheduling over time
 
-Additionally it is recommended to
+Additionally it is recommended to 
 
-> distribute scheduled executions over time instead of sending all jobs at once. For example, instead of starting all hourly jobs at xx:00, distribute them evenly over each hour.
+> distribute scheduled executions over time instead of sending all jobs at once. For example, instead of starting all hourly jobs at xx:00, distribute them evenly over each hour. 
 
 This allows uvicorn to assign requests to the worker processes that are idle. And it allows more sophisticated inter-service load balancing to take current load better into account, see below.
 
 ### Inter-service load balancing
-
 An ideal solution would be to
 
 > use an intelligent inter-service load balancer between backend and runtime which ideally takes current and expected load into consideration, has some knowledge about job resource needs and maybe even queues request to controll the amount of parallely executed tasks.
 
-For example an intelligent load balancer could analyze execution requests and learn from past executions which workflows take a long time to run. Or it could make use of prior knowledge from model registering / experiment management processes.
+For example an intelligent load balancer could analyze execution requests and learn from past executions which workflows take a long time to run. Or it could make use of prior knowledge from model registering / experiment management processes. 
 
 Of course this is a highliy-customized load balancing strategy, so at the end this would require to write your own individual load balancing service.
 
 Depending on your scenario It may also be sufficient to just employ a simple load balancer incorporating the "least connection" strategy, for example using an extra [nginx](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/) service or just kube-proxy in [IPVS-proxy mode](https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-ipvs).
 
 ### Understanding async execution and IO behaviour
-
 As mentioned above, the hetida designer runtime runs workflows inside the default async event loop of a worker process. During workflow execution, between each operator execution, control is given back to the event loop, allowing other tasks to gain control. Furthermore operator entry point functions can be async and consequently even inside code execution control can switch to other tasks on the event loop.
 
 So workflow and operator execution might switch in-between to other IO tasks, like loading data from an adapter for another workflow execution on the same worker process. I.e. IO for another workflow execution can increase total workflow execution time. The runtime has no priority for actual workflow / operator code execution over adapter IO or vice versa. For example it does not prioritize finishing a running further-progressed workflow execution job over initial loading data for the next one. The runtime is in a sense "neutral".

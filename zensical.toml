@@ -129,6 +129,7 @@ nav = [
     { "Runtime Variants" = "deployment_operation/varying_runtime_services.md" },
     { "Scheduling Configuration" = "deployment_operation/scheduling_configuration.md" },
     { "Logging" = "deployment_operation/logging.md" },
+    { "Monitoring" = "deployment_operation/monitoring.md"},
     { "Timeouts" = "deployment_operation/timeouts.md" },
     { "Trafo Management" = [
         "deployment_operation/trafo_import_export/index.md",        

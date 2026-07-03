@@ -23,11 +23,11 @@ FirstAdapterId|FirstAdapterName|FirstAdapterUrl|FirstAdapterInternalUrl,SecondAd
 Example with two adapters:
 
 ```
-demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter
+demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter    
 ```
 
 !!! note Note
-The registered adapters can be queried from the hetida designer backend [api](../api.md) endpoint `/api/adapters`. E.g. the hetida designer frontend obtains information of available adapters from there.
+    The registered adapters can be queried from the hetida designer backend [api](../api.md) endpoint `/api/adapters`. E.g. the hetida designer frontend obtains information of available adapters from there.
 
 ## Registering a new generic rest adapter
 

@@ -6,8 +6,8 @@ In contrast to [kafka execution](./execution_via_kafka.md) this allows to chain,
 
 Note that the hetida designer adapter system can play a similar role as [Kafka Connect](https://docs.confluent.io/platform/current/connect/index.html) in such contexts.
 
-## Basic Setup
 
+## Basic Setup
 First you need the Kafka adapter to be active and registered and Kafka configurations configured as is described in [Kafka adapter documentation](../adapter_system/builtin_adapters/kafka_adapter.md).
 
 Then you can set up a separate container using the hetida designer runtime Docker image running in consumption mode by setting the environment variable `HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE` to a json object which is equal to the execution payload (described for example [here](./execution_via_api.md)) except that no `job_id` is set. Consumption mode will automatically create a new job id for each execution triggered by a Kafka message.
@@ -15,28 +15,27 @@ Then you can set up a separate container using the hetida designer runtime Docke
 The provided input wiring determines to which topic consumption mode will listen continuously. Note that all other functionalities like backend/runtime API endpoints will not run on a container in consumption mode.
 
 Example:
-
 ```json
 {
-  "id": "1946d5f8-44a8-724c-176f-16f3e49963af",
-  "run_pure_plot_operators": true,
-  "wiring": {
-    "input_wirings": [
-      {
-        "adapter_id": "kafka",
-        "filters": {
-          "message_value_key": "analytic_result"
-        },
-        "ref_id": "base",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "ingestion_status_metadata(any)",
-        "type": "metadata(any)",
-        "use_default_value": false,
-        "workflow_input_name": "input"
-      }
-    ],
-    "output_wirings": []
-  }
+	"id": "1946d5f8-44a8-724c-176f-16f3e49963af",
+	"run_pure_plot_operators": true,
+	"wiring": {
+		"input_wirings": [
+			{
+				"adapter_id": "kafka",
+				"filters": {
+					"message_value_key": "analytic_result"
+				},
+				"ref_id": "base",
+				"ref_id_type": "THINGNODE",
+				"ref_key": "ingestion_status_metadata(any)",
+				"type": "metadata(any)",
+				"use_default_value": false,
+				"workflow_input_name": "input"
+			}
+		],
+		"output_wirings": []
+	}
 }
 ```
 
@@ -50,8 +49,8 @@ It is recommended to enable the caching of non-draft transformations for executi
 
 # Notes
 
-- Consumption mode can only listen to one topic with one Kafka config. So the input wirings must all be tied to the same Kafka config object.
-- In the same spirit, if more than one inputs are wired via Kafka adapter then for every input wiring message value keys must be set and the message must be in multi value format. Furthermore, message identifier must be equal (typically empty string) for all Kafka adapter input wirings.
-- Commit strategy, connection details etc. are all determined by the Kafka config attributes, in particular the `consumer_config` attribute.
-- The Kafka Config object(s) configured for the container in consumption mode is not required to be the same or exist in other hetida designer services (in particular the hd backend).
-- However, you typically want the consumption mode container to have `HD_IS_RUNTIME_SERVICE` being set to `true` in order to carry out trafo execution in the same container to avoid data being transferred via rest.
+* Consumption mode can only listen to one topic with one Kafka config. So the input wirings must all be tied to the same Kafka config object.
+* In the same spirit, if more than one inputs are wired via Kafka adapter then for every input wiring message value keys must be set and the message must be in multi value format. Furthermore, message identifier must be equal (typically empty string) for all Kafka adapter input wirings.
+* Commit strategy, connection details etc. are all determined by the Kafka config attributes, in particular the `consumer_config` attribute.
+* The Kafka Config object(s) configured for the container in consumption mode is not required to be the same or exist in other hetida designer services (in particular the hd backend).
+* However, you typically want the consumption mode container to have `HD_IS_RUNTIME_SERVICE` being set to `true` in order to carry out trafo execution in the same container to avoid data being transferred via rest.

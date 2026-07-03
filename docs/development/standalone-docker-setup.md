@@ -8,7 +8,7 @@ You'll have to install a recent version of [git](https://git-scm.com/book/en/v2/
 and [docker](https://docs.docker.com/get-docker/).
 
 !!! note "Note for Windows Users"
-On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy _Checkout as-is, commit Unix-sytyle line endings_. In every case, make sure that these settings match.
+    On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy *Checkout as-is, commit Unix-sytyle line endings*. In every case, make sure that these settings match.
 
 ## Getting the source code
 
@@ -45,6 +45,6 @@ You'll find corresponding Dockerfiles in the source code's root folder. You can 
 2. Run `docker run -e HD_IS_BACKEND_SERVICE=false -p 127.0.0.1:8091:8090 hetida/runtime` to run the runtime image (use -d flag to run container in background). After this the runtime OpenAPI UI is available at http://127.0.0.1:8091/docs.
 
 #### Backend + Runtime as one container
-
 1. Run `docker build -t hetida/backend_runtime -f ./Dockerfile-runtime .` to build the image.
 2. Run `docker run -p 127.0.0.1:8092:8090 hetida/backend_runtime` to run the image (use -d flag to run container in background). After this the combined backend + runtime OpenAPI UI is available at http://127.0.0.1:8092/docs.
+

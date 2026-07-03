@@ -2,8 +2,8 @@
 
 This page describes the web service endpoints which
 
-- any Adapter should implement to enable discovering and searching sinks and sources, e.g. in frontends like the hetida designer execution dialog
-- a generic Rest adapter must implement additionally to actually provide and receive data.
+* any Adapter should implement to enable discovering and searching sinks and sources, e.g. in frontends like the hetida designer execution dialog
+* a generic Rest adapter must implement additionally to actually provide and receive data.
 
 If not stated differently all endpoints provide JSON responses (application/JSON) and POST endpoints require JSON bodies.
 
@@ -47,8 +47,8 @@ These endpoints enable user interfaces (like the hetida designer test execution 
 
 General information about the adapter.
 
-- no query parameters
-- Response:
+* no query parameters
+* Response:
 
   ```json
   {
@@ -62,8 +62,8 @@ General information about the adapter.
 
 This endpoints allows for hierarchical browsing of data sources / data sinks. It returns exactly one level of the hierarchy (e.g. used by the hetida designer frontend for lazy loading). The nodes of the hierarchy are called thingNodes.
 
-- query parameters:
-  - `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks) and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
+* query parameters:
+    * `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all  sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks)  and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
 
 Response:
 
@@ -125,16 +125,16 @@ Response:
 - sources and sinks have an optional (default true) `visible` attribute. In future versions hetida designer might not show sources and sinks in the tree with visible being false.
 
 - `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now. If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
-  Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
+Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
 
-      !!! info "Handling of filters"
-          If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
-          The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
+    !!! info "Handling of filters"
+        If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
+        The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
 
 !!! info "Metadata in hierarchy"
-Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
+    Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
 
 ```
 /thingNodes/{thingNodeId}/metadata/{metadataKey}
@@ -152,7 +152,7 @@ These endpoints provide direct information on sources and sinks and allow to sea
 
 parameters:
 
-- filter (String). Only available for /sources/ (without id)!. The fulltext filter search string.
+* filter (String). Only available for /sources/ (without id)!. The fulltext filter search string.
 
 Response of /sources/ (without id):
 
@@ -280,14 +280,14 @@ On the one side metadata endpoints tell which metadatum is available at every so
 On the other side these endpoints directly return metadata values and are accessed from the runtime-side generic rest adapter implementation to obtain wired metadata or to send them.
 
 !!! info "Not providing/receiving Metadata"
-If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
+    If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
 
 #### Query parameters for metadata endpoints
-
 Metadata endpoint may get the following metadata
 
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
-- `filter_key=filter_value`: The runtime provides filter values from wirings for metadata sources/sinks as query parameters when requesting them during execution.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `filter_key=filter_value`: The runtime provides filter values from wirings for metadata sources/sinks as query parameters when requesting them during execution.
+
 
 #### /sources/{id}/metadata/ (GET)
 
@@ -369,10 +369,10 @@ This endpoint streams several timeseries together. This endpoint is only necessa
 
 Query parameters:
 
-- `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
-- `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
-- `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
+* `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
+* `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -389,7 +389,6 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 Type of value must be the datatype of the timeseries source, i.e. if the timeseries source with that id has type `timeseries(int)` the value of a corresponding record must be a Json integer.
 
 ##### Attaching metadata to each timeseries
-
 Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata, e.g.:
@@ -418,23 +417,22 @@ This endpoint accepts a single timeseries per POST request.
 
 Query parameters:
 
-- `timeseriesId`: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `timeseriesId`: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload (List of timeseries records):
 
 ```json
 [
-  { "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3 },
-  { "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7 },
-  { "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333 }
+    {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3},
+    {"timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7},
+    {"timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
 ]
 ```
 
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
 ##### Retrieving attached timeseries metadata
-
 Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
@@ -445,8 +443,8 @@ It is up to your adapter implementation what you do with that metadata.
 
 Query parameters:
 
-- `id`: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `id`: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -461,7 +459,6 @@ This response can have arbitrary entries in the record which then correspond to 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas DataFrame to this column and sort by it. If that does not work the index of the resulting Pandas DataFrame will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
 ##### Attaching metadata to the dataframe
-
 Additionally, [metadata](../../user_guide/attached_metadata.md) in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
@@ -470,7 +467,7 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 {
   "column_units": {
     "main_engine_pw": "W",
-    "pump_throughput": "l/s"
+    "pump_throughput": "l/s",
   },
   "plant_name": "north-west 3"
 }
@@ -480,23 +477,22 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 
 Query parameters:
 
-- `id`: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `id`: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload:
 
 ```json
 [
-  { "columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3 },
-  { "columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3 },
-  { "columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5 }
+  {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
+  {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
+  {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ]
 ```
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
 ##### Retrieving attached timeseries metadata
-
 Again, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
@@ -507,10 +503,10 @@ It is up to your adapter implementation what you do with that metadata.
 
 Query parameters:
 
-- `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
-- `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
-- `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
+* `from`: The timestamp from which on datapoints of the source are requested. Isoformat, up to nanosecond precision. E.g. 2020-03-11T13:45:18.194000000Z" or "2025-11-11T02:03:15+00:00".
+* `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Response (Line delimited Stream of Json records):
 
@@ -523,8 +519,8 @@ Response (Line delimited Stream of Json records):
 
 This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timeszone and nanosecond resolution.
 
-##### Attaching metadata to the multitsframe
 
+##### Attaching metadata to the multitsframe
 Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
@@ -535,17 +531,17 @@ For this the response is allowed to send a header `Data-Attributes` which must c
   "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
   "ref_interval_type": "closed",
   "ref_metrics": [
-    "Milling Influx Temperature",
-    "Milling Outfeed Temperature",
-    "Pickling Influx Temperature",
-    "Pickling Outfeed Temperature"
-  ],
+      "Milling Influx Temperature",
+      "Milling Outfeed Temperature",
+      "Pickling Influx Temperature",
+      "Pickling Outfeed Temperature"
+    ],
   "column_units": {
     "Milling Influx Temperature": "C",
     "Milling Outfeed Temperature": "C",
     "Pickling Influx Temperature": "C",
-    "Pickling Outfeed Temperature": "C"
-  }
+    "Pickling Outfeed Temperature": "C",
+  },
 }
 ```
 
@@ -553,8 +549,8 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 
 Query parameters:
 
-- `id`: required exactly once: This is a sink id of a multitsframe sink occurring in the structure endpoint
-- `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
+* `id`: required exactly once: This is a sink id of a multitsframe sink occurring in the structure endpoint
+* `job_id`: Runtime may send a job id (UUID) which the adapter implementation can e.g. use for logging to identify log messages belonging to the same execution across services.
 
 Payload:
 
@@ -570,7 +566,6 @@ Payload:
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different.
 
 ##### Retrieving attached multitsframe metadata
-
 Analogous to the corresponding GET endpoint, metadata stored in the underlying Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
@@ -583,29 +578,29 @@ Lets imagine you want to make some tables from a SQL database available as sourc
 
 In this case you have to implement the following endpoints:
 
-- /info (GET) endpoint
+* /info (GET) endpoint
 
-- /structure (GET) endpoint where the tables occur as sources
+* /structure (GET) endpoint where the tables occur as sources
 
-- all /sources/\* (GET) endpoints responding with appropriate sources for your tables
+* all /sources/* (GET) endpoints responding with appropriate sources for your tables
 
-- the /sinks (GET) endpoint returning an empty list.
+* the /sinks (GET) endpoint returning an empty list.
 
-- /thingNodes/{id} (GET) endpoint where the thingNodes you offer in /structure occur.
+* /thingNodes/{id} (GET) endpoint where the thingNodes you offer in /structure occur.
 
-- All metadata (GET) endpoints of the form /source|sink|thingNode/metadata/ (those that return a list, without key) responding with empty lists.
+* All metadata (GET) endpoints of the form /source|sink|thingNode/metadata/ (those that return a list, without key) responding with empty lists.
 
-- The /dataframe (GET) endpoint delivering your tables
+* The /dataframe (GET) endpoint delivering your tables
 
 In particular you do not need:
 
-- the /sources|sinks|thingNodes/metadata/{key} endpoints
+* the /sources|sinks|thingNodes/metadata/{key} endpoints
 
-- the /timeseries endpoints
+* the /timeseries endpoints
 
-- the /multitsframe endpoints
+* the /multitsframe endpoints
 
-- /dataframe (POST) endpoint
+* /dataframe (POST) endpoint
 
 ## Registering your adapter
 

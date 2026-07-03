@@ -1,5 +1,4 @@
 ## Logging in user / component code
-
 When writing component code you can use logging in the usual and recommended way of the Python stdlib logging module:
 
 ```python
@@ -23,3 +22,4 @@ In addition to the log output of the runtime service, these logs can also be vie
 ## Component Code Logging settings
 
 See [logging configuration documentation](../../deployment_operation/logging.md#component-code-logging) for configuring log level and maximum log messages for component code logging.
+

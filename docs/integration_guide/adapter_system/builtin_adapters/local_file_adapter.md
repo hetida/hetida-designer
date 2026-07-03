@@ -2,15 +2,15 @@
 
 The built-in mounted files adapter (also called "local file adapter") allows to read and write files in directories that are mounted (as volumes) into the runtime container. It currently enables mapping
 
-- DATAFRAME input/outputs to .csv (and variants like csv.zip), .xlsx / .xls / .odf, .parquet or .h5 files using corresponding Pandas functions
-- ANY input/outputs to .pkl files using Python's builtin pickle module for object serialization.
+* DATAFRAME input/outputs to .csv (and variants like csv.zip), .xlsx / .xls / .odf, .parquet or .h5 files using corresponding Pandas functions
+* ANY input/outputs to .pkl files using Python's builtin pickle module for object serialization.
 
 It is even possible to add your own file handlers for your file format.
 
 One purpose of this adapter is to access data from files, typically
 
-- at early exploratory stages of an analytical project.
-- if these data files are too large for manual input, i.e. data files exceeeding several hundred lines etc.
+* at early exploratory stages of an analytical project.
+* if these data files are too large for manual input, i.e. data files exceeeding several hundred lines etc.
 
 Furthermore even some production setups may work with data files instead of proper databases, for example via mounted SFTP directories or NFS shares.
 
@@ -44,7 +44,7 @@ The local file adapter is built into the runtime and needs to know which mounted
   hetida-designer-runtime:
     ...
     environment:
-      RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
+      RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'  
 ```
 
 ### Configuring the backend
@@ -58,7 +58,6 @@ local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|h
 If you have not changed anything else in your setup you may just leave this as is.
 
 ### Configuring generic sinks
-
 By default a generic sink for ANY type outputs is offered at each subdirectory of the configured local directories, allowing to write to generically named .pkl files. You can turn this off via setting the environment variable `RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS` to `false`.
 
 When used these generic sinks create files with name consisiting of timestamp at writing time and the job_id of the execution job.
@@ -87,9 +86,9 @@ Now all mounted directories and included local files with known extensions (.csv
 
 This makes them available for reading with default settings, e.g. the default settings employed by the corresponding Pandas functions [read_csv](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) or [read_excel](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html) for dataframes. The next sections describe how to
 
-- allow writing of files
+* allow writing of files
 
-- use different settings for reading/writing than the default settings
+* use different settings for reading/writing than the default settings
 
 ### Accompanying .settings.json - Writing and load/write settings
 
@@ -97,14 +96,14 @@ Allowing writing of files and also configuring the settings for loading / writin
 
 ```json
 {
-  "loadable": true,
-  "load_settings": {
-    "sep": ";"
-  },
-  "writable": true,
-  "write_settings": {
-    "sep": ";"
-  }
+    "loadable": true,
+    "load_settings": {
+        "sep": ";"
+    },
+    "writable": true,
+    "write_settings": {
+        "sep": ";"
+    }
 }
 ```
 

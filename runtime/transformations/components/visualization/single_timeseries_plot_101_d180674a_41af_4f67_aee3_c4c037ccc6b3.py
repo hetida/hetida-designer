@@ -11,7 +11,7 @@ Creates an interactive Plotly line chart for a single time series.
 * **series** (*Pandas Series*): Timeseries to be plotted. Values must be numeric and the index must be a `DateTimeIndex`.
 * **ymin** (*float, optional*): Lower limit of the y-axis. If not specified, the minimum value is determined automatically from the data.
 * **ymax** (*float, optional*): Upper limit of the y-axis. If not specified, the maximum value is determined automatically from the data.
-* **colour** (*string, optional*): Line color of the plotted series. Defaults to `#89CE6E` (light green).
+* **color** (*string, optional*): Line color of the plotted series. Defaults to `#89CE6E` (light green). Can also be a named color, e.g. "red" or a fuseki color like "ki.tech".
 * **ylabel** (*string, optional*): Label of the y-axis. If not specified, the metric name and unit are extracted from the series metadata, if available.
 * **xmin** (*string, optional*): Lower x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the minimum timestamp of the series is used.
 * **xmax** (*string, optional*): Upper x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the maximum timestamp of the series is used.
@@ -130,6 +130,20 @@ from hdutils import plotly_fig_to_json_dict
 
 pio.templates.default = None
 
+FUSEKI_COLORS = {
+    "ki.vision": "#eb7c45",  # orange
+    "ki.change": "#2fae53",  # green
+    "ki.contrast": "#232326",  # black
+    "ki.insight": "#e5cf64",  # yellow / gold
+    "ki.tech": "#80b0ec",  # blue
+    "ki.shade": "#8c8c98",  # gray
+    "ki.vision.bright": "#ffb058",  # light orange
+    "ki.change.bright": "#89ce6e",  # light green
+    "ki.light": "#f8f8f8",  # off-white / light gray
+    "ki.energy": "#eb6962",  # red / coral
+    "ki.science": "#bd7abb",  # purple
+}
+
 DEFAULT_EMPTY_XMIN = pd.Timestamp("1970-01-01 00:00:00", tz="UTC")
 DEFAULT_EMPTY_XMAX = pd.Timestamp("1970-01-02 00:00:00", tz="UTC")
 
@@ -233,7 +247,7 @@ COMPONENT_INFO = {
         "series": {"data_type": "SERIES"},
         "ymin": {"data_type": "FLOAT", "default_value": None},
         "ymax": {"data_type": "FLOAT", "default_value": None},
-        "colour": {"data_type": "STRING", "default_value": "#89CE6E"},
+        "color": {"data_type": "STRING", "default_value": "#89CE6E"},
         "ylabel": {"data_type": "STRING", "default_value": None},
         "xmin": {"data_type": "STRING", "default_value": None},
         "xmax": {"data_type": "STRING", "default_value": None},
@@ -262,7 +276,7 @@ def main(
     series,
     ymin=None,
     ymax=None,
-    colour="#89CE6E",
+    color="#89CE6E",
     ylabel=None,
     xmin=None,
     xmax=None,
@@ -290,7 +304,7 @@ def main(
 
     fig.update_traces(
         {
-            "line_color": colour,
+            "line_color": FUSEKI_COLORS.get(color, color),
             "line_width": 1,
             "line_dash": "solid",
             "line_shape": shape,
@@ -303,7 +317,7 @@ def main(
         {
             "autosize": True,
             "height": 200,
-            "yaxis_title": ytitle,
+            "yaxis_title": None if not ytitle else {"text": ytitle, "standoff": 20},
             "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
         }
     )
@@ -337,7 +351,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": ""},
         },
         {
-            "workflow_input_name": "colour",
+            "workflow_input_name": "color",
             "use_default_value": True,
             "filters": {"value": "#89CE6E"},
         },
@@ -388,7 +402,7 @@ RELEASE_WIRING = {
             "filters": {"value": ""},
         },
         {
-            "workflow_input_name": "colour",
+            "workflow_input_name": "color",
             "use_default_value": True,
             "filters": {"value": "#89CE6E"},
         },
@@ -440,8 +454,8 @@ def test_empty_series():
     [
         pytest.param({"ymin": -1}, id="only ymin"),
         pytest.param({"ymin": -1, "ymax": 2}, id="ymin+ymax"),
-        pytest.param({"colour": "green"}, id="color is name"),
-        pytest.param({"colour": "#F54927"}, id="color is hex"),
+        pytest.param({"color": "green"}, id="color is name"),
+        pytest.param({"color": "#F54927"}, id="color is hex"),
         pytest.param({"xmin": "now-1d"}, id="only xmin"),
         pytest.param({"xmin": "now-1d", "xmax": "now+1d"}, id="xmin and xmax"),
         pytest.param({"connection_type": "backward_steps"}, id="connection_type"),

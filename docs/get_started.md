@@ -24,6 +24,6 @@ Then open `http://localhost/` in your browser to access the hetida designer's we
 
 ![hetida designer home screen](./assets/hetida-designer-home.png)
 
-### Next Steps
 
+### Next Steps
 From here we recommend working through the tutorials starting either with [basic concepts](./user_guide/tutorials/basic_concepts.md) or jumping directly into [component / workflow development](./user_guide/tutorials/component_workflow_tutorial.md).

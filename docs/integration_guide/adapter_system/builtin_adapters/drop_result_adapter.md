@@ -4,12 +4,12 @@ A built-in adapter that only can be wired to outputs: It simply drops/swallows t
 
 ![selecting drop adapter](../../../assets/select_drop_adapter.png)
 
-This is practical for components or workflows that provide a result that is not needed in all use cases. Or that provide the same result in two different ways, e.g. as a plot and as a SERIES: Interactively you may set the plot output to _Only Output_ and the SERIES output to _Drop Result_. For automated background executions it is probably vice versa.
+This is practical for components or workflows that provide a result that is not needed in all use cases. Or that provide the same result in two different ways, e.g. as a plot and as a SERIES: Interactively you may set the plot output to *Only Output* and the SERIES output to *Drop Result*. For automated background executions it is probably vice versa.
 
 !!! warning
-Wiring an output to the drop adapter does not mean that the output value is not calculated: hetida designer execution is not lazy with respect to Drop. So dropping the result does not help avoiding resource- or time-intensive computations.
-
+    Wiring an output to the drop adapter does not mean that the output value is not calculated: hetida designer execution is not lazy with respect to Drop. So dropping the result does not help avoiding resource- or time-intensive computations. 
+    
     Instead the [execution endpoint](../../trafo_exec_guide/execution_via_api.md#optional-parameters) supports an option `run_pure_plot_operators` that sould be disabled to actually avoid building and sending plots in automated production background jobs.
 
 !!! note
-There is also a base component named "Forget" that accepts an input and has no output and actually does nothing. Use this as an operator in your workflow if you even want to deny the choice of wiring an (unused) output of a workflow.
+    There is also a base component named "Forget" that accepts an input and has no output and actually does nothing. Use this as an operator in your workflow if you even want to deny the choice of wiring an (unused) output of a workflow.

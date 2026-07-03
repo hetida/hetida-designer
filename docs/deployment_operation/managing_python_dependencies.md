@@ -6,24 +6,25 @@ Often, workflow engines manage Python dependencies on the step / operator level,
 
 While appropriate for automation tasks, this is suboptimal for production Data Science / analytics / Machine Learning for several reasons:
 
-- For each step a new process must be started and managed:
-  - This adds a startup latency to each step
-  - Importing Python data science libraries often adds notable memory overhead and takes time
-- It requires data to be serialized/deserialized in-between steps, which is not feasible for efficient operation on large analytical datasets
+* For each step a new process must be started and managed:
+    * This adds a startup latency to each step
+    * Importing Python data science libraries often adds notable memory overhead and takes time
+* It requires data to be serialized/deserialized in-between steps, which is not feasible for efficient operation on large analytical datasets
 
 hetida designer runtime's execution simply runs in the same process which handles the execution request, with dependencies being those of the runtime container / process. No new processes are initialized and data is passed from one to the next operator by providing is as a reference/variable, i.e. data stays in-memory. See [design decisions](../design_decisions.md).
 
 That means adding dependencies requires adding them to the runtime image. Consequently
 
-- all executions share the same set of dependencies.
-- dependencies cannot be added ad-hoc or via the user interface.
-- a higher trust level towards user code is required, see [security hints](./security_hints.md), since operator execution is not sandboxed/isolated.
+* all executions share the same set of dependencies.
+* dependencies cannot be added ad-hoc or via the user interface.
+* a higher trust level towards user code is required, see [security hints](./security_hints.md), since operator execution is not sandboxed/isolated.
 
 !!! tip "Remark"
-Summarized there is a trade-off between convenience and isolation on the one side and production performance / efficiency on the other side. hetida designer opts for the latter.
+    Summarized there is a trade-off between convenience and isolation on the one side and production performance / efficiency on the other side. hetida designer opts for the latter.
 
 !!! info "Runtime Included Dependencies"
-Since dependencies cannot be added via user interface / on the fly, the hetida designer runtime docker image comes with a comprehensive set of Python Data Science dependencies pre-installed, like numpy, pandas, scikit-learn, scipy and many more.
+    Since dependencies cannot be added via user interface / on the fly, the hetida designer runtime docker image comes with a comprehensive set of Python Data Science dependencies pre-installed, like numpy, pandas, scikit-learn, scipy and many more.
+
 
 ## Adding custom Python dependencies
 
@@ -44,12 +45,11 @@ RUN pip install xgboost==1.4.2
 Now save the `docker-compose.yml` file as a new file with name `docker-compose-custom-dependencies.yml` and edit the hetida designer runtime service section as follows:
 
 ```yml
-
 ...
-hetida-designer-runtime:
-build:
-  context: .
-  dockerfile: Dockerfile-runtime-custom-python-deps
+    hetida-designer-runtime:
+    build:
+        context: .
+        dockerfile: Dockerfile-runtime-custom-python-deps
 ...
 ```
 
@@ -101,12 +101,11 @@ USER hd_app
 Now save the `docker-compose.yml` file as a new file with name `docker-compose-custom-dependencies.yml` and edit the hetida designer runtime service section as follows:
 
 ```yml
-
 ...
-hetida-designer-runtime:
-build:
-  context: .
-  dockerfile: Dockerfile-runtime-custom-python-deps
+    hetida-designer-runtime:
+    build:
+        context: .
+        dockerfile: Dockerfile-runtime-custom-python-deps
 ...
 ```
 
@@ -125,5 +124,4 @@ docker compose -f docker-compose-custom-dependencies.yml up -d
 To test availability of the xgboost library you may write a small component importing it (`import xgboost`) and verify that the component can be run.
 
 ## Employing separate runtime services with varying dependencies
-
 Using `HD_AUTH_RUNTIME_ENGINE_URL_BY_ROLE`, [multiple runtime services](./varying_runtime_services.md) with varying dependencies and environment variables can be employed and are selected based on a token role.
