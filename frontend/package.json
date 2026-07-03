@@ -45,14 +45,14 @@
     "angular-plotly.js": "^6.0.0",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",
-    "hd-wiring": "0.10.1",
-    "hetida-flowchart": "0.10.1",
+    "hd-wiring": "0.10.3",
+    "hetida-flowchart": "0.10.3",
     "js-sha256": "^0.11.0",
     "katex": "^0.16.28",
     "marked": "^17.0.1",
     "material-design-icons-iconfont": "^6.7.0",
     "monaco-editor": "^0.52.2",
-    "ng-hetida-flowchart": "0.10.1",
+    "ng-hetida-flowchart": "0.10.3",
     "ngx-monaco-editor-v2": "^19.0.2",
     "plotly.js": "^3.0.1",
     "plotly.js-locales": "^3.3.1",
@@ -107,5 +107,12 @@
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "typescript": "^5.6.3"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.1": true,
+    "es5-ext@0.10.64": true,
+    "esbuild@0.25.4": true,
+    "lmdb@3.2.6": true,
+    "msgpackr-extract@3.0.3": true
   }
 }
