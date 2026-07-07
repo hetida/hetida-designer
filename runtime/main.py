@@ -36,6 +36,9 @@ app = get_app()
 
 
 def detect_in_memory_db() -> bool:
+    if not get_config().is_backend_service:
+        return False
+
     from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     engine = get_db_engine()
@@ -143,7 +146,7 @@ if in_memory_db:
 
 
 if __name__ == "__main__":
-    if not in_memory_db:
+    if not in_memory_db and is_backend:
         logger.info("Running migrations from main.py since main.py was invoked directly.")
         run_migrations()
 
