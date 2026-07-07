@@ -1,3 +1,5 @@
+## 0.14.0
+- Added configurable Opentelemetry support via logfire
 - documentation rewrite + documentation building via static site generator (see https://hetida.github.io/hetida-designer)
 - add simple cron-based **scheduling**.
 - **MIGRATION NOTE**: If you have multiple backend service instances, e.g. if using additional restricted webservices you need to ensure that only the one frontend facing backend instance has `HETIDA_DESIGNER_SCHEDULING_ACTIVE=true` and all others have `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`. See the scheduling docs for details.
