@@ -1,14 +1,21 @@
-- documentation rewrite + documentation building via static site generator
-- add simple cron-based scheduling.
+- documentation rewrite + documentation building via static site generator (see https://hetida.github.io/hetida-designer)
+- add simple cron-based **scheduling**.
 - **MIGRATION NOTE**: If you have multiple backend service instances, e.g. if using additional restricted webservices you need to ensure that only the one frontend facing backend instance has `HETIDA_DESIGNER_SCHEDULING_ACTIVE=true` and all others have `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`. See the scheduling docs for details.
 - **MIGRATION NOTE**: In order for scheduling to work in authenticated setups you need to configure `HD_SCHEDULING_INTERNAL_AUTH_MODE=CLIENT` and `HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` to some service user credentials.
-- **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if still using gunicorn mode.
+- **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if you are still using gunicorn mode.
 - Proper obj / model repo path directory in nix shell setup
 - fix component adapter metadata wiring handling
 - fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 - Upgrade to Python 3.14
-- **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x> to major release 3.x. This may affect / break component code in multiple ways.
+- **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x to major release 3.x. This may affect / break component code in multiple ways.
 - **BREAKING CHANGE**: When using auth, audience and issuer checks are now active by default and will be carried out if environment variables `HD_AUTH_AUDIENCE` (defaults to `account`) or respectively `HD_AUTH_ISSUER` are set, which we recommend to always do.
+- maintenance endpoint for deleting old deprecated trafos now has two exclusion parameters (explicit revisions and one to only those that were disabled before a cutoff timestamp)
+- A new **[hdhelpers](https://github.com/hetida/hdhelpers)** library provides functionality to faciliate component writing, in particular for visualization components and for integration into hetida platform. E.g. to respect locale / language settings, different themes and use provided metadata of timeseries data. As an example, there is a new version of the "Single Timeseries Plot" component, that uses this helpers.
+- **Builtin Drop adapter**: When outputs are wired to this adapter, they are simply dropped. This faciliates writing components / workflows with multiple outputs where it depends on the concrete use case, which output is relevant.
+- **Builtin Plot adapter**: When outputs are wired to this adapter, these outputs are converted into a basic predefined plot suitable for the output type. This faciliates writing components / workflows so that the same workflow can be used in automation and to visually inspect results without the need to include a plot operator.
+- frontend / angular update to angular 19
+- make final docker images compatible with trivy scans.
+- minor fixes in forecast component
 
 ## 0.13.10
 
