@@ -190,9 +190,7 @@ def get_x_range(
     )
 
 
-def get_y_range(
-    series: pd.Series, ymin: float | None, ymax: float | None
-) -> tuple[float]:
+def get_y_range(series: pd.Series, ymin: float | None, ymax: float | None) -> tuple[float]:
 
     data_min = series.min()
     data_max = series.max()
@@ -215,9 +213,7 @@ def get_y_range(
     return ymin_to_use, ymax_to_use
 
 
-def apply_maximum_gap_size(
-    series: pd.Series, maximum_gap_size: str | None
-) -> pd.Series:
+def apply_maximum_gap_size(series: pd.Series, maximum_gap_size: str | None) -> pd.Series:
 
     if maximum_gap_size is None or series.empty:
         return series
@@ -309,9 +305,7 @@ def main(
     ymin_to_use, ymax_to_use = get_y_range(series=series, ymin=ymin, ymax=ymax)
     ytitle = get_y_title(series=series, ylabel=ylabel)
 
-    series_with_gaps = apply_maximum_gap_size(
-        series=series, maximum_gap_size=maximum_gap_size
-    )
+    series_with_gaps = apply_maximum_gap_size(series=series, maximum_gap_size=maximum_gap_size)
 
     # timezone handling for series
     series_with_tz = modify_timezone(series_with_gaps)
@@ -319,11 +313,7 @@ def main(
     mode = "lines" if 0 <= marker_threshold < len(series) else "lines+markers"
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
     fig = go.Figure(
-        [
-            go.Scatter(
-                x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False
-            )
-        ]
+        [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
     )
 
     fig.update_traces(
