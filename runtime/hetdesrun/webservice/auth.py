@@ -146,6 +146,7 @@ class BearerVerifier:
             # do not reload key if not forced
             return
         url = self.verifier_options.auth_url
+        logger.info("Getting public key from auth service...")
         try:
             resp = httpx.get(url, verify=self.verifier_options.verify_ssl, timeout=15)
         except httpx.HTTPError as e:

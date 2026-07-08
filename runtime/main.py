@@ -207,4 +207,7 @@ if __name__ == "__main__":
             reload=explicit_development_mode,
             host=host,
             port=port,
+            timeout_worker_healthcheck=int(
+                os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30")
+            ),
         )

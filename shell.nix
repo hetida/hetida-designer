@@ -260,6 +260,8 @@ let
     export HETIDA_DESIGNER_SCHEDULING_RETENTION_JOB_TRIGGER_INTERVAL_SECONDS=30 # for testing
     export HETIDA_DESIGNER_SCHEDULING_RETENTION_TIMEDELTA=PT5M # 5 minutes for testing
     export MODEL_REPO_PATH="$(mktemp -d)"
+    export WEB_CONCURRENCY=2
+    export UVICORN_TIMEOUT_WORKER_HEALTHCHECK=60
     echo "WAIT FOR POSTGRES DB"
     sleep 5 # wait for stopping possibly existing postgres instances before trying
     # wait for postgres to be up using the pg_isready utility
