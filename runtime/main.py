@@ -1,10 +1,4 @@
-"""Module for development/debugging execution of the Web Service
-
-In production the service will probably be executed using asgi in
-a proper webserving environment in a container.
-
-This file can be used for development/testing/debugging of the
-webservice using uvicorn as development web server.
+"""Module for development/debugging and actual execution of the Web Service
 
 Usage: Call with activated virtual environment via
     python main.py
@@ -12,8 +6,10 @@ from project directory.
 """
 
 import asyncio
+import datetime
 import logging
 import os
+import sys
 
 if __name__ == "__main__":
     if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
@@ -24,8 +20,29 @@ if __name__ == "__main__":
 from hetdesrun import configure_logging
 from hetdesrun.scheduling.management import start_scheduling
 
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module base imports done."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
+
+
 logger = logging.getLogger(__name__)
+
+
 configure_logging(logger)
+
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module logging configured."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
 
 
 # must be after logging config:
@@ -33,6 +50,15 @@ from hetdesrun.webservice import get_app
 from hetdesrun.webservice.config import get_config
 
 app = get_app()
+
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module further imports done and app object obtained."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
 
 
 def detect_in_memory_db() -> bool:
@@ -112,6 +138,14 @@ def run_trafo_rev_deployment():
 
 
 in_memory_db = detect_in_memory_db()
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] in memory db: {in_memory_db}."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
 is_backend = get_config().is_backend_service
 
 consumption_mode_variable = os.environ.get("HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE", None)
