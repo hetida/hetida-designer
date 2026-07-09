@@ -226,13 +226,20 @@ if __name__ == "__main__":
             host.lower() in {"localhost", "127.0.0.1"} or explicit_development_mode
         ) and not explicit_no_development_mode
         port = int(os.environ.get("PORT", "8000"))
+        worker_healthcheck_timeout = int(os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30"))
         log_level = os.environ.get("UVICORN_LOG_LEVEL", "info")
+        web_concurrency = os.environ.get("WEB_CONCURRENCY", "UNSET")
         logger.info(
-            "Start uvicorn app as host %s with port %s with uvicorn log level %s%s",
+            (
+                "Start uvicorn app as host %s with port %s with uvicorn log level %s%s"
+                " with web concurrency %s and worker healthcheck timeout %s"
+            ),
             str(host),
             str(port),
             log_level,
             " in reload/development mode" if reload_mode else "",
+            web_concurrency,
+            worker_healthcheck_timeout,
         )
 
         uvicorn.run(
@@ -241,7 +248,5 @@ if __name__ == "__main__":
             reload=explicit_development_mode,
             host=host,
             port=port,
-            timeout_worker_healthcheck=int(
-                os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30")
-            ),
+            timeout_worker_healthcheck=worker_healthcheck_timeout,
         )

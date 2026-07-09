@@ -2,9 +2,10 @@
 
 ## Timeouts during execution
 
-When executing long-running workflows or when loading or sending huge amounts of data, timeouts can occur, leading to execution errors. Timeouts can occur at different steps:
+When executing long-running workflows or when loading or sending huge amounts of data, timeouts can occur, leading to execution errors. Timeouts can occur at different steps of the overall process:
 
 * If running the workflow via the test execution button, the frontend container nginx reverse proxy can time out. To adjust these timeouts the [nginx.conf file](https://github.com/hetida/hetida-designer/blob/release/frontend/nginx.conf) must be modified. One way to do this is mounting a modified nginx.conf to the appropriate location into the service-container.
-* The backend / runtime uvicorn Server can time out. These [timeouts](https://uvicorn.dev/settings/#timeouts) can be set via [environment variables](https://uvicorn.dev/settings/#configuration-methods). For the deprecated gunicorn mode these timeouts can be set via `TIMEOUT` and `GRACEFUL_TIMEOUT` environment variables on the backend / runtime service. See [gunicorn documentation](https://docs.gunicorn.org/en/stable/settings.html#timeout).
+* The backend / runtime uvicorn Server can time out. These [timeouts](https://uvicorn.dev/settings/#timeouts) can be set via [environment variables](https://uvicorn.dev/settings/#configuration-methods). For the worker timeout in multi-worker process setup (i.e. `WEB_CONCURRENCY`>1) hetida designer backend/runtime introduce `UVICORN_TIMEOUT_WORKER_HEALTHCHECK` environment variable, defaulting to 30 (seconds). It is often necessary to increase this to allow handling compute intensive data science runtime executions.
+* For the deprecated gunicorn mode these timeouts can be set via `TIMEOUT` and `GRACEFUL_TIMEOUT` environment variables on the backend / runtime service. See [gunicorn documentation](https://docs.gunicorn.org/en/stable/settings.html#timeout).
 * Requests to send or receive data from the runtime to the adapter or requests to execute workflows/components from the backend to the runtime can cause timeouts. These timeouts can be set via the `EXTERNAL_REQUEST_TIMEOUT` envirionment variables on the backend / runtime service.
 * If running in kubernetes using an ingress, the ingress may have its own timeout settings.
