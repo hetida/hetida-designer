@@ -171,6 +171,7 @@ def update_schedule_execution(
                 transformation_state=db_model.transformation_state,
                 state=db_model.state,
                 trafo_exec_job_id=db_model.trafo_exec_job_id,
+                exec_input=db_model.exec_input,
                 exec_result=db_model.exec_result,
                 error_message=db_model.error_message,
             )
@@ -239,12 +240,7 @@ def select_latest_schedule_execution_by_schedule_id(
     exclude_exec_result: bool = False,
     exclude_exec_input: bool = False,
 ) -> ScheduleExecution | None:
-    # Select only the required columns and omit exec_result / exec_input from the
-    # query when they are excluded: these fields can be large, so this avoids both
-    # transferring them from the database and parsing/validating them into pydantic
-    # models. A transient ScheduleExecutionDBModel is constructed from the row rather
-    # than fetching the persistent ORM entity, so nothing is flushed back to the
-    # database on transaction commit.
+
     selection = select(
         *(
             (
