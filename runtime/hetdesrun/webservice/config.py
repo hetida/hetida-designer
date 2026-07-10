@@ -385,6 +385,22 @@ class RuntimeConfig(BaseSettings):
         validation_alias=AliasChoices("HD_AUTH_ISSUER", "JWT_ISSUER"),
     )
 
+    auth_allowed_algorithms: str = Field(
+        "RS256,RS384,RS512,ES256,ES384,ES512",
+        description=(
+            "Comma separated list of JWT signature algorithms that are accepted when"
+            " verifying bearer tokens. This MUST only contain asymmetric algorithms:"
+            " the verification key is the public key obtained from the auth provider's"
+            " JWKS endpoint, so allowing symmetric algorithms (HS256/HS384/HS512) would"
+            " enable algorithm-confusion attacks where an attacker signs a forged token"
+            " with the (public) key as an HMAC secret. The default covers the RSA and"
+            " ECDSA algorithms commonly offered by OpenID Connect providers such as"
+            " Keycloak; adjust it to match the algorithm(s) your provider signs with."
+        ),
+        validation_alias="HD_AUTH_ALLOWED_ALGORITHMS",
+        examples=["RS256", "RS256,ES256"],
+    )
+
     auth_verify_certs: bool = Field(True, validation_alias="HD_AUTH_VERIFY_CERTS")
 
     auth_role_key: str = Field(

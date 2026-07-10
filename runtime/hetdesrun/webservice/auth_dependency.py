@@ -158,6 +158,9 @@ bearer_verifier = BearerVerifier.from_verifier_options(
     verify_ssl=get_config().auth_verify_certs,
     audience=get_config().auth_audience,
     issuer=get_config().auth_issuer,
+    allowed_algorithms=[
+        alg.strip() for alg in get_config().auth_allowed_algorithms.split(",") if alg.strip()
+    ],
 )
 
 

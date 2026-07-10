@@ -23,6 +23,11 @@ DEFAULT_OPTIONS = {
     # so we require it
 }
 
+# Asymmetric JWT signature algorithms accepted by default. Only asymmetric algorithms
+# may be listed here. These cover the algorithms commonly offered by OpenID Connect providers such
+# as Keycloak (and are the asymmetric signing algorithms supported by python-jose).
+DEFAULT_ALLOWED_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+
 
 class FrontendAuthOptions(BaseModel):
     """For html backends using keycloak-js
@@ -48,6 +53,12 @@ class BearerVerifierOptions(BaseModel):
         description="default options for jwt decoding. These will be used"
         " if no options are provided explicitely on invoking the verify_token"
         " method of the BearerVerifier",
+    )
+    allowed_algorithms: list[str] = Field(
+        default_factory=lambda: list(DEFAULT_ALLOWED_ALGORITHMS),
+        description="Signature algorithms accepted when verifying bearer tokens."
+        " Must contain only asymmetric algorithms (the verification key is a public"
+        " key), otherwise algorithm-confusion attacks become possible.",
     )
     verify_ssl: bool = Field(True)
 
@@ -77,6 +88,7 @@ class BearerVerifier:
         reload_public_key: bool = True,
         public_key_reloading_minimum_age: datetime.timedelta = datetime.timedelta(seconds=15),
         default_decoding_options: dict = DEFAULT_OPTIONS,
+        allowed_algorithms: list[str] | None = None,
         verify_ssl: bool = True,
     ) -> BearerVerifier:
         """Return a 'BearerVerifier' object bases on the provided parameters."""
@@ -88,6 +100,11 @@ class BearerVerifier:
                 reload_public_key=reload_public_key,
                 public_key_reloading_minimum_age=public_key_reloading_minimum_age,
                 default_decoding_options=default_decoding_options,
+                allowed_algorithms=(
+                    allowed_algorithms
+                    if allowed_algorithms is not None
+                    else list(DEFAULT_ALLOWED_ALGORITHMS)
+                ),
                 verify_ssl=verify_ssl,
             )
         )
@@ -111,6 +128,7 @@ class BearerVerifier:
             decoded_bearer_token: dict = jwt.decode(
                 access_token,
                 key=self._public_key_data,
+                algorithms=self.verifier_options.allowed_algorithms,
                 audience=self.verifier_options.audience,
                 issuer=self.verifier_options.issuer,
                 options=options,
