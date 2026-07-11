@@ -27,6 +27,21 @@ from hetdesrun.trafoutils.io.load import (
 from hetdesrun.utils import State, get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
+
+@pytest.fixture()
+def allow_test_callback_url():
+    """Permit the callback URL used by the async execution tests.
+
+    Callback URLs must match the configured allowlist
+    (HD_ALLOWED_CALLBACK_URL_PATTERNS), which is empty by default (fail closed).
+    """
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.allowed_callback_url_patterns",
+        ["http://callback-url.com/*"],
+    ) as _fixture:
+        yield _fixture
+
+
 tr_json_component_1 = {
     "id": str(get_uuid_from_seed("component 1")),
     "revision_group_id": str(get_uuid_from_seed("group of component 1")),
@@ -1710,7 +1725,7 @@ async def test_execute_for_transformation_revision_workflow_with_optional_inputs
 
 @pytest.mark.asyncio
 async def test_execute_asynchron_for_transformation_revision_works(
-    async_test_client, mocked_clean_test_db_session
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
@@ -1755,8 +1770,43 @@ async def test_execute_asynchron_for_transformation_revision_works(
 
 
 @pytest.mark.asyncio
+async def test_execute_async_rejects_callback_url_not_in_allowlist(
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
+):
+    """A callback_url that does not match the configured allowlist must be rejected
+    before any execution is scheduled or any result is posted (SSRF / token-leak fix).
+    """
+    tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+    store_single_transformation_revision(tr_workflow_2)
+    update_or_create_nesting(tr_workflow_2)
+
+    exec_by_id_input = ExecByIdInput(
+        id=tr_workflow_2.id,
+        wiring=tr_workflow_2.test_wiring,
+        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+    )
+
+    send_mock = mock.AsyncMock()
+    with mock.patch(
+        "hetdesrun.backend.service.transformation_router.send_result_to_callback_url",
+        new=send_mock,
+    ):
+        async with async_test_client as ac:
+            response = await ac.post(
+                "/api/transformations/execute-async",
+                json=json.loads(exec_by_id_input.model_dump_json()),
+                # host is not on the allowlist (only http://callback-url.com/* is)
+                params={"callback_url": "http://attacker.example.com/steal"},
+            )
+
+    assert response.status_code == 400
+    assert "callback_url" in response.json()["detail"]
+    assert not send_mock.called
+
+
+@pytest.mark.asyncio
 async def test_execute_async_for_transformation_revision_with_exception(
-    async_test_client, mocked_clean_test_db_session, caplog
+    async_test_client, mocked_clean_test_db_session, caplog, allow_test_callback_url
 ):
     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -1859,7 +1909,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
 
 @pytest.mark.asyncio
 async def test_execute_latest_async_for_transformation_revision_works(
-    async_test_client, mocked_clean_test_db_session
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
@@ -1906,7 +1956,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
 
 @pytest.mark.asyncio
 async def test_execute_latest_async_for_transformation_revision_with_exception(
-    async_test_client, mocked_clean_test_db_session, caplog
+    async_test_client, mocked_clean_test_db_session, caplog, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
 

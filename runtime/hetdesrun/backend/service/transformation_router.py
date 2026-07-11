@@ -1,9 +1,11 @@
 import datetime
+import fnmatch
 import json
 import logging
 from copy import deepcopy
 from posixpath import join as posix_urljoin
 from typing import Annotated, Any
+from urllib.parse import urlsplit
 from uuid import UUID
 
 import httpx
@@ -1455,6 +1457,29 @@ def receive_execution_response(
     pass
 
 
+def callback_url_is_allowed(callback_url: str) -> bool:
+    """Check a caller-supplied callback URL against the configured allowlist.
+
+    Returns True only if callback patterns are configured (via
+    HD_ALLOWED_CALLBACK_URL_PATTERNS) and the URL matches at least one of them.
+
+    Only http/https URLs without embedded userinfo are ever accepted: rejecting
+    userinfo ensures a glob pattern that pins scheme and host (e.g.
+    "https://caller.example.com/cb*") cannot be bypassed via an authority such as
+    "https://caller.example.com@evil.example.com/". Matching uses shell-style globbing
+    against the (pydantic-normalized) URL string.
+    """
+    patterns = get_config().allowed_callback_url_patterns
+    if not patterns:
+        return False
+    split = urlsplit(callback_url)
+    if split.scheme not in ("http", "https"):
+        return False
+    if split.username is not None or split.password is not None:
+        return False
+    return any(fnmatch.fnmatchcase(callback_url, pattern) for pattern in patterns)
+
+
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
@@ -1552,6 +1577,15 @@ async def execute_asynchronous_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+    if not callback_url_is_allowed(str(callback_url)):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "The provided callback_url is not allowed. It must match one of the"
+                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
+            ),
+        )
+
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
     return {"message": f"Execution request with job_id={exec_by_id.job_id} accepted"}
@@ -1714,6 +1748,15 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+    if not callback_url_is_allowed(str(callback_url)):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "The provided callback_url is not allowed. It must match one of the"
+                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
+            ),
+        )
+
     background_tasks.add_task(execute_latest_and_post, exec_latest_by_group_id_input, callback_url)
 
     return {

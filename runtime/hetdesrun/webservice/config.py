@@ -236,6 +236,26 @@ class RuntimeConfig(BaseSettings):
             "such as a generic REST adapter"
         ),
     )
+    allowed_callback_url_patterns: list[str] = Field(
+        default_factory=list,
+        validation_alias="HD_ALLOWED_CALLBACK_URL_PATTERNS",
+        description=(
+            "Allowlist of URL patterns that the callback_url of the asynchronous"
+            " execution endpoints (/execute-async, /execute-latest-async) must match."
+            " A caller-supplied callback_url is only accepted if it matches at least one"
+            " pattern here; otherwise the request is rejected. This prevents the backend"
+            " from being abused to POST execution results (and, depending on the outgoing"
+            " auth mode, the service's own bearer token) to arbitrary hosts (SSRF)."
+            " Patterns use shell-style globbing (fnmatch): '*' matches any sequence of"
+            " characters, '?' a single character. Always pin the scheme and host and"
+            " include the path separator, e.g."
+            " 'https://caller.example.com/hd-callback*' to permit any query string such"
+            " as an identifying call id. Only http/https URLs without embedded userinfo"
+            " are ever considered. The default is an empty list, which disables the"
+            " asynchronous callback feature entirely (fail closed) until configured."
+        ),
+        examples=[["https://caller.example.com/hd-callback*"]],
+    )
     model_repo_path: str = Field(
         "/mnt/obj_repo",
         validation_alias="MODEL_REPO_PATH",
