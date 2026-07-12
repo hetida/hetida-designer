@@ -16,13 +16,12 @@ optionally fill them, and return a corrected series.
     One of "fill", "flag", "drop".
 - **method** (String, default value: "time"):
     Filling method. One of "time", "linear", "ffill", "bfill", "constant".
-- **limit_direction** (String, default value: "both"):
-    Interpolation direction for "time"/"linear" ("forward", "backward", "both").
-- **min_gap_length** (Integer, default value: 1):
-    Minimum number of consecutive missing points to consider a gap fillable.
-- **max_gap_length** (Integer, default value: 6):
-    Maximum length of fillable gaps. Standard is deliberately conservative.
-    Larger gaps are left as missing values.
+- **fill_direction** (String, default value: "both"):
+    Direction in which filling is allowed ("forward", "backward", "both").
+- **max_gap_duration** (String, default value: null):
+    Maximum size of an inner gap that may still be filled, for example `15min`,
+    `1h`, or `1D`. Larger inner gaps are left as missing values. If not set,
+    the component uses about six typical sampling intervals.
 - **constant_value** (Float, default value: 0):
     Constant value used when method="constant".
 - **resample_to** (String, default value: null):
@@ -50,8 +49,12 @@ optionally fill them, and return a corrected series.
    If interval boundaries are not aligned to the detected grid, boundaries are
    snapped to the nearest inner grid points while preserving the original
    timestamp phase of the series.
-7. Fills only gaps within the configured length limits.
-8. Returns the processed series.
+7. Gaps inside the measured data are treated with the selected fill method and
+   the configured maximum gap duration.
+8. Missing points before the first real value are always filled with that first value.
+9. Missing points after the last real value are never filled.
+10. This edge behavior is independent of how inner gaps are handled.
+11. Returns the processed series.
 
 ## Example
 ```json
@@ -121,7 +124,7 @@ optionally fill them, and return a corrected series.
     "2026-01-12T05:07:00Z": 20,
     "2026-01-12T05:13:00Z": 19
 },
-  "max_gap_length": 4
+  "max_gap_duration": "20min"
 }
 ```
 """
@@ -138,9 +141,8 @@ def validate_inputs(
     series: pd.Series,
     mode: str,
     method: str,
-    limit_direction: str,
-    min_gap_length: int,
-    max_gap_length: int | None,
+    fill_direction: str,
+    max_gap_duration: str | None,
     constant_value: float,
     resample_to: str | None,
     auto_frequency_determination: bool,
@@ -169,36 +171,33 @@ def validate_inputs(
             error_code="422",
             invalid_component_inputs=["method"],
         )
-    if limit_direction not in {"forward", "backward", "both"}:
+    if fill_direction not in {"forward", "backward", "both"}:
         raise ComponentInputValidationException(
-            "limit_direction must be one of 'forward', 'backward', 'both'",
+            "fill_direction must be one of 'forward', 'backward', 'both'",
             error_code="422",
-            invalid_component_inputs=["limit_direction"],
+            invalid_component_inputs=["fill_direction"],
         )
-    if not isinstance(min_gap_length, int):
+    if max_gap_duration is not None and not isinstance(max_gap_duration, str):
         raise ComponentInputValidationException(
-            "min_gap_length must be an integer >= 1",
+            "max_gap_duration must be a duration string like '15min' or null",
             error_code="422",
-            invalid_component_inputs=["min_gap_length"],
+            invalid_component_inputs=["max_gap_duration"],
         )
-    if min_gap_length < 1:
-        raise ComponentInputValidationException(
-            "min_gap_length must be >= 1",
-            error_code="422",
-            invalid_component_inputs=["min_gap_length"],
-        )
-    if max_gap_length is not None and not isinstance(max_gap_length, int):
-        raise ComponentInputValidationException(
-            "max_gap_length must be an integer >= min_gap_length or null",
-            error_code="422",
-            invalid_component_inputs=["max_gap_length"],
-        )
-    if max_gap_length is not None and max_gap_length < min_gap_length:
-        raise ComponentInputValidationException(
-            "max_gap_length must be >= min_gap_length",
-            error_code="422",
-            invalid_component_inputs=["max_gap_length"],
-        )
+    if max_gap_duration is not None:
+        try:
+            parsed_gap_duration = pd.to_timedelta(max_gap_duration)
+        except (TypeError, ValueError) as exc:
+            raise ComponentInputValidationException(
+                "max_gap_duration must be a valid duration string like '15min'",
+                error_code="422",
+                invalid_component_inputs=["max_gap_duration"],
+            ) from exc
+        if parsed_gap_duration <= pd.Timedelta(0):
+            raise ComponentInputValidationException(
+                "max_gap_duration must be positive",
+                error_code="422",
+                invalid_component_inputs=["max_gap_duration"],
+            )
     if mode == "fill" and method == "constant":
         if not isinstance(constant_value, (int, float)):
             raise ComponentInputValidationException(
@@ -230,6 +229,45 @@ def gap_lengths(mask: pd.Series) -> pd.Series:
     """Return gap length for each position in a boolean gap mask."""
     group = (mask != mask.shift()).cumsum()
     return mask.groupby(group).transform("sum")
+
+
+def split_gap_masks(series: pd.Series) -> tuple[pd.Series, pd.Series, pd.Series]:
+    missing_mask = series.isna()
+    left_edge_mask = pd.Series(False, index=series.index)
+    inner_gap_mask = pd.Series(False, index=series.index)
+    right_edge_mask = pd.Series(False, index=series.index)
+
+    if not missing_mask.any():
+        return left_edge_mask, inner_gap_mask, right_edge_mask
+
+    first_valid = series.first_valid_index()
+    last_valid = series.last_valid_index()
+
+    if first_valid is None or last_valid is None:
+        return left_edge_mask, inner_gap_mask, right_edge_mask
+
+    left_edge_mask = missing_mask & (series.index < first_valid)
+    right_edge_mask = missing_mask & (series.index > last_valid)
+    inner_gap_mask = missing_mask & ~(left_edge_mask | right_edge_mask)
+    return left_edge_mask, inner_gap_mask, right_edge_mask
+
+
+def infer_typical_step(series: pd.Series) -> pd.Timedelta | None:
+    diffs = series.index.to_series().diff().dropna()
+    positive_diffs = diffs[diffs > pd.Timedelta(0)]
+    if positive_diffs.empty:
+        return None
+    return positive_diffs.median()
+
+
+def resolve_max_gap_duration(series: pd.Series, max_gap_duration: str | None) -> pd.Timedelta | None:
+    if max_gap_duration is not None:
+        return pd.to_timedelta(max_gap_duration)
+
+    typical_step = infer_typical_step(series)
+    if typical_step is None:
+        return None
+    return 6 * typical_step
 
 
 def get_reference_interval_from_series_attrs(
@@ -525,7 +563,7 @@ def fill_series(
     series: pd.Series,
     fillable_mask: pd.Series,
     method: str,
-    limit_direction: str,
+    fill_direction: str,
     constant_value: float,
 ) -> pd.Series:
     if method == "constant":
@@ -536,7 +574,7 @@ def fill_series(
     if method in {"ffill", "bfill"}:
         filled = series.ffill() if method == "ffill" else series.bfill()
     else:
-        filled = series.interpolate(method=method, limit_direction=limit_direction)
+        filled = series.interpolate(method=method, limit_direction=fill_direction)
 
     # Restore non-fillable missing points
     filled.loc[~fillable_mask & series.isna()] = np.nan
@@ -550,10 +588,9 @@ COMPONENT_INFO = {
         "timeseries": {"data_type": "SERIES"},
         "mode": {"data_type": "STRING", "default_value": "fill"},
         "method": {"data_type": "STRING", "default_value": "time"},
-        "limit_direction": {"data_type": "STRING", "default_value": "both"},
+        "fill_direction": {"data_type": "STRING", "default_value": "both"},
         "auto_frequency_determination": {"data_type": "BOOLEAN", "default_value": True},
-        "min_gap_length": {"data_type": "INT", "default_value": 1},
-        "max_gap_length": {"data_type": "INT", "default_value": 6},
+        "max_gap_duration": {"data_type": "STRING", "default_value": None},
         "constant_value": {"data_type": "FLOAT", "default_value": 0.0},
         "resample_to": {"data_type": "STRING", "default_value": None},
     },
@@ -578,10 +615,9 @@ def main(
     timeseries,
     mode="fill",
     method="time",
-    limit_direction="both",
+    fill_direction="both",
     auto_frequency_determination=True,
-    min_gap_length=1,
-    max_gap_length=6,
+    max_gap_duration=None,
     constant_value=0.0,
     resample_to=None,
 ):
@@ -591,9 +627,8 @@ def main(
         timeseries,
         mode,
         method,
-        limit_direction,
-        min_gap_length,
-        max_gap_length,
+        fill_direction,
+        max_gap_duration,
         constant_value,
         resample_to,
         auto_frequency_determination,
@@ -611,25 +646,33 @@ def main(
         window_end=ref_interval_end,
     )
 
-    missing_mask = series.isna()
-    gap_lengths_values = gap_lengths(missing_mask)
-    fillable_mask = missing_mask & (gap_lengths_values >= min_gap_length)
-    if max_gap_length is not None:
-        fillable_mask &= gap_lengths_values <= max_gap_length
+    left_edge_mask, inner_gap_mask, right_edge_mask = split_gap_masks(series)
+    gap_lengths_values = gap_lengths(inner_gap_mask)
+    fillable_mask = inner_gap_mask.copy()
+    resolved_max_gap_duration = resolve_max_gap_duration(series, max_gap_duration)
+    if resolved_max_gap_duration is not None:
+        typical_step = infer_typical_step(series)
+        if typical_step is not None:
+            gap_durations = gap_lengths_values * typical_step
+            fillable_mask &= gap_durations <= resolved_max_gap_duration
+
+    processed = series.copy()
+    first_valid = series.first_valid_index()
+    if first_valid is not None and left_edge_mask.any():
+        processed.loc[left_edge_mask] = float(series.loc[first_valid])
+    processed.loc[right_edge_mask] = np.nan
 
     if mode == "fill":
         processed = fill_series(
-            series,
+            processed,
             fillable_mask,
             method,
-            limit_direction,
+            fill_direction,
             constant_value,
         )
+        processed.loc[right_edge_mask] = np.nan
     elif mode == "drop":
-        processed = series.copy()
         processed = processed.dropna()
-    else:
-        processed = series.copy()
 
     return {
         "corrected_timeseries": processed,

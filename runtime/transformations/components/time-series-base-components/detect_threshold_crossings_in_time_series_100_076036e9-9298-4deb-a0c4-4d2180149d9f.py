@@ -18,11 +18,9 @@ upward crossings, downward crossings, or both directions.
     - `downward`: detect crossings from above the threshold to below it.
     - `both`: detect both directions.
 - **inclusiveness** (String, default value: "strict"):
-    Controls how equality to the threshold is treated.
-    - `strict`: use strict comparisons.
-    - `inclusive`: treat equality at the current timestamp as part of the
-      crossing condition. For example, `8 -> 10` counts as an upward crossing,
-      but `10 -> 11` does not.
+    Controls whether touching the threshold already counts as a crossing.
+    - `strict`: the series must move from one side of the threshold to the other.
+    - `inclusive`: reaching the threshold already counts as a crossing.
 
 ## Outputs
 - **crossing_mask** (Pandas Series):
@@ -37,9 +35,9 @@ upward crossings, downward crossings, or both directions.
    that interval.
 4. Depending on `crossing_type`, upward crossings, downward crossings, or both
    are detected.
-5. Depending on `inclusiveness`, equality to the threshold is either ignored or
-   treated as crossing-relevant at the current timestamp.
-6. The crossing result of an interval is written to the right timestamp of that
+5. With `strict`, the series must move from one side of the threshold to the other.
+6. With `inclusive`, reaching the threshold already counts as a crossing.
+7. The crossing result of an interval is written to the right timestamp of that
    interval.
 
 ## Example

@@ -53,7 +53,7 @@ or different timestamps and should first be brought onto a common grid, use
       missing before applying the merge operation.
 - **merge_operation** (String, default value: "sum"):
     Defines how the aligned values from all metrics are merged into one result.
-    Must be one of `sum`, `min`, or `max`.
+    Must be one of `sum`, `mean`, `min`, or `max`.
 
 ## Outputs
 - **combined_series** (Pandas Series):
@@ -69,15 +69,17 @@ or different timestamps and should first be brought onto a common grid, use
    The result is then merged with the next metric series, and so on.
 6. This means `align_strategy`, `join_type`, `tolerance`, and `missing_policy`
    behave like in version 1.0.0, but are applied repeatedly.
-7. `sum`, `min`, and `max` are supported because they remain meaningful when
-   repeatedly combining more than two series.
-8. `mean` is deliberately not available in this version. Pairwise averaging
-   would weight earlier metrics differently from later metrics, which is not
-   what users usually expect.
-9. Operations such as `difference`, `ratio`, `left`, or `right` are also not
-   available because they are not clearly defined for an arbitrary number of
-   time series.
-10. If the input series are strongly irregular, either use `tolerance`
+7. `sum`, `min`, and `max` are supported directly by repeated pairwise
+   merging.
+8. `mean` is also supported. It is calculated as accumulated sum divided by
+   accumulated count, so each metric contributes with equal weight.
+9. For `missing_policy="keep_nan"`, the mean is calculated from the aligned
+   values that are available at a timestamp. For `missing_policy="drop_if_any_missing"`,
+   timestamps with a missing aligned value are removed before the mean is updated.
+10. Operations such as `difference`, `ratio`, `left`, or `right` are also not
+    available because they are not clearly defined for an arbitrary number of
+    time series.
+11. If the input series are strongly irregular, either use `tolerance`
     carefully or first create a common grid with `Resample Multi Time Series`.
 
 ## Recommended Workflow
@@ -131,6 +133,35 @@ Expected output:
   }
 }
 ```
+
+Second example with `merge_operation="mean"`:
+```json
+{
+  "multitsframe": [
+    {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_1", "value": 100.0},
+    {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_1", "value": 105.0},
+    {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_2", "value": 20.0},
+    {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_2", "value": 25.0},
+    {"timestamp": "2026-03-01T10:00:00Z", "metric": "inverter_3", "value": 10.0},
+    {"timestamp": "2026-03-01T10:05:00Z", "metric": "inverter_3", "value": 20.0}
+  ],
+  "align_strategy": "exact",
+  "join_type": "inner",
+  "tolerance": null,
+  "missing_policy": "keep_nan",
+  "merge_operation": "mean"
+}
+```
+
+Expected output:
+```json
+{
+  "combined_series": {
+    "2026-03-01T10:00:00Z": 43.3333333333,
+    "2026-03-01T10:05:00Z": 50.0
+  }
+}
+```
 """
 
 from __future__ import annotations
@@ -146,7 +177,7 @@ align_and_merge_two_time_series = import_comp("79ffe3ff-346f-4dad-ab38-ecb7b4773
 ALIGN_STRATEGIES = {"exact", "nearest", "forward_fill"}
 JOIN_TYPES = {"inner", "left", "right"}
 MISSING_POLICIES = {"keep_nan", "drop_if_any_missing"}
-MERGE_OPERATIONS = {"sum", "min", "max"}
+MERGE_OPERATIONS = {"sum", "mean", "min", "max"}
 REQUIRED_COLUMNS = {"timestamp", "metric", "value"}
 
 
@@ -293,6 +324,16 @@ def merge_metric_series(
     merge_operation: str,
 ) -> pd.Series:
     ordered_series = [metric_series[metric] for metric in sorted(metric_series)]
+
+    if merge_operation == "mean":
+        return merge_metric_series_mean(
+            ordered_series,
+            align_strategy,
+            join_type,
+            tolerance,
+            missing_policy,
+        )
+
     combined = ordered_series[0]
 
     for next_series in ordered_series[1:]:
@@ -306,6 +347,79 @@ def merge_metric_series(
             merge_operation=merge_operation,
         )["combined_series"]
 
+    return combined.astype(float)
+
+
+def merge_metric_series_mean(
+    ordered_series: list[pd.Series],
+    align_strategy: str,
+    join_type: str,
+    tolerance: str | None,
+    missing_policy: str,
+) -> pd.Series:
+    parsed_tolerance = align_and_merge_two_time_series.parse_fixed_timedelta_string(
+        tolerance, "tolerance"
+    ) if tolerance is not None else None
+
+    first_series = ordered_series[0].astype(float)
+    if missing_policy == "drop_if_any_missing":
+        running_sum = first_series.copy()
+        running_count = pd.Series(
+            np.where(first_series.notna(), 1.0, np.nan),
+            index=first_series.index,
+            dtype=float,
+        )
+    else:
+        running_sum = first_series.fillna(0.0)
+        running_count = pd.Series(
+            np.where(first_series.notna(), 1.0, 0.0),
+            index=first_series.index,
+            dtype=float,
+        )
+
+    for series_to_add in ordered_series[1:]:
+        next_series = series_to_add.astype(float)
+
+        if missing_policy == "drop_if_any_missing":
+            aligned_values = align_and_merge_two_time_series.build_aligned_frame(
+                running_sum,
+                next_series,
+                align_strategy,
+                join_type,
+                parsed_tolerance,
+            )
+            aligned_values = align_and_merge_two_time_series.apply_missing_policy(
+                aligned_values, missing_policy
+            )
+            running_sum = (aligned_values["value_1"] + aligned_values["value_2"]).astype(float)
+            running_count = (running_count.reindex(running_sum.index).fillna(0.0) + 1.0).astype(float)
+            continue
+
+        aligned_sum = align_and_merge_two_time_series.build_aligned_frame(
+            running_sum,
+            next_series.fillna(0.0),
+            align_strategy,
+            join_type,
+            parsed_tolerance,
+        )
+        running_sum = aligned_sum.fillna(0.0).sum(axis=1).astype(float)
+
+        next_count = pd.Series(
+            np.where(next_series.notna(), 1.0, 0.0),
+            index=next_series.index,
+            dtype=float,
+        )
+        aligned_count = align_and_merge_two_time_series.build_aligned_frame(
+            running_count,
+            next_count,
+            align_strategy,
+            join_type,
+            parsed_tolerance,
+        )
+        running_count = aligned_count.fillna(0.0).sum(axis=1).astype(float)
+
+    combined = running_sum / running_count
+    combined = combined.where(running_count > 0)
     return combined.astype(float)
 
 

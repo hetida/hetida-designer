@@ -10,7 +10,7 @@ Component to detect jumps in time series data.
     The input time series. Index must be datetime, values numeric.
 - **method** (String, default value: "robust_zscore_on_diff"):
     Jump detection method. One of "threshold_on_derivative",
-    "robust_zscore_on_diff".
+    "robust_zscore_on_diff", "absolute_change".
     - `threshold_on_derivative`: detects jumps via strong changes between
       consecutive values. This is the more specialized option.
       Best suited for:
@@ -24,6 +24,12 @@ Component to detect jumps in time series data.
       - noisy industrial sensor data
       - data with occasional spikes/outliers
       - cases where robust detection is preferred over maximum sensitivity
+    - `absolute_change`: detects jumps via a fixed minimum value change in the
+      original units of the time series.
+      Best suited for:
+      - signals with a known minimum relevant jump size
+      - engineering use cases with a clear physical threshold
+      - cases where a direct threshold in signal units is preferred
 - **sensitivity** (String, default value: "medium"):
     Controls how easily jumps are accepted after the internal auto-threshold is
     calculated. This is not an absolute jump size. It only changes how strict
@@ -32,8 +38,19 @@ Component to detect jumps in time series data.
     - `medium`: balanced default behavior
     - `high`: more sensitive detection, so smaller or more borderline jumps
       are more likely to be accepted
-- **min_distance** (Integer, default value: 2):
-    Minimum distance between two events (samples).
+- **sensitivity_factor** (Float, default value: null):
+    Optional direct factor for the internally inferred threshold. If this input
+    is set, it overrides `sensitivity`. For `method="absolute_change"`, this
+    input is ignored.
+    - values larger than `1.0` make detection stricter
+    - values smaller than `1.0` make detection more sensitive
+- **min_jump_size** (Float, default value: null):
+    Minimum absolute value change that creates a jump candidate. This input is
+    required for `method="absolute_change"` and ignored for the other methods.
+- **min_distance_time** (String, default value: null):
+    Optional minimum time distance between two reported jumps, for example
+    `5min`, `30min`, or `2h`. If this input is not set, the component uses
+    twice the typical sampling interval of the series.
 - **direction** (String, default value: "both"):
     Event direction filter. One of "both", "up", "down".
 - **smoothing_before** (Boolean, default value: False):
@@ -53,12 +70,13 @@ Component to detect jumps in time series data.
 4. Transitions over unusually large time gaps are excluded from jump scoring,
    so a jump is not inferred purely across a long data gap.
 5. The score is compared against a robust internally determined threshold that
-   is scaled by `sensitivity`.
+   is scaled by `sensitivity` or by `sensitivity_factor` if it is set. For
+   `method="absolute_change"`, `min_jump_size` is used instead.
 6. Candidates are filtered by direction and persistent post-jump behavior.
 7. A candidate is kept at its original change timestamp, but only if the next
    five points confirm a sufficiently stable new level. This helps suppress
    short spikes that immediately return to the old level.
-8. Remaining candidates are reduced by minimum event distance.
+8. Remaining candidates are reduced by minimum time distance between events.
 9. The final jump mask is returned.
 
 ## Recommended Usage
@@ -66,8 +84,12 @@ Use the defaults first: `method="robust_zscore_on_diff"`,
 `sensitivity="medium"`, and `smoothing_before=false`.
 
 If too many jumps are detected, use `sensitivity="low"` first. If clear jumps
-are missed, use `sensitivity="high"`. Enable `smoothing_before` only when the
+are missed, use `sensitivity="high"`. If finer tuning is needed, set
+`sensitivity_factor` directly. Enable `smoothing_before` only when the
 signal is visibly noisy and small fluctuations create false candidates.
+
+If a fixed jump size in the original signal units is known, use
+`method="absolute_change"` together with `min_jump_size`.
 
 For a real jump, the component expects a persistent level change. A single
 large spike is usually rejected if the values return quickly to the previous
@@ -104,7 +126,9 @@ level.
   },
   "method": "robust_zscore_on_diff",
   "sensitivity": "medium",
-  "min_distance": 2,
+  "sensitivity_factor": null,
+  "min_jump_size": null,
+  "min_distance_time": null,
   "direction": "both",
   "smoothing_before": false
 }
@@ -141,6 +165,43 @@ Expected output:
   }
 }
 ```
+
+Second example with `method="absolute_change"`:
+```json
+{
+  "timeseries": {
+    "2026-03-01T00:00:00Z": 10.0,
+    "2026-03-01T01:00:00Z": 10.2,
+    "2026-03-01T02:00:00Z": 10.1,
+    "2026-03-01T03:00:00Z": 18.5,
+    "2026-03-01T04:00:00Z": 18.6,
+    "2026-03-01T05:00:00Z": 18.4,
+    "2026-03-01T06:00:00Z": 18.5
+  },
+  "method": "absolute_change",
+  "sensitivity": "medium",
+  "sensitivity_factor": null,
+  "min_jump_size": 5.0,
+  "min_distance_time": null,
+  "direction": "both",
+  "smoothing_before": false
+}
+```
+
+Expected output:
+```json
+{
+  "jump_mask": {
+    "2026-03-01T00:00:00Z": false,
+    "2026-03-01T01:00:00Z": false,
+    "2026-03-01T02:00:00Z": false,
+    "2026-03-01T03:00:00Z": true,
+    "2026-03-01T04:00:00Z": false,
+    "2026-03-01T05:00:00Z": false,
+    "2026-03-01T06:00:00Z": false
+  }
+}
+```
 """
 
 from __future__ import annotations
@@ -169,7 +230,9 @@ def validate_and_normalize_inputs(
     timeseries: pd.Series,
     method: str,
     sensitivity: str,
-    min_distance: int,
+    sensitivity_factor: float | None,
+    min_jump_size: float | None,
+    min_distance_time: str | None,
     direction: str,
 ) -> None:
     if not isinstance(timeseries, pd.Series):
@@ -200,6 +263,7 @@ def validate_and_normalize_inputs(
     valid_methods = {
         "threshold_on_derivative",
         "robust_zscore_on_diff",
+        "absolute_change",
     }
     if method not in valid_methods:
         raise ComponentInputValidationException(
@@ -222,12 +286,55 @@ def validate_and_normalize_inputs(
             invalid_component_inputs=["sensitivity"],
         )
 
-    if not isinstance(min_distance, int) or min_distance < 1:
-        raise ComponentInputValidationException(
-            "min_distance must be an integer >= 1",
-            error_code="422",
-            invalid_component_inputs=["min_distance"],
-        )
+    if sensitivity_factor is not None:
+        if not isinstance(sensitivity_factor, int | float) or not np.isfinite(float(sensitivity_factor)):
+            raise ComponentInputValidationException(
+                "sensitivity_factor must be a finite number",
+                error_code="422",
+                invalid_component_inputs=["sensitivity_factor"],
+            )
+        if float(sensitivity_factor) <= 0:
+            raise ComponentInputValidationException(
+                "sensitivity_factor must be greater than zero",
+                error_code="422",
+                invalid_component_inputs=["sensitivity_factor"],
+            )
+
+    if method == "absolute_change":
+        if min_jump_size is None:
+            raise ComponentInputValidationException(
+                "min_jump_size must be set when method is 'absolute_change'",
+                error_code="422",
+                invalid_component_inputs=["min_jump_size"],
+            )
+        if not isinstance(min_jump_size, int | float) or not np.isfinite(float(min_jump_size)):
+            raise ComponentInputValidationException(
+                "min_jump_size must be a finite number",
+                error_code="422",
+                invalid_component_inputs=["min_jump_size"],
+            )
+        if float(min_jump_size) <= 0:
+            raise ComponentInputValidationException(
+                "min_jump_size must be greater than zero",
+                error_code="422",
+                invalid_component_inputs=["min_jump_size"],
+            )
+
+    if min_distance_time is not None:
+        try:
+            min_distance_delta = pd.to_timedelta(min_distance_time)
+        except ValueError as exc:
+            raise ComponentInputValidationException(
+                "min_distance_time must be a valid fixed timedelta string like '5min', '30min', or '2h'",
+                error_code="422",
+                invalid_component_inputs=["min_distance_time"],
+            ) from exc
+        if min_distance_delta <= pd.Timedelta(0):
+            raise ComponentInputValidationException(
+                "min_distance_time must be greater than zero",
+                error_code="422",
+                invalid_component_inputs=["min_distance_time"],
+            )
 
 
 def prepare_series(timeseries: pd.Series) -> pd.Series:
@@ -252,6 +359,18 @@ def infer_typical_dt_seconds(index: pd.Index) -> float | None:
     if not np.isfinite(typical_dt_seconds) or typical_dt_seconds <= 0:
         return None
     return typical_dt_seconds
+
+def resolve_min_distance_time(
+    index: pd.Index,
+    min_distance_time: str | None,
+) -> pd.Timedelta:
+    if min_distance_time is not None:
+        return pd.to_timedelta(min_distance_time)
+
+    typical_dt_seconds = infer_typical_dt_seconds(index)
+    if typical_dt_seconds is None:
+        return pd.Timedelta(0)
+    return pd.to_timedelta(2.0 * typical_dt_seconds, unit="s")
 
 
 def build_large_gap_mask(
@@ -304,8 +423,13 @@ def robust_auto_threshold(score: pd.Series) -> float:
     return med + 3.5 * sigma
 
 
-def apply_sensitivity_to_threshold(threshold: float, sensitivity: str) -> float:
-    return float(threshold) * SENSITIVITY_FACTORS[sensitivity]
+def apply_sensitivity_to_threshold(
+    threshold: float,
+    sensitivity: str,
+    sensitivity_factor: float | None,
+) -> float:
+    factor = float(sensitivity_factor) if sensitivity_factor is not None else SENSITIVITY_FACTORS[sensitivity]
+    return float(threshold) * factor
 
 
 def passes_direction(magnitude: float, direction: str) -> bool:
@@ -319,25 +443,19 @@ def passes_direction(magnitude: float, direction: str) -> bool:
 def enforce_min_distance(
     candidates: pd.Index,
     magnitudes: pd.Series,
-    min_distance: int,
-    index_positions: pd.Series,
+    min_distance_time: pd.Timedelta,
 ) -> pd.Index:
     if len(candidates) == 0:
         return candidates
 
     kept: list[pd.Timestamp] = []
     last_kept_ts: pd.Timestamp | None = None
-    last_kept_pos: int | None = None
-
     for ts in candidates:
-        pos = int(index_positions.loc[ts])
-        if last_kept_pos is None or pos - last_kept_pos >= min_distance:
+        if last_kept_ts is None or ts - last_kept_ts >= min_distance_time:
             kept.append(ts)
-            last_kept_pos = pos
             last_kept_ts = ts
         elif abs(float(magnitudes.loc[ts])) > abs(float(magnitudes.loc[last_kept_ts])):
             kept[-1] = ts
-            last_kept_pos = pos
             last_kept_ts = ts
 
     return pd.Index(kept)
@@ -441,18 +559,20 @@ def filter_persistent_jumps(
 def detect_threshold_on_derivative(
     series: pd.Series,
     sensitivity: str,
+    sensitivity_factor: float | None,
 ) -> tuple[pd.Series, float]:
     derivative = calculate_difference_per_second(series)
     large_gap_mask = build_large_gap_mask(series.index, MAX_ALLOWED_GAP_FACTOR)
     derivative = derivative.mask(large_gap_mask)
     score = derivative.abs()
-    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity)
+    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity, sensitivity_factor)
     return score, used_threshold
 
 
 def detect_robust_zscore_on_diff(
     series: pd.Series,
     sensitivity: str,
+    sensitivity_factor: float | None,
 ) -> tuple[pd.Series, pd.Series, float]:
     diff_signal = series.diff()
     large_gap_mask = build_large_gap_mask(series.index, MAX_ALLOWED_GAP_FACTOR)
@@ -467,8 +587,19 @@ def detect_robust_zscore_on_diff(
     else:
         z = (diff_signal - med) / scale
     score = z.abs()
-    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity)
+    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity, sensitivity_factor)
     return score, diff_signal, used_threshold
+
+
+def detect_absolute_change(
+    series: pd.Series,
+    min_jump_size: float,
+) -> tuple[pd.Series, pd.Series, float]:
+    diff_signal = series.diff()
+    large_gap_mask = build_large_gap_mask(series.index, MAX_ALLOWED_GAP_FACTOR)
+    diff_signal = diff_signal.mask(large_gap_mask)
+    score = diff_signal.abs()
+    return score, diff_signal, float(min_jump_size)
 
 
 # ***** DO NOT EDIT LINES BELOW *****
@@ -478,7 +609,9 @@ COMPONENT_INFO = {
         "timeseries": {"data_type": "SERIES"},
         "method": {"data_type": "STRING", "default_value": "robust_zscore_on_diff"},
         "sensitivity": {"data_type": "STRING", "default_value": "medium"},
-        "min_distance": {"data_type": "INT", "default_value": 2},
+        "sensitivity_factor": {"data_type": "FLOAT", "default_value": None},
+        "min_jump_size": {"data_type": "FLOAT", "default_value": None},
+        "min_distance_time": {"data_type": "STRING", "default_value": None},
         "direction": {"data_type": "STRING", "default_value": "both"},
         "smoothing_before": {"data_type": "BOOLEAN", "default_value": False},
     },
@@ -503,7 +636,9 @@ def main(
     timeseries,
     method="robust_zscore_on_diff",
     sensitivity="medium",
-    min_distance=2,
+    sensitivity_factor=None,
+    min_jump_size=None,
+    min_distance_time=None,
     direction="both",
     smoothing_before=False,
 ):
@@ -514,7 +649,9 @@ def main(
         timeseries,
         method,
         sensitivity,
-        min_distance,
+        sensitivity_factor,
+        min_jump_size,
+        min_distance_time,
         direction,
     )
 
@@ -524,13 +661,17 @@ def main(
     # Step 3: Optionally smooth the series before jump scoring.
     smoothed = apply_smoothing(prepared, smoothing_before, SMOOTHING_WINDOW)
     large_gap_mask = build_large_gap_mask(smoothed.index, MAX_ALLOWED_GAP_FACTOR)
+    resolved_min_distance_time = resolve_min_distance_time(smoothed.index, min_distance_time)
 
     # Step 4: Calculate score and magnitudes for the selected method.
     if method == "threshold_on_derivative":
-        score, used_threshold = detect_threshold_on_derivative(smoothed, sensitivity)
+        score, used_threshold = detect_threshold_on_derivative(smoothed, sensitivity, sensitivity_factor)
         magnitudes = calculate_difference_per_second(smoothed)
+    elif method == "absolute_change":
+        score, diff_signal, used_threshold = detect_absolute_change(smoothed, float(min_jump_size))
+        magnitudes = diff_signal
     else:
-        score, diff_signal, used_threshold = detect_robust_zscore_on_diff(smoothed, sensitivity)
+        score, diff_signal, used_threshold = detect_robust_zscore_on_diff(smoothed, sensitivity, sensitivity_factor)
         magnitudes = diff_signal
 
     # Step 5: Apply threshold on score to get initial candidate jumps.
@@ -569,7 +710,7 @@ def main(
     )
 
     # Step 10: Enforce minimum distance and keep strongest nearby event.
-    filtered_index = enforce_min_distance(candidate_index, magnitudes, min_distance, positions)
+    filtered_index = enforce_min_distance(candidate_index, magnitudes, resolved_min_distance_time)
 
     # Step 11: Build output mask.
     jump_mask = pd.Series(False, index=smoothed.index)
