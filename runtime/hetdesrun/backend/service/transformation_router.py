@@ -1490,8 +1490,14 @@ async def send_result_to_callback_url(
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
-        msg = f"Failed to get auth headers for sending result to callback url. Error was:\n{str(e)}"
+        msg = (
+            "Failed to get auth headers for sending result to callback url."
+            f" Aborting callback. Error was:\n{str(e)}"
+        )
         logger.error(msg)
+        # Without auth headers the callback cannot be delivered authenticated;
+        # abort instead of continuing with an undefined `headers` variable.
+        return
 
     async with httpx.AsyncClient(
         verify=get_config().hd_backend_verify_certs,

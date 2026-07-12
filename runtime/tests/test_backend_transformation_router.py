@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 from fastapi import HTTPException
 
+from hetdesrun.backend.service import transformation_router as tr_module
 from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
@@ -25,6 +26,7 @@ from hetdesrun.trafoutils.io.load import (
     transformation_revision_from_python_code,
 )
 from hetdesrun.utils import State, get_uuid_from_seed
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 
@@ -1771,18 +1773,18 @@ async def test_execute_asynchron_for_transformation_revision_works(
 
 @pytest.mark.asyncio
 async def test_execute_async_rejects_callback_url_not_in_allowlist(
-    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
+    async_test_client, allow_test_callback_url
 ):
     """A callback_url that does not match the configured allowlist must be rejected
-    before any execution is scheduled or any result is posted (SSRF / token-leak fix).
-    """
-    tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
-    store_single_transformation_revision(tr_workflow_2)
-    update_or_create_nesting(tr_workflow_2)
+    before any execution is scheduled or any result is posted (SSRF / may cause
+    token-leak otherwise).
 
+    The allowlist check happens at the very start of the endpoint, before any DB
+    access, so no transformation revision needs to be stored for this test.
+    """
     exec_by_id_input = ExecByIdInput(
-        id=tr_workflow_2.id,
-        wiring=tr_workflow_2.test_wiring,
+        id=UUID("c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7"),
+        wiring=WorkflowWiring(),
         job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
     )
 
@@ -1802,6 +1804,30 @@ async def test_execute_async_rejects_callback_url_not_in_allowlist(
     assert response.status_code == 400
     assert "callback_url" in response.json()["detail"]
     assert not send_mock.called
+
+
+@pytest.mark.asyncio
+async def test_send_result_to_callback_url_aborts_when_auth_headers_fail():
+    """If obtaining outgoing auth headers fails, the callback must be aborted cleanly"""
+    client_cls_mock = mock.MagicMock()
+    with (
+        mock.patch.object(
+            tr_module,
+            "handle_frontend_exec_response_dict_serialisation",
+            return_value={},
+        ),
+        mock.patch.object(
+            tr_module,
+            "get_auth_headers",
+            new=mock.AsyncMock(side_effect=ServiceAuthenticationError("no creds")),
+        ),
+        mock.patch.object(tr_module.httpx, "AsyncClient", new=client_cls_mock),
+    ):
+        # Must not raise ...
+        await tr_module.send_result_to_callback_url("http://callback-url.com/", mock.MagicMock())
+
+    # ... and must not attempt any outgoing request.
+    assert not client_cls_mock.called
 
 
 @pytest.mark.asyncio
