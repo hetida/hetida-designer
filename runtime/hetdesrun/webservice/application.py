@@ -26,7 +26,10 @@ from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
-from hetdesrun.webservice.auth_dependency import get_auth_deps
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_deps,
+    warn_on_permissive_ingoing_auth_config,
+)
 from hetdesrun.webservice.config import get_config
 
 if get_config().hd_kafka_consumer_enabled:
@@ -84,6 +87,7 @@ middleware = [
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     logger.info("Initializing application ...")
+    warn_on_permissive_ingoing_auth_config()
     app.state.runtime_http_client = httpx.AsyncClient(
         verify=get_config().hd_runtime_verify_certs,
         timeout=get_config().external_request_timeout,

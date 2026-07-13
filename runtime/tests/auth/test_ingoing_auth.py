@@ -1,9 +1,13 @@
 import asyncio
+import logging
 from unittest import mock
 
 import pytest
 
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_headers,
+    warn_on_permissive_ingoing_auth_config,
+)
 
 
 @pytest.mark.asyncio
@@ -222,6 +226,44 @@ async def test_auth_role_checking_works(
         auth_headers = await get_auth_headers()
         assert len(auth_headers) > 0
         assert auth_headers["Authorization"].startswith("Bearer ")
+
+
+def test_warn_on_permissive_ingoing_auth_config(caplog):
+    """Startup warnings nudge operators to scope tokens via issuer and audience."""
+    # auth disabled: no nudges
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" not in caplog.text
+        assert "HD_AUTH_AUDIENCE" not in caplog.text
+
+    # auth enabled but permissive defaults (no issuer, audience == "account"): both nudges
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth", True),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_issuer", None),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_audience", "account"),
+    ):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" in caplog.text
+        assert "HD_AUTH_AUDIENCE" in caplog.text
+
+    # auth enabled and both explicitly scoped: no nudges
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth", True),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_issuer",
+            "https://issuer.example/realms/hd",
+        ),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_audience", "hetida-designer"),
+    ):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" not in caplog.text
+        assert "HD_AUTH_AUDIENCE" not in caplog.text
 
 
 @pytest.mark.asyncio

@@ -288,3 +288,30 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
 def get_auth_deps() -> list[Any]:
     """Return the authentication dependencies based on the application settings."""
     return [Depends(has_access)] if get_config().auth else []
+
+
+def warn_on_permissive_ingoing_auth_config() -> None:
+    """Warn if ingoing auth is enabled but tokens are not scoped to this service.
+
+    The issuer (iss) and audience (aud) claims are what bind a bearer token to this
+    service. Both are configurable but permissive by default, so nudge operators to
+    set them explicitly.
+    """
+    config = get_config()
+    if not config.auth:
+        return
+    if config.auth_issuer is None:
+        logger.warning(
+            "Ingoing auth is enabled but no issuer is configured (HD_AUTH_ISSUER), so"
+            " bearer tokens are not validated against an expected issuer. Set"
+            " HD_AUTH_ISSUER to your OpenID Connect issuer to scope accepted tokens."
+        )
+    if config.auth_audience is None or config.auth_audience == "account":
+        logger.warning(
+            "Ingoing auth is enabled but the expected token audience is %r"
+            " (HD_AUTH_AUDIENCE), which does not scope tokens to this service"
+            " ('account' is Keycloak's shared default present in most realm tokens)."
+            " Tokens issued for other clients in the same realm may be accepted. Set"
+            " HD_AUTH_AUDIENCE to this service's client id to scope accepted tokens.",
+            config.auth_audience,
+        )
