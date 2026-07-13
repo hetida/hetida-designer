@@ -138,8 +138,14 @@ class SQLAdapterDBConfig(BaseModel):
         return create_engine(self.connection_url, **self.create_engine_kwargs)  # type: ignore
 
     def __del__(self) -> None:
-        if self.engine is not None:
-            self.engine.dispose()
+        # Access the cached_property value via __dict__ instead of self.engine: the engine
+        # is a cached_property, so touching self.engine here would *create* a brand-new
+        # engine during garbage collection if one was never built during this object's
+        # life, only to immediately dispose it. __dict__.get returns the engine only if it
+        # was actually accessed/created before, and None otherwise.
+        engine = self.__dict__.get("engine")
+        if engine is not None:
+            engine.dispose()
 
     model_config = ConfigDict(arbitrary_types_allowed=True, ignored_types=(cached_property,))
 

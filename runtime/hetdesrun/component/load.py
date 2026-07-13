@@ -205,7 +205,7 @@ def import_from_code_module(
                 str(exec_exception),
             )
             raise ComponentCodeImportError(
-                "Could not import code due to Exception %s", str(exec_exception)
+                f"Could not import code due to Exception {str(exec_exception)}"
             ) from exec_exception
 
         if register_module:
@@ -222,8 +222,8 @@ def import_from_code_module(
             module_path,
             datetime.datetime.now(tz=datetime.timezone.utc) - import_start,
         )
-
-    currently_importing[code_module.uuid] = False
+    finally:
+        currently_importing[code_module.uuid] = False
 
     return mod
 

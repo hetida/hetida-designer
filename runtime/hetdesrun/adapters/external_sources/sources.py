@@ -138,7 +138,7 @@ def append_dataset(
 ) -> None:
     """Extract timeseries data and metadata from a dataset and append both to separate lists"""
     metadata_set = {
-        key: val for key, val in dataset.items() if key not in ["hourly", "daily", "15_minutely"]
+        key: val for key, val in dataset.items() if key not in ["hourly", "daily", "minutely_15"]
     }
     multi_df, freq_key, lat, lon = extract_openmeteo_data(dataset, key)
     mutable_df_list.append(multi_df)

@@ -157,12 +157,6 @@ def build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
     ) + ((continuation_spec,) if continuation_spec is not None else ())
 
 
-def breakpoint_and_continue(x: Any) -> Any:
-    """For testing purposes to insert into a glom spec"""
-    breakpoint()  # noqa: T100
-    return x
-
-
 def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
     """Providesglom spec that extracts a metadatum by metric by value dimension
 

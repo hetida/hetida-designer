@@ -333,7 +333,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
                     ts_table_config,
                     write_table.table_name,
                 )
-            elif metadata.invalidate_dataset and not metadata.delete_invalidated is False:
+            elif metadata.invalidate_dataset and metadata.delete_invalidated is not False:
                 logger.warning(
                     "According to dataset_metadata deletion should happen, "
                     "but according to the table configuration, deletion is not allowed. "
