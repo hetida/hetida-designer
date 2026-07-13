@@ -225,6 +225,24 @@ async def test_auth_role_checking_works(
 
 
 @pytest.mark.asyncio
+async def test_auth_rejects_token_without_exp(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_without_exp,
+    mocked_public_key_fetching,
+):
+    """A signed token without an exp claim must be rejected: tokens must carry an
+    expiration so that they cannot be valid indefinitely.
+    """
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_without_exp},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_auth_role_checking_rejects_non_list_role_claim(
     open_async_test_client_with_auth,
     mocked_clean_test_db_session,

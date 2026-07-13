@@ -233,6 +233,16 @@ def valid_access_token_with_role(key_pair):
 
 
 @pytest.fixture()
+def access_token_without_exp(key_pair):
+    # a validly signed token that lacks the exp claim
+    return jwt.encode(
+        {"iss": "Example Issuer", "sub": "test_case", "jti": str(uuid4())},
+        key_pair[0],
+        constants.Algorithms.RS256,
+    )
+
+
+@pytest.fixture()
 def valid_access_token_with_string_role(key_pair):
     # role claim is a single string (not a list) that contains the allowed role
     # "allowed_hd_user" as a substring

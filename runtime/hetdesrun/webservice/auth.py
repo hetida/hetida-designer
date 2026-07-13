@@ -18,9 +18,11 @@ DEFAULT_OPTIONS = {
     "verify_signature": True,
     "verify_aud": True,
     "verify_iss": True,
-    "require": ["exp"],
-    # expiration will only be checked by jose if it is present,
-    # so we require it
+    # expiration is only checked by python-jose if the exp claim is present, so we
+    # require the exp claim to be present. Note that python-jose only honors the
+    # per-claim "require_<claim>" boolean options; a PyJWT-style {"require": ["exp"]}
+    # would be silently ignored.
+    "require_exp": True,
 }
 
 # Asymmetric JWT signature algorithms accepted by default. Only asymmetric algorithms
