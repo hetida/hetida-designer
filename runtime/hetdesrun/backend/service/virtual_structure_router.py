@@ -65,7 +65,14 @@ async def update_structure_endpoint(
     """
 
     configured_maintenance_secret = get_config().maintenance_secret
-    assert configured_maintenance_secret is not None  # for mypy # noqa: S101
+    # This router is always mounted (unlike maintenance_router, which is only mounted when
+    # a maintenance secret is configured), so guard explicitly and fail closed.
+    if configured_maintenance_secret is None:
+        logger.error("Maintenance secret is not configured; denying structure update request")
+        raise HTTPException(
+            status_code=403,
+            detail={"authorization_error": "maintenance secret is not configured"},
+        )
     secret_str = maintenance_payload.maintenance_secret
 
     if not compare_digest(
