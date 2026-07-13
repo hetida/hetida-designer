@@ -1,5 +1,6 @@
 from copy import deepcopy
 from sqlite3 import Connection as SQLite3Connection
+from unittest import mock
 from uuid import UUID, uuid4
 
 import pytest
@@ -8,9 +9,11 @@ from sqlalchemy.future.engine import Engine
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
+from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    filter_unused_transformation_ids,
     get_distinct_categories,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
@@ -753,6 +756,23 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
     assert is_unused(tr_component_not_contained.id) is True
     assert is_unused(tr_component_contained_only_in_deprecated.id) is True
     assert is_unused(tr_component_contained_not_only_in_deprecated.id) is False
+
+    # the batched variant returns the same unused set for all ids at once ...
+    all_ids = [
+        tr_component_not_contained.id,
+        tr_component_contained_only_in_deprecated.id,
+        tr_component_contained_not_only_in_deprecated.id,
+    ]
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.get_session", wraps=get_session
+    ) as get_session_spy:
+        unused_ids = filter_unused_transformation_ids(all_ids)
+    assert unused_ids == {
+        tr_component_not_contained.id,
+        tr_component_contained_only_in_deprecated.id,
+    }
+    # ... using a single session/transaction rather than one per id
+    assert get_session_spy.call_count == 1
 
     results = get_multiple_transformation_revisions(
         FilterParams(

@@ -4,7 +4,7 @@ from copy import deepcopy
 from uuid import UUID
 
 from pydantic import StrictInt, StrictStr
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, distinct, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only
 from sqlalchemy.sql.selectable import Select
@@ -13,7 +13,7 @@ from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.component.code_utils import CodeParsingException, get_global_component_imports
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.persistence.dbmodels import NestingDBModel, TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -663,6 +663,39 @@ def is_unused(transformation_id: UUID) -> bool:
     return len(results) == 0
 
 
+def filter_unused_transformation_ids(transformation_ids: list[UUID]) -> set[UUID]:
+    """Return the subset of the given transformation ids that are unused.
+
+    A transformation revision is considered unused if it is only contained in
+    deprecated (DISABLED) workflows, i.e. it is not contained in any non-deprecated
+    workflow (see is_unused). This computes the result for all given ids with a single
+    query instead of one transaction per id.
+
+    This does not check for component imports!
+    """
+    if not transformation_ids:
+        return set()
+
+    with get_session()() as session, session.begin():
+        # ids that ARE used: they appear as a nested transformation in at least one
+        # non-deprecated containing workflow
+        used_ids = set(
+            session.execute(
+                select(distinct(NestingDBModel.nested_transformation_id))
+                .join(
+                    TransformationRevisionDBModel,
+                    TransformationRevisionDBModel.id == NestingDBModel.workflow_id,
+                )
+                .where(NestingDBModel.nested_transformation_id.in_(transformation_ids))
+                .where(TransformationRevisionDBModel.state != State.DISABLED)
+            )
+            .scalars()
+            .all()
+        )
+
+    return {tr_id for tr_id in transformation_ids if tr_id not in used_ids}
+
+
 def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
     """Get unique categories of all trafo revisions of specified types
 
@@ -816,7 +849,8 @@ def get_multiple_transformation_revisions(
     )
 
     if params.unused:
-        tr_list = [tr for tr in tr_list if is_unused(tr.id)]
+        unused_ids = filter_unused_transformation_ids([tr.id for tr in tr_list])
+        tr_list = [tr for tr in tr_list if tr.id in unused_ids]
 
     if params.include_dependencies:
         dependencies = []
