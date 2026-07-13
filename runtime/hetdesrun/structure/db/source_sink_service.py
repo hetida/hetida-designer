@@ -161,11 +161,9 @@ def fetch_sources_by_substring_match(filter_string: str) -> list[StructureServic
                 .all()
             )
             logger.debug(
-                "Found %d StructureServiceSourceDBModel items matching filter "
-                "string '%s' from %d total records.",
+                "Found %d StructureServiceSourceDBModel items matching filter string '%s'.",
                 len(matching_sources),
                 filter_string,
-                session.query(StructureServiceSourceDBModel).count(),
             )
             return [StructureServiceSource.from_orm_model(src) for src in matching_sources]
         except IntegrityError as e:
@@ -203,11 +201,9 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
                 .all()
             )
             logger.debug(
-                "Found %d StructureServiceSinkDBModel items matching "
-                "filter string '%s' from %d total records.",
+                "Found %d StructureServiceSinkDBModel items matching filter string '%s'.",
                 len(matching_sinks),
                 filter_string,
-                session.query(StructureServiceSinkDBModel).count(),
             )
             return [StructureServiceSink.from_orm_model(sink) for sink in matching_sinks]
         except IntegrityError as e:
