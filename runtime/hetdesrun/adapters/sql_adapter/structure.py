@@ -19,7 +19,10 @@ from hetdesrun.adapters.sql_adapter.models import (
     WriteTableMode,
     to_table_type_str,
 )
-from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
+from hetdesrun.adapters.sql_adapter.utils import (
+    get_configured_dbs_by_key,
+    is_allowed_dataframe_source_table,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +31,6 @@ def get_table_names(engine: Engine) -> list[str]:
     inspection = inspect(engine)
     table_names = inspection.get_table_names()
     return table_names
-
-
-def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:
-    return (
-        (db_config.explicit_source_tables is None or table_name in db_config.explicit_source_tables)
-        and not table_name in db_config.ignore_tables
-        and not table_name in db_config.timeseries_tables
-    )
 
 
 def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[str]:

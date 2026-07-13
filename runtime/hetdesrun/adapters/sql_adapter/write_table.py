@@ -246,6 +246,39 @@ def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
     return []
 
 
+def validate_sink_is_allowed(write_table: WriteTable, sink_id: str) -> None:
+    """Ensure the requested sink is configured as a writable target.
+
+    The set of writable tables is restricted by configuration (append_tables,
+    replace_tables and appendable timeseries tables). Parsing a sink id only checks
+    that the db key is configured, so this check must be enforced here at write time
+    and not only when listing the offered sinks. Otherwise a crafted sink id could be
+    used to append to or replace an arbitrary table reachable by the connection user.
+    """
+    db_config = write_table.db_config
+    table_name = write_table.table_name
+    write_mode = write_table.write_mode
+
+    if write_mode is WriteTableMode.APPEND:
+        allowed = table_name in db_config.append_tables
+    elif write_mode is WriteTableMode.REPLACE:
+        allowed = table_name in db_config.replace_tables
+    elif write_mode is WriteTableMode.TIMSERIES_APPEND:
+        ts_table_config = db_config.timeseries_tables.get(table_name)
+        allowed = ts_table_config is not None and ts_table_config.appendable
+    else:  # pragma: no cover
+        allowed = False
+
+    if not allowed:
+        msg = (
+            f"Writing to sink id {sink_id} is not allowed: table {table_name!r} is not"
+            f" configured as a writable {write_mode.value} sink for db key"
+            f" {write_table.db_key!r}."
+        )
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
+
+
 def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     try:
         write_table = WriteTable.from_sink_id(sink_id)
@@ -253,6 +286,8 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
         msg = f"Could not parse and validate sink id {sink_id}. Error was {str(e)}."
         logger.info(msg)  # noqa: G003
         raise AdapterHandlingException(msg) from e
+
+    validate_sink_is_allowed(write_table, sink_id)
 
     data_to_send = data.copy()  # deep copy by default!
 

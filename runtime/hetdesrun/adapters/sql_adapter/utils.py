@@ -33,6 +33,20 @@ def get_configured_dbs_by_key() -> dict[str, SQLAdapterDBConfig]:
     }
 
 
+def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:
+    """Whether a table may be read as an ordinary dataframe source.
+
+    Restricted by configuration: it must be in explicit_source_tables (if set), must not
+    be ignored and must not be a timeseries table. This must be enforced at read time and
+    not only when listing the offered sources.
+    """
+    return (
+        (db_config.explicit_source_tables is None or table_name in db_config.explicit_source_tables)
+        and table_name not in db_config.ignore_tables
+        and table_name not in db_config.timeseries_tables
+    )
+
+
 def validate_multits_frame(df: pd.DataFrame) -> pd.DataFrame:
     """Raises pydantic validation error if frame is not okay"""
 
