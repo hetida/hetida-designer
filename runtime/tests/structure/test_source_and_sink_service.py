@@ -1,4 +1,6 @@
+import itertools
 import uuid
+from unittest import mock
 
 import pytest
 
@@ -153,6 +155,55 @@ def test_fetch_all_sinks_from_db(mocked_clean_test_db_session):
         assert found_sink.name == expected_sink.name, (
             f"Expected name '{expected_sink.name}', but got '{found_sink.name}'."
         )
+
+
+def _recording_batched(recorded):
+    real_batched = itertools.batched
+
+    def recording_batched(iterable, n, *, strict=False):
+        recorded.append(n)
+        return real_batched(iterable, n, strict=strict)
+
+    return recording_batched
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_collection_of_sources_batches_by_batch_size(mocked_clean_test_db_session):
+    # The collection is fetched in batches; batched() must receive the batch *size*,
+    # so that the number of queries scales as ceil(len(ids) / batch_size) rather than
+    # degenerating into one query per id.
+    with mocked_clean_test_db_session() as session:
+        source_ids = [source.id for source in session.query(StructureServiceSourceDBModel).all()]
+    assert len(source_ids) >= 2, "Expected several sources in the test database."
+
+    recorded_batch_sizes: list[int] = []
+    with mock.patch(
+        "hetdesrun.structure.db.source_sink_service.batched",
+        _recording_batched(recorded_batch_sizes),
+    ):
+        fetched = fetch_collection_of_sources_from_db_by_id(source_ids, batch_size=500)
+
+    # all ids are fetched ...
+    assert set(fetched.keys()) == set(source_ids)
+    # ... and batching used the batch size (500), not the batch count (ceil(len/500) == 1)
+    assert recorded_batch_sizes == [500]
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_fetch_collection_of_sinks_batches_by_batch_size(mocked_clean_test_db_session):
+    with mocked_clean_test_db_session() as session:
+        sink_ids = [sink.id for sink in session.query(StructureServiceSinkDBModel).all()]
+    assert len(sink_ids) >= 2, "Expected several sinks in the test database."
+
+    recorded_batch_sizes: list[int] = []
+    with mock.patch(
+        "hetdesrun.structure.db.source_sink_service.batched",
+        _recording_batched(recorded_batch_sizes),
+    ):
+        fetched = fetch_collection_of_sinks_from_db_by_id(sink_ids, batch_size=500)
+
+    assert set(fetched.keys()) == set(sink_ids)
+    assert recorded_batch_sizes == [500]
 
 
 @pytest.mark.usefixtures("_db_test_structure")

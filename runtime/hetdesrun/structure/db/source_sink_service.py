@@ -1,6 +1,5 @@
 import logging
 from itertools import batched
-from math import ceil
 from uuid import UUID
 
 from sqlalchemy import Connection, Engine
@@ -93,15 +92,9 @@ def fetch_collection_of_sources_from_db_by_id(
     if not src_ids:
         return sources
 
-    logger.debug(
-        "Successfully fetched collection of %d StructureServiceSources "
-        "from the database for %d IDs. StructureServiceSources with IDs: %s",
-        len(sources),
-        len(src_ids),
-        src_ids,
-    )
+    logger.debug("Fetching collection of StructureServiceSources for %d IDs.", len(src_ids))
     with get_session()() as session:
-        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size), strict=False):
+        for id_batch in batched(src_ids, batch_size, strict=False):
             batch_query = session.query(StructureServiceSourceDBModel).filter(
                 StructureServiceSourceDBModel.id.in_(id_batch)
             )
@@ -112,7 +105,11 @@ def fetch_collection_of_sources_from_db_by_id(
     if not sources:
         raise DBNotFoundError(f"No StructureServiceSources found for IDs {src_ids}")
 
-    logger.debug("Successfully fetched collection of StructureServiceSources.")
+    logger.debug(
+        "Successfully fetched collection of %d StructureServiceSources for %d IDs.",
+        len(sources),
+        len(src_ids),
+    )
     return sources
 
 
@@ -128,17 +125,9 @@ def fetch_collection_of_sinks_from_db_by_id(
     if not sink_ids:
         return sinks
 
-    logger.debug("Fetching collection of StructureServiceSinks with IDs: %s", sink_ids)
-
-    logger.debug(
-        "Successfully fetched collection of %d StructureServiceSinks from the database for %d IDs. "
-        "StructureServiceSinks with IDs: %s",
-        len(sinks),
-        len(sink_ids),
-        sink_ids,
-    )
+    logger.debug("Fetching collection of StructureServiceSinks for %d IDs.", len(sink_ids))
     with get_session()() as session:
-        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size), strict=False):
+        for id_batch in batched(sink_ids, batch_size, strict=False):
             batch_query = session.query(StructureServiceSinkDBModel).filter(
                 StructureServiceSinkDBModel.id.in_(id_batch)
             )
@@ -149,7 +138,11 @@ def fetch_collection_of_sinks_from_db_by_id(
     if not sinks:
         raise DBNotFoundError(f"No StructureServiceSinks found for IDs {sink_ids}")
 
-    logger.debug("Successfully fetched collection of StructureServiceSinks.")
+    logger.debug(
+        "Successfully fetched collection of %d StructureServiceSinks for %d IDs.",
+        len(sinks),
+        len(sink_ids),
+    )
     return sinks
 
 
