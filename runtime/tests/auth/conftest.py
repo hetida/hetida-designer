@@ -233,6 +233,15 @@ def valid_access_token_with_role(key_pair):
 
 
 @pytest.fixture()
+def valid_access_token_with_string_role(key_pair):
+    # role claim is a single string (not a list) that contains the allowed role
+    # "allowed_hd_user" as a substring
+    return generate_token(
+        algorithm="RS256", key=key_pair[0], payload={"some_roles": "superallowed_hd_user_x"}
+    )
+
+
+@pytest.fixture()
 def valid_access_token_with_several_roles(key_pair):
     return generate_token(
         algorithm="RS256",

@@ -222,3 +222,30 @@ async def test_auth_role_checking_works(
         auth_headers = await get_auth_headers()
         assert len(auth_headers) > 0
         assert auth_headers["Authorization"].startswith("Bearer ")
+
+
+@pytest.mark.asyncio
+async def test_auth_role_checking_rejects_non_list_role_claim(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    valid_access_token_with_string_role,  # has "some_roles": "superallowed_hd_user_x"
+    mocked_public_key_fetching,
+):
+    """The role claim must be a JSON array.
+
+    A string role claim must not grant access even when it contains the allowed role
+    as a substring: membership is checked against a list, not via substring matching.
+    """
+    client = open_async_test_client_with_auth
+
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "some_roles"),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_allowed_role", "allowed_hd_user"
+        ),
+    ):
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_string_role},
+        )
+        assert response.status_code == 403

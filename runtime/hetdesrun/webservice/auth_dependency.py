@@ -187,18 +187,25 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     except AuthentificationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from None
     # Check role
-    try:
-        if get_config().auth_allowed_role is not None and (
-            not get_config().auth_allowed_role in payload[get_config().auth_role_key]
-        ):
-            # roles are expected in "groups" key in payload
+    if get_config().auth_allowed_role is not None:
+        try:
+            roles = payload[get_config().auth_role_key]
+        except KeyError:
+            logger.info("Unauthorized: No role information in token")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
+            ) from None
+
+        if not isinstance(roles, list):
+            logger.info("Unauthorized: Role field in token has wrong type. Must be array.")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="Role information in token has wrong type"
+            )
+
+        if get_config().auth_allowed_role not in roles:
+            # roles are expected as a list under the configured role key in the payload
             logger.info("Unauthorized: Roles not allowed")
             raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed")
-    except KeyError:
-        logger.info("Unauthorized: No role information in token")
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
-        ) from None
 
     auth_context_dict = {"token": token, "creds": credentials, "payload": payload}
     set_request_auth_context(auth_context_dict)
