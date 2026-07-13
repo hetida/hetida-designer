@@ -73,9 +73,11 @@ class TimeseriesTableConfig(BaseModel):
 class SQLAdapterDBConfig(BaseModel):
     """A config of a database for the sql adapter
 
-    All tables will be made available as sources by default and additionally an arbitrary
-    query source is offered. It is up to the database admin to restrict access for the
-    user configured in the connection url.
+    All tables will be made available as sources by default. Additionally an arbitrary
+    free-text SQL query source can be offered, but only if
+    allow_arbitrary_sql_query_sources is explicitly set to True (it is disabled by
+    default). It is up to the database admin to restrict access for the user configured
+    in the connection url.
 
     Only the tables configured in append_tables and replace_tables will be offered as
     fixed sinks.
@@ -88,6 +90,15 @@ class SQLAdapterDBConfig(BaseModel):
     connection_url: str = Field(..., description="a valid and complete sql connection uri")
     name: str
     key: str
+    allow_arbitrary_sql_query_sources: bool = Field(
+        False,
+        description=(
+            "Whether the arbitrary free-text SQL query source is offered for this database."
+            " When True, any user who can configure a wiring can execute arbitrary SQL"
+            " against this database (limited only by the permissions granted to the database"
+            " user in the connection url). Disabled by default; must be explicitly enabled."
+        ),
+    )
     append_tables: list[str] = Field(
         [], description="names of tables that are offered as sinks for appending data"
     )

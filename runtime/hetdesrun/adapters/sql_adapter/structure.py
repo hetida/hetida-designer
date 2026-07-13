@@ -43,22 +43,26 @@ def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[s
 
 def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSource]:
     return (
-        [
-            # query source
-            SQLAdapterStructureSource(
-                id=db_config.key + "/query",
-                thingNodeId=db_config.key,
-                name="SQL Query in " + db_config.name,
-                path=db_config.key + "|" + db_config.name + "/query/sql",
-                filters={
-                    "sql_query": {
-                        "name": " SQL Query",
-                        "type": "free_text",
-                        "required": True,
-                    }
-                },
-            )
-        ]
+        (
+            [
+                # query source (only offered if arbitrary SQL queries are enabled)
+                SQLAdapterStructureSource(
+                    id=db_config.key + "/query",
+                    thingNodeId=db_config.key,
+                    name="SQL Query in " + db_config.name,
+                    path=db_config.key + "|" + db_config.name + "/query/sql",
+                    filters={
+                        "sql_query": {
+                            "name": " SQL Query",
+                            "type": "free_text",
+                            "required": True,
+                        }
+                    },
+                )
+            ]
+            if db_config.allow_arbitrary_sql_query_sources
+            else []
+        )
         + [
             # dataframe source tables
             SQLAdapterStructureSource(
@@ -219,6 +223,8 @@ def get_source_by_id(source_id: str) -> SQLAdapterStructureSource | None:
 
     if source_type == "query" and len(id_split) == 2:
         db_config = configured_dbs_by_key[db_key]
+        if not db_config.allow_arbitrary_sql_query_sources:
+            return None
         return SQLAdapterStructureSource(
             id=source_id,
             thingNodeId=db_key,

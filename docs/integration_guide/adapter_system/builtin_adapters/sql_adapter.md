@@ -40,6 +40,8 @@ Furthermore, the tables to be used as sinks can be configured:
 * "append_tables" generate sinks that allow to append tabular data to them.
 * "replace_tables" replace the complete table with the provided dataframe on each write!
 
+Each database can additionally offer a special "SQL Query" source that lets a user enter and run an arbitrary free-text SQL query. Because this allows executing arbitrary SQL (limited only by the permissions of the database user in the connection url), it is **disabled by default** and must be explicitly enabled per database by setting `"allow_arbitrary_sql_query_sources": true`.
+
 Additionally, timeseries tables, which can be used as sources or sinks, can be configured.  
 They must be listed under "timeseries_tables" in the database configuration.  
 An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in which the timeseries table can be configured further.  
@@ -78,7 +80,8 @@ Here we give an example configuration for mounting and accessing two sqlite data
             "key": "example_sqlite_db",
             "connection_url": "sqlite+pysqlite:////mnt/sql_adapter_data/example_sqlite.db",
             "append_tables": [],
-            "replace_tables" : []
+            "replace_tables" : [],
+            "allow_arbitrary_sql_query_sources": true
           },
           {
             "name": "writable sqlite db",
@@ -168,7 +171,7 @@ In the execution dialog, you should now be able to select "SQL Adapter" for inpu
 
 As sources, the selection dialog offers for each database
 * All available tables. Choosing one will load the complete unfiltered table!
-* A special "SQL Query" source which when selected allows to enter an arbitrary SQL query.
+* A special "SQL Query" source which when selected allows to enter an arbitrary SQL query. This source is only offered for databases that have `"allow_arbitrary_sql_query_sources": true` set in their configuration (disabled by default).
 
 As sinks, it offers only the explicitely configured append and replace tables for each configured database.
 

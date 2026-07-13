@@ -183,6 +183,14 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
     db_config = configured_dbs_by_key[db_key]
 
     if id_split[1] == "query" and len(id_split) == 2:
+        if not db_config.allow_arbitrary_sql_query_sources:
+            msg = (
+                f"Arbitrary SQL query source {source_id} is not allowed: arbitrary SQL"
+                f" queries are disabled for db key {db_key!r}. Set"
+                " allow_arbitrary_sql_query_sources to True for this database to enable them."
+            )
+            logger.info(msg)
+            raise AdapterHandlingException(msg)
         query = source_filters.get("sql_query")
         if query is None:  # pragma: no cover
             msg = (

@@ -1,9 +1,14 @@
+from unittest import mock
+
 import pandas as pd
 import pytest
 from sqlalchemy import create_engine, inspect
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.sql_adapter import load_data, send_data
+from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.structure import get_source_by_id, get_sources
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
@@ -174,6 +179,41 @@ async def test_read_table_not_configured_as_source_is_rejected(
         adapter_key="sql-adapter",
     )
     assert isinstance(received["inp"], pd.DataFrame)
+
+
+@pytest.mark.asyncio
+async def test_arbitrary_sql_query_source_disabled_by_default():
+    db_key = "db_without_query_source"
+    with mock.patch(
+        "hetdesrun.adapters.sql_adapter.config.sql_adapter_config.sql_databases",
+        new=[
+            SQLAdapterDBConfig(
+                connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db",
+                name="db without query source",
+                key=db_key,
+            )
+        ],
+    ):
+        get_configured_dbs_by_key.cache_clear()
+        try:
+            # the query source is not offered in the listing
+            assert all(not source.id.endswith("/query") for source in get_sources())
+            # and cannot be resolved by id
+            assert get_source_by_id(f"{db_key}/query") is None
+            # and executing a query against it is rejected
+            with pytest.raises(AdapterHandlingException, match="not allowed"):
+                await load_data(
+                    {
+                        "inp": FilteredSource(
+                            ref_id=f"{db_key}/query",
+                            ref_id_type="SOURCE",
+                            filters={"sql_query": "SELECT a FROM data_table"},
+                        )
+                    },
+                    adapter_key="sql-adapter",
+                )
+        finally:
+            get_configured_dbs_by_key.cache_clear()
 
 
 @pytest.mark.asyncio
