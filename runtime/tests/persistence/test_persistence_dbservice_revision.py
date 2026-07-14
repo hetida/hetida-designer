@@ -897,6 +897,76 @@ def test_create_disabled_workflow_populates_nesting(mocked_clean_test_db_session
     assert tr_component.id in nested_trafos
 
 
+def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
+    mocked_clean_test_db_session,
+):
+    # a component that ends up deprecated in the db
+    tr_component = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="comp",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.COMPONENT,
+        documentation="",
+        state=State.DRAFT,
+        content="",
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(id=uuid4(), name="o", data_type=DataType.Any)]
+        ),
+        test_wiring=WorkflowWiring(),
+    )
+    tr_component.release()
+    update_or_create_single_transformation_revision(tr_component)
+
+    # snapshot the operator while the component is still RELEASED, then deprecate it
+    operator = tr_component.to_operator()
+    operator.state = State.RELEASED
+    tr_component.deprecate()
+    update_or_create_single_transformation_revision(tr_component)
+
+    output_connector = WorkflowContentOutput(
+        id=uuid4(),
+        name=operator.outputs[0].name,
+        operator_id=operator.id,
+        connector_id=operator.outputs[0].id,
+        operator_name=operator.name,
+        connector_name=operator.outputs[0].name,
+        data_type=operator.outputs[0].data_type,
+    )
+    tr_workflow = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="wf",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.WORKFLOW,
+        documentation="",
+        state=State.DRAFT,
+        content=WorkflowContent(
+            operators=[operator],
+            outputs=[output_connector],
+            links=[
+                Link(
+                    id=uuid4(),
+                    start=Vertex(operator=operator.id, connector=operator.outputs[0]),
+                    end=Vertex(operator=None, connector=output_connector),
+                )
+            ],
+        ),
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+    )
+
+    # storing the workflow (as when importing it) must flag the operator that references
+    # the now-deprecated component, even though the incoming operator state is stale
+    stored_workflow = update_or_create_single_transformation_revision(tr_workflow)
+    assert isinstance(stored_workflow.content, WorkflowContent)
+    stored_operator = stored_workflow.content.operators[0]
+    assert stored_operator.transformation_id == tr_component.id
+    assert stored_operator.state == State.DISABLED
+
+
 def test_get_latest_revision_id(mocked_clean_test_db_session):
     tr_template_id = get_uuid_from_seed("object_template")
     tr_object_template = TransformationRevision(

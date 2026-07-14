@@ -373,16 +373,65 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     return found_some_disabled
 
 
+def refresh_deprecated_operator_states(
+    session: SQLAlchemySession, workflow_content: WorkflowContent
+) -> None:
+    """Flag operators that reference a deprecated (DISABLED) transformation.
+
+    operator.state is a denormalized snapshot of the referenced transformation's state
+    (used e.g. by the frontend to indicate operators whose transformation is deprecated).
+    It can be stale in incoming content -- most notably when importing a workflow whose
+    referenced transformation was already deprecated, so that pass_on_deprecation never
+    reached this workflow. Recompute the DISABLED flag from the db.
+
+    This uses a single query projecting only the ids of the referenced transformations
+    that are deprecated (no full transformation contents are loaded), so it stays cheap
+    even though workflows are stored on every edit.
+    """
+    operators = workflow_content.operators
+    if not operators:
+        return
+
+    referenced_ids = {operator.transformation_id for operator in operators}
+    disabled_ids = set(
+        session.execute(
+            select(TransformationRevisionDBModel.id).where(
+                TransformationRevisionDBModel.id.in_(referenced_ids),
+                TransformationRevisionDBModel.state == State.DISABLED,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    for operator in operators:
+        if operator.transformation_id in disabled_ids:
+            operator.state = State.DISABLED
+
+
 def update_content(
     updated_transformation_revision: TransformationRevision,
     existing_transformation_revision: TransformationRevision | None = None,
     do_expand_code: bool = False,
+    session: SQLAlchemySession | None = None,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(updated_transformation_revision)
         if do_expand_code:
             updated_transformation_revision.content = expand_code(updated_transformation_revision)
-    elif existing_transformation_revision is not None:
+        return updated_transformation_revision
+
+    assert isinstance(  # noqa: S101
+        updated_transformation_revision.content, WorkflowContent
+    )  # hint for mypy
+
+    # keep each operator's deprecation flag in sync with the referenced transformation,
+    # so that operators referencing an already-deprecated transformation are flagged even
+    # when they enter the db via import rather than through pass_on_deprecation
+    if session is not None:
+        refresh_deprecated_operator_states(session, updated_transformation_revision.content)
+
+    if existing_transformation_revision is not None:
         assert isinstance(  # noqa: S101
             existing_transformation_revision.content, WorkflowContent
         )  # hint for mypy
@@ -390,10 +439,6 @@ def update_content(
         existing_operator_ids: list[UUID] = []
         for operator in existing_transformation_revision.content.operators:
             existing_operator_ids.append(operator.id)
-
-        assert isinstance(  # noqa: S101
-            updated_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
 
         for operator in updated_transformation_revision.content.operators:
             if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
@@ -561,7 +606,9 @@ def update_or_create_single_transformation_revision(
         except DBNotFoundError:
             if transformation_revision.type == Type.WORKFLOW or update_component_code:
                 transformation_revision = update_content(
-                    transformation_revision, do_expand_code=expand_component_code
+                    transformation_revision,
+                    do_expand_code=expand_component_code,
+                    session=session,
                 )
 
             add_tr(session, transformation_revision)
@@ -584,6 +631,7 @@ def update_or_create_single_transformation_revision(
                     transformation_revision,
                     existing_transformation_revision,
                     do_expand_code=expand_component_code,
+                    session=session,
                 )
 
             update_tr(session, transformation_revision)
