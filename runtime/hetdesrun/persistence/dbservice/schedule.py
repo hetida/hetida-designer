@@ -21,7 +21,11 @@ def add_schedule(session: SQLAlchemySession, schedule: Schedule) -> None:
     try:
         db_model = schedule.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:  # pragma: no cover
+        # Flush so a constraint violation surfaces here and is mapped to DBIntegrityError,
+        # instead of only at the surrounding transaction's commit where it would escape
+        # unmapped (session.add() alone only stages the row).
+        session.flush()
+    except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store schedule "
             f"with id {schedule.id}. Error was:\n{str(e)}"
@@ -141,9 +145,13 @@ def add_schedule_execution(
     try:
         db_model = schedule_execution.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:  # pragma: no cover
+        # Flush so a constraint violation surfaces here and is mapped to DBIntegrityError,
+        # instead of only at the surrounding transaction's commit where it would escape
+        # unmapped (session.add() alone only stages the row).
+        session.flush()
+    except IntegrityError as e:
         msg = (
-            f"Integrity Error while trying to store schedule execution"
+            f"Integrity Error while trying to store schedule execution "
             f"with id {schedule_execution.id}. Error was:\n{str(e)}"
         )
         logger.error(msg)

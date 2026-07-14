@@ -42,6 +42,12 @@ def add_tr(session: SQLAlchemySession, transformation_revision: TransformationRe
     try:
         db_model = transformation_revision.to_orm_model()
         session.add(db_model)
+        # Flush here so that a constraint violation (e.g. a duplicate id from a concurrent
+        # create) surfaces as an IntegrityError at this point and is mapped to
+        # DBIntegrityError. session.add() alone only stages the row; without the flush the
+        # error would first be raised at the surrounding transaction's commit, where it
+        # escapes unmapped as a raw sqlalchemy IntegrityError (HTTP 500).
+        session.flush()
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store transformation revision "

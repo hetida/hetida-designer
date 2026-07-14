@@ -74,6 +74,33 @@ def test_storing_and_receiving(mocked_clean_test_db_session):
         received_tr_object = read_single_transformation_revision(wrong_tr_uuid)
 
 
+def test_storing_duplicate_transformation_revision_raises_db_integrity_error(
+    mocked_clean_test_db_session,
+):
+    tr_uuid = get_uuid_from_seed("test_storing_duplicate")
+    tr_object = TransformationRevision(
+        id=tr_uuid,
+        revision_group_id=tr_uuid,
+        name="Test",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    store_single_transformation_revision(tr_object)
+
+    # storing the same id again violates the primary key constraint; this must surface as
+    # the mapped DBIntegrityError, not as a raw sqlalchemy IntegrityError
+    with pytest.raises(DBIntegrityError):
+        store_single_transformation_revision(tr_object)
+
+
 def test_distinct_categories(mocked_clean_test_db_session):
     tr_uuid_1 = get_uuid_from_seed("test_getting_categories_1")
 
