@@ -588,15 +588,19 @@ def update_or_create_single_transformation_revision(
 
             update_tr(session, transformation_revision)
 
-        if transformation_revision.state == State.DISABLED:
-            pass_on_deprecation(session, transformation_revision.id)
-            return select_tr_by_id(session, transformation_revision.id)
-
+        # Build the nesting for workflows regardless of state. This must happen even for
+        # DISABLED workflows: a deprecated workflow is still executable, and a workflow
+        # can enter the db already in DISABLED state (e.g. importing a pre-deprecated
+        # workflow), in which case it was never stored as RELEASED and would otherwise
+        # never get its nesting populated -> execution would fail to resolve its operators.
         if transformation_revision.type == Type.WORKFLOW:
             assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
             update_nesting(session, transformation_revision.id, transformation_revision.content)
+
+        if transformation_revision.state == State.DISABLED:
+            pass_on_deprecation(session, transformation_revision.id)
 
         return select_tr_by_id(session, transformation_revision.id)
 

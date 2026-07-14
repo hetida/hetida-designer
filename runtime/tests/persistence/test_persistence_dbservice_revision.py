@@ -14,6 +14,7 @@ from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFo
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     filter_unused_transformation_ids,
+    get_all_nested_transformation_revisions,
     get_distinct_categories,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
@@ -827,6 +828,73 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
         )
     )
     assert len(results) == 0
+
+
+def test_create_disabled_workflow_populates_nesting(mocked_clean_test_db_session):
+    # A workflow can enter the db already in DISABLED state (e.g. importing a
+    # pre-deprecated workflow). Its nesting must still be populated, otherwise its
+    # operators cannot be resolved at execution time.
+    tr_component = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="comp",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.COMPONENT,
+        documentation="",
+        state=State.DRAFT,
+        content="",
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(id=uuid4(), name="o", data_type=DataType.Any)]
+        ),
+        test_wiring=WorkflowWiring(),
+    )
+    tr_component.release()
+    update_or_create_single_transformation_revision(tr_component)
+
+    operator = tr_component.to_operator()
+    output_connector = WorkflowContentOutput(
+        id=uuid4(),
+        name=operator.outputs[0].name,
+        operator_id=operator.id,
+        connector_id=operator.outputs[0].id,
+        operator_name=operator.name,
+        connector_name=operator.outputs[0].name,
+        data_type=operator.outputs[0].data_type,
+    )
+    tr_workflow = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="wf",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.WORKFLOW,
+        documentation="",
+        state=State.DRAFT,
+        content=WorkflowContent(
+            operators=[operator],
+            outputs=[output_connector],
+            links=[
+                Link(
+                    id=uuid4(),
+                    start=Vertex(operator=operator.id, connector=operator.outputs[0]),
+                    end=Vertex(operator=None, connector=output_connector),
+                )
+            ],
+        ),
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+    )
+    # store the workflow directly in DISABLED state
+    tr_workflow.release()
+    tr_workflow.deprecate()
+    stored_workflow = update_or_create_single_transformation_revision(tr_workflow)
+    assert stored_workflow.state == State.DISABLED
+
+    # nesting must be populated even though the workflow is disabled, so that its
+    # operators (here the component) can be resolved when executing it
+    nested_trafos = get_all_nested_transformation_revisions(stored_workflow)
+    assert tr_component.id in nested_trafos
 
 
 def test_get_latest_revision_id(mocked_clean_test_db_session):
