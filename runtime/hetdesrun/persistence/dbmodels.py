@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -139,6 +140,7 @@ class NestingDBModel(Base):
             """,
             name="_via_ids_equal_nested_ids_for_direct_nesting_cc",
         ),
+        Index("ix_nestings_nested_transformation_id", "nested_transformation_id"),
     )
 
 
@@ -193,3 +195,14 @@ class ScheduleExecutionDBModel(Base):
         JSON(none_as_null=True), nullable=True, default=lambda: None
     )
     error_message: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    __table_args__ = (
+        # supports the "latest execution for a schedule" lookup, which filters on
+        # schedule_id and orders by last_state_update desc on a table that grows with
+        # every scheduled run.
+        Index(
+            "ix_schedule_executions_schedule_id_last_state_update",
+            "schedule_id",
+            "last_state_update",
+        ),
+    )
