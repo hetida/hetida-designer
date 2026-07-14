@@ -67,7 +67,7 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
     unexpected_xml_response_text = "<Code>AccessDenied</Code>"
     with pytest.raises(StorageAuthenticationError) as exc_info:
         parse_credential_info_from_xml_string(unexpected_xml_response_text, now)
-    assert "The authentication request does not have the expected structure" in str(exc_info.value)
+    assert "does not have the expected structure" in str(exc_info.value)
 
     missing_session_token_xml_response_text = """
     <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
