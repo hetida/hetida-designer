@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from httpx import ASGITransport, AsyncClient
 from jose import constants, jwk, jwt
+from pydantic import SecretStr
 
 from hetdesrun.webservice.application import init_app
 from hetdesrun.webservice.auth_dependency import (
@@ -122,7 +123,7 @@ def outgoing_auth_external_mode_client():
 def auth_bearer_token_for_outgoing_requests_is_set():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
-        "some token string",
+        SecretStr("some token string"),
     ) as _fixture:
         yield _fixture
 

@@ -469,7 +469,7 @@ class RuntimeConfig(BaseSettings):
         examples=["P0DT00H00M15S"],
     )
 
-    auth_bearer_token_for_outgoing_requests: str | None = Field(
+    auth_bearer_token_for_outgoing_requests: SecretStr | None = Field(
         None,
         description=(
             "A string containing a bearer token for making outgoing requests. "
@@ -687,10 +687,10 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HETIDA_DESIGNER_BASIC_AUTH_USER",
         description="Basic Auth User",
     )
-    hd_backend_basic_auth_password: str | None = Field(
+    hd_backend_basic_auth_password: SecretStr | None = Field(
         None,
         validation_alias="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
-        description="Basic Auth User",
+        description="Basic Auth Password",
     )
     hd_backend_verify_certs: bool = Field(
         True, validation_alias="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"

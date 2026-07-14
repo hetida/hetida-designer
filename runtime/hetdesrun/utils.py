@@ -33,9 +33,10 @@ def check_explicit_utc(dt: datetime.datetime) -> bool:
 
 def get_backend_basic_auth() -> tuple[str | None, str | None] | None:
     if get_config().hd_backend_use_basic_auth:
+        password = get_config().hd_backend_basic_auth_password
         return (
             get_config().hd_backend_basic_auth_user,
-            get_config().hd_backend_basic_auth_password,
+            password.get_secret_value() if password is not None else None,
         )
     return None
 
