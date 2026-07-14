@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import SecretStr
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import URL
 from sqlalchemy.future.engine import Engine
 from sqlalchemy.orm import Session as SQLAlchemySession  # noqa: F401
@@ -65,6 +65,18 @@ def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engin
             else {}
         ),
     )
+
+    if engine.dialect.name == "sqlite":
+        # SQLite does not enforce foreign key constraints unless explicitly enabled per
+        # connection. The persistence schema relies on foreign keys (e.g. nestings ->
+        # transformation_revisions), so enable enforcement to get the same integrity
+        # guarantees as on postgres. Scoped to this engine so it does not affect other
+        # engines (e.g. user-configured sql adapter databases).
+        @event.listens_for(engine, "connect")
+        def _enable_sqlite_foreign_keys(dbapi_connection: Any, _connection_record: Any) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
     logger.debug("Created DB Engine with url: %s", repr(engine.url))
 

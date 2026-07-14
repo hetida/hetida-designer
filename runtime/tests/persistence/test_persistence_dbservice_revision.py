@@ -1,11 +1,8 @@
 from copy import deepcopy
-from sqlite3 import Connection as SQLite3Connection
 from unittest import mock
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import event
-from sqlalchemy.future.engine import Engine
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
@@ -37,12 +34,9 @@ from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
-
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) -> None:  # type: ignore  # noqa: E501,
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# Note: foreign key enforcement for sqlite is enabled centrally in
+# hetdesrun.persistence.db_engine_and_session.get_db_engine, so the tests below that rely
+# on foreign key constraints need no test-local pragma setup.
 
 
 def test_storing_and_receiving(mocked_clean_test_db_session):
