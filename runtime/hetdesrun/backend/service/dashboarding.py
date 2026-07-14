@@ -56,6 +56,19 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.config import get_config
 
 
+def json_for_inline_script(obj: Any) -> str:
+    """json.dumps result safe to embed inside an inline <script> element.
+
+    Avoids closing html tags (and thereby leaving the script) by replacing "<" with
+    its unicode escaped variant. Note that generally we trust the rendered content
+    and only want to mitigate possible breaks of the html.
+
+    json.dumps defaults to ensure_ascii=True, which already escapes
+    the U+2028/U+2029 line separators, so "<" is the only remaining case.
+    """
+    return json.dumps(obj).replace("<", "\\u003c")
+
+
 class OverrideMode(StrEnum):
     """Dashboard time range override mode
 
@@ -264,8 +277,8 @@ def dataframe_to_table_gridstack_div(
 
         create_and_register_tabulator_datatable(
             "{db_id}",
-            {json.dumps(data_row_list)},
-            {json.dumps(column_descriptions)},
+            {json_for_inline_script(data_row_list)},
+            {json_for_inline_script(column_descriptions)},
         );
 
         """
@@ -1885,7 +1898,7 @@ def generate_dashboard_html(
             + "\n".join(
                 (
                     f"""plot = Plotly.newPlot("{db_id}",
-                        {json.dumps(ensure_working_plotly_json(plotly_json))}\n);
+                        {json_for_inline_script(ensure_working_plotly_json(plotly_json))}\n);
 
                 resize_plot("{db_id}");
                 resize_plot("{db_id}");  // second time, otherwise width is not correct in chrome
