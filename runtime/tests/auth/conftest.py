@@ -318,7 +318,7 @@ def mocked_pre_loaded_wrong_public_key(wrong_key_pair):
 
 @pytest.fixture()
 def mocked_public_key_fetching(key_pair):
-    def _mocked_obtain_public_key(self, force: bool = False):
+    async def _mocked_obtain_public_key(self, force: bool = False):
         if self._public_key_data is not None and not force:
             # do not reload key if not forced
             _mocked_obtain_public_key.called = _mocked_obtain_public_key.called + 1

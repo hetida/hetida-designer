@@ -1,3 +1,10 @@
+
+- more secure and precise auth configuration
+- sql adpater config BREAKING CHANGE: requires explicit flag to allow arbitrary sql query sources from now on, default being not to allow them. Table allowlist is now enforced at read/write
+- BREAKING CHANGE: async execution endpoint callback urls must now be pre-configured via `HD_ALLOWED_CALLBACK_URL_PATTERNS`
+- introduce JWT algorithm pinning via `HD_AUTH_ALLOWED_ALGORITHMS` and fix exp claim being now required as intended
+- many smaller fixes
+
 ## 0.14.0
 - Added configurable Opentelemetry support via logfire
 - documentation rewrite + documentation building via static site generator (see https://hetida.github.io/hetida-designer)

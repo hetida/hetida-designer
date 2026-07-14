@@ -182,7 +182,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     token = credentials.credentials  # type: ignore
 
     try:
-        payload: dict = bearer_verifier.verify_token(token)
+        payload: dict = await bearer_verifier.verify_token(token)
         logger.debug("Bearer token payload => %s", payload)
     except AuthentificationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from None
@@ -256,7 +256,7 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
 
     # Actually checking
     try:
-        payload: dict = bearer_verifier.verify_token(access_token_to_check)
+        payload: dict = await bearer_verifier.verify_token(access_token_to_check)
         logger.debug("Bearer token payload => %s", payload)
     except AuthentificationError as e:
         logger.debug("Token verification Error: %s", str(e))
