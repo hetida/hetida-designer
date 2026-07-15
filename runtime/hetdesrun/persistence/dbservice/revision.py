@@ -105,16 +105,33 @@ def select_tr_by_id_with_possible_caching(
 def read_multiple_transformation_revisions_by_id(
     ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
+    if not ids:
+        return {}
+
+    # normalize to UUID: callers pass either UUIDs (nested descendants) or uuid strings
+    # (parsed component imports), and the missing-id check below must compare like types.
+    requested_ids = [UUID(str(id_)) for id_ in ids]
+    # single IN query instead of one SELECT per id (avoids N+1 on the execution path)
+    selection = multiple_trafo_select_filtered(ids=requested_ids)
+
+    # the orm results must be converted while the session is still open, so build the
+    # dict inside the session scope
     if session is None:
         with get_session()() as new_session, new_session.begin():
-            return {
-                trafo_id: select_tr_by_id(new_session, trafo_id, log_error=log_error)
-                for trafo_id in ids
-            }
+            results = new_session.execute(selection).scalars().all()
+            trafos_by_id = {tr.id: tr for tr in map(TransformationRevision.from_orm_model, results)}
     else:
-        return {
-            trafo_id: select_tr_by_id(session, trafo_id, log_error=log_error) for trafo_id in ids
-        }
+        results = session.execute(selection).scalars().all()
+        trafos_by_id = {tr.id: tr for tr in map(TransformationRevision.from_orm_model, results)}
+
+    # preserve the previous contract: raise if any requested id is missing
+    missing_ids = set(requested_ids) - set(trafos_by_id)
+    if missing_ids:
+        msg = f"Found no transformation revision in database for ids {missing_ids}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+    return trafos_by_id
 
 
 @cache_output_dict_conditionally(

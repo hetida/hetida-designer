@@ -17,6 +17,7 @@ from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
     is_modifiable,
     is_unused,
+    read_multiple_transformation_revisions_by_id,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
@@ -67,6 +68,36 @@ def test_storing_and_receiving(mocked_clean_test_db_session):
     wrong_tr_uuid = get_uuid_from_seed("wrong id")
     with pytest.raises(DBNotFoundError):
         received_tr_object = read_single_transformation_revision(wrong_tr_uuid)
+
+
+def test_read_multiple_transformation_revisions_by_id(mocked_clean_test_db_session):
+    stored = []
+    for i in range(3):
+        tr = TransformationRevision(
+            id=uuid4(),
+            revision_group_id=uuid4(),
+            name=f"comp {i}",
+            category="category",
+            version_tag="1.0.0",
+            type=Type.COMPONENT,
+            documentation="",
+            state=State.DRAFT,
+            content="",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+        )
+        store_single_transformation_revision(tr)
+        stored.append(tr)
+
+    ids = tuple(tr.id for tr in stored)
+    result = read_multiple_transformation_revisions_by_id(ids)
+    assert set(result.keys()) == set(ids)
+    for tr in stored:
+        assert result[tr.id].id == tr.id
+
+    # missing id must raise DBNotFoundError (contract relied on by check_direct_component_imports)
+    with pytest.raises(DBNotFoundError):
+        read_multiple_transformation_revisions_by_id((*ids, uuid4()))
 
 
 def test_storing_duplicate_transformation_revision_raises_db_integrity_error(
