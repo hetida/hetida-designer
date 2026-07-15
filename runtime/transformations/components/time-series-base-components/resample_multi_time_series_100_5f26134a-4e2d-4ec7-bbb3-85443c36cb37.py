@@ -101,7 +101,10 @@ import pandas as pd
 from hdutils import ComponentInputValidationException
 from hetdesrun.component.load import import_comp
 
-resample_time_series = import_comp("8d9180a9-9b95-4390-aeff-8a36f25f5d7b")
+
+def get_resample_time_series():
+    return import_comp("8d9180a9-9b95-4390-aeff-8a36f25f5d7b")
+
 
 AGGREGATION_METHODS = {"mean", "median", "min", "max", "sum", "asfreq"}
 LABEL_POSITIONS = {"left", "right"}
@@ -198,6 +201,7 @@ def validate_inputs(
         )
 
     # Let Resample Time Series validate the exact target frequency semantics.
+    resample_time_series = get_resample_time_series()
     resample_time_series.validate_inputs(
         pd.Series(
             [1.0, 2.0],
@@ -241,6 +245,7 @@ def resample_metric_series(
     label_position: str,
     closed: str,
 ) -> pd.DataFrame:
+    resample_time_series = get_resample_time_series()
     result_frames = []
 
     for metric in sorted(metric_series):
