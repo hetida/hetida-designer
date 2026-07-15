@@ -96,7 +96,7 @@ def upsert_element_types(
         logger.error("Value error while upserting StructureServiceElementTypeDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceElementTypeDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceElementTypeDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceElementTypeDBModel")
         raise DBUpdateError(
             "Unexpected error while upserting StructureServiceElementTypeDBModel"
         ) from e

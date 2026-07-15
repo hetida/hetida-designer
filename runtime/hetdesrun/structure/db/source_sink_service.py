@@ -178,10 +178,8 @@ def fetch_sources_by_substring_match(filter_string: str) -> list[StructureServic
                 "Integrity Error while filtering StructureServiceSourceDBModel by substring match"
             ) from e
         except Exception as e:
-            logger.error(
-                "Unexpected error while filtering StructureServiceSourceDBModel "
-                "by substring match: %s",
-                e,
+            logger.exception(
+                "Unexpected error while filtering StructureServiceSourceDBModel by substring match"
             )
             raise DBError(
                 "Unexpected error while filtering StructureServiceSourceDBModel by substring match"
@@ -218,10 +216,8 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
                 "Integrity Error while filtering StructureServiceSourceDBModel by substring match"
             ) from e
         except Exception as e:
-            logger.error(
-                "Unexpected error while filtering StructureServiceSinkDBModel "
-                "by substring match: %s",
-                e,
+            logger.exception(
+                "Unexpected error while filtering StructureServiceSinkDBModel by substring match"
             )
             raise DBError(
                 "Unexpected error while filtering StructureServiceSinkDBModel by substring match"
@@ -327,7 +323,7 @@ def upsert_sources(
         logger.error("Value error while upserting StructureServiceSourceDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceSourceDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceSourceDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceSourceDBModel")
         raise DBUpdateError("Unexpected error while upserting StructureServiceSourceDBModel") from e
 
 
@@ -397,5 +393,5 @@ def upsert_sinks(
         logger.error("Value error while upserting StructureServiceSinkDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceSinkDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceSinkDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceSinkDBModel")
         raise DBUpdateError("Unexpected error while upserting StructureServiceSinkDBModel") from e

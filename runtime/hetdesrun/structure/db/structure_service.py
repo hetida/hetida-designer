@@ -80,9 +80,7 @@ def load_structure_from_json_file(file_path: str) -> CompleteStructure:
         ) from e
 
     except Exception as e:
-        logger.error(
-            "Unexpected error while loading or parsing structure from %s: %s", file_path, str(e)
-        )
+        logger.exception("Unexpected error while loading or parsing structure from %s", file_path)
         raise JsonParsingError(
             f"Unexpected error while loading or parsing structure from {file_path}: {str(e)}"
         ) from e
@@ -209,7 +207,7 @@ def update_structure(complete_structure: CompleteStructure) -> None:
         logger.error("General DB Error: %s", e)
         raise
     except Exception as e:
-        logger.error("Unexpected Error while updating or inserting the structure: %s", e)
+        logger.exception("Unexpected Error while updating or inserting the structure")
         raise DBError("Unexpected Error while updating or inserting the structure") from e
 
     logger.debug("Completed update or insert operation for the complete structure.")
@@ -388,5 +386,5 @@ def delete_structure() -> None:
             raise DBError(msg) from e
         except Exception as e:
             msg = f"Unexpected Error while deleting structure: {str(e)}"
-            logger.error(msg)
+            logger.exception(msg)
             raise DBError(msg) from e
