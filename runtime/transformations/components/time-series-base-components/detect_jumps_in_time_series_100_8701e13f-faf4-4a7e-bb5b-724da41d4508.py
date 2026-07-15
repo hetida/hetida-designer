@@ -287,7 +287,9 @@ def validate_and_normalize_inputs(
         )
 
     if sensitivity_factor is not None:
-        if not isinstance(sensitivity_factor, int | float) or not np.isfinite(float(sensitivity_factor)):
+        if not isinstance(sensitivity_factor, int | float) or not np.isfinite(
+            float(sensitivity_factor)
+        ):
             raise ComponentInputValidationException(
                 "sensitivity_factor must be a finite number",
                 error_code="422",
@@ -360,6 +362,7 @@ def infer_typical_dt_seconds(index: pd.Index) -> float | None:
         return None
     return typical_dt_seconds
 
+
 def resolve_min_distance_time(
     index: pd.Index,
     min_distance_time: str | None,
@@ -428,7 +431,11 @@ def apply_sensitivity_to_threshold(
     sensitivity: str,
     sensitivity_factor: float | None,
 ) -> float:
-    factor = float(sensitivity_factor) if sensitivity_factor is not None else SENSITIVITY_FACTORS[sensitivity]
+    factor = (
+        float(sensitivity_factor)
+        if sensitivity_factor is not None
+        else SENSITIVITY_FACTORS[sensitivity]
+    )
     return float(threshold) * factor
 
 
@@ -565,7 +572,9 @@ def detect_threshold_on_derivative(
     large_gap_mask = build_large_gap_mask(series.index, MAX_ALLOWED_GAP_FACTOR)
     derivative = derivative.mask(large_gap_mask)
     score = derivative.abs()
-    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity, sensitivity_factor)
+    used_threshold = apply_sensitivity_to_threshold(
+        robust_auto_threshold(score), sensitivity, sensitivity_factor
+    )
     return score, used_threshold
 
 
@@ -587,7 +596,9 @@ def detect_robust_zscore_on_diff(
     else:
         z = (diff_signal - med) / scale
     score = z.abs()
-    used_threshold = apply_sensitivity_to_threshold(robust_auto_threshold(score), sensitivity, sensitivity_factor)
+    used_threshold = apply_sensitivity_to_threshold(
+        robust_auto_threshold(score), sensitivity, sensitivity_factor
+    )
     return score, diff_signal, used_threshold
 
 
@@ -665,13 +676,17 @@ def main(
 
     # Step 4: Calculate score and magnitudes for the selected method.
     if method == "threshold_on_derivative":
-        score, used_threshold = detect_threshold_on_derivative(smoothed, sensitivity, sensitivity_factor)
+        score, used_threshold = detect_threshold_on_derivative(
+            smoothed, sensitivity, sensitivity_factor
+        )
         magnitudes = calculate_difference_per_second(smoothed)
     elif method == "absolute_change":
         score, diff_signal, used_threshold = detect_absolute_change(smoothed, float(min_jump_size))
         magnitudes = diff_signal
     else:
-        score, diff_signal, used_threshold = detect_robust_zscore_on_diff(smoothed, sensitivity, sensitivity_factor)
+        score, diff_signal, used_threshold = detect_robust_zscore_on_diff(
+            smoothed, sensitivity, sensitivity_factor
+        )
         magnitudes = diff_signal
 
     # Step 5: Apply threshold on score to get initial candidate jumps.

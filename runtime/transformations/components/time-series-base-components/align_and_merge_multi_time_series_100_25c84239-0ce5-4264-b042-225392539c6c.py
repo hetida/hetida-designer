@@ -357,9 +357,11 @@ def merge_metric_series_mean(
     tolerance: str | None,
     missing_policy: str,
 ) -> pd.Series:
-    parsed_tolerance = align_and_merge_two_time_series.parse_fixed_timedelta_string(
-        tolerance, "tolerance"
-    ) if tolerance is not None else None
+    parsed_tolerance = (
+        align_and_merge_two_time_series.parse_fixed_timedelta_string(tolerance, "tolerance")
+        if tolerance is not None
+        else None
+    )
 
     first_series = ordered_series[0].astype(float)
     if missing_policy == "drop_if_any_missing":
@@ -392,7 +394,9 @@ def merge_metric_series_mean(
                 aligned_values, missing_policy
             )
             running_sum = (aligned_values["value_1"] + aligned_values["value_2"]).astype(float)
-            running_count = (running_count.reindex(running_sum.index).fillna(0.0) + 1.0).astype(float)
+            running_count = (running_count.reindex(running_sum.index).fillna(0.0) + 1.0).astype(
+                float
+            )
             continue
 
         aligned_sum = align_and_merge_two_time_series.build_aligned_frame(

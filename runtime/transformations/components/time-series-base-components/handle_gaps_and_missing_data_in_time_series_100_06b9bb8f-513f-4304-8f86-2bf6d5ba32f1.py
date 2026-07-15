@@ -26,10 +26,9 @@ optionally fill them, and return a corrected series.
     Constant value used when method="constant".
 - **resample_to** (String, default value: null):
     Optional target frequency (e.g. "10min") to create a regular grid.
-    Missing timestamps on the grid are treated as gaps.
-- **auto_frequency_determination** (Boolean, default value: True):
-    If True and resample_to is not set, infer a regular frequency from the
-    median time difference and resample to that grid.
+    Missing timestamps on the grid are treated as gaps. If `resample_to` is not
+    set, the component may still derive an internal frequency when this is
+    needed to apply edge handling consistently.
 
 ## Outputs
 - **corrected_timeseries** (Pandas Series):
@@ -39,9 +38,11 @@ optionally fill them, and return a corrected series.
 1. Sorts the input by time and removes duplicate timestamps (keeps the mean).
 2. Optionally resamples to a regular grid to make missing timestamps visible.
 3. Detects gaps as NaN values and as missing timestamps on the grid.
-4. If resample_to is set, it takes precedence over auto-frequency detection.
-5. Optionally infers a regular grid from the median time difference.
-6. Optionally extends/restricts the grid to the reference interval from
+4. If `resample_to` is set, the component first creates that regular grid.
+5. If `resample_to` is not set, the component may still derive an internal
+   frequency when this is needed to apply reference interval metadata and edge
+   handling consistently.
+6. The grid can optionally be extended/restricted to the reference interval from
    metadata (`ref_interval_start_timestamp`/`from`,
    `ref_interval_end_timestamp`/`to`).
    If metadata provides `ref_data_frequency` (and optionally
@@ -145,7 +146,6 @@ def validate_inputs(
     max_gap_duration: str | None,
     constant_value: float,
     resample_to: str | None,
-    auto_frequency_determination: bool,
 ) -> None:
     if not isinstance(series, pd.Series):
         raise ComponentInputValidationException(
@@ -217,12 +217,6 @@ def validate_inputs(
             error_code="422",
             invalid_component_inputs=["resample_to"],
         )
-    if not isinstance(auto_frequency_determination, bool):
-        raise ComponentInputValidationException(
-            "auto_frequency_determination must be true or false",
-            error_code="422",
-            invalid_component_inputs=["auto_frequency_determination"],
-        )
 
 
 def gap_lengths(mask: pd.Series) -> pd.Series:
@@ -260,7 +254,9 @@ def infer_typical_step(series: pd.Series) -> pd.Timedelta | None:
     return positive_diffs.median()
 
 
-def resolve_max_gap_duration(series: pd.Series, max_gap_duration: str | None) -> pd.Timedelta | None:
+def resolve_max_gap_duration(
+    series: pd.Series, max_gap_duration: str | None
+) -> pd.Timedelta | None:
     if max_gap_duration is not None:
         return pd.to_timedelta(max_gap_duration)
 
@@ -289,7 +285,9 @@ def get_reference_interval_from_series_attrs(
         start_raw = dataset_metadata.get(
             "ref_interval_start_timestamp", dataset_metadata.get("from")
         )
-        end_raw = dataset_metadata.get("ref_interval_end_timestamp", dataset_metadata.get("to"))
+        end_raw = dataset_metadata.get(
+            "ref_interval_end_timestamp", dataset_metadata.get("to")
+        )
 
     if start_raw is None:
         start_raw = attrs.get("ref_interval_start_timestamp", attrs.get("from"))
@@ -381,14 +379,15 @@ def build_regular_grid_from_frequency(
     ordered: pd.Series,
     frequency: str | pd.Timedelta,
 ) -> pd.Series:
-    full_index = pd.date_range(start=ordered.index.min(), end=ordered.index.max(), freq=frequency)
+    full_index = pd.date_range(
+        start=ordered.index.min(), end=ordered.index.max(), freq=frequency
+    )
     return ordered.reindex(full_index)
 
 
 def resolve_frequency_for_window(
     ordered: pd.Series,
     resample_to: str | None,
-    auto_frequency_determination: bool,
     reference_frequency: str | None,
 ) -> tuple[pd.Series, str | pd.Timedelta | None]:
     resample_value = resample_to
@@ -423,25 +422,6 @@ def resolve_frequency_for_window(
             )
         ordered = build_regular_grid_from_frequency(ordered, ref_freq_delta)
         return ordered, ref_freq_delta
-
-    if auto_frequency_determination and len(ordered.index) > 1:
-        diffs = ordered.index.to_series().diff().dropna()
-        positive_diffs = diffs[diffs > pd.Timedelta(0)]
-        if positive_diffs.empty:
-            raise ComponentInputValidationException(
-                "Cannot infer frequency from timestamps after sorting",
-                error_code="422",
-                invalid_component_inputs=["auto_frequency_determination"],
-            )
-        inferred = positive_diffs.median()
-        if inferred <= pd.Timedelta(0):
-            raise ComponentInputValidationException(
-                "Inferred frequency must be positive",
-                error_code="422",
-                invalid_component_inputs=["auto_frequency_determination"],
-            )
-        ordered = build_regular_grid_from_frequency(ordered, inferred)
-        return ordered, inferred
 
     return ordered, None
 
@@ -528,14 +508,15 @@ def apply_reference_window_to_series(
     if aligned_start > aligned_end:
         return ordered.iloc[0:0]
 
-    full_window_index = pd.date_range(start=aligned_start, end=aligned_end, freq=freq_delta)
+    full_window_index = pd.date_range(
+        start=aligned_start, end=aligned_end, freq=freq_delta
+    )
     return ordered.reindex(full_window_index)
 
 
 def prepare_series(
     series: pd.Series,
     resample_to: str | None,
-    auto_frequency_determination: bool,
     reference_frequency: str | None = None,
     reference_frequency_offset: str | None = None,
     window_start: pd.Timestamp | None = None,
@@ -547,7 +528,6 @@ def prepare_series(
     ordered, frequency_for_window = resolve_frequency_for_window(
         ordered,
         resample_to,
-        auto_frequency_determination,
         reference_frequency,
     )
     return apply_reference_window_to_series(
@@ -589,7 +569,6 @@ COMPONENT_INFO = {
         "mode": {"data_type": "STRING", "default_value": "fill"},
         "method": {"data_type": "STRING", "default_value": "time"},
         "fill_direction": {"data_type": "STRING", "default_value": "both"},
-        "auto_frequency_determination": {"data_type": "BOOLEAN", "default_value": True},
         "max_gap_duration": {"data_type": "STRING", "default_value": None},
         "constant_value": {"data_type": "FLOAT", "default_value": 0.0},
         "resample_to": {"data_type": "STRING", "default_value": None},
@@ -616,7 +595,6 @@ def main(
     mode="fill",
     method="time",
     fill_direction="both",
-    auto_frequency_determination=True,
     max_gap_duration=None,
     constant_value=0.0,
     resample_to=None,
@@ -631,15 +609,17 @@ def main(
         max_gap_duration,
         constant_value,
         resample_to,
-        auto_frequency_determination,
     )
-    ref_interval_start, ref_interval_end = get_reference_interval_from_series_attrs(timeseries)
+    ref_interval_start, ref_interval_end = get_reference_interval_from_series_attrs(
+        timeseries
+    )
     ref_data_frequency = get_reference_frequency_from_series_attrs(timeseries)
-    ref_data_frequency_offset = get_reference_frequency_offset_from_series_attrs(timeseries)
+    ref_data_frequency_offset = get_reference_frequency_offset_from_series_attrs(
+        timeseries
+    )
     series = prepare_series(
         timeseries,
         resample_to,
-        auto_frequency_determination,
         reference_frequency=ref_data_frequency,
         reference_frequency_offset=ref_data_frequency_offset,
         window_start=ref_interval_start,
