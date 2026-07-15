@@ -69,6 +69,43 @@ async def test_blob_storage_service_get_s3_client() -> None:
 
 
 @pytest.mark.asyncio
+async def test_blob_storage_service_get_s3_client_caches_and_rebuilds_on_credential_change() -> (
+    None
+):
+    def make_session(session_token: str) -> boto3.Session:
+        return boto3.Session(
+            aws_access_key_id="some_key_id",
+            aws_secret_access_key="some_key",  # noqa: S106
+            aws_session_token=session_token,
+            region_name="eu-central-1",
+        )
+
+    with (
+        mock_aws(),
+        mock.patch(
+            "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+            return_value=mock.Mock(endpoint_url="http://localhost:9000", anonymous=False),
+        ),
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.service.get_session",
+            return_value=make_session("token_1"),
+        ):
+            client_a = await get_s3_client()
+            client_b = await get_s3_client()
+            # identical credentials -> the same cached client object is reused
+            assert client_a is client_b
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.service.get_session",
+            return_value=make_session("token_2"),
+        ):
+            # rotated session token -> a new client is built
+            client_c = await get_s3_client()
+            assert client_c is not client_a
+
+
+@pytest.mark.asyncio
 async def test_ensure_bucket_exists() -> None:
     with mock_aws():
         client_mock = boto3.client("s3", region_name="us-east-1")
