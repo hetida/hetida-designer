@@ -285,9 +285,7 @@ def get_reference_interval_from_series_attrs(
         start_raw = dataset_metadata.get(
             "ref_interval_start_timestamp", dataset_metadata.get("from")
         )
-        end_raw = dataset_metadata.get(
-            "ref_interval_end_timestamp", dataset_metadata.get("to")
-        )
+        end_raw = dataset_metadata.get("ref_interval_end_timestamp", dataset_metadata.get("to"))
 
     if start_raw is None:
         start_raw = attrs.get("ref_interval_start_timestamp", attrs.get("from"))
@@ -379,9 +377,7 @@ def build_regular_grid_from_frequency(
     ordered: pd.Series,
     frequency: str | pd.Timedelta,
 ) -> pd.Series:
-    full_index = pd.date_range(
-        start=ordered.index.min(), end=ordered.index.max(), freq=frequency
-    )
+    full_index = pd.date_range(start=ordered.index.min(), end=ordered.index.max(), freq=frequency)
     return ordered.reindex(full_index)
 
 
@@ -508,9 +504,7 @@ def apply_reference_window_to_series(
     if aligned_start > aligned_end:
         return ordered.iloc[0:0]
 
-    full_window_index = pd.date_range(
-        start=aligned_start, end=aligned_end, freq=freq_delta
-    )
+    full_window_index = pd.date_range(start=aligned_start, end=aligned_end, freq=freq_delta)
     return ordered.reindex(full_window_index)
 
 
@@ -610,13 +604,9 @@ def main(
         constant_value,
         resample_to,
     )
-    ref_interval_start, ref_interval_end = get_reference_interval_from_series_attrs(
-        timeseries
-    )
+    ref_interval_start, ref_interval_end = get_reference_interval_from_series_attrs(timeseries)
     ref_data_frequency = get_reference_frequency_from_series_attrs(timeseries)
-    ref_data_frequency_offset = get_reference_frequency_offset_from_series_attrs(
-        timeseries
-    )
+    ref_data_frequency_offset = get_reference_frequency_offset_from_series_attrs(timeseries)
     series = prepare_series(
         timeseries,
         resample_to,
