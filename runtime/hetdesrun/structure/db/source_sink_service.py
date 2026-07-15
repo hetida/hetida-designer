@@ -2,7 +2,7 @@ import logging
 from itertools import batched
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine
+from sqlalchemy import Connection, Engine, delete, insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.postgresql.dml import Insert as pg_insert_typing
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -14,6 +14,8 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     StructureServiceSinkDBModel,
     StructureServiceSourceDBModel,
     StructureServiceThingNodeDBModel,
+    thingnode_sink_association,
+    thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import (
     DBError,
@@ -226,6 +228,34 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
             ) from e
 
 
+def _collect_thing_node_associations(
+    entity_dbmodels: object,
+    existing_thing_nodes: dict[tuple[str, str], StructureServiceThingNodeDBModel],
+    entity_id_column: str,
+) -> tuple[list[UUID], list[dict]]:
+    """Collect the thing-node association rows for a set of upserted sources/sinks.
+
+    Returns the entity ids and the association rows ({"thingnode_id": ..., <entity_id_column>: ...})
+    for a bulk replace. Duplicate associations are removed. Only scalar columns of the
+    returned orm models are accessed, so this does not trigger relationship lazy-loads.
+    """
+    entity_ids: list[UUID] = []
+    association_rows: list[dict] = []
+    seen: set[tuple[UUID, UUID]] = set()
+    for entity in entity_dbmodels:  # type: ignore[attr-defined]
+        entity_ids.append(entity.id)
+        for tn_external_id in entity.thing_node_external_ids or []:
+            thing_node = existing_thing_nodes.get((entity.stakeholder_key, tn_external_id))
+            if thing_node is None:
+                continue
+            association = (thing_node.id, entity.id)
+            if association in seen:
+                continue
+            seen.add(association)
+            association_rows.append({"thingnode_id": thing_node.id, entity_id_column: entity.id})
+    return entity_ids, association_rows
+
+
 def upsert_sources(
     session: SQLAlchemySession,
     sources: list[StructureServiceSource],
@@ -273,13 +303,20 @@ def upsert_sources(
             execution_options={"populate_existing": True},
         )
 
-        # Assign relationships
-        for source in sources_dbmodels:
-            source.thing_nodes = [
-                existing_thing_nodes.get((source.stakeholder_key, tn_external_id))
-                for tn_external_id in source.thing_node_external_ids or []
-                if (source.stakeholder_key, tn_external_id) in existing_thing_nodes
-            ]
+        # Replace the many-to-many thing-node associations in bulk. Assigning
+        # source.thing_nodes per row would lazy-load each source's current association
+        # collection to diff it (one SELECT per source, i.e. N+1); instead apply the
+        # desired associations with a single bulk delete + bulk insert.
+        source_ids, source_association_rows = _collect_thing_node_associations(
+            sources_dbmodels, existing_thing_nodes, "source_id"
+        )
+        session.execute(
+            delete(thingnode_source_association).where(
+                thingnode_source_association.c.source_id.in_(source_ids)
+            )
+        )
+        if source_association_rows:
+            session.execute(insert(thingnode_source_association), source_association_rows)
 
     except IntegrityError as e:
         logger.error("Integrity Error while upserting StructureServiceSourceDBModel: %s", e)
@@ -341,13 +378,17 @@ def upsert_sinks(
             execution_options={"populate_existing": True},
         )
 
-        # Assign relationships
-        for sink in sinks_dbmodels:
-            sink.thing_nodes = [
-                existing_thing_nodes.get((sink.stakeholder_key, tn_external_id))
-                for tn_external_id in sink.thing_node_external_ids or []
-                if (sink.stakeholder_key, tn_external_id) in existing_thing_nodes
-            ]
+        # Replace the many-to-many thing-node associations in bulk (see upsert_sources).
+        sink_ids, sink_association_rows = _collect_thing_node_associations(
+            sinks_dbmodels, existing_thing_nodes, "sink_id"
+        )
+        session.execute(
+            delete(thingnode_sink_association).where(
+                thingnode_sink_association.c.sink_id.in_(sink_ids)
+            )
+        )
+        if sink_association_rows:
+            session.execute(insert(thingnode_sink_association), sink_association_rows)
 
     except IntegrityError as e:
         logger.error("Integrity Error while upserting StructureServiceSinkDBModel: %s", e)
