@@ -1,6 +1,5 @@
 import datetime
 import logging
-from copy import deepcopy
 from uuid import UUID
 
 from pydantic import StrictInt, StrictStr
@@ -319,11 +318,13 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
 def tr_same_except_for_wiring_and_docu(
     tr_A: TransformationRevision, tr_B: TransformationRevision
 ) -> bool:
-    tr_compare = deepcopy(tr_A)
-    tr_compare.test_wiring = tr_B.test_wiring
-    tr_compare.documentation = tr_B.documentation
-    are_equal = tr_compare == tr_B
-    return are_equal
+    # Shallow copy instead of deepcopy: we only override two fields and compare, never
+    # mutating the shared nested content, so there is no need to duplicate the
+    # (potentially large) workflow content.
+    tr_compare = tr_A.model_copy(
+        update={"test_wiring": tr_B.test_wiring, "documentation": tr_B.documentation}
+    )
+    return tr_compare == tr_B
 
 
 def is_modifiable(
