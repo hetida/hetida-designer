@@ -281,3 +281,17 @@ def test_filter_sources_by_substring_match_no_matches(mocked_clean_test_db_sessi
 
     # Assert that no StructureServiceSourceDBModel is returned
     assert len(result) == 0
+
+
+@pytest.mark.usefixtures("_db_test_structure")
+def test_filter_by_substring_match_escapes_like_wildcards(mocked_clean_test_db_session):
+    # The empty string is a substring of every name, so it matches all entries.
+    all_sinks = fetch_sinks_by_substring_match("")
+    all_sources = fetch_sources_by_substring_match("")
+    assert len(all_sinks) > 0
+    assert len(all_sources) > 0
+
+    # "%" is the SQL LIKE "match anything" wildcard. It must be treated literally, so a
+    # search for "%" returns only names actually containing a "%" (none here), never all.
+    assert len(fetch_sinks_by_substring_match("%")) < len(all_sinks)
+    assert len(fetch_sources_by_substring_match("%")) < len(all_sources)

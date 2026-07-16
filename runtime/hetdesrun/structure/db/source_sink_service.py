@@ -159,7 +159,9 @@ def fetch_sources_by_substring_match(filter_string: str) -> list[StructureServic
         try:
             matching_sources = (
                 session.query(StructureServiceSourceDBModel)
-                .filter(StructureServiceSourceDBModel.name.ilike(f"%{filter_string}%"))
+                .filter(
+                    StructureServiceSourceDBModel.name.icontains(filter_string, autoescape=True)
+                )
                 .all()
             )
             logger.debug(
@@ -197,7 +199,7 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
         try:
             matching_sinks = (
                 session.query(StructureServiceSinkDBModel)
-                .filter(StructureServiceSinkDBModel.name.ilike(f"%{filter_string}%"))
+                .filter(StructureServiceSinkDBModel.name.icontains(filter_string, autoescape=True))
                 .all()
             )
             logger.debug(
