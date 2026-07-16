@@ -84,6 +84,11 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"The bucket '{bucket.name}' contains no object with the key '{object_key.string}'!"
         ) from error
 
+    # Security note (reviewed, accepted by design): the object is deserialized via
+    # pickle (or keras/hdf5 below), which executes embedded code. The configured BLOB
+    # store is therefore TRUSTED -- only trusted producers may write objects to
+    # it. This is intrinsic to loading pickled/keras models and is intended behaviour,
+
     if object_key.file_extension == FileExtension.H5:
         try:
             import tensorflow as tf  # noqa: PLC0415

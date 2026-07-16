@@ -4,6 +4,7 @@
 - BREAKING CHANGE: async execution endpoint callback urls must now be pre-configured via `HD_ALLOWED_CALLBACK_URL_PATTERNS`
 - introduce JWT algorithm pinning via `HD_AUTH_ALLOWED_ALGORITHMS` and fix exp claim being now required as intended
 - many smaller fixes
+- BREAKING CHANGE: tighten model object loading path handling to avoid path traversals. This may affect existing stored objects with very unusual object names or tag names.
 
 ## 0.14.0
 - Added configurable Opentelemetry support via logfire
