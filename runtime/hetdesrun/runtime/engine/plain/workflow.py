@@ -160,6 +160,14 @@ class ComputationNode:
 
         input_value_dict: dict[str, Any] = {}
 
+        # Upstream node results are awaited sequentially on purpose. Each node's result is a
+        # memoized cached_property, so every node runs exactly once regardless of ordering.
+        # Gathering independent branches concurrently (asyncio.gather) is deliberately NOT
+        # done: component code is predominantly synchronous and CPU-bound and runs inline on
+        # the event loop (sync components are not offloaded to threads), so concurrency would
+        # yield no real parallelism for that work while complicating cycle detection (the
+        # _in_computation flag), error propagation and concurrent-first-await memoization of
+        # shared nodes. This is intended -- do not "optimise" it into a gather.
         for input_name, (another_node, output_name) in self.inputs.items():
             # Cycle detection logic
             if another_node._in_computation:
@@ -397,6 +405,9 @@ class Workflow:
         internal_runtime_execution_logger.debug("Starting computation")
 
         # gather result from workflow operators
+        # Sequential awaiting is intentional here too (see _gather_data_from_inputs): node
+        # results are memoized and execution is mostly CPU-bound sync code running inline on
+        # the event loop, so a concurrent gather would not help. Do not convert to gather.
         results = {}
         exe_context_config = execution_config.get(ConfigurationInput())
 
