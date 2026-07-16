@@ -13,6 +13,7 @@ The format is
     hd://<adapter_key>/<ref_id>?filter_key_1=filter_value_1&other_filter=other_value#ref_key=<ref_key>&ref_id_type=<ref_id_type>
 
 Notes on uri:
+
 * Schema must be "hd"
 * must be properly url encoded
 * multiple values for the same filter key will yield a json serialized array
@@ -42,5 +43,6 @@ Furthermore it allows to configuratively upgrade/change such wirings by simply c
 
 ### Uri Wiring shortcuts in hetida platform
 Using [hetida platform](https://hetida.io/), typically the following wiring shortcuts are configured:
+
 * `hd://assets` — points to the hetida platform source component "Hetida Platform Assets" that provides assets as a dataframe at the current point in the hierarchy.
 * `hd://timeseries` — points to the hetida platform source component "Hetida Platform Channel Timeseries Data" that provides dynamic collections of timeseries data at and below the current asset as a multitsframe.
