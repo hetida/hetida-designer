@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - release
-      - develop
 permissions:
   contents: read
   pages: write
