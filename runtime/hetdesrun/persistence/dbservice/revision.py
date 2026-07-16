@@ -1,4 +1,3 @@
-import datetime
 import logging
 from uuid import UUID
 
@@ -993,14 +992,20 @@ def get_all_nested_transformation_revisions(
 
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
-    revision_group_list = get_multiple_transformation_revisions(
-        FilterParams(
-            state=State.RELEASED,
-            revision_group_id=revision_group_id,
-            include_dependencies=False,
-        )
-    )
-    if len(revision_group_list) == 0:
+    # Select only the id of the newest released revision instead of loading every
+    # released revision of the group (with full content) and sorting in Python.
+    with get_session()() as session, session.begin():
+        latest_revision_id: UUID | None = session.execute(
+            select(TransformationRevisionDBModel.id)
+            .where(
+                TransformationRevisionDBModel.revision_group_id == revision_group_id,
+                TransformationRevisionDBModel.state == State.RELEASED,
+            )
+            .order_by(TransformationRevisionDBModel.released_timestamp.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+    if latest_revision_id is None:
         msg = (
             f"no released transformation revisions with revision group id {revision_group_id} "
             f"found in the database"
@@ -1008,11 +1013,4 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
         logger.error(msg)
         raise DBNotFoundError(msg)
 
-    id_by_released_timestamp: dict[datetime.datetime, UUID] = {}
-
-    for revision in revision_group_list:
-        if not isinstance(revision.released_timestamp, datetime.datetime):
-            raise TypeError("revision.released_timestamp must be of type datetime.datetime")
-        id_by_released_timestamp[revision.released_timestamp] = revision.id
-    _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
     return latest_revision_id
