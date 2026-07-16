@@ -134,6 +134,17 @@ def cache_conditionally(condition_func: Callable) -> Callable:
     * cache_conditionally works for both synchronous and asynchronous functions
     * The implementation is NOT thread-safe
 
+    Contract / caveats (this is an intentional, opt-in optimisation, not a general-purpose
+    cache -- see the transformation-revision execution caching in
+    persistence/dbservice/revision.py):
+    * The SAME cached object is handed back on every hit. Callers MUST NOT mutate a returned
+      value in place -- doing so would corrupt the cache for every subsequent caller.
+    * The cache is unbounded: entries are never evicted and are only freed on process restart.
+      This is acceptable because it is meant to key on a bounded set of immutable objects.
+    * There is NO invalidation: if the underlying object changes or is removed after being
+      cached, the stale value keeps being served. Only use this where the cached values are
+      known to be immutable for the process lifetime.
+
     Args:
         condition_func (function): Takes a result of `func`
         and returns a boolean that determines whether this value should be cached
@@ -197,6 +208,15 @@ def cache_output_dict_conditionally(condition_func: Callable) -> Callable:
 
     * cache_output_dict_conditionally works for both synchronous and asynchronous functions
     * The implementation is NOT thread-safe
+
+    Contract / caveats (intentional, opt-in optimisation -- see the transformation-revision
+    execution caching in persistence/dbservice/revision.py):
+    * The returned mapping is a read-only MappingProxyType, but the cached VALUES are the same
+      objects on every hit. Callers MUST NOT mutate a returned value in place -- doing so would
+      corrupt the cache for every subsequent caller.
+    * The cache is unbounded (entries are never evicted, only freed on process restart) and is
+      NOT invalidated. Only use this where the cached values are known to be immutable for the
+      process lifetime.
 
     Args:
         condition_func (function): Takes a result dict val of `func`

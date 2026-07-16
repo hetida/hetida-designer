@@ -97,6 +97,13 @@ def select_tr_by_id_with_possible_caching(
     session: SQLAlchemySession,
     log_error: bool = True,
 ) -> TransformationRevision:
+    """Like select_tr_by_id, but caches non-DRAFT trafos when the flag is enabled.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. On a cache hit the SAME object is returned, so
+    callers MUST NOT mutate the result in place. See cache_conditionally for the full
+    contract (shared objects, unbounded, no invalidation).
+    """
     return select_tr_by_id(session=session, id=id, log_error=log_error)
 
 
@@ -141,6 +148,13 @@ def read_multiple_transformation_revisions_by_id(
 def read_multiple_transformation_revisions_by_id_with_possible_caching(
     ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
+    """Like read_multiple_transformation_revisions_by_id, but caches non-DRAFT trafos.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. Cached values are shared objects, so callers
+    MUST NOT mutate them in place. See cache_output_dict_conditionally for the full contract
+    (shared values, unbounded, no invalidation).
+    """
     return read_multiple_transformation_revisions_by_id(ids, log_error=log_error, session=session)
 
 
@@ -162,6 +176,13 @@ def read_single_transformation_revision_with_caching(
     id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> TransformationRevision:
+    """Like read_single_transformation_revision, but caches non-DRAFT trafos.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. On a cache hit the SAME object is returned, so
+    callers MUST NOT mutate the result in place. See cache_conditionally for the full
+    contract (shared objects, unbounded, no invalidation).
+    """
     return read_single_transformation_revision(id, log_error)
 
 
