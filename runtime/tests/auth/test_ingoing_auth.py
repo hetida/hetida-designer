@@ -285,6 +285,39 @@ async def test_auth_rejects_token_without_exp(
 
 
 @pytest.mark.asyncio
+async def test_auth_rejects_token_without_aud_if_audience_configured(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_without_aud,
+    mocked_public_key_fetching,
+):
+    """If an expected audience is configured (which it is by default), a token
+    lacking the aud claim must be rejected.
+    """
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_without_aud},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_token_with_wrong_aud(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_with_wrong_aud,
+    mocked_public_key_fetching,
+):
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_with_wrong_aud},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_auth_role_checking_rejects_non_list_role_claim(
     open_async_test_client_with_auth,
     mocked_clean_test_db_session,

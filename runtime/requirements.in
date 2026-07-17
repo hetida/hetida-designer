@@ -27,6 +27,7 @@ htpy
 httptools
 httpx
 joblib
+joserfc
 kaleido
 keras
 libcst
@@ -49,7 +50,6 @@ pydantic[dotenv]<3,>=2.11
 pydantic-settings
 pytest
 pytest-asyncio
-python-jose[cryptography]
 regex!=2022.3.15 # bug in combination with dateparser "bad escape..."
 requests
 scikit-learn

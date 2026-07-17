@@ -395,13 +395,16 @@ class RuntimeConfig(BaseSettings):
 
     auth_audience: str | None = Field(
         "account",
-        description="Expected audience in tokens.",
+        description="Expected audience in tokens. If set, tokens must contain a matching"
+        " aud claim — tokens lacking the claim are rejected. Set to an empty string to"
+        " disable audience checking.",
         validation_alias=AliasChoices("HD_AUTH_AUDIENCE", "JWT_AUDIENCE"),
     )
 
     auth_issuer: str | None = Field(
         None,
-        description="Expected issuer in tokens.",
+        description="Expected issuer in tokens. If set, tokens must contain a matching"
+        " iss claim — tokens lacking the claim are rejected.",
         validation_alias=AliasChoices("HD_AUTH_ISSUER", "JWT_ISSUER"),
     )
 

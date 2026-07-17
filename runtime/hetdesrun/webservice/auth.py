@@ -2,9 +2,12 @@ import datetime
 import json
 import logging
 import threading
+from typing import cast
 
 import httpx
-from jose import JOSEError, jwt
+from joserfc import jwt
+from joserfc.errors import JoseError
+from joserfc.jwk import JWKRegistry, KeySet, KeySetSerialization
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -14,20 +17,22 @@ class AuthentificationError(Exception):
     pass
 
 
+# Options steering claims validation. Signature verification is always performed
+# by joserfc and cannot be disabled. Expiration (exp) and not-before (nbf) timestamps
+# are validated whenever the respective claim is present in the token; "require_exp"
+# additionally makes a missing exp claim an error, since a token without expiration
+# should not be accepted. If an expected audience / issuer is configured, the
+# respective claim must be present in the token and match — a token lacking the
+# claim is rejected.
 DEFAULT_OPTIONS = {
-    "verify_signature": True,
     "verify_aud": True,
     "verify_iss": True,
-    # expiration is only checked by python-jose if the exp claim is present, so we
-    # require the exp claim to be present. Note that python-jose only honors the
-    # per-claim "require_<claim>" boolean options; a PyJWT-style {"require": ["exp"]}
-    # would be silently ignored.
     "require_exp": True,
 }
 
 # Asymmetric JWT signature algorithms accepted by default. Only asymmetric algorithms
 # may be listed here. These cover the algorithms commonly offered by OpenID Connect providers such
-# as Keycloak (and are the asymmetric signing algorithms supported by python-jose).
+# as Keycloak.
 DEFAULT_ALLOWED_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
 
 
@@ -52,7 +57,7 @@ class BearerVerifierOptions(BaseModel):
     public_key_reloading_minimum_age: datetime.timedelta = Field(datetime.timedelta(seconds=15))
     default_decoding_options: dict = Field(
         DEFAULT_OPTIONS,
-        description="default options for jwt decoding. These will be used"
+        description="default options for jwt claims validation. These will be used"
         " if no options are provided explicitely on invoking the verify_token"
         " method of the BearerVerifier",
     )
@@ -68,11 +73,9 @@ class BearerVerifierOptions(BaseModel):
 class BearerVerifier:
     """Bearer verifier class with key (re)loading
 
-    * python-jose does not support loading public keys for signature check
-      from an url at all at the moment.
-    * PyJWT supports that but has insufficient error handling parsing key data
-      and does not try to reload keys. Since some auth backends update their public
-      keys from time to time we implement automatic reloading of keys from url here.
+    joserfc does not fetch public keys for signature checking from an url itself.
+    Since some auth backends update their public keys from time to time we
+    implement automatic (re)loading of keys from url here.
     """
 
     def __init__(self, verifier_options: BearerVerifierOptions):
@@ -111,6 +114,44 @@ class BearerVerifier:
             )
         )
 
+    def _key_set(self) -> KeySet:
+        """Build a joserfc key set from the loaded public key data.
+
+        The auth server may provide either a JWK set ({"keys": [...]}) or a
+        single JWK. Raises ValueError / JoseError on unusable key data, which
+        verify_token handles by trying to reload keys.
+        """
+        key_data = self._public_key_data
+        if not isinstance(key_data, dict):
+            raise ValueError("No usable public key data loaded from auth service.")
+        if "keys" in key_data:
+            return KeySet.import_key_set(cast(KeySetSerialization, key_data))
+        return KeySet([JWKRegistry.import_key(key_data)])
+
+    def _claims_registry(self, options: dict) -> jwt.JWTClaimsRegistry:
+        """Translate decoding options into a joserfc claims registry.
+
+        If an expected audience / issuer is configured, the respective claim is
+        required ("essential") in the token and validated against the configured
+        value — tokens lacking the claim are rejected. exp and nbf timestamps are
+        validated whenever present.
+        """
+        claims_options: dict = {
+            "exp": {"essential": options.get("require_exp", False)},
+            "nbf": {"essential": False},
+        }
+        if options.get("verify_aud", True) and self.verifier_options.audience:
+            claims_options["aud"] = {
+                "essential": True,
+                "value": self.verifier_options.audience,
+            }
+        if options.get("verify_iss", True) and self.verifier_options.issuer:
+            claims_options["iss"] = {
+                "essential": True,
+                "value": self.verifier_options.issuer,
+            }
+        return jwt.JWTClaimsRegistry(**claims_options)
+
     async def verify_token(
         self,
         access_token: str,
@@ -127,15 +168,13 @@ class BearerVerifier:
         if options is None:
             options = self.verifier_options.default_decoding_options
         try:
-            decoded_bearer_token: dict = jwt.decode(
+            token = jwt.decode(
                 access_token,
-                key=self._public_key_data,
+                key=self._key_set(),
                 algorithms=self.verifier_options.allowed_algorithms,
-                audience=self.verifier_options.audience,
-                issuer=self.verifier_options.issuer,
-                options=options,
             )
-        except JOSEError as e:  # this is the base exception class of jose
+            self._claims_registry(options).validate(token.claims)
+        except (JoseError, ValueError) as e:
             logger.info("Failing to verify Bearer Token:\nError: %s", str(e))
             if not force_loading_keys:
                 logger.info("Trying to load current public key")
@@ -147,6 +186,7 @@ class BearerVerifier:
                         force_loading_keys=True,
                     )
             raise AuthentificationError("Failed to verify Bearer Token") from e
+        decoded_bearer_token: dict = token.claims
         return decoded_bearer_token
 
     def is_key_old(self) -> bool:
