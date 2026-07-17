@@ -118,6 +118,51 @@
   </span>
 </ng-template>
 
+<ng-template #fileTemplate let-fileItem="transformation">
+  @if (fileResultsByOutputKey[fileItem.key]; as fileResult) {
+    <span class="mat-body-strong">{{ fileItem.key }}:</span>
+    <br />
+    @switch (fileResult.kind) {
+      @case ('pdf') {
+        <iframe
+          class="protocol-content__pdf"
+          [src]="fileResult.safeResourceUrl"
+          title="{{ fileResult.name || fileItem.key }}"
+        ></iframe>
+      }
+      @case ('image') {
+        <img
+          class="protocol-content__image"
+          [src]="fileResult.blobUrl"
+          alt="{{ fileResult.name || fileItem.key }}"
+        />
+      }
+      @case ('html') {
+        <iframe
+          class="protocol-content__html"
+          [src]="fileResult.safeResourceUrl"
+          sandbox="allow-scripts"
+          title="{{ fileResult.name || fileItem.key }}"
+        ></iframe>
+      }
+      @default {
+        <a
+          class="protocol-content__download"
+          [href]="fileResult.blobUrl"
+          [download]="fileResult.name || fileItem.key"
+        >
+          <mat-icon>download</mat-icon>
+          <span
+            >{{ fileResult.name || fileItem.key }} ({{
+              fileResult.contentType
+            }})</span
+          >
+        </a>
+      }
+    }
+  }
+</ng-template>
+
 <ng-template #stringTemplate let-someItem="transformation">
   <span class="mat-body-strong">{{ someItem.key }}:</span>
   <br />
