@@ -116,6 +116,8 @@ Component to detect outliers using a moving-window median absolute deviation
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -264,7 +266,7 @@ def calculate_window_size_in_seconds(
             invalid_component_inputs=["timeseries"],
         )
 
-    median_diff_seconds = float(median_diff.seconds)
+    median_diff_seconds = float(median_diff.total_seconds())
     if median_diff_seconds <= 0:
         raise ComponentInputValidationException(
             "timeseries must have a positive median time difference to infer window_size",
@@ -276,7 +278,8 @@ def calculate_window_size_in_seconds(
 
 
 def create_pandas_frequency_string(number_of_seconds: float) -> str:
-    return str(number_of_seconds) + "S"
+    rounded_seconds = max(1, math.ceil(number_of_seconds))
+    return f"{rounded_seconds}s"
 
 
 def resolve_window_size(

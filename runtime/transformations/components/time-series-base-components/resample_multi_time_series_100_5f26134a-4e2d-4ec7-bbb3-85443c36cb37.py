@@ -101,9 +101,7 @@ import pandas as pd
 from hdutils import ComponentInputValidationException
 from hetdesrun.component.load import import_comp
 
-
-def get_resample_time_series():
-    return import_comp("8d9180a9-9b95-4390-aeff-8a36f25f5d7b")
+resample_time_series = import_comp("8d9180a9-9b95-4390-aeff-8a36f25f5d7b")
 
 
 AGGREGATION_METHODS = {"mean", "median", "min", "max", "sum", "asfreq"}
@@ -201,7 +199,6 @@ def validate_inputs(
         )
 
     # Let Resample Time Series validate the exact target frequency semantics.
-    resample_time_series = get_resample_time_series()
     resample_time_series.validate_inputs(
         pd.Series(
             [1.0, 2.0],
@@ -245,7 +242,6 @@ def resample_metric_series(
     label_position: str,
     closed: str,
 ) -> pd.DataFrame:
-    resample_time_series = get_resample_time_series()
     result_frames = []
 
     for metric in sorted(metric_series):
@@ -285,7 +281,7 @@ COMPONENT_INFO = {
     "name": "Resample Multi Time Series",
     "category": "Time Series Base Components",
     "description": "Bring several time series from one MultiTSFrame onto the same target time grid.",  # noqa: E501
-    "version_tag": "1.0.0",
+    "version_tag": "1.0.1",
     "id": "5f26134a-4e2d-4ec7-bbb3-85443c36cb37",
     "revision_group_id": "3fe9e72c-9cb6-47f5-a509-0e420ee4522b",
     "state": "RELEASED",

@@ -172,9 +172,7 @@ import pandas as pd
 from hdutils import ComponentInputValidationException
 from hetdesrun.component.load import import_comp
 
-
-def get_align_and_merge_two_time_series():
-    return import_comp("79ffe3ff-346f-4dad-ab38-ecb7b477325d")
+align_and_merge_two_time_series = import_comp("79ffe3ff-346f-4dad-ab38-ecb7b477325d")
 
 
 ALIGN_STRATEGIES = {"exact", "nearest", "forward_fill"}
@@ -286,10 +284,13 @@ def validate_inputs(
         )
 
     # Let version 1.0.0 validate the exact tolerance syntax, so behavior stays identical.
-    align_and_merge_two_time_series = get_align_and_merge_two_time_series()
     align_and_merge_two_time_series.validate_inputs(
-        pd.Series([1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])),
-        pd.Series([1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])),
+        pd.Series(
+            [1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])
+        ),
+        pd.Series(
+            [1.0], index=pd.DatetimeIndex([pd.Timestamp("2026-01-01T00:00:00Z")])
+        ),
         align_strategy,
         join_type,
         tolerance,
@@ -327,7 +328,6 @@ def merge_metric_series(
     missing_policy: str,
     merge_operation: str,
 ) -> pd.Series:
-    align_and_merge_two_time_series = get_align_and_merge_two_time_series()
     ordered_series = [metric_series[metric] for metric in sorted(metric_series)]
 
     if merge_operation == "mean":
@@ -362,9 +362,10 @@ def merge_metric_series_mean(
     tolerance: str | None,
     missing_policy: str,
 ) -> pd.Series:
-    align_and_merge_two_time_series = get_align_and_merge_two_time_series()
     parsed_tolerance = (
-        align_and_merge_two_time_series.parse_fixed_timedelta_string(tolerance, "tolerance")
+        align_and_merge_two_time_series.parse_fixed_timedelta_string(
+            tolerance, "tolerance"
+        )
         if tolerance is not None
         else None
     )
@@ -399,10 +400,12 @@ def merge_metric_series_mean(
             aligned_values = align_and_merge_two_time_series.apply_missing_policy(
                 aligned_values, missing_policy
             )
-            running_sum = (aligned_values["value_1"] + aligned_values["value_2"]).astype(float)
-            running_count = (running_count.reindex(running_sum.index).fillna(0.0) + 1.0).astype(
-                float
-            )
+            running_sum = (
+                aligned_values["value_1"] + aligned_values["value_2"]
+            ).astype(float)
+            running_count = (
+                running_count.reindex(running_sum.index).fillna(0.0) + 1.0
+            ).astype(float)
             continue
 
         aligned_sum = align_and_merge_two_time_series.build_aligned_frame(
