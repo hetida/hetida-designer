@@ -348,14 +348,18 @@ export class TransformationActionService {
 
   public unitTestComponent(transformation: Transformation): void {
     if (transformation.type === TransformationType.COMPONENT) {
-      this.transformationService
-        .unitTestComponent(transformation)
-        .subscribe(test_results => {
-          this.resultDialogService.openDialog(
-            'Unit Test Results',
-            `${test_results.pytest_stdout_str}\n\nSTDERR:\n${test_results.pytest_stderr_str}`
-          );
-        });
+      this.resultDialogService.openDialogWithLoading(
+        'Unit Test Results',
+        this.transformationService
+          .unitTestComponent(transformation)
+          .pipe(
+            map(
+              test_results =>
+                `${test_results.pytest_stdout_str}\n\nSTDERR:\n${test_results.pytest_stderr_str}`
+            )
+          ),
+        'Running unit tests...'
+      );
     } else {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} is not a component. Only components can have unit tests.`

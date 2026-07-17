@@ -12,7 +12,16 @@
 </div>
 
 <mat-dialog-content>
-  <p>{{ data.message }}</p>
+  @if (loading) {
+    <div class="loading-container" data-testid="text-result-dialog-spinner">
+      <mat-spinner diameter="40"></mat-spinner>
+      @if (data.loadingText) {
+        <span>{{ data.loadingText }}</span>
+      }
+    </div>
+  } @else {
+    <p>{{ message }}</p>
+  }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button
