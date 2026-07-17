@@ -1,4 +1,5 @@
-- replace unmaintained python-jose with joserfc for JWT verification. BREAKING CHANGE: if an expected audience (`HD_AUTH_AUDIENCE`, default `account`) or issuer (`HD_AUTH_ISSUER`) is configured, the respective claim must now be present in tokens and match — tokens lacking the claim are rejected. Set `HD_AUTH_AUDIENCE` to an empty string to disable audience checking.
+- allow component import and hetdesrun usage in components during unit testing
+- replace python-jose with joserfc for JWT verification. BREAKING CHANGE: if an expected audience (`HD_AUTH_AUDIENCE`, default `account`) or issuer (`HD_AUTH_ISSUER`) is configured, the respective claim must now be present in tokens and match — tokens lacking the claim are rejected. Set `HD_AUTH_AUDIENCE` to an empty string to disable audience checking.
 - more secure and precise auth configuration
 - sql adpater config BREAKING CHANGE: requires explicit flag to allow arbitrary sql query sources from now on, default being not to allow them. Table allowlist is now enforced at read/write
 - BREAKING CHANGE: async execution endpoint callback urls must now be pre-configured via `HD_ALLOWED_CALLBACK_URL_PATTERNS`

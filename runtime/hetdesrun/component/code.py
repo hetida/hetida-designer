@@ -31,7 +31,7 @@ import logging
 
 # add your own imports here.
 # See
-#   https://github.com/hetida/hetida-designer/tree/release/docs/component_tips.md
+#   https://hetida.github.io/hetida-designer/user_guide/component_writing/
 # for component writing features and tips (logging, debugging, importing other components)
 
 logger = logging.getLogger(__name__)
