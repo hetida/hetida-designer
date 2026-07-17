@@ -9726,6 +9726,24 @@
           "component_code": {
             "type": "string",
             "title": "Component Code"
+          },
+          "code_modules": {
+            "items": {
+              "$ref": "#/components/schemas/CodeModule"
+            },
+            "type": "array",
+            "title": "Code Modules",
+            "description": "Code modules of all components (transitively) imported via import_comp by the component code under test.",
+            "default": []
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentRevision"
+            },
+            "type": "array",
+            "title": "Components",
+            "description": "Component revisions of all components (transitively) imported via import_comp by the component code under test.",
+            "default": []
           }
         },
         "type": "object",

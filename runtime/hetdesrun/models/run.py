@@ -611,6 +611,20 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
 
 class UnitTestPayload(BaseModel):
     component_code: str
+    code_modules: list[CodeModule] = Field(
+        default=[],
+        description=(
+            "Code modules of all components (transitively) imported via import_comp"
+            " by the component code under test."
+        ),
+    )
+    components: list[ComponentRevision] = Field(
+        default=[],
+        description=(
+            "Component revisions of all components (transitively) imported via import_comp"
+            " by the component code under test."
+        ),
+    )
 
 
 class UnitTestResults(BaseModel):

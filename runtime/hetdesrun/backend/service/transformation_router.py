@@ -50,6 +50,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
+from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.component.load import ComponentCodeImportError, ComponentImportCycleError
 from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.exportimport.importing import (
@@ -72,6 +73,7 @@ from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
+    read_component_imports_recursively,
     read_single_transformation_revision,
     select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
@@ -1357,6 +1359,51 @@ async def execute_transformation_revision_endpoint(
     return msgspec_result
 
 
+def build_unittest_payload(trafo: TransformationRevision) -> UnitTestPayload:
+    """Build the unittest payload for a component transformation revision
+
+    Resolves component imports (components importing components via import_comp)
+    so that they can be provided to the pytest process, analogously to how they
+    are provided in the execution context during ordinary execution.
+    """
+    assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
+
+    try:
+        imported_components_dict = read_component_imports_recursively([trafo])
+    except DBNotFoundError as e:
+        msg = (
+            f"Could not find a component imported (via import_comp) by component"
+            f" {trafo.name} ({trafo.version_tag}) with id {str(trafo.id)} in db"
+            f" for unittesting. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from e
+    except CodeParsingException as e:
+        # e.g. syntax errors in the component code. Proceed without import context:
+        # the pytest run itself will surface the actual problem to the user in a
+        # more helpful way than an http error could.
+        msg = (
+            f"Could not parse component code for resolving component imports for"
+            f" unittesting component {trafo.name} ({trafo.version_tag}) with id"
+            f" {str(trafo.id)}. Proceeding without resolved component imports."
+            f" Error was:\n{str(e)}"
+        )
+        logger.warning(msg)
+        imported_components_dict = {}
+
+    all_components = [trafo, *imported_components_dict.values()]
+
+    return UnitTestPayload(
+        component_code=trafo.content,
+        code_modules=list(
+            {(cm := comp.to_code_module()).uuid: cm for comp in all_components}.values()
+        ),
+        components=list(
+            {(cr := comp.to_component_revision()).uuid: cr for comp in all_components}.values()
+        ),
+    )
+
+
 @transformation_router.post(
     "/{id}/test",
     response_model=UnitTestResults,
@@ -1392,16 +1439,16 @@ async def test_transformation_revision(
         )
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
+    unit_test_payload = build_unittest_payload(trafo)
+
     if get_config().is_runtime_service:
         try:
-            assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
-            unittest_result = await unittest_service(trafo.content)
+            unittest_result = await unittest_service(unit_test_payload)
         except Exception as e:
             msg = f"Failure running unittest_service:\n{str(e)}"
             logger.error(msg)
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
     else:
-        unit_test_payload = UnitTestPayload(component_code=trafo.content)
         try:
             headers = await get_auth_headers(external=False)
         except ServiceAuthenticationError as e:

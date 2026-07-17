@@ -68,4 +68,4 @@ async def info_service() -> dict[str, str]:
 async def unittest_component(
     payload: UnitTestPayload,
 ) -> UnitTestResults:
-    return await unittest_service(payload.component_code)
+    return await unittest_service(payload)
