@@ -72,6 +72,7 @@ def unittest_code(
         env["PYTHONPATH"] = str(get_runtime_base_dir()) + (
             os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else ""
         )
+        env["LOGFIRE_IGNORE_NO_CONFIG"] = "1"
 
         completed_process = subprocess.run(  # noqa: S603 # nosec B603 B607
             ["pytest", "--doctest-modules", "."],  # noqa: S607
