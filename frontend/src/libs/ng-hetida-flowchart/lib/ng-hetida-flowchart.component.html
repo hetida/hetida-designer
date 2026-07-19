@@ -1,0 +1,46 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  version="1.1"
+  #svg
+  class="hetida-flowchart-svg"
+>
+  <defs>
+    <style>
+      .svg-small-grid {
+        stroke: #a9a9a9;
+      }
+
+      .svg-grid {
+        stroke: #a9a9a9;
+      }
+    </style>
+    <pattern
+      id="smallGrid"
+      width="10"
+      height="10"
+      patternUnits="userSpaceOnUse"
+    >
+      <path
+        d="M 10 0 L 0 0 0 10"
+        fill="none"
+        stroke-width="0.5"
+        class="svg-small-grid"
+      />
+    </pattern>
+    <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="url(#smallGrid)" />
+      <path
+        d="M 100 0 L 0 0 0 100"
+        fill="none"
+        stroke-width="1"
+        class="svg-grid"
+      />
+    </pattern>
+  </defs>
+  <rect
+    width="100%"
+    height="100%"
+    fill="url(#grid)"
+    id="flowchart-grid-element"
+  />
+</svg>

@@ -1,0 +1,5 @@
+@import './lib/node-wiring-context-menu/node-wiring-context-menu.component.theme';
+
+@mixin hd-wiring-theme($theme) {
+  @include node-wiring-context-menu-theme($theme);
+}

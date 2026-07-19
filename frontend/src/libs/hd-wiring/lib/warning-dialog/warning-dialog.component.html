@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Warning: Some sources not found</h2>
+<mat-dialog-content class="mat-typography">
+  @if (_errorMessage) {
+    <h3 class="hd-text-strong hd-pr-1">
+      {{ _errorMessage }}
+    </h3>
+  }
+  <p>
+    It seems so that one or more wired sources, sinks or thing nodes are removed
+    from adapter.
+  </p>
+
+  <p>
+    For the Inputs and Outputs that do not have the wired items, Either you can
+    check the adapter and fix the missing resources or you can wire to other
+    resources.
+  </p>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="true" data-testid="ok-warning-dialog">
+    OK
+  </button>
+</mat-dialog-actions>

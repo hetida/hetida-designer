@@ -1,0 +1,36 @@
+.node-search {
+  width: 100%;
+  height: calc(100% - 65px - 60px);
+
+  .node-item {
+    display: flex;
+    margin-right: 10px;
+
+    &__element {
+      cursor: pointer;
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      padding-bottom: 10px;
+      height: 50px;
+    }
+
+    &__id {
+      font-style: italic;
+      font-size: smaller;
+    }
+
+    &__io-type-container {
+      display: flex;
+    }
+
+    &__name {
+      font-weight: 600;
+    }
+
+    &__meta-data-icon {
+      display: flex;
+      align-items: center;
+    }
+  }
+}

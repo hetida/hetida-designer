@@ -1,0 +1,45 @@
+<div class="hd-d-flex hd-content-space-between" mat-dialog-title>
+  <h4 class="hd-m-0">Search Sources</h4>
+  <div>
+    <button
+      (click)="onCancel()"
+      mat-icon-button
+      data-testid="close-tree-node-modal"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>
+
+<div mat-dialog-content class="dialog-content">
+  @if (data.nodeSourceType === 'SOURCE') {
+    <div class="mb-2">
+      Hint: Select a data source and connect it to a Workflow/Component input to
+      provide that input with data from the selected source.
+    </div>
+  }
+  @if (data.nodeSourceType === 'SINK') {
+    <div class="mb-2">
+      Hint: Select a data sink and connect it to a Workflow/Component output to
+      send the data of that output to the selected sink.
+    </div>
+  }
+
+  <hd-tree-node
+    (nodeClick)="_nodeClick($event)"
+    (nodeMetaDataClick)="_nodeMetaDataClick($event)"
+    [initialDataTypeFilter]="data.initialDataTypeFilter"
+    [nodeSourceType]="data.nodeSourceType"
+    [adapterUrl]="data.adapterUrl"
+  ></hd-tree-node>
+</div>
+<div mat-dialog-actions>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onOk()"
+    data-testid="done-tree-node-modal"
+  >
+    Done
+  </button>
+</div>

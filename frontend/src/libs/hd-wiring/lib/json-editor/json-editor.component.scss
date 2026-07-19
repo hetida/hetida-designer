@@ -1,0 +1,52 @@
+$toolbar-height: 40px;
+$editor-height: 400px;
+
+.invisible {
+  height: 0;
+  width: 0;
+  border: none;
+  position: absolute;
+  top: -99999px;
+  left: -99999px;
+}
+
+.json-editor {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__toolbar {
+    display: flex;
+    height: $toolbar-height;
+    justify-content: flex-end;
+  }
+
+  &__toolbar__upload-json-button {
+    width: auto;
+    cursor: pointer;
+  }
+
+  &__editor-container {
+    height: $editor-height;
+    overflow: hidden;
+  }
+
+  &__editor-container__monaco-editor {
+    height: $editor-height;
+  }
+
+  &__editor-container__simple-editor {
+    width: 540px;
+    height: 390px;
+    resize: none;
+  }
+
+  ngx-monaco-editor {
+    height: $editor-height;
+  }
+
+  .d-none {
+    display: none !important;
+  }
+}

@@ -1,3 +1,4 @@
+- reintegrate the former separate npm packages `hetida-flowchart`, `ng-hetida-flowchart` and `hd-wiring` (wiring dialog) from the hetida-flowchart repository directly into the frontend source tree (`frontend/src/libs/`), removing them as external dependencies
 - allow component import and hetdesrun usage in components during unit testing
 - replace python-jose with joserfc for JWT verification. BREAKING CHANGE: if an expected audience (`HD_AUTH_AUDIENCE`, default `account`) or issuer (`HD_AUTH_ISSUER`) is configured, the respective claim must now be present in tokens and match — tokens lacking the claim are rejected. Set `HD_AUTH_AUDIENCE` to an empty string to disable audience checking.
 - more secure and precise auth configuration
@@ -8,6 +9,7 @@
 - BREAKING CHANGE: tighten model object loading path handling to avoid path traversals. This may affect existing stored objects with very unusual object names or tag names.
 
 ## 0.14.0
+
 - Added configurable Opentelemetry support via logfire
 - documentation rewrite + documentation building via static site generator (see https://hetida.github.io/hetida-designer)
 - add simple cron-based **scheduling**.
