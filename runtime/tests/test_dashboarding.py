@@ -8,11 +8,13 @@ from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
 from hetdesrun.backend.service.dashboarding import (
+    HTML_FILE_RESULT_SIZING_STYLE_TAG,
     file_result_kind,
     file_result_to_base64,
     file_result_to_gridstack_div,
     file_result_to_text,
     generate_gridstack_div,
+    html_file_result_srcdoc,
     is_file_like_result,
 )
 from hetdesrun.backend.service.dashboarding_utils import (
@@ -253,12 +255,8 @@ def test_is_file_like_result_detection():
     # missing / wrong fields are not file results
     assert not is_file_like_result("just a string")
     assert not is_file_like_result({"foo": "bar"})
-    assert not is_file_like_result(
-        {"content_type": "text/csv", "encoding": "gzip", "data": "x"}
-    )
-    assert not is_file_like_result(
-        {"content_type": "text/csv", "encoding": "plain", "data": 42}
-    )
+    assert not is_file_like_result({"content_type": "text/csv", "encoding": "gzip", "data": "x"})
+    assert not is_file_like_result({"content_type": "text/csv", "encoding": "plain", "data": 42})
 
 
 def test_file_result_kind_classification():
@@ -281,11 +279,34 @@ def test_file_result_encoding_normalization():
     assert file_result_to_text({"encoding": "plain", "data": "<h1>hi</h1>"}) == "<h1>hi</h1>"
     # base64 data gets decoded to text
     assert (
-        file_result_to_text(
-            {"encoding": "base64", "data": base64.b64encode(b"<b>x</b>").decode()}
-        )
+        file_result_to_text({"encoding": "base64", "data": base64.b64encode(b"<b>x</b>").decode()})
         == "<b>x</b>"
     )
+
+
+def test_html_file_result_srcdoc_injects_sizing_style():
+    # The sizing style is prepended so that a fragment sized with height:100%
+    # (which would otherwise collapse to zero height in the standards-mode
+    # srcdoc document) fills its tile. Prepending a bare <style> keeps this
+    # working for both fragments and complete html documents.
+    fragment = '<div style="height:100%">chart</div>'
+    srcdoc = html_file_result_srcdoc(
+        {"content_type": "text/html", "encoding": "plain", "data": fragment}
+    )
+    assert srcdoc == HTML_FILE_RESULT_SIZING_STYLE_TAG + fragment
+    assert srcdoc.startswith("<style>")
+    assert "height:100%" in HTML_FILE_RESULT_SIZING_STYLE_TAG
+
+    # also works for base64-encoded html content
+    full_doc = "<!doctype html><html><body>hi</body></html>"
+    srcdoc_b64 = html_file_result_srcdoc(
+        {
+            "content_type": "text/html",
+            "encoding": "base64",
+            "data": base64.b64encode(full_doc.encode("utf-8")).decode("ascii"),
+        }
+    )
+    assert srcdoc_b64 == HTML_FILE_RESULT_SIZING_STYLE_TAG + full_doc
 
 
 def test_file_result_gridstack_div_rendering_per_kind():
@@ -335,6 +356,9 @@ def test_file_result_gridstack_div_rendering_per_kind():
     assert 'sandbox="allow-scripts"' in html_out
     assert "srcdoc=" in html_out
     assert "&lt;h1" in html_out  # escaped, not raw
+    # sizing style is injected so height:100% content fills the tile in the
+    # standards-mode srcdoc document (attribute-escaped like the rest)
+    assert "html,body{height:100%" in html_out
 
     download_html = str(
         file_result_to_gridstack_div(
@@ -362,9 +386,7 @@ def test_generate_gridstack_div_includes_any_file_outputs():
         }
     }
     grid = str(
-        generate_gridstack_div(
-            {}, {}, {}, {}, {}, any_file_outputs, WorkflowWiring(), set()
-        )
+        generate_gridstack_div({}, {}, {}, {}, {}, any_file_outputs, WorkflowWiring(), set())
     )
     assert "grid-stack" in grid
     assert "o.report" in grid

@@ -287,9 +287,32 @@ def file_result_to_text(file_result: dict[str, Any]) -> str:
     return base64.b64decode(file_result["data"]).decode("utf-8")
 
 
-def file_result_inner_element(
-    file_result: dict[str, Any], db_id: str
-) -> BaseElement:
+# Prepended to text/html file results before embedding them via <iframe srcdoc>.
+# srcdoc documents are always parsed in standards mode, in which a fragment sized
+# with height:100% (the natural way to make a visualization fill its tile)
+# collapses to zero height: the implicit html/body have auto height, so there is
+# no definite-height ancestor for the percentage to resolve against (widths still
+# work, which is why such content renders full-width but zero-height). Giving
+# html/body an explicit full height provides that ancestor. Content taller than
+# the tile still scrolls via the surrounding container's overflow.
+#
+# Prepending a bare <style> (rather than wrapping the content in a fresh
+# html/body) keeps this robust for both fragments and complete documents: the
+# parser hoists the style into the single head either way.
+#
+# Note: the frontend protocol viewer embeds the same content via an <iframe src>
+# blob url instead, which - having no doctype - is parsed in quirks mode, where
+# height:100% percolates up to the viewport; such content therefore happens to
+# render correctly there without this adjustment.
+HTML_FILE_RESULT_SIZING_STYLE_TAG = "<style>html,body{height:100%;margin:0;padding:0}</style>"
+
+
+def html_file_result_srcdoc(file_result: dict[str, Any]) -> str:
+    """Build the srcdoc for a text/html file result embedded in an iframe."""
+    return HTML_FILE_RESULT_SIZING_STYLE_TAG + file_result_to_text(file_result)
+
+
+def file_result_inner_element(file_result: dict[str, Any], db_id: str) -> BaseElement:
     """Build the element rendering a single file result according to its kind.
 
     Images are rendered inline via <img> (data uri), HTML in a sandboxed iframe
@@ -313,7 +336,7 @@ def file_result_inner_element(
             {
                 "class": "file-result-html",
                 "sandbox": "allow-scripts",
-                "srcdoc": file_result_to_text(file_result),
+                "srcdoc": html_file_result_srcdoc(file_result),
                 "title": file_name,
             }
         )
