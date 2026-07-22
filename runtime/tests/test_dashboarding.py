@@ -1,3 +1,4 @@
+import base64
 import json
 from unittest import mock
 
@@ -6,12 +7,21 @@ import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
+from hetdesrun.backend.service.dashboarding import (
+    file_result_kind,
+    file_result_to_base64,
+    file_result_to_gridstack_div,
+    file_result_to_text,
+    generate_gridstack_div,
+    is_file_like_result,
+)
 from hetdesrun.backend.service.dashboarding_utils import (
     __all_wiring_attribute_url_alias_sets__,
     update_wiring_from_query_parameters,
 )
 from hetdesrun.models.wiring import (
     GridstackItemPositioning,
+    GridstackPositioningType,
     InputWiring,
     OutputWiring,
     WorkflowWiring,
@@ -231,3 +241,131 @@ def test_actually_update_wiring_from_query_parameters():
         and positionings_by_name["outp_3"].w == 6
         and positionings_by_name["outp_3"].h == 6
     )
+
+
+def test_is_file_like_result_detection():
+    assert is_file_like_result(
+        {"content_type": "application/pdf", "encoding": "base64", "data": "JVBER"}
+    )
+    assert is_file_like_result(
+        {"content_type": "text/html", "encoding": "plain", "data": "<h1>hi</h1>"}
+    )
+    # missing / wrong fields are not file results
+    assert not is_file_like_result("just a string")
+    assert not is_file_like_result({"foo": "bar"})
+    assert not is_file_like_result(
+        {"content_type": "text/csv", "encoding": "gzip", "data": "x"}
+    )
+    assert not is_file_like_result(
+        {"content_type": "text/csv", "encoding": "plain", "data": 42}
+    )
+
+
+def test_file_result_kind_classification():
+    assert file_result_kind("application/pdf") == "pdf"
+    assert file_result_kind("image/png") == "image"
+    assert file_result_kind("image/svg+xml") == "image"
+    assert file_result_kind("text/html") == "html"
+    assert file_result_kind("text/csv") == "download"
+    assert file_result_kind("application/octet-stream") == "download"
+
+
+def test_file_result_encoding_normalization():
+    assert file_result_to_base64({"encoding": "base64", "data": "QUJD"}) == "QUJD"
+    # plain data gets base64-encoded
+    encoded = file_result_to_base64(
+        {"encoding": "plain", "data": "ABC", "content_type": "text/csv"}
+    )
+    assert base64.b64decode(encoded).decode() == "ABC"
+
+    assert file_result_to_text({"encoding": "plain", "data": "<h1>hi</h1>"}) == "<h1>hi</h1>"
+    # base64 data gets decoded to text
+    assert (
+        file_result_to_text(
+            {"encoding": "base64", "data": base64.b64encode(b"<b>x</b>").decode()}
+        )
+        == "<b>x</b>"
+    )
+
+
+def test_file_result_gridstack_div_rendering_per_kind():
+    pos = GridstackItemPositioning(
+        id="report", x=0, y=0, w=12, h=3, type=GridstackPositioningType.OUTPUT
+    )
+
+    pdf_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "application/pdf",
+                "encoding": "base64",
+                "name": "Report.pdf",
+                "data": "JVBER",
+            },
+            pos,
+        )
+    )
+    # PDF src is filled client-side from the base64 blob, not embedded as a data uri
+    assert 'data-file-b64="JVBER"' in pdf_html
+    assert 'data-file-content-type="application/pdf"' in pdf_html
+    assert "<iframe" in pdf_html
+
+    image_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {"content_type": "image/png", "encoding": "base64", "data": "iVBORw0K"},
+            pos,
+        )
+    )
+    assert "<img" in image_html
+    assert "data:image/png;base64,iVBORw0K" in image_html
+
+    # inline HTML is sandboxed and the content is attribute-escaped in srcdoc
+    html_out = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "text/html",
+                "encoding": "plain",
+                "data": '<h1 class="x">Hallo & "welt"</h1>',
+            },
+            pos,
+        )
+    )
+    assert 'sandbox="allow-scripts"' in html_out
+    assert "srcdoc=" in html_out
+    assert "&lt;h1" in html_out  # escaped, not raw
+
+    download_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "text/csv",
+                "encoding": "plain",
+                "name": "data.csv",
+                "data": "a,b\n1,2\n",
+            },
+            pos,
+        )
+    )
+    assert 'download="data.csv"' in download_html
+    assert "data:text/csv;base64," in download_html
+
+
+def test_generate_gridstack_div_includes_any_file_outputs():
+    any_file_outputs = {
+        "o.report": {
+            "content_type": "application/pdf",
+            "encoding": "base64",
+            "name": "Report.pdf",
+            "data": "JVBER",
+        }
+    }
+    grid = str(
+        generate_gridstack_div(
+            {}, {}, {}, {}, {}, any_file_outputs, WorkflowWiring(), set()
+        )
+    )
+    assert "grid-stack" in grid
+    assert "o.report" in grid
+    assert 'data-file-b64="JVBER"' in grid
