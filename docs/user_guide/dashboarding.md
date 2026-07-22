@@ -1,5 +1,7 @@
 # Experimental Dashboarding
-hetida designer workflow/component execution can generate outputs containing [plotly](https://plotly.com/) json objects, which in turn can be rendered using plotly.js. One actually quite common use case for hetida designer is to use it as a backend service for providing highly customized analytical plots written in Python using Plotly to specialized frontends or dashboards.
+hetida designer workflow/component execution can generate outputs containing [plotly](https://plotly.com/) json objects, which in turn can be rendered using plotly.js. Furthermore, outputs of type [ANY](./data_types/any.md) which suffice a certain structure can provide HTML, PDFs, Images and File downloads, which are also rendered / shown in the result view. See [visualization documentation](./visualizations.md) for details.
+
+One actually quite common use case for hetida designer is to use it as a backend service for providing highly customized analytical plots written in Python using Plotly to specialized frontends or dashboards.
 
 hetida designer provides an experimental (read: proof of concept / demo!) dashboard view for each component/workflow to demonstrate these capabilities. I.e. to each component / workflow a dashboard exists that by default is tied to the current test wiring in the execution dialog.
 
@@ -42,10 +44,16 @@ http://localhost:8080/api/transformations/f28d403f-88bb-4328-afd5-6a4aa53aa039/d
     * Example: adding new direct_provisioning input wiring or overriding existing input wiring: `i.input_1.val=42`. This is actually a shortcut to change the `value` filter and set everything else to the defaults for a wiring with adapter_id `direct_provisioning`.
     * Example: overrding filter for output `o.output_1.filters.my_filter_key=new_filter_value`
 * The "view/hide dashboard configuration" button in the upper right will show you the test wiring, the release wiring, indicates which of these two is used as base for overriding and finally the updated (overridden) wiring that is actually used when executing.
-* The dashboard shows all plotly outputs of the component / workflow and all string outputs as html. It (currently) ignores all other outputs!
-    * String outputs with a "_" at the end of the output name will result in only the html shown, i.e. the header with the output name is hidden.
-    * Arbitrary html can be part of the string output and is rendered as such. Note that this may have security implications, depeding on how the string output is generated from trafo input data in the underlying Python code of your workflows/components!
-    * For simple data tables we recommend to use the "Display Table" component (or a custom variant of it).
+* The dashboard shows 
+    * plotly outputs of the component / workflow as plotly plots
+    * all string outputs as html
+        * String outputs with a "_" at the end of the output name will result in only the html shown, i.e. the header with the output name is hidden.
+        * Arbitrary html can be part of the string output and is rendered as such. Note that this may have security implications, depeding on how the string output is generated from trafo input data in the underlying Python code of your workflows/components!
+    * dataframe / multitsframe outputs will be rendered as a sortable and filterable table
+    * ANY outputs sufficing a special json structure as specified in [ANY type documentation](./data_types/any.md)
+    * outputs with other types won't be visualized.
+        * for single value types (like FLOAT) we recommend to write a plotly component, e.g. using plotly indicators or gauges.
+
 * You can rearrange the plots by dragging them around using their titlebar or resize them using the resize handles in the bottom corners. The arrangement is saved automatically as part of the test wiring. Furthermore the layout is mapped to url query params automatically. Layout query parameters have higher priority than what is stored in the test wiring allowing to exchange permalinks to dashboards with fixed layout.
 * You can set the dashboard to auto-update every X seconds by selecting a value for X in the appropriate selection element in the dashboard user interface.
 * You can override all the time ranges of the used wiring with a common absolute or relative time range selectable in the dashboard. 
