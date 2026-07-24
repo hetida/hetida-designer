@@ -1,0 +1,34 @@
+$dataTypes: (
+  'ANY': #b7087f,
+  'INT': #5bc5f2,
+  'STRING': #10b51b,
+  'BOOLEAN': #0f377f,
+  'FLOAT': #2f86a6,
+  'DATAFRAME': #5b2283,
+  'SERIES': #ffc621,
+  'PLOTLYJSON': #808080,
+  'MULTITSFRAME': #ef7800
+);
+
+$colors: (
+  'black',
+  'white',
+  'red',
+  'green',
+  'blue',
+  'grey',
+  'gray',
+  'darkgray',
+  'darkgrey',
+  'lightgray',
+  'lightgrey',
+  'yellow',
+  'orange'
+);
+
+:root {
+  // set datatype colors as css variables to allow for easy access from outside
+  @each $type, $color in $dataTypes {
+    --#{$type}-color: #{$color};
+  }
+}

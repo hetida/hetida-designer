@@ -1,0 +1,66 @@
+<div class="json-editor__header" mat-dialog-title>
+  <h4 class="hd-m-0">{{ data.title }}</h4>
+  <button (click)="_onCancel()" mat-icon-button data-testid="close-json-editor">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content>
+  <div class="json-editor__toolbar">
+    <button
+      class="json-editor__toolbar__upload-json-button"
+      (click)="_uploadCSVorJSONfile(uploadCSVorJSONfileInput)"
+      mat-icon-button
+      data-testid="import-json-csv-json-editor"
+    >
+      <mat-icon>attachment</mat-icon>
+      Import JSON / CSV
+      <input
+        #uploadCSVorJSONfileInput
+        accept=".csv,.json"
+        class="d-none"
+        type="file"
+        (change)="_triggerNewFileUpload(uploadCSVorJSONfileInput)"
+      />
+    </button>
+  </div>
+  <div class="json-editor__editor-container">
+    <div
+      [class.invisible]="!_isMonacoEditorAvailable"
+      class="json-editor__editor-container__monaco-editor"
+    >
+      <ng-template #monacoEditorContainer></ng-template>
+    </div>
+    @if (!_isMonacoEditorAvailable) {
+      <textarea
+        (ngModelChange)="_validateJson($event)"
+        [ngModel]="updatedJson"
+        class="json-editor__editor-container__simple-editor"
+        data-testid="textarea-json-editor"
+      >
+      </textarea>
+    }
+  </div>
+</div>
+<div mat-dialog-actions>
+  @if (jsonErrorMessage) {
+    <mat-error class="hd-mr-1">{{ jsonErrorMessage }}</mat-error>
+  }
+  <button
+    (click)="_onCancel()"
+    color="primary"
+    mat-raised-button
+    attr.data-testid="{{ data.actionCancel + '-json-editor' | lowercase }}"
+  >
+    {{ data.actionCancel }}
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="_onOk()"
+    [disabled]="jsonErrorMessage !== null"
+    attr.data-testid="{{ data.actionOk + '-json-editor' | lowercase }}"
+  >
+    {{ data.actionOk }}
+  </button>
+</div>

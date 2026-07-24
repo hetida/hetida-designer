@@ -1,0 +1,30 @@
+.hetida-context-menu {
+  &.component {
+    background-color: black;
+    color: white;
+  }
+
+  background-color: #666666;
+  color: white;
+
+  position: absolute;
+  z-index: 100;
+  border: 1px solid white;
+  min-width: 125px;
+  display: block;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      cursor: pointer;
+      padding: 5px;
+
+      &:hover {
+        background-color: blue;
+      }
+    }
+  }
+}

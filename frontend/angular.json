@@ -40,9 +40,9 @@
               "src/silent-renew.html"
             ],
             "styles": [
-              "./node_modules/hetida-flowchart/hetida-flowchart.css",
+              "src/libs/hetida-flowchart/hetida-flowchart.scss",
               "./node_modules/katex/dist/katex.css",
-              "./node_modules/hd-wiring/hd-wiring.css",
+              "src/libs/hd-wiring/hd-wiring.scss",
               "src/style/styles.scss"
             ],
             "scripts": ["node_modules/plotly.js/dist/plotly.min.js"],
@@ -110,7 +110,7 @@
             "tsConfig": "src/tsconfig.spec.json",
             "karmaConfig": "src/karma.conf.js",
             "styles": [
-              "./node_modules/hetida-flowchart/hetida-flowchart.css",
+              "src/libs/hetida-flowchart/hetida-flowchart.scss",
               "./node_modules/katex/dist/katex.css",
               "src/style/styles.scss"
             ],

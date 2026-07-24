@@ -1,0 +1,9 @@
+@use 'sass:map';
+
+@mixin node-wiring-context-menu-theme($theme) {
+  $primary: map.get($theme, primary);
+
+  .node-selected {
+    color: map.get($primary, 300);
+  }
+}

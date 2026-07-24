@@ -4,8 +4,8 @@
 @use 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
 @use 'src/app/components/popover-transformation/popover-transformation.component.theme';
 @use 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
-@use 'node_modules/hd-wiring/theme';
-@use 'node_modules/hd-wiring/src/lib/node-search/node-search.component.theme';
+@use 'src/libs/hd-wiring/theme';
+@use 'src/libs/hd-wiring/lib/node-search/node-search.component.theme';
 
 @mixin hd-material-theme($theme) {
   $primary: map.get($theme, primary);

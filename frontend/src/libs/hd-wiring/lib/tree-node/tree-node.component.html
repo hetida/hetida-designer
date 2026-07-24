@@ -1,0 +1,104 @@
+<div class="hd-d-flex" [formGroup]="filterFormGroup">
+  <mat-form-field class="hd-pr-3">
+    <mat-label>Search</mat-label>
+    <input
+      formControlName="textSearch"
+      matInput
+      data-testid="search-tree-node"
+    />
+  </mat-form-field>
+  <mat-form-field style="flex: 1 0 150px">
+    <mat-label>Select type</mat-label>
+    <mat-select
+      style="min-height: 20px"
+      formControlName="dataTypeSearch"
+      data-testid="select-type-tree-node"
+    >
+      <mat-option [value]="null">-</mat-option>
+      @for (io of ioType | keyvalue; track $index) {
+        <mat-option [value]="io.value">
+          {{ io.value }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <div class="icon-bag hd-d-flex">
+    <button
+      (click)="collapseAll()"
+      mat-icon-button
+      aria-label="Example icon-button with a heart icon"
+    >
+      <mat-icon>unfold_less</mat-icon>
+    </button>
+  </div>
+</div>
+<!-- on search a simple list with meta information will be displayed -->
+@if (_isSearchViewVisible()) {
+  <hd-node-search
+    [sourcesOrSinks]="nodeSearchResult"
+    [searchText]="_searchText()"
+    [nodeSourceType]="nodeSourceType"
+    (nodeClick)="_searchNodeClick($event)"
+    (nodeMetaDataClick)="_searchNodeMetaDataClick($event)"
+  ></hd-node-search>
+} @else {
+  @if (dataSource && dataSource.isLoadingInitialData) {
+    <mat-progress-bar
+      mode="indeterminate"
+      [color]="'accent'"
+    ></mat-progress-bar>
+  }
+  <cdk-virtual-scroll-viewport
+    class="virtual-scroll-container"
+    itemSize="30"
+    [minBufferPx]="300"
+    [maxBufferPx]="900"
+  >
+    <ng-container *cdkVirtualFor="let node of dataSource">
+      <!-- Note that the [style.padding-left] is essentially what cdkTreeNodePadding is doing under the hood -->
+      <div
+        style="height: 30px"
+        class="hd-d-flex hd-align-items-center"
+        [style.padding-left]="node.level * 24 + 'px'"
+      >
+        <!-- Note that treeControl.toggle(node) is essentially what cdkTreeNodeToggle is doing under the hood -->
+        @if (node.expandable) {
+          <button mat-icon-button (click)="treeControl.toggle(node)">
+            <mat-icon class="mat-icon-rtl-mirror">
+              {{
+                treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'
+              }}
+            </mat-icon>
+          </button>
+        }
+        <div class="hd-mr-1">
+          @if (node.type) {
+            <span
+              class="hd-lens-icon-12"
+              [ngStyle]="{ color: _getTypeColor(node.type) }"
+            >
+              <mat-icon class="hd-unselectable" [inline]="true">lens</mat-icon>
+            </span>
+          }
+          <span>{{ node.name }}</span>
+        </div>
+        @if (node.type) {
+          <div class="hd-d-flex" (click)="_nodeClick(node, $event)">
+            <mat-icon class="hd-clickable">more_horiz</mat-icon>
+          </div>
+        }
+        <div class="hd-d-flex" (click)="_nodeMetaDataClick(node, $event)">
+          <mat-icon class="hd-clickable">ballot</mat-icon>
+        </div>
+        @if (node.loading) {
+          <mat-progress-bar
+            class="ml-2"
+            style="flex: 1 1 0"
+            mode="indeterminate"
+            [color]="'accent'"
+          ></mat-progress-bar>
+        }
+      </div>
+    </ng-container>
+  </cdk-virtual-scroll-viewport>
+}

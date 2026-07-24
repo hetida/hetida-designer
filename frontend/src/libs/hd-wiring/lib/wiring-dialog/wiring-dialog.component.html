@@ -1,0 +1,660 @@
+@if (_configService.app_config.showDialogHeader) {
+  <div class="hd-d-flex hd-content-space-between" mat-dialog-title>
+    <h4 class="hd-m-0">
+      {{ title }} {{ wiringItem.name }}
+      {{ wiringItem.version_tag }}
+    </h4>
+    <button
+      (click)="onCancel()"
+      mat-icon-button
+      data-testid="close-wiring-dialog"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+}
+
+<div mat-dialog-content>
+  <div class="execution-dialog-content">
+    @if (inputOutputForm) {
+      <form
+        [formGroup]="inputOutputForm"
+        class="execution-dialog-parameter-wrapper"
+      >
+        <div
+          [class.parameter-input--single]="
+            !_configService.app_config.allowOutputWiring
+          "
+          [class.parameter-input]="_configService.app_config.allowOutputWiring"
+        >
+          <div
+            class="hd-mb-1 hd-d-flex hd-content-space-between hd-align-items-baseline"
+          >
+            <span class="mat-h2"> Input Parameter </span>
+            <div class="hd-d-flex">
+              @if (_configService.app_config.showDownloadExampleJsonButton) {
+                <button
+                  (click)="downloadJsonSchema()"
+                  mat-raised-button
+                  color="primary"
+                  class="hd-mr-1"
+                  data-testid="download-json-template-wiring-dialog"
+                >
+                  Download JSON Template
+                </button>
+              }
+              @if (_configService.app_config.showUploadJsonButton) {
+                <button
+                  (click)="uploadJsonForAllInputs(jsonFileInput)"
+                  mat-raised-button
+                  color="primary"
+                  data-testid="upload-json-data-wiring-dialog"
+                >
+                  Upload JSON Data
+                </button>
+              }
+              <input
+                #jsonFileInput
+                accept=".json"
+                class="d-none"
+                type="file"
+                (change)="triggerForAllInputs(jsonFileInput)"
+              />
+              <mat-error>{{ jsonImportErrorStatus | async }}</mat-error>
+            </div>
+          </div>
+          @if (!_isAdapterAvailable()) {
+            <div id="hints-tips" class="hd-d-flex hd-align-items-center">
+              <mat-icon class="mat-icon--small">info</mat-icon
+              ><span class="mat-small">No adapter provided</span>
+            </div>
+          }
+          <div class="hd-d-flex hd-column-gab-1 hd-align-items-end">
+            <h3 class="hd-text-strong hd-m-0 parameter-input__label-column">
+              Label
+            </h3>
+            <h3 class="hd-text-strong hd-m-0 parameter-input__type-column">
+              Data Type
+            </h3>
+            <h3
+              class="hd-text-strong hd-m-0 parameter-input__default-value-column"
+            >
+              Default
+            </h3>
+            <h3 class="hd-text-strong hd-m-0 parameter-input__adapter-column">
+              Adapter
+            </h3>
+            <h3 class="hd-text-strong hd-m-0 parameter-input__value-column">
+              Value / Source
+            </h3>
+            <span class="parameter-input__delete-icon-column"></span>
+          </div>
+          <mat-divider class="hd-mb-1"></mat-divider>
+          @for (inputControl of inputFormArray.controls; track $index) {
+            <div [formGroup]="_checkFormGroupOrFail(inputControl)">
+              <div class="hd-d-flex hd-column-gab-1 hd-align-items-center">
+                <span
+                  class="parameter-input__label-column hd-text-ellipsis"
+                  title="{{
+                    _getControlOrFail(inputControl, 'ioItemName').value
+                  }}"
+                  >{{
+                    _getControlOrFail(inputControl, 'ioItemName').value
+                  }}</span
+                >
+                <div class="parameter-input__type-column hd-text-ellipsis">
+                  <span
+                    class="hd-lens-icon-12"
+                    [ngStyle]="{
+                      color: getTypeColor(
+                        _getControlOrFail(inputControl, 'ioType').value
+                      )
+                    }"
+                  >
+                    <mat-icon class="hd-unselectable" [inline]="true"
+                      >lens</mat-icon
+                    >
+                  </span>
+                  <span
+                    title="{{
+                      _getControlOrFail(inputControl, 'ioType').value
+                    }}"
+                    >{{ _getControlOrFail(inputControl, 'ioType').value }}</span
+                  >
+                </div>
+                <div class="parameter-input__default-value-column">
+                  @if (_isDefaultValue(inputControl)) {
+                    <mat-slide-toggle
+                      formControlName="useDefaultValue"
+                      attr.data-testid="{{
+                        _getControlOrFail(inputControl, 'ioItemName').value +
+                          '-use-default-input-wiring-dialog' | lowercase
+                      }}"
+                    ></mat-slide-toggle>
+                  }
+                </div>
+                <div
+                  class="hd-d-flex hd-flex-direction-column parameter-input__adapter-column"
+                  style="align-self: flex-start"
+                >
+                  <mat-form-field class="mat-form-field--no-fixed-width">
+                    <mat-label>adapter list</mat-label>
+                    <mat-select
+                      formControlName="adapterId"
+                      attr.data-testid="{{
+                        _getControlOrFail(inputControl, 'ioItemName').value +
+                          '-adapter-list-input-wiring-dialog' | lowercase
+                      }}"
+                    >
+                      @for (
+                        adapter of _adapterListForInputParameter();
+                        track adapter.id
+                      ) {
+                        <mat-option [value]="adapter.id">
+                          {{ adapter.name }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                @if (_parameterHasAdapter(inputControl)) {
+                  <div
+                    class="hd-w-100 hd-d-flex hd-flex-direction-column parameter-input__value-column"
+                  >
+                    <mat-form-field class="mat-form-field--no-fixed-width">
+                      <mat-label>Browse Sources</mat-label>
+                      <input
+                        readonly
+                        [title]="
+                          _stringValueOfFormControl(
+                            _getControlOrFail(inputControl, 'nodeId')
+                          )
+                        "
+                        class="hd-clickable"
+                        (click)="
+                          $event.preventDefault();
+                          openAdapterTreeDialog(
+                            'SOURCE',
+                            _getControlOrFail(inputControl, 'ioType').value,
+                            _getControlOrFail(inputControl, 'adapterId').value,
+                            'INPUT_WIRING'
+                          )
+                        "
+                        formControlName="displayName"
+                        matInput
+                        placeholder="Browse Sources"
+                        type="text"
+                        attr.data-testid="{{
+                          _getControlOrFail(inputControl, 'ioItemName').value +
+                            '-browse-sources-input-wiring-dialog' | lowercase
+                        }}"
+                      />
+                      <span
+                        matSuffix
+                        class="hd-clickable"
+                        (click)="
+                          openAdapterTreeDialog(
+                            'SOURCE',
+                            _getControlOrFail(inputControl, 'ioType').value,
+                            _getControlOrFail(inputControl, 'adapterId').value,
+                            'INPUT_WIRING'
+                          )
+                        "
+                      >
+                        <mat-icon>search</mat-icon>
+                      </span>
+                      @if (
+                        _getControlOrFail(inputControl, 'metaDataKey').value
+                      ) {
+                        <mat-hint
+                          >FROM NODE:
+                          {{
+                            _getControlOrFail(inputControl, 'nodeName').value
+                          }}</mat-hint
+                        >
+                      }
+                      <mat-error>{{
+                        inputControl.get('displayName')?.errors?.message
+                      }}</mat-error>
+                    </mat-form-field>
+                  </div>
+                } @else {
+                  <mat-form-field
+                    class="mat-form-field--no-fixed-width parameter-input__value-column"
+                  >
+                    <mat-label>Input Value</mat-label>
+                    @if (
+                      isJsonType(
+                        _getControlOrFail(inputControl, 'ioType').value
+                      )
+                    ) {
+                      <input
+                        readonly
+                        class="hd-clickable"
+                        (click)="
+                          $event.preventDefault();
+                          openJsonEditorModal(inputControl)
+                        "
+                        formControlName="rawValue"
+                        matInput
+                        placeholder="Input Value"
+                        type="text"
+                        attr.data-testid="{{
+                          _getControlOrFail(inputControl, 'ioItemName').value +
+                            '-value-input-wiring-dialog' | lowercase
+                        }}"
+                      />
+                    }
+                    @if (
+                      !isJsonType(
+                        _getControlOrFail(inputControl, 'ioType').value
+                      )
+                    ) {
+                      <input
+                        formControlName="rawValue"
+                        matInput
+                        placeholder="Input Value"
+                        type="text"
+                        attr.data-testid="{{
+                          _getControlOrFail(inputControl, 'ioItemName').value +
+                            '-value-input-wiring-dialog' | lowercase
+                        }}"
+                      />
+                    }
+                    <mat-error>{{
+                      inputControl.get('rawValue')?.errors?.message
+                    }}</mat-error>
+                    <span matSuffix class="hd-clickable">
+                      @if (
+                        isJsonType(inputControl?.get('ioType')?.value) &&
+                        !_getControlOrFail(inputControl, 'useDefaultValue')
+                          .value
+                      ) {
+                        <mat-icon
+                          (click)="openJsonEditorModal(inputControl)"
+                          class="hd-clickable"
+                          >create
+                        </mat-icon>
+                      }
+                    </span>
+                  </mat-form-field>
+                }
+                <button
+                  title="Clear Input"
+                  class="parameter-input__delete-icon-column"
+                  (click)="_clearInput(inputControl)"
+                  mat-icon-button
+                  attr.data-testid="{{
+                    _getControlOrFail(inputControl, 'ioItemName').value +
+                      '-clear-input-wiring-dialog' | lowercase
+                  }}"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              @if (
+                _parameterHasAdapter(inputControl) &&
+                isTimestampRangeType(inputControl.get('ioType')?.value) &&
+                inputControl.get('nodeId')?.value &&
+                _configService.app_config.enableDateRangeSelectionOnSeriesTypes
+              ) {
+                <div
+                  class="hd-d-flex hd-align-items-center hd-justify-content-end"
+                >
+                  <mat-form-field
+                    [hidden]="
+                      _getControlOrFail(
+                        inputControl,
+                        'timestampRangePickerHidden'
+                      ).value
+                    "
+                    class="mat-form-field--no-fixed-width parameter-input__filter-input"
+                  >
+                    <mat-label>Timestamp Range Picker</mat-label>
+                    <input
+                      [min]="
+                        (inputControl?.get('timestampRangeFilter')?.value)[0]
+                      "
+                      [max]="
+                        (inputControl?.get('timestampRangeFilter')?.value)[1]
+                      "
+                      [owlDateTime]="dt1"
+                      [owlDateTimeTrigger]="dt1"
+                      [selectMode]="'range'"
+                      formControlName="timestampRange"
+                      matInput
+                      placeholder="Timestamp Range Picker"
+                      attr.data-testid="{{
+                        _getControlOrFail(inputControl, 'ioItemName').value +
+                          '-timestamp-range-input-wiring-dialog' | lowercase
+                      }}"
+                    />
+                    <owl-date-time #dt1></owl-date-time>
+                    <mat-hint align="end">
+                      Timestamp range is displayed in UTC.
+                    </mat-hint>
+                    <mat-error>{{
+                      inputControl.get('timestampRange')?.errors?.message
+                    }}</mat-error>
+                  </mat-form-field>
+                  <mat-form-field
+                    [hidden]="
+                      !_getControlOrFail(
+                        inputControl,
+                        'timestampRangePickerHidden'
+                      ).value
+                    "
+                    class="mat-form-field--no-fixed-width parameter-input__filter-input"
+                  >
+                    <mat-label>Timestamp Range Query</mat-label>
+                    <input
+                      formControlName="timestampRangeQuery"
+                      matInput
+                      placeholder="Timestamp Range Query"
+                      type="text"
+                    />
+                    <mat-hint align="end">
+                      Example: "now-15min,now", only "{{
+                        _timestampRangeQueryDelimiter
+                      }}" is a valid delimiter.
+                    </mat-hint>
+                    <mat-error>{{
+                      inputControl.get('timestampRangeQuery')?.errors?.message
+                    }}</mat-error>
+                  </mat-form-field>
+                  <button
+                    title="Change Timestamp Range Picker"
+                    class="parameter-input__timestamp-range-picker-button"
+                    mat-icon-button
+                    (click)="_changeTimestampRangePicker(inputControl)"
+                    attr.data-testid="{{
+                      _getControlOrFail(inputControl, 'ioItemName').value +
+                        '-timestamp-range-button-wiring-dialog' | lowercase
+                    }}"
+                  >
+                    @if (
+                      _getControlOrFail(
+                        inputControl,
+                        'timestampRangePickerHidden'
+                      ).value
+                    ) {
+                      <mat-icon>create</mat-icon>
+                    } @else {
+                      <mat-icon>date_range</mat-icon>
+                    }
+                  </button>
+                </div>
+              }
+              @if (
+                _parameterHasAdapter(inputControl) &&
+                hasTextFilter(inputControl)
+              ) {
+                <div formArrayName="textFilters">
+                  @for (
+                    filter of textFiltersFormArray(inputControl).controls;
+                    track $index;
+                    let i = $index
+                  ) {
+                    <div>
+                      <div
+                        [formGroupName]="i"
+                        class="hd-d-flex hd-align-items-baseline hd-justify-content-end parameter-input--no-button"
+                      >
+                        <mat-form-field
+                          class="mat-form-field--no-fixed-width parameter-input__filter-input mt-2"
+                        >
+                          <mat-label>{{ filter.get('name')?.value }}</mat-label>
+                          <input
+                            matInput
+                            [placeholder]="filter.get('name')?.value"
+                            [formControlName]="
+                              'value_' + filter.get('filterKey')?.value
+                            "
+                            attr.data-testid="{{
+                              _getControlOrFail(inputControl, 'ioItemName')
+                                .value + '-free-text-filter-input-wiring-dialog'
+                                | lowercase
+                            }}"
+                          />
+                          <mat-error>{{
+                            inputControl.get(
+                              'textFilters.' +
+                                i +
+                                '.' +
+                                'value_' +
+                                filter.get('filterKey')?.value
+                            )?.errors?.message
+                          }}</mat-error>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+        @if (_configService.app_config.allowOutputWiring) {
+          <div class="parameter-output">
+            <div
+              class="hd-mb-1 hd-d-flex hd-content-space-between hd-align-items-baseline"
+            >
+              <span class="mat-h2">Output Parameter</span>
+            </div>
+            <div
+              id="input-header"
+              class="hd-d-flex hd-column-gab-1 hd-align-items-end"
+            >
+              <h3 class="hd-text-strong hd-m-0 parameter-output__label-column">
+                Label
+              </h3>
+              <h3 class="hd-text-strong hd-m-0 parameter-output__type-column">
+                Data Type
+              </h3>
+              <h3
+                class="hd-text-strong hd-m-0 parameter-output__adapter-column"
+              >
+                Adapter
+              </h3>
+              <h3 class="hd-text-strong hd-m-0 parameter-output__value-column">
+                Destination
+              </h3>
+              <span class="parameter-output__delete-icon-column"></span>
+            </div>
+            <mat-divider class="hd-mb-1"></mat-divider>
+            @for (outputControl of outputFormArray.controls; track $index) {
+              <div [formGroup]="_checkFormGroupOrFail(outputControl)">
+                <div class="hd-d-flex hd-column-gab-1 hd-align-items-center">
+                  <span
+                    class="parameter-output__label-column hd-text-ellipsis"
+                    title="{{
+                      _getControlOrFail(outputControl, 'ioItemName').value
+                    }}"
+                    >{{
+                      _getControlOrFail(outputControl, 'ioItemName').value
+                    }}</span
+                  >
+                  <div class="parameter-output__type-column hd-text-ellipsis">
+                    <span
+                      class="hd-lens-icon-12"
+                      [ngStyle]="{
+                        color: getTypeColor(
+                          _getControlOrFail(outputControl, 'ioType').value
+                        )
+                      }"
+                    >
+                      <mat-icon class="hd-unselectable" [inline]="true"
+                        >lens</mat-icon
+                      >
+                    </span>
+                    <span
+                      title="{{
+                        _getControlOrFail(outputControl, 'ioType').value
+                      }}"
+                      >{{
+                        _getControlOrFail(outputControl, 'ioType').value
+                      }}</span
+                    >
+                  </div>
+                  <div
+                    class="d-flex hd-flex-direction-column parameter-output__adapter-column"
+                    style="align-self: flex-start"
+                  >
+                    <mat-form-field class="mat-form-field--no-fixed-width">
+                      <mat-label>adapter</mat-label>
+                      <mat-select
+                        placeholder="Only Output"
+                        formControlName="adapterId"
+                        attr.data-testid="{{
+                          _getControlOrFail(outputControl, 'ioItemName').value +
+                            '-adapter-output-wiring-dialog' | lowercase
+                        }}"
+                      >
+                        <mat-option [value]="null">Only Output</mat-option>
+
+                        @for (adapter of _availableAdapters; track adapter.id) {
+                          <mat-option [value]="adapter.id">
+                            {{ adapter.name }}
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field
+                    class="mat-form-field--no-fixed-width parameter-output__value-column"
+                  >
+                    <mat-label>Browse Destinations</mat-label>
+                    <input
+                      [title]="
+                        _stringValueOfFormControl(
+                          _getControlOrFail(outputControl, 'nodeId')
+                        )
+                      "
+                      readonly
+                      formControlName="displayName"
+                      matInput
+                      class="hd-clickable"
+                      (click)="
+                        openAdapterTreeDialog(
+                          'SINK',
+                          _getControlOrFail(outputControl, 'ioType').value,
+                          _getControlOrFail(outputControl, 'adapterId').value,
+                          'OUTPUT_WIRING'
+                        )
+                      "
+                      placeholder="Browse Destinations"
+                      type="text"
+                      attr.data-testid="{{
+                        _getControlOrFail(outputControl, 'ioItemName').value +
+                          '-browse-destinations-output-wiring-dialog'
+                          | lowercase
+                      }}"
+                    />
+                    <span
+                      matSuffix
+                      class="hd-clickable"
+                      (click)="
+                        openAdapterTreeDialog(
+                          'SINK',
+                          _getControlOrFail(outputControl, 'ioType').value,
+                          _getControlOrFail(outputControl, 'adapterId').value,
+                          'OUTPUT_WIRING'
+                        )
+                      "
+                    >
+                      <mat-icon>search</mat-icon>
+                    </span>
+                    <mat-error>{{
+                      outputControl.get('nodeId')?.errors?.message
+                    }}</mat-error>
+                  </mat-form-field>
+                  <button
+                    title="Clear Input"
+                    class="parameter-output__delete-icon-column"
+                    (click)="_clearOutput(outputControl)"
+                    mat-icon-button
+                    attr.data-testid="{{
+                      _getControlOrFail(outputControl, 'ioItemName').value +
+                        '-clear-output-wiring-dialog' | lowercase
+                    }}"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                @if (
+                  _parameterHasAdapter(outputControl) &&
+                  hasTextFilter(outputControl)
+                ) {
+                  <div formArrayName="textFilters">
+                    @for (
+                      filter of textFiltersFormArray(outputControl).controls;
+                      track $index;
+                      let i = $index
+                    ) {
+                      <div>
+                        <div
+                          [formGroupName]="i"
+                          class="hd-d-flex hd-align-items-baseline hd-justify-content-end mr-4"
+                        >
+                          <mat-form-field
+                            class="mat-form-field--no-fixed-width parameter-input__filter-input mt-2"
+                          >
+                            <mat-label>{{
+                              filter.get('name')?.value
+                            }}</mat-label>
+                            <input
+                              matInput
+                              [placeholder]="filter.get('name')?.value"
+                              [formControlName]="
+                                'value_' + filter.get('filterKey')?.value
+                              "
+                              attr.data-testid="{{
+                                _getControlOrFail(outputControl, 'ioItemName') +
+                                  '-free-text-filter-input-wiring-dialog'
+                                  | lowercase
+                              }}"
+                            />
+                            <mat-error>{{
+                              outputControl.get(
+                                'textFilters.' +
+                                  i +
+                                  '.' +
+                                  'value_' +
+                                  filter.get('filterKey')?.value
+                              )?.errors?.message
+                            }}</mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </form>
+    }
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button
+    (click)="onCancel()"
+    mat-raised-button
+    color="primary"
+    data-testid="cancel-wiring-dialog"
+  >
+    Cancel
+  </button>
+  <button
+    (click)="onOk()"
+    mat-raised-button
+    color="primary"
+    attr.data-testid="{{
+      _configService.app_config.confirmationButtonText + '-wiring-dialog'
+        | lowercase
+    }}"
+  >
+    {{ _configService.app_config.confirmationButtonText }}
+  </button>
+</div>

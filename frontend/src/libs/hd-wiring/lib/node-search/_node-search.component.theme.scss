@@ -1,0 +1,12 @@
+@use 'sass:map';
+// Only styles that either require theming variables
+// or that override internal material columns.
+@mixin node-search-theme($primary, $secondary) {
+  hd-node-search {
+    .node-item {
+      &:hover {
+        background-color: map.get($secondary, 700);
+      }
+    }
+  }
+}
