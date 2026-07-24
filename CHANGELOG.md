@@ -1,3 +1,4 @@
+## 0.14.1
 - reintegrate the former separate npm packages `hetida-flowchart`, `ng-hetida-flowchart` and `hd-wiring` (wiring dialog) from the hetida-flowchart repository directly into the frontend source tree (`frontend/src/libs/`), removing them as external dependencies
 - ANY outputs of a specified structure can now be used to render images, pdfs, arbitrary html or offer file downloads. In particular HTML rendering allows to employ html/javascript based plotting libraries like µplot or Apache ECharts.
 - allow component import and hetdesrun usage in components during unit testing
