@@ -1,3 +1,4 @@
+- ANY outputs of a specified structure can now be used to render images, pdfs, arbitrary html or offer file downloads. In particular HTML rendering allows to employ html/javascript based plotting libraries like µplot or Apache ECharts.
 - allow component import and hetdesrun usage in components during unit testing
 - replace python-jose with joserfc for JWT verification. BREAKING CHANGE: if an expected audience (`HD_AUTH_AUDIENCE`, default `account`) or issuer (`HD_AUTH_ISSUER`) is configured, the respective claim must now be present in tokens and match — tokens lacking the claim are rejected. Set `HD_AUTH_AUDIENCE` to an empty string to disable audience checking.
 - more secure and precise auth configuration
