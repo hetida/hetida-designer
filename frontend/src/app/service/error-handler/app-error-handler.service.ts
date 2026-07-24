@@ -10,11 +10,33 @@ import { NotificationService } from '../notifications/notification.service';
  */
 @Injectable()
 export class AppErrorHandler extends ErrorHandler {
+  /** Detects Monaco's cancellation error (name/message === 'Canceled'),
+   * including the case where Angular wraps it in `ngOriginalError`.
+   */
+  private static isCancellationError(error: unknown): boolean {
+    const candidate =
+      error && (error as { ngOriginalError?: unknown }).ngOriginalError
+        ? (error as { ngOriginalError: unknown }).ngOriginalError
+        : error;
+    if (!(candidate instanceof Error)) {
+      return false;
+    }
+    return candidate.name === 'Canceled' || candidate.message === 'Canceled';
+  }
+
   constructor(private readonly notificationsService: NotificationService) {
     super();
   }
 
   handleError(error: Error | HttpErrorResponse) {
+    // Monaco editor rejects pending async operations (link providers,
+    // tokenization, worker requests) with a cancellation error when its
+    // editor instance is disposed, e.g. when a component transformation tab
+    // is closed. These are benign internals and must not surface as errors.
+    if (AppErrorHandler.isCancellationError(error)) {
+      return;
+    }
+
     let displayMessage = 'An error occurred.';
 
     if (!environment.production) {

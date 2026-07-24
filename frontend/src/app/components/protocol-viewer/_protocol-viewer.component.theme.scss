@@ -1,9 +1,20 @@
 @use 'sass:map';
+@use 'src/style/colors';
 
 @mixin protocol-viewer-theme($primary, $secondary) {
   hd-protocol-viewer {
     .menu-bar {
       background-color: map.get($secondary, 500);
+    }
+
+    // use the themed foreground text color (black in light, white in dark)
+    // instead of the browser default link blue, with the brand pink on hover
+    .protocol-content__download {
+      color: map.get($primary, 500);
+
+      &:hover {
+        color: colors.$hd-pink;
+      }
     }
   }
 }
