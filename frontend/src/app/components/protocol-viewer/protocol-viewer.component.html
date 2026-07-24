@@ -126,6 +126,7 @@
       @case ('pdf') {
         <iframe
           class="protocol-content__pdf"
+          [style.height]="fileResult.height"
           [src]="fileResult.safeResourceUrl"
           title="{{ fileResult.name || fileItem.key }}"
         ></iframe>
@@ -140,6 +141,7 @@
       @case ('html') {
         <iframe
           class="protocol-content__html"
+          [style.height]="fileResult.height"
           [src]="fileResult.safeResourceUrl"
           sandbox="allow-scripts"
           title="{{ fileResult.name || fileItem.key }}"

@@ -50,6 +50,9 @@ export interface FileLikeResult {
   encoding: 'base64' | 'plain';
   name?: string;
   data: string;
+  // optional render height, e.g. "500px", "80vh" or a plain number (px).
+  // Used to override the default height for pdf/html renderings.
+  height?: string | number;
 }
 
 /**
@@ -61,6 +64,9 @@ export interface RenderableFileResult {
   kind: 'pdf' | 'image' | 'html' | 'download';
   name?: string;
   contentType: string;
+  // optional css height to apply to the rendering (pdf/html), overriding the
+  // default. Undefined means "use the default height from the stylesheet".
+  height?: string;
   // blob url usable directly as <img>/<a> href (URL security context)
   blobUrl: string;
   // sanitized blob url usable as <iframe> src (RESOURCE_URL security context)
@@ -260,6 +266,7 @@ export class ProtocolViewerComponent implements AfterViewInit, OnDestroy {
           kind: this.fileResultKind(value.content_type),
           name: value.name,
           contentType: value.content_type,
+          height: this.normalizeHeight(value.height),
           blobUrl,
           safeResourceUrl:
             this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl)
@@ -284,6 +291,24 @@ export class ProtocolViewerComponent implements AfterViewInit, OnDestroy {
       (encoding === 'base64' || encoding === 'plain') &&
       typeof (value as FileLikeResult).data === 'string'
     );
+  }
+
+  /**
+   * Normalizes an optional height coming from an ANY output result into a css
+   * height string. A plain number is interpreted as pixels; a string is used
+   * verbatim (e.g. "80vh", "500px"). Returns undefined when no usable height is
+   * given, so the default height from the stylesheet applies.
+   */
+  private normalizeHeight(
+    height: string | number | undefined
+  ): string | undefined {
+    if (typeof height === 'number' && Number.isFinite(height)) {
+      return `${height}px`;
+    }
+    if (typeof height === 'string' && height.trim() !== '') {
+      return height.trim();
+    }
+    return undefined;
   }
 
   private fileResultKind(contentType: string): RenderableFileResult['kind'] {
