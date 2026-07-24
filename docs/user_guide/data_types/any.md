@@ -9,7 +9,8 @@ On the one side they can be arbitrary Json serializable objects which can be pro
   "content_type": "application/pdf",
   "encoding": "base64",
   "name": "Daily Report XYZ - 2026-06-19",
-  "data": "JVBERi0xLjMKJe....MwolJUVPRgo="
+  "data": "JVBERi0xLjMKJe....MwolJUVPRgo=",
+  "height": "60vh"
 }
 ```
 
@@ -55,6 +56,7 @@ The hetida designer frontend as well as the [experimental dashboarding](../dashb
                                             # "image/svg+xml", "text/csv", ...
   "encoding": "base64",                     # "plain" or "base64"
   "name": "Daily Report - 2026-06-19",
+  "height": "50vh",                         # height is optional / can be left out.
   "data": "JVBERi0xLjMKJe....MwolJUVPRgo="  # actual content,
                                             # encoded according to "encoding"
 }
@@ -66,6 +68,10 @@ The rendering is as follows:
 * `image/svg+xml` and generally image formats: Render as image
 * `text/html`: Render HTML in sandboxed IFrame. *Note: Generally we trust the output to be non-malicious!* This can be used to visualize data using other javascript based plotting frameworks like e.g. Apache Echarts or µplot: Simply write a component that generated the respective HTML (including the necessary scripts, e.g. via CDN) and output it in the above-described way as ANY output.
 * others (files): Provide a file download link. The "name" will be recommended as file name.
+
+### Display height
+
+The optional `height` field can be used to specify a height for rendering in some contexts / frontends. It is up to the receiving frontend to decide whether / how to use this value. The hetida designer result protocol view will take it into account, the experimental dashboarding ignores it, since it allows arbitrary resizing.
 
 ### Examples:
 
@@ -108,6 +114,8 @@ Note that this html loads the echarts javascript library from a CDN.
 ```
 Note that this html loads the µplot javascript library from a CDN.
 
+There is a "µplot Single Timeseries Plot" base component that renders timeseries data via µplot.
+
 
 #### CSV file download
 
@@ -143,3 +151,13 @@ same example but base64 encoded:
 ```
 
 
+### A PDF report
+```json
+{
+  "content_type": "application/pdf",
+  "encoding": "base64",
+  "name": "Tagesbericht Anlage X - 2026-06-19",
+  "data": "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bHZldGljYS1PYmxpcXVlCi9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nCi9TdWJ0eXBlIC9UeXBlMQovVHlwZSAvRm9udAo+PgplbmRvYmoKOCAwIG9iago8PAovRm9udCA8PC9GMSA1IDAgUgovRjIgNiAwIFIKL0YzIDcgMCBSPj4KL1Byb2NTZXQgWy9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUldCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9DcmVhdGlvbkRhdGUgKEQ6MjAyNjA2MjkxMTUxNDNaKQo+PgplbmRvYmoKeHJlZgowIDEwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMTAyIDAwMDAwIG4gCjAwMDAwMDAyMDUgMDAwMDAgbiAKMDAwMDAwMDI4NSAwMDAwMCBuIAowMDAwMDA1MTc3IDAwMDAwIG4gCjAwMDAwMDUyNzkgMDAwMDAgbiAKMDAwMDAwNTM3NiAwMDAwMCBuIAowMDAwMDA1NDgxIDAwMDAwIG4gCjAwMDAwMDU1ODggMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSAxMAovUm9vdCAyIDAgUgovSW5mbyA5IDAgUgovSUQgWzxDRTJBODc2NTI3ODEzQjc4OEFGRUVENDMzQTY2NzMzNj48Q0UyQTg3NjUyNzgxM0I3ODhBRkVFRDQzM0E2NjczMzY+XQo+PgpzdGFydHhyZWYKNTY0MwolJUVPRgo="
+}
+
+```
