@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import pandas as pd
 import pytest
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from starlette.testclient import TestClient
 
 from demo_adapter_python.external_types import ExternalType
@@ -30,7 +30,7 @@ async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     assert "swagger-ui" in response.text.lower()
 
 
-async def walk_thing_nodes(  # noqa: PLR0913
+async def walk_thing_nodes(  # noqa: PLR0913, PLR0917
     parent_id: str,
     tn_append_list: list[StructureThingNode],
     src_append_list: list[StructureSource],
