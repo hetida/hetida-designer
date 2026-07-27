@@ -329,4 +329,8 @@ async def test_runtime_exec_context_available_during_component_adapter_execution
             "id": "abc",
             "node_id": "def",
             "parent_node_id": "ghi",
+            "hierarchy_display_path": None,
+            "name": None,
+            "tenant_id": None,
+            "tenant_name": None,
         }
