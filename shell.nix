@@ -198,7 +198,7 @@ let
     set -e
 
     echo "BUILD AND ACTIVATING VENV AT ${venvDirPythonDemoAdapter}"
-    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true false "import httpx; import pydantic; import numpy; import pandas"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true false "import httpx2; import pydantic; import numpy; import pandas"
   '';
 
   start-postgres = writeShellScriptBin "start-hd-postgres" ''
