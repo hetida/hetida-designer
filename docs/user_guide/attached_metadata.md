@@ -1,6 +1,6 @@
 # DataFrames, MultiTSFrames and Series with attached Metadata
 
-Metadata is an essential ingredient for many analytical operations. E.g. if you want to detect gaps in an irregular timeseries and you only get the timestamp, value pairs loaded for time interval, you cannot know where the interval starts and ends. Consequently you are unable to say whether there is a gap at the beginning or end. The loaded interval boundaries are necessary metadata for the gap detection.
+Metadata is an essential ingredient for many analytical operations. E.g. if you want to detect gaps in an irregular timeseries and you only get the timestamp, value pairs loaded for a time interval, you cannot know where the interval starts and ends. Consequently you are unable to say whether there is a gap at the beginning or end. The loaded interval boundaries are necessary metadata for the gap detection.
 
 Both [pandas DataFrames](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.attrs.html) and [pandas Series](https://pandas.pydata.org/docs/reference/api/pandas.Series.attrs.html) can have metadata attached in their attribute `attrs`.
 
@@ -12,10 +12,10 @@ To extract or update the metadata the corresponding base components "Extract Att
 
 
 <figure markdown="span">
-![](../../assets/metadata_base_components.png){ height="110" width=850}
+![](../assets/metadata_base_components.png){ height="110" width=850}
 </figure>
 
-The "Extract Attributes" components reads `attrs` from the underlying Dataframe/Series object and outputs it as a Python dictionary.
+The "Extract Attributes" components read `attrs` from the underlying Dataframe/Series object and output it as a Python dictionary.
 
 The "Add/Update Attributes" components update the metadata dictionary stored in `attrs` of the underlying Dataframe/Series.
 
@@ -65,7 +65,7 @@ This "wrapper" format is also received when using the direct provisioning adapte
 
 ## Metadata conventions
 
-For writing generalizable (base) components, it is preferred to have a metadata structure convention that adapters can conform to in order to make these components work with the data they provide. E.g. a component that plots timeseries data should expect the units at a specific point in the metadata which is independant on which adapter is used.
+For writing generalizable (base) components, it is preferred to have a metadata structure convention that adapters can conform to in order to make these components work with the data they provide. E.g. a component that plots timeseries data should expect the units at a specific point in the metadata which is independent on which adapter is used.
 
 When writing your own adapters, we therefore strongly advise to follow the conventions defined here. On the other side adapters, when receiving data can make use of metadata to decide how to handle this data, e.g. whether existing data in the target interval should be invalidated / overwritten.
 
@@ -80,7 +80,7 @@ We differentiate between
 * metadata associated to the metrics / timeseries
     * Examples: name, location
 * metadata associated to individual value dimensions for a multidimensional timeseries
-    * A multitsframe typically comes with one column "value" which defines a value dimension of that name for each metric. But mutlitsframes support arbitrary columns in addition to the fixed `timestamp` and `metric` columns. All these additional columns define a value dimension for each metric.
+    * A multitsframe typically comes with one column "value" which defines a value dimension of that name for each metric. But multitsframes support arbitrary columns in addition to the fixed `timestamp` and `metric` columns. All these additional columns define a value dimension for each metric.
     * Examples: unit, measurement
     * For example you may have two metrics "pressure" and "temperature" in a multitsframe which only has one value column. You need to know that for the "pressure" metric the unit associated to the value dimension "value" is "bar" and for the "temperature" metric the unit associated to the value dimension "value" is "°C"
 * metadata associated to each datapoint (pointwise)
@@ -104,15 +104,15 @@ Described as json
 
     # "single_metric"
     # if only a single metric is present (e.g. in SERIES), this is the key
-    # of the single metric occuring as single entry under "metrics" in the 
+    # of the single metric occurring as single entry under "metrics" in the 
     # key specified via "metric_key".
     # This should not be present / null, if more than one metric is present!
     "single_metric": "series",
 
-    "queried_metrics": list[str] | None = None,  # Since not all queried metrics may have
-    # data in the queries interval, it may be possible that a metric entirely is missing
+    "queried_metrics": ["metric1", "metric2"],  # or null. Since not all queried metrics may have
+    # data in the queried interval, it may be possible that a metric entirely is missing
     # in the dataset and depending on the providing adapter even from the "metrics"
-    # metadata. Therefore it should be explicitely listed which metrics where requested.
+    # metadata. Therefore it should be explicitly listed which metrics were requested.
 
     ... # see below!
     
@@ -153,7 +153,7 @@ Important hints:
 
 *  structure is the same for MULTITSFRAME and SERIES
 * The invalidation / overwrite  / delete behaviour will be defined on the dataset, not on individual metrics or even value dimensions.
-* metadata information can be omitted or null. E.g. value_dimensions does not need to be provided. Components should not require metadata have good default behaviour for missing metadata.
+* metadata information can be omitted or null. E.g. value_dimensions does not need to be provided. Components should not require metadata and should have good default behaviour for missing metadata.
 * additional metadata fields can be present at every point in the structure.
 
 #### Example for SERIES
@@ -204,11 +204,11 @@ Important hints:
 }
 ```
 
-This implies that the “metric” column of the data uses the entries of “external_id” to identify the metric and that this key’s values are unique in the metrics under “metrics” in the metadata.
+This implies that the "metric" column of the data uses the entries of "external_id" to identify the metric and that this key's values are unique in the metrics under "metrics" in the metadata.
 
 ### dataset_metadata structure
 
-We include the default values that each fiels should be considered to have if missing.
+We include the default values that each field should be considered to have if missing.
 
 ```yaml
     "dataset_metadata": {
@@ -218,7 +218,7 @@ We include the default values that each fiels should be considered to have if mi
 
         # Whether the ref dataset should be considered as discrete, i.e. isolated datapoints,
         # not an interval.
-        “ref_dataset_discrete“: false,
+        "ref_dataset_discrete": false,
         # if set, this has higher priority than all interval settings for the ref dataset.
       
         # Start / End timestamps of the queried time interval in explicit UTC isoformat:
@@ -273,7 +273,7 @@ We include the default values that each fiels should be considered to have if mi
       }
 ```
 
-### metric metdata
+### metric metadata
 ```yaml
   {
     "id": "some id", 
@@ -286,25 +286,17 @@ We include the default values that each fiels should be considered to have if mi
     "channel_id": "abc123-..." # actual platform channel id
 
     "inherited": { # metadata inherited from a hierarchy
-      # Is there a unique parent? In der hetida.platform ja. Im virtuellen Strukturadapter: nein.
-      # DEEPEST WINS LOGIC!!
-      # keine ids, name, description!
-      # nur dynamische Properties
+      # typically this should be "deepest wins"
+      # and should not contain names, ids or descriptions
       
-      # Konventionen:
-      "longitude": 42.12345, # später mal im Frontend übersetzen!
-      "latitude": 66:12345,
+      # some conventions for geo data:
+      "longitude": 42.12345,
+      "latitude": 66.12345,
       "elevation": 125.2
-      # Wenn eine Komponente hier ein Feld erwartet was nicht auftaucht muss sie diesen
-      # Fall selbstständig handeln (z.B. Default Wert nutzen!)
-    },
-    "hierarchy": {
-      # ERSTMAL NICHT!
-      # (komplette Hierarchie durchgeben)
-    },
+    }
     "comments": [
       { # comments attached to metric.
-        # Typicaly timestamped somehow, describing situations in the timeseries data.
+        # Typically timestamped somehow, describing situations in the timeseries data.
         ...
       },
       ...
@@ -320,7 +312,7 @@ We include the default values that each fiels should be considered to have if mi
         # value dimension:
         # if name, display_name, short_display_name are not present here,
         # the ones from the metric itself can/should be used
-        "description": "Blubbeldiblubb und so" # default: empty String ""
+        "description": "some description" # default: empty String ""
         "unit": "m/s",
         "value_data_type": "float",
       },
@@ -366,7 +358,7 @@ get_display_names
 get_short_display_names
 get_measurements
 ```
-wth result structure analogous to the get_units example above.
+with result structure analogous to the get_units example above.
 
 
 For SERIES it provides:
@@ -390,7 +382,7 @@ Furthermore this module provides helper functions to define your own metadata ac
 
 
 ## Wrapped format parsing options
-The wrapped format allows to specifiy the actual data in different ways and to add corresponding parsing options. For example 
+The wrapped format allows to specify the actual data in different ways and to add corresponding parsing options. For example 
 
 ```json
 {
@@ -416,9 +408,10 @@ The wrapped format allows to specifiy the actual data in different ways and to a
 ```
 provides SERIES data with a name, in "split" format (see Pandas [read_json](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html) documentation). In particular this allows to provide / enter duplicate indices via direct_provisioning.
 
+
 You may provide other parsing options as well, but you have to make sure that the structure under `__data__` is parsable with your parsing options.
 
-hetida designer always outputs the wrapped format for ouputs wired against the `direct_provisioning` adapter. For SERIES it uses the non-default "split" orient in order to preserve index duplicated. For DATAFRAME / MULTITSFRAME it expects all relevant information to be present in columns and therefore uses the default json serialization format for dataframes.
+hetida designer always outputs the wrapped format for outputs wired against the `direct_provisioning` adapter. For SERIES it uses the non-default "split" orient in order to preserve index duplicates. For DATAFRAME / MULTITSFRAME it expects all relevant information to be present in columns and therefore uses the default json serialization format for dataframes.
 
 All this does not affect the `__metadata__` field.
 

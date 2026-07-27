@@ -1,4 +1,6 @@
+- documentation improvements
 - add documentation for some environment variables
+- extend hierarchy object execution context information
 
 ## 0.14.1
 - reintegrate the former separate npm packages `hetida-flowchart`, `ng-hetida-flowchart` and `hd-wiring` (wiring dialog) from the hetida-flowchart repository directly into the frontend source tree (`frontend/src/libs/`), removing them as external dependencies
