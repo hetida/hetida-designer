@@ -151,7 +151,7 @@ same example but base64 encoded:
 ```
 
 
-### A PDF report
+#### A PDF report
 ```json
 {
   "content_type": "application/pdf",
