@@ -91,6 +91,13 @@ Once the user is logged in, the hetida designer frontend will add the access tok
 
 Using the default settings, backend and runtime will use the access token when making requests against each other or against configured adapters. See below for more options for outgoing requests.
 
+## Further auth configuration
+
+* `HD_AUTH_ALLOWED_ALGORITHMS` is a comma sperated string of asymmetric JWT signature algorithms, defaulting to a set of secure algorithms. We recommend to restrict it to the exact algorithm your setup employs.
+* `HD_AUTH_AUDIENCE`: Defaults to `account`. We recommend to explicitely set this to the expected audience claim. Will check for claim being present and correct. Empty string will disable audience check (not recommended!)
+* `HD_AUTH_ISSUER`: Unset by default. If set to a string, tokens must contain a macthing `iss` claim. Recommendation is to explicitely set this and configure your auth provider to provide issuer claims.
+
+
 ## Enabling Authentication for adapters
 As explained above, hetida designer backend/runtime will by default (`HD_EXTERNAL_AUTH_MODE` is set to `FORWARD_OR_FIXED`) forward any bearer access token when making http requests to adapter webservices, if the respective environment variables `HD_USE_AUTH` are set to `true`.
 
