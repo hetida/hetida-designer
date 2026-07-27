@@ -1,9 +1,7 @@
 packaging==26.2 \
     --hash=sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e \
     --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
-    # via
-    #   -r ./requirements-base.in
-    #   wheel
+    # via -r ./requirements-base.in
 pip==26.1.2 \
     --hash=sha256:382ff9f685ee3bc25864f820aa50505825f10f5458ffff07e30a6d96e5715cab \
     --hash=sha256:f49cd134c61cf2fd75e0ce2676db03e4054504a5a4986d00f8299ae632dc4605
@@ -28,8 +26,4 @@ uv==0.11.27 \
     --hash=sha256:d325b8bd2665ce3ac58d33f977683cfb2cb8eb951effab06fad8518426bc0a90 \
     --hash=sha256:d806e1067c8eb9f8ba5dbdca46484512d224070e8473442319d4c1fbc3246f4d \
     --hash=sha256:e20f25921ed4c46d32ac18a9b2e610c0384439fd367f647f2b68e0e1d90e9885
-    # via -r ./requirements-base.in
-wheel==0.47.0 \
-    --hash=sha256:212281cab4dff978f6cedd499cd893e1f620791ca6ff7107cf270781e587eced \
-    --hash=sha256:cc72bd1009ba0cf63922e28f94d9d83b920aa2bb28f798a31d0691b02fa3c9b3
     # via -r ./requirements-base.in
