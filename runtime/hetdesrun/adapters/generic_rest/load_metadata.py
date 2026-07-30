@@ -14,12 +14,12 @@ from hetdesrun.adapters.exceptions import (
 )
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
-from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ async def load_single_metadatum_from_adapter(
     filtered_source: FilteredSource,
     adapter_key: str,
     client: httpx.AsyncClient,
+    headers: dict[str, str],
 ) -> Any:
     if filtered_source.ref_id_type == RefIdType.SOURCE:
         endpoint = "sources"
@@ -57,7 +58,7 @@ async def load_single_metadatum_from_adapter(
         params.append(("job_id", str(job_id)))
 
     try:
-        resp = await client.get(url, params=params)
+        resp = await client.get(url, params=params, headers=headers)
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
@@ -135,19 +136,16 @@ async def load_multiple_metadata(
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
 
-    async with httpx.AsyncClient(
-        headers=headers,
-        verify=get_config().hd_adapters_verify_certs,
-        timeout=get_config().external_request_timeout,
-    ) as client:
-        loaded_metadata = await asyncio.gather(
-            *(
-                load_single_metadatum_from_adapter(
-                    filtered_source,
-                    adapter_key,
-                    client,
-                )
-                for filtered_source in data_to_load.values()
+    client = get_generic_rest_adapter_client(adapter_key)
+    loaded_metadata = await asyncio.gather(
+        *(
+            load_single_metadatum_from_adapter(
+                filtered_source,
+                adapter_key,
+                client,
+                headers=headers,
             )
+            for filtered_source in data_to_load.values()
         )
+    )
     return dict(zip(data_to_load.keys(), loaded_metadata, strict=True))

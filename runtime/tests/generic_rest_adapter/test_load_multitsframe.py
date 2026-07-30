@@ -27,8 +27,8 @@ async def test_load_single_multitsframe_from_adapter_end_to_end() -> None:
                 }
             )
         },
-        raw=io.StringIO(
-            """
+        raw=io.BytesIO(
+            b"""
         {"timestamp": "2019-08-01T15:45:36.000Z", "metric": "a", "value": 1.0}
         {"timestamp": "2019-08-01T15:45:37.000Z", "metric": "b", "value": 1.2}
         {"timestamp": "2019-08-01T15:45:37.000Z", "metric": "c", "value": 0.5}
@@ -46,7 +46,7 @@ async def test_load_single_multitsframe_from_adapter_end_to_end() -> None:
         return_value="https://hetida.de",
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
             return_value=resp_mock,
         ):
             mtsf = await load_single_multitsframe_from_adapter(

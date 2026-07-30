@@ -19,6 +19,10 @@ from starlette.responses import JSONResponse, Response
 from hetdesrun import VERSION
 from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
+from hetdesrun.adapters.generic_rest.client import (
+    close_generic_rest_adapter_clients,
+    close_generic_rest_adapter_sync_sessions,
+)
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
@@ -100,6 +104,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     yield
     logger.info("Shutting down application...")
     await app.state.runtime_http_client.aclose()
+    await close_generic_rest_adapter_clients()
+    close_generic_rest_adapter_sync_sessions()
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Shutting down Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()

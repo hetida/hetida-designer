@@ -12,8 +12,10 @@ from posixpath import join as posix_urljoin
 from typing import Any, Literal
 from uuid import UUID
 
+import niquests
 import pandas as pd
-import requests
+import pyarrow as pa
+import pyarrow.json as pa_json
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
@@ -21,6 +23,7 @@ from hetdesrun.adapters.exceptions import (
 )
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_sync_session
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.runtime.logging import job_id_context_filter
@@ -28,6 +31,11 @@ from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
+
+# Block size (bytes) pyarrow's streaming JSON reader pulls from the socket at a time. It caps the
+# transient read buffer (peak memory ~ this + the growing result) and must exceed the largest
+# single JSON record (one row); 1 MiB is ample for the adapter's per-row records.
+_PYARROW_JSON_READ_BLOCK_SIZE = 1024 * 1024
 
 
 def create_empty_ts_df(data_type: ExternalType, attrs: Any | None = None) -> pd.DataFrame:
@@ -113,97 +121,116 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
 
-    with requests.Session() as session:
-        try:
-            start_time = datetime.datetime.now(datetime.timezone.utc)
+    # One cached (blocking) niquests session per adapter, so the connection pool is reused across
+    # requests. Blocking is acceptable here: we stream the body synchronously into pyarrow.
+    session = get_generic_rest_adapter_sync_session(adapter_key)
+    try:
+        start_time = datetime.datetime.now(datetime.timezone.utc)
+        logger.info(
+            "Start receiving generic rest adapter %s framelike data at %s",
+            adapter_key,
+            start_time.isoformat(),
+        )
+        query_params: list[tuple[str, Any]] = [
+            ("id", (str(filtered_source.ref_id))) for filtered_source in filtered_sources
+        ] + additional_params
+        resp = session.get(
+            url,
+            params=query_params,
+            stream=True,
+            headers=headers,
+            verify=get_config().hd_adapters_verify_certs,
+            timeout=get_config().external_request_timeout,
+        )
+        if (
+            resp.status_code == 404
+            and resp.text is not None
+            and "errorCode" in resp.text
+            and resp.json()["errorCode"] == "RESULT_EMPTY"
+        ):
             logger.info(
-                "Start receiving generic rest adapter %s framelike data at %s",
+                (
+                    "Received RESULT_EMPTY error_code from generic rest adapter %s"
+                    " framelike endpoint %s, therefore returning empty DataFrame"
+                ),
                 adapter_key,
-                start_time.isoformat(),
-            )
-            resp = session.get(
                 url,
-                params=[
-                    ("id", (str(filtered_source.ref_id))) for filtered_source in filtered_sources
-                ]
-                + additional_params,
-                stream=True,
-                headers=headers,
-                verify=get_config().hd_adapters_verify_certs,
-                timeout=get_config().external_request_timeout,
             )
-            if (
-                resp.status_code == 404
-                and "errorCode" in resp.text
-                and resp.json()["errorCode"] == "RESULT_EMPTY"
-            ):
-                logger.info(
-                    (
-                        "Received RESULT_EMPTY error_code from generic rest adapter %s"
-                        " framelike endpoint %s, therefore returning empty DataFrame"
-                    ),
-                    adapter_key,
-                    url,
-                )
-                if endpoint == "timeseries":
-                    return create_empty_ts_df(ExternalType(common_data_type))
-                # must be "dataframe":
-                return df_empty({})
+            if endpoint == "timeseries":
+                return create_empty_ts_df(ExternalType(common_data_type))
+            # must be "dataframe":
+            return df_empty({})
 
-            if resp.status_code != 200:
+        if resp.status_code != 200:
+            msg = (
+                f"Requesting framelike data from generic rest adapter endpoint {url} failed."
+                f" Status code: {resp.status_code}. Text: {resp.text}"
+            )
+            logger.info(msg)
+            raise AdapterConnectionError(msg)
+        logger.info("Start reading in and parsing framelike data")
+
+        # Stream the response body straight into pyarrow's JSON reader: it pulls the socket in
+        # blocks and builds the columnar result incrementally, so memory grows with the resulting
+        # DataFrame instead of first buffering the whole raw payload (as pd.read_json does).
+        raw = resp.raw
+        assert raw is not None  # streamed 200 response always has a raw body  # noqa: S101
+        raw.decode_content = True  # transparently decompress gzip/deflate while streaming
+        try:
+            table = pa_json.read_json(
+                raw,
+                read_options=pa_json.ReadOptions(block_size=_PYARROW_JSON_READ_BLOCK_SIZE),
+            )
+        except pa.ArrowInvalid as e:
+            if "empty" in str(e).lower():
+                # Empty response body: fall through to the len == 0 handling below, matching the
+                # previous pd.read_json behavior on empty input.
+                df = df_empty({})
+            else:
                 msg = (
-                    f"Requesting framelike data from generic rest adapter endpoint {url} failed."
-                    f" Status code: {resp.status_code}. Text: {resp.text}"
+                    f"Could not parse framelike response data from {url} via the pyarrow json"
+                    f" reader. Exception was:\n{str(e)}."
                 )
                 logger.info(msg)
-                raise AdapterConnectionError(msg)
-            logger.info("Start reading in and parsing framelike data")
-
-            try:
-                df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
-            except Exception as e:
-                msg = (
-                    f"Could not parse framelike response data from {url} via pd.read_json"
-                    f" Exception was:\n{str(e)}."
-                )
                 raise AdapterHandlingException(msg) from e
-            end_time = datetime.datetime.now(datetime.timezone.utc)
-            logger.info(
-                (
-                    "Finished receiving generic rest framelike data (including dataframe parsing)"
-                    " at %s. DataFrame shape is %s with columns %s"
-                ),
-                end_time.isoformat(),
-                str(df.shape),
-                str(df.columns),
-            )
-            logger.info(
-                (
-                    "Receiving generic rest adapter framelike data took"
-                    " (including dataframe parsing)"
-                    " %s"
-                ),
-                str(end_time - start_time),
-            )
+        else:
+            # to_pandas with self_destruct + split_blocks frees each Arrow column as its numpy
+            # column is materialized (numeric columns are zero-copy), avoiding a full Arrow+numpy
+            # duplicate. Strings stay as pandas' (arrow-backed) string dtype.
+            df = table.to_pandas(self_destruct=True, split_blocks=True, use_threads=True)
+        end_time = datetime.datetime.now(datetime.timezone.utc)
+        logger.info(
+            (
+                "Finished receiving generic rest framelike data (including dataframe parsing)"
+                " at %s. DataFrame shape is %s with columns %s"
+            ),
+            end_time.isoformat(),
+            str(df.shape),
+            str(df.columns),
+        )
+        logger.info(
+            ("Receiving generic rest adapter framelike data took (including dataframe parsing) %s"),
+            str(end_time - start_time),
+        )
 
-            if "Data-Attributes" in resp.headers:
-                logger.debug("Got Data-Attributes via GET response header")
-                data_attributes = resp.headers["Data-Attributes"]
-                df.attrs = decode_attributes(data_attributes)
+        if "Data-Attributes" in resp.headers:
+            logger.debug("Got Data-Attributes via GET response header")
+            data_attributes = resp.headers["Data-Attributes"]
+            df.attrs = decode_attributes(data_attributes)
 
-            logger.debug(
-                "Received dataframe of form %s:\n%s",
-                str(df.shape) if len(df) > 0 else "EMPTY RESULT",
-                str(df) if len(df) > 0 else "EMPTY RESULT",
-            )
-        except (requests.HTTPError, requests.ConnectionError, requests.RequestException) as e:
-            msg = (
-                f"Requesting framelike data from generic rest adapter endpoint {url}"
-                f" failed with Exception {str(e)}"
-            )
+        logger.debug(
+            "Received dataframe of form %s:\n%s",
+            str(df.shape) if len(df) > 0 else "EMPTY RESULT",
+            str(df) if len(df) > 0 else "EMPTY RESULT",
+        )
+    except (niquests.HTTPError, niquests.ConnectionError, niquests.RequestException) as e:
+        msg = (
+            f"Requesting framelike data from generic rest adapter endpoint {url}"
+            f" failed with Exception {str(e)}"
+        )
 
-            logger.info(msg)
-            raise AdapterConnectionError(msg) from e
+        logger.info(msg)
+        raise AdapterConnectionError(msg) from e
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
@@ -211,18 +238,24 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
         # must be dataframe:
         return df_empty({}, attrs=df.attrs)
 
-    if "timestamp" in df.columns and endpoint == "dataframe":
-        try:
-            parsed_timestamps = pd.to_datetime(df["timestamp"])
-        except ValueError as e:
-            logger.info(
-                "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
-                " not be set to index. Proceeding with default index. Error was: %s",
-                url,
-                str(e),
-            )
+    if "timestamp" in df.columns:
+        if endpoint == "dataframe":
+            try:
+                parsed_timestamps = pd.to_datetime(df["timestamp"])
+            except (ValueError, TypeError) as e:
+                logger.info(
+                    "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
+                    " not be set to index. Proceeding with default index. Error was: %s",
+                    url,
+                    str(e),
+                )
+            else:
+                df.index = parsed_timestamps
+                df = df.sort_index()
         else:
-            df.index = parsed_timestamps
-            df = df.sort_index()
+            # timeseries / multitsframe: reproduce the tz-aware datetime "timestamp" column that
+            # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings,
+            # and downstream code relies on this column being datetime, e.g. as a series index).
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
     return df

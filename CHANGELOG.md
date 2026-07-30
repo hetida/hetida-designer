@@ -1,3 +1,5 @@
+- refactored generic rest adapter http client handling and data fetching
+
 ## 0.14.2
 - documentation improvements
 - add documentation for some environment variables
