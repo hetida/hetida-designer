@@ -9,7 +9,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, Literal
+from typing import Any, BinaryIO, Literal
 from uuid import UUID
 
 import niquests
@@ -74,6 +74,67 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
     if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(filtered_sources) > 1:
         return False, "Cannot request more than one dataframe together"
     return True, ""
+
+
+def parse_framelike_response_stream(
+    stream: BinaryIO,
+    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
+    error_source: str = "",
+) -> pd.DataFrame:
+    """Core transformation from a framelike response body to a DataFrame.
+
+    Streams ``stream`` - a readable, already-decompressed binary file-like of newline-delimited JSON
+    records - through pyarrow's JSON reader and converts it to a numpy-backed pandas DataFrame, then
+    normalizes the ``timestamp`` column the way each endpoint needs. pyarrow reads the stream in
+    blocks and builds the columnar result incrementally, so memory grows with the resulting
+    DataFrame instead of the whole raw payload being buffered first (as ``pd.read_json`` does).
+
+    An empty body yields an empty (0-column) DataFrame. ``error_source`` (e.g. the request URL) is
+    only used in error / log messages.
+
+    Shared by :func:`load_framelike_data` and its performance tests so both exercise the same code.
+    """
+    try:
+        table = pa_json.read_json(
+            stream,
+            read_options=pa_json.ReadOptions(block_size=_PYARROW_JSON_READ_BLOCK_SIZE),
+        )
+    except pa.ArrowInvalid as e:
+        if "empty" in str(e).lower():
+            return df_empty({})
+        msg = (
+            f"Could not parse framelike response data from {error_source} via the pyarrow json"
+            f" reader. Exception was:\n{str(e)}."
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
+
+    # to_pandas with self_destruct + split_blocks frees each Arrow column as its numpy column is
+    # materialized (numeric columns are zero-copy), avoiding a full Arrow+numpy duplicate. Strings
+    # stay as pandas' (arrow-backed) string dtype.
+    df = table.to_pandas(self_destruct=True, split_blocks=True, use_threads=True)
+
+    if "timestamp" in df.columns:
+        if endpoint == "dataframe":
+            try:
+                parsed_timestamps = pd.to_datetime(df["timestamp"])
+            except (ValueError, TypeError) as e:
+                logger.info(
+                    "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
+                    " not be set to index. Proceeding with default index. Error was: %s",
+                    error_source,
+                    str(e),
+                )
+            else:
+                df.index = parsed_timestamps
+                df = df.sort_index()
+        else:
+            # timeseries / multitsframe: reproduce the tz-aware datetime "timestamp" column that
+            # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings,
+            # and downstream code relies on this column being datetime, e.g. as a series index).
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+
+    return df
 
 
 async def load_framelike_data(  # noqa: PLR0915,PLR0912
@@ -170,34 +231,11 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
             raise AdapterConnectionError(msg)
         logger.info("Start reading in and parsing framelike data")
 
-        # Stream the response body straight into pyarrow's JSON reader: it pulls the socket in
-        # blocks and builds the columnar result incrementally, so memory grows with the resulting
-        # DataFrame instead of first buffering the whole raw payload (as pd.read_json does).
+        # Stream the response body straight into the parse core (parse_framelike_response_stream).
         raw = resp.raw
         assert raw is not None  # streamed 200 response always has a raw body  # noqa: S101
         raw.decode_content = True  # transparently decompress gzip/deflate while streaming
-        try:
-            table = pa_json.read_json(
-                raw,
-                read_options=pa_json.ReadOptions(block_size=_PYARROW_JSON_READ_BLOCK_SIZE),
-            )
-        except pa.ArrowInvalid as e:
-            if "empty" in str(e).lower():
-                # Empty response body: fall through to the len == 0 handling below, matching the
-                # previous pd.read_json behavior on empty input.
-                df = df_empty({})
-            else:
-                msg = (
-                    f"Could not parse framelike response data from {url} via the pyarrow json"
-                    f" reader. Exception was:\n{str(e)}."
-                )
-                logger.info(msg)
-                raise AdapterHandlingException(msg) from e
-        else:
-            # to_pandas with self_destruct + split_blocks frees each Arrow column as its numpy
-            # column is materialized (numeric columns are zero-copy), avoiding a full Arrow+numpy
-            # duplicate. Strings stay as pandas' (arrow-backed) string dtype.
-            df = table.to_pandas(self_destruct=True, split_blocks=True, use_threads=True)
+        df = parse_framelike_response_stream(raw, endpoint, error_source=url)
         end_time = datetime.datetime.now(datetime.timezone.utc)
         logger.info(
             (
@@ -237,25 +275,5 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
             return create_empty_ts_df(ExternalType(common_data_type), attrs=df.attrs)
         # must be dataframe:
         return df_empty({}, attrs=df.attrs)
-
-    if "timestamp" in df.columns:
-        if endpoint == "dataframe":
-            try:
-                parsed_timestamps = pd.to_datetime(df["timestamp"])
-            except (ValueError, TypeError) as e:
-                logger.info(
-                    "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
-                    " not be set to index. Proceeding with default index. Error was: %s",
-                    url,
-                    str(e),
-                )
-            else:
-                df.index = parsed_timestamps
-                df = df.sort_index()
-        else:
-            # timeseries / multitsframe: reproduce the tz-aware datetime "timestamp" column that
-            # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings,
-            # and downstream code relies on this column being datetime, e.g. as a series index).
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
     return df
