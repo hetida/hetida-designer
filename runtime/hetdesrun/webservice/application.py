@@ -76,16 +76,35 @@ class AdditionalLoggingRoute(APIRoute):
         return custom_route_handler
 
 
-middleware = [
-    Middleware(GZipMiddleware, minimum_size=1000, compresslevel=5),
-    Middleware(
-        CORSMiddleware,
-        allow_origins=get_config().allowed_origins.split(","),
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["*"],
-    ),
-]
+def get_middleware() -> list[Middleware]:
+    """Build the ASGI middleware stack from the current config.
+
+    Response compression is off by default: gzip runs synchronously in the event loop and costs on
+    the order of 100ms on multi-MB responses (e.g. large plotly plots), which is a net latency loss
+    on fast links and blocks concurrency. Prefer compressing at the reverse proxy / ingress; enable
+    it only for slow-link clients via RESPONSE_COMPRESSION_ENABLED. When enabled it stays outermost.
+    """
+    middleware: list[Middleware] = []
+
+    if get_config().response_compression_enabled:
+        middleware.append(
+            Middleware(
+                GZipMiddleware,
+                minimum_size=1000,
+                compresslevel=get_config().response_compression_level,
+            )
+        )
+
+    middleware.append(
+        Middleware(
+            CORSMiddleware,
+            allow_origins=get_config().allowed_origins.split(","),
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
+            allow_headers=["*"],
+        )
+    )
+    return middleware
 
 
 @asynccontextmanager
@@ -219,7 +238,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         version=VERSION,
         lifespan=lifespan,
         root_path=get_config().swagger_prefix,
-        middleware=middleware,
+        middleware=get_middleware(),
     )
 
     app.router.route_class = AdditionalLoggingRoute

@@ -10,6 +10,7 @@ from uuid import UUID
 
 import httpx
 import logfire
+import msgspec
 from dtexp import DtexpParsingError
 from fastapi import (
     APIRouter,
@@ -1553,8 +1554,10 @@ async def send_result_to_callback_url(
         try:
             await client.post(
                 str(callback_url),
-                headers=headers,
-                json=dict_like_obj,
+                headers={**headers, "Content-Type": "application/json"},
+                # Encode with msgspec (not httpx's json=, i.e. stdlib json) so a spliced
+                # msgspec.Raw output payload is emitted verbatim:
+                content=msgspec.json.encode(dict_like_obj),
             )
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)

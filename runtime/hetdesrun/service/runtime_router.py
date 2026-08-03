@@ -2,6 +2,7 @@ import datetime
 import logging
 
 import logfire
+from fastapi import Response
 
 from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
@@ -12,10 +13,7 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 from hetdesrun.runtime.service import runtime_service, unittest_service
-from hetdesrun.service.serialization_helpers import (
-    MsgSpecJSONResponse,
-    handle_workflow_execution_dict_serialisation,
-)
+from hetdesrun.service.serialization_helpers import encode_workflow_execution_result
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -31,7 +29,7 @@ runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
 )
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
-) -> MsgSpecJSONResponse:
+) -> Response:
     with logfire.span(
         "runtime execution request handling without fastapi parsing",
         trafo_id=str(runtime_input.trafo_id),
@@ -42,13 +40,15 @@ async def runtime_endpoint(
         result.measured_steps.backend_calling_runtime_request_start.end = received_backend_request
 
         with logfire.span("runtime execution result serialization without fastapi"):
-            dict_like_json_serializable_obj = handle_workflow_execution_dict_serialisation(result)
-            dict_like_json_serializable_obj["measured_steps"]["runtime_sending_response_start"][
-                "start"
-            ] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            msgspec_result = MsgSpecJSONResponse(content=dict_like_json_serializable_obj)
+            # Raw-splicing encode using msgspec.Raw for e.g. Pandas ouput to avoid
+            # multiple serialization loops, i.e. skipping the json.loads round-trip
+            # + re-encode.
+            response = Response(
+                content=encode_workflow_execution_result(result),
+                media_type="application/json",
+            )
 
-    return msgspec_result
+    return response
 
 
 @runtime_router.get("/info", response_model=VersionInfo)

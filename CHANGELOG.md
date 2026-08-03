@@ -1,4 +1,8 @@
 - refactored generic rest adapter http client handling and data fetching
+- faster execution result serialization: pandas and plotly outputs are spliced into the response as the json bytes produced by their respective serializer apis using `msgspec.Raw` allowing for single pass serialization, avoiding redundant JSON parse/re-encode round-trips
+- faster result relaying with separate backend and runtime services: the backend now passes the runtime's output payload through to the caller as raw json bytes — validated as well-formed JSON but not parsed into Python and re-encoded. Slight performance improvements in particular for larger Plotly ouputs.
+- BREAKING CHANGE: backend response gzip compression is now **off by default** and configurable via `RESPONSE_COMPRESSION_ENABLED` (and `RESPONSE_COMPRESSION_LEVEL`, default 1). This improves response time for larger responses (in particulary large plotly plots). It is recommended to compress at your reverse proxy / ingress instead, or set `RESPONSE_COMPRESSION_ENABLED=true` if your clients are on slow links. The internal backend => runtime request now never requests compression.
+- hardened execution result serialization: any failure while serializing (untrusted) component output (e.g. non-serializable objects, circular references, unencodable dict)now becomes a structured failure result instead of a 5xx, at both the runtime and the backend response boundaries
 
 ## 0.14.2
 - documentation improvements

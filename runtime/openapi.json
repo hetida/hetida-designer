@@ -6512,6 +6512,18 @@
             "type": "string",
             "title": "Result"
           },
+          "raw_output_results_json": {
+            "anyOf": [
+              {
+                "type": "string",
+                "contentMediaType": "application/octet-stream"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Output Results Json"
+          },
           "resolved_reproducibility_references": {
             "$ref": "#/components/schemas/ReproducibilityReference",
             "description": "Resolved references to information needed to reproduce an execution result.The provided data can be used to replace data that would usually be produced at runtime."

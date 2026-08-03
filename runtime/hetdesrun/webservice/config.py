@@ -202,7 +202,8 @@ class RuntimeConfig(BaseSettings):
         False,
         description=(
             "Whether the output_results_by_output_name field provided together with an"
-            " execution result response will be logged"
+            " execution result response will be logged. This should be False in production."
+            " Activating it can have significant negative performance impact!"
         ),
         validation_alias="LOG_DIRECT_PROVISIONING_OUTPUTS",
     )
@@ -322,6 +323,30 @@ class RuntimeConfig(BaseSettings):
         ),
         validation_alias="ALLOWED_ORIGINS",
         examples=["http://exampledomain.com,http://anotherexampledomain.de"],
+    )
+
+    response_compression_enabled: bool = Field(
+        False,
+        description=(
+            "Whether to gzip-compress outgoing responses (GZipMiddleware). Disabled by default:"
+            " gzip runs synchronously in the event loop and, on multi-MB payloads (e.g. large"
+            " plotly plots), costs on the order of 100ms per response - a net latency loss on fast"
+            " (LAN / same-cluster) links and a block on request concurrency. Enable it only if"
+            " clients are on slow links and no reverse proxy / ingress already handles compression"
+            " (which is the recommended place for it). Does not affect the internal"
+            " backend->runtime request, which never requests compression."
+        ),
+        validation_alias="RESPONSE_COMPRESSION_ENABLED",
+    )
+    response_compression_level: int = Field(
+        1,
+        ge=1,
+        le=9,
+        description=(
+            "gzip compression level (1-9) used when response_compression_enabled is true. Level 1"
+            " is markedly cheaper than the zlib default (6) for a marginally larger payload."
+        ),
+        validation_alias="RESPONSE_COMPRESSION_LEVEL",
     )
 
     sqlalchemy_db_host: str = Field(
