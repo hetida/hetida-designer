@@ -27,6 +27,7 @@ from collections.abc import Callable
 import msgspec
 import numpy as np
 import pandas as pd
+import pytest
 
 _NUM_ROWS = 50_000
 _NUM_COLS = 5
@@ -63,6 +64,7 @@ def _best_time(dump: Callable[[pd.DataFrame], bytes], df: pd.DataFrame) -> float
     return best
 
 
+@pytest.mark.performance
 def test_raw_result_serialization_is_faster_than_dump() -> None:
     df = _make_frame(_NUM_ROWS, _NUM_COLS)
 

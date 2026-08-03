@@ -152,6 +152,7 @@ def _peak_rss_in_fresh_subprocess(kind: str) -> float:
     )
 
 
+@pytest.mark.performance
 def test_new_framelike_parse_chain_is_faster_than_old() -> None:
     raw = _make_timeseries_ndjson(_NUM_ROWS)
 
@@ -177,6 +178,7 @@ def test_new_framelike_parse_chain_is_faster_than_old() -> None:
     )
 
 
+@pytest.mark.performance
 def test_new_framelike_parse_chain_uses_less_peak_memory_than_old() -> None:
     if not os.path.exists("/proc/self/clear_refs"):
         pytest.skip("peak-RSS measurement relies on Linux /proc (clear_refs / VmHWM)")

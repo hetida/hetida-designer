@@ -66,6 +66,9 @@ def pytest_addoption(parser: Any) -> None:
     )
 
     parser.addoption("--apply-fixes", action="store_true", dest="apply_fixes", default=False)
+    parser.addoption(
+        "--ensure-performance", action="store_true", dest="ensure_performance", default=False
+    )
 
 
 @pytest.fixture(scope="session")
@@ -76,6 +79,18 @@ def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
 @pytest.fixture(scope="session")
 def apply_fixes(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("apply_fixes")
+
+
+def pytest_collection_modifyitems(config, items):
+    run_performance_ensuring_tests = config.getoption("ensure_performance")
+
+    if run_performance_ensuring_tests:
+        return
+
+    skip_marker = pytest.mark.skip(reason="need --ensure-performance to run")
+    for item in items:
+        if "performance" in item.keywords:
+            item.add_marker(skip_marker)
 
 
 @pytest_asyncio.fixture
