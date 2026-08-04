@@ -1,3 +1,4 @@
+## 0.14.3
 - refactored generic rest adapter http client handling and data fetching
 - faster execution result serialization: pandas and plotly outputs are spliced into the response as the json bytes produced by their respective serializer apis using `msgspec.Raw` allowing for single pass serialization, avoiding redundant JSON parse/re-encode round-trips
 - faster result relaying with separate backend and runtime services: the backend now passes the runtime's output payload through to the caller as raw json bytes — validated as well-formed JSON but not parsed into Python and re-encoded. Slight performance improvements in particular for larger Plotly ouputs.
