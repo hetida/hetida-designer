@@ -122,8 +122,8 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
         )
 
         assert len(all_tns) == 17
-        assert len(all_srcs) == 39
-        assert len(all_snks) == 15
+        assert len(all_srcs) == 41
+        assert len(all_snks) == 17
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
         assert len(tn_attached_metadata_dict) == 9
@@ -211,6 +211,21 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
                     print(line)
                     if len(line) > 0:
                         json.loads(line)
+
+            if src.type.startswith("singletsframe"):
+                response = await client.get(
+                    f"/singletsframe?id={src.id}&from={quote('2020-01-01T00:00:00.000000000Z')}"
+                    f"&to={quote('2020-01-02T00:00:00.0000000Z')}"
+                )
+                assert response.status_code == 200
+                lines = response.text.splitlines()
+                for line in lines:
+                    print(line)
+                    if len(line) > 0:
+                        record = json.loads(line)
+                        # a singletsframe has no metric column
+                        assert "timestamp" in record
+                        assert "metric" not in record
 
             if src.type.startswith("timeseries"):
                 response = await client.get(

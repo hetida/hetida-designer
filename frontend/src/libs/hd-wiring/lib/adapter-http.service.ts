@@ -90,7 +90,8 @@ export enum AdapterDataType {
   FLOAT = 'float',
   INT = 'int',
   STRING = 'string',
-  MULTITSFRAME = 'multitsframe'
+  MULTITSFRAME = 'multitsframe',
+  SINGLETSFRAME = 'singletsframe'
 }
 
 export const adapterTypeIoTypeMap = {
@@ -100,7 +101,8 @@ export const adapterTypeIoTypeMap = {
   [AdapterDataType.INT]: IOType.INT,
   [AdapterDataType.STRING]: IOType.STRING,
   [AdapterDataType.DATA_FRAME]: IOType.DATAFRAME,
-  [AdapterDataType.MULTITSFRAME]: IOType.MULTITSFRAME
+  [AdapterDataType.MULTITSFRAME]: IOType.MULTITSFRAME,
+  [AdapterDataType.SINGLETSFRAME]: IOType.SINGLETSFRAME
 };
 
 export interface Adapter {

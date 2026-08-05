@@ -23,6 +23,7 @@ from hetdesrun.datatypes import (
     DataType,
     PydanticMultiTimeseriesPandasDataFrame,
     PydanticPandasDataFrame,
+    PydanticSingleTimeseriesPandasDataFrame,
     parse_dynamically_from_datatypes,
 )
 from hetdesrun.models.run import WorkflowExecutionResult
@@ -210,6 +211,165 @@ def test_multitsframe_parsing():
                 ],
             }
         )
+
+
+class MySingleTsFrameModel(BaseModel):
+    stsf: PydanticSingleTimeseriesPandasDataFrame
+    model_config = ConfigDict(arbitrary_types_allowed=True, coerce_numbers_to_str=True)
+
+
+def test_singletsframe_parsing_empty():
+    empty_df_stsf = MySingleTsFrameModel(stsf=("""{}""")).stsf
+
+    assert len(empty_df_stsf) == 0
+    assert list(empty_df_stsf.columns) == ["timestamp", "value"]
+
+    empty_stsf = MySingleTsFrameModel(stsf=('{"value":[],"timestamp":[]}')).stsf
+
+    assert len(empty_stsf) == 0
+
+
+def test_singletsframe_parsing_multi_dimensional():
+    """A SingleTSFrame holds one metric with arbitrarily many value dimensions"""
+    stsf1 = MySingleTsFrameModel(
+        stsf=(
+            '{"value":[1.0,2,1.9],'
+            '"state":["ok","ok","suspicious"],'
+            '"timestamp":["2019-08-01T15:45:36.000Z","2019-08-02T15:45:36.000Z",'
+            '"2019-08-03T15:45:36.000Z"]}'
+        )
+    ).stsf
+
+    assert len(stsf1) == 3
+    assert set(stsf1.columns) == {"timestamp", "value", "state"}
+    assert isinstance(stsf1["timestamp"].dtype, pd.DatetimeTZDtype)
+
+    stsf2 = MySingleTsFrameModel(
+        stsf={
+            "value": [1.0, 2, 1.9],
+            "state": ["ok", "ok", "suspicious"],
+            "timestamp": [
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+                "2019-08-03T15:45:36.000Z",
+            ],
+        }
+    ).stsf
+
+    # 3 rows x 3 columns, all equal
+    assert (stsf2 == stsf1).sum().sum() == 9
+
+
+def test_singletsframe_parsing_sorts_by_timestamp():
+    stsf = MySingleTsFrameModel(
+        stsf={
+            "value": [3.0, 1.0, 2.0],
+            "timestamp": [
+                "2019-08-03T15:45:36.000Z",
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+            ],
+        }
+    ).stsf
+
+    assert list(stsf["value"]) == [1.0, 2.0, 3.0]
+
+
+def test_singletsframe_parsing_allows_metric_column_as_value_dimension():
+    """In contrast to a MultiTSFrame, "metric" is an ordinary value column here"""
+    stsf = MySingleTsFrameModel(
+        stsf={
+            "metric": ["a", None],
+            "timestamp": ["2019-08-01T15:45:36.000Z", "2019-08-02T15:45:36.000Z"],
+        }
+    ).stsf
+
+    assert set(stsf.columns) == {"timestamp", "metric"}
+    assert stsf["metric"].isna().sum() == 1
+
+
+def test_singletsframe_parsing_validation_errors():
+    with pytest.raises(ValueError, match=r"at least one value column"):
+        MySingleTsFrameModel(stsf={"timestamp": ["2019-08-01T15:45:36.000Z"]})
+
+    with pytest.raises(ValueError, match=r"don't contain the required column"):
+        MySingleTsFrameModel(stsf={"foo": [1.0], "bar": ["2019-08-01T15:45:36.000Z"]})
+
+    with pytest.raises(ValueError, match=r"No null values.*timestamp"):
+        MySingleTsFrameModel(
+            stsf={
+                "value": [1.0, 2.0],
+                "timestamp": ["2019-08-01T15:45:36.000Z", None],
+            }
+        )
+
+    with pytest.raises(ValueError, match="does not have DatetimeTZDtype dtype"):
+        MySingleTsFrameModel(
+            stsf={
+                "value": [1.0, 2.0],
+                "timestamp": ["2019-08-01T15:45:36.000", "2019-08-02T15:45:36.000"],
+            }
+        )
+
+    with pytest.raises(ValueError, match="does not have UTC timezone"):
+        MySingleTsFrameModel(
+            stsf={
+                "value": [1.0, 2.0],
+                "timestamp": ["2019-08-01T15:45:36.000+01:00", "2019-08-02T15:45:36.000+01:00"],
+            }
+        )
+
+
+def test_singletsframe_parsing_wrapped_with_metadata():
+    stsf = MySingleTsFrameModel(
+        stsf={
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": {"dataset_metadata": {"single_metric": "abc.temp"}},
+            "__data__": {
+                "value": {"0": 1.0},
+                "timestamp": {"0": "2019-08-01T15:45:36.000Z"},
+            },
+        }
+    ).stsf
+
+    assert stsf.attrs["dataset_metadata"]["single_metric"] == "abc.temp"
+    assert len(stsf) == 1
+
+
+def test_singletsframe_back_and_forth_parsing():
+    """Parsing a serialized SingleTSFrame must yield the same frame again"""
+    stsf = MySingleTsFrameModel(
+        stsf={
+            "value": [1.0, np.nan],
+            "state": ["ok", None],
+            "timestamp": ["2019-08-01T15:45:36.000Z", "2019-08-02T15:45:36.000Z"],
+        }
+    ).stsf
+    stsf.attrs = {"dataset_metadata": {"single_metric": "abc.temp"}}
+
+    serialized = MySingleTsFrameModel(stsf=stsf).model_dump()["stsf"]
+
+    assert serialized["__hd_wrapped_data_object__"] == "DATAFRAME"
+
+    reparsed = MySingleTsFrameModel(stsf=serialized).stsf
+
+    assert reparsed.attrs == stsf.attrs
+    pd.testing.assert_frame_equal(reparsed, stsf)
+
+
+def test_singletsframe_parsing_is_idempotent():
+    stsf = MySingleTsFrameModel(
+        stsf={
+            "value": [1.0],
+            "timestamp": ["2019-08-01T15:45:36.000Z"],
+        }
+    ).stsf
+
+    not_identical = parsing_not_identical(
+        {"stsf": stsf}, {"stsf": DataType.SingleTSFrame}, nullable=False
+    )
+
+    assert not_identical == {}
 
 
 def test_parsing_of_boolean_series():

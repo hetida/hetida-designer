@@ -14,7 +14,7 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import pandas as pd
-from glom import A, Check, Coalesce, Iter, Merge, S, Spec, T, glom
+from glom import A, Check, Coalesce, GlomError, Iter, Merge, S, Spec, T, glom
 
 
 def update_dict_and_return_it(start_dict: dict, updated_values_dict: dict) -> dict:
@@ -309,8 +309,15 @@ def get_value_dimension_info(
 
     For examples we refer to the corresponding unit tests (/tests/helpers/test_metadata.py).
     """
+    return value_dimension_info_from_attrs(multitsframe.attrs, value_dim_info)
+
+
+def value_dimension_info_from_attrs(
+    attrs: Any, value_dim_info: str | Spec
+) -> defaultdict[str, defaultdict[str, Any]]:
+    """Extraction core of get_value_dimension_info, operating directly on an attrs object"""
     spec = spec_by_metric_key_by_val_dimension(value_dim_info)
-    value_dimension_info_by_metric_by_value_dimension = glom(multitsframe.attrs, spec)
+    value_dimension_info_by_metric_by_value_dimension = glom(attrs, spec)
     return defaultdict(
         lambda: defaultdict(lambda: None), value_dimension_info_by_metric_by_value_dimension
     )
@@ -427,9 +434,14 @@ def get_metric_info(multitsframe: pd.DataFrame, metric_info: str | Spec) -> defa
     }
 
     """
+    return metric_info_from_attrs(multitsframe.attrs, metric_info)
+
+
+def metric_info_from_attrs(attrs: Any, metric_info: str | Spec) -> defaultdict[str, Any]:
+    """Extraction core of get_metric_info, operating directly on an attrs object"""
     spec = spec_by_metric_key(metric_info)
-    metric_info = glom(multitsframe.attrs, spec)
-    return defaultdict(lambda: None, metric_info)
+    extracted_metric_info = glom(attrs, spec)
+    return defaultdict(lambda: None, extracted_metric_info)
 
 
 def extract_series_metric_key(metadata: Any) -> Any:
@@ -507,3 +519,111 @@ def get_series_short_display_name(series: pd.Series) -> str | None:
 
 def get_series_measurement(series: pd.Series) -> str | None:
     return cast(str | None, get_series_info(series, "measurement"))
+
+
+def extract_singlets_metric_key(metadata: Any) -> Any:
+    """The key identifying the single metric of a SingleTSFrame
+
+    A SingleTSFrame follows the same convention as a SERIES here: its single metric is
+    named via "dataset_metadata.single_metric".
+
+    Returns None if no such entry is present.
+    """
+    return glom(metadata, Coalesce("dataset_metadata.single_metric", default=None))
+
+
+def attrs_with_default_metric_key(attrs: Any) -> Any:
+    """Return attrs with "dataset_metadata.metric_key" defaulted to "id"
+
+    The metadata conventions declare metric_key to be optional with "id" as default.
+    Returns the original object unchanged if it is not a dict or if a metric_key is set,
+    and a shallow-enough copy with the default applied otherwise.
+    """
+    if not isinstance(attrs, dict):
+        return attrs
+
+    dataset_metadata = attrs.get("dataset_metadata")
+    if isinstance(dataset_metadata, dict) and dataset_metadata.get("metric_key") is not None:
+        return attrs
+
+    defaulted = dict(attrs)
+    defaulted["dataset_metadata"] = {
+        **(dataset_metadata if isinstance(dataset_metadata, dict) else {}),
+        "metric_key": "id",
+    }
+    return defaulted
+
+
+def get_singlets_info(
+    singletsframe: pd.DataFrame, value_dim_info: str | Spec
+) -> defaultdict[str, Any]:
+    """Obtain metadata info associated to the value dimensions of a SingleTSFrame
+
+    A SingleTSFrame holds exactly one metric but — like a MultiTSFrame — arbitrarily many
+    value dimensions. Therefore, in contrast to get_value_dimension_info (which is keyed by
+    metric first), this returns a defaultdict keyed by value dimension column name only,
+    defaulting to None.
+
+    The single metric is identified via "dataset_metadata.single_metric". If that is missing
+    but the metadata contains exactly one metric, that metric is used, since a SingleTSFrame
+    cannot be ambiguous in this respect.
+    """
+    info_by_metric_by_val_dim = value_dimension_info_from_attrs(
+        attrs_with_default_metric_key(singletsframe.attrs), value_dim_info
+    )
+
+    metric_key = extract_singlets_metric_key(singletsframe.attrs)
+    if metric_key is not None and metric_key in info_by_metric_by_val_dim:
+        return info_by_metric_by_val_dim[metric_key]
+
+    if len(info_by_metric_by_val_dim) == 1:
+        return next(iter(info_by_metric_by_val_dim.values()))
+
+    return defaultdict(lambda: None)
+
+
+def get_singlets_units(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, "unit")
+
+
+def get_singlets_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, Coalesce("name", default=None))
+
+
+def get_singlets_display_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, Coalesce("display_name", "name", default=None))
+
+
+def get_singlets_short_display_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(
+        singletsframe, Coalesce("short_display_name", "display_name", "name", default=None)
+    )
+
+
+def get_singlets_measurements(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, "measurement")
+
+
+def get_singlets_metric_info(singletsframe: pd.DataFrame, metric_info: str | Spec) -> Any:
+    """Obtain metadata of the single metric of a SingleTSFrame
+
+    Counterpart of get_metric_info for SingleTSFrames: instead of a mapping keyed by metric
+    this directly returns the requested information for the one metric, or None if it cannot
+    be determined. In particular this includes the case of absent metric metadata: components
+    should not require metadata (see the metadata conventions documentation).
+    """
+    try:
+        info_by_metric = metric_info_from_attrs(
+            attrs_with_default_metric_key(singletsframe.attrs), metric_info
+        )
+    except GlomError:  # no metric metadata present at all
+        return None
+
+    metric_key = extract_singlets_metric_key(singletsframe.attrs)
+    if metric_key is not None and metric_key in info_by_metric:
+        return info_by_metric[metric_key]
+
+    if len(info_by_metric) == 1:
+        return next(iter(info_by_metric.values()))
+
+    return None

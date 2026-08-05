@@ -41,7 +41,7 @@ async def post_framelike_records(
     ref_id: str,
     additional_params: list[tuple[str, str]],
     adapter_key: str,
-    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
+    endpoint: Literal["timeseries", "dataframe", "multitsframe", "singletsframe"],
     client: AsyncClient,
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""

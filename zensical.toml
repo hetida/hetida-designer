@@ -82,6 +82,7 @@ nav = [
     ]},    
     { "Special Data Types" = [
         {"MultiTsFrame" = "user_guide/data_types/multitsframes.md"},
+        {"SingleTsFrame" = "user_guide/data_types/singletsframes.md"},
         {"Any" = "user_guide/data_types/any.md"}
     ]}
     

@@ -14,7 +14,7 @@ def data_info_by_data_type(
         case DataType.Series:
             info_dict = {"len": len(data_obj), "dtype": str(data_obj.dtype)}
 
-        case DataType.MultiTSFrame:
+        case DataType.MultiTSFrame | DataType.SingleTSFrame:
             info_dict = {
                 "len": len(data_obj),
                 "columns": list(data_obj.columns),

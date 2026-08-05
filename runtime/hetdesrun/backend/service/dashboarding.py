@@ -1442,8 +1442,10 @@ def generate_gridstack_div(
             dataframe_to_table_gridstack_div(
                 db_id,
                 multitsframe.reindex(
+                    # SingleTSFrames have no "metric" column, so only reorder columns that
+                    # are actually present.
                     columns=(
-                        ["timestamp", "metric"]
+                        [col for col in ("timestamp", "metric") if col in multitsframe.columns]
                         + [
                             col
                             for col in multitsframe.columns
@@ -1708,12 +1710,16 @@ def generate_dashboard_html(
         if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
     }
 
+    # MULTITSFRAME and SINGLETSFRAME outputs are rendered by the same datatable code path
+    # (timestamp-first column ordering, see generate_gridstack_div).
     multitsframe_outputs = {
         (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
-            exec_resp.output_results_by_output_name[name], "MULTITSFRAME", nullable=False
+            exec_resp.output_results_by_output_name[name],
+            exec_resp.output_types_by_output_name[name],
+            nullable=False,
         )  # actually parse as dataframe, this is a dict-like object when received from runtime
         for name in exec_resp.output_results_by_output_name
-        if exec_resp.output_types_by_output_name[name] == "MULTITSFRAME"
+        if exec_resp.output_types_by_output_name[name] in ("MULTITSFRAME", "SINGLETSFRAME")
     }
 
     # structured ANY outputs that represent a file (pdf, image, html, ...)
@@ -2158,7 +2164,7 @@ def generate_dashboard_html(
                 resize_plot(inp_name); // second time, otherwise width is not correct in chrome
             }
 
-            if (inp_type=="DATAFRAME" || inp_type=="MULTITSFRAME") {
+            if (inp_type=="DATAFRAME" || inp_type=="MULTITSFRAME" || inp_type=="SINGLETSFRAME") {
                 get_datatable_by_dashboard_id(inp_name).redraw();
             }
         });

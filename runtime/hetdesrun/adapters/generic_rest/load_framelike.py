@@ -78,7 +78,7 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
 
 def parse_framelike_response_stream(
     stream: BinaryIO,
-    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
+    endpoint: Literal["timeseries", "dataframe", "multitsframe", "singletsframe"],
     error_source: str = "",
 ) -> pd.DataFrame:
     """Core transformation from a framelike response body to a DataFrame.
@@ -129,7 +129,8 @@ def parse_framelike_response_stream(
                 df.index = parsed_timestamps
                 df = df.sort_index()
         else:
-            # timeseries / multitsframe: reproduce the tz-aware datetime "timestamp" column that
+            # timeseries / multitsframe / singletsframe: reproduce the tz-aware datetime
+            # "timestamp" column that
             # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings,
             # and downstream code relies on this column being datetime, e.g. as a series index).
             df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
@@ -139,11 +140,11 @@ def parse_framelike_response_stream(
 
 async def load_framelike_data(  # noqa: PLR0915,PLR0912
     filtered_sources: list[FilteredSource],
-    additional_params: list[
-        tuple[str, str]
-    ],  # for timeseries and multitsframes: [("from", from_timestamp), ("to", to_timestamp)]
+    # for timeseries, multitsframes and singletsframes additional_params carries the
+    # "from" / "to" timestamp query params [("from", from_timestamp), ("to", to_timestamp)]
+    additional_params: list[tuple[str, str]],
     adapter_key: str,
-    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
+    endpoint: Literal["timeseries", "dataframe", "multitsframe", "singletsframe"],
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 

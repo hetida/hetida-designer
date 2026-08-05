@@ -181,6 +181,7 @@ from pydantic import (
 logger = logging.getLogger(__name__)
 
 MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+SINGLETSFRAME_COLUMN_NAMES = ["timestamp", "value"]
 
 
 class ComponentException(Exception):
@@ -424,6 +425,7 @@ class DataType(StrEnum):
     DataFrame = "DATAFRAME"
     Series = "SERIES"
     MultiTSFrame = "MULTITSFRAME"
+    SingleTSFrame = "SINGLETSFRAME"
     Boolean = "BOOLEAN"
     Any = "ANY"
     PlotlyJson = "PLOTLYJSON"
@@ -620,6 +622,97 @@ PydanticMultiTimeseriesPandasDataFrame = Annotated[
 ]
 
 
+def validate_singlets_properties(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Validate the conventions of a SingleTSFrame
+
+    A SingleTSFrame holds a single — possibly multi-dimensional — timeseries. It has the same
+    tabular representation as a MultiTSFrame, except that it has no "metric" column, since
+    the metric is unique for the whole frame. Every column besides "timestamp" is a value
+    dimension. This explicitly includes a column named "metric", which is treated like any
+    other value column here.
+    """
+    if len(df.columns) == 0:
+        attrs = df.attrs
+        df = pd.DataFrame(columns=SINGLETSFRAME_COLUMN_NAMES)
+        df.attrs = attrs
+
+    if len(df.columns) < 2:
+        raise ValueError(
+            "SingleTSFrame requires at least 2 columns: timestamp"
+            f" and at least one value column. Only found {str(df.columns)}"
+        )
+
+    if "timestamp" not in df.columns:
+        column_names_string = ", ".join(df.columns)
+        raise ValueError(
+            f"The column names {column_names_string} don't contain the required column"
+            ' "timestamp" for a SingleTSFrame.'
+        )
+
+    if df["timestamp"].isna().any():
+        raise ValueError(
+            "No null values are allowed for the column 'timestamp' of a SingleTSFrame."
+        )
+
+    if len(df.index) == 0:
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+
+    if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
+        raise ValueError(
+            "Column 'timestamp' of SingleTSFrame does not have DatetimeTZDtype dtype. "
+            f"Got {str(df['timestamp'].dtype)} index dtype instead."
+        )
+
+    if df["timestamp"].dt.tz not in (pytz.UTC, datetime.timezone.utc):
+        raise ValueError(
+            "Column 'timestamp' of SingleTSFrame does not have UTC timezone. "
+            f"Got {str(df['timestamp'].dt.tz)} timezone instead."
+        )
+
+    return df.sort_values("timestamp")
+
+
+def parse_pydantic_single_timeseries_pandas_data_frame(
+    v: pd.DataFrame | str | dict | list,
+) -> pd.DataFrame:
+    if isinstance(v, pd.DataFrame):
+        return v
+
+    if not isinstance(
+        v, str | dict | list
+    ):  # need to check at runtime since we get objects from user code
+        msg = f"Got unexpected type at runtime when parsing SingleTsFrame: {str(type(v))}"
+        logger.error(msg)
+        raise ValueError(msg)
+
+    data_content, metadata, parsing_options = parse_wrapped_content(v, "DATAFRAME")
+
+    new_df = wrap_metadata_as_attrs(
+        parse_pandas_data_content(data_content, "frame", parsing_options), metadata
+    )
+
+    return validate_singlets_properties(new_df)
+
+
+def serialize_singletsframe(df: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": df.attrs,
+        "__data__": json.loads(
+            df.to_json(date_format="iso")
+        ),  # in order to serialize both NaN and NaT to null
+    }
+
+
+PydanticSingleTimeseriesPandasDataFrame = Annotated[
+    pd.DataFrame,
+    PlainSerializer(serialize_singletsframe),
+    BeforeValidator(parse_pydantic_single_timeseries_pandas_data_frame),
+]
+
+
 # "Raw" serializer variants: Previously we parsed pandas output JSON back with json.loads to
 # ensure having a json serializable object at the service boundary later and avoiding having
 # 5xx errors. At that boundary it was re-encoded leading to multiple serialization loops.
@@ -655,8 +748,9 @@ def serialize_dataframe_raw(df: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-# MultiTSFrames use the same wrapper as ordinary DataFrames.
+# MultiTSFrames and SingleTSFrames use the same wrapper as ordinary DataFrames.
 serialize_multitsframe_raw = serialize_dataframe_raw
+serialize_singletsframe_raw = serialize_dataframe_raw
 
 
 def parse_any(v: Any) -> Any:
@@ -764,6 +858,7 @@ data_type_map: dict[DataType | None, type] = {
     DataType.String: ParsedStr,
     DataType.Series: PydanticPandasSeries,
     DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
+    DataType.SingleTSFrame: PydanticSingleTimeseriesPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: ParsedBool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
@@ -778,6 +873,7 @@ optional_data_type_map: dict[DataType | None, Any] = {
     DataType.String: ParsedStr | None,
     DataType.Series: PydanticPandasSeries | None,
     DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame | None,
+    DataType.SingleTSFrame: PydanticSingleTimeseriesPandasDataFrame | None,
     DataType.DataFrame: PydanticPandasDataFrame | None,
     DataType.Boolean: ParsedBool | None,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
@@ -824,6 +920,13 @@ serializer_funcs_by_type = {
             v.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
     },
+    PydanticSingleTimeseriesPandasDataFrame: lambda v: {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": v.attrs,
+        "__data__": json.loads(
+            v.to_json(date_format="iso")
+        ),  # in order to serialize both NaN and NaT to null
+    },
     np.ndarray: lambda v: v.tolist(),
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
@@ -842,6 +945,7 @@ raw_pandas_serializer_funcs_by_type = {
     PydanticPandasSeries: serialize_series_raw,
     PydanticPandasDataFrame: serialize_dataframe_raw,
     PydanticMultiTimeseriesPandasDataFrame: serialize_multitsframe_raw,
+    PydanticSingleTimeseriesPandasDataFrame: serialize_singletsframe_raw,
 }
 
 

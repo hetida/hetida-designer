@@ -79,10 +79,20 @@ def _mixed_outputs() -> tuple[dict, dict[str, DataType]]:
         }
     )
 
+    sts = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2020-01-01T00:00:00Z", "2020-01-01T01:00:00Z"]),
+            "value": [1.0, np.nan],
+            "state": ["ok", None],
+        }
+    )
+    sts.attrs = {"dataset_metadata": {"single_metric": "m1"}}
+
     outputs = {
         "out_df": df,
         "out_series": series,
         "out_mts": mts,
+        "out_sts": sts,
         "out_int": 42,
         "out_str": "hello",
         "out_bool": True,
@@ -95,6 +105,7 @@ def _mixed_outputs() -> tuple[dict, dict[str, DataType]]:
         "out_df": DataType.DataFrame,
         "out_series": DataType.Series,
         "out_mts": DataType.MultiTSFrame,
+        "out_sts": DataType.SingleTSFrame,
         "out_int": DataType.Integer,
         "out_str": DataType.String,
         "out_bool": DataType.Boolean,

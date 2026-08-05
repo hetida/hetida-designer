@@ -1,4 +1,12 @@
+- new data type **SINGLETSFRAME** for a single, possibly multi-dimensional timeseries. It uses the same tabular representation as MULTITSFRAME (a `timestamp` column plus arbitrarily many value columns) but has no `metric` column, since it holds exactly one metric — the metric is identified in the attached metadata via `dataset_metadata.single_metric`, like for SERIES. See the [SingleTsFrame documentation](https://hetida.github.io/hetida-designer/user_guide/data_types/singletsframes/).
+  - the generic REST adapter interface gains `/singletsframe` GET and POST endpoints and the external type `singletsframe`. Existing adapters are unaffected — the new endpoints only need to be implemented if you want to offer `singletsframe` sources/sinks.
+  - the Python demo adapter offers a `singletsframe` demo source and sink.
+  - new base components in the category "Connectors": Pass Through (SingleTSFrame), Convert Series to SingleTSFrame, Convert SingleTSFrame to Series, Extract SingleTSFrame from MultiTSFrame, Convert SingleTSFrame to MultiTSFrame, Convert SingleTSFrame to DataFrame, Convert DataFrame to SingleTSFrame, Add/Update Attributes (SingleTSFrame), Extract Attributes (SingleTSFrame). Plus "SingleTSFrame Plot with multiple Y Axes" in the category "Visualization".
+  - new metadata helper functions `get_singlets_units`, `get_singlets_names`, `get_singlets_display_names`, `get_singlets_short_display_names`, `get_singlets_measurements` and `get_singlets_metric_info` in `hetdesrun.helpers.metadata`. Since a SingleTSFrame has exactly one metric, these are keyed by value dimension only.
+- fix: the execution dialog now offers the json editor for MULTITSFRAME default values of workflow inputs and attaches the time range picker validators to MULTITSFRAME inputs (previously SERIES only)
+
 ## 0.14.3
+
 - refactored generic rest adapter http client handling and data fetching
 - faster execution result serialization: pandas and plotly outputs are spliced into the response as the json bytes produced by their respective serializer apis using `msgspec.Raw` allowing for single pass serialization, avoiding redundant JSON parse/re-encode round-trips
 - faster result relaying with separate backend and runtime services: the backend now passes the runtime's output payload through to the caller as raw json bytes — validated as well-formed JSON but not parsed into Python and re-encoded. Slight performance improvements in particular for larger Plotly ouputs.
@@ -6,12 +14,14 @@
 - hardened execution result serialization: any failure while serializing (untrusted) component output (e.g. non-serializable objects, circular references, unencodable dict)now becomes a structured failure result instead of a 5xx, at both the runtime and the backend response boundaries
 
 ## 0.14.2
+
 - documentation improvements
 - add documentation for some environment variables
 - extend hierarchy object execution context information
 - upgrade demo adapter dependencies
 
 ## 0.14.1
+
 - reintegrate the former separate npm packages `hetida-flowchart`, `ng-hetida-flowchart` and `hd-wiring` (wiring dialog) from the hetida-flowchart repository directly into the frontend source tree (`frontend/src/libs/`), removing them as external dependencies
 - ANY outputs of a specified structure can now be used to render images, pdfs, arbitrary html or offer file downloads. In particular HTML rendering allows to employ html/javascript based plotting libraries like µplot or Apache ECharts.
 - allow component import and hetdesrun usage in components during unit testing
@@ -24,7 +34,6 @@
 - add explicit worker timeout configuration for pure uvicorn setup
 - performance improvements (DB queries, adapters, trafo loading)
 - many smaller fixes
-
 
 ## 0.14.0
 

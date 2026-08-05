@@ -33,6 +33,7 @@ data_type_to_external_type_map = {
     DataType.DataFrame: ExternalType.DATAFRAME,
     DataType.Series: ExternalType.TIMESERIES_NUMERIC,
     DataType.MultiTSFrame: ExternalType.MULTITSFRAME,
+    DataType.SingleTSFrame: ExternalType.SINGLETSFRAME,
     DataType.Boolean: ExternalType.METADATA_BOOLEAN,
     DataType.Any: ExternalType.METADATA_ANY,
     DataType.PlotlyJson: ExternalType.PLOTLYJSON,

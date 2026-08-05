@@ -7,7 +7,9 @@ $dataTypes: (
   'DATAFRAME': #5b2283,
   'SERIES': #ffc621,
   'PLOTLYJSON': #808080,
-  'MULTITSFRAME': #ef7800
+  'MULTITSFRAME': #ef7800,
+  // same warm family as SERIES / MULTITSFRAME, kept apart by lightness
+  'SINGLETSFRAME': #fdad52
 );
 
 $colors: (

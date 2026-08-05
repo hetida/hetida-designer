@@ -79,7 +79,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
 
     if isinstance(input_info["default_value"], pd.Series | pd.DataFrame) and input_info[
         "data_type"
-    ] in ("SERIES", "DATAFRAME", "MULTITSFRAME"):
+    ] in ("SERIES", "DATAFRAME", "MULTITSFRAME", "SINGLETSFRAME"):
         return str(input_info["default_value"].to_json(date_format="iso"))
 
     return json.dumps(input_info["default_value"])

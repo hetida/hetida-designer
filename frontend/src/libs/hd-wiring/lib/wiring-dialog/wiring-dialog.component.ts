@@ -580,7 +580,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         this.inputTypeCheckIfAny(ioItem.type, ioItem.data_type, formGroup)
       );
 
-      if (ioItem.data_type === IOType.SERIES) {
+      if (this.isTimestampRangeType(ioItem.data_type)) {
         this._getControlOrFail(formGroup, 'timestampRange').setValidators(
           this.timestampRangeValidation(formGroup)
         );
@@ -865,6 +865,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       case IOType.PLOTLYJSON:
       case IOType.DATAFRAME:
       case IOType.MULTITSFRAME:
+      case IOType.SINGLETSFRAME:
         try {
           JSON.parse(controlValue);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -944,7 +945,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
   }
 
   isTimestampRangeType(type: IOType): boolean {
-    return type === IOType.SERIES || type === IOType.MULTITSFRAME;
+    return (
+      type === IOType.SERIES ||
+      type === IOType.MULTITSFRAME ||
+      type === IOType.SINGLETSFRAME
+    );
   }
 
   hasTextFilter(abstractControl: AbstractControl): boolean {
@@ -1292,7 +1297,6 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     };
 
     const inputWirings: InputWiring[] = this.inputFormArray.controls.map(
-      // eslint-disable-next-line complexity
       (inputControl: AbstractControl) => {
         Utils.assert(
           inputControl instanceof FormGroup,
@@ -1306,8 +1310,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         }
         // Apply timestamp only for series and for non manual selection.
         if (
-          (uiWiring.ioType === IOType.SERIES ||
-            uiWiring.ioType === IOType.MULTITSFRAME) &&
+          this.isTimestampRangeType(uiWiring.ioType) &&
           Utils.isNullOrUndefined(uiWiring.rawValue)
         ) {
           const timestampRange = uiWiring.timestampRange;
@@ -1548,6 +1551,18 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
           ]
         };
         break;
+      case IOType.SINGLETSFRAME:
+        // a single, possibly multi-dimensional timeseries: no "metric" column,
+        // but arbitrarily many value columns
+        exampleValue = {
+          value: [1.0, 1.2, 0.5],
+          timestamp: [
+            '2019-08-01T15:42:36.000Z',
+            '2019-08-01T15:45:36.000Z',
+            '2019-08-01T15:48:36.000Z'
+          ]
+        };
+        break;
       case IOType.ANY:
         exampleValue = {
           a: true,
@@ -1759,6 +1774,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       ioType === IOType.SERIES ||
       ioType === IOType.DATAFRAME ||
       ioType === IOType.MULTITSFRAME ||
+      ioType === IOType.SINGLETSFRAME ||
       ioType === IOType.ANY
     ) {
       isJsonType = true;
