@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
+import msgspec
 from pydantic import Field
 
 from hetdesrun.datatypes import DataType
@@ -44,6 +45,26 @@ class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
     gathered_component_code_logs: deque[SimplifiedLogRecord] = deque(
         maxlen=get_config().user_component_code_logs_max_len
     )
+
+    def decoded_output_results_by_output_name(self) -> dict[str, Any]:
+        """The output results as python objects, no matter how they were transported
+
+        ``output_results_by_output_name`` is only populated when the runtime runs in this same
+        service. When it is a separate service, the output payload is relayed as raw json bytes
+        (see ``raw_output_results_json``) and the model field stays empty, so consumers that
+        actually need the *values* (as opposed to just passing them on to the caller) must go
+        through this method.
+
+        Note that objects obtained from the raw json are in their transport representation: pandas
+        payloads are ``__hd_wrapped_data_object__`` wrappers and hence still need to be run through
+        ``parse_value`` - exactly as before the raw-splicing optimization.
+        """
+        if self.raw_output_results_json is None:
+            return self.output_results_by_output_name
+        decoded = msgspec.json.decode(self.raw_output_results_json)
+        # A runtime always sends a (possibly empty) mapping here. Anything else is a protocol
+        # violation and is treated as "no outputs" instead of breaking the consumer.
+        return cast(dict[str, Any], decoded) if isinstance(decoded, dict) else {}
 
     @classmethod
     def from_exception(
