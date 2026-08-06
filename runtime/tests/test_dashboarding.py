@@ -2,11 +2,14 @@ import base64
 import json
 from unittest import mock
 
+import msgspec
+import pandas as pd
 import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
+from hdutils import serialize_multitsframe_raw
 from hetdesrun.backend.service.dashboarding import (
     HTML_FILE_RESULT_SIZING_STYLE_TAG,
     file_result_kind,
@@ -33,6 +36,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.application import init_app
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.fixture()
@@ -374,6 +378,80 @@ def test_file_result_gridstack_div_rendering_per_kind():
     )
     assert 'download="data.csv"' in download_html
     assert "data:text/csv;base64," in download_html
+
+
+@pytest.mark.asyncio
+async def test_dashboard_renders_outputs_relayed_from_separate_runtime_service(
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
+):
+    """Dashboard must render outputs when the runtime is a separate service
+
+    In that (default docker compose) setup the backend relays the runtime's output payload
+    as raw json bytes instead of parsed objects, see run_execution_input.
+    """
+    multitsframe = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2019-08-01T15:45:36.000Z", "2019-08-02T15:45:36.000Z"]),
+            "metric": ["a", "a"],
+            "value": [1.0, 2.0],
+        }
+    )
+
+    with mock.patch.object(get_config(), "is_runtime_service", False):
+        runtime_response_content = msgspec.json.encode(
+            {
+                "result": "ok",
+                "output_results_by_output_name": {
+                    "plot": {"data": [], "layout": {}},
+                    "report": {
+                        "content_type": "text/html",
+                        "encoding": "plain",
+                        "name": "report.html",
+                        "data": "<h1>hi</h1>",
+                    },
+                    "note": "some text output",
+                    # exactly as a separate runtime service serializes pandas payloads
+                    "frame": serialize_multitsframe_raw(multitsframe),
+                },
+                "output_types_by_output_name": {
+                    "plot": "PLOTLYJSON",
+                    "report": "ANY",
+                    "note": "STRING",
+                    "frame": "MULTITSFRAME",
+                },
+                "error": None,
+                "traceback": None,
+                "job_id": "1270547c-b224-461d-9387-e9d9d465bbe1",
+                "tr_id": "28120522-a6a5-418f-a658-ab19d5beefe2",
+                "tr_name": "MultiTsFrame Plot with multiple Y Axes",
+                "tr_tag": "1.0.0",
+                "measured_steps": {},
+            }
+        )
+        resp_mock = mock.Mock()
+        resp_mock.status_code = 200
+        resp_mock.content = runtime_response_content
+        runtime_client_mock = mock.Mock()
+        runtime_client_mock.post = mock.AsyncMock(return_value=resp_mock)
+
+        with mock.patch(
+            "hetdesrun.backend.execution.get_runtime_http_client",
+            return_value=runtime_client_mock,
+        ):
+            async with async_test_client as client:
+                response = await client.get(
+                    "/api/transformations/28120522-a6a5-418f-a658-ab19d5beefe2/dashboard"
+                )
+
+    assert response.status_code == 200
+    assert 'db_id="o.plot"' in response.text  # plotly output tile
+    assert 'db_id="o.note"' in response.text  # string output tile
+    assert "some text output" in response.text
+    assert 'db_id="o.report"' in response.text  # ANY file output tile
+    assert "&lt;h1&gt;hi&lt;/h1&gt;" in response.text  # its (escaped) srcdoc content
+    assert 'db_id="o.frame"' in response.text  # multitsframe datatable tile
+    assert "2019-08-01T15:45:36.000Z" in response.text  # its data
 
 
 def test_generate_gridstack_div_includes_any_file_outputs():

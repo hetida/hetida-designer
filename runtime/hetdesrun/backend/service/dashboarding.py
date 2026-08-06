@@ -1450,7 +1450,8 @@ def generate_gridstack_div(
                             if col not in {"timestamp", "metric"}
                         ]
                     ),
-                    copy=False,
+                    # no copy= here: it is deprecated with pandas' copy-on-write, which already
+                    # defers the copy
                 ),
                 positioning_dict.get(
                     db_id,
@@ -1683,47 +1684,47 @@ def generate_dashboard_html(
         for inp_name in inputs_to_expose
     }
 
+    # The dashboard renders the actual output values, so it needs them as objects — which for a
+    # separate runtime service means decoding the raw json payload relayed by the backend.
+    output_results = exec_resp.decoded_output_results_by_output_name()
+
     # obtain plotly outputs from result
     plotly_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
     }
 
     string_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "STRING"
     }
 
     dataframe_outputs = {
         (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
-            exec_resp.output_results_by_output_name[name], "DATAFRAME", nullable=False
+            output_results[name], "DATAFRAME", nullable=False
         )  # actually parse as dataframe, this is a dict-like object when received from runtime
-        for name in exec_resp.output_results_by_output_name
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
     }
 
     multitsframe_outputs = {
         (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
-            exec_resp.output_results_by_output_name[name], "MULTITSFRAME", nullable=False
+            output_results[name],
+            str(exec_resp.output_types_by_output_name[name]),
+            nullable=False,
         )  # actually parse as dataframe, this is a dict-like object when received from runtime
-        for name in exec_resp.output_results_by_output_name
-        if exec_resp.output_types_by_output_name[name] == "MULTITSFRAME"
+        for name in output_results
+        if exec_resp.output_types_by_output_name[name] in ("MULTITSFRAME", "SINGLETSFRAME")
     }
 
     # structured ANY outputs that represent a file (pdf, image, html, ...)
     any_file_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "ANY"
-        and is_file_like_result(exec_resp.output_results_by_output_name[name])
+        and is_file_like_result(output_results[name])
     }
 
     datatable_script = script[

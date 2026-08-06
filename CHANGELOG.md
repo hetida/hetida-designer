@@ -1,3 +1,5 @@
+- fix: experimental dashboards were empty (no output visualizations at all) when backend and runtime run as separate services — as in the provided docker compose setups. Since 0.14.3 the backend relays the runtime's output payload as raw json bytes, which the dashboard did not read. Setups with backend and runtime in one service were not affected.
+
 ## 0.14.3
 - refactored generic rest adapter http client handling and data fetching
 - faster execution result serialization: pandas and plotly outputs are spliced into the response as the json bytes produced by their respective serializer apis using `msgspec.Raw` allowing for single pass serialization, avoiding redundant JSON parse/re-encode round-trips
