@@ -16,6 +16,8 @@ These tests pin that the new encoder:
 * still turns a non-serializable output into a structured failure result instead of raising.
 """
 
+import json
+
 import msgspec
 import numpy as np
 import pandas as pd
@@ -301,6 +303,51 @@ def test_relay_splices_raw_output_verbatim() -> None:
     assert isinstance(dict_like["output_results_by_output_name"], msgspec.Raw)
     decoded = msgspec.json.decode(msgspec.json.encode(dict_like))
     assert decoded["output_results_by_output_name"] == {"plot": {"data": [1, 2, 3]}, "n": 100}
+
+
+def test_materialized_dump_decodes_relayed_outputs_for_non_msgspec_consumers() -> None:
+    # Consumers that store / re-serialize the result outside the msgspec path (e.g. the scheduling
+    # result persisted in a JSON db column via json.dumps) cannot handle a msgspec.Raw splice and
+    # would lose the relayed outputs on a plain model_dump (empty model field + excluded raw field).
+    # model_dump_with_materialized_outputs must decode the raw payload into plain python objects.
+    raw_outputs = msgspec.json.encode({"plot": {"data": [1, 2, 3]}, "n": 100})
+    dto = ExecutionResponseFrontendDto(
+        result="ok",
+        output_results_by_output_name={},
+        output_types_by_output_name={"plot": "PLOTLYJSON", "n": "INT"},
+        job_id=JOB_ID,
+        tr_id=TR_ID,
+        tr_name="t",
+        tr_tag="1.0.0",
+    )
+    dto.raw_output_results_json = raw_outputs
+
+    dumped = dto.model_dump_with_materialized_outputs()
+
+    assert dumped["output_results_by_output_name"] == {"plot": {"data": [1, 2, 3]}, "n": 100}
+    # Must survive a plain json.dumps round-trip (that is what a JSON db column does): no Raw leaks.
+    assert json.loads(json.dumps(dumped))["output_results_by_output_name"] == {
+        "plot": {"data": [1, 2, 3]},
+        "n": 100,
+    }
+
+
+def test_materialized_dump_without_relay_matches_plain_dump() -> None:
+    # Same-service case: outputs already live on the model field, so behaviour is unchanged.
+    dto = ExecutionResponseFrontendDto(
+        result="ok",
+        output_results_by_output_name={"output": "test"},
+        output_types_by_output_name={"output": "STRING"},
+        job_id=JOB_ID,
+        tr_id=TR_ID,
+        tr_name="t",
+        tr_tag="1.0.0",
+    )
+
+    assert dto.model_dump_with_materialized_outputs() == dto.model_dump(mode="json")
+    assert dto.model_dump_with_materialized_outputs()["output_results_by_output_name"] == {
+        "output": "test"
+    }
 
 
 def test_frontend_from_exception_builds_a_complete_failure_dto() -> None:

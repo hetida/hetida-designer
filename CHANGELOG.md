@@ -5,6 +5,7 @@
   - new metadata helper functions `get_singlets_units`, `get_singlets_names`, `get_singlets_display_names`, `get_singlets_short_display_names`, `get_singlets_measurements` and `get_singlets_metric_info` in `hetdesrun.helpers.metadata`. Since a SingleTSFrame has exactly one metric, these are keyed by value dimension only.
 - fix: the execution dialog now offers the json editor for MULTITSFRAME default values of workflow inputs and attaches the time range picker validators to MULTITSFRAME inputs (previously SERIES only)
 - fix: experimental dashboards were empty (no output visualizations at all) when backend and runtime run as separate services — as in the provided docker compose setups. Since 0.14.3 the backend relays the runtime's output payload as raw json bytes, which the dashboard did not read. Setups with backend and runtime in one service were not affected.
+- fix: stored scheduled-execution results were missing their direct-provisioning outputs (nothing to show in the schedule result view) when backend and runtime run as separate services — same root cause as the dashboard fix above: since 0.14.3 the outputs are relayed as raw json bytes, which the persistence path did not read before storing the result in the db. Setups with backend and runtime in one service were not affected.
 
 ## 0.14.3
 

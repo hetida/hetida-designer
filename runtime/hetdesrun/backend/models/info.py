@@ -66,6 +66,26 @@ class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
         # violation and is treated as "no outputs" instead of breaking the consumer.
         return cast(dict[str, Any], decoded) if isinstance(decoded, dict) else {}
 
+    def model_dump_with_materialized_outputs(self) -> dict[str, Any]:
+        """A JSON-native ``model_dump(mode="json")`` with the output results included.
+
+        The live response paths splice raw-relayed output data into the caller response as
+        ``msgspec.Raw`` (see ``handle_frontend_exec_response_dict_serialisation``), which requires a
+        downstream msgspec encoder. Consumers that instead *store* or re-serialize the result
+        outside that msgspec path - e.g. persisting the scheduling result in a JSON db column
+        (``json.dumps``, which cannot handle ``msgspec.Raw``) - must go through here.
+
+        A plain ``model_dump(mode="json")`` would drop the direct-provisioning outputs whenever the
+        runtime is a *separate* service, because then ``output_results_by_output_name`` is empty and
+        the raw payload lives only in the ``exclude=True`` ``raw_output_results_json`` field. This
+        materializes that payload (in its transport representation) back into
+        ``output_results_by_output_name`` so the stored result matches the same-service case.
+        """
+        dumped = self.model_dump(mode="json")
+        if self.raw_output_results_json is not None:
+            dumped["output_results_by_output_name"] = self.decoded_output_results_by_output_name()
+        return dumped
+
     @classmethod
     def from_exception(
         cls,

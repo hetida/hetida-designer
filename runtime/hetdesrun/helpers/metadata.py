@@ -569,10 +569,13 @@ def get_singlets_info(
     What is extracted per value dimension is exactly what get_value_dimension_info extracts —
     only the metric level is collapsed away.
     """
-    return select_single_metric(
-        get_value_dimension_info(singletsframe, value_dim_info),
-        singletsframe.attrs,
-        empty=defaultdict(lambda: None),
+    return cast(
+        "defaultdict[str, Any]",
+        select_single_metric(
+            get_value_dimension_info(singletsframe, value_dim_info),
+            singletsframe.attrs,
+            empty=defaultdict(lambda: None),
+        ),
     )
 
 
