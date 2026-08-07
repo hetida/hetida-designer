@@ -1,3 +1,5 @@
+## 0.14.4
+
 - new data type **SINGLETSFRAME** for a single, possibly multi-dimensional timeseries. It uses the same tabular representation as MULTITSFRAME (a `timestamp` column plus arbitrarily many value columns) but has no `metric` column, since it holds exactly one metric — the metric is identified in the attached metadata via `dataset_metadata.single_metric`, like for SERIES. See the [SingleTsFrame documentation](https://hetida.github.io/hetida-designer/user_guide/data_types/singletsframes/).
   - the generic REST adapter interface gains `/singletsframe` GET and POST endpoints and the external type `singletsframe`. Existing adapters are unaffected — the new endpoints only need to be implemented if you want to offer `singletsframe` sources/sinks.
   - the Python demo adapter offers a `singletsframe` demo source and sink.
