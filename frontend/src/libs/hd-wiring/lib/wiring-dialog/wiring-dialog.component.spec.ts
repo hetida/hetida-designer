@@ -197,7 +197,7 @@ describe('WiringDialogComponent', () => {
     const data = {
       title: 'test20',
       wiringItem: mockTransformation,
-      adapterList: []
+      adapterList: [] as string[]
     };
 
     // Act
