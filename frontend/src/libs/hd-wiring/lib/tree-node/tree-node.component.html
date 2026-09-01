@@ -1,4 +1,4 @@
-<div class="hd-d-flex" [formGroup]="filterFormGroup">
+<div class="hd-d-flex" [formGroup]="_filterFormGroup">
   <mat-form-field class="hd-pr-3">
     <mat-label>Search</mat-label>
     <input
@@ -24,7 +24,7 @@
   </mat-form-field>
   <div class="icon-bag hd-d-flex">
     <button
-      (click)="collapseAll()"
+      (click)="_collapseAll()"
       mat-icon-button
       aria-label="Example icon-button with a heart icon"
     >
@@ -35,7 +35,7 @@
 <!-- on search a simple list with meta information will be displayed -->
 @if (_isSearchViewVisible()) {
   <hd-node-search
-    [sourcesOrSinks]="nodeSearchResult"
+    [sourcesOrSinks]="_nodeSearchResult"
     [searchText]="_searchText()"
     [nodeSourceType]="nodeSourceType"
     (nodeClick)="_searchNodeClick($event)"
@@ -63,10 +63,10 @@
       >
         <!-- Note that treeControl.toggle(node) is essentially what cdkTreeNodeToggle is doing under the hood -->
         @if (node.expandable) {
-          <button mat-icon-button (click)="treeControl.toggle(node)">
+          <button mat-icon-button (click)="_treeControl.toggle(node)">
             <mat-icon class="mat-icon-rtl-mirror">
               {{
-                treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'
+                _treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'
               }}
             </mat-icon>
           </button>

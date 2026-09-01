@@ -7,7 +7,6 @@ import { debounceTime, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import {
   AdapterDataType,
   AdapterHttpService,
-  DataStructureType,
   NodeSourceType,
   SourceSinkNode
 } from '../adapter-http.service';
@@ -22,14 +21,19 @@ import { ThingDataSource } from './thing-datasource';
   standalone: false
 })
 export class TreeNodeComponent implements OnInit {
-  nodeSearchResult: SourceSinkNode[] = [];
+  public dataSource!: ThingDataSource;
 
-  treeControl = new FlatTreeControl<TreeNodeWithUiInfo>(
+  public _nodeSearchResult: SourceSinkNode[] = [];
+
+  public _treeControl = new FlatTreeControl<TreeNodeWithUiInfo>(
     node => node.level,
     node => node.expandable
   );
 
-  dataSource!: ThingDataSource;
+  public _filterFormGroup: FormGroup = this.formBuilder.group({
+    textSearch: '',
+    dataTypeSearch: null
+  });
 
   @Input()
   initialDataTypeFilter: IOType | undefined = undefined;
@@ -49,19 +53,10 @@ export class TreeNodeComponent implements OnInit {
   @Output()
   nodeMetaDataClick = new EventEmitter<NodeClickEvent>();
 
-  public filterFormGroup: FormGroup = this.formBuilder.group({
-    textSearch: '',
-    dataTypeSearch: null
-  });
-
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly adapterService: AdapterHttpService
   ) {}
-
-  get ioType(): Record<string, string> {
-    return IOType;
-  }
 
   ngOnInit(): void {
     Utils.assert(this.adapterUrl, 'adapter url is missing');
@@ -71,13 +66,13 @@ export class TreeNodeComponent implements OnInit {
     );
 
     this.dataSource = new ThingDataSource(
-      this.treeControl,
+      this._treeControl,
       this.adapterUrl,
       this.adapterService,
       this.nodeSourceType
     );
-    const textSearchForm = this.filterFormGroup.get('textSearch');
-    const typeSearchForm = this.filterFormGroup.get('dataTypeSearch');
+    const textSearchForm = this._filterFormGroup.get('textSearch');
+    const typeSearchForm = this._filterFormGroup.get('dataTypeSearch');
 
     Utils.assert(typeSearchForm);
     Utils.assert(textSearchForm);
@@ -117,9 +112,9 @@ export class TreeNodeComponent implements OnInit {
       .pipe(withLatestFrom(typeSearchForm$))
       .subscribe(([sourcesOrSinks, typeSearch]) => {
         if (Utils.isNullOrUndefined(typeSearch)) {
-          this.nodeSearchResult = sourcesOrSinks;
+          this._nodeSearchResult = sourcesOrSinks;
         } else {
-          this.nodeSearchResult = AdapterHttpService.filterNodesByIoType(
+          this._nodeSearchResult = AdapterHttpService.filterNodesByIoType(
             sourcesOrSinks,
             typeSearch
           );
@@ -130,25 +125,25 @@ export class TreeNodeComponent implements OnInit {
     typeSearchForm.setValue(this.initialDataTypeFilter);
   }
 
-  expandAll(): void {
-    this.treeControl.expandAll();
+  public get ioType(): Record<string, string> {
+    return IOType;
   }
 
-  collapseAll(): void {
-    this.treeControl.collapseAll();
+  public _expandAll(): void {
+    this._treeControl.expandAll();
   }
 
-  _searchNodeClick(event: NodeClickEvent): void {
+  public _collapseAll(): void {
+    this._treeControl.collapseAll();
+  }
+
+  public _searchNodeClick(event: NodeClickEvent): void {
     this.nodeClick.emit(event);
   }
 
-  _nodeClick(node: TreeNodeWithUiInfo, event: MouseEvent): void {
-    const adapterDataType = node.type;
+  public _nodeClick(node: TreeNodeWithUiInfo, event: MouseEvent): void {
     let nodeSourceType: NodeSourceType | undefined = this.nodeSourceType;
-    if (
-      Utils.isDefined(adapterDataType) &&
-      adapterDataType.includes(DataStructureType.METADATA)
-    ) {
+    if (Utils.isDefined(node.metadataKey)) {
       nodeSourceType = 'THINGNODE';
     }
     this.nodeClick.emit({
@@ -159,7 +154,7 @@ export class TreeNodeComponent implements OnInit {
     });
   }
 
-  _nodeMetaDataClick(node: TreeNodeWithUiInfo, event: MouseEvent): void {
+  public _nodeMetaDataClick(node: TreeNodeWithUiInfo, event: MouseEvent): void {
     this.nodeMetaDataClick.emit({
       node,
       event,
@@ -168,7 +163,7 @@ export class TreeNodeComponent implements OnInit {
     });
   }
 
-  _searchNodeMetaDataClick(event: NodeClickEvent): void {
+  public _searchNodeMetaDataClick(event: NodeClickEvent): void {
     this.nodeMetaDataClick.emit(event);
   }
 
@@ -179,21 +174,21 @@ export class TreeNodeComponent implements OnInit {
       : thingNodeSourceType;
   }
 
-  _isSearchViewVisible(): boolean {
-    const textSearchForm = this.filterFormGroup.get('textSearch');
+  public _isSearchViewVisible(): boolean {
+    const textSearchForm = this._filterFormGroup.get('textSearch');
     Utils.assert(textSearchForm);
     return !Utils.string.isEmptyOrUndefined(textSearchForm.value);
   }
 
-  _searchText(): string {
-    const textSearchForm = this.filterFormGroup.get('textSearch');
+  public _searchText(): string {
+    const textSearchForm = this._filterFormGroup.get('textSearch');
     Utils.assert(textSearchForm);
     return Utils.string.isEmptyOrUndefined(textSearchForm.value)
       ? ''
       : textSearchForm.value;
   }
 
-  _getTypeColor(type: AdapterDataType | null): string {
+  public _getTypeColor(type: AdapterDataType | null): string {
     if (Utils.isNullOrUndefined(type)) {
       return '';
     }

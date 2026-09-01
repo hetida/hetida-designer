@@ -5,7 +5,7 @@
       {{ wiringItem.version_tag }}
     </h4>
     <button
-      (click)="onCancel()"
+      (click)="_onCancel()"
       mat-icon-button
       data-testid="close-wiring-dialog"
     >
@@ -16,9 +16,9 @@
 
 <div mat-dialog-content>
   <div class="execution-dialog-content">
-    @if (inputOutputForm) {
+    @if (_inputOutputForm) {
       <form
-        [formGroup]="inputOutputForm"
+        [formGroup]="_inputOutputForm"
         class="execution-dialog-parameter-wrapper"
       >
         <div
@@ -34,7 +34,7 @@
             <div class="hd-d-flex">
               @if (_configService.app_config.showDownloadExampleJsonButton) {
                 <button
-                  (click)="downloadJsonSchema()"
+                  (click)="_downloadJsonSchema()"
                   mat-raised-button
                   color="primary"
                   class="hd-mr-1"
@@ -45,7 +45,7 @@
               }
               @if (_configService.app_config.showUploadJsonButton) {
                 <button
-                  (click)="uploadJsonForAllInputs(jsonFileInput)"
+                  (click)="_uploadJsonForAllInputs(jsonFileInput)"
                   mat-raised-button
                   color="primary"
                   data-testid="upload-json-data-wiring-dialog"
@@ -58,9 +58,9 @@
                 accept=".json"
                 class="d-none"
                 type="file"
-                (change)="triggerForAllInputs(jsonFileInput)"
+                (change)="_triggerForAllInputs(jsonFileInput)"
               />
-              <mat-error>{{ jsonImportErrorStatus | async }}</mat-error>
+              <mat-error>{{ _jsonImportErrorStatus$ | async }}</mat-error>
             </div>
           </div>
           @if (!_isAdapterAvailable()) {
@@ -173,7 +173,7 @@
                         class="hd-clickable"
                         (click)="
                           $event.preventDefault();
-                          openAdapterTreeDialog(
+                          _openAdapterTreeDialog(
                             'SOURCE',
                             _getControlOrFail(inputControl, 'ioType').value,
                             _getControlOrFail(inputControl, 'adapterId').value,
@@ -193,7 +193,7 @@
                         matSuffix
                         class="hd-clickable"
                         (click)="
-                          openAdapterTreeDialog(
+                          _openAdapterTreeDialog(
                             'SOURCE',
                             _getControlOrFail(inputControl, 'ioType').value,
                             _getControlOrFail(inputControl, 'adapterId').value,
@@ -224,7 +224,7 @@
                   >
                     <mat-label>Input Value</mat-label>
                     @if (
-                      isJsonType(
+                      _isJsonType(
                         _getControlOrFail(inputControl, 'ioType').value
                       )
                     ) {
@@ -233,7 +233,7 @@
                         class="hd-clickable"
                         (click)="
                           $event.preventDefault();
-                          openJsonEditorModal(inputControl)
+                          _openJsonEditorModal(inputControl)
                         "
                         formControlName="rawValue"
                         matInput
@@ -246,7 +246,7 @@
                       />
                     }
                     @if (
-                      !isJsonType(
+                      !_isJsonType(
                         _getControlOrFail(inputControl, 'ioType').value
                       )
                     ) {
@@ -266,12 +266,12 @@
                     }}</mat-error>
                     <span matSuffix class="hd-clickable">
                       @if (
-                        isJsonType(inputControl?.get('ioType')?.value) &&
+                        _isJsonType(inputControl?.get('ioType')?.value) &&
                         !_getControlOrFail(inputControl, 'useDefaultValue')
                           .value
                       ) {
                         <mat-icon
-                          (click)="openJsonEditorModal(inputControl)"
+                          (click)="_openJsonEditorModal(inputControl)"
                           class="hd-clickable"
                           >create
                         </mat-icon>
@@ -294,7 +294,7 @@
               </div>
               @if (
                 _parameterHasAdapter(inputControl) &&
-                isTimestampRangeType(inputControl.get('ioType')?.value) &&
+                _isTimestampRangeType(inputControl.get('ioType')?.value) &&
                 inputControl.get('nodeId')?.value &&
                 _configService.app_config.enableDateRangeSelectionOnSeriesTypes
               ) {
@@ -387,12 +387,12 @@
               }
               @if (
                 _parameterHasAdapter(inputControl) &&
-                hasTextFilter(inputControl)
+                _hasTextFilter(inputControl)
               ) {
                 <div formArrayName="textFilters">
                   @for (
-                    filter of textFiltersFormArray(inputControl).controls;
-                    track $index;
+                    filter of _textFiltersFormArray(inputControl).controls;
+                    track 'value_' + filter.get('filterKey')?.value;
                     let i = $index
                   ) {
                     <div>
@@ -535,7 +535,7 @@
                       matInput
                       class="hd-clickable"
                       (click)="
-                        openAdapterTreeDialog(
+                        _openAdapterTreeDialog(
                           'SINK',
                           _getControlOrFail(outputControl, 'ioType').value,
                           _getControlOrFail(outputControl, 'adapterId').value,
@@ -554,7 +554,7 @@
                       matSuffix
                       class="hd-clickable"
                       (click)="
-                        openAdapterTreeDialog(
+                        _openAdapterTreeDialog(
                           'SINK',
                           _getControlOrFail(outputControl, 'ioType').value,
                           _getControlOrFail(outputControl, 'adapterId').value,
@@ -583,11 +583,11 @@
                 </div>
                 @if (
                   _parameterHasAdapter(outputControl) &&
-                  hasTextFilter(outputControl)
+                  _hasTextFilter(outputControl)
                 ) {
                   <div formArrayName="textFilters">
                     @for (
-                      filter of textFiltersFormArray(outputControl).controls;
+                      filter of _textFiltersFormArray(outputControl).controls;
                       track $index;
                       let i = $index
                     ) {
@@ -639,7 +639,7 @@
 </div>
 <div mat-dialog-actions>
   <button
-    (click)="onCancel()"
+    (click)="_onCancel()"
     mat-raised-button
     color="primary"
     data-testid="cancel-wiring-dialog"
@@ -647,7 +647,7 @@
     Cancel
   </button>
   <button
-    (click)="onOk()"
+    (click)="_onOk()"
     mat-raised-button
     color="primary"
     attr.data-testid="{{

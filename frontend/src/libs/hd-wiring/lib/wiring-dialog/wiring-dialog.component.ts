@@ -147,26 +147,6 @@ type SourcesSinksHash = { [id: string]: SourceSinkNode | ThingNode };
   standalone: false
 })
 export class WiringDialogComponent implements OnInit {
-  get inputFormArray(): FormArray {
-    return this.inputOutputForm.get('inputs') as FormArray;
-  }
-
-  get outputFormArray(): FormArray {
-    return this.inputOutputForm.get('outputs') as FormArray;
-  }
-
-  constructor(
-    @Optional()
-    @Inject(MAT_DIALOG_DATA)
-    public readonly data: ExecutionDialogData,
-    public readonly _configService: ConfigService,
-    private readonly adapterHttpService: AdapterHttpService,
-    private readonly formBuilder: FormBuilder,
-    private readonly dialog: MatDialog,
-    private readonly changeDetector: ChangeDetectorRef,
-    private readonly dateFormatter: DatePipe
-  ) {}
-
   @Input()
   title!: string;
 
@@ -181,17 +161,39 @@ export class WiringDialogComponent implements OnInit {
 
   @Output()
   confirmClick = new EventEmitter<ConfirmClickEvent>();
-  private readonly SOURCE_TYPE: SourceType = 'INPUT_WIRING';
-  private readonly SINK_TYPE: SourceType = 'OUTPUT_WIRING';
 
-  inputOutputForm!: FormGroup;
+  public get inputFormArray(): FormArray {
+    return this._inputOutputForm.get('inputs') as FormArray;
+  }
+
+  public get outputFormArray(): FormArray {
+    return this._inputOutputForm.get('outputs') as FormArray;
+  }
+
+  public _inputOutputForm!: FormGroup;
 
   // If an error occurs during the upload operation,
   // this observable will be triggered.
-  jsonImportErrorStatus = new Subject<string>();
+  public _jsonImportErrorStatus$ = new Subject<string>();
 
-  _timestampRangeQueryDelimiter = ',';
-  _availableAdapters!: Adapter[];
+  public _timestampRangeQueryDelimiter = ',';
+  public _availableAdapters!: Adapter[];
+
+  private _saveAdapterId = '';
+  private readonly SOURCE_TYPE: SourceType = 'INPUT_WIRING';
+  private readonly SINK_TYPE: SourceType = 'OUTPUT_WIRING';
+
+  constructor(
+    @Optional()
+    @Inject(MAT_DIALOG_DATA)
+    public readonly data: ExecutionDialogData,
+    public readonly _configService: ConfigService,
+    private readonly adapterHttpService: AdapterHttpService,
+    private readonly formBuilder: FormBuilder,
+    private readonly dialog: MatDialog,
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly dateFormatter: DatePipe
+  ) {}
 
   ngOnInit(): void {
     this.title ??= this.data.title;
@@ -222,11 +224,7 @@ export class WiringDialogComponent implements OnInit {
           const dataSourceSink$: Observable<
             SourceSinkNode | ThingNode | null
           >[] = wirings
-            .filter(
-              wiring =>
-                Utils.isNullOrUndefined(wiring.ref_key) ||
-                wiring.ref_id_type === 'THINGNODE'
-            )
+            .filter(wiring => wiring.ref_id_type !== 'THINGNODE')
             .filter(
               wiring =>
                 wiring.adapter_id !==
@@ -322,7 +320,7 @@ export class WiringDialogComponent implements OnInit {
         })
       )
       .subscribe(sourcesSinksHash => {
-        this.inputOutputForm = this._createExecutionDialogForm(
+        this._inputOutputForm = this._createExecutionDialogForm(
           standardWiring,
           this.wiringItem.io_interface.inputs,
           this.wiringItem.io_interface.outputs,
@@ -332,12 +330,12 @@ export class WiringDialogComponent implements OnInit {
       });
   }
 
-  _checkFormGroupOrFail(control: AbstractControl): FormGroup {
+  public _checkFormGroupOrFail(control: AbstractControl): FormGroup {
     Utils.assert(control instanceof FormGroup);
     return control;
   }
 
-  _getControlOrFail(
+  public _getControlOrFail(
     abstractControl: AbstractControl,
     key: string
   ): AbstractControl {
@@ -361,7 +359,7 @@ export class WiringDialogComponent implements OnInit {
           wiringCandidate =>
             inputItem.name === wiringCandidate.workflow_input_name
         );
-      return this.createInputOrOutputForm(
+      return this._createInputOrOutputForm(
         inputItem,
         this.SOURCE_TYPE,
         foundWiring,
@@ -375,7 +373,7 @@ export class WiringDialogComponent implements OnInit {
           wiringCandidate =>
             output.name === wiringCandidate.workflow_output_name
         );
-      return this.createInputOrOutputForm(
+      return this._createInputOrOutputForm(
         output,
         this.SINK_TYPE,
         existingOutputWiring,
@@ -390,7 +388,7 @@ export class WiringDialogComponent implements OnInit {
   }
 
   // eslint-disable-next-line complexity
-  private createInputOrOutputForm(
+  private _createInputOrOutputForm(
     ioItem: IO,
     sourceType: SourceType,
     inputOrOutputWiring: InputOrOutputWiring | undefined,
@@ -415,6 +413,9 @@ export class WiringDialogComponent implements OnInit {
     if (inputOrOutputWiring) {
       nodeId = inputOrOutputWiring.ref_id ?? null;
       adapterId = inputOrOutputWiring.adapter_id ?? null;
+      // Save adapterId to reset textFilters on adapterId change.
+      this._saveAdapterId = adapterId;
+
       if (
         inputOrOutputWiring.adapter_id !==
         AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
@@ -425,21 +426,27 @@ export class WiringDialogComponent implements OnInit {
           : null;
       }
 
+      // Load filters.
       if (nodeId) {
         let filters;
-        if (inputOrOutputWiring.ref_id_type === 'THINGNODE') {
-          for (const nodeHash of Object.values(nodesHash)) {
-            const nodeHashObj: SourceSinkNode = nodeHash as SourceSinkNode;
-            if (nodeHashObj.metadataKey === inputOrOutputWiring.ref_key) {
-              filters =
-                (nodesHash[nodeHashObj.id] as SourceSinkNode)?.filters ?? [];
+        // Don't load filters from sources with selected metadata.
+        if (Utils.isNullOrUndefined(inputOrOutputWiring.ref_key)) {
+          if (inputOrOutputWiring.ref_id_type === 'THINGNODE') {
+            // Not sure if this part is used any more.
+            for (const nodeHash of Object.values(nodesHash)) {
+              const nodeHashObj: SourceSinkNode = nodeHash as SourceSinkNode;
+              if (nodeHashObj.metadataKey === inputOrOutputWiring.ref_key) {
+                filters =
+                  (nodesHash[nodeHashObj.id] as SourceSinkNode)?.filters ?? [];
+              }
             }
+          } else {
+            filters = (nodesHash[nodeId] as SourceSinkNode)?.filters ?? [];
           }
-        } else {
-          filters = (nodesHash[nodeId] as SourceSinkNode)?.filters ?? [];
         }
+
         if (filters) {
-          textFilters = this.getTextFilters(filters, inputOrOutputWiring);
+          textFilters = this._getTextFilters(filters, inputOrOutputWiring);
         }
       }
 
@@ -464,10 +471,10 @@ export class WiringDialogComponent implements OnInit {
             moment(tmpInputWiring.filters.timestampFrom, true).isValid() &&
             moment(tmpInputWiring.filters.timestampTo, true).isValid()
           ) {
-            timestampFrom = this.resetSecondsAndMilliseconds(
+            timestampFrom = this._resetSecondsAndMilliseconds(
               moment(tmpInputWiring.filters.timestampFrom)
             );
-            timestampTo = this.resetSecondsAndMilliseconds(
+            timestampTo = this._resetSecondsAndMilliseconds(
               moment(tmpInputWiring.filters.timestampTo)
             );
           } else {
@@ -476,8 +483,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
             timestampRangePickerHidden = true;
           }
         } else {
-          timestampFrom = this.resetSecondsAndMilliseconds(moment());
-          timestampTo = this.resetSecondsAndMilliseconds(moment());
+          timestampFrom = this._resetSecondsAndMilliseconds(moment());
+          timestampTo = this._resetSecondsAndMilliseconds(moment());
         }
         const node = Utils.isDefined(nodeId) ? nodesHash[nodeId] : null;
         if (
@@ -502,7 +509,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       rawValue: manualValue,
       nodeId,
       nodeName,
-      displayName: null, // will be calculated from nodeName and metaDataKey. See @ _setInputOrOutputFormConfigurations function
+      displayName: null, // Will be calculated from nodeName and metaDataKey. See @ _setInputOrOutputFormConfigurations function.
       nodeType: inputOrOutputWiring ? inputOrOutputWiring.type : null,
       metaDataKey: inputOrOutputWiring?.ref_key ?? null,
       refIdType: inputOrOutputWiring ? inputOrOutputWiring.ref_id_type : null,
@@ -514,7 +521,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       adapterId,
       textFilters: this.formBuilder.array(
         textFilters.map((filter: TextFilter) =>
-          this.getTextFilterFormGroup(filter)
+          this._getTextFilterFormGroup(filter)
         )
       ),
       type: ioItem.type ?? IOTypeOption.REQUIRED,
@@ -573,19 +580,19 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     }
 
     this._getControlOrFail(formGroup, 'displayName').setValidators(
-      this.nodeIdValidation(formGroup)
+      this._nodeIdValidation(formGroup)
     );
     if (sourceType === 'INPUT_WIRING') {
       this._getControlOrFail(formGroup, 'rawValue').setValidators(
-        this.inputTypeCheckIfAny(ioItem.type, ioItem.data_type, formGroup)
+        this._inputTypeCheckIfAny(ioItem.type, ioItem.data_type, formGroup)
       );
 
-      if (this.isTimestampRangeType(ioItem.data_type)) {
+      if (ioItem.data_type === IOType.SERIES) {
         this._getControlOrFail(formGroup, 'timestampRange').setValidators(
-          this.timestampRangeValidation(formGroup)
+          this._timestampRangeValidation(formGroup)
         );
         this._getControlOrFail(formGroup, 'timestampRangeQuery').setValidators(
-          this.timestampRangeQueryValidation(formGroup)
+          this._timestampRangeQueryValidation(formGroup)
         );
       }
     }
@@ -606,7 +613,9 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       ) {
         return;
       }
-      const displayName = metaDataKey ? metaDataKey : nodeName;
+      const displayName = Utils.isNullOrUndefined(metaDataKey)
+        ? nodeName
+        : metaDataKey;
       this._getControlOrFail(formGroup, 'displayName').setValue(displayName);
     });
 
@@ -620,52 +629,52 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         this._getControlOrFail(formGroup, 'timestampRangePickerHidden').reset(
           false
         );
+        // Reset textFilters on adapterId change,
+        // triggers on 'adapter list' and 'browse sources' value changes.
+        const textFiltersArray = this._getControlOrFail(
+          formGroup,
+          'textFilters'
+        ) as FormArray;
+
+        textFiltersArray.controls.forEach(control => {
+          for (const controlsKey in (control as FormGroup).controls) {
+            if (
+              controlsKey !== 'filterKey' &&
+              controlsKey !== 'required' &&
+              controlsKey !== 'name'
+            ) {
+              (control as FormGroup).get(controlsKey)?.reset();
+            }
+          }
+        });
+
+        // Remove textFilters only on 'adapter list' change.
+        if (
+          this._saveAdapterId !== changedAdapterId &&
+          this._saveAdapterId !== AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
+        ) {
+          (
+            this._getControlOrFail(formGroup, 'textFilters') as FormArray
+          ).clear();
+        }
+        this._saveAdapterId = changedAdapterId;
+
         if (changedAdapterId === AdapterHttpService.MANUAL_INPUT_ADAPTER_ID) {
           this._getControlOrFail(formGroup, 'timestampRange').reset([
             null,
             null
           ]);
-          const textFilters = this._getControlOrFail(
-            formGroup,
-            'textFilters'
-          ) as FormArray;
-          textFilters.controls.forEach(control => {
-            for (const controlsKey in (control as FormGroup).controls) {
-              if (
-                controlsKey !== 'filterKey' &&
-                controlsKey !== 'required' &&
-                controlsKey !== 'name'
-              ) {
-                (control as FormGroup).get(controlsKey)?.reset();
-              }
-            }
-          });
         } else if (changedAdapterId === 'drop' || changedAdapterId === 'plot') {
           this._getControlOrFail(formGroup, 'rawValue').reset();
           this._getControlOrFail(formGroup, 'timestampRange').reset([
             null,
             null
           ]);
-          const textFilters = this._getControlOrFail(
-            formGroup,
-            'textFilters'
-          ) as FormArray;
-          textFilters.controls.forEach(control => {
-            for (const controlsKey in (control as FormGroup).controls) {
-              if (
-                controlsKey !== 'filterKey' &&
-                controlsKey !== 'required' &&
-                controlsKey !== 'name'
-              ) {
-                (control as FormGroup).get(controlsKey)?.reset();
-              }
-            }
-          });
         } else {
           this._getControlOrFail(formGroup, 'rawValue').reset();
           this._getControlOrFail(formGroup, 'timestampRange').setValue([
-            this.resetSecondsAndMilliseconds(moment()),
-            this.resetSecondsAndMilliseconds(moment())
+            this._resetSecondsAndMilliseconds(moment()),
+            this._resetSecondsAndMilliseconds(moment())
           ]);
         }
 
@@ -707,13 +716,13 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     );
   }
 
-  private resetSecondsAndMilliseconds(date: Moment): Moment {
+  private _resetSecondsAndMilliseconds(date: Moment): Moment {
     date.set('second', 0);
     date.set('millisecond', 0);
     return date;
   }
 
-  timestampRangeValidation(
+  private _timestampRangeValidation(
     formGroup: FormGroup
   ): (control: AbstractControl) => ValidationErrors | null {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -750,7 +759,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     };
   }
 
-  timestampRangeQueryValidation(
+  private _timestampRangeQueryValidation(
     formGroup: FormGroup
   ): (control: AbstractControl) => ValidationErrors | null {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -794,7 +803,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     };
   }
 
-  nodeIdValidation(fromGroup: FormGroup): ValidatorFn {
+  private _nodeIdValidation(fromGroup: FormGroup): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       let validationErrorOrNull: ValidationErrors | null = null;
       // If no adapter is chosen, do not validate nodeId which is relevant on adapter is available.
@@ -819,7 +828,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     };
   }
 
-  ioItemTypeValidation(
+  private _ioItemTypeValidation(
     ioItemType: IOType,
     control: AbstractControl
   ): ValidationErrors | null {
@@ -865,7 +874,6 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       case IOType.PLOTLYJSON:
       case IOType.DATAFRAME:
       case IOType.MULTITSFRAME:
-      case IOType.SINGLETSFRAME:
         try {
           JSON.parse(controlValue);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -887,7 +895,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
   /**
    * Validates input
    */
-  inputTypeCheckIfAny(
+  private _inputTypeCheckIfAny(
     ioItemTypeOption: IOTypeOption,
     ioItemType: IOType,
     formGroup: FormGroup
@@ -933,34 +941,30 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         ioItemTypeOption === IOTypeOption.OPTIONAL && controlValue === 'null';
 
       if (!isControlValueOptionalAndNull) {
-        validationErrorOrNull = this.ioItemTypeValidation(ioItemType, control);
+        validationErrorOrNull = this._ioItemTypeValidation(ioItemType, control);
       }
 
       return validationErrorOrNull;
     };
   }
 
-  getTypeColor(type: string): string {
+  public getTypeColor(type: string): string {
     return `var(--${type}-color)`;
   }
 
-  isTimestampRangeType(type: IOType): boolean {
-    return (
-      type === IOType.SERIES ||
-      type === IOType.MULTITSFRAME ||
-      type === IOType.SINGLETSFRAME
-    );
+  public _isTimestampRangeType(type: IOType): boolean {
+    return type === IOType.SERIES || type === IOType.MULTITSFRAME;
   }
 
-  hasTextFilter(abstractControl: AbstractControl): boolean {
-    return this.textFiltersFormArray(abstractControl).controls.length > 0;
+  public _hasTextFilter(abstractControl: AbstractControl): boolean {
+    return this._textFiltersFormArray(abstractControl).controls.length > 0;
   }
 
-  textFiltersFormArray(abstractControl: AbstractControl): FormArray {
+  public _textFiltersFormArray(abstractControl: AbstractControl): FormArray {
     return this._getControlOrFail(abstractControl, 'textFilters') as FormArray;
   }
 
-  openAdapterTreeDialog(
+  public _openAdapterTreeDialog(
     nodeSourceType: NodeSourceType,
     ioType: IOType,
     adapterId: string,
@@ -993,7 +997,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     });
 
     dialog.componentInstance.nodeClick.subscribe(treeNodeItemClickEvent => {
-      this.openWireAttributeToDataMenu(
+      this._openWireAttributeToDataMenu(
         treeNodeItemClickEvent,
         adapter.id,
         sourceType
@@ -1054,11 +1058,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     const node = nodeClickEvent.node;
     let ioItems: UiItemWiring[];
     if (sourceType === 'INPUT_WIRING') {
-      const formInputArray = this.inputOutputForm.get('inputs');
+      const formInputArray = this._inputOutputForm.get('inputs');
       Utils.assert(formInputArray instanceof FormArray);
       ioItems = formInputArray.getRawValue();
     } else if (sourceType === 'OUTPUT_WIRING') {
-      const formOutputArray = this.inputOutputForm.get('outputs');
+      const formOutputArray = this._inputOutputForm.get('outputs');
       Utils.assert(formOutputArray instanceof FormArray);
       ioItems = formOutputArray.getRawValue();
     } else {
@@ -1069,7 +1073,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     ioItems = ioItems.filter(ioItem => ioItem.adapterId);
 
     const dialogPositionAndMaxHeight =
-      this.getDialogPositionAndMaxHeight(nodeClickEvent);
+      this._getDialogPositionAndMaxHeight(nodeClickEvent);
 
     const dialog = this.dialog.open<
       MetaDataWiringModalComponent,
@@ -1146,7 +1150,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     );
   }
 
-  openWireAttributeToDataMenu(
+  private _openWireAttributeToDataMenu(
     nodeClickEvent: NodeClickEvent,
     adapterId: string,
     sourceType: SourceType
@@ -1156,11 +1160,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     let ioItems: UiItemWiring[];
 
     if (sourceType === 'INPUT_WIRING') {
-      const formInputArray = this.inputOutputForm.get('inputs');
+      const formInputArray = this._inputOutputForm.get('inputs');
       Utils.assert(formInputArray instanceof FormArray);
       ioItems = formInputArray.getRawValue();
     } else if (sourceType === 'OUTPUT_WIRING') {
-      const formOutputArray = this.inputOutputForm.get('outputs');
+      const formOutputArray = this._inputOutputForm.get('outputs');
       Utils.assert(formOutputArray instanceof FormArray);
       ioItems = formOutputArray.getRawValue();
     } else {
@@ -1171,7 +1175,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     ioItems = ioItems.filter(ioItem => ioItem.adapterId);
 
     const dialogPositionAndMaxHeight =
-      this.getDialogPositionAndMaxHeight(nodeClickEvent);
+      this._getDialogPositionAndMaxHeight(nodeClickEvent);
 
     const dialog = this.dialog.open<
       NodeWiringContextMenuComponent,
@@ -1193,6 +1197,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     dialog.componentInstance.wiringChange.subscribe(
       (idAndChecked: WiringChangeEvent) => {
         let inputOrOutputControls: AbstractControl[];
+
         if (sourceType === 'INPUT_WIRING') {
           inputOrOutputControls = this.inputFormArray.controls;
         } else if (sourceType === 'OUTPUT_WIRING') {
@@ -1209,6 +1214,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
           'wiring dialog gets io items from this component as input data, but the io item is not found.'
         );
         const realFilters = node.filters;
+
         if (AdapterHttpService.isDateFilter(realFilters)) {
           const timestampMin = moment(realFilters.fromTimestamp.min);
           const timestampMax = moment(realFilters.toTimestamp.max);
@@ -1223,8 +1229,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
           'textFilters'
         ) as FormArray;
         textFiltersArray.clear();
-        this.getTextFilters(realFilters).map((filter: TextFilter) => {
-          textFiltersArray.push(this.getTextFilterFormGroup(filter));
+        this._getTextFilters(realFilters).map((filter: TextFilter) => {
+          textFiltersArray.push(this._getTextFilterFormGroup(filter));
         });
 
         this._getControlOrFail(foundIoItemControl, 'adapterId').setValue(
@@ -1262,11 +1268,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     );
   }
 
-  onCancel(): void {
+  public _onCancel(): void {
     this.cancelDialogClick.next();
   }
 
-  onOk(): void {
+  public _onOk(): void {
     this.inputFormArray.controls.map((inputControl: AbstractControl) => {
       Utils.assert(
         inputControl instanceof FormGroup,
@@ -1277,8 +1283,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
 
       if (timestampRangePickerHidden) {
         this._getControlOrFail(inputControl, 'timestampRange').reset([
-          this.resetSecondsAndMilliseconds(moment()),
-          this.resetSecondsAndMilliseconds(moment())
+          this._resetSecondsAndMilliseconds(moment()),
+          this._resetSecondsAndMilliseconds(moment())
         ]);
       } else {
         this._getControlOrFail(inputControl, 'timestampRangeQuery').reset();
@@ -1297,6 +1303,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     };
 
     const inputWirings: InputWiring[] = this.inputFormArray.controls.map(
+      // eslint-disable-next-line complexity
       (inputControl: AbstractControl) => {
         Utils.assert(
           inputControl instanceof FormGroup,
@@ -1310,7 +1317,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         }
         // Apply timestamp only for series and for non manual selection.
         if (
-          this.isTimestampRangeType(uiWiring.ioType) &&
+          (uiWiring.ioType === IOType.SERIES ||
+            uiWiring.ioType === IOType.MULTITSFRAME) &&
           Utils.isNullOrUndefined(uiWiring.rawValue)
         ) {
           const timestampRange = uiWiring.timestampRange;
@@ -1419,7 +1427,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     });
   }
 
-  openJsonEditorModal(inputControl: AbstractControl): void {
+  public _openJsonEditorModal(inputControl: AbstractControl): void {
     const rawValue =
       this._getControlOrFail(inputControl, 'rawValue').value ?? '';
     const ioType: IOType = this._getControlOrFail(inputControl, 'ioType').value;
@@ -1452,11 +1460,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     });
   }
 
-  uploadJsonForAllInputs(jSONInput: HTMLInputElement): void {
+  public _uploadJsonForAllInputs(jSONInput: HTMLInputElement): void {
     jSONInput.click();
   }
 
-  downloadJsonSchema(): void {
+  public _downloadJsonSchema(): void {
     const fileName = `jsonschema_${this.wiringItem.name}_${this.wiringItem.version_tag}.json`;
     const schema = this._generateJSONSchema(true);
     const data = new Blob([JSON.stringify(schema, null, 4)], {
@@ -1551,18 +1559,6 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
           ]
         };
         break;
-      case IOType.SINGLETSFRAME:
-        // a single, possibly multi-dimensional timeseries: no "metric" column,
-        // but arbitrarily many value columns
-        exampleValue = {
-          value: [1.0, 1.2, 0.5],
-          timestamp: [
-            '2019-08-01T15:42:36.000Z',
-            '2019-08-01T15:45:36.000Z',
-            '2019-08-01T15:48:36.000Z'
-          ]
-        };
-        break;
       case IOType.ANY:
         exampleValue = {
           a: true,
@@ -1575,7 +1571,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return exampleValue;
   }
 
-  private getTextFilters(
+  private _getTextFilters(
     filters: any,
     inputOrOutputWiring?: InputOrOutputWiring
   ): TextFilter[] {
@@ -1606,7 +1602,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return textFilters;
   }
 
-  private getTextFilterFormGroup(filter: TextFilter): FormGroup {
+  private _getTextFilterFormGroup(filter: TextFilter): FormGroup {
     return this.formBuilder.group({
       filterKey: filter.key,
       [`value_${filter.key}`]: this.formBuilder.control(filter.value ?? ''),
@@ -1621,7 +1617,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
    * To prevent it from happening we render it above or below the cursor and calc his maxHeight
    * from the current cursor position onClick, to the bottom or top of the screen, minus some padding.
    */
-  private getDialogPositionAndMaxHeight(
+  private _getDialogPositionAndMaxHeight(
     nodeClickEvent: NodeClickEvent
   ): DialogPositionAndMaxHeight {
     const clickPositionX = nodeClickEvent.event.clientX;
@@ -1675,7 +1671,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return timestampRange;
   }
 
-  _changeTimestampRangePicker(inputControl: AbstractControl): boolean {
+  public _changeTimestampRangePicker(inputControl: AbstractControl): boolean {
     const timestampRangePickerHidden = !this._getControlOrFail(
       inputControl,
       'timestampRangePickerHidden'
@@ -1687,7 +1683,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return timestampRangePickerHidden;
   }
 
-  _parameterHasAdapter(abstractControl: AbstractControl): boolean {
+  public _parameterHasAdapter(abstractControl: AbstractControl): boolean {
     const adapterId = abstractControl.get('adapterId');
     Utils.assert(adapterId, 'missing formGroup attribute "adapterId"');
     if (Utils.isNullOrUndefined(adapterId.value)) {
@@ -1700,11 +1696,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     );
   }
 
-  _isAdapterAvailable(): boolean {
+  public _isAdapterAvailable(): boolean {
     return this._availableAdapters.length !== 0;
   }
 
-  _adapterListForInputParameter(): (Adapter | Omit<Adapter, 'url'>)[] {
+  public _adapterListForInputParameter(): (Adapter | Omit<Adapter, 'url'>)[] {
     const inputAdapters = this._availableAdapters.filter(
       availableAdapters =>
         availableAdapters.id !== 'drop' && availableAdapters.id !== 'plot'
@@ -1721,7 +1717,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return [AdapterHttpService.MANUAL_INPUT_ADAPTER, ...inputAdapters];
   }
 
-  triggerForAllInputs(jSONInput: HTMLInputElement): void {
+  public _triggerForAllInputs(jSONInput: HTMLInputElement): void {
     const uploadedFile = jSONInput.files?.item(0);
     const fileReader = new FileReader();
 
@@ -1751,10 +1747,10 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
           this._getControlOrFail(inputControl, 'rawValue').markAllAsTouched();
           this.changeDetector.markForCheck();
         });
-        this.jsonImportErrorStatus.next('');
+        this._jsonImportErrorStatus$.next('');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        this.jsonImportErrorStatus.next('JSON is malformed.');
+        this._jsonImportErrorStatus$.next('JSON is malformed.');
         this.changeDetector.markForCheck();
       }
     };
@@ -1768,13 +1764,12 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     jSONInput.value = '';
   }
 
-  isJsonType(ioType: IOType): boolean {
+  public _isJsonType(ioType: IOType): boolean {
     let isJsonType = false;
     if (
       ioType === IOType.SERIES ||
       ioType === IOType.DATAFRAME ||
       ioType === IOType.MULTITSFRAME ||
-      ioType === IOType.SINGLETSFRAME ||
       ioType === IOType.ANY
     ) {
       isJsonType = true;
@@ -1790,17 +1785,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     });
   }
 
-  _clearOutput(outputControl: AbstractControl): void {
-    this._getControlOrFail(outputControl, 'refIdType').reset(null);
-    this._getControlOrFail(outputControl, 'metaDataKey').reset(null);
-    this._getControlOrFail(outputControl, 'nodeId').reset(null);
-    this._getControlOrFail(outputControl, 'nodeName').reset(null);
-    this._getControlOrFail(outputControl, 'nodeType').reset(null);
-    this._getControlOrFail(outputControl, 'adapterId').reset(null);
-    (this._getControlOrFail(outputControl, 'textFilters') as FormArray).clear();
-  }
-
-  _clearInput(inputControl: AbstractControl): void {
+  public _clearInput(inputControl: AbstractControl): void {
     this._getControlOrFail(inputControl, 'adapterId').reset(
       AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
     );
@@ -1819,7 +1804,17 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     (this._getControlOrFail(inputControl, 'textFilters') as FormArray).clear();
   }
 
-  _stringValueOfFormControl(control: AbstractControl): string {
+  public _clearOutput(outputControl: AbstractControl): void {
+    this._getControlOrFail(outputControl, 'refIdType').reset(null);
+    this._getControlOrFail(outputControl, 'metaDataKey').reset(null);
+    this._getControlOrFail(outputControl, 'nodeId').reset(null);
+    this._getControlOrFail(outputControl, 'nodeName').reset(null);
+    this._getControlOrFail(outputControl, 'nodeType').reset(null);
+    this._getControlOrFail(outputControl, 'adapterId').reset(null);
+    (this._getControlOrFail(outputControl, 'textFilters') as FormArray).clear();
+  }
+
+  public _stringValueOfFormControl(control: AbstractControl): string {
     const value = control.value;
     if (Utils.isNullOrUndefined(value)) {
       return '';
@@ -1828,7 +1823,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     return String(value);
   }
 
-  _isDefaultValue(abstractControl: AbstractControl): boolean {
+  public _isDefaultValue(abstractControl: AbstractControl): boolean {
     return (
       this._getControlOrFail(abstractControl, 'type').value ===
       IOTypeOption.OPTIONAL
