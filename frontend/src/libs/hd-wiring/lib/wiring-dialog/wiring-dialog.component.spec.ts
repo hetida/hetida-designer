@@ -197,7 +197,7 @@ describe('WiringDialogComponent', () => {
     const data = {
       title: 'test20',
       wiringItem: mockTransformation,
-      adapterList: [] as Adapter[]
+      adapterList: [] as string[]
     };
 
     // Act
@@ -369,7 +369,7 @@ describe('WiringDialogComponent', () => {
     let formGroup = componentLocal.inputFormArray.controls[0] as FormGroup;
     let uiWiring: UiItemWiring = formGroup.getRawValue();
 
-    componentLocal.openAdapterTreeDialog(
+    componentLocal._openAdapterTreeDialog(
       'SOURCE',
       IOType.STRING,
       adapterList[0].id,
