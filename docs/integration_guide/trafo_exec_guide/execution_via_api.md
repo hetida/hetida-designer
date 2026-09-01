@@ -308,6 +308,8 @@ or for the execution of the latest revision to the corresponding POST web servic
 
 The execution result is then sent to the specified callback url in the request body once it has been determined.
 
+The allowed callback urls must be pre-configured for the backend service via the `HD_ALLOWED_CALLBACK_URL_PATTERNS` environment variable, which allows wildcard characters like `?`and `*`.
+
 ## Technical notes on execution
 
 ### Concurrent code execution

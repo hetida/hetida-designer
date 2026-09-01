@@ -1,10 +1,4 @@
-"""Module for development/debugging execution of the Web Service
-
-In production the service will probably be executed using asgi in
-a proper webserving environment in a container.
-
-This file can be used for development/testing/debugging of the
-webservice using uvicorn as development web server.
+"""Module for development/debugging and actual execution of the Web Service
 
 Usage: Call with activated virtual environment via
     python main.py
@@ -12,8 +6,10 @@ from project directory.
 """
 
 import asyncio
+import datetime
 import logging
 import os
+import sys
 
 if __name__ == "__main__":
     if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
@@ -24,8 +20,29 @@ if __name__ == "__main__":
 from hetdesrun import configure_logging
 from hetdesrun.scheduling.management import start_scheduling
 
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module base imports done."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
+
+
 logger = logging.getLogger(__name__)
+
+
 configure_logging(logger)
+
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module logging configured."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
 
 
 # must be after logging config:
@@ -34,8 +51,20 @@ from hetdesrun.webservice.config import get_config
 
 app = get_app()
 
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] main module further imports done and app object obtained."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
+
 
 def detect_in_memory_db() -> bool:
+    if not get_config().is_backend_service:
+        return False
+
     from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
     engine = get_db_engine()
@@ -109,6 +138,14 @@ def run_trafo_rev_deployment():
 
 
 in_memory_db = detect_in_memory_db()
+print(  # noqa: T201
+    (
+        f"[DIAG pid={os.getpid()}] in memory db: {in_memory_db}."
+        f"t={datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    ),
+    file=sys.stderr,
+    flush=True,
+)
 is_backend = get_config().is_backend_service
 
 consumption_mode_variable = os.environ.get("HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE", None)
@@ -143,7 +180,7 @@ if in_memory_db:
 
 
 if __name__ == "__main__":
-    if not in_memory_db:
+    if not in_memory_db and is_backend:
         logger.info("Running migrations from main.py since main.py was invoked directly.")
         run_migrations()
 
@@ -189,13 +226,20 @@ if __name__ == "__main__":
             host.lower() in {"localhost", "127.0.0.1"} or explicit_development_mode
         ) and not explicit_no_development_mode
         port = int(os.environ.get("PORT", "8000"))
+        worker_healthcheck_timeout = int(os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30"))
         log_level = os.environ.get("UVICORN_LOG_LEVEL", "info")
+        web_concurrency = os.environ.get("WEB_CONCURRENCY", "UNSET")
         logger.info(
-            "Start uvicorn app as host %s with port %s with uvicorn log level %s%s",
+            (
+                "Start uvicorn app as host %s with port %s with uvicorn log level %s%s"
+                " with web concurrency %s and worker healthcheck timeout %s"
+            ),
             str(host),
             str(port),
             log_level,
             " in reload/development mode" if reload_mode else "",
+            web_concurrency,
+            worker_healthcheck_timeout,
         )
 
         uvicorn.run(
@@ -204,4 +248,5 @@ if __name__ == "__main__":
             reload=explicit_development_mode,
             host=host,
             port=port,
+            timeout_worker_healthcheck=worker_healthcheck_timeout,
         )

@@ -7,10 +7,10 @@ import pytz
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
+from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
 from hetdesrun.models.data_selection import FilteredSink
-from hetdesrun.webservice.config import get_config
 
 
 def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
@@ -123,25 +123,22 @@ async def post_multiple_timeseries(
     sink_types: list[ExternalType],
     adapter_key: str,
 ) -> None:
-    async with AsyncClient(
-        verify=get_config().hd_adapters_verify_certs,
-        timeout=get_config().external_request_timeout,
-    ) as client:
-        await asyncio.gather(
-            *(
-                post_single_timeseries(
-                    series,
-                    ref_id,
-                    additional_params=list(filters.items()),
-                    sink_type=sink_type,
-                    adapter_key=adapter_key,
-                    client=client,
-                )
-                for series, ref_id, filters, sink_type in zip(
-                    timeseries_list, ref_ids, sink_filters, sink_types, strict=True
-                )
+    client = get_generic_rest_adapter_client(adapter_key)
+    await asyncio.gather(
+        *(
+            post_single_timeseries(
+                series,
+                ref_id,
+                additional_params=list(filters.items()),
+                sink_type=sink_type,
+                adapter_key=adapter_key,
+                client=client,
+            )
+            for series, ref_id, filters, sink_type in zip(
+                timeseries_list, ref_ids, sink_filters, sink_types, strict=True
             )
         )
+    )
 
 
 async def send_multiple_timeseries_to_adapter(

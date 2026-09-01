@@ -7,9 +7,9 @@ import pytz
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
+from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
 from hetdesrun.models.data_selection import FilteredSink
-from hetdesrun.webservice.config import get_config
 
 
 def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
@@ -108,22 +108,19 @@ async def post_multitsframes(
     sink_filters: list[dict[str, str]],
     adapter_key: str,
 ) -> None:
-    async with AsyncClient(
-        verify=get_config().hd_adapters_verify_certs,
-        timeout=get_config().external_request_timeout,
-    ) as client:
-        await asyncio.gather(
-            *(
-                post_multitsframe(
-                    df,
-                    ref_id,
-                    additional_params=list(filters.items()),
-                    adapter_key=adapter_key,
-                    client=client,
-                )
-                for df, ref_id, filters in zip(dfs, ref_ids, sink_filters, strict=True)
+    client = get_generic_rest_adapter_client(adapter_key)
+    await asyncio.gather(
+        *(
+            post_multitsframe(
+                df,
+                ref_id,
+                additional_params=list(filters.items()),
+                adapter_key=adapter_key,
+                client=client,
             )
+            for df, ref_id, filters in zip(dfs, ref_ids, sink_filters, strict=True)
         )
+    )
 
 
 async def send_multitsframes_to_adapter(

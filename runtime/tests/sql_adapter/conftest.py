@@ -151,6 +151,7 @@ def two_sqlite_dbs_configured(temporary_sqlite_file_path, _clean_configured_dbs_
                 connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db",
                 name="sqlite test example db",
                 key="test_example_sqlite_read_db",
+                allow_arbitrary_sql_query_sources=True,
             ),
             SQLAdapterDBConfig(
                 connection_url="sqlite+pysqlite:///" + temporary_sqlite_file_path,
@@ -158,6 +159,7 @@ def two_sqlite_dbs_configured(temporary_sqlite_file_path, _clean_configured_dbs_
                 key="test_writable_temp_sqlite_db",
                 append_tables=["append_alert_table", "model_run_stats"],
                 replace_tables=["model_config_params"],
+                allow_arbitrary_sql_query_sources=True,
             ),
         ],
     ) as _fixture:
@@ -180,6 +182,7 @@ def three_sqlite_dbs_configured(
                 connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db",
                 name="sqlite test example db",
                 key="test_example_sqlite_read_db",
+                allow_arbitrary_sql_query_sources=True,
             ),
             SQLAdapterDBConfig(
                 connection_url="sqlite+pysqlite:///" + temporary_sqlite_file_path,
@@ -187,11 +190,13 @@ def three_sqlite_dbs_configured(
                 key="test_writable_temp_sqlite_db",
                 append_tables=["append_alert_table", "model_run_stats"],
                 replace_tables=["model_config_params"],
+                allow_arbitrary_sql_query_sources=True,
             ),
             SQLAdapterDBConfig(
                 connection_url="sqlite+pysqlite:///" + temporary_prefilled_sqlite_ts_db,
                 name="read_only_timeseries sqlite database",
                 key="read_only_timeseries_sqlite_database",
+                allow_arbitrary_sql_query_sources=True,
                 explicit_source_tables={"table1", "table2"},
                 ignore_tables={"table1"},
                 timeseries_tables={

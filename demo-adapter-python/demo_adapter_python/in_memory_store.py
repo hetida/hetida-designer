@@ -46,6 +46,10 @@ for plant in ("plantA", "plantB"):
     )
     store[f"root.{plant}.alerts"] = pd.DataFrame()
     store[f"root.{plant}.anomalies"] = pd.DataFrame([], columns=["timestamp", "metric", "value"])
+    # writable singletsframe: a single (multi-dimensional) timeseries, hence no "metric" column
+    store[f"root.{plant}.scored_anomalies"] = pd.DataFrame(
+        [], columns=["timestamp", "value", "score"]
+    )
 
 
 def get_store() -> MutableMapping[Any, Any]:

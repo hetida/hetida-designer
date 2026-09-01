@@ -14,7 +14,26 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import pandas as pd
-from glom import A, Check, Coalesce, Iter, Merge, S, Spec, T, glom
+from glom import A, Check, Coalesce, GlomError, Iter, Merge, S, Spec, T, glom
+
+# The metadatum specs of the individual accessors, including their fallback chains.
+# Defined once here and shared by the MultiTSFrame and the SingleTSFrame accessors, which
+# only differ in whether the result is keyed by metric first - not in what they extract.
+UNIT: Spec = "unit"
+MEASUREMENT: Spec = "measurement"
+NAME: Spec = Coalesce("name", default=None)
+DISPLAY_NAME: Spec = Coalesce("display_name", "name", default=None)
+SHORT_DISPLAY_NAME: Spec = Coalesce("short_display_name", "display_name", "name", default=None)
+
+
+def spec_metric_key() -> Spec:
+    """Which key of the metric objects identifies a metric
+
+    Per the metadata conventions "metric_key" is optional and defaults to "id". Note that
+    it therefore cannot act as the discriminator between the current and the older metadata
+    conventions - that role belongs to "metrics" being a list.
+    """
+    return (Coalesce("dataset_metadata.metric_key", default="id"), A.globals.metric_key)
 
 
 def update_dict_and_return_it(start_dict: dict, updated_values_dict: dict) -> dict:
@@ -157,12 +176,6 @@ def build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
     ) + ((continuation_spec,) if continuation_spec is not None else ())
 
 
-def breakpoint_and_continue(x: Any) -> Any:
-    """For testing purposes to insert into a glom spec"""
-    breakpoint()  # noqa: T100
-    return x
-
-
 def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
     """Providesglom spec that extracts a metadatum by metric by value dimension
 
@@ -182,7 +195,7 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
     return Coalesce(
         (  # current metdadata convention
             {  # first gather information at different locations in metadata in a dict
-                "metric_key": ("dataset_metadata.metric_key", A.globals.metric_key),
+                "metric_key": spec_metric_key(),
                 "defaults_by_value_dimension": (
                     Coalesce(
                         (
@@ -207,26 +220,24 @@ def spec_by_metric_key_by_val_dimension(metadatum_key: str | Spec) -> Spec:
                     ),
                     default={},
                 ),
+                # deliberately without a default: this is what discriminates the metadata
+                # conventions. If "metrics" is absent or is not a list this fails, so the
+                # enclosing Coalesce falls through to the older conventions below.
                 "actual_per_metric_per_value_dimensions": (
-                    Coalesce(
+                    "metrics",
+                    Check(instance_of=list),
+                    build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
+                        S.globals.metric_key,
                         (
-                            "metrics",
-                            Check(instance_of=list),
+                            Coalesce("value_dimensions", default={}),
                             build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
-                                S.globals.metric_key,
-                                (
-                                    Coalesce("value_dimensions", default={}),
-                                    build_dict_from_iterable_from_key_and_subspec_and_then_proceed_on_result(
-                                        "column",
-                                        Coalesce(metadatum_key, default=None),
-                                        add_keys_with_none_values=["value"],
-                                    ),
-                                ),
-                                key_as_value=True,
+                                "column",
+                                Coalesce(metadatum_key, default=None),
+                                add_keys_with_none_values=["value"],
                             ),
                         ),
-                        default={},
-                    )
+                        key_as_value=True,
+                    ),
                 ),
             },
             lambda x: defaultdict(
@@ -323,34 +334,32 @@ def get_value_dimension_info(
 
 
 def get_units(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
-    return get_value_dimension_info(multitsframe, "unit")
+    return get_value_dimension_info(multitsframe, UNIT)
 
 
 def get_names(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
-    return get_value_dimension_info(multitsframe, Coalesce("name", default=None))
+    return get_value_dimension_info(multitsframe, NAME)
 
 
 def get_display_names(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
-    return get_value_dimension_info(multitsframe, Coalesce("display_name", "name", default=None))
+    return get_value_dimension_info(multitsframe, DISPLAY_NAME)
 
 
 def get_short_display_names(
     multitsframe: pd.DataFrame,
 ) -> defaultdict[str, defaultdict[str, str | None]]:
-    return get_value_dimension_info(
-        multitsframe, Coalesce("short_display_name", "display_name", "name", default=None)
-    )
+    return get_value_dimension_info(multitsframe, SHORT_DISPLAY_NAME)
 
 
 def get_measurements(multitsframe: pd.DataFrame) -> defaultdict[str, defaultdict[str, str | None]]:
-    return get_value_dimension_info(multitsframe, "measurement")
+    return get_value_dimension_info(multitsframe, MEASUREMENT)
 
 
 def spec_by_metric_key(metadatum_key: str | Spec) -> Spec:
     return Coalesce(
         (  # current metdadata convention
             {
-                "metric_key": ("dataset_metadata.metric_key", A.globals.metric_key),
+                "metric_key": spec_metric_key(),
                 "by_metric": (
                     "metrics",
                     Check(instance_of=list),
@@ -434,8 +443,8 @@ def get_metric_info(multitsframe: pd.DataFrame, metric_info: str | Spec) -> defa
 
     """
     spec = spec_by_metric_key(metric_info)
-    metric_info = glom(multitsframe.attrs, spec)
-    return defaultdict(lambda: None, metric_info)
+    extracted_metric_info = glom(multitsframe.attrs, spec)
+    return defaultdict(lambda: None, extracted_metric_info)
 
 
 def extract_series_metric_key(metadata: Any) -> Any:
@@ -513,3 +522,94 @@ def get_series_short_display_name(series: pd.Series) -> str | None:
 
 def get_series_measurement(series: pd.Series) -> str | None:
     return cast(str | None, get_series_info(series, "measurement"))
+
+
+def extract_singlets_metric_key(metadata: Any) -> Any:
+    """The key identifying the single metric of a SingleTSFrame
+
+    A SingleTSFrame follows the same convention as a SERIES here: its single metric is
+    named via "dataset_metadata.single_metric".
+
+    Returns None if no such entry is present.
+    """
+    return glom(metadata, Coalesce("dataset_metadata.single_metric", default=None))
+
+
+def select_single_metric(info_by_metric: dict, attrs: Any, empty: Any) -> Any:
+    """Pick the entry of the one metric of a SingleTSFrame out of a by-metric mapping
+
+    The single metric is identified via "dataset_metadata.single_metric". If that is missing
+    but exactly one metric is present, that one is used, since a SingleTSFrame cannot be
+    ambiguous in this respect. Otherwise `empty` is returned.
+    """
+    metric = extract_singlets_metric_key(attrs)
+    if metric is not None and metric in info_by_metric:
+        return info_by_metric[metric]
+
+    if len(info_by_metric) == 1:
+        return next(iter(info_by_metric.values()))
+
+    return empty
+
+
+def get_singlets_info(
+    singletsframe: pd.DataFrame, value_dim_info: str | Spec
+) -> defaultdict[str, Any]:
+    """Obtain metadata info associated to the value dimensions of a SingleTSFrame
+
+    A SingleTSFrame holds exactly one metric but — like a MultiTSFrame — arbitrarily many
+    value dimensions. Therefore, in contrast to get_value_dimension_info (which is keyed by
+    metric first), this returns a defaultdict keyed by value dimension column name only,
+    defaulting to None.
+
+    The single metric is identified via "dataset_metadata.single_metric". If that is missing
+    but the metadata contains exactly one metric, that metric is used, since a SingleTSFrame
+    cannot be ambiguous in this respect.
+
+    What is extracted per value dimension is exactly what get_value_dimension_info extracts —
+    only the metric level is collapsed away.
+    """
+    return cast(
+        "defaultdict[str, Any]",
+        select_single_metric(
+            get_value_dimension_info(singletsframe, value_dim_info),
+            singletsframe.attrs,
+            empty=defaultdict(lambda: None),
+        ),
+    )
+
+
+def get_singlets_units(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, UNIT)
+
+
+def get_singlets_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, NAME)
+
+
+def get_singlets_display_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, DISPLAY_NAME)
+
+
+def get_singlets_short_display_names(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, SHORT_DISPLAY_NAME)
+
+
+def get_singlets_measurements(singletsframe: pd.DataFrame) -> defaultdict[str, str | None]:
+    return get_singlets_info(singletsframe, MEASUREMENT)
+
+
+def get_singlets_metric_info(singletsframe: pd.DataFrame, metric_info: str | Spec) -> Any:
+    """Obtain metadata of the single metric of a SingleTSFrame
+
+    Counterpart of get_metric_info for SingleTSFrames: instead of a mapping keyed by metric
+    this directly returns the requested information for the one metric, or None if it cannot
+    be determined. In particular this includes the case of absent metric metadata: components
+    should not require metadata (see the metadata conventions documentation).
+    """
+    try:
+        info_by_metric = glom(singletsframe.attrs, spec_by_metric_key(metric_info))
+    except GlomError:  # no metric metadata present at all
+        return None
+
+    return select_single_metric(info_by_metric, singletsframe.attrs, empty=None)

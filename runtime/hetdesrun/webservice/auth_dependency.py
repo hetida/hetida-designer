@@ -53,7 +53,7 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
                 " Using the explicitely configured token for outgoing requests with schema"
                 " Bearer."
             )
-            return {"Authorization": "Bearer " + possible_fixed_token}
+            return {"Authorization": "Bearer " + possible_fixed_token.get_secret_value()}
         logger.debug(
             "No stored auth token and no explicitly fixed configured token. Not setting auth header"
         )
@@ -158,6 +158,9 @@ bearer_verifier = BearerVerifier.from_verifier_options(
     verify_ssl=get_config().auth_verify_certs,
     audience=get_config().auth_audience,
     issuer=get_config().auth_issuer,
+    allowed_algorithms=[
+        alg.strip() for alg in get_config().auth_allowed_algorithms.split(",") if alg.strip()
+    ],
 )
 
 
@@ -179,23 +182,30 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     token = credentials.credentials  # type: ignore
 
     try:
-        payload: dict = bearer_verifier.verify_token(token)
+        payload: dict = await bearer_verifier.verify_token(token)
         logger.debug("Bearer token payload => %s", payload)
     except AuthentificationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from None
     # Check role
-    try:
-        if get_config().auth_allowed_role is not None and (
-            not get_config().auth_allowed_role in payload[get_config().auth_role_key]
-        ):
-            # roles are expected in "groups" key in payload
+    if get_config().auth_allowed_role is not None:
+        try:
+            roles = payload[get_config().auth_role_key]
+        except KeyError:
+            logger.info("Unauthorized: No role information in token")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
+            ) from None
+
+        if not isinstance(roles, list):
+            logger.info("Unauthorized: Role field in token has wrong type. Must be array.")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="Role information in token has wrong type"
+            )
+
+        if get_config().auth_allowed_role not in roles:
+            # roles are expected as a list under the configured role key in the payload
             logger.info("Unauthorized: Roles not allowed")
             raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed")
-    except KeyError:
-        logger.info("Unauthorized: No role information in token")
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
-        ) from None
 
     auth_context_dict = {"token": token, "creds": credentials, "payload": payload}
     set_request_auth_context(auth_context_dict)
@@ -246,7 +256,7 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
 
     # Actually checking
     try:
-        payload: dict = bearer_verifier.verify_token(access_token_to_check)
+        payload: dict = await bearer_verifier.verify_token(access_token_to_check)
         logger.debug("Bearer token payload => %s", payload)
     except AuthentificationError as e:
         logger.debug("Token verification Error: %s", str(e))
@@ -278,3 +288,30 @@ async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
 def get_auth_deps() -> list[Any]:
     """Return the authentication dependencies based on the application settings."""
     return [Depends(has_access)] if get_config().auth else []
+
+
+def warn_on_permissive_ingoing_auth_config() -> None:
+    """Warn if ingoing auth is enabled but tokens are not scoped to this service.
+
+    The issuer (iss) and audience (aud) claims are what bind a bearer token to this
+    service. Both are configurable but permissive by default, so nudge operators to
+    set them explicitly.
+    """
+    config = get_config()
+    if not config.auth:
+        return
+    if config.auth_issuer is None:
+        logger.warning(
+            "Ingoing auth is enabled but no issuer is configured (HD_AUTH_ISSUER), so"
+            " bearer tokens are not validated against an expected issuer. Set"
+            " HD_AUTH_ISSUER to your OpenID Connect issuer to scope accepted tokens."
+        )
+    if config.auth_audience is None or config.auth_audience == "account":
+        logger.warning(
+            "Ingoing auth is enabled but the expected token audience is %r"
+            " (HD_AUTH_AUDIENCE), which does not scope tokens to this service"
+            " ('account' is Keycloak's shared default present in most realm tokens)."
+            " Tokens issued for other clients in the same realm may be accepted. Set"
+            " HD_AUTH_AUDIENCE to this service's client id to scope accepted tokens.",
+            config.auth_audience,
+        )

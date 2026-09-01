@@ -14,6 +14,7 @@ def benchmark_base():
     return timeit.timeit(benchmark_base_function, number=100) / 100
 
 
+@pytest.mark.performance
 def test_hash_code_fast_enough(benchmark_base):
     """Test that code hashing is fast
 

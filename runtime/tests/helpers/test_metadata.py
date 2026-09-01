@@ -12,6 +12,12 @@ from hetdesrun.helpers.metadata import (
     get_series_name,
     get_series_short_display_name,
     get_series_unit,
+    get_singlets_display_names,
+    get_singlets_measurements,
+    get_singlets_metric_info,
+    get_singlets_names,
+    get_singlets_short_display_names,
+    get_singlets_units,
     get_units,
 )
 
@@ -327,3 +333,135 @@ def test_series_unit():
     assert get_series_short_display_name(s) == "muster"
 
     assert get_series_measurement(s) is None
+
+
+singletsframe_metadata = {
+    "dataset_metadata": {
+        "single_metric": "abc.temp",
+        "metric_key": "external_id",
+    },
+    "metrics": [
+        {
+            "external_id": "abc.temp",
+            "name": "ABC temperature",
+            "value_dimensions": [
+                {"column": "value", "name": "temperature", "unit": "°C"},
+                {"column": "state", "name": "measurement state"},
+            ],
+        }
+    ],
+    "value_dimensions_shared": [{"column": "state", "unit": "UNKNOWN"}],
+}
+
+
+def test_singlets_info_by_value_dimension():
+    """A SingleTSFrame has one metric, so info is keyed by value dimension only"""
+    df = pd.DataFrame()
+    df.attrs = singletsframe_metadata
+
+    units = get_singlets_units(df)
+    assert units["value"] == "°C"
+    assert units["state"] == "UNKNOWN"  # falls back to value_dimensions_shared
+    assert units["NOT OCCURING"] is None
+
+    names = get_singlets_names(df)
+    assert names["value"] == "temperature"
+    assert names["state"] == "measurement state"
+
+    assert get_singlets_display_names(df)["value"] == "temperature"
+    assert get_singlets_short_display_names(df)["value"] == "temperature"
+    assert get_singlets_measurements(df)["value"] is None
+
+
+def test_singlets_info_falls_back_to_only_metric_without_single_metric():
+    """If single_metric is missing but there is exactly one metric, use that one"""
+    df = pd.DataFrame()
+    metadata = deepcopy(singletsframe_metadata)
+    del metadata["dataset_metadata"]["single_metric"]
+    df.attrs = metadata
+
+    assert get_singlets_units(df)["value"] == "°C"
+
+
+def test_singlets_info_defaults_metric_key_to_id():
+    """metric_key is optional per convention and defaults to "id" """
+    df = pd.DataFrame()
+    df.attrs = {
+        "dataset_metadata": {"single_metric": "abc.temp"},
+        "metrics": [
+            {
+                "id": "abc.temp",
+                "value_dimensions": [{"column": "value", "unit": "°C"}],
+            }
+        ],
+    }
+
+    assert get_singlets_units(df)["value"] == "°C"
+
+
+def test_singlets_info_without_metadata():
+    df = pd.DataFrame()
+    df.attrs = {}
+
+    assert get_singlets_units(df)["value"] is None
+    assert get_singlets_metric_info(df, "name") is None
+
+
+def test_singlets_metric_info():
+    df = pd.DataFrame()
+    df.attrs = singletsframe_metadata
+
+    assert get_singlets_metric_info(df, "name") == "ABC temperature"
+    assert get_singlets_metric_info(df, "external_id") == "abc.temp"
+
+
+def test_metric_key_defaults_to_id():
+    """ "metric_key" is optional per the conventions and defaults to "id"
+
+    It therefore must not act as the discriminator between the metadata conventions —
+    see test_by_metric_convention_stays_reachable_without_metric_key.
+    """
+    mts = pd.DataFrame()
+    mts.attrs = {
+        "dataset_metadata": {},
+        "metrics": [{"id": "metric1", "value_dimensions": [{"column": "value", "unit": "m³/s"}]}],
+    }
+
+    assert get_units(mts)["metric1"]["value"] == "m³/s"
+    assert get_metric_info(mts, "id")["metric1"] == "metric1"
+
+    # ... also with no "dataset_metadata" at all
+    mts.attrs = {
+        "metrics": [{"id": "metric1", "value_dimensions": [{"column": "value", "unit": "m³/s"}]}]
+    }
+
+    assert get_units(mts)["metric1"]["value"] == "m³/s"
+
+
+def test_by_metric_convention_stays_reachable_without_metric_key():
+    """The older "by_metric" convention must stay reachable
+
+    "metrics" being a list is what discriminates the current convention from the older ones,
+    so metadata without a "metrics" list still resolves via "by_metric".
+    """
+    mts = pd.DataFrame()
+    mts.attrs = {
+        "dataset_metadata": {},
+        "by_metric": {"metric1": {"value_dimensions": {"value": {"unit": "m³/s"}}}},
+    }
+
+    assert get_units(mts)["metric1"]["value"] == "m³/s"
+
+
+def test_metrics_list_takes_precedence_over_by_metric():
+    """If both are present the current convention wins"""
+    mts = pd.DataFrame()
+    mts.attrs = {
+        "dataset_metadata": {},
+        "metrics": [
+            {"id": "metric1", "value_dimensions": [{"column": "value", "unit": "FROM_NEW"}]}
+        ],
+        "by_metric": {"metric1": {"value_dimensions": {"value": {"unit": "FROM_OLD"}}}},
+    }
+
+    assert get_units(mts)["metric1"]["value"] == "FROM_NEW"

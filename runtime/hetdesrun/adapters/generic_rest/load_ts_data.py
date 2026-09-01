@@ -33,10 +33,9 @@ async def load_ts_data_from_adapter(
     a "value" column with automatically inferred dtype
     and a timeseriesId column with dtype str.
 
-    This uses request with stream=True in combination with the raw response as file-like together
-    with Pandas read_json class method to get some minor performance out of the streaming.
-
-    It therefore currently isn't async.
+    This streams the response body (via a cached niquests session, stream=True) directly into
+    pyarrow's JSON reader for fast, low-peak-memory parsing into the DataFrame. The parsing is
+    synchronous (blocking), so this coroutine blocks the event loop while receiving.
     """
 
     df = await load_framelike_data(

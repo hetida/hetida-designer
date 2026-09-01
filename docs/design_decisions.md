@@ -15,7 +15,7 @@ The rationale for the described design decisions on this page assumes familiarit
 * separation of analytics from data provisioning via adapter system
 * other systems / services trigger executions via backend
 
-![Basic architecture overview](../diagrams/basic-architecture-overview.excalidraw.svg)
+![Basic architecture overview](diagrams/basic-architecture-overview.excalidraw.svg)
  
 !!! tip "Combined Backend+Runtime"
     Backend and runtime can be run combined as a single container from the same image to support scenarios like exposing a fixed set of workflows (e.g. a single workflow) as a separate [restricted webservice](./integration_guide/trafo_exec_guide/restricted_webservice.md).

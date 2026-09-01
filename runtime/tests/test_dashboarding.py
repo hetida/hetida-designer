@@ -1,17 +1,32 @@
+import base64
 import json
 from unittest import mock
 
+import msgspec
+import pandas as pd
 import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
+from hdutils import serialize_multitsframe_raw
+from hetdesrun.backend.service.dashboarding import (
+    HTML_FILE_RESULT_SIZING_STYLE_TAG,
+    file_result_kind,
+    file_result_to_base64,
+    file_result_to_gridstack_div,
+    file_result_to_text,
+    generate_gridstack_div,
+    html_file_result_srcdoc,
+    is_file_like_result,
+)
 from hetdesrun.backend.service.dashboarding_utils import (
     __all_wiring_attribute_url_alias_sets__,
     update_wiring_from_query_parameters,
 )
 from hetdesrun.models.wiring import (
     GridstackItemPositioning,
+    GridstackPositioningType,
     InputWiring,
     OutputWiring,
     WorkflowWiring,
@@ -21,6 +36,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.application import init_app
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.fixture()
@@ -231,3 +247,225 @@ def test_actually_update_wiring_from_query_parameters():
         and positionings_by_name["outp_3"].w == 6
         and positionings_by_name["outp_3"].h == 6
     )
+
+
+def test_is_file_like_result_detection():
+    assert is_file_like_result(
+        {"content_type": "application/pdf", "encoding": "base64", "data": "JVBER"}
+    )
+    assert is_file_like_result(
+        {"content_type": "text/html", "encoding": "plain", "data": "<h1>hi</h1>"}
+    )
+    # missing / wrong fields are not file results
+    assert not is_file_like_result("just a string")
+    assert not is_file_like_result({"foo": "bar"})
+    assert not is_file_like_result({"content_type": "text/csv", "encoding": "gzip", "data": "x"})
+    assert not is_file_like_result({"content_type": "text/csv", "encoding": "plain", "data": 42})
+
+
+def test_file_result_kind_classification():
+    assert file_result_kind("application/pdf") == "pdf"
+    assert file_result_kind("image/png") == "image"
+    assert file_result_kind("image/svg+xml") == "image"
+    assert file_result_kind("text/html") == "html"
+    assert file_result_kind("text/csv") == "download"
+    assert file_result_kind("application/octet-stream") == "download"
+
+
+def test_file_result_encoding_normalization():
+    assert file_result_to_base64({"encoding": "base64", "data": "QUJD"}) == "QUJD"
+    # plain data gets base64-encoded
+    encoded = file_result_to_base64(
+        {"encoding": "plain", "data": "ABC", "content_type": "text/csv"}
+    )
+    assert base64.b64decode(encoded).decode() == "ABC"
+
+    assert file_result_to_text({"encoding": "plain", "data": "<h1>hi</h1>"}) == "<h1>hi</h1>"
+    # base64 data gets decoded to text
+    assert (
+        file_result_to_text({"encoding": "base64", "data": base64.b64encode(b"<b>x</b>").decode()})
+        == "<b>x</b>"
+    )
+
+
+def test_html_file_result_srcdoc_injects_sizing_style():
+    # The sizing style is prepended so that a fragment sized with height:100%
+    # (which would otherwise collapse to zero height in the standards-mode
+    # srcdoc document) fills its tile. Prepending a bare <style> keeps this
+    # working for both fragments and complete html documents.
+    fragment = '<div style="height:100%">chart</div>'
+    srcdoc = html_file_result_srcdoc(
+        {"content_type": "text/html", "encoding": "plain", "data": fragment}
+    )
+    assert srcdoc == HTML_FILE_RESULT_SIZING_STYLE_TAG + fragment
+    assert srcdoc.startswith("<style>")
+    assert "height:100%" in HTML_FILE_RESULT_SIZING_STYLE_TAG
+
+    # also works for base64-encoded html content
+    full_doc = "<!doctype html><html><body>hi</body></html>"
+    srcdoc_b64 = html_file_result_srcdoc(
+        {
+            "content_type": "text/html",
+            "encoding": "base64",
+            "data": base64.b64encode(full_doc.encode("utf-8")).decode("ascii"),
+        }
+    )
+    assert srcdoc_b64 == HTML_FILE_RESULT_SIZING_STYLE_TAG + full_doc
+
+
+def test_file_result_gridstack_div_rendering_per_kind():
+    pos = GridstackItemPositioning(
+        id="report", x=0, y=0, w=12, h=3, type=GridstackPositioningType.OUTPUT
+    )
+
+    pdf_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "application/pdf",
+                "encoding": "base64",
+                "name": "Report.pdf",
+                "data": "JVBER",
+            },
+            pos,
+        )
+    )
+    # PDF src is filled client-side from the base64 blob, not embedded as a data uri
+    assert 'data-file-b64="JVBER"' in pdf_html
+    assert 'data-file-content-type="application/pdf"' in pdf_html
+    assert "<iframe" in pdf_html
+
+    image_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {"content_type": "image/png", "encoding": "base64", "data": "iVBORw0K"},
+            pos,
+        )
+    )
+    assert "<img" in image_html
+    assert "data:image/png;base64,iVBORw0K" in image_html
+
+    # inline HTML is sandboxed and the content is attribute-escaped in srcdoc
+    html_out = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "text/html",
+                "encoding": "plain",
+                "data": '<h1 class="x">Hallo & "welt"</h1>',
+            },
+            pos,
+        )
+    )
+    assert 'sandbox="allow-scripts"' in html_out
+    assert "srcdoc=" in html_out
+    assert "&lt;h1" in html_out  # escaped, not raw
+    # sizing style is injected so height:100% content fills the tile in the
+    # standards-mode srcdoc document (attribute-escaped like the rest)
+    assert "html,body{height:100%" in html_out
+
+    download_html = str(
+        file_result_to_gridstack_div(
+            "o.report",
+            {
+                "content_type": "text/csv",
+                "encoding": "plain",
+                "name": "data.csv",
+                "data": "a,b\n1,2\n",
+            },
+            pos,
+        )
+    )
+    assert 'download="data.csv"' in download_html
+    assert "data:text/csv;base64," in download_html
+
+
+@pytest.mark.asyncio
+async def test_dashboard_renders_outputs_relayed_from_separate_runtime_service(
+    _db_with_multits_viz_component,  # noqa: PT019
+    async_test_client,
+):
+    """Dashboard must render outputs when the runtime is a separate service
+
+    In that (default docker compose) setup the backend relays the runtime's output payload
+    as raw json bytes instead of parsed objects, see run_execution_input.
+    """
+    multitsframe = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2019-08-01T15:45:36.000Z", "2019-08-02T15:45:36.000Z"]),
+            "metric": ["a", "a"],
+            "value": [1.0, 2.0],
+        }
+    )
+
+    with mock.patch.object(get_config(), "is_runtime_service", False):
+        runtime_response_content = msgspec.json.encode(
+            {
+                "result": "ok",
+                "output_results_by_output_name": {
+                    "plot": {"data": [], "layout": {}},
+                    "report": {
+                        "content_type": "text/html",
+                        "encoding": "plain",
+                        "name": "report.html",
+                        "data": "<h1>hi</h1>",
+                    },
+                    "note": "some text output",
+                    # exactly as a separate runtime service serializes pandas payloads
+                    "frame": serialize_multitsframe_raw(multitsframe),
+                },
+                "output_types_by_output_name": {
+                    "plot": "PLOTLYJSON",
+                    "report": "ANY",
+                    "note": "STRING",
+                    "frame": "MULTITSFRAME",
+                },
+                "error": None,
+                "traceback": None,
+                "job_id": "1270547c-b224-461d-9387-e9d9d465bbe1",
+                "tr_id": "28120522-a6a5-418f-a658-ab19d5beefe2",
+                "tr_name": "MultiTsFrame Plot with multiple Y Axes",
+                "tr_tag": "1.0.0",
+                "measured_steps": {},
+            }
+        )
+        resp_mock = mock.Mock()
+        resp_mock.status_code = 200
+        resp_mock.content = runtime_response_content
+        runtime_client_mock = mock.Mock()
+        runtime_client_mock.post = mock.AsyncMock(return_value=resp_mock)
+
+        with mock.patch(
+            "hetdesrun.backend.execution.get_runtime_http_client",
+            return_value=runtime_client_mock,
+        ):
+            async with async_test_client as client:
+                response = await client.get(
+                    "/api/transformations/28120522-a6a5-418f-a658-ab19d5beefe2/dashboard"
+                )
+
+    assert response.status_code == 200
+    assert 'db_id="o.plot"' in response.text  # plotly output tile
+    assert 'db_id="o.note"' in response.text  # string output tile
+    assert "some text output" in response.text
+    assert 'db_id="o.report"' in response.text  # ANY file output tile
+    assert "&lt;h1&gt;hi&lt;/h1&gt;" in response.text  # its (escaped) srcdoc content
+    assert 'db_id="o.frame"' in response.text  # multitsframe datatable tile
+    assert "2019-08-01T15:45:36.000Z" in response.text  # its data
+
+
+def test_generate_gridstack_div_includes_any_file_outputs():
+    any_file_outputs = {
+        "o.report": {
+            "content_type": "application/pdf",
+            "encoding": "base64",
+            "name": "Report.pdf",
+            "data": "JVBER",
+        }
+    }
+    grid = str(
+        generate_gridstack_div({}, {}, {}, {}, {}, any_file_outputs, WorkflowWiring(), set())
+    )
+    assert "grid-stack" in grid
+    assert "o.report" in grid
+    assert 'data-file-b64="JVBER"' in grid

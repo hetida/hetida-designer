@@ -1,7 +1,14 @@
+from unittest import mock
+
 import pandas as pd
 import pytest
+from sqlalchemy import create_engine, inspect
 
+from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.sql_adapter import load_data, send_data
+from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.structure import get_source_by_id, get_sources
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
@@ -92,6 +99,121 @@ async def test_roundtrip_append_table(two_sqlite_dbs_configured):
     )
 
     assert len(append_table_after_second_write["inp"]) == 6
+
+
+@pytest.mark.asyncio
+async def test_write_to_table_not_configured_as_sink_is_rejected(
+    two_sqlite_dbs_configured, temporary_sqlite_file_path
+):
+    dataframe = pd.DataFrame({"a": [1, 2, 3]})
+
+    # append to a table that is not in append_tables
+    with pytest.raises(AdapterHandlingException, match="not allowed"):
+        await send_data(
+            {
+                "outp": FilteredSink(
+                    ref_id="test_writable_temp_sqlite_db/append_table/secret_table",
+                    ref_id_type="SINK",
+                )
+            },
+            {"outp": dataframe},
+            adapter_key="sql-adapter",
+        )
+
+    # replace a table that is only configured as an append table (mode-specific check)
+    with pytest.raises(AdapterHandlingException, match="not allowed"):
+        await send_data(
+            {
+                "outp": FilteredSink(
+                    ref_id="test_writable_temp_sqlite_db/replace_table/model_run_stats",
+                    ref_id_type="SINK",
+                )
+            },
+            {"outp": dataframe},
+            adapter_key="sql-adapter",
+        )
+
+    # the rejected writes must not have created/touched any table
+    engine = create_engine("sqlite+pysqlite:///" + temporary_sqlite_file_path)
+    try:
+        existing_tables = inspect(engine).get_table_names()
+    finally:
+        engine.dispose()
+    assert "secret_table" not in existing_tables
+
+
+@pytest.mark.asyncio
+async def test_read_table_not_configured_as_source_is_rejected(
+    three_sqlite_dbs_configured,
+):
+    db_key = "read_only_timeseries_sqlite_database"
+
+    # table1 is an existing table but explicitly ignored via ignore_tables
+    with pytest.raises(AdapterHandlingException, match="not allowed"):
+        await load_data(
+            {"inp": FilteredSource(ref_id=f"{db_key}/table/table1", ref_id_type="SOURCE")},
+            adapter_key="sql-adapter",
+        )
+
+    # deletion_test_table exists but is not in explicit_source_tables
+    with pytest.raises(AdapterHandlingException, match="not allowed"):
+        await load_data(
+            {
+                "inp": FilteredSource(
+                    ref_id=f"{db_key}/table/deletion_test_table", ref_id_type="SOURCE"
+                )
+            },
+            adapter_key="sql-adapter",
+        )
+
+    # a timeseries table must not be readable through the ordinary dataframe table source
+    with pytest.raises(AdapterHandlingException, match="not allowed"):
+        await load_data(
+            {"inp": FilteredSource(ref_id=f"{db_key}/table/ts_table", ref_id_type="SOURCE")},
+            adapter_key="sql-adapter",
+        )
+
+    # table2 is in explicit_source_tables and not ignored: it may be read
+    received = await load_data(
+        {"inp": FilteredSource(ref_id=f"{db_key}/table/table2", ref_id_type="SOURCE")},
+        adapter_key="sql-adapter",
+    )
+    assert isinstance(received["inp"], pd.DataFrame)
+
+
+@pytest.mark.asyncio
+async def test_arbitrary_sql_query_source_disabled_by_default():
+    db_key = "db_without_query_source"
+    with mock.patch(
+        "hetdesrun.adapters.sql_adapter.config.sql_adapter_config.sql_databases",
+        new=[
+            SQLAdapterDBConfig(
+                connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db",
+                name="db without query source",
+                key=db_key,
+            )
+        ],
+    ):
+        get_configured_dbs_by_key.cache_clear()
+        try:
+            # the query source is not offered in the listing
+            assert all(not source.id.endswith("/query") for source in get_sources())
+            # and cannot be resolved by id
+            assert get_source_by_id(f"{db_key}/query") is None
+            # and executing a query against it is rejected
+            with pytest.raises(AdapterHandlingException, match="not allowed"):
+                await load_data(
+                    {
+                        "inp": FilteredSource(
+                            ref_id=f"{db_key}/query",
+                            ref_id_type="SOURCE",
+                            filters={"sql_query": "SELECT a FROM data_table"},
+                        )
+                    },
+                    adapter_key="sql-adapter",
+                )
+        finally:
+            get_configured_dbs_by_key.cache_clear()
 
 
 @pytest.mark.asyncio

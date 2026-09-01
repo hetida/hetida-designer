@@ -1,0 +1,38 @@
+<cdk-virtual-scroll-viewport
+  itemSize="52"
+  minBufferPx="200"
+  maxBufferPx="400"
+  class="node-search"
+>
+  <div
+    class="node-item"
+    (click)="_nodeClick(sourceOrSinkNode, $event)"
+    *cdkVirtualFor="let sourceOrSinkNode of sourcesOrSinks"
+  >
+    <div class="node-item__element">
+      <span
+        class="node-item__id"
+        [innerHTML]="sourceOrSinkNode.path | highlightText: searchText"
+      ></span>
+
+      <div class="node-item__io-type-container">
+        <span
+          class="hd-lens-icon-20"
+          [ngStyle]="{ color: _getTypeColor(sourceOrSinkNode.type) }"
+        >
+          <mat-icon class="hd-unselectable" [inline]="true">lens</mat-icon>
+        </span>
+        <span
+          class="node-item__name"
+          [innerHTML]="sourceOrSinkNode.name | highlightText: searchText"
+        ></span>
+      </div>
+    </div>
+    <div
+      class="node-item__meta-data-icon"
+      (click)="_nodeMetaDataClick(sourceOrSinkNode, $event)"
+    >
+      <mat-icon class="hd-clickable">ballot</mat-icon>
+    </div>
+  </div>
+</cdk-virtual-scroll-viewport>

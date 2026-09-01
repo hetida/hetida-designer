@@ -475,7 +475,11 @@ async def run_execution_input(  # noqa: PLR0915
                     logger.info(msg)
                     raise TrafoExecutionRuntimeConnectionError(msg) from e
 
-            headers["Accept-Encoding"] = "gzip"
+            # Never compress the internal backend->runtime hop: it is typically same-host / same
+            # cluster (well above the bandwidth break-even), so gzip here is pure CPU cost and
+            # blocks the runtime event loop. "identity" also overrides httpx's default
+            # Accept-Encoding (which requests gzip/br) regardless of the runtime middleware config.
+            headers["Accept-Encoding"] = "identity"
             headers["Content-Type"] = "application/json"
 
             client = get_runtime_http_client()  # get runtime async httpx client
@@ -563,11 +567,28 @@ async def run_execution_input(  # noqa: PLR0915
                         PerformanceMeasuredStep.create_and_begin("runtime_request_response_parsing")
                     )
 
-                    json_obj = msgspec.json.decode(
-                        response.content
-                    )  # use msgspec for json parsing speed instead of response.json()
+                    # Decode the runtime response keeping each top-level field's value as raw bytes.
+                    # This validates that the whole response is well-formed JSON (the "is it
+                    # serializable" guard) while NOT building Python objects for the potentially
+                    # large output data: those bytes are spliced through to the caller (see
+                    # ExecutionResponseFrontendDto.raw_output_results_json). Only the small envelope
+                    # fields are parsed here.
+                    top_level_raw = msgspec.json.decode(
+                        response.content, type=dict[str, msgspec.Raw]
+                    )
+                    # remove output_results_by_output_name for now, but keep its raw value:
+                    raw_output_results = top_level_raw.pop("output_results_by_output_name", None)
+                    # complete parsing of the remaining fields
+                    envelope = {
+                        key: msgspec.json.decode(raw_value)
+                        for key, raw_value in top_level_raw.items()
+                    }
+                    envelope["output_results_by_output_name"] = {}
                     execution_response = ExecutionResponseFrontendDto.model_validate(
-                        json_obj, context={"result_validation": False}
+                        envelope, context={"result_validation": False}
+                    )
+                    execution_response.raw_output_results_json = (
+                        bytes(raw_output_results) if raw_output_results is not None else None
                     )
                     add_runtime_request_response_reaction_times(
                         start_calling_runtime,
@@ -577,10 +598,10 @@ async def run_execution_input(  # noqa: PLR0915
 
                     runtime_request_response_parsing_step.stop()
 
-            except ValidationError as e:
+            except (ValidationError, msgspec.MsgspecError) as e:
                 msg = (
                     f"Could not validate hd runtime result object. Exception:\n{str(e)}"
-                    f"\nJson Object is:\n{str(json_obj)}"
+                    f"\nResponse content (truncated) is:\n{response.content[:2000]!r}"
                 )
                 logger.info(msg)
                 raise TrafoExecutionResultValidationError(msg) from e
@@ -610,17 +631,20 @@ async def run_execution_input(  # noqa: PLR0915
         plot_wiring_corrected_output_types_by_output_name
     )
 
+    log_outputs = get_config().log_direct_provisioning_outputs
+    execution_result_response_log = execution_response.model_dump(
+        mode="json",
+        exclude=None if log_outputs else {"output_results_by_output_name"},
+        context={"naive_result_serialization": not get_config().is_runtime_service},
+    )
+    if log_outputs and execution_response.raw_output_results_json is not None:
+        # Output data was relayed as raw bytes (not in the model); decode it just for this log line.
+        execution_result_response_log["output_results_by_output_name"] = msgspec.json.decode(
+            execution_response.raw_output_results_json
+        )
     logger.info(
         "Execution Result Response",
-        extra={
-            "execution_result_response": execution_response.model_dump(
-                mode="json",
-                exclude={"output_results_by_output_name"}
-                if not get_config().log_direct_provisioning_outputs
-                else None,
-                context={"naive_result_serialization": not get_config().is_runtime_service},
-            )
-        },
+        extra={"execution_result_response": execution_result_response_log},
     )
     return execution_response
 

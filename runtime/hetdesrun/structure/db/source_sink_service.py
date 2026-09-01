@@ -1,9 +1,8 @@
 import logging
 from itertools import batched
-from math import ceil
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine
+from sqlalchemy import Connection, Engine, delete, insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.postgresql.dml import Insert as pg_insert_typing
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -15,6 +14,8 @@ from hetdesrun.persistence.structure_service_dbmodels import (
     StructureServiceSinkDBModel,
     StructureServiceSourceDBModel,
     StructureServiceThingNodeDBModel,
+    thingnode_sink_association,
+    thingnode_source_association,
 )
 from hetdesrun.structure.db.exceptions import (
     DBError,
@@ -93,15 +94,9 @@ def fetch_collection_of_sources_from_db_by_id(
     if not src_ids:
         return sources
 
-    logger.debug(
-        "Successfully fetched collection of %d StructureServiceSources "
-        "from the database for %d IDs. StructureServiceSources with IDs: %s",
-        len(sources),
-        len(src_ids),
-        src_ids,
-    )
+    logger.debug("Fetching collection of StructureServiceSources for %d IDs.", len(src_ids))
     with get_session()() as session:
-        for id_batch in batched(src_ids, ceil(len(src_ids) / batch_size), strict=False):
+        for id_batch in batched(src_ids, batch_size, strict=False):
             batch_query = session.query(StructureServiceSourceDBModel).filter(
                 StructureServiceSourceDBModel.id.in_(id_batch)
             )
@@ -112,7 +107,11 @@ def fetch_collection_of_sources_from_db_by_id(
     if not sources:
         raise DBNotFoundError(f"No StructureServiceSources found for IDs {src_ids}")
 
-    logger.debug("Successfully fetched collection of StructureServiceSources.")
+    logger.debug(
+        "Successfully fetched collection of %d StructureServiceSources for %d IDs.",
+        len(sources),
+        len(src_ids),
+    )
     return sources
 
 
@@ -128,17 +127,9 @@ def fetch_collection_of_sinks_from_db_by_id(
     if not sink_ids:
         return sinks
 
-    logger.debug("Fetching collection of StructureServiceSinks with IDs: %s", sink_ids)
-
-    logger.debug(
-        "Successfully fetched collection of %d StructureServiceSinks from the database for %d IDs. "
-        "StructureServiceSinks with IDs: %s",
-        len(sinks),
-        len(sink_ids),
-        sink_ids,
-    )
+    logger.debug("Fetching collection of StructureServiceSinks for %d IDs.", len(sink_ids))
     with get_session()() as session:
-        for id_batch in batched(sink_ids, ceil(len(sink_ids) / batch_size), strict=False):
+        for id_batch in batched(sink_ids, batch_size, strict=False):
             batch_query = session.query(StructureServiceSinkDBModel).filter(
                 StructureServiceSinkDBModel.id.in_(id_batch)
             )
@@ -149,7 +140,11 @@ def fetch_collection_of_sinks_from_db_by_id(
     if not sinks:
         raise DBNotFoundError(f"No StructureServiceSinks found for IDs {sink_ids}")
 
-    logger.debug("Successfully fetched collection of StructureServiceSinks.")
+    logger.debug(
+        "Successfully fetched collection of %d StructureServiceSinks for %d IDs.",
+        len(sinks),
+        len(sink_ids),
+    )
     return sinks
 
 
@@ -164,15 +159,15 @@ def fetch_sources_by_substring_match(filter_string: str) -> list[StructureServic
         try:
             matching_sources = (
                 session.query(StructureServiceSourceDBModel)
-                .filter(StructureServiceSourceDBModel.name.ilike(f"%{filter_string}%"))
+                .filter(
+                    StructureServiceSourceDBModel.name.icontains(filter_string, autoescape=True)
+                )
                 .all()
             )
             logger.debug(
-                "Found %d StructureServiceSourceDBModel items matching filter "
-                "string '%s' from %d total records.",
+                "Found %d StructureServiceSourceDBModel items matching filter string '%s'.",
                 len(matching_sources),
                 filter_string,
-                session.query(StructureServiceSourceDBModel).count(),
             )
             return [StructureServiceSource.from_orm_model(src) for src in matching_sources]
         except IntegrityError as e:
@@ -185,10 +180,8 @@ def fetch_sources_by_substring_match(filter_string: str) -> list[StructureServic
                 "Integrity Error while filtering StructureServiceSourceDBModel by substring match"
             ) from e
         except Exception as e:
-            logger.error(
-                "Unexpected error while filtering StructureServiceSourceDBModel "
-                "by substring match: %s",
-                e,
+            logger.exception(
+                "Unexpected error while filtering StructureServiceSourceDBModel by substring match"
             )
             raise DBError(
                 "Unexpected error while filtering StructureServiceSourceDBModel by substring match"
@@ -206,15 +199,13 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
         try:
             matching_sinks = (
                 session.query(StructureServiceSinkDBModel)
-                .filter(StructureServiceSinkDBModel.name.ilike(f"%{filter_string}%"))
+                .filter(StructureServiceSinkDBModel.name.icontains(filter_string, autoescape=True))
                 .all()
             )
             logger.debug(
-                "Found %d StructureServiceSinkDBModel items matching "
-                "filter string '%s' from %d total records.",
+                "Found %d StructureServiceSinkDBModel items matching filter string '%s'.",
                 len(matching_sinks),
                 filter_string,
-                session.query(StructureServiceSinkDBModel).count(),
             )
             return [StructureServiceSink.from_orm_model(sink) for sink in matching_sinks]
         except IntegrityError as e:
@@ -227,14 +218,40 @@ def fetch_sinks_by_substring_match(filter_string: str) -> list[StructureServiceS
                 "Integrity Error while filtering StructureServiceSourceDBModel by substring match"
             ) from e
         except Exception as e:
-            logger.error(
-                "Unexpected error while filtering StructureServiceSinkDBModel "
-                "by substring match: %s",
-                e,
+            logger.exception(
+                "Unexpected error while filtering StructureServiceSinkDBModel by substring match"
             )
             raise DBError(
                 "Unexpected error while filtering StructureServiceSinkDBModel by substring match"
             ) from e
+
+
+def _collect_thing_node_associations(
+    entity_dbmodels: object,
+    existing_thing_nodes: dict[tuple[str, str], StructureServiceThingNodeDBModel],
+    entity_id_column: str,
+) -> tuple[list[UUID], list[dict]]:
+    """Collect the thing-node association rows for a set of upserted sources/sinks.
+
+    Returns the entity ids and the association rows ({"thingnode_id": ..., <entity_id_column>: ...})
+    for a bulk replace. Duplicate associations are removed. Only scalar columns of the
+    returned orm models are accessed, so this does not trigger relationship lazy-loads.
+    """
+    entity_ids: list[UUID] = []
+    association_rows: list[dict] = []
+    seen: set[tuple[UUID, UUID]] = set()
+    for entity in entity_dbmodels:  # type: ignore[attr-defined]
+        entity_ids.append(entity.id)
+        for tn_external_id in entity.thing_node_external_ids or []:
+            thing_node = existing_thing_nodes.get((entity.stakeholder_key, tn_external_id))
+            if thing_node is None:
+                continue
+            association = (thing_node.id, entity.id)
+            if association in seen:
+                continue
+            seen.add(association)
+            association_rows.append({"thingnode_id": thing_node.id, entity_id_column: entity.id})
+    return entity_ids, association_rows
 
 
 def upsert_sources(
@@ -284,13 +301,20 @@ def upsert_sources(
             execution_options={"populate_existing": True},
         )
 
-        # Assign relationships
-        for source in sources_dbmodels:
-            source.thing_nodes = [
-                existing_thing_nodes.get((source.stakeholder_key, tn_external_id))
-                for tn_external_id in source.thing_node_external_ids or []
-                if (source.stakeholder_key, tn_external_id) in existing_thing_nodes
-            ]
+        # Replace the many-to-many thing-node associations in bulk. Assigning
+        # source.thing_nodes per row would lazy-load each source's current association
+        # collection to diff it (one SELECT per source, i.e. N+1); instead apply the
+        # desired associations with a single bulk delete + bulk insert.
+        source_ids, source_association_rows = _collect_thing_node_associations(
+            sources_dbmodels, existing_thing_nodes, "source_id"
+        )
+        session.execute(
+            delete(thingnode_source_association).where(
+                thingnode_source_association.c.source_id.in_(source_ids)
+            )
+        )
+        if source_association_rows:
+            session.execute(insert(thingnode_source_association), source_association_rows)
 
     except IntegrityError as e:
         logger.error("Integrity Error while upserting StructureServiceSourceDBModel: %s", e)
@@ -301,7 +325,7 @@ def upsert_sources(
         logger.error("Value error while upserting StructureServiceSourceDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceSourceDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceSourceDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceSourceDBModel")
         raise DBUpdateError("Unexpected error while upserting StructureServiceSourceDBModel") from e
 
 
@@ -352,13 +376,17 @@ def upsert_sinks(
             execution_options={"populate_existing": True},
         )
 
-        # Assign relationships
-        for sink in sinks_dbmodels:
-            sink.thing_nodes = [
-                existing_thing_nodes.get((sink.stakeholder_key, tn_external_id))
-                for tn_external_id in sink.thing_node_external_ids or []
-                if (sink.stakeholder_key, tn_external_id) in existing_thing_nodes
-            ]
+        # Replace the many-to-many thing-node associations in bulk (see upsert_sources).
+        sink_ids, sink_association_rows = _collect_thing_node_associations(
+            sinks_dbmodels, existing_thing_nodes, "sink_id"
+        )
+        session.execute(
+            delete(thingnode_sink_association).where(
+                thingnode_sink_association.c.sink_id.in_(sink_ids)
+            )
+        )
+        if sink_association_rows:
+            session.execute(insert(thingnode_sink_association), sink_association_rows)
 
     except IntegrityError as e:
         logger.error("Integrity Error while upserting StructureServiceSinkDBModel: %s", e)
@@ -367,5 +395,5 @@ def upsert_sinks(
         logger.error("Value error while upserting StructureServiceSinkDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceSinkDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceSinkDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceSinkDBModel")
         raise DBUpdateError("Unexpected error while upserting StructureServiceSinkDBModel") from e

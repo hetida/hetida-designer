@@ -20,13 +20,13 @@ This guide assumes the default docker compose setup described in the project REA
 On the home tab in the bottom left the user interface provides a import trafos button
 
 <figure markdown="span">
-![](../../../assets/import_trafos_button.png){ width=30 }
+![](../../assets/import_trafos_button.png){ width=30 }
 </figure>
 
 This button opens a dialog where workflow or component json (or component code) can be pasted into a text input and imported:
 
 <figure markdown="span">
-![](../../../assets/import_trafos_dialog.png){ width=300 }
+![](../../assets/import_trafos_dialog.png){ width=300 }
 </figure>
 
 You can enter a single transformation's json or a single component's code. E.g. component code can be simply copy-pasted from the component editor, e.g. from antoher installation, and pasted here.
@@ -44,7 +44,7 @@ The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that ca
 
 The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
 
-Using hdctl has the advantage that it does not require docker. See the [hdctl script file](../hdctl) for installation instructions and run `./hdctl usage` for usage details and examples.
+Using hdctl has the advantage that it does not require docker. See the [hdctl script file](https://github.com/hetida/hetida-designer/blob/release/hdctl) for installation instructions and run `./hdctl usage` for usage details and examples.
 
 hdctl supports the same parameters as the Pythons script variant discussed below.
 

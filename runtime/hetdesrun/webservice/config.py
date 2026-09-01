@@ -202,7 +202,8 @@ class RuntimeConfig(BaseSettings):
         False,
         description=(
             "Whether the output_results_by_output_name field provided together with an"
-            " execution result response will be logged"
+            " execution result response will be logged. This should be False in production."
+            " Activating it can have significant negative performance impact!"
         ),
         validation_alias="LOG_DIRECT_PROVISIONING_OUTPUTS",
     )
@@ -235,6 +236,26 @@ class RuntimeConfig(BaseSettings):
             "The time (in seconds) to wait for a response of an external REST API "
             "such as a generic REST adapter"
         ),
+    )
+    allowed_callback_url_patterns: list[str] = Field(
+        default_factory=list,
+        validation_alias="HD_ALLOWED_CALLBACK_URL_PATTERNS",
+        description=(
+            "Allowlist of URL patterns that the callback_url of the asynchronous"
+            " execution endpoints (/execute-async, /execute-latest-async) must match."
+            " A caller-supplied callback_url is only accepted if it matches at least one"
+            " pattern here; otherwise the request is rejected. This prevents the backend"
+            " from being abused to POST execution results (and, depending on the outgoing"
+            " auth mode, the service's own bearer token) to arbitrary hosts (SSRF)."
+            " Patterns use shell-style globbing (fnmatch): '*' matches any sequence of"
+            " characters, '?' a single character. Always pin the scheme and host and"
+            " include the path separator, e.g."
+            " 'https://caller.example.com/hd-callback*' to permit any query string such"
+            " as an identifying call id. Only http/https URLs without embedded userinfo"
+            " are ever considered. The default is an empty list, which disables the"
+            " asynchronous callback feature entirely (fail closed) until configured."
+        ),
+        examples=[["https://caller.example.com/hd-callback*"]],
     )
     model_repo_path: str = Field(
         "/mnt/obj_repo",
@@ -302,6 +323,30 @@ class RuntimeConfig(BaseSettings):
         ),
         validation_alias="ALLOWED_ORIGINS",
         examples=["http://exampledomain.com,http://anotherexampledomain.de"],
+    )
+
+    response_compression_enabled: bool = Field(
+        False,
+        description=(
+            "Whether to gzip-compress outgoing responses (GZipMiddleware). Disabled by default:"
+            " gzip runs synchronously in the event loop and, on multi-MB payloads (e.g. large"
+            " plotly plots), costs on the order of 100ms per response - a net latency loss on fast"
+            " (LAN / same-cluster) links and a block on request concurrency. Enable it only if"
+            " clients are on slow links and no reverse proxy / ingress already handles compression"
+            " (which is the recommended place for it). Does not affect the internal"
+            " backend->runtime request, which never requests compression."
+        ),
+        validation_alias="RESPONSE_COMPRESSION_ENABLED",
+    )
+    response_compression_level: int = Field(
+        1,
+        ge=1,
+        le=9,
+        description=(
+            "gzip compression level (1-9) used when response_compression_enabled is true. Level 1"
+            " is markedly cheaper than the zlib default (6) for a marginally larger payload."
+        ),
+        validation_alias="RESPONSE_COMPRESSION_LEVEL",
     )
 
     sqlalchemy_db_host: str = Field(
@@ -375,14 +420,33 @@ class RuntimeConfig(BaseSettings):
 
     auth_audience: str | None = Field(
         "account",
-        description="Expected audience in tokens.",
+        description="Expected audience in tokens. If set, tokens must contain a matching"
+        " aud claim — tokens lacking the claim are rejected. Set to an empty string to"
+        " disable audience checking.",
         validation_alias=AliasChoices("HD_AUTH_AUDIENCE", "JWT_AUDIENCE"),
     )
 
     auth_issuer: str | None = Field(
         None,
-        description="Expected issuer in tokens.",
+        description="Expected issuer in tokens. If set, tokens must contain a matching"
+        " iss claim — tokens lacking the claim are rejected.",
         validation_alias=AliasChoices("HD_AUTH_ISSUER", "JWT_ISSUER"),
+    )
+
+    auth_allowed_algorithms: str = Field(
+        "RS256,RS384,RS512,ES256,ES384,ES512",
+        description=(
+            "Comma separated list of JWT signature algorithms that are accepted when"
+            " verifying bearer tokens. This MUST only contain asymmetric algorithms:"
+            " the verification key is the public key obtained from the auth provider's"
+            " JWKS endpoint, so allowing symmetric algorithms (HS256/HS384/HS512) would"
+            " enable algorithm-confusion attacks where an attacker signs a forged token"
+            " with the (public) key as an HMAC secret. The default covers the RSA and"
+            " ECDSA algorithms commonly offered by OpenID Connect providers such as"
+            " Keycloak; adjust it to match the algorithm(s) your provider signs with."
+        ),
+        validation_alias="HD_AUTH_ALLOWED_ALGORITHMS",
+        examples=["RS256", "RS256,ES256"],
     )
 
     auth_verify_certs: bool = Field(True, validation_alias="HD_AUTH_VERIFY_CERTS")
@@ -433,7 +497,7 @@ class RuntimeConfig(BaseSettings):
         examples=["P0DT00H00M15S"],
     )
 
-    auth_bearer_token_for_outgoing_requests: str | None = Field(
+    auth_bearer_token_for_outgoing_requests: SecretStr | None = Field(
         None,
         description=(
             "A string containing a bearer token for making outgoing requests. "
@@ -651,10 +715,10 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HETIDA_DESIGNER_BASIC_AUTH_USER",
         description="Basic Auth User",
     )
-    hd_backend_basic_auth_password: str | None = Field(
+    hd_backend_basic_auth_password: SecretStr | None = Field(
         None,
         validation_alias="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
-        description="Basic Auth User",
+        description="Basic Auth Password",
     )
     hd_backend_verify_certs: bool = Field(
         True, validation_alias="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"

@@ -6036,7 +6036,7 @@
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
-            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
+            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"SINGLETSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
             "examples": [
               "FLOAT"
             ]
@@ -6117,7 +6117,7 @@
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
-            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
+            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"SINGLETSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
             "examples": [
               "INT"
             ]
@@ -6274,6 +6274,7 @@
           "DATAFRAME",
           "SERIES",
           "MULTITSFRAME",
+          "SINGLETSFRAME",
           "BOOLEAN",
           "ANY",
           "PLOTLYJSON"
@@ -6511,6 +6512,18 @@
           "result": {
             "type": "string",
             "title": "Result"
+          },
+          "raw_output_results_json": {
+            "anyOf": [
+              {
+                "type": "string",
+                "contentMediaType": "application/octet-stream"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Output Results Json"
           },
           "resolved_reproducibility_references": {
             "$ref": "#/components/schemas/ReproducibilityReference",
@@ -6854,6 +6867,7 @@
           "series(boolean)",
           "series(any)",
           "multitsframe",
+          "singletsframe",
           "dataframe",
           "plotlyjson"
         ],
@@ -7064,6 +7078,50 @@
               }
             ],
             "title": "Parent Node Id"
+          },
+          "hierarchy_display_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hierarchy Display Path"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          },
+          "tenant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Name"
           }
         },
         "type": "object",
@@ -7198,7 +7256,7 @@
                 "type": "null"
               }
             ],
-            "description": "Type of data. If present then must be one of \"metadata(int)\", \"metadata(float)\", \"metadata(numeric)\", \"metadata(string)\", \"metadata(boolean)\", \"metadata(any)\", \"timeseries(int)\", \"timeseries(float)\", \"timeseries(numeric)\", \"timeseries(string)\", \"timeseries(boolean)\", \"timeseries(any)\", \"series(int)\", \"series(float)\", \"series(numeric)\", \"series(string)\", \"series(boolean)\", \"series(any)\", \"multitsframe\", \"dataframe\", \"plotlyjson\""
+            "description": "Type of data. If present then must be one of \"metadata(int)\", \"metadata(float)\", \"metadata(numeric)\", \"metadata(string)\", \"metadata(boolean)\", \"metadata(any)\", \"timeseries(int)\", \"timeseries(float)\", \"timeseries(numeric)\", \"timeseries(string)\", \"timeseries(boolean)\", \"timeseries(any)\", \"series(int)\", \"series(float)\", \"series(numeric)\", \"series(string)\", \"series(boolean)\", \"series(any)\", \"multitsframe\", \"singletsframe\", \"dataframe\", \"plotlyjson\""
           },
           "use_default_value": {
             "type": "boolean",
@@ -7840,7 +7898,7 @@
                 "type": "null"
               }
             ],
-            "description": "Type of data. If present then must be one of \"metadata(int)\", \"metadata(float)\", \"metadata(numeric)\", \"metadata(string)\", \"metadata(boolean)\", \"metadata(any)\", \"timeseries(int)\", \"timeseries(float)\", \"timeseries(numeric)\", \"timeseries(string)\", \"timeseries(boolean)\", \"timeseries(any)\", \"series(int)\", \"series(float)\", \"series(numeric)\", \"series(string)\", \"series(boolean)\", \"series(any)\", \"multitsframe\", \"dataframe\", \"plotlyjson\""
+            "description": "Type of data. If present then must be one of \"metadata(int)\", \"metadata(float)\", \"metadata(numeric)\", \"metadata(string)\", \"metadata(boolean)\", \"metadata(any)\", \"timeseries(int)\", \"timeseries(float)\", \"timeseries(numeric)\", \"timeseries(string)\", \"timeseries(boolean)\", \"timeseries(any)\", \"series(int)\", \"series(float)\", \"series(numeric)\", \"series(string)\", \"series(boolean)\", \"series(any)\", \"multitsframe\", \"singletsframe\", \"dataframe\", \"plotlyjson\""
           },
           "filters": {
             "patternProperties": {
@@ -9726,6 +9784,24 @@
           "component_code": {
             "type": "string",
             "title": "Component Code"
+          },
+          "code_modules": {
+            "items": {
+              "$ref": "#/components/schemas/CodeModule"
+            },
+            "type": "array",
+            "title": "Code Modules",
+            "description": "Code modules of all components (transitively) imported via import_comp by the component code under test.",
+            "default": []
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentRevision"
+            },
+            "type": "array",
+            "title": "Components",
+            "description": "Component revisions of all components (transitively) imported via import_comp by the component code under test.",
+            "default": []
           }
         },
         "type": "object",
@@ -10904,7 +10980,7 @@
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
-            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
+            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"SINGLETSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
             "examples": [
               "FLOAT"
             ]
@@ -11069,7 +11145,7 @@
           },
           "type": {
             "$ref": "#/components/schemas/DataType",
-            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
+            "description": "one of \"INT\", \"FLOAT\", \"STRING\", \"DATAFRAME\", \"SERIES\", \"MULTITSFRAME\", \"SINGLETSFRAME\", \"BOOLEAN\", \"ANY\", \"PLOTLYJSON\"",
             "examples": [
               "INT"
             ]

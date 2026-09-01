@@ -67,6 +67,7 @@ class GeneralType(Enum):
     TIMESERIES = "timeseries"
     SERIES = "series"
     MULTITSFRAME = "multitsframe"
+    SINGLETSFRAME = "singletsframe"
     DATAFRAME = "dataframe"
 
 
@@ -93,6 +94,8 @@ class ExternalType(str, Enum):
     SERIES_ANY = "series(any)", "series(object)"
 
     MULTITSFRAME = "multitsframe"
+
+    SINGLETSFRAME = "singletsframe"
 
     DATAFRAME = "dataframe"
 

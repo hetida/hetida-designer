@@ -22,16 +22,11 @@ def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> N
             str(nesting.nested_transformation_id),
             str(nesting.workflow_id),
         )
-    try:
-        session.merge(nesting)
-    except IntegrityError as e:
-        msg = (
-            f"Integrity Error while trying to store nesting for"
-            f" transformation revision with id {nesting.workflow_id}."
-            f" Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise DBIntegrityError(msg) from e
+    # session.add (not session.merge): update_nesting deletes all of this workflow's
+    # nestings first, so a row cannot already exist. merge would issue a redundant
+    # existence SELECT per row (N+1); add stages the row to be flushed in bulk. Integrity
+    # errors are handled where the flush happens (in update_nesting).
+    session.add(nesting)
 
 
 def find_all_nested_transformation_revisions(
@@ -105,38 +100,56 @@ def update_nesting(
 
     disallowed_ancestors: set[UUID] = {workflow_id}
 
-    for child in workflow_content.operators:
-        add_single_nesting(
-            session,
-            NestingDBModel(
-                workflow_id=workflow_id,
-                via_transformation_id=child.transformation_id,
-                via_operator_id=child.id,
-                depth=1,
-                nested_transformation_id=child.transformation_id,
-                nested_operator_id=child.id,
-            ),
-        )
-        if child.transformation_id == workflow_id:
-            raise DBNestingCycleDetected(
-                f"Direct cycle detected: Trying to insert workflow {workflow_id} into itself"
+    # Stage all nestings and flush them in bulk. The try wraps the whole staging phase so
+    # that a foreign key violation (e.g. an operator referencing a transformation that is
+    # not present) is mapped to DBIntegrityError regardless of whether it surfaces at the
+    # explicit flush or at an autoflush triggered by find_all_nested_transformation_revisions
+    # -- so callers (e.g. the importer) can handle it per transformation instead of it
+    # escaping as a raw IntegrityError.
+    try:
+        for child in workflow_content.operators:
+            add_single_nesting(
+                session,
+                NestingDBModel(
+                    workflow_id=workflow_id,
+                    via_transformation_id=child.transformation_id,
+                    via_operator_id=child.id,
+                    depth=1,
+                    nested_transformation_id=child.transformation_id,
+                    nested_operator_id=child.id,
+                ),
             )
-
-        if child.type == Type.WORKFLOW:
-            descendants = find_all_nested_transformation_revisions(session, child.transformation_id)
-            for descendant in descendants:
-                add_single_nesting(
-                    session,
-                    NestingDBModel(
-                        workflow_id=workflow_id,
-                        via_transformation_id=child.transformation_id,
-                        via_operator_id=child.id,
-                        depth=1 + descendant.depth,
-                        nested_transformation_id=descendant.transformation_id,
-                        nested_operator_id=descendant.operator_id,
-                    ),
+            if child.transformation_id == workflow_id:
+                raise DBNestingCycleDetected(
+                    f"Direct cycle detected: Trying to insert workflow {workflow_id} into itself"
                 )
-                disallowed_ancestors.add(descendant.transformation_id)
+
+            if child.type == Type.WORKFLOW:
+                descendants = find_all_nested_transformation_revisions(
+                    session, child.transformation_id
+                )
+                for descendant in descendants:
+                    add_single_nesting(
+                        session,
+                        NestingDBModel(
+                            workflow_id=workflow_id,
+                            via_transformation_id=child.transformation_id,
+                            via_operator_id=child.id,
+                            depth=1 + descendant.depth,
+                            nested_transformation_id=descendant.transformation_id,
+                            nested_operator_id=descendant.operator_id,
+                        ),
+                    )
+                    disallowed_ancestors.add(descendant.transformation_id)
+
+        session.flush()
+    except IntegrityError as e:
+        msg = (
+            f"Integrity error while storing nestings for transformation revision "
+            f"with id {workflow_id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
 
     # check ancestors to disallow possible introduction of cycles
 

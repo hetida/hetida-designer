@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - release
-      - develop
 permissions:
   contents: read
   pages: write
   id-token: write
 jobs:
   deploy:
+    if: github.repository == 'hetida/hetida-designer'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

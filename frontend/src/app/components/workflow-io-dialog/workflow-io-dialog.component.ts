@@ -355,6 +355,8 @@ export class WorkflowIODialogComponent implements AfterViewInit {
     return (
       ioType === IOType.SERIES ||
       ioType === IOType.DATAFRAME ||
+      ioType === IOType.MULTITSFRAME ||
+      ioType === IOType.SINGLETSFRAME ||
       ioType === IOType.ANY
     );
   }

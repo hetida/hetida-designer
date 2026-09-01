@@ -20,6 +20,10 @@ class HierarchyObject(BaseModel):
     id: str | None = None
     node_id: str | None = None
     parent_node_id: str | None = None
+    hierarchy_display_path: str | None = None
+    name: str | None = None
+    tenant_id: str | None = None
+    tenant_name: str | None = None
 
 
 class TimeInterval(BaseModel):

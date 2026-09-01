@@ -11,8 +11,8 @@ Creates an interactive Plotly line chart for a single time series.
 * **series** (*Pandas Series*): Timeseries to be plotted. Values must be numeric and the index must be a `DateTimeIndex`.
 * **ymin** (*float, optional*): Lower limit of the y-axis. If not specified, the minimum value is determined automatically from the data.
 * **ymax** (*float, optional*): Upper limit of the y-axis. If not specified, the maximum value is determined automatically from the data.
-* **color** (*string, optional*): Line color of the plotted series. Defaults to `#89CE6E` (light green). Can also be a named color, e.g. "red" or a fuseki color like "ki.tech".
-* **ylabel** (*string, optional*): Label of the y-axis. If not specified, the metric name and unit are extracted from the series metadata, if available.
+* **color** (*string, optional*): Line color of the plotted series. Defaults to `ki.green`. Can be a color hey value like `#89CE6E`. Can also be a named color, e.g. "red" or a fuseki color like "ki.tech".
+* **ylabel** (*string, optional*): Label of the y-axis. If not specified (null/None), the metric name and unit are extracted from the series metadata, if available. If that does not yield a non-empty string or ylabel is explicitely set to the string "__OFF__", no yaxis label will be shown.
 * **xmin** (*string, optional*): Lower x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the minimum timestamp of the series is used.
 * **xmax** (*string, optional*): Upper x-axis limit. The value is interpreted using `dtexp`. If not specified, the queried interval from the metadata is used. If no metadata is available, the maximum timestamp of the series is used.
 * **connection_type** (*string, optional*): Defines how consecutive data points are connected. As default a linear line is drawn between consecutive datapoints. Supported values are:
@@ -21,6 +21,8 @@ Creates an interactive Plotly line chart for a single time series.
   * `backward_steps`: Step plot with vertical transitions followed by horizontal segments.
 * **maximum_gap_size** (*string, optional*): Maximum allowed time gap between two consecutive data points that are connected by a line. The value must be specified as a pandas frequency string (e.g. `5min`, `1h`, `2d`). Gaps larger than the specified value are visualized as breaks in the line. Per default no check for long gaps between consecutive timestamps is performed.
 * **marker_threshold** (integer, optional): Parameter that controls when to add markers to the line plot. By default, markers are displayed until the series length is smaller than 300. In case markers should never be drawn, please define 0. In case markers should always be drawn please define a negative number, .e.g, -1. (Note that this might reduce the processing speed of this component.)
+* **locale** (*string, optional*): A plotly locale string like "de", "de-DE" or "en-US". If not explicitely provided (null/None) the locale will be inferred from plot target settings. If explicitely provided using this param this has higher priority.
+* **target_timezone** (*string, optional*): If this is not provided, i.e. has its default value null / None, the target timezone will be inferred from plot_target_settings. If it is provided this param has higher priority. Example values: "Europe/Berlin" or "+02:00". See possible timezone strings in pandas’ tz_convert method or pytz all_timezones list
 
 ## Outputs
 
@@ -122,30 +124,21 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import pytest
 from dtexp import parse_dtexp
-from hdhelpers.helpers import modify_timezone
+from hdhelpers import (
+    get_locale,
+    modify_timezone,
+    resolve_color,
+    set_agnostic_theme,
+    set_dt_ticks,
+)
 from hdhelpers.metadata import get_queried_interval, get_series_name, get_series_unit
-from hdhelpers.plot_target_settings import get_plot_target_settings
 
 from hdutils import plotly_fig_to_json_dict
 
 pio.templates.default = None
 
-FUSEKI_COLORS = {
-    "ki.vision": "#eb7c45",  # orange
-    "ki.change": "#2fae53",  # green
-    "ki.contrast": "#232326",  # black
-    "ki.insight": "#e5cf64",  # yellow / gold
-    "ki.tech": "#80b0ec",  # blue
-    "ki.shade": "#8c8c98",  # gray
-    "ki.vision.bright": "#ffb058",  # light orange
-    "ki.change.bright": "#89ce6e",  # light green
-    "ki.light": "#f8f8f8",  # off-white / light gray
-    "ki.energy": "#eb6962",  # red / coral
-    "ki.science": "#bd7abb",  # purple
-}
-
-DEFAULT_EMPTY_XMIN = pd.Timestamp("1970-01-01 00:00:00", tz="UTC")
-DEFAULT_EMPTY_XMAX = pd.Timestamp("1970-01-02 00:00:00", tz="UTC")
+DEFAULT_EMPTY_XMIN = None  # pd.Timestamp("1970-01-01 00:00:00", tz="UTC")
+DEFAULT_EMPTY_XMAX = None  # pd.Timestamp("1970-01-02 00:00:00", tz="UTC")
 
 DEFAULT_EMPTY_YMIN = 0
 DEFAULT_EMPTY_YMAX = 1
@@ -159,7 +152,9 @@ CONNECTION_TYPE_MAP = {
 }
 
 
-def get_x_range(series: pd.Series, xmin: str | None, xmax: str | None) -> tuple[pd.Timestamp]:
+def get_x_range(
+    series: pd.Series, xmin: str | None, xmax: str | None, to_timezone: str | None
+) -> tuple[pd.Timestamp | None]:
 
     requested_xmin, requested_xmax = get_queried_interval(series)
 
@@ -181,7 +176,18 @@ def get_x_range(series: pd.Series, xmin: str | None, xmax: str | None) -> tuple[
     else:
         xmax_to_use = DEFAULT_EMPTY_XMAX
 
-    return modify_timezone(xmin_to_use), modify_timezone(xmax_to_use)
+    return (
+        (
+            modify_timezone(xmin_to_use, to_timezone=to_timezone)
+            if xmin_to_use is not None
+            else None
+        ),
+        (
+            modify_timezone(xmax_to_use, to_timezone=to_timezone)
+            if xmax_to_use is not None
+            else None
+        ),
+    )
 
 
 def get_y_range(series: pd.Series, ymin: float | None, ymax: float | None) -> tuple[float]:
@@ -228,6 +234,8 @@ def apply_maximum_gap_size(series: pd.Series, maximum_gap_size: str | None) -> p
 def get_y_title(series: pd.Series, ylabel: str | None) -> str:
 
     if ylabel is not None:
+        if ylabel == "__OFF__":
+            return ""
         return ylabel
 
     name = get_series_name(series)
@@ -247,13 +255,15 @@ COMPONENT_INFO = {
         "series": {"data_type": "SERIES"},
         "ymin": {"data_type": "FLOAT", "default_value": None},
         "ymax": {"data_type": "FLOAT", "default_value": None},
-        "color": {"data_type": "STRING", "default_value": "#89CE6E"},
+        "color": {"data_type": "STRING", "default_value": "ki.green"},
         "ylabel": {"data_type": "STRING", "default_value": None},
         "xmin": {"data_type": "STRING", "default_value": None},
         "xmax": {"data_type": "STRING", "default_value": None},
         "connection_type": {"data_type": "STRING", "default_value": "linear"},
         "maximum_gap_size": {"data_type": "STRING", "default_value": None},
         "marker_threshold": {"data_type": "INT", "default_value": 300},
+        "locale": {"data_type": "STRING", "default_value": None},
+        "target_timezone": {"data_type": "STRING", "default_value": None},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
@@ -276,18 +286,22 @@ def main(
     series,
     ymin=None,
     ymax=None,
-    color="#89CE6E",
+    color="ki.green",
     ylabel=None,
     xmin=None,
     xmax=None,
     connection_type="linear",
     maximum_gap_size=None,
     marker_threshold=300,
+    locale=None,
+    target_timezone=None,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
 
-    xmin_to_use, xmax_to_use = get_x_range(series=series, xmin=xmin, xmax=xmax)
+    xmin_to_use, xmax_to_use = get_x_range(
+        series=series, xmin=xmin, xmax=xmax, to_timezone=target_timezone
+    )
     ymin_to_use, ymax_to_use = get_y_range(series=series, ymin=ymin, ymax=ymax)
     ytitle = get_y_title(series=series, ylabel=ylabel)
 
@@ -304,30 +318,40 @@ def main(
 
     fig.update_traces(
         {
-            "line_color": FUSEKI_COLORS.get(color, color),
+            "line_color": resolve_color(color),
             "line_width": 1,
             "line_dash": "solid",
             "line_shape": shape,
+            "cliponaxis": False,
         }
     )
     fig.update_yaxes(automargin=True, range=[ymin_to_use, ymax_to_use])
-    fig.update_xaxes(automargin=True, range=[xmin_to_use, xmax_to_use], type="date")
+
+    if xmin_to_use is not None or xmax_to_use is not None:
+        fig.update_xaxes(range=[xmin_to_use, xmax_to_use])
+    fig.update_xaxes(automargin=True, type="date")
+
+    set_dt_ticks(fig)
 
     fig.update_layout(
         {
             "autosize": True,
             "height": 200,
             "yaxis_title": None if not ytitle else {"text": ytitle, "standoff": 20},
-            "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
+            "margin": {"l": 0, "r": 5, "b": 0, "t": 5, "pad": 0},
         }
     )
 
+    set_agnostic_theme(fig)
+
     json_to_return = plotly_fig_to_json_dict(fig)
 
+    plot_target_locale = get_locale(locale)
+    json_to_return["config"] = {"displaylogo": False, "showTips": False}
+
     # set locale if available
-    plot_target_locale = get_plot_target_settings().plot_target_locale
     if plot_target_locale is not None:
-        json_to_return["config"] = {"locale": plot_target_locale}
+        json_to_return["config"]["locale"] = plot_target_locale
 
     return {"plot": json_to_return}
 
@@ -353,7 +377,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "color",
             "use_default_value": True,
-            "filters": {"value": "#89CE6E"},
+            "filters": {"value": "ki.green"},
         },
         {
             "workflow_input_name": "ylabel",
@@ -380,7 +404,21 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "use_default_value": True,
             "filters": {"value": ""},
         },
-        {"workflow_input_name": "marker_threshold", "filters": {"value": "0"}},
+        {
+            "workflow_input_name": "marker_threshold",
+            "use_default_value": True,
+            "filters": {"value": "300"},
+        },
+        {
+            "workflow_input_name": "locale",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "target_timezone",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
     ]
 }
 RELEASE_WIRING = {
@@ -404,7 +442,7 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "color",
             "use_default_value": True,
-            "filters": {"value": "#89CE6E"},
+            "filters": {"value": "ki.green"},
         },
         {
             "workflow_input_name": "ylabel",
@@ -431,7 +469,21 @@ RELEASE_WIRING = {
             "use_default_value": True,
             "filters": {"value": ""},
         },
-        {"workflow_input_name": "marker_threshold", "filters": {"value": "0"}},
+        {
+            "workflow_input_name": "marker_threshold",
+            "use_default_value": True,
+            "filters": {"value": "300"},
+        },
+        {
+            "workflow_input_name": "locale",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
+        {
+            "workflow_input_name": "target_timezone",
+            "use_default_value": True,
+            "filters": {"value": ""},
+        },
     ]
 }
 

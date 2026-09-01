@@ -34,7 +34,7 @@ set -euo pipefail
 #                                                                             #
 ###############################################################################
 
-declare -r PIPT_VERSION="0.3.0"
+declare -r PIPT_VERSION="0.4.0"
 
 # Hash separator:
 declare -r HASH_SEP="b703d2e29001d23a7a3b153619c4a3cf0d75c0e5bc44cfe8991371344cd3cd1d"
@@ -647,9 +647,9 @@ _init_base_in_file() {
     if [[ ! -f "$REQ_BASE_IN" ]]; then
         _info "--> Initiliazing requirements-base.in since it does not exist."
         if [[ $USE_UV = false ]]; then
-            printf -- "packaging\npip>=24\npip-tools\nwheel\n" >"$REQ_BASE_IN"
+            printf -- "packaging\npip>=24\npip-tools\n" >"$REQ_BASE_IN"
         else
-            printf -- "packaging\npip>=24\nuv\nwheel\n" >"$REQ_BASE_IN"
+            printf -- "packaging\npip>=24\nuv\n" >"$REQ_BASE_IN"
         fi
     fi
 }

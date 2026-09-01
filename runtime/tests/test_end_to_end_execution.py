@@ -17,7 +17,10 @@ from hetdesrun.models.run import (
 )
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.trafoutils.io.load import load_json
+from hetdesrun.trafoutils.io.load import (
+    load_json,
+    transformation_revision_from_python_code,
+)
 
 
 async def run_workflow_with_client(
@@ -28,13 +31,15 @@ async def run_workflow_with_client(
 
 
 def gen_execution_input_from_single_component(
-    component_json_path: str,
+    component_path: str,
     direct_provisioning_data_dict: dict | None = None,
     wf_wiring: WorkflowWiring | None = None,
 ) -> WorkflowExecutionInput:
     """Wraps a single component into a workflow and generates the execution input json
 
     input data is provided directly
+
+    Accepts base components both as .json and as .py files.
     """
 
     if (direct_provisioning_data_dict is None) == (wf_wiring is None):
@@ -42,8 +47,11 @@ def gen_execution_input_from_single_component(
             "Excatly one of direct_provisioning_data_dict or wf_wiring must be provided"
         )
 
-    tr_component_json = load_json(component_json_path)
-    tr_component = TransformationRevision(**tr_component_json)
+    if component_path.endswith(".py"):
+        with open(component_path, encoding="utf8") as f:
+            tr_component = transformation_revision_from_python_code(f.read())
+    else:
+        tr_component = TransformationRevision(**load_json(component_path))
     wrapping_wf = tr_component.wrap_component_in_tr_workflow()
     assert not isinstance(wrapping_wf.content, str)
     assert len(wrapping_wf.content.operators) != 0
@@ -99,13 +107,13 @@ async def execute_workflow_execution_input(
 
 
 async def run_single_component(
-    component_json_file_path: str,
+    component_file_path: str,
     input_data_dict: dict,
     open_async_test_client: AsyncClient,
 ) -> WorkflowExecutionResult:
     return await execute_workflow_execution_input(
         gen_execution_input_from_single_component(
-            component_json_file_path,
+            component_file_path,
             input_data_dict,
         ),
         open_async_test_client,
@@ -256,6 +264,91 @@ async def test_direct_provisioning_multitsframe_metadata(
                 "value": {"0": 1.7},
             },
         }
+
+
+@pytest.mark.asyncio
+async def test_direct_provisioning_singletsframe_metadata(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "extract-attributes-singletsframe_100_e1297c39-e1eb-426c-8938-535bf7a78938.py"
+            ),
+            {
+                "singletsframe": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 44},'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"],'
+                    ' "value": [1.7]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.model_dump()["output_results_by_output_name"]["attributes"] == {
+            "test": 44
+        }
+
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through-singletsframe_100_82b75412-5f29-4991-b6bc-e047bd8c140f.json"
+            ),
+            {
+                "input": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 44},'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"],'
+                    ' "value": [1.7], "state": ["ok"]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.model_dump()["output_results_by_output_name"]["output"] == {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": {"test": 44},
+            "__data__": {
+                "timestamp": {"0": "2023-01-01T00:00:00.000Z"},
+                "value": {"0": 1.7},
+                "state": {"0": "ok"},
+            },
+        }
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_extract_singletsframe_from_multitsframe(
+    async_test_client: AsyncClient,
+) -> None:
+    """The whole SINGLETSFRAME path: MULTITSFRAME input, SINGLETSFRAME output"""
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "extract-singletsframe-from-multitsframe_100_"
+                "03fb74a1-b8ef-47fa-a0a4-64314e05b82f.py"
+            ),
+            {
+                "multitsframe": (
+                    '{"timestamp": ["2023-01-01T00:00:00+00:00", "2023-01-01T01:00:00+00:00"],'
+                    ' "metric": ["a", "b"], "value": [1.7, 2.3]}'
+                ),
+                "metric": "a",
+            },
+            client,
+        )
+
+        output = exec_result.model_dump()["output_results_by_output_name"]["singletsframe"]
+
+        assert output["__hd_wrapped_data_object__"] == "DATAFRAME"
+        # no metric column anymore, and the metric moved into the metadata
+        assert output["__data__"] == {
+            "timestamp": {"0": "2023-01-01T00:00:00.000Z"},
+            "value": {"0": 1.7},
+        }
+        assert output["__metadata__"]["dataset_metadata"]["single_metric"] == "a"
 
 
 @pytest.mark.asyncio

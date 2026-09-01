@@ -16,6 +16,7 @@ from hetdesrun.adapters.sql_adapter.config import (
 )
 from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
+    is_allowed_dataframe_source_table,
     validate_multits_frame,
 )
 from hetdesrun.dt_utils import resolve_interval
@@ -182,6 +183,14 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
     db_config = configured_dbs_by_key[db_key]
 
     if id_split[1] == "query" and len(id_split) == 2:
+        if not db_config.allow_arbitrary_sql_query_sources:
+            msg = (
+                f"Arbitrary SQL query source {source_id} is not allowed: arbitrary SQL"
+                f" queries are disabled for db key {db_key!r}. Set"
+                " allow_arbitrary_sql_query_sources to True for this database to enable them."
+            )
+            logger.info(msg)
+            raise AdapterHandlingException(msg)
         query = source_filters.get("sql_query")
         if query is None:  # pragma: no cover
             msg = (
@@ -195,10 +204,25 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
 
     if id_split[1] == "table" and len(id_split) > 2:
         table_name = id_split[2]
+        if not is_allowed_dataframe_source_table(table_name, db_config):
+            msg = (
+                f"Reading table {table_name!r} via source id {source_id} is not allowed:"
+                f" it is not an accessible dataframe table source for db key {db_key!r}."
+            )
+            logger.info(msg)
+            raise AdapterHandlingException(msg)
         return load_sql_table(db_config, table_name)
 
     if id_split[1] == "ts_table" and len(id_split) > 2:
         ts_table_name = id_split[2]
+
+        if ts_table_name not in db_config.timeseries_tables:
+            msg = (
+                f"Reading timeseries table {ts_table_name!r} via source id {source_id} is not"
+                f" allowed: it is not a configured timeseries table for db key {db_key!r}."
+            )
+            logger.info(msg)
+            raise AdapterHandlingException(msg)
 
         metric_ids_string = source_filters.get("metrics", "")
 

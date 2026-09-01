@@ -1,14 +1,65 @@
-- documentation rewrite + documentation building via static site generator
-- add simple cron-based scheduling.
+## 0.14.4
+
+- new data type **SINGLETSFRAME** for a single, possibly multi-dimensional timeseries. It uses the same tabular representation as MULTITSFRAME (a `timestamp` column plus arbitrarily many value columns) but has no `metric` column, since it holds exactly one metric — the metric is identified in the attached metadata via `dataset_metadata.single_metric`, like for SERIES. See the [SingleTsFrame documentation](https://hetida.github.io/hetida-designer/user_guide/data_types/singletsframes/).
+  - the generic REST adapter interface gains `/singletsframe` GET and POST endpoints and the external type `singletsframe`. Existing adapters are unaffected — the new endpoints only need to be implemented if you want to offer `singletsframe` sources/sinks.
+  - the Python demo adapter offers a `singletsframe` demo source and sink.
+  - new base components in the category "Connectors": Pass Through (SingleTSFrame), Convert Series to SingleTSFrame, Convert SingleTSFrame to Series, Extract SingleTSFrame from MultiTSFrame, Convert SingleTSFrame to MultiTSFrame, Convert SingleTSFrame to DataFrame, Convert DataFrame to SingleTSFrame, Add/Update Attributes (SingleTSFrame), Extract Attributes (SingleTSFrame). Plus "SingleTSFrame Plot with multiple Y Axes" in the category "Visualization".
+  - new metadata helper functions `get_singlets_units`, `get_singlets_names`, `get_singlets_display_names`, `get_singlets_short_display_names`, `get_singlets_measurements` and `get_singlets_metric_info` in `hetdesrun.helpers.metadata`. Since a SingleTSFrame has exactly one metric, these are keyed by value dimension only.
+- fix: the execution dialog now offers the json editor for MULTITSFRAME default values of workflow inputs and attaches the time range picker validators to MULTITSFRAME inputs (previously SERIES only)
+- fix: experimental dashboards were empty (no output visualizations at all) when backend and runtime run as separate services — as in the provided docker compose setups. Since 0.14.3 the backend relays the runtime's output payload as raw json bytes, which the dashboard did not read. Setups with backend and runtime in one service were not affected.
+- fix: stored scheduled-execution results were missing their direct-provisioning outputs (nothing to show in the schedule result view) when backend and runtime run as separate services — same root cause as the dashboard fix above: since 0.14.3 the outputs are relayed as raw json bytes, which the persistence path did not read before storing the result in the db. Setups with backend and runtime in one service were not affected.
+
+## 0.14.3
+
+- refactored generic rest adapter http client handling and data fetching
+- faster execution result serialization: pandas and plotly outputs are spliced into the response as the json bytes produced by their respective serializer apis using `msgspec.Raw` allowing for single pass serialization, avoiding redundant JSON parse/re-encode round-trips
+- faster result relaying with separate backend and runtime services: the backend now passes the runtime's output payload through to the caller as raw json bytes — validated as well-formed JSON but not parsed into Python and re-encoded. Slight performance improvements in particular for larger Plotly ouputs.
+- BREAKING CHANGE: backend response gzip compression is now **off by default** and configurable via `RESPONSE_COMPRESSION_ENABLED` (and `RESPONSE_COMPRESSION_LEVEL`, default 1). This improves response time for larger responses (in particulary large plotly plots). It is recommended to compress at your reverse proxy / ingress instead, or set `RESPONSE_COMPRESSION_ENABLED=true` if your clients are on slow links. The internal backend => runtime request now never requests compression.
+- hardened execution result serialization: any failure while serializing (untrusted) component output (e.g. non-serializable objects, circular references, unencodable dict)now becomes a structured failure result instead of a 5xx, at both the runtime and the backend response boundaries
+
+## 0.14.2
+
+- documentation improvements
+- add documentation for some environment variables
+- extend hierarchy object execution context information
+- upgrade demo adapter dependencies
+
+## 0.14.1
+
+- reintegrate the former separate npm packages `hetida-flowchart`, `ng-hetida-flowchart` and `hd-wiring` (wiring dialog) from the hetida-flowchart repository directly into the frontend source tree (`frontend/src/libs/`), removing them as external dependencies
+- ANY outputs of a specified structure can now be used to render images, pdfs, arbitrary html or offer file downloads. In particular HTML rendering allows to employ html/javascript based plotting libraries like µplot or Apache ECharts.
+- allow component import and hetdesrun usage in components during unit testing
+- replace python-jose with joserfc for JWT verification. BREAKING CHANGE: if an expected audience (`HD_AUTH_AUDIENCE`, default `account`) or issuer (`HD_AUTH_ISSUER`) is configured, the respective claim must now be present in tokens and match — tokens lacking the claim are rejected. Set `HD_AUTH_AUDIENCE` to an empty string to disable audience checking.
+- more secure and precise auth configuration
+- sql adpater config BREAKING CHANGE: requires explicit flag to allow arbitrary sql query sources from now on, default being not to allow them. Table allowlist is now enforced at read/write
+- BREAKING CHANGE: async execution endpoint callback urls must now be pre-configured via `HD_ALLOWED_CALLBACK_URL_PATTERNS`
+- introduce JWT algorithm pinning via `HD_AUTH_ALLOWED_ALGORITHMS` and fix exp claim being now required as intended
+- BREAKING CHANGE: tighten model object loading path handling to avoid path traversals. This may affect existing stored objects with very unusual object names or tag names.
+- add explicit worker timeout configuration for pure uvicorn setup
+- performance improvements (DB queries, adapters, trafo loading)
+- many smaller fixes
+
+## 0.14.0
+
+- Added configurable Opentelemetry support via logfire
+- documentation rewrite + documentation building via static site generator (see https://hetida.github.io/hetida-designer)
+- add simple cron-based **scheduling**.
 - **MIGRATION NOTE**: If you have multiple backend service instances, e.g. if using additional restricted webservices you need to ensure that only the one frontend facing backend instance has `HETIDA_DESIGNER_SCHEDULING_ACTIVE=true` and all others have `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`. See the scheduling docs for details.
 - **MIGRATION NOTE**: In order for scheduling to work in authenticated setups you need to configure `HD_SCHEDULING_INTERNAL_AUTH_MODE=CLIENT` and `HD_SCHEDULING_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS` to some service user credentials.
-- **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if still using gunicorn mode.
+- **DEPRECATION WARNING**: gunicorn mode will be removed in a future version. pure uvicorn mode (already the default) will be the only remaining mode for backend and runtime webservice. Note that scheduling will not work if you are still using gunicorn mode.
 - Proper obj / model repo path directory in nix shell setup
 - fix component adapter metadata wiring handling
 - fix hetida platform channel timeseries data component metadata allowing relativeNamePath as metric_key for accessing metadata.
 - Upgrade to Python 3.14
-- **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x> to major release 3.x. This may affect / break component code in multiple ways.
+- **BREAKING CHANGE**: dependency upgrades: In particular Pandas was upgraded from <=2.x to major release 3.x. This may affect / break component code in multiple ways.
 - **BREAKING CHANGE**: When using auth, audience and issuer checks are now active by default and will be carried out if environment variables `HD_AUTH_AUDIENCE` (defaults to `account`) or respectively `HD_AUTH_ISSUER` are set, which we recommend to always do.
+- maintenance endpoint for deleting old deprecated trafos now has two exclusion parameters (explicit revisions and one to only those that were disabled before a cutoff timestamp)
+- A new **[hdhelpers](https://github.com/hetida/hdhelpers)** library provides functionality to faciliate component writing, in particular for visualization components and for integration into hetida platform. E.g. to respect locale / language settings, different themes and use provided metadata of timeseries data. As an example, there is a new version of the "Single Timeseries Plot" component, that uses this helpers.
+- **Builtin Drop adapter**: When outputs are wired to this adapter, they are simply dropped. This faciliates writing components / workflows with multiple outputs where it depends on the concrete use case, which output is relevant.
+- **Builtin Plot adapter**: When outputs are wired to this adapter, these outputs are converted into a basic predefined plot suitable for the output type. This faciliates writing components / workflows so that the same workflow can be used in automation and to visually inspect results without the need to include a plot operator.
+- frontend / angular update to angular 19
+- make final docker images compatible with trivy scans.
+- minor fixes in forecast component
 
 ## 0.13.10
 

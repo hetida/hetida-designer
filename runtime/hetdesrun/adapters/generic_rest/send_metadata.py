@@ -10,23 +10,28 @@ import httpx
 from hetdesrun.adapters.exceptions import AdapterConnectionError, AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
-from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
 async def post_json_with_open_client(
-    open_client: httpx.AsyncClient, url: str, params: list[tuple[str, Any]], json_payload: dict
+    open_client: httpx.AsyncClient,
+    url: str,
+    params: list[tuple[str, Any]],
+    json_payload: dict,
+    headers: dict[str, str],
 ) -> httpx.Response:
     return await open_client.post(
         url,
         params=params,
         json=json_payload,
+        headers=headers,
     )
 
 
@@ -35,6 +40,7 @@ async def send_single_metadatum_to_adapter(
     metadatum_value: Any,
     adapter_key: str,
     client: httpx.AsyncClient,
+    headers: dict[str, str],
 ) -> None:
     if filtered_sink.ref_id_type == RefIdType.SOURCE:
         endpoint = "sources"
@@ -80,6 +86,7 @@ async def send_single_metadatum_to_adapter(
                     "dataType": value_datatype.value,
                 }
             ),
+            headers=headers,
         )
     except httpx.HTTPError as e:
         msg = (
@@ -114,20 +121,17 @@ async def send_multiple_metadata_to_adapter(
         logger.info(msg)
         raise AdapterConnectionError(msg) from e
 
-    async with httpx.AsyncClient(
-        headers=headers,
-        verify=get_config().hd_adapters_verify_certs,
-        timeout=get_config().external_request_timeout,
-    ) as client:
-        wf_output_names = filtered_sinks.keys()
-        await asyncio.gather(
-            *(
-                send_single_metadatum_to_adapter(
-                    filtered_sinks[wf_output_name],
-                    data_to_send[wf_output_name],
-                    adapter_key=adapter_key,
-                    client=client,
-                )
-                for wf_output_name in wf_output_names
+    client = get_generic_rest_adapter_client(adapter_key)
+    wf_output_names = filtered_sinks.keys()
+    await asyncio.gather(
+        *(
+            send_single_metadatum_to_adapter(
+                filtered_sinks[wf_output_name],
+                data_to_send[wf_output_name],
+                adapter_key=adapter_key,
+                client=client,
+                headers=headers,
             )
+            for wf_output_name in wf_output_names
         )
+    )

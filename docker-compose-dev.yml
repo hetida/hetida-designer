@@ -72,10 +72,11 @@ services:
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
 
-      WEB_CONCURRENCY: 1
+      MAX_WORKERS: 2
+      WEB_CONCURRENCY: 2
       #LOG_LEVEL: "DEBUG"
       LOG_HTTPX: "true"
-      HETIDA_DESIGNER_PURE_UVICORN: "true"
+      # HETIDA_DESIGNER_PURE_UVICORN: "true"
       #LOG_DIRECT_PROVISIONING_OUTPUTS: "true"
       HD_OTEL_VIA_LOGFIRE_ACTIVE: "true"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://grafana-otel-lgtm:4318"

@@ -66,6 +66,7 @@ nav = [
         { "Persisting Models" = "user_guide/persisting_models.md" },
         { "Reproducibility and Deserialization" = "user_guide/repr_pitfalls.md"},
         { "Optional Inputs / Default Values" = "user_guide/default_values.md"},
+        { "Visualizations / Plots" = "user_guide/visualizations.md"},
         { "Dashboarding" = "user_guide/dashboarding.md"}
     ]},
     { "Component Writing" = [
@@ -80,7 +81,9 @@ nav = [
         { "Pandas Objects" = "user_guide/component_writing/pandas_objects.md"},
     ]},    
     { "Special Data Types" = [
-        {"MultiTsFrame" = "user_guide/data_types/multitsframes.md"}
+        {"MultiTsFrame" = "user_guide/data_types/multitsframes.md"},
+        {"SingleTsFrame" = "user_guide/data_types/singletsframes.md"},
+        {"Any" = "user_guide/data_types/any.md"}
     ]}
     
   ]},

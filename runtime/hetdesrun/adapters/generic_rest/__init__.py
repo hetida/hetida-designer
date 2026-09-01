@@ -16,6 +16,9 @@ from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.adapters.generic_rest.load_multitsframe import (
     load_multitsframes_from_adapter,
 )
+from hetdesrun.adapters.generic_rest.load_singletsframe import (
+    load_singletsframes_from_adapter,
+)
 from hetdesrun.adapters.generic_rest.load_ts_data import (
     load_grouped_timeseries_data_together,
 )
@@ -25,6 +28,9 @@ from hetdesrun.adapters.generic_rest.send_metadata import (
 )
 from hetdesrun.adapters.generic_rest.send_multitsframe import (
     send_multitsframes_to_adapter,
+)
+from hetdesrun.adapters.generic_rest.send_singletsframe import (
+    send_singletsframes_to_adapter,
 )
 from hetdesrun.adapters.generic_rest.send_ts_data import (
     send_multiple_timeseries_to_adapter,
@@ -116,6 +122,7 @@ async def load_data(
     series_data_to_load: dict[str, FilteredSource] = {}
     dataframe_data_to_load: dict[str, FilteredSource] = {}
     multitsframe_data_to_load: dict[str, FilteredSource] = {}
+    singletsframe_data_to_load: dict[str, FilteredSource] = {}
 
     for wf_input_name, parsed_source_type in zip(wf_input_names, parsed_source_types, strict=True):
         entry = wf_input_name_to_filtered_source_mapping_dict[wf_input_name]
@@ -131,16 +138,20 @@ async def load_data(
             dataframe_data_to_load[wf_input_name] = entry
         elif entry.type.general_type == GeneralType.MULTITSFRAME:
             multitsframe_data_to_load[wf_input_name] = entry
+        elif entry.type.general_type == GeneralType.SINGLETSFRAME:
+            singletsframe_data_to_load[wf_input_name] = entry
 
     (
         loaded_ts_data,
         loaded_dataframes,
         loaded_multitsframes,
+        loaded_singletsframes,
         loaded_metadata,
     ) = await asyncio.gather(
         load_grouped_timeseries_data_together(timeseries_data_to_load, adapter_key=adapter_key),
         load_dataframes_from_adapter(dataframe_data_to_load, adapter_key=adapter_key),
         load_multitsframes_from_adapter(multitsframe_data_to_load, adapter_key=adapter_key),
+        load_singletsframes_from_adapter(singletsframe_data_to_load, adapter_key=adapter_key),
         load_multiple_metadata(metadata_data_to_load, adapter_key=adapter_key),
     )
 
@@ -148,6 +159,7 @@ async def load_data(
         **loaded_ts_data,
         **loaded_dataframes,
         **loaded_multitsframes,
+        **loaded_singletsframes,
         **loaded_metadata,
     }
 
@@ -174,6 +186,8 @@ async def send_data(
     dataframe_filtered_sinks: dict[str, FilteredSink] = {}
     multitsframe_data_to_send: dict[str, pd.DataFrame] = {}
     multitsframe_filtered_sinks: dict[str, FilteredSink] = {}
+    singletsframe_data_to_send: dict[str, pd.DataFrame] = {}
+    singletsframe_filtered_sinks: dict[str, FilteredSink] = {}
 
     for wf_output_name, parsed_sink_type in zip(wf_output_names, parsed_sink_types, strict=True):
         entry = wf_output_name_to_filtered_sink_mapping_dict[wf_output_name]
@@ -195,6 +209,9 @@ async def send_data(
         elif entry.type.general_type == GeneralType.MULTITSFRAME:
             multitsframe_filtered_sinks[wf_output_name] = entry
             multitsframe_data_to_send[wf_output_name] = value
+        elif entry.type.general_type == GeneralType.SINGLETSFRAME:
+            singletsframe_filtered_sinks[wf_output_name] = entry
+            singletsframe_data_to_send[wf_output_name] = value
 
     await asyncio.gather(
         send_dataframes_to_adapter(
@@ -203,6 +220,11 @@ async def send_data(
         send_multitsframes_to_adapter(
             multitsframe_filtered_sinks,
             multitsframe_data_to_send,
+            adapter_key=adapter_key,
+        ),
+        send_singletsframes_to_adapter(
+            singletsframe_filtered_sinks,
+            singletsframe_data_to_send,
             adapter_key=adapter_key,
         ),
         send_multiple_timeseries_to_adapter(

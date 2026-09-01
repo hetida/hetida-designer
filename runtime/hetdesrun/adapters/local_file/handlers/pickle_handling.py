@@ -1,6 +1,11 @@
 import pickle  # nosec: B403
 from typing import Any
 
+# Security note (reviewed, accepted by design): unpickling executes embedded code,
+# this is inheritent to Python unpickling. The local-file adapter's configured
+# directory and everything reahable from there is TRUSTED as well as the
+# execution context / users under which this unpickling happens.
+
 
 def load_pickle(path: str, **kwargs: Any) -> Any:
     with open(path, "rb") as f:

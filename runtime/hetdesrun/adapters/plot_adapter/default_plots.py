@@ -13,7 +13,7 @@ from hetdesrun.adapters.exceptions import AdapterHandlingException
 logger = logging.getLogger(__name__)
 
 
-def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: DataType) -> Any:  # noqa: PLR0911, PLR0912
+def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: DataType) -> Any:  # noqa: PLR0911, PLR0912, PLR0915
     """Decide on Python type / DataType and provide corresponding plotly json dict"""
     if isinstance(value, (str, int, float, bool)) and filtered_sink_type in {
         DataType.Boolean,
@@ -52,6 +52,19 @@ def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: 
         except Exception as e:  # pragma: no cover
             msg = (
                 f"Plot adapter could not generate multitsframe plot for value"
+                f" with type {str(type(value))} "
+                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise AdapterHandlingException(msg) from e
+        return plotly_json_obj
+
+    if isinstance(value, pd.DataFrame) and filtered_sink_type == DataType.SingleTSFrame:
+        try:
+            plotly_json_obj = singlets_frame_plotly_json(value)
+        except Exception as e:  # pragma: no cover
+            msg = (
+                f"Plot adapter could not generate singletsframe plot for value"
                 f" with type {str(type(value))} "
                 f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
             )
@@ -272,6 +285,68 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame) -> go.Figure:
 
 def multi_series_plotly_json(df: pd.DataFrame) -> Any:
     plotly_fig_dict = plotly_fig_to_json_dict(multi_series_with_multi_yaxis(df))
+    plotly_fig_dict["config"]["displaylogo"] = False
+    return plotly_fig_dict
+
+
+def singlets_frame_with_multi_yaxis(df: pd.DataFrame) -> go.Figure:
+    """One y_axis for each value dimension of the input singletsframe
+
+    A SingleTSFrame holds one metric, so in contrast to a MultiTSFrame the traces are
+    the value columns (value dimensions) instead of the entries of a "metric" column.
+    """
+
+    plotly_data = []
+
+    colors = px.colors.qualitative.Plotly
+    value_columns = [col for col in df.columns if col != "timestamp"]
+
+    sep_ratio, positions = compute_plot_positions(len(value_columns), side="right")
+
+    layout_kwargs: dict[str, Any] = {
+        "xaxis": {"domain": [0, sep_ratio]},
+        "height": 200,
+    }
+
+    for i, col in enumerate(value_columns):
+        # * (i > 0) is just to get rid of the if i > 0 statement
+        axis_name = "yaxis" + str(i + 1) * (i > 0)
+        yaxis = "y" + str(i + 1) * (i > 0)
+        plotly_data.append(
+            plotly.graph_objs.Scatter(
+                x=df["timestamp"],
+                y=df[col],
+                name=str(col),
+                line={"color": colors[i % len(colors)]},
+            )
+        )
+
+        layout_kwargs[axis_name] = {
+            "position": positions[i],
+            "side": "right",  # which side of the anchor
+            "tickfont": {"color": colors[i % len(colors)], "size": 12},
+            "showline": True,  # axis line
+            "linecolor": colors[i % len(colors)],  # axis line color
+            "showgrid": True,
+        }
+
+        plotly_data[i]["yaxis"] = yaxis
+        if i > 0:
+            layout_kwargs[axis_name]["overlaying"] = "y"
+
+    fig = plotly.graph_objs.Figure(
+        data=plotly_data, layout=plotly.graph_objs.Layout(**layout_kwargs)
+    )
+    fig.update_layout(
+        margin={"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
+        template="none",
+    )
+
+    return fig
+
+
+def singlets_frame_plotly_json(df: pd.DataFrame) -> Any:
+    plotly_fig_dict = plotly_fig_to_json_dict(singlets_frame_with_multi_yaxis(df))
     plotly_fig_dict["config"]["displaylogo"] = False
     return plotly_fig_dict
 

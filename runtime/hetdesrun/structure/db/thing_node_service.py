@@ -164,7 +164,7 @@ def upsert_thing_nodes(
         logger.error("Value error while upserting StructureServiceThingNodeDBModel: %s", e)
         raise DBUpdateError("Value error while upserting StructureServiceThingNodeDBModel") from e
     except Exception as e:
-        logger.error("Unexpected error while upserting StructureServiceThingNodeDBModel: %s", e)
+        logger.exception("Unexpected error while upserting StructureServiceThingNodeDBModel")
         raise DBUpdateError(
             "Unexpected error while upserting StructureServiceThingNodeDBModel"
         ) from e

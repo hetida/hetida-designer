@@ -60,8 +60,11 @@ class StructureServiceElementTypeDBModel(Base):
         default=uuid4,
     )
     external_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    stakeholder_key: Mapped[str] = mapped_column(String(36), nullable=False)
-    name: Mapped[str] = mapped_column(String(255), index=True, nullable=False, unique=True)
+    stakeholder_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    # uniqueness (and thus the index for name lookups) is provided by the named
+    # UniqueConstraint in __table_args__; no separate index=True (redundant) or
+    # column-level unique=True (duplicate constraint) -- matches the migration.
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     thing_nodes: Mapped[list[StructureServiceThingNodeDBModel]] = relationship(
         "StructureServiceThingNodeDBModel",
@@ -81,11 +84,6 @@ class StructureServiceElementTypeDBModel(Base):
             "stakeholder_key",
             name="_element_type_external_id_stakeholder_key_uc",
         ),
-        Index(
-            "idx_element_type_stakeholder_external",  # Optimized search on stakeholder_key and external_id  # noqa: E501
-            "stakeholder_key",
-            "external_id",
-        ),
     )
 
 
@@ -94,8 +92,11 @@ class StructureServiceSourceDBModel(Base):
     __tablename__ = "structure_source"
     id: Mapped[UUIDType] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid4)
     external_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    stakeholder_key: Mapped[str] = mapped_column(String(36), nullable=False)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    stakeholder_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    # no name uniqueness: sources/sinks are keyed by (external_id, stakeholder_key); the
+    # migration enforces no name constraint, so the previous column-level unique=True was
+    # unenforced in postgres -- drop it to match the migrated schema.
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[str] = mapped_column(String(255), nullable=False)
     visible: Mapped[bool] = mapped_column(Boolean, default=True)
     display_path: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -127,11 +128,6 @@ class StructureServiceSourceDBModel(Base):
             "stakeholder_key",
             name="_source_external_id_stakeholder_key_uc",
         ),
-        Index(
-            "idx_source_stakeholder_external",
-            "stakeholder_key",
-            "external_id",
-        ),
     )
 
 
@@ -140,8 +136,11 @@ class StructureServiceSinkDBModel(Base):
     __tablename__ = "structure_sink"
     id: Mapped[UUIDType] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid4)
     external_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    stakeholder_key: Mapped[str] = mapped_column(String(36), nullable=False)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    stakeholder_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    # no name uniqueness: sources/sinks are keyed by (external_id, stakeholder_key); the
+    # migration enforces no name constraint, so the previous column-level unique=True was
+    # unenforced in postgres -- drop it to match the migrated schema.
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[str] = mapped_column(String(255), nullable=False)
     visible: Mapped[bool] = mapped_column(Boolean, default=True)
     display_path: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -173,11 +172,6 @@ class StructureServiceSinkDBModel(Base):
             "stakeholder_key",
             name="_sink_external_id_stakeholder_key_uc",
         ),
-        Index(
-            "idx_sink_stakeholder_external",
-            "stakeholder_key",
-            "external_id",
-        ),
     )
 
 
@@ -186,8 +180,11 @@ class StructureServiceThingNodeDBModel(Base):
     __tablename__ = "structure_thing_node"
     id: Mapped[UUIDType] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid4)
     external_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    stakeholder_key: Mapped[str] = mapped_column(String(36), nullable=False)
-    name: Mapped[str] = mapped_column(String(255), index=True, nullable=False, unique=True)
+    stakeholder_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    # uniqueness (and thus the index for name lookups) is provided by the named
+    # UniqueConstraint in __table_args__; no separate index=True (redundant) or
+    # column-level unique=True (duplicate constraint) -- matches the migration.
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     parent_node_id: Mapped[UUIDType | None] = mapped_column(
         UUIDType(binary=False), ForeignKey("structure_thing_node.id"), nullable=True
@@ -238,9 +235,7 @@ class StructureServiceThingNodeDBModel(Base):
             "stakeholder_key",
             name="_thing_node_external_id_stakeholder_key_uc",
         ),
-        Index(
-            "idx_thing_node_stakeholder_external",  # Optimized search on stakeholder_key and external_id  # noqa: E501
-            "stakeholder_key",
-            "external_id",
-        ),
+        # parent_node_id is a non-leading, unindexed self-referential foreign key that is
+        # filtered on every structure-tree expansion (get_children).
+        Index("ix_structure_thing_node_parent_node_id", "parent_node_id"),
     )

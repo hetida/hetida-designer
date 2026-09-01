@@ -51,7 +51,13 @@ def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) ->
         raise StorageAuthenticationError(msg) from error
     namespace = {"sts": extract_namespace_from_root_tag(xml_response.tag)}
     if not xml_response.tag.endswith("AssumeRoleWithWebIdentityResponse"):
-        msg = f"The authentication request does not have the expected structure:\n{xml_string}"
+        # Do not log/expose the raw response body: on a partially-formed response it can
+        # contain issued credential material (SecretAccessKey / SessionToken). Only report
+        # the non-sensitive root tag as a diagnostic.
+        msg = (
+            "The authentication request response does not have the expected structure:"
+            f" unexpected root tag {xml_response.tag!r}."
+        )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
     path = "./sts:AssumeRoleWithWebIdentityResult/sts:Credentials/sts:"
@@ -65,9 +71,21 @@ def parse_credential_info_from_xml_string(xml_string: str, utc_now: datetime) ->
         or xml_session_token is None
         or xml_expiration is None
     ):
+        # Report only which required fields are missing, never the raw response body:
+        # it can contain issued credential material (SecretAccessKey / SessionToken).
+        missing_fields = [
+            name
+            for name, element in (
+                ("AccessKeyId", xml_access_key),
+                ("SecretAccessKey", xml_secret_access_key),
+                ("SessionToken", xml_session_token),
+                ("Expiration", xml_expiration),
+            )
+            if element is None
+        ]
         msg = (
-            "At least one of the required Credentials could not be found"
-            f"in the XML response:\n{xml_string}"
+            "At least one of the required Credentials could not be found in the XML"
+            f" response. Missing fields: {missing_fields}."
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)

@@ -173,12 +173,35 @@ async def mock_failed_execute_transformation_revision_with_arbitrary_exc(*args, 
     raise Exception("Something went horribly wrong")
 
 
+def _init_mocked_consumer(self) -> None:
+    self._consumer = mock.MagicMock()
+
+
+def _init_mocked_producer(self) -> None:
+    self._producer = mock.AsyncMock()
+
+
 async def run_kafka_msg(msg_str, exec_func_mock=mock_successful_execute_transformation_revision):
-    with mock.patch(
-        "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.consumer",
-        new_callable=mock.PropertyMock,
-        return_value=MockKafkaConsumer(exec_msg_str=msg_str),
-    ) as _mocked_ctx_consumer:
+    with (
+        # KafkaWorkerContext.__init__ eagerly constructs real aiokafka clients which this test
+        # never starts, since the consumer / producer properties are mocked below. As the context
+        # is a process wide cached singleton, those clients would then stay alive and unclosed
+        # until interpreter exit, where aiokafka reports them as
+        # "Unclosed AIOKafkaConsumer / AIOKafkaProducer". So don't create them in the first place.
+        mock.patch(
+            "hetdesrun.backend.kafka.consumer.KafkaWorkerContext._init_consumer",
+            new=_init_mocked_consumer,
+        ),
+        mock.patch(
+            "hetdesrun.backend.kafka.consumer.KafkaWorkerContext._init_producer",
+            new=_init_mocked_producer,
+        ),
+        mock.patch(
+            "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.consumer",
+            new_callable=mock.PropertyMock,
+            return_value=MockKafkaConsumer(exec_msg_str=msg_str),
+        ) as _mocked_ctx_consumer,
+    ):
         producer_mock = mock.AsyncMock()
         with mock.patch(
             "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.producer",

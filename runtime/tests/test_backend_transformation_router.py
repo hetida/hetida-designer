@@ -5,9 +5,11 @@ from posixpath import join as posix_urljoin
 from unittest import mock
 from uuid import UUID
 
+import msgspec
 import pytest
 from fastapi import HTTPException
 
+from hetdesrun.backend.service import transformation_router as tr_module
 from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
@@ -25,7 +27,23 @@ from hetdesrun.trafoutils.io.load import (
     transformation_revision_from_python_code,
 )
 from hetdesrun.utils import State, get_uuid_from_seed
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+
+
+@pytest.fixture()
+def allow_test_callback_url():
+    """Permit the callback URL used by the async execution tests.
+
+    Callback URLs must match the configured allowlist
+    (HD_ALLOWED_CALLBACK_URL_PATTERNS), which is empty by default (fail closed).
+    """
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.allowed_callback_url_patterns",
+        ["http://callback-url.com/*"],
+    ) as _fixture:
+        yield _fixture
+
 
 tr_json_component_1 = {
     "id": str(get_uuid_from_seed("component 1")),
@@ -1602,33 +1620,46 @@ async def test_execute_for_transformation_revision_without_job_id(
 async def test_execute_for_separate_runtime_container(
     async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config",
-        is_runtime_service=False,
-    ):
-        resp_mock = mock.Mock()
-        resp_mock.status_code = 200
-        resp_mock.json = mock.Mock(
-            return_value={
+    # Override only this attribute on the real config (mocking the whole config object would turn
+    # every other setting into a Mock and break the backend once it actually runs).
+    with mock.patch.object(get_config(), "is_runtime_service", False):
+        tr_component_1 = TransformationRevision(**tr_json_component_1)
+        tr_component_1.content = update_code(tr_component_1)
+        store_single_transformation_revision(tr_component_1)
+        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+        store_single_transformation_revision(tr_workflow_2)
+
+        update_or_create_nesting(tr_workflow_2)
+
+        # A complete, well-formed runtime response as a *separate* runtime service would send it
+        # (bytes, msgspec-encoded). The backend must decode it keeping the output payload as raw
+        # bytes and splice those verbatim into the response to the caller.
+        runtime_response_content = msgspec.json.encode(
+            {
+                "result": "ok",
                 "output_results_by_output_name": {"wf_output": 100},
                 "output_types_by_output_name": {"wf_output": "INT"},
-                "result": "ok",
+                "error": None,
+                "traceback": None,
                 "job_id": "1270547c-b224-461d-9387-e9d9d465bbe1",
+                "tr_id": str(tr_workflow_2.id),
+                "tr_name": tr_workflow_2.name,
+                "tr_tag": tr_workflow_2.version_tag,
+                "measured_steps": {},
             }
         )
+        resp_mock = mock.Mock()
+        resp_mock.status_code = 200
+        resp_mock.content = runtime_response_content
+        # Mock only the backend's runtime client (not httpx.AsyncClient globally, which would also
+        # mock the test client's own request and make this test vacuous).
+        runtime_client_mock = mock.Mock()
+        runtime_client_mock.post = mock.AsyncMock(return_value=resp_mock)
         with mock.patch(
-            "hetdesrun.backend.execution.httpx.AsyncClient.post",
-            return_value=resp_mock,
-        ) as mocked_post:
-            tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = update_code(tr_component_1)
-            store_single_transformation_revision(tr_component_1)
-            tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
-
-            store_single_transformation_revision(tr_workflow_2)
-
-            update_or_create_nesting(tr_workflow_2)
-
+            "hetdesrun.backend.execution.get_runtime_http_client",
+            return_value=runtime_client_mock,
+        ) as mocked_get_client:
             exec_by_id_input = ExecByIdInput(
                 id=tr_workflow_2.id,
                 wiring=tr_workflow_2.test_wiring,
@@ -1643,10 +1674,17 @@ async def test_execute_for_separate_runtime_container(
 
             assert response.status_code == 200
             resp_data = response.json()
-            assert "output_types_by_output_name" in resp_data
-            assert "job_id" in resp_data
+            assert resp_data["result"] == "ok"
             assert UUID(resp_data["job_id"]) == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
-            mocked_post.assert_called_once()
+            # The runtime's output payload is relayed through to the caller intact (spliced).
+            assert resp_data["output_results_by_output_name"] == {"wf_output": 100}
+            assert resp_data["output_types_by_output_name"] == {"wf_output": "INT"}
+            runtime_client_mock.post.assert_awaited_once()
+            mocked_get_client.assert_called()
+            # The internal backend->runtime hop must not request compression.
+            assert runtime_client_mock.post.call_args.kwargs["headers"]["Accept-Encoding"] == (
+                "identity"
+            )
 
 
 @pytest.mark.asyncio
@@ -1710,7 +1748,7 @@ async def test_execute_for_transformation_revision_workflow_with_optional_inputs
 
 @pytest.mark.asyncio
 async def test_execute_asynchron_for_transformation_revision_works(
-    async_test_client, mocked_clean_test_db_session
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
@@ -1755,8 +1793,67 @@ async def test_execute_asynchron_for_transformation_revision_works(
 
 
 @pytest.mark.asyncio
+async def test_execute_async_rejects_callback_url_not_in_allowlist(
+    async_test_client, allow_test_callback_url
+):
+    """A callback_url that does not match the configured allowlist must be rejected
+    before any execution is scheduled or any result is posted (SSRF / may cause
+    token-leak otherwise).
+
+    The allowlist check happens at the very start of the endpoint, before any DB
+    access, so no transformation revision needs to be stored for this test.
+    """
+    exec_by_id_input = ExecByIdInput(
+        id=UUID("c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7"),
+        wiring=WorkflowWiring(),
+        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+    )
+
+    send_mock = mock.AsyncMock()
+    with mock.patch(
+        "hetdesrun.backend.service.transformation_router.send_result_to_callback_url",
+        new=send_mock,
+    ):
+        async with async_test_client as ac:
+            response = await ac.post(
+                "/api/transformations/execute-async",
+                json=json.loads(exec_by_id_input.model_dump_json()),
+                # host is not on the allowlist (only http://callback-url.com/* is)
+                params={"callback_url": "http://attacker.example.com/steal"},
+            )
+
+    assert response.status_code == 400
+    assert "callback_url" in response.json()["detail"]
+    assert not send_mock.called
+
+
+@pytest.mark.asyncio
+async def test_send_result_to_callback_url_aborts_when_auth_headers_fail():
+    """If obtaining outgoing auth headers fails, the callback must be aborted cleanly"""
+    client_cls_mock = mock.MagicMock()
+    with (
+        mock.patch.object(
+            tr_module,
+            "handle_frontend_exec_response_dict_serialisation",
+            return_value={},
+        ),
+        mock.patch.object(
+            tr_module,
+            "get_auth_headers",
+            new=mock.AsyncMock(side_effect=ServiceAuthenticationError("no creds")),
+        ),
+        mock.patch.object(tr_module.httpx, "AsyncClient", new=client_cls_mock),
+    ):
+        # Must not raise ...
+        await tr_module.send_result_to_callback_url("http://callback-url.com/", mock.MagicMock())
+
+    # ... and must not attempt any outgoing request.
+    assert not client_cls_mock.called
+
+
+@pytest.mark.asyncio
 async def test_execute_async_for_transformation_revision_with_exception(
-    async_test_client, mocked_clean_test_db_session, caplog
+    async_test_client, mocked_clean_test_db_session, caplog, allow_test_callback_url
 ):
     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -1859,7 +1956,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
 
 @pytest.mark.asyncio
 async def test_execute_latest_async_for_transformation_revision_works(
-    async_test_client, mocked_clean_test_db_session
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
@@ -1906,7 +2003,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
 
 @pytest.mark.asyncio
 async def test_execute_latest_async_for_transformation_revision_with_exception(
-    async_test_client, mocked_clean_test_db_session, caplog
+    async_test_client, mocked_clean_test_db_session, caplog, allow_test_callback_url
 ):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
 

@@ -1,9 +1,13 @@
 import asyncio
+import logging
 from unittest import mock
 
 import pytest
 
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_headers,
+    warn_on_permissive_ingoing_auth_config,
+)
 
 
 @pytest.mark.asyncio
@@ -222,3 +226,119 @@ async def test_auth_role_checking_works(
         auth_headers = await get_auth_headers()
         assert len(auth_headers) > 0
         assert auth_headers["Authorization"].startswith("Bearer ")
+
+
+def test_warn_on_permissive_ingoing_auth_config(caplog):
+    """Startup warnings nudge operators to scope tokens via issuer and audience."""
+    # auth disabled: no nudges
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" not in caplog.text
+        assert "HD_AUTH_AUDIENCE" not in caplog.text
+
+    # auth enabled but permissive defaults (no issuer, audience == "account"): both nudges
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth", True),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_issuer", None),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_audience", "account"),
+    ):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" in caplog.text
+        assert "HD_AUTH_AUDIENCE" in caplog.text
+
+    # auth enabled and both explicitly scoped: no nudges
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth", True),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_issuer",
+            "https://issuer.example/realms/hd",
+        ),
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_audience", "hetida-designer"),
+    ):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            warn_on_permissive_ingoing_auth_config()
+        assert "HD_AUTH_ISSUER" not in caplog.text
+        assert "HD_AUTH_AUDIENCE" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_token_without_exp(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_without_exp,
+    mocked_public_key_fetching,
+):
+    """A signed token without an exp claim must be rejected: tokens must carry an
+    expiration so that they cannot be valid indefinitely.
+    """
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_without_exp},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_token_without_aud_if_audience_configured(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_without_aud,
+    mocked_public_key_fetching,
+):
+    """If an expected audience is configured (which it is by default), a token
+    lacking the aud claim must be rejected.
+    """
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_without_aud},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_token_with_wrong_aud(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_with_wrong_aud,
+    mocked_public_key_fetching,
+):
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={"Authorization": "Bearer " + access_token_with_wrong_aud},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_role_checking_rejects_non_list_role_claim(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    valid_access_token_with_string_role,  # has "some_roles": "superallowed_hd_user_x"
+    mocked_public_key_fetching,
+):
+    """The role claim must be a JSON array.
+
+    A string role claim must not grant access even when it contains the allowed role
+    as a substring: membership is checked against a list, not via substring matching.
+    """
+    client = open_async_test_client_with_auth
+
+    with (
+        mock.patch("hetdesrun.webservice.config.runtime_config.auth_role_key", "some_roles"),
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.auth_allowed_role", "allowed_hd_user"
+        ),
+    ):
+        response = await client.get(
+            "/api/transformations/",
+            headers={"Authorization": "Bearer " + valid_access_token_with_string_role},
+        )
+        assert response.status_code == 403

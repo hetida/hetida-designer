@@ -129,6 +129,20 @@ sources_json_objects: list[dict[str, Any]] = [
         "type": ExternalType.MULTITSFRAME,
     },
     {
+        "id": "root.plantA.picklingUnit.influx.temp_with_state",
+        "thingNodeId": "root.plantA.picklingUnit.influx",
+        "name": "Influx Temperature With State",
+        "path": "Plant A / Pickling Unit / Influx",
+        "type": ExternalType.SINGLETSFRAME,
+    },
+    {
+        "id": "root.plantB.picklingUnit.influx.temp_with_state",
+        "thingNodeId": "root.plantB.picklingUnit.influx",
+        "name": "Influx Temperature With State",
+        "path": "Plant B / Pickling Unit / Influx",
+        "type": ExternalType.SINGLETSFRAME,
+    },
+    {
         "id": "root.plantA.picklingUnit.influx.temp",
         "thingNodeId": "root.plantA.picklingUnit.influx",
         "name": "Influx Temperature",

@@ -46,6 +46,7 @@ from demo_adapter_python.models import (
 logger = logging.getLogger(__name__)
 
 MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+SINGLETSFRAME_COLUMN_NAMES = ["timestamp", "value", "score"]
 
 middleware = [
     Middleware(
@@ -1037,6 +1038,123 @@ async def post_multitsframe(
         return {"message": "success"}
 
     raise HTTPException(status.HTTP_404_NOT_FOUND, f"No writable multitsframe with id '{mtsf_id}'.")
+
+
+@demo_adapter_main_router.get("/singletsframe", response_model=None)
+async def singletsframe(
+    stsf_id: str = Query(..., alias="id"),
+    from_timestamp: datetime.datetime = Query(
+        ..., alias="from", examples=[datetime.datetime.now(datetime.timezone.utc)]
+    ),
+    to_timestamp: datetime.datetime = Query(
+        ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
+    ),
+) -> StreamingResponse | HTTPException:
+    """Provide a single, multi-dimensional timeseries
+
+    In contrast to the /multitsframe endpoint the returned records have no "metric" field,
+    since a SingleTSFrame holds exactly one metric. All fields besides "timestamp" are
+    value dimensions — here "value" (the temperature) and "state" (a per-point quality flag).
+    """
+    dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
+
+    if not stsf_id.endswith("temp_with_state"):
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No singletsframe data available with provided id '{stsf_id}'.",
+        )
+
+    offset = 100.0 if "plantA" in stsf_id else 30.0
+    factor = 10.0 if "plantA" in stsf_id else 5.0
+    values = np.random.randn(len(dt_range)) * factor + offset
+
+    stsf = pd.DataFrame(
+        {
+            "timestamp": dt_range,
+            "value": values,
+            "state": ["ok" if value > offset - factor else "suspicious" for value in values],
+        }
+    )
+    stsf.attrs.update(
+        {
+            "dataset_metadata": {
+                "single_metric": stsf_id,
+                "metric_key": "id",
+                "ref_interval_start_timestamp": from_timestamp.isoformat(),
+                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "id": stsf_id,
+                    "name": "Influx Temperature With State",
+                    "value_dimensions": [
+                        {"column": "value", "name": "temperature", "unit": "°C"},
+                        {"column": "state", "name": "state", "unit": None},
+                    ],
+                }
+            ],
+        }
+    )
+
+    headers = {}
+    logger.debug("loading singletsframe %s", str(stsf))
+    logger.debug("which has attributes %s", str(stsf.attrs))
+    df_attrs = stsf.attrs
+    if df_attrs is not None and len(df_attrs) != 0:
+        headers["Data-Attributes"] = encode_attributes(df_attrs)
+
+    io_stream = StringIO()
+    stsf.to_json(io_stream, lines=True, orient="records", date_format="iso")
+    io_stream.seek(0)
+
+    return StreamingResponse(io_stream, media_type="application/json", headers=headers)
+
+
+@demo_adapter_main_router.post("/singletsframe", status_code=200)
+async def post_singletsframe(
+    stsf_body: list[dict] = Body(
+        ...,
+        examples=[
+            [
+                {
+                    "timestamp": "2020-03-11T13:45:18.194000000Z",
+                    "value": 42.3,
+                    "score": 0.7,
+                },
+                {
+                    "timestamp": "2020-03-11T14:45:18.237000000Z",
+                    "value": 41.7,
+                    "score": 0.2,
+                },
+            ]
+        ],
+    ),
+    stsf_id: str = Query(..., alias="id"),
+    data_attributes: str | None = Header(None),
+) -> dict:
+    if stsf_id in ("root.plantA.scored_anomalies", "root.plantB.scored_anomalies"):
+        stsf = pd.DataFrame.from_dict(stsf_body, orient="columns")
+        if set(stsf.columns) != set(SINGLETSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(stsf.columns)
+            singletsframe_column_names_string = ", ".join(SINGLETSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"Dataframe from storage has column names {column_names_string} that don't match "
+                f"the column names this demo sink expects for a SingleTSFrame "
+                f"{singletsframe_column_names_string}."
+            )
+        if data_attributes is not None and len(data_attributes) != 0:
+            df_from_store: pd.DataFrame = get_value_from_store(stsf_id)
+            stsf.attrs = df_from_store.attrs
+            stsf.attrs.update(decode_attributes(data_attributes))
+        logger.debug("storing %s", json.dumps(stsf_body))
+        logger.debug("which has attributes %s", str(stsf.attrs))
+        set_value_in_store(stsf_id, stsf)
+        return {"message": "success"}
+
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND, f"No writable singletsframe with id '{stsf_id}'."
+    )
 
 
 app.include_router(demo_adapter_main_router, prefix="")

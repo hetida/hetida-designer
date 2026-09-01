@@ -44,7 +44,7 @@ You can create a new revision in the same revision group from an existing releas
 
 
 <figure markdown="span">
-  ![New Revisions / Copy Revision](../../../../assets/first_workflow/new_revision_and_copy_button.png){ width="300" }
+  ![New Revisions / Copy Revision](../../assets/first_workflow/new_revision_and_copy_button.png){ width="300" }
 </figure>
 
 

@@ -176,7 +176,7 @@ async def maintenance_delete_unused_deprecated(
     By default, all unused deprecated transformations are deleted.
 
     To prevent recently deprecated transformations from being deleted, use the cutoff_date
-    body-parameter. This parameter restricts deletion to transformations that were disabled after
+    body-parameter. This parameter restricts deletion to transformations that were disabled before
     the specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:
     "cutoff_date":"2026-01-01T00:00:00Z". By default, all unused deprecated transformations are
     deleted.

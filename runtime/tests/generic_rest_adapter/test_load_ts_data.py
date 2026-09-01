@@ -1,9 +1,9 @@
 import io
 from unittest import mock
 
+import niquests
 import pandas as pd
 import pytest
-import requests
 
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
@@ -26,8 +26,8 @@ async def test_load_ts_adapter_request():
     ):
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.raw = io.StringIO(
-            """\n
+        resp_mock.raw = io.BytesIO(
+            b"""\n
             {"timeseriesId": "1", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
             {"timeseriesId": "1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
             {"timeseriesId": "1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
@@ -54,7 +54,7 @@ async def test_load_ts_adapter_request():
             }
         )
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
             return_value=resp_mock,
         ) as get_request_mock:
             df = await load_ts_data_from_adapter(
@@ -96,7 +96,7 @@ async def test_load_ts_adapter_request():
             assert df.shape == (0, 3)
 
             resp_mock.status_code = 200
-            resp_mock.raw = io.StringIO("")
+            resp_mock.raw = io.BytesIO(b"")
             df = await load_ts_data_from_adapter(
                 filtered_sources,
                 filter_params=filter_params,
@@ -375,7 +375,7 @@ async def test_end_to_end_load_ts_with_exception():
     ):
         with (
             mock.patch(
-                "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+                "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
                 return_value=mock.Mock(status_code=422, text="my adapter error"),
             ),
             pytest.raises(AdapterConnectionError, match="my adapter error"),
@@ -396,8 +396,8 @@ async def test_end_to_end_load_ts_with_exception():
 
         with (
             mock.patch(
-                "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
-                side_effect=requests.HTTPError("my http error"),
+                "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
+                side_effect=niquests.HTTPError("my http error"),
             ),
             pytest.raises(AdapterConnectionError, match="my http error"),
         ):

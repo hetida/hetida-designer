@@ -17,6 +17,7 @@ from hdutils import (
     PydanticMultiTimeseriesPandasDataFrame,
     PydanticPandasDataFrame,
     PydanticPandasSeries,
+    PydanticSingleTimeseriesPandasDataFrame,
     parse_obj_as_type,
 )
 
@@ -119,6 +120,7 @@ class GeneralType(Enum):
     TIMESERIES = "timeseries"
     SERIES = "series"
     MULTITSFRAME = "multitsframe"
+    SINGLETSFRAME = "singletsframe"
     DATAFRAME = "dataframe"
     PLOTLYJSON = "plotlyjson"
 
@@ -146,6 +148,8 @@ class ExternalType(StrEnum):
     SERIES_ANY = "series(any)", "series(object)"
 
     MULTITSFRAME = "multitsframe"
+
+    SINGLETSFRAME = "singletsframe"
 
     DATAFRAME = "dataframe"
 
@@ -224,6 +228,7 @@ external_type_to_pydantic_type: dict[ExternalType, type] = {
     ExternalType.SERIES_BOOLEAN: PydanticPandasSeries,
     ExternalType.SERIES_ANY: PydanticPandasSeries,
     ExternalType.MULTITSFRAME: PydanticMultiTimeseriesPandasDataFrame,
+    ExternalType.SINGLETSFRAME: PydanticSingleTimeseriesPandasDataFrame,
     ExternalType.DATAFRAME: PydanticPandasDataFrame,
     ExternalType.PLOTLYJSON: dict,
 }
@@ -248,6 +253,7 @@ external_type_to_datatype: dict[ExternalType, DataType] = {
     ExternalType.SERIES_BOOLEAN: DataType.Series,
     ExternalType.SERIES_ANY: DataType.Series,
     ExternalType.MULTITSFRAME: DataType.MultiTSFrame,
+    ExternalType.SINGLETSFRAME: DataType.SingleTSFrame,
     ExternalType.DATAFRAME: DataType.DataFrame,
     ExternalType.PLOTLYJSON: DataType.PlotlyJson,
 }

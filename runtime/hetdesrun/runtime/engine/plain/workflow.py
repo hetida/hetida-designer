@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
 from typing import Any, Protocol, TypeVar
@@ -159,6 +160,14 @@ class ComputationNode:
 
         input_value_dict: dict[str, Any] = {}
 
+        # Upstream node results are awaited sequentially on purpose. Each node's result is a
+        # memoized cached_property, so every node runs exactly once regardless of ordering.
+        # Gathering independent branches concurrently (asyncio.gather) is deliberately NOT
+        # done: component code is predominantly synchronous and CPU-bound and runs inline on
+        # the event loop (sync components are not offloaded to threads), so concurrency would
+        # yield no real parallelism for that work while complicating cycle detection (the
+        # _in_computation flag), error propagation and concurrent-first-await memoization of
+        # shared nodes. This is intended -- do not "optimise" it into a gather.
         for input_name, (another_node, output_name) in self.inputs.items():
             # Cycle detection logic
             if another_node._in_computation:
@@ -191,6 +200,19 @@ class ComputationNode:
                 input_values,
             )
             function_result = function_result if function_result is not None else {}
+        except asyncio.CancelledError, GeneratorExit:
+            # These are not user-code errors but control-flow signals of the event loop
+            # and must never be swallowed / rebranded as component errors:
+            # - asyncio.CancelledError drives request cancellation (e.g. client
+            #   disconnect), timeouts and graceful shutdown of async components. Catching
+            #   it would defeat cancellation and keep the task running.
+            # - GeneratorExit is raised while a coroutine is being closed; swallowing it
+            #   and raising a different exception instead can provoke a
+            #   "coroutine ignored GeneratorExit" RuntimeError.
+            # Both are BaseException (not Exception) subclasses, so the broad handler
+            # below would otherwise catch them. All actual user-code errors (including
+            # SystemExit, KeyboardInterrupt, MemoryError, ...) are still captured there.
+            raise
         except BaseException as exc:  # uncaught exceptions from user code  # noqa: BLE001
             if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(exc, "error_code"):
                 internal_runtime_execution_logger.warning(
@@ -383,6 +405,9 @@ class Workflow:
         internal_runtime_execution_logger.debug("Starting computation")
 
         # gather result from workflow operators
+        # Sequential awaiting is intentional here too (see _gather_data_from_inputs): node
+        # results are memoized and execution is mostly CPU-bound sync code running inline on
+        # the event loop, so a concurrent gather would not help. Do not convert to gather.
         results = {}
         exe_context_config = execution_config.get(ConfigurationInput())
 

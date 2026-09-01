@@ -21,7 +21,11 @@ def add_schedule(session: SQLAlchemySession, schedule: Schedule) -> None:
     try:
         db_model = schedule.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:  # pragma: no cover
+        # Flush so a constraint violation surfaces here and is mapped to DBIntegrityError,
+        # instead of only at the surrounding transaction's commit where it would escape
+        # unmapped (session.add() alone only stages the row).
+        session.flush()
+    except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store schedule "
             f"with id {schedule.id}. Error was:\n{str(e)}"
@@ -141,9 +145,13 @@ def add_schedule_execution(
     try:
         db_model = schedule_execution.to_orm_model()
         session.add(db_model)
-    except IntegrityError as e:  # pragma: no cover
+        # Flush so a constraint violation surfaces here and is mapped to DBIntegrityError,
+        # instead of only at the surrounding transaction's commit where it would escape
+        # unmapped (session.add() alone only stages the row).
+        session.flush()
+    except IntegrityError as e:
         msg = (
-            f"Integrity Error while trying to store schedule execution"
+            f"Integrity Error while trying to store schedule execution "
             f"with id {schedule_execution.id}. Error was:\n{str(e)}"
         )
         logger.error(msg)
@@ -171,6 +179,7 @@ def update_schedule_execution(
                 transformation_state=db_model.transformation_state,
                 state=db_model.state,
                 trafo_exec_job_id=db_model.trafo_exec_job_id,
+                exec_input=db_model.exec_input,
                 exec_result=db_model.exec_result,
                 error_message=db_model.error_message,
             )
@@ -239,19 +248,57 @@ def select_latest_schedule_execution_by_schedule_id(
     exclude_exec_result: bool = False,
     exclude_exec_input: bool = False,
 ) -> ScheduleExecution | None:
-    result = session.execute(
-        select(ScheduleExecutionDBModel)
-        .where(ScheduleExecutionDBModel.schedule_id == schedule_id)
+
+    selection = select(
+        *(
+            (
+                ScheduleExecutionDBModel.id,
+                ScheduleExecutionDBModel.schedule_id,
+                ScheduleExecutionDBModel.last_state_update,
+                ScheduleExecutionDBModel.start,
+                ScheduleExecutionDBModel.end,
+                ScheduleExecutionDBModel.transformation_id,
+                ScheduleExecutionDBModel.transformation_name,
+                ScheduleExecutionDBModel.transformation_version_tag,
+                ScheduleExecutionDBModel.transformation_type,
+                ScheduleExecutionDBModel.transformation_state,
+                ScheduleExecutionDBModel.state,
+                ScheduleExecutionDBModel.trafo_exec_job_id,
+                ScheduleExecutionDBModel.error_message,
+            )
+            + ((ScheduleExecutionDBModel.exec_result,) if not exclude_exec_result else ())
+            + ((ScheduleExecutionDBModel.exec_input,) if not exclude_exec_input else ())
+        )
+    )
+
+    row = session.execute(
+        selection.where(ScheduleExecutionDBModel.schedule_id == schedule_id)
         .order_by(ScheduleExecutionDBModel.last_state_update.desc())
         .limit(1)
-    ).scalar_one_or_none()
-    if result is None:  # pragma: no cover
+    ).first()
+
+    if row is None:  # pragma: no cover
         return None
-    if exclude_exec_result:  # pragma: no cover
-        result.exec_result = None
-    if exclude_exec_input:  # pragma: no cover
-        result.exec_input = None
-    return ScheduleExecution.from_orm_model(result)
+
+    return ScheduleExecution.from_orm_model(
+        ScheduleExecutionDBModel(
+            id=row.id,
+            schedule_id=row.schedule_id,
+            last_state_update=row.last_state_update,
+            start=row.start,
+            end=row.end,
+            transformation_id=row.transformation_id,
+            transformation_name=row.transformation_name,
+            transformation_version_tag=row.transformation_version_tag,
+            transformation_type=row.transformation_type,
+            transformation_state=row.transformation_state,
+            state=row.state,
+            trafo_exec_job_id=row.trafo_exec_job_id,
+            exec_result=None if exclude_exec_result else row.exec_result,
+            exec_input=None if exclude_exec_input else row.exec_input,
+            error_message=row.error_message,
+        )
+    )
 
 
 def read_latest_schedule_execution_by_schedule_id(

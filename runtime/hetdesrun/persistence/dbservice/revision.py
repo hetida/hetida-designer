@@ -1,10 +1,8 @@
-import datetime
 import logging
-from copy import deepcopy
 from uuid import UUID
 
 from pydantic import StrictInt, StrictStr
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, distinct, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only
 from sqlalchemy.sql.selectable import Select
@@ -13,7 +11,7 @@ from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.component.code_utils import CodeParsingException, get_global_component_imports
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.persistence.dbmodels import NestingDBModel, TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -42,6 +40,12 @@ def add_tr(session: SQLAlchemySession, transformation_revision: TransformationRe
     try:
         db_model = transformation_revision.to_orm_model()
         session.add(db_model)
+        # Flush here so that a constraint violation (e.g. a duplicate id from a concurrent
+        # create) surfaces as an IntegrityError at this point and is mapped to
+        # DBIntegrityError. session.add() alone only stages the row; without the flush the
+        # error would first be raised at the surrounding transaction's commit, where it
+        # escapes unmapped as a raw sqlalchemy IntegrityError (HTTP 500).
+        session.flush()
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store transformation revision "
@@ -93,22 +97,46 @@ def select_tr_by_id_with_possible_caching(
     session: SQLAlchemySession,
     log_error: bool = True,
 ) -> TransformationRevision:
+    """Like select_tr_by_id, but caches non-DRAFT trafos when the flag is enabled.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. On a cache hit the SAME object is returned, so
+    callers MUST NOT mutate the result in place. See cache_conditionally for the full
+    contract (shared objects, unbounded, no invalidation).
+    """
     return select_tr_by_id(session=session, id=id, log_error=log_error)
 
 
 def read_multiple_transformation_revisions_by_id(
     ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
+    if not ids:
+        return {}
+
+    # normalize to UUID: callers pass either UUIDs (nested descendants) or uuid strings
+    # (parsed component imports), and the missing-id check below must compare like types.
+    requested_ids = [UUID(str(id_)) for id_ in ids]
+    # single IN query instead of one SELECT per id (avoids N+1 on the execution path)
+    selection = multiple_trafo_select_filtered(ids=requested_ids)
+
+    # the orm results must be converted while the session is still open, so build the
+    # dict inside the session scope
     if session is None:
         with get_session()() as new_session, new_session.begin():
-            return {
-                trafo_id: select_tr_by_id(new_session, trafo_id, log_error=log_error)
-                for trafo_id in ids
-            }
+            results = new_session.execute(selection).scalars().all()
+            trafos_by_id = {tr.id: tr for tr in map(TransformationRevision.from_orm_model, results)}
     else:
-        return {
-            trafo_id: select_tr_by_id(session, trafo_id, log_error=log_error) for trafo_id in ids
-        }
+        results = session.execute(selection).scalars().all()
+        trafos_by_id = {tr.id: tr for tr in map(TransformationRevision.from_orm_model, results)}
+
+    # preserve the previous contract: raise if any requested id is missing
+    missing_ids = set(requested_ids) - set(trafos_by_id)
+    if missing_ids:
+        msg = f"Found no transformation revision in database for ids {missing_ids}"
+        if log_error:
+            logger.error(msg)
+        raise DBNotFoundError(msg)
+    return trafos_by_id
 
 
 @cache_output_dict_conditionally(
@@ -120,6 +148,13 @@ def read_multiple_transformation_revisions_by_id(
 def read_multiple_transformation_revisions_by_id_with_possible_caching(
     ids: tuple[UUID, ...], log_error: bool = True, session: SQLAlchemySession | None = None
 ) -> dict[UUID, TransformationRevision]:
+    """Like read_multiple_transformation_revisions_by_id, but caches non-DRAFT trafos.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. Cached values are shared objects, so callers
+    MUST NOT mutate them in place. See cache_output_dict_conditionally for the full contract
+    (shared values, unbounded, no invalidation).
+    """
     return read_multiple_transformation_revisions_by_id(ids, log_error=log_error, session=session)
 
 
@@ -141,6 +176,13 @@ def read_single_transformation_revision_with_caching(
     id: UUID,  # noqa: A002
     log_error: bool = True,
 ) -> TransformationRevision:
+    """Like read_single_transformation_revision, but caches non-DRAFT trafos.
+
+    Caching is opt-in (enable_caching_for_non_draft_trafos_for_execution) and only kicks in
+    for non-DRAFT (i.e. immutable) revisions. On a cache hit the SAME object is returned, so
+    callers MUST NOT mutate the result in place. See cache_conditionally for the full
+    contract (shared objects, unbounded, no invalidation).
+    """
     return read_single_transformation_revision(id, log_error)
 
 
@@ -296,11 +338,13 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
 def tr_same_except_for_wiring_and_docu(
     tr_A: TransformationRevision, tr_B: TransformationRevision
 ) -> bool:
-    tr_compare = deepcopy(tr_A)
-    tr_compare.test_wiring = tr_B.test_wiring
-    tr_compare.documentation = tr_B.documentation
-    are_equal = tr_compare == tr_B
-    return are_equal
+    # Shallow copy instead of deepcopy: we only override two fields and compare, never
+    # mutating the shared nested content, so there is no need to duplicate the
+    # (potentially large) workflow content.
+    tr_compare = tr_A.model_copy(
+        update={"test_wiring": tr_B.test_wiring, "documentation": tr_B.documentation}
+    )
+    return tr_compare == tr_B
 
 
 def is_modifiable(
@@ -367,16 +411,65 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     return found_some_disabled
 
 
+def refresh_deprecated_operator_states(
+    session: SQLAlchemySession, workflow_content: WorkflowContent
+) -> None:
+    """Flag operators that reference a deprecated (DISABLED) transformation.
+
+    operator.state is a denormalized snapshot of the referenced transformation's state
+    (used e.g. by the frontend to indicate operators whose transformation is deprecated).
+    It can be stale in incoming content -- most notably when importing a workflow whose
+    referenced transformation was already deprecated, so that pass_on_deprecation never
+    reached this workflow. Recompute the DISABLED flag from the db.
+
+    This uses a single query projecting only the ids of the referenced transformations
+    that are deprecated (no full transformation contents are loaded), so it stays cheap
+    even though workflows are stored on every edit.
+    """
+    operators = workflow_content.operators
+    if not operators:
+        return
+
+    referenced_ids = {operator.transformation_id for operator in operators}
+    disabled_ids = set(
+        session.execute(
+            select(TransformationRevisionDBModel.id).where(
+                TransformationRevisionDBModel.id.in_(referenced_ids),
+                TransformationRevisionDBModel.state == State.DISABLED,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    for operator in operators:
+        if operator.transformation_id in disabled_ids:
+            operator.state = State.DISABLED
+
+
 def update_content(
     updated_transformation_revision: TransformationRevision,
     existing_transformation_revision: TransformationRevision | None = None,
     do_expand_code: bool = False,
+    session: SQLAlchemySession | None = None,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(updated_transformation_revision)
         if do_expand_code:
             updated_transformation_revision.content = expand_code(updated_transformation_revision)
-    elif existing_transformation_revision is not None:
+        return updated_transformation_revision
+
+    assert isinstance(  # noqa: S101
+        updated_transformation_revision.content, WorkflowContent
+    )  # hint for mypy
+
+    # keep each operator's deprecation flag in sync with the referenced transformation,
+    # so that operators referencing an already-deprecated transformation are flagged even
+    # when they enter the db via import rather than through pass_on_deprecation
+    if session is not None:
+        refresh_deprecated_operator_states(session, updated_transformation_revision.content)
+
+    if existing_transformation_revision is not None:
         assert isinstance(  # noqa: S101
             existing_transformation_revision.content, WorkflowContent
         )  # hint for mypy
@@ -384,10 +477,6 @@ def update_content(
         existing_operator_ids: list[UUID] = []
         for operator in existing_transformation_revision.content.operators:
             existing_operator_ids.append(operator.id)
-
-        assert isinstance(  # noqa: S101
-            updated_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
 
         for operator in updated_transformation_revision.content.operators:
             if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
@@ -555,7 +644,9 @@ def update_or_create_single_transformation_revision(
         except DBNotFoundError:
             if transformation_revision.type == Type.WORKFLOW or update_component_code:
                 transformation_revision = update_content(
-                    transformation_revision, do_expand_code=expand_component_code
+                    transformation_revision,
+                    do_expand_code=expand_component_code,
+                    session=session,
                 )
 
             add_tr(session, transformation_revision)
@@ -578,19 +669,24 @@ def update_or_create_single_transformation_revision(
                     transformation_revision,
                     existing_transformation_revision,
                     do_expand_code=expand_component_code,
+                    session=session,
                 )
 
             update_tr(session, transformation_revision)
 
-        if transformation_revision.state == State.DISABLED:
-            pass_on_deprecation(session, transformation_revision.id)
-            return select_tr_by_id(session, transformation_revision.id)
-
+        # Build the nesting for workflows regardless of state. This must happen even for
+        # DISABLED workflows: a deprecated workflow is still executable, and a workflow
+        # can enter the db already in DISABLED state (e.g. importing a pre-deprecated
+        # workflow), in which case it was never stored as RELEASED and would otherwise
+        # never get its nesting populated -> execution would fail to resolve its operators.
         if transformation_revision.type == Type.WORKFLOW:
             assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
             update_nesting(session, transformation_revision.id, transformation_revision.content)
+
+        if transformation_revision.state == State.DISABLED:
+            pass_on_deprecation(session, transformation_revision.id)
 
         return select_tr_by_id(session, transformation_revision.id)
 
@@ -661,6 +757,39 @@ def is_unused(transformation_id: UUID) -> bool:
 
         results = session.execute(selection).scalars().all()
     return len(results) == 0
+
+
+def filter_unused_transformation_ids(transformation_ids: list[UUID]) -> set[UUID]:
+    """Return the subset of the given transformation ids that are unused.
+
+    A transformation revision is considered unused if it is only contained in
+    deprecated (DISABLED) workflows, i.e. it is not contained in any non-deprecated
+    workflow (see is_unused). This computes the result for all given ids with a single
+    query instead of one transaction per id.
+
+    This does not check for component imports!
+    """
+    if not transformation_ids:
+        return set()
+
+    with get_session()() as session, session.begin():
+        # ids that ARE used: they appear as a nested transformation in at least one
+        # non-deprecated containing workflow
+        used_ids = set(
+            session.execute(
+                select(distinct(NestingDBModel.nested_transformation_id))
+                .join(
+                    TransformationRevisionDBModel,
+                    TransformationRevisionDBModel.id == NestingDBModel.workflow_id,
+                )
+                .where(NestingDBModel.nested_transformation_id.in_(transformation_ids))
+                .where(TransformationRevisionDBModel.state != State.DISABLED)
+            )
+            .scalars()
+            .all()
+        )
+
+    return {tr_id for tr_id in transformation_ids if tr_id not in used_ids}
 
 
 def get_distinct_categories(types: set[Type] | None = None) -> list[str]:
@@ -816,7 +945,8 @@ def get_multiple_transformation_revisions(
     )
 
     if params.unused:
-        tr_list = [tr for tr in tr_list if is_unused(tr.id)]
+        unused_ids = filter_unused_transformation_ids([tr.id for tr in tr_list])
+        tr_list = [tr for tr in tr_list if tr.id in unused_ids]
 
     if params.include_dependencies:
         dependencies = []
@@ -883,14 +1013,20 @@ def get_all_nested_transformation_revisions(
 
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
-    revision_group_list = get_multiple_transformation_revisions(
-        FilterParams(
-            state=State.RELEASED,
-            revision_group_id=revision_group_id,
-            include_dependencies=False,
-        )
-    )
-    if len(revision_group_list) == 0:
+    # Select only the id of the newest released revision instead of loading every
+    # released revision of the group (with full content) and sorting in Python.
+    with get_session()() as session, session.begin():
+        latest_revision_id: UUID | None = session.execute(
+            select(TransformationRevisionDBModel.id)
+            .where(
+                TransformationRevisionDBModel.revision_group_id == revision_group_id,
+                TransformationRevisionDBModel.state == State.RELEASED,
+            )
+            .order_by(TransformationRevisionDBModel.released_timestamp.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+    if latest_revision_id is None:
         msg = (
             f"no released transformation revisions with revision group id {revision_group_id} "
             f"found in the database"
@@ -898,11 +1034,4 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
         logger.error(msg)
         raise DBNotFoundError(msg)
 
-    id_by_released_timestamp: dict[datetime.datetime, UUID] = {}
-
-    for revision in revision_group_list:
-        if not isinstance(revision.released_timestamp, datetime.datetime):
-            raise TypeError("revision.released_timestamp must be of type datetime.datetime")
-        id_by_released_timestamp[revision.released_timestamp] = revision.id
-    _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
     return latest_revision_id

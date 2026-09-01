@@ -10,7 +10,17 @@ from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSource,
     IdString,
 )
+from hetdesrun.adapters.blob_storage.service import reset_s3_client_cache
 from hetdesrun.webservice.application import init_app
+
+
+@pytest.fixture(autouse=True)
+def reset_blob_storage_s3_client_cache() -> Generator:
+    # The service caches the S3 client for the process lifetime. Tests run against
+    # fresh mocked S3 backends, so start each from a clean slate.
+    reset_s3_client_cache()
+    yield
+    reset_s3_client_cache()
 
 
 @pytest.fixture(scope="module")

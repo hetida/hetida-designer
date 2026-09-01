@@ -103,7 +103,13 @@ class ScheduleExecution(BaseModel):
             state=self.state,
             trafo_exec_job_id=self.trafo_exec_job_id,
             exec_input=self.exec_input.model_dump(mode="json") if self.exec_input else None,
-            exec_result=self.exec_result.model_dump(mode="json") if self.exec_result else None,
+            # For exec_result use model_dump_with_materialized_outputs: with a separate
+            # runtime the direct-provisioning outputs are relayed as raw json bytes on the excluded
+            # raw_output_results_json field and output_results_by_output_name is empty, so a plain
+            # dump would persist a result without any outputs for the schedule result view to show.
+            exec_result=self.exec_result.model_dump_with_materialized_outputs()
+            if self.exec_result
+            else None,
             error_message=self.error_message,
         )
 

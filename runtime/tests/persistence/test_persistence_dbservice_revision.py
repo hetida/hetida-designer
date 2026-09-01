@@ -1,21 +1,23 @@
 from copy import deepcopy
-from sqlite3 import Connection as SQLite3Connection
+from unittest import mock
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import event
-from sqlalchemy.future.engine import Engine
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
+from hetdesrun.persistence.db_engine_and_session import get_session
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    filter_unused_transformation_ids,
+    get_all_nested_transformation_revisions,
     get_distinct_categories,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
     is_modifiable,
     is_unused,
+    read_multiple_transformation_revisions_by_id,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
@@ -33,12 +35,9 @@ from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
-
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) -> None:  # type: ignore  # noqa: E501,
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# Note: foreign key enforcement for sqlite is enabled centrally in
+# hetdesrun.persistence.db_engine_and_session.get_db_engine, so the tests below that rely
+# on foreign key constraints need no test-local pragma setup.
 
 
 def test_storing_and_receiving(mocked_clean_test_db_session):
@@ -69,6 +68,63 @@ def test_storing_and_receiving(mocked_clean_test_db_session):
     wrong_tr_uuid = get_uuid_from_seed("wrong id")
     with pytest.raises(DBNotFoundError):
         received_tr_object = read_single_transformation_revision(wrong_tr_uuid)
+
+
+def test_read_multiple_transformation_revisions_by_id(mocked_clean_test_db_session):
+    stored = []
+    for i in range(3):
+        tr = TransformationRevision(
+            id=uuid4(),
+            revision_group_id=uuid4(),
+            name=f"comp {i}",
+            category="category",
+            version_tag="1.0.0",
+            type=Type.COMPONENT,
+            documentation="",
+            state=State.DRAFT,
+            content="",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+        )
+        store_single_transformation_revision(tr)
+        stored.append(tr)
+
+    ids = tuple(tr.id for tr in stored)
+    result = read_multiple_transformation_revisions_by_id(ids)
+    assert set(result.keys()) == set(ids)
+    for tr in stored:
+        assert result[tr.id].id == tr.id
+
+    # missing id must raise DBNotFoundError (contract relied on by check_direct_component_imports)
+    with pytest.raises(DBNotFoundError):
+        read_multiple_transformation_revisions_by_id((*ids, uuid4()))
+
+
+def test_storing_duplicate_transformation_revision_raises_db_integrity_error(
+    mocked_clean_test_db_session,
+):
+    tr_uuid = get_uuid_from_seed("test_storing_duplicate")
+    tr_object = TransformationRevision(
+        id=tr_uuid,
+        revision_group_id=tr_uuid,
+        name="Test",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    store_single_transformation_revision(tr_object)
+
+    # storing the same id again violates the primary key constraint; this must surface as
+    # the mapped DBIntegrityError, not as a raw sqlalchemy IntegrityError
+    with pytest.raises(DBIntegrityError):
+        store_single_transformation_revision(tr_object)
 
 
 def test_distinct_categories(mocked_clean_test_db_session):
@@ -754,6 +810,23 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
     assert is_unused(tr_component_contained_only_in_deprecated.id) is True
     assert is_unused(tr_component_contained_not_only_in_deprecated.id) is False
 
+    # the batched variant returns the same unused set for all ids at once ...
+    all_ids = [
+        tr_component_not_contained.id,
+        tr_component_contained_only_in_deprecated.id,
+        tr_component_contained_not_only_in_deprecated.id,
+    ]
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.get_session", wraps=get_session
+    ) as get_session_spy:
+        unused_ids = filter_unused_transformation_ids(all_ids)
+    assert unused_ids == {
+        tr_component_not_contained.id,
+        tr_component_contained_only_in_deprecated.id,
+    }
+    # ... using a single session/transaction rather than one per id
+    assert get_session_spy.call_count == 1
+
     results = get_multiple_transformation_revisions(
         FilterParams(
             ids=[tr_component_not_contained.id],
@@ -780,6 +853,143 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
         )
     )
     assert len(results) == 0
+
+
+def test_create_disabled_workflow_populates_nesting(mocked_clean_test_db_session):
+    # A workflow can enter the db already in DISABLED state (e.g. importing a
+    # pre-deprecated workflow). Its nesting must still be populated, otherwise its
+    # operators cannot be resolved at execution time.
+    tr_component = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="comp",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.COMPONENT,
+        documentation="",
+        state=State.DRAFT,
+        content="",
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(id=uuid4(), name="o", data_type=DataType.Any)]
+        ),
+        test_wiring=WorkflowWiring(),
+    )
+    tr_component.release()
+    update_or_create_single_transformation_revision(tr_component)
+
+    operator = tr_component.to_operator()
+    output_connector = WorkflowContentOutput(
+        id=uuid4(),
+        name=operator.outputs[0].name,
+        operator_id=operator.id,
+        connector_id=operator.outputs[0].id,
+        operator_name=operator.name,
+        connector_name=operator.outputs[0].name,
+        data_type=operator.outputs[0].data_type,
+    )
+    tr_workflow = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="wf",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.WORKFLOW,
+        documentation="",
+        state=State.DRAFT,
+        content=WorkflowContent(
+            operators=[operator],
+            outputs=[output_connector],
+            links=[
+                Link(
+                    id=uuid4(),
+                    start=Vertex(operator=operator.id, connector=operator.outputs[0]),
+                    end=Vertex(operator=None, connector=output_connector),
+                )
+            ],
+        ),
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+    )
+    # store the workflow directly in DISABLED state
+    tr_workflow.release()
+    tr_workflow.deprecate()
+    stored_workflow = update_or_create_single_transformation_revision(tr_workflow)
+    assert stored_workflow.state == State.DISABLED
+
+    # nesting must be populated even though the workflow is disabled, so that its
+    # operators (here the component) can be resolved when executing it
+    nested_trafos = get_all_nested_transformation_revisions(stored_workflow)
+    assert tr_component.id in nested_trafos
+
+
+def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
+    mocked_clean_test_db_session,
+):
+    # a component that ends up deprecated in the db
+    tr_component = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="comp",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.COMPONENT,
+        documentation="",
+        state=State.DRAFT,
+        content="",
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(id=uuid4(), name="o", data_type=DataType.Any)]
+        ),
+        test_wiring=WorkflowWiring(),
+    )
+    tr_component.release()
+    update_or_create_single_transformation_revision(tr_component)
+
+    # snapshot the operator while the component is still RELEASED, then deprecate it
+    operator = tr_component.to_operator()
+    operator.state = State.RELEASED
+    tr_component.deprecate()
+    update_or_create_single_transformation_revision(tr_component)
+
+    output_connector = WorkflowContentOutput(
+        id=uuid4(),
+        name=operator.outputs[0].name,
+        operator_id=operator.id,
+        connector_id=operator.outputs[0].id,
+        operator_name=operator.name,
+        connector_name=operator.outputs[0].name,
+        data_type=operator.outputs[0].data_type,
+    )
+    tr_workflow = TransformationRevision(
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        name="wf",
+        category="category",
+        version_tag="1.0.0",
+        type=Type.WORKFLOW,
+        documentation="",
+        state=State.DRAFT,
+        content=WorkflowContent(
+            operators=[operator],
+            outputs=[output_connector],
+            links=[
+                Link(
+                    id=uuid4(),
+                    start=Vertex(operator=operator.id, connector=operator.outputs[0]),
+                    end=Vertex(operator=None, connector=output_connector),
+                )
+            ],
+        ),
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+    )
+
+    # storing the workflow (as when importing it) must flag the operator that references
+    # the now-deprecated component, even though the incoming operator state is stale
+    stored_workflow = update_or_create_single_transformation_revision(tr_workflow)
+    assert isinstance(stored_workflow.content, WorkflowContent)
+    stored_operator = stored_workflow.content.operators[0]
+    assert stored_operator.transformation_id == tr_component.id
+    assert stored_operator.state == State.DISABLED
 
 
 def test_get_latest_revision_id(mocked_clean_test_db_session):

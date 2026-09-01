@@ -96,6 +96,30 @@ def hash_code(code: str) -> str:
     return hashlib.sha256(code.encode("utf8")).hexdigest()
 
 
+def prepare_component_import_context(
+    code_modules: list[CodeModule], components: list[ComponentRevision]
+) -> None:
+    """Bind everything necessary for import_comp into the execution context
+
+    Makes the given code modules and component revisions available so that
+    import_comp invocations in component code can resolve them.
+    """
+    code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}
+    component_rev_dict: dict[str, ComponentRevision] = {str(c.uuid): c for c in components}
+    code_hash_dict: dict[str, str] = {str(c.uuid): hash_code(c.code) for c in code_modules}
+
+    currently_importing: dict[UUID, bool] = {c.uuid: False for c in code_modules}
+
+    execution_context_filter.bind_context(
+        current_code_modules=code_modules,
+        current_components=components,
+        code_modules_by_id=code_module_dict,
+        component_revisions_by_trafo_id=component_rev_dict,
+        code_hash_dict=code_hash_dict,
+        currently_importing=currently_importing,
+    )
+
+
 def import_comp(trafo_id: str) -> ModuleType:
     """Actually import another component code module from within component code
 
@@ -205,7 +229,7 @@ def import_from_code_module(
                 str(exec_exception),
             )
             raise ComponentCodeImportError(
-                "Could not import code due to Exception %s", str(exec_exception)
+                f"Could not import code due to Exception {str(exec_exception)}"
             ) from exec_exception
 
         if register_module:
@@ -222,8 +246,8 @@ def import_from_code_module(
             module_path,
             datetime.datetime.now(tz=datetime.timezone.utc) - import_start,
         )
-
-    currently_importing[code_module.uuid] = False
+    finally:
+        currently_importing[code_module.uuid] = False
 
     return mod
 

@@ -2,3 +2,11 @@ mat-dialog-content {
   min-width: 300px;
   white-space: pre-wrap;
 }
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+}

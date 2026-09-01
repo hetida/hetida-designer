@@ -2,8 +2,13 @@ import os
 from typing import Any
 from uuid import UUID
 
+import pandas as pd
 import pytest
 
+from hdutils import DataType
+from hetdesrun.adapters.plot_adapter.default_plots import (
+    provide_plotly_fig_json_for_arbitrary_value,
+)
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 
 payload = {
@@ -179,3 +184,21 @@ async def test_plot_wiring_payload(mocked_clean_test_db_session, async_test_clie
         plot_result = resp_json["output_results_by_output_name"]["output"]
         assert isinstance(plot_result, dict)
         assert len(plot_result) == 0  # empty dict
+
+
+def test_default_plot_for_singletsframe_uses_value_dimensions_as_traces():
+    """A SingleTSFrame gets one trace / y axis per value dimension, not per metric"""
+    singletsframe = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2020-01-01T00:00:00Z", "2020-01-01T01:00:00Z"], utc=True),
+            "value": [1.0, 1.2],
+            "score": [0.7, 0.2],
+        }
+    )
+
+    plotly_json = provide_plotly_fig_json_for_arbitrary_value(singletsframe, DataType.SingleTSFrame)
+
+    assert len(plotly_json["data"]) == 2
+    assert {trace["name"] for trace in plotly_json["data"]} == {"value", "score"}
+    # each value dimension gets its own y axis
+    assert {trace["yaxis"] for trace in plotly_json["data"]} == {"y", "y2"}

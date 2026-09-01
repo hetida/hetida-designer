@@ -110,8 +110,8 @@ async def mock_load_generic_rest_dataframe_with_timestamp_col(*args, **kwargs):
 async def test_end_to_end_load_dataframe_data_with_timestamp_column():
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
-    resp_mock.raw = io.StringIO(
-        """\n
+    resp_mock.raw = io.BytesIO(
+        b"""\n
         {"timestamp": "2020-03-11T13:45:18.194000000Z", "a": 42.3}
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
@@ -123,7 +123,7 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
         return_value="https://hetida.de",
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
             return_value=resp_mock,
         ):
             loaded_data = await load_data(
@@ -145,8 +145,8 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
     resp_mock.status_code = 200
     attributes = {"b": 2}
     resp_mock.headers = {"Data-Attributes": encode_attributes(attributes)}
-    resp_mock.raw = io.StringIO(
-        """\n
+    resp_mock.raw = io.BytesIO(
+        b"""\n
         {"timestamp": "2020-03-11T13:45:18.194000000Z", "a": 42.3}
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
@@ -157,7 +157,7 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
         return_value="https://hetida.de",
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            "hetdesrun.adapters.generic_rest.load_framelike.niquests.Session.get",
             return_value=resp_mock,
         ):
             loaded_data = await load_data(

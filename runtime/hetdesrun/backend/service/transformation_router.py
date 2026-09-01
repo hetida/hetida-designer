@@ -1,13 +1,16 @@
 import datetime
+import fnmatch
 import json
 import logging
 from copy import deepcopy
 from posixpath import join as posix_urljoin
 from typing import Annotated, Any
+from urllib.parse import urlsplit
 from uuid import UUID
 
 import httpx
 import logfire
+import msgspec
 from dtexp import DtexpParsingError
 from fastapi import (
     APIRouter,
@@ -48,6 +51,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import ParseDefaultValueError, expand_code, update_code
+from hetdesrun.component.code_utils import CodeParsingException
 from hetdesrun.component.load import ComponentCodeImportError, ComponentImportCycleError
 from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.exportimport.importing import (
@@ -70,6 +74,7 @@ from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
+    read_component_imports_recursively,
     read_single_transformation_revision,
     select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
@@ -1355,6 +1360,51 @@ async def execute_transformation_revision_endpoint(
     return msgspec_result
 
 
+def build_unittest_payload(trafo: TransformationRevision) -> UnitTestPayload:
+    """Build the unittest payload for a component transformation revision
+
+    Resolves component imports (components importing components via import_comp)
+    so that they can be provided to the pytest process, analogously to how they
+    are provided in the execution context during ordinary execution.
+    """
+    assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
+
+    try:
+        imported_components_dict = read_component_imports_recursively([trafo])
+    except DBNotFoundError as e:
+        msg = (
+            f"Could not find a component imported (via import_comp) by component"
+            f" {trafo.name} ({trafo.version_tag}) with id {str(trafo.id)} in db"
+            f" for unittesting. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from e
+    except CodeParsingException as e:
+        # e.g. syntax errors in the component code. Proceed without import context:
+        # the pytest run itself will surface the actual problem to the user in a
+        # more helpful way than an http error could.
+        msg = (
+            f"Could not parse component code for resolving component imports for"
+            f" unittesting component {trafo.name} ({trafo.version_tag}) with id"
+            f" {str(trafo.id)}. Proceeding without resolved component imports."
+            f" Error was:\n{str(e)}"
+        )
+        logger.warning(msg)
+        imported_components_dict = {}
+
+    all_components = [trafo, *imported_components_dict.values()]
+
+    return UnitTestPayload(
+        component_code=trafo.content,
+        code_modules=list(
+            {(cm := comp.to_code_module()).uuid: cm for comp in all_components}.values()
+        ),
+        components=list(
+            {(cr := comp.to_component_revision()).uuid: cr for comp in all_components}.values()
+        ),
+    )
+
+
 @transformation_router.post(
     "/{id}/test",
     response_model=UnitTestResults,
@@ -1390,16 +1440,16 @@ async def test_transformation_revision(
         )
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
+    unit_test_payload = build_unittest_payload(trafo)
+
     if get_config().is_runtime_service:
         try:
-            assert isinstance(trafo.content, str)  # noqa: S101 # for mypy
-            unittest_result = await unittest_service(trafo.content)
+            unittest_result = await unittest_service(unit_test_payload)
         except Exception as e:
             msg = f"Failure running unittest_service:\n{str(e)}"
             logger.error(msg)
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from e
     else:
-        unit_test_payload = UnitTestPayload(component_code=trafo.content)
         try:
             headers = await get_auth_headers(external=False)
         except ServiceAuthenticationError as e:
@@ -1455,6 +1505,29 @@ def receive_execution_response(
     pass
 
 
+def callback_url_is_allowed(callback_url: str) -> bool:
+    """Check a caller-supplied callback URL against the configured allowlist.
+
+    Returns True only if callback patterns are configured (via
+    HD_ALLOWED_CALLBACK_URL_PATTERNS) and the URL matches at least one of them.
+
+    Only http/https URLs without embedded userinfo are ever accepted: rejecting
+    userinfo ensures a glob pattern that pins scheme and host (e.g.
+    "https://caller.example.com/cb*") cannot be bypassed via an authority such as
+    "https://caller.example.com@evil.example.com/". Matching uses shell-style globbing
+    against the (pydantic-normalized) URL string.
+    """
+    patterns = get_config().allowed_callback_url_patterns
+    if not patterns:
+        return False
+    split = urlsplit(callback_url)
+    if split.scheme not in ("http", "https"):
+        return False
+    if split.username is not None or split.password is not None:
+        return False
+    return any(fnmatch.fnmatchcase(callback_url, pattern) for pattern in patterns)
+
+
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
@@ -1465,8 +1538,14 @@ async def send_result_to_callback_url(
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
-        msg = f"Failed to get auth headers for sending result to callback url. Error was:\n{str(e)}"
+        msg = (
+            "Failed to get auth headers for sending result to callback url."
+            f" Aborting callback. Error was:\n{str(e)}"
+        )
         logger.error(msg)
+        # Without auth headers the callback cannot be delivered authenticated;
+        # abort instead of continuing with an undefined `headers` variable.
+        return
 
     async with httpx.AsyncClient(
         verify=get_config().hd_backend_verify_certs,
@@ -1475,8 +1554,10 @@ async def send_result_to_callback_url(
         try:
             await client.post(
                 str(callback_url),
-                headers=headers,
-                json=dict_like_obj,
+                headers={**headers, "Content-Type": "application/json"},
+                # Encode with msgspec (not httpx's json=, i.e. stdlib json) so a spliced
+                # msgspec.Raw output payload is emitted verbatim:
+                content=msgspec.json.encode(dict_like_obj),
             )
         except httpx.HTTPError as http_err:
             # handles both request errors (connection problems)
@@ -1552,6 +1633,15 @@ async def execute_asynchronous_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+    if not callback_url_is_allowed(str(callback_url)):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "The provided callback_url is not allowed. It must match one of the"
+                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
+            ),
+        )
+
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
     return {"message": f"Execution request with job_id={exec_by_id.job_id} accepted"}
@@ -1714,6 +1804,15 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+    if not callback_url_is_allowed(str(callback_url)):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "The provided callback_url is not allowed. It must match one of the"
+                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
+            ),
+        )
+
     background_tasks.add_task(execute_latest_and_post, exec_latest_by_group_id_input, callback_url)
 
     return {

@@ -2,21 +2,19 @@ import resource
 from collections import deque
 from copy import deepcopy
 from typing import cast
-from uuid import UUID
 
 import logfire
 from pydantic import ValidationError
 
 from hdutils import DataType, parsing_not_identical
 from hetdesrun.adapters import AdapterHandlingException
-from hetdesrun.component.load import hash_code
+from hetdesrun.component.load import prepare_component_import_context
 from hetdesrun.datatypes import NamedDataTypedValue
-from hetdesrun.models.code import CodeModule
-from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.run import (
     AllMeasuredSteps,
     ProcessStage,
     RuntimeMemoryInfo,
+    UnitTestPayload,
     UnitTestResults,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
@@ -68,24 +66,7 @@ def prepare_runtime_context_bindings(
     execution_context_filter.clear_context()
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
 
-    code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in runtime_input.code_modules}
-    component_rev_dict: dict[str, ComponentRevision] = {
-        str(c.uuid): c for c in runtime_input.components
-    }
-    code_hash_dict: dict[str, str] = {
-        str(c.uuid): hash_code(c.code) for c in runtime_input.code_modules
-    }
-
-    currently_importing: dict[UUID, bool] = {c.uuid: False for c in runtime_input.code_modules}
-
-    execution_context_filter.bind_context(
-        current_code_modules=runtime_input.code_modules,
-        current_components=runtime_input.components,
-        code_modules_by_id=code_module_dict,
-        component_revisions_by_trafo_id=component_rev_dict,
-        code_hash_dict=code_hash_dict,
-        currently_importing=currently_importing,
-    )
+    prepare_component_import_context(runtime_input.code_modules, runtime_input.components)
     execution_context_filter.bind_context(
         plot_target_settings=runtime_input.runtime_execution_context.plot_target_settings
     )
@@ -557,5 +538,9 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
     return wf_exec_result
 
 
-async def unittest_service(component_code: str) -> UnitTestResults:
-    return unittest_code(component_code=component_code)
+async def unittest_service(unittest_payload: UnitTestPayload) -> UnitTestResults:
+    return unittest_code(
+        component_code=unittest_payload.component_code,
+        code_modules=unittest_payload.code_modules,
+        components=unittest_payload.components,
+    )

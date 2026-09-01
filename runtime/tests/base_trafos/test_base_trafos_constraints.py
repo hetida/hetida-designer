@@ -1,11 +1,46 @@
 import json
+import os
 
 import pytest
 
 from hetdesrun.backend.service.transformation_router import change_code
-from hetdesrun.component.code_utils import format_code_with_black
+from hetdesrun.component.code_utils import format_code_with_black, get_global_from_code
+from hetdesrun.exportimport.importing import import_transformations_from_dir
+from hetdesrun.persistence.dbservice.revision import (
+    select_multiple_transformation_revision_stubs,
+)
 from hetdesrun.trafoutils.io.load import load_transformation_revisions_from_directory
 from hetdesrun.utils import State, Type
+
+# Note: foreign key enforcement for sqlite is enabled centrally in
+# hetdesrun.persistence.db_engine_and_session.get_db_engine, so the base-import test below
+# detects missing-dependency failures (FK violations) without any test-local setup.
+
+
+def _expected_trafo_ids_by_path(directory: str) -> dict[str, str]:
+    """Map each transformation id to its file, read directly from the raw files.
+
+    Ids are extracted without model validation, so that a file which fails to load
+    (e.g. invalid content) is still expected and therefore detected as missing after
+    import -- just like a file that loads but fails to import due to a missing
+    dependency.
+    """
+    expected: dict[str, str] = {}
+    for root, _, files in os.walk(directory):
+        for file in files:
+            path = os.path.join(root, file)
+            ext = os.path.splitext(path)[1]
+            if ext == ".json":
+                with open(path, encoding="utf8") as f:
+                    obj = json.load(f)
+                for trafo_json in obj if isinstance(obj, list) else [obj]:
+                    expected[str(trafo_json["id"])] = path
+            elif ext == ".py" and file != "__init__.py":
+                with open(path, encoding="utf8") as f:
+                    component_info = get_global_from_code(f.read(), "COMPONENT_INFO")
+                if component_info is not None and component_info.get("id") is not None:
+                    expected[str(component_info["id"])] = path
+    return expected
 
 
 def test_base_trafos_can_be_loaded_from_dir():
@@ -197,3 +232,36 @@ def test_base_trafos_have_documentation():
             f" with id {trafo_id} loaded from path {path_dict[trafo_id]}"
             f" has no documentation."
         )
+
+
+def test_all_base_trafos_import_into_db(mocked_clean_test_db_session):
+    """Every base transformation on disk must import cleanly into a fresh database.
+
+    Detects both classes of base-trafo breakage:
+    * files that fail to load (e.g. invalid content), and
+    * files that load but fail to import (e.g. an operator referencing a transformation
+      that is not part of the base set -> foreign key violation on the nestings table).
+
+    Foreign keys are enforced (see the connect listener above) so that missing-dependency
+    failures surface here the same way they do on postgres in production.
+    """
+    expected_by_path = _expected_trafo_ids_by_path("./transformations")
+
+    assert len(expected_by_path) > 50
+
+    import_transformations_from_dir("./transformations", directly_into_db=True)
+
+    imported_ids = {str(stub.id) for stub in select_multiple_transformation_revision_stubs()}
+
+    assert len(imported_ids) > 50
+
+    missing = {
+        trafo_id: path
+        for trafo_id, path in expected_by_path.items()
+        if trafo_id not in imported_ids
+    }
+    assert not missing, (
+        "The following base transformations were not imported (failed to load or to import,"
+        " e.g. due to a missing dependency / foreign key violation):\n"
+        + "\n".join(f"  {trafo_id}  <-  {path}" for trafo_id, path in sorted(missing.items()))
+    )

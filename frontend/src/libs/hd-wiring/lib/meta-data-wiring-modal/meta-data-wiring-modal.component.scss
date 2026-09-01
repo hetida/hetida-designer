@@ -1,0 +1,29 @@
+:host {
+  margin: var(--spacing-2);
+  display: block;
+}
+.assign-to-icon {
+  align-self: center;
+  margin-right: var(--spacing-1);
+  flex: 0 0 24px;
+}
+
+.meta-data-wiring {
+  display: flex;
+  flex-direction: column;
+
+  &__meta-data {
+    display: flex;
+    align-items: baseline;
+  }
+
+  &__meta-data-select {
+    flex: 1 0 100px;
+    padding-right: 10px;
+  }
+
+  &__meta-data-select-lens-icon {
+    line-height: 12px;
+    vertical-align: middle;
+  }
+}

@@ -1,0 +1,92 @@
+:host {
+  background-color: inherit;
+}
+
+[hidden] {
+  display: none;
+}
+
+.mat-mdc-dialog-content {
+  display: flex;
+  flex-direction: column;
+  background-color: inherit;
+
+  .execution-dialog-content {
+    background-color: inherit;
+
+    .execution-dialog-parameter-wrapper {
+      background-color: inherit;
+      display: flex;
+      flex-direction: row;
+      column-gap: 30px;
+      overflow: auto;
+
+      .parameter-input--single {
+        flex: 0 1 100%;
+      }
+
+      .parameter-input--no-button {
+        margin-right: 48px;
+      }
+
+      .parameter-input {
+        flex: 0 1 50%;
+
+        &__label-column {
+          flex: 1 1 25%;
+        }
+
+        &__type-column {
+          flex: 1 1 15%;
+        }
+
+        &__default-value-column {
+          flex: 0 0 52px;
+        }
+
+        &__adapter-column {
+          flex: 1 1 20%;
+          overflow: hidden;
+        }
+
+        &__value-column {
+          flex: 1 1 30%;
+        }
+
+        &__delete-icon-column {
+          flex: 0 0 48px;
+        }
+
+        &__filter-input {
+          flex: 0 0 265px;
+          margin-top: 0.5rem;
+        }
+      }
+
+      .parameter-output {
+        flex: 0 1 50%;
+
+        &__label-column {
+          flex: 1 1 25%;
+        }
+
+        &__type-column {
+          flex: 1 1 15%;
+        }
+
+        &__adapter-column {
+          flex: 1 1 20%;
+          overflow: hidden;
+        }
+
+        &__value-column {
+          flex: 1 1 30%;
+        }
+
+        &__delete-icon-column {
+          flex: 0 0 48px;
+        }
+      }
+    }
+  }
+}

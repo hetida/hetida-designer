@@ -3,6 +3,7 @@
 Generate HTML / Styles / Javascript for the experimental dashboarding feature.
 """
 
+import base64
 import datetime
 import json
 import os
@@ -11,6 +12,7 @@ from typing import Any
 
 import pandas as pd
 from htpy import (
+    BaseElement,
     Element,
     a,
     b,
@@ -23,6 +25,8 @@ from htpy import (
     head,
     html,
     i,
+    iframe,
+    img,
     input,  # noqa: A004
     label,
     link,
@@ -54,6 +58,19 @@ from hetdesrun.models.wiring import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.config import get_config
+
+
+def json_for_inline_script(obj: Any) -> str:
+    """json.dumps result safe to embed inside an inline <script> element.
+
+    Avoids closing html tags (and thereby leaving the script) by replacing "<" with
+    its unicode escaped variant. Note that generally we trust the rendered content
+    and only want to mitigate possible breaks of the html.
+
+    json.dumps defaults to ensure_ascii=True, which already escapes
+    the U+2028/U+2029 line separators, so "<" is the only remaining case.
+    """
+    return json.dumps(obj).replace("<", "\\u003c")
 
 
 class OverrideMode(StrEnum):
@@ -227,6 +244,157 @@ def html_str_to_gridstack_div(
     ]
 
 
+def is_file_like_result(value: Any) -> bool:
+    """Detect structured ANY outputs that represent a file.
+
+    Such values are shaped like
+    { "content_type": str, "encoding": "base64" | "plain", "name"?: str, "data": str }
+    and are typically emitted via an ANY-typed output. Mirrors the detection done
+    by the frontend protocol viewer so both surfaces render the same results.
+    """
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("content_type"), str)
+        and value.get("encoding") in ("base64", "plain")
+        and isinstance(value.get("data"), str)
+    )
+
+
+def file_result_kind(content_type: str) -> str:
+    """Classify a file result by content type into a rendering kind."""
+    if content_type == "application/pdf":
+        return "pdf"
+    if content_type.startswith("image/"):
+        return "image"
+    if content_type == "text/html":
+        return "html"
+    return "download"
+
+
+def file_result_to_base64(file_result: dict[str, Any]) -> str:
+    """Return the file result's data as base64, encoding plain data as needed."""
+    if file_result["encoding"] == "base64":
+        return str(file_result["data"])
+    # plain text (assumed utf-8) -> utf-8 bytes -> base64. The base64 output is
+    # itself pure ascii, so decoding it back to str with utf-8 is exact.
+    return base64.b64encode(file_result["data"].encode("utf-8")).decode("utf-8")
+
+
+def file_result_to_text(file_result: dict[str, Any]) -> str:
+    """Return the file result's data as text, decoding base64 data as needed."""
+    if file_result["encoding"] == "plain":
+        return str(file_result["data"])
+    return base64.b64decode(file_result["data"]).decode("utf-8")
+
+
+# Prepended to text/html file results before embedding them via <iframe srcdoc>.
+# srcdoc documents are always parsed in standards mode, in which a fragment sized
+# with height:100% (the natural way to make a visualization fill its tile)
+# collapses to zero height: the implicit html/body have auto height, so there is
+# no definite-height ancestor for the percentage to resolve against (widths still
+# work, which is why such content renders full-width but zero-height). Giving
+# html/body an explicit full height provides that ancestor. Content taller than
+# the tile still scrolls via the surrounding container's overflow.
+#
+# Prepending a bare <style> (rather than wrapping the content in a fresh
+# html/body) keeps this robust for both fragments and complete documents: the
+# parser hoists the style into the single head either way.
+#
+# Note: the frontend protocol viewer embeds the same content via an <iframe src>
+# blob url instead, which - having no doctype - is parsed in quirks mode, where
+# height:100% percolates up to the viewport; such content therefore happens to
+# render correctly there without this adjustment.
+HTML_FILE_RESULT_SIZING_STYLE_TAG = "<style>html,body{height:100%;margin:0;padding:0}</style>"
+
+
+def html_file_result_srcdoc(file_result: dict[str, Any]) -> str:
+    """Build the srcdoc for a text/html file result embedded in an iframe."""
+    return HTML_FILE_RESULT_SIZING_STYLE_TAG + file_result_to_text(file_result)
+
+
+def file_result_inner_element(file_result: dict[str, Any], db_id: str) -> BaseElement:
+    """Build the element rendering a single file result according to its kind.
+
+    Images are rendered inline via <img> (data uri), HTML in a sandboxed iframe
+    (via srcdoc, scripts allowed but isolated from the surrounding page), and
+    everything else as a download link. PDFs are rendered in an iframe whose src
+    is set client-side from a base64 blob (data uris are not reliably shown as
+    PDFs by all browsers) - see init_file_result_iframes in the main scripts.
+    """
+    content_type = file_result["content_type"]
+    kind = file_result_kind(content_type)
+    file_name = file_result.get("name") or parse_dashboard_id(db_id)[0]
+
+    if kind == "image":
+        return img(
+            class_="file-result-image",
+            src=f"data:{content_type};base64,{file_result_to_base64(file_result)}",
+            alt=file_name,
+        )
+    if kind == "html":
+        return iframe(
+            {
+                "class": "file-result-html",
+                "sandbox": "allow-scripts",
+                "srcdoc": html_file_result_srcdoc(file_result),
+                "title": file_name,
+            }
+        )
+    if kind == "pdf":
+        return iframe(
+            {
+                "class": "file-result-pdf",
+                "title": file_name,
+                "data-file-b64": file_result_to_base64(file_result),
+                "data-file-content-type": content_type,
+            }
+        )
+    return a(
+        {
+            "class": "file-result-download",
+            "href": f"data:{content_type};base64,{file_result_to_base64(file_result)}",
+            "download": file_name,
+        }
+    )[f"{file_name} ({content_type})"]
+
+
+def file_result_to_gridstack_div(
+    db_id: str,
+    file_result: dict[str, Any],
+    item_positioning: GridstackItemPositioning,
+    header: str | None = None,
+) -> Element:
+    name = parse_dashboard_id(db_id)[0]
+    show_header_if_not_hovering, header_to_use = show_header(name, header)
+
+    return div(
+        {
+            "class": "grid-stack-item",
+            "db_id": db_id,
+            "input_type": "ANY",
+            "id": f"gs-item-{db_id}",
+            "gs-id": db_id,
+            "style": "",
+        }
+        | gs_div_attributes_from_item_positioning_as_dict(item_positioning)  # type: ignore
+    )[
+        div(
+            class_="grid-stack-item-content",
+            id=f"container-{db_id}",
+            style="display: flex; flex-direction: column;",
+        )[
+            div(
+                class_=f"""panel-heading{"-hover-only" if show_header_if_not_hovering else ""}""",
+                id=f"heading-{db_id}",
+            )[div(class_="header-text", title=header_to_use)[header_to_use]],
+            div(
+                id=f"file-container-{db_id}",
+                style="margin:0;padding:0;flex-grow:1;overflow:auto;",
+            )[file_result_inner_element(file_result, db_id)],
+        ]
+    ]
+
+
 def dataframe_to_table_gridstack_div(
     db_id: str,
     dataframe: pd.DataFrame,
@@ -264,8 +432,8 @@ def dataframe_to_table_gridstack_div(
 
         create_and_register_tabulator_datatable(
             "{db_id}",
-            {json.dumps(data_row_list)},
-            {json.dumps(column_descriptions)},
+            {json_for_inline_script(data_row_list)},
+            {json_for_inline_script(column_descriptions)},
         );
 
         """
@@ -622,6 +790,35 @@ DASHBOARD_HEAD_ELEMENTS = (
 
 .hd_df_table_for_dashboarding {
     width: 100%
+}
+
+.file-result-pdf, .file-result-html {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+}
+
+.file-result-image {
+    max-width: 100%;
+    height: auto;
+}
+
+.file-result-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    color: #b7087f;
+    text-decoration: underline;
+}
+
+/* Keep iframes (html / pdf file results) from swallowing the mouse events that
+   gridstack needs to track a drag/resize gesture, which would otherwise cause
+   stutter/lag. This only disables pointer events on the iframe surface itself,
+   not on the resize handles. */
+body.gs-interacting iframe {
+    pointer-events: none;
 }
 
 .hd-dashboard-timerange-picker {
@@ -1175,6 +1372,7 @@ def generate_gridstack_div(
     string_outputs: dict[str, str],
     dataframe_outputs: dict[str, pd.DataFrame],
     multitsframe_outputs: dict[str, pd.DataFrame],
+    any_file_outputs: dict[str, dict[str, Any]],
     actually_used_wiring: WorkflowWiring,
     exposed_manual_inputs: set[str],
 ) -> Element:
@@ -1244,15 +1442,18 @@ def generate_gridstack_div(
             dataframe_to_table_gridstack_div(
                 db_id,
                 multitsframe.reindex(
+                    # SingleTSFrames have no "metric" column, so only reorder columns that
+                    # are actually present.
                     columns=(
-                        ["timestamp", "metric"]
+                        [col for col in ("timestamp", "metric") if col in multitsframe.columns]
                         + [
                             col
                             for col in multitsframe.columns
                             if col not in {"timestamp", "metric"}
                         ]
                     ),
-                    copy=False,
+                    # no copy= here: it is deprecated with pandas' copy-on-write, which already
+                    # defers the copy
                 ),
                 positioning_dict.get(
                     db_id,
@@ -1272,6 +1473,28 @@ def generate_gridstack_div(
             for ind, (db_id, multitsframe) in enumerate(multitsframe_outputs.items())
         ),
         *(
+            file_result_to_gridstack_div(
+                db_id,
+                file_result,
+                positioning_dict.get(
+                    db_id,
+                    GridstackItemPositioning(
+                        id=parse_dashboard_id(db_id)[0],
+                        x=(ind % 2) * 12,
+                        y=(ind // 2) * 3
+                        + len(plotly_outputs) % 2 * 3
+                        + len(string_outputs) % 2 * 3
+                        + len(dataframe_outputs) % 2 * 3
+                        + len(multitsframe_outputs) % 2 * 3,
+                        w=12,
+                        h=3,
+                        type=GridstackPositioningType.OUTPUT,
+                    ),
+                ),
+            )
+            for ind, (db_id, file_result) in enumerate(any_file_outputs.items())
+        ),
+        *(
             input_value_gridstack_div(
                 db_id,
                 positioning_dict.get(
@@ -1283,7 +1506,8 @@ def generate_gridstack_div(
                         + len(plotly_outputs) % 2 * 3
                         + len(string_outputs) % 2 * 3
                         + len(dataframe_outputs) % 2 * 3
-                        + len(multitsframe_outputs) % 2 * 3,
+                        + len(multitsframe_outputs) % 2 * 3
+                        + len(any_file_outputs) % 2 * 3,
                         w=4,
                         h=1,
                         type=GridstackPositioningType.INPUT,
@@ -1462,37 +1686,49 @@ def generate_dashboard_html(
         for inp_name in inputs_to_expose
     }
 
+    # The dashboard renders the actual output values, so it needs them as objects — which for a
+    # separate runtime service means decoding the raw json payload relayed by the backend.
+    output_results = exec_resp.decoded_output_results_by_output_name()
+
     # obtain plotly outputs from result
     plotly_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
     }
 
     string_outputs = {
-        (
-            dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)
-        ): exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "STRING"
     }
 
     dataframe_outputs = {
         (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
-            exec_resp.output_results_by_output_name[name], "DATAFRAME", nullable=False
+            output_results[name], "DATAFRAME", nullable=False
         )  # actually parse as dataframe, this is a dict-like object when received from runtime
-        for name in exec_resp.output_results_by_output_name
+        for name in output_results
         if exec_resp.output_types_by_output_name[name] == "DATAFRAME"
     }
 
+    # MULTITSFRAME and SINGLETSFRAME outputs are rendered by the same datatable code path
+    # (timestamp-first column ordering, see generate_gridstack_div).
     multitsframe_outputs = {
         (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): parse_value(
-            exec_resp.output_results_by_output_name[name], "MULTITSFRAME", nullable=False
+            output_results[name],
+            str(exec_resp.output_types_by_output_name[name]),
+            nullable=False,
         )  # actually parse as dataframe, this is a dict-like object when received from runtime
-        for name in exec_resp.output_results_by_output_name
-        if exec_resp.output_types_by_output_name[name] == "MULTITSFRAME"
+        for name in output_results
+        if exec_resp.output_types_by_output_name[name] in ("MULTITSFRAME", "SINGLETSFRAME")
+    }
+
+    # structured ANY outputs that represent a file (pdf, image, html, ...)
+    any_file_outputs = {
+        (dashboard_id_for_io(name, GridstackPositioningType.OUTPUT)): output_results[name]
+        for name in output_results
+        if exec_resp.output_types_by_output_name[name] == "ANY"
+        and is_file_like_result(output_results[name])
     }
 
     datatable_script = script[
@@ -1885,7 +2121,7 @@ def generate_dashboard_html(
             + "\n".join(
                 (
                     f"""plot = Plotly.newPlot("{db_id}",
-                        {json.dumps(ensure_working_plotly_json(plotly_json))}\n);
+                        {json_for_inline_script(ensure_working_plotly_json(plotly_json))}\n);
 
                 resize_plot("{db_id}");
                 resize_plot("{db_id}");  // second time, otherwise width is not correct in chrome
@@ -1896,7 +2132,28 @@ def generate_dashboard_html(
             + r"""
 
 
+        // While dragging or resizing a panel, the mouse can pass over an iframe
+        // (html / pdf file results), which then swallows the mouse events that
+        // gridstack needs to track the gesture - causing stutter/lag. Disable
+        // pointer events on the iframe surfaces (see the gs-interacting css) for
+        // the duration of the interaction, and re-enable them when it ends.
+        //
+        // NOTE: gridstack's on() keeps only a single handler per event, so the
+        // gs-interacting removal for 'resizestop' MUST live in the same handler
+        // that does the resize work below - registering a second 'resizestop'
+        // handler would silently overwrite it (leaving iframes non-interactive
+        // after a resize until the panel is moved). 'dragstop' has no such
+        // clash, so it is handled here.
+        grid.on('resizestart dragstart', function() {
+            document.body.classList.add('gs-interacting');
+        });
+        grid.on('dragstop', function() {
+            document.body.classList.remove('gs-interacting');
+        });
+
         grid.on('resizestop', function(event, el) {
+            document.body.classList.remove('gs-interacting');
+
             var inp_name = el.getAttribute("db_id");
             var inp_type = el.getAttribute("input_type");
             console.log("Resizestop for: " + inp_name)
@@ -1906,10 +2163,28 @@ def generate_dashboard_html(
                 resize_plot(inp_name); // second time, otherwise width is not correct in chrome
             }
 
-            if (inp_type=="DATAFRAME" || inp_type=="MULTITSFRAME") {
+            if (inp_type=="DATAFRAME" || inp_type=="MULTITSFRAME" || inp_type=="SINGLETSFRAME") {
                 get_datatable_by_dashboard_id(inp_name).redraw();
             }
         });
+
+        // Render PDF file results via blob object urls. Browsers do not reliably
+        // display a PDF from a data: uri in an iframe, so we build a blob from the
+        // base64 data client-side and use its object url as the iframe src.
+        function init_file_result_iframes() {
+            document.querySelectorAll("iframe[data-file-b64]").forEach(function(iframe) {
+                var b64 = iframe.getAttribute("data-file-b64");
+                var contentType = iframe.getAttribute("data-file-content-type");
+                var byteChars = atob(b64);
+                var bytes = new Uint8Array(byteChars.length);
+                for (var i = 0; i < byteChars.length; i++) {
+                    bytes[i] = byteChars.charCodeAt(i);
+                }
+                var blob = new Blob([bytes], {type: contentType});
+                iframe.src = URL.createObjectURL(blob);
+            });
+        }
+        init_file_result_iframes();
 
         function dashboard_id_for_io(io_name, type) {
             if (type == "OUTPUT") {
@@ -2277,6 +2552,7 @@ def generate_dashboard_html(
                 string_outputs,
                 dataframe_outputs,
                 multitsframe_outputs,
+                any_file_outputs,
                 actually_used_wiring,
                 exposed_inputs,
             )

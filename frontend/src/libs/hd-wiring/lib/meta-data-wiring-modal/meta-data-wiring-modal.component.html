@@ -1,0 +1,63 @@
+<div>
+  @for (ioItem of _notWiredUiItems(); track ioItem.ioItemId) {
+    <div class="meta-data-wiring">
+      <div class="meta-data-wiring__meta-data">
+        <mat-form-field class="meta-data-wiring__meta-data-select">
+          <mat-label>Select Metadata</mat-label>
+          <mat-select
+            [value]="_wiredMetaDataKey(ioItem)"
+            (selectionChange)="_wireToUiItem(ioItem, $event)"
+            attr.data-testid="{{
+              ioItem.ioItemName + '-meta-data-wiring-modal' | lowercase
+            }}"
+          >
+            <mat-select-trigger>
+              {{ _getMetaDataName(ioItem) }}
+            </mat-select-trigger>
+            <mat-option [value]="null">-</mat-option>
+            @for (
+              metaData of _metaDataDialogData.metaDataList;
+              track metaData.key
+            ) {
+              <mat-option
+                [disabled]="
+                  _isWiredToAnOtherNode(ioItem, metaData) ||
+                  _incompatibleTypes(ioItem, metaData)
+                "
+                [value]="metaData.key"
+              >
+                <div class="hd-pr-1">
+                  <span
+                    class="meta-data-wiring__meta-data-select-lens-icon"
+                    [ngStyle]="{
+                      color: _getTypeColor(
+                        _getIoTypeOfAdapterType(metaData.dataType)
+                      )
+                    }"
+                  >
+                    <mat-icon class="hd-unselectable" [inline]="true"
+                      >lens</mat-icon
+                    >
+                  </span>
+                  <span class="hd-mr-1">{{ metaData.key }}</span>
+                </div>
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-icon class="assign-to-icon">arrow_forward</mat-icon>
+        <div class="hd-pr-1 hd-white-space-nowrap">
+          <span
+            class="meta-data-wiring__meta-data-select-lens-icon hd-lens-icon-12"
+            [ngStyle]="{
+              color: _getTypeColor(ioItem.ioType)
+            }"
+          >
+            <mat-icon class="hd-unselectable" [inline]="true">lens</mat-icon>
+          </span>
+          <span>{{ ioItem.ioItemName }}</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

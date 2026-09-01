@@ -19,6 +19,10 @@ from starlette.responses import JSONResponse, Response
 from hetdesrun import VERSION
 from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
+from hetdesrun.adapters.generic_rest.client import (
+    close_generic_rest_adapter_clients,
+    close_generic_rest_adapter_sync_sessions,
+)
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_config
@@ -26,7 +30,10 @@ from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
-from hetdesrun.webservice.auth_dependency import get_auth_deps
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_deps,
+    warn_on_permissive_ingoing_auth_config,
+)
 from hetdesrun.webservice.config import get_config
 
 if get_config().hd_kafka_consumer_enabled:
@@ -69,21 +76,41 @@ class AdditionalLoggingRoute(APIRoute):
         return custom_route_handler
 
 
-middleware = [
-    Middleware(GZipMiddleware, minimum_size=1000, compresslevel=5),
-    Middleware(
-        CORSMiddleware,
-        allow_origins=get_config().allowed_origins.split(","),
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["*"],
-    ),
-]
+def get_middleware() -> list[Middleware]:
+    """Build the ASGI middleware stack from the current config.
+
+    Response compression is off by default: gzip runs synchronously in the event loop and costs on
+    the order of 100ms on multi-MB responses (e.g. large plotly plots), which is a net latency loss
+    on fast links and blocks concurrency. Prefer compressing at the reverse proxy / ingress; enable
+    it only for slow-link clients via RESPONSE_COMPRESSION_ENABLED. When enabled it stays outermost.
+    """
+    middleware: list[Middleware] = []
+
+    if get_config().response_compression_enabled:
+        middleware.append(
+            Middleware(
+                GZipMiddleware,
+                minimum_size=1000,
+                compresslevel=get_config().response_compression_level,
+            )
+        )
+
+    middleware.append(
+        Middleware(
+            CORSMiddleware,
+            allow_origins=get_config().allowed_origins.split(","),
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
+            allow_headers=["*"],
+        )
+    )
+    return middleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     logger.info("Initializing application ...")
+    warn_on_permissive_ingoing_auth_config()
     app.state.runtime_http_client = httpx.AsyncClient(
         verify=get_config().hd_runtime_verify_certs,
         timeout=get_config().external_request_timeout,
@@ -96,6 +123,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     yield
     logger.info("Shutting down application...")
     await app.state.runtime_http_client.aclose()
+    await close_generic_rest_adapter_clients()
+    close_generic_rest_adapter_sync_sessions()
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Shutting down Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()
@@ -209,7 +238,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         version=VERSION,
         lifespan=lifespan,
         root_path=get_config().swagger_prefix,
-        middleware=middleware,
+        middleware=get_middleware(),
     )
 
     app.router.route_class = AdditionalLoggingRoute

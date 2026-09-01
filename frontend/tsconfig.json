@@ -3,7 +3,12 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@models/*": ["src/app/models/*"]
+      "@models/*": ["src/app/models/*"],
+      "hetida-flowchart": ["src/libs/hetida-flowchart/hetida-flowchart.ts"],
+      "hetida-flowchart/*": ["src/libs/hetida-flowchart/*"],
+      "ng-hetida-flowchart": ["src/libs/ng-hetida-flowchart/public-api.ts"],
+      "hd-wiring": ["src/libs/hd-wiring/public-api.ts"],
+      "hd-wiring/*": ["src/libs/hd-wiring/*"]
     },
     "esModuleInterop": true,
     "outDir": "./dist/out-tsc",
@@ -21,7 +26,7 @@
     "noUnusedParameters": true,
     "target": "ES2022",
     "typeRoots": ["node_modules/@types", "types"],
-    "lib": ["es2018", "dom"],
+    "lib": ["es2018", "dom", "dom.iterable"],
     "useDefineForClassFields": false
   }
 }

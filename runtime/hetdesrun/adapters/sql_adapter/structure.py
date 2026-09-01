@@ -19,7 +19,10 @@ from hetdesrun.adapters.sql_adapter.models import (
     WriteTableMode,
     to_table_type_str,
 )
-from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
+from hetdesrun.adapters.sql_adapter.utils import (
+    get_configured_dbs_by_key,
+    is_allowed_dataframe_source_table,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +31,6 @@ def get_table_names(engine: Engine) -> list[str]:
     inspection = inspect(engine)
     table_names = inspection.get_table_names()
     return table_names
-
-
-def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:
-    return (
-        (db_config.explicit_source_tables is None or table_name in db_config.explicit_source_tables)
-        and not table_name in db_config.ignore_tables
-        and not table_name in db_config.timeseries_tables
-    )
 
 
 def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[str]:
@@ -48,22 +43,26 @@ def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[s
 
 def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSource]:
     return (
-        [
-            # query source
-            SQLAdapterStructureSource(
-                id=db_config.key + "/query",
-                thingNodeId=db_config.key,
-                name="SQL Query in " + db_config.name,
-                path=db_config.key + "|" + db_config.name + "/query/sql",
-                filters={
-                    "sql_query": {
-                        "name": " SQL Query",
-                        "type": "free_text",
-                        "required": True,
-                    }
-                },
-            )
-        ]
+        (
+            [
+                # query source (only offered if arbitrary SQL queries are enabled)
+                SQLAdapterStructureSource(
+                    id=db_config.key + "/query",
+                    thingNodeId=db_config.key,
+                    name="SQL Query in " + db_config.name,
+                    path=db_config.key + "|" + db_config.name + "/query/sql",
+                    filters={
+                        "sql_query": {
+                            "name": " SQL Query",
+                            "type": "free_text",
+                            "required": True,
+                        }
+                    },
+                )
+            ]
+            if db_config.allow_arbitrary_sql_query_sources
+            else []
+        )
         + [
             # dataframe source tables
             SQLAdapterStructureSource(
@@ -224,6 +223,8 @@ def get_source_by_id(source_id: str) -> SQLAdapterStructureSource | None:
 
     if source_type == "query" and len(id_split) == 2:
         db_config = configured_dbs_by_key[db_key]
+        if not db_config.allow_arbitrary_sql_query_sources:
+            return None
         return SQLAdapterStructureSource(
             id=source_id,
             thingNodeId=db_key,

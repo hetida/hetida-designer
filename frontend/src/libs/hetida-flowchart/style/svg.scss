@@ -1,0 +1,110 @@
+@use 'sass:map';
+@use './variables';
+
+.hetida-flowchart-svg {
+  line-height: 1;
+  width: 100%;
+  height: 100%;
+  background: #666666;
+
+  #flowchart-grid-element {
+    pointer-events: none;
+  }
+
+  .flowchart-ghost-link {
+    opacity: 0.5;
+    stroke-width: 10px;
+    pointer-events: none;
+    fill: none;
+  }
+
+  .flowchart-link {
+    stroke-width: 10px;
+    fill: none;
+  }
+
+  .flowchart-output,
+  .flowchart-input,
+  .link-marker {
+    cursor: pointer;
+  }
+
+  .link-marker-ghost {
+    cursor: pointer;
+    opacity: 0.5;
+  }
+
+  .text-overflow {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    &:before {
+      // @Hack: simulates the behaviour of line-height = height (px)
+      content: '';
+      display: inline-block;
+      height: 110%;
+      vertical-align: middle;
+    }
+  }
+
+  .text-unselectable {
+    user-select: none;
+  }
+
+  .state-disabled {
+    fill: red;
+  }
+
+  .state-default {
+    fill: #ffdb3f;
+  }
+
+  .default-value-field {
+    stroke-width: 0.1rem;
+    stroke: rgb(255, 255, 255);
+  }
+
+  @each $type in map.keys(variables.$dataTypes) {
+    .type-#{$type} {
+      fill: var(--#{$type}-color);
+    }
+
+    .link-#{$type} {
+      stroke: var(--#{$type}-color);
+    }
+  }
+
+  @each $color in variables.$colors {
+    .fill-#{$color} {
+      fill: #{$color};
+    }
+    .stroke-#{$color} {
+      stroke: #{$color};
+    }
+    .text-#{$color} {
+      color: #{$color};
+    }
+  }
+  @for $i from 1 through 5 {
+    .stroke-#{$i} {
+      stroke-width: $i;
+    }
+  }
+  .opacity-0 {
+    opacity: 0;
+  }
+  @for $i from 1 through 10 {
+    .opacity-#{$i}0 {
+      opacity: calc($i / 10);
+    }
+  }
+  @for $i from 3 through 5 {
+    .font-#{$i * 4} {
+      font-size: #{($i * 4)}pt;
+    }
+  }
+}

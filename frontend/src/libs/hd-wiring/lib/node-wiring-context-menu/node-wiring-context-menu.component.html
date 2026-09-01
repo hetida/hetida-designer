@@ -1,0 +1,28 @@
+<div>
+  <span>Assign To</span>
+  <div class="hd-d-flex hd-flex-direction-column hd-white-space-nowrap">
+    @for (item of executionContextData.IOItem; track item.ioItemId) {
+      <mat-checkbox
+        [disabled]="incompatibleTypes(item)"
+        (change)="itemSelectionChange($event, item)"
+        [checked]="isChecked(item)"
+      >
+        <span
+          class="hd-lens-icon-12"
+          [ngStyle]="{ color: getTypeColor(item.ioType) }"
+        >
+          <mat-icon class="hd-unselectable" [inline]="true">lens</mat-icon>
+        </span>
+        <span
+          class="hd-pr-1"
+          [ngClass]="{ 'node-selected': isAssigned(item) }"
+          attr.data-testid="{{
+            item.ioItemName + '-node-wiring-context-menu' | lowercase
+          }}"
+        >
+          {{ item.ioItemName }}
+        </span>
+      </mat-checkbox>
+    }
+  </div>
+</div>

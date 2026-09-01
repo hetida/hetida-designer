@@ -31,7 +31,7 @@ import logging
 
 # add your own imports here.
 # See
-#   https://github.com/hetida/hetida-designer/tree/release/docs/component_tips.md
+#   https://hetida.github.io/hetida-designer/user_guide/component_writing/
 # for component writing features and tips (logging, debugging, importing other components)
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,12 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
-    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+    if inp.data_type in (
+        DataType.Series,
+        DataType.DataFrame,
+        DataType.MultiTSFrame,
+        DataType.SingleTSFrame,
+    ):
         return repr(
             parse_single_value_dynamically(
                 name=inp.name if inp.name is not None else "UNKNOWN",
@@ -110,6 +115,7 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         DataType.Series,
         DataType.DataFrame,
         DataType.MultiTSFrame,
+        DataType.SingleTSFrame,
         DataType.Any,
     ):
         if not inp.data_type is DataType.Any and not isinstance(

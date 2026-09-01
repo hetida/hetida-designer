@@ -36,6 +36,31 @@
       width: calc(100% - 15px);
     }
 
+    &__pdf {
+      width: calc(100% - 15px);
+      height: 70vh;
+      border: none;
+    }
+
+    &__image {
+      max-width: calc(100% - 15px);
+      height: auto;
+    }
+
+    &__html {
+      width: calc(100% - 15px);
+      height: 70vh;
+      border: none;
+      background-color: white;
+    }
+
+    &__download {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+    }
+
     &__raw-value {
       height: 100%;
       width: calc(100% - 15px);

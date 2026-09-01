@@ -11,10 +11,35 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.future.engine import Engine
 
+from hetdesrun.adapters.generic_rest import client as generic_rest_client
 from hetdesrun.persistence.db_engine_and_session import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.application import init_app
+
+
+@pytest.fixture(autouse=True)
+def _isolate_generic_rest_adapter_clients() -> Generator:
+    """Never let a cached generic REST adapter http client leak into another test
+
+    ``get_generic_rest_adapter_client`` / ``get_generic_rest_adapter_sync_session`` cache one
+    client per adapter key in module level dicts which are only cleared on application shutdown.
+    In tests that means a client created by one test survives into the next one.
+
+    That breaks test isolation in an order dependent way: a test which patches
+    ``httpx.AsyncClient.get`` (i.e. the *method*) leaves a **real** client instance in the cache,
+    so a later test which patches ``httpx.AsyncClient`` (i.e. the *class*) gets the cached real
+    client back, its patch has no effect and the test performs an actual network request.
+
+    Clearing the caches around every test makes each test start from a clean state.
+    """
+    generic_rest_client._generic_rest_adapter_clients.clear()
+    generic_rest_client._generic_rest_adapter_sync_sessions.clear()
+
+    yield
+
+    generic_rest_client._generic_rest_adapter_clients.clear()
+    generic_rest_client._generic_rest_adapter_sync_sessions.clear()
 
 
 @pytest.fixture(scope="session")
@@ -66,6 +91,9 @@ def pytest_addoption(parser: Any) -> None:
     )
 
     parser.addoption("--apply-fixes", action="store_true", dest="apply_fixes", default=False)
+    parser.addoption(
+        "--ensure-performance", action="store_true", dest="ensure_performance", default=False
+    )
 
 
 @pytest.fixture(scope="session")
@@ -76,6 +104,18 @@ def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
 @pytest.fixture(scope="session")
 def apply_fixes(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("apply_fixes")
+
+
+def pytest_collection_modifyitems(config, items):
+    run_performance_ensuring_tests = config.getoption("ensure_performance")
+
+    if run_performance_ensuring_tests:
+        return
+
+    skip_marker = pytest.mark.skip(reason="need --ensure-performance to run")
+    for item in items:
+        if "performance" in item.keywords:
+            item.add_marker(skip_marker)
 
 
 @pytest_asyncio.fixture
