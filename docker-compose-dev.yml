@@ -100,7 +100,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test:
-        ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep ok"]
+        ["CMD-SHELL", "curl -s http://localhost:3000/api/health | grep ok"]
       interval: 30s
       timeout: 5s
       retries: 3
