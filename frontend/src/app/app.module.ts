@@ -83,13 +83,13 @@ const httpLoaderFactory = (configService: ConfigService) => {
     map(config => {
       return {
         authority: config.authConfig?.authority,
-        redirectUrl: `${window.location.origin}/authcallback`,
-        postLogoutRedirectUri: window.location.origin,
+        redirectUrl: `${document.baseURI}authcallback`,
+        postLogoutRedirectUri: document.baseURI,
         clientId: config.authConfig?.clientId,
         responseType: 'code',
         scope: 'openid',
         silentRenew: true,
-        silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+        silentRenewUrl: `${document.baseURI}silent-renew.html`,
         ...config.authConfig
       };
     })
@@ -101,7 +101,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
 const monacoConfig: NgxMonacoEditorConfig = {
   // TODO: Broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
   // https://github.com/microsoft/monaco-editor/issues/4778
-  baseUrl: `${window.location.origin}/assets/monaco/min/vs`
+  baseUrl: `${document.baseURI}assets/monaco/min/vs`
 };
 
 @NgModule({
