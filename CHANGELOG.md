@@ -2,6 +2,7 @@
 - upgrade dependencies
 - add Apache datafusion dependency
 - add niquest opentelemetry instrumentation. Niquest is used for fetching (timeseries) data from generic rest adapters.
+- fix coloring of deprecated trafos
 
 ## 0.14.4
 
