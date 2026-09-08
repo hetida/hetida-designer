@@ -29,25 +29,7 @@
 
             .mat-icon-svg {
               .cls-1 {
-                fill: map.get($primary, 500);
-              }
-            }
-
-            .mat-icon-svg-released {
-              .cls-1 {
-                fill: colors.$hd-yellow-dark;
-              }
-            }
-
-            .mat-icon-svg-draft {
-              .cls-1 {
-                fill: colors.$hd-grey-dark;
-              }
-            }
-
-            .mat-icon-svg-disabled {
-              .cls-1 {
-                fill: colors.$hd-red-dark;
+                fill: colors.$hd-black;
               }
             }
 
@@ -57,24 +39,6 @@
               .mat-icon-svg {
                 .cls-1 {
                   fill: colors.$hd-yellow;
-                }
-              }
-
-              .mat-icon-svg-released {
-                .cls-1 {
-                  fill: colors.$hd-yellow;
-                }
-              }
-
-              .mat-icon-svg-draft {
-                .cls-1 {
-                  fill: map.get($primary, 700);
-                }
-              }
-
-              .mat-icon-svg-disabled {
-                .cls-1 {
-                  fill: colors.$hd-red;
                 }
               }
             }

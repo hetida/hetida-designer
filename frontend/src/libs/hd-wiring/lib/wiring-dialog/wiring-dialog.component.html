@@ -392,7 +392,7 @@
                 <div formArrayName="textFilters">
                   @for (
                     filter of _textFiltersFormArray(inputControl).controls;
-                    track 'value_' + filter.get('filterKey')?.value;
+                    track filter.getRawValue();
                     let i = $index
                   ) {
                     <div>

@@ -179,7 +179,9 @@ export class WiringDialogComponent implements OnInit {
   public _timestampRangeQueryDelimiter = ',';
   public _availableAdapters!: Adapter[];
 
-  private _saveAdapterId = '';
+  private _saveAdapterIdInput = '';
+  private _saveAdapterIdOutput = '';
+
   private readonly SOURCE_TYPE: SourceType = 'INPUT_WIRING';
   private readonly SINK_TYPE: SourceType = 'OUTPUT_WIRING';
 
@@ -413,8 +415,13 @@ export class WiringDialogComponent implements OnInit {
     if (inputOrOutputWiring) {
       nodeId = inputOrOutputWiring.ref_id ?? null;
       adapterId = inputOrOutputWiring.adapter_id ?? null;
-      // Save adapterId to reset textFilters on adapterId change.
-      this._saveAdapterId = adapterId;
+
+      // Save adapterId for input and output to reset textFilters on adapterId change.
+      if (sourceType === 'INPUT_WIRING') {
+        this._saveAdapterIdInput = adapterId;
+      } else {
+        this._saveAdapterIdOutput = adapterId;
+      }
 
       if (
         inputOrOutputWiring.adapter_id !==
@@ -629,7 +636,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         this._getControlOrFail(formGroup, 'timestampRangePickerHidden').reset(
           false
         );
-        // Reset textFilters on adapterId change,
+
+        // Reset textFilters on adapterId change but keep set default_values,
         // triggers on 'adapter list' and 'browse sources' value changes.
         const textFiltersArray = this._getControlOrFail(
           formGroup,
@@ -641,23 +649,54 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
             if (
               controlsKey !== 'filterKey' &&
               controlsKey !== 'required' &&
-              controlsKey !== 'name'
+              controlsKey !== 'name' &&
+              controlsKey !== 'default_value'
             ) {
-              (control as FormGroup).get(controlsKey)?.reset();
+              const filterValue = (control as FormGroup).get(
+                controlsKey
+              )?.value;
+              const defaultValue = (control as FormGroup).get(
+                'default_value'
+              )?.value;
+              if (
+                (Utils.isNullOrUndefined(filterValue) &&
+                  Utils.isNullOrUndefined(defaultValue)) ||
+                filterValue !== defaultValue
+              ) {
+                (control as FormGroup).get(controlsKey)?.reset();
+              } else {
+                (control as FormGroup).get(controlsKey)?.setValue(filterValue);
+              }
             }
           }
         });
 
-        // Remove textFilters only on 'adapter list' change.
-        if (
-          this._saveAdapterId !== changedAdapterId &&
-          this._saveAdapterId !== AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
-        ) {
-          (
-            this._getControlOrFail(formGroup, 'textFilters') as FormArray
-          ).clear();
+        // Remove textFilters only on 'adapter list' change from
+        // any current selected adapter to 'manual input'.
+        // Separated for input and output by the sourceType.
+        if (sourceType === 'INPUT_WIRING') {
+          if (
+            this._saveAdapterIdInput !== changedAdapterId &&
+            this._saveAdapterIdInput !==
+              AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
+          ) {
+            (
+              this._getControlOrFail(formGroup, 'textFilters') as FormArray
+            ).clear();
+          }
+          this._saveAdapterIdInput = changedAdapterId;
+        } else {
+          if (
+            this._saveAdapterIdOutput !== changedAdapterId &&
+            this._saveAdapterIdOutput !==
+              AdapterHttpService.MANUAL_INPUT_ADAPTER_ID
+          ) {
+            (
+              this._getControlOrFail(formGroup, 'textFilters') as FormArray
+            ).clear();
+          }
+          this._saveAdapterIdOutput = changedAdapterId;
         }
-        this._saveAdapterId = changedAdapterId;
 
         if (changedAdapterId === AdapterHttpService.MANUAL_INPUT_ADAPTER_ID) {
           this._getControlOrFail(formGroup, 'timestampRange').reset([
@@ -1607,7 +1646,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       filterKey: filter.key,
       [`value_${filter.key}`]: this.formBuilder.control(filter.value ?? ''),
       required: filter.required,
-      name: filter.name ? filter.name : filter.key
+      name: filter.name ? filter.name : filter.key,
+      default_value: filter.default_value
     });
   }
 
