@@ -13,6 +13,7 @@ from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.routing import APIRoute
+from opentelemetry.instrumentation.niquests import NiquestsInstrumentor
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -342,6 +343,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         logfire.instrument_httpx()
         logfire.instrument_requests()
         logfire.instrument_system_metrics()
+        NiquestsInstrumentor().instrument()
 
         from hetdesrun.persistence.db_engine_and_session import get_db_engine
 

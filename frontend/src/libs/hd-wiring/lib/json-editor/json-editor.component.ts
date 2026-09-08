@@ -117,7 +117,7 @@ export class JsonEditorComponent implements OnInit, AfterViewInit {
                   useValue: {
                     // TODO: Broken default baseUrl seems fixed in "monaco-editor" version "0.54.0".
                     // https://github.com/microsoft/monaco-editor/issues/4778
-                    baseUrl: `${window.location.origin}/assets/monaco/min/vs`
+                    baseUrl: `${document.baseURI}assets/monaco/min/vs`
                   }
                 }
               ],
