@@ -28,6 +28,22 @@ from hetdesrun.utils import Type
 logger = logging.getLogger(__name__)
 
 
+def filter_default_value_from_input(component_input: TransformationInput) -> Any:
+    """Determine the default value of the filter corresponding to a component input
+
+    A required input has no default value at all.
+
+    For an optional input the value None means that its default value is json null. Filter
+    values are transferred as strings, so it is mapped to the string "null", which the
+    runtime parses to None for every data type. The empty string that would be sent
+    otherwise is not even parsable for numeric and boolean inputs.
+    """
+    if component_input.type is InputType.REQUIRED:
+        return None
+
+    return "null" if component_input.value is None else component_input.value
+
+
 def extract_filters_from_component(
     component: TransformationRevision, as_sink: bool = False
 ) -> dict[str, dict[str, Any]]:
@@ -49,7 +65,7 @@ def extract_filters_from_component(
             "name": inp.name,
             "type": "free_text",
             "required": (inp.type is InputType.REQUIRED),  # not required means optional
-            "default_value": inp.value,  # None if not set
+            "default_value": filter_default_value_from_input(inp),
         }
         for inp in component_inputs
         if (not as_sink or inp.name != "data")

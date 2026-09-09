@@ -94,7 +94,9 @@ Response:
         "<key>": {
           "name": STRING,
           "type": FILTERTYPE, // enumeration, possible value: "free_text"
-          "required": BOOLEAN
+          "required": BOOLEAN,
+          "default_value": STRING, // optional, prefilled into the filter input field
+          "description": STRING    // optional, shown below the filter input field
         },
         ...
       }
@@ -113,7 +115,9 @@ Response:
         "<key>": {
           "name": STRING,
           "type": FILTERTYPE, // enumeration, possible value: "free_text"
-          "required": BOOLEAN
+          "required": BOOLEAN,
+          "default_value": STRING, // optional, prefilled into the filter input field
+          "description": STRING    // optional, shown below the filter input field
         },
         ...
       }
@@ -133,7 +137,11 @@ Response:
           If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
           The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
-- `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
+- a filter may provide an optional `default_value`. The execution dialog prefills the input field of that filter with it, so the user only has to enter something if the default does not fit. The prefilled value is treated like any other entered value, i.e. it is stored in the wiring and sent back to the adapter on execution - the adapter does not have to apply the default itself. Like every filter value it is transferred as a string, so structured defaults have to be provided as their json text. The built-in component adapter for example maps the default values of a component's inputs to filter default values and thus sends `{"__DEFAULT__": {"offset": 0.0, "factor": 3.0, "frequency": "1h"}}` for an input with such a value.
+
+- a filter may provide an optional `description`, a short explanation of what the filter expects. The execution dialog shows it below the input field of that filter and repeats it, together with the `default_value`, in the tooltip of that input field. Since the space below the input field is a single line, only the beginning of a long description is visible there - keep it to a few words and do not use it for multi-sentence documentation.
+
+- `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering and is displayed below the selected source/sink in the wiring dialog.
 
 !!! info "Metadata in hierarchy"
 Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
@@ -174,7 +182,9 @@ Response of /sources/ (without id):
         "<key>": {
           "name": STRING,
           "type": STRING,
-          "required": BOOLEAN
+          "required": BOOLEAN,
+          "default_value": STRING,
+          "description": STRING
         },
         ...
       }
@@ -197,7 +207,9 @@ Response of /sources/{id} (with id):
     "<key>": {
       "name": STRING,
       "type": STRING,
-      "required": BOOLEAN
+      "required": BOOLEAN,
+      "default_value": STRING,
+      "description": STRING
     },
     ...
   }
@@ -229,7 +241,9 @@ Response of /sinks/ (without id):
         "<key>": {
           "name": STRING,
           "type": STRING,
-          "required": BOOLEAN
+          "required": BOOLEAN,
+          "default_value": STRING,
+          "description": STRING
         },
         ...
       }
@@ -253,7 +267,9 @@ Response of /sinks/{id} (with id):
     "<key>": {
       "name": STRING,
       "type": STRING,
-      "required": BOOLEAN
+      "required": BOOLEAN,
+      "default_value": STRING,
+      "description": STRING
     },
     ...
   }

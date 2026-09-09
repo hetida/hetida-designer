@@ -17,7 +17,8 @@ import { of } from 'rxjs';
 import {
   Adapter,
   AdapterDataType,
-  AdapterHttpService
+  AdapterHttpService,
+  SourceSinkNode
 } from '../adapter-http.service';
 import { MaterialModule } from '../material.module';
 import { NodeClickEvent } from '../node-click/node-click';
@@ -49,6 +50,7 @@ class TestTreeNodeModalComponent {
       loading: false,
       name: 'testNodeFromEvent',
       parentId: 'oneThingNodeId',
+      path: 'Plant A / Pickling Unit / Influx',
       thingNodeId: 'oneThingNodeId',
       type: AdapterDataType.STRING
     }
@@ -300,6 +302,190 @@ describe('WiringDialogComponent', () => {
     expect(componentLocal.inputFormArray.length).toBe(1);
     expect(uiWiring.ioItemId).toBe('mockInput1Id');
     expect(uiWiring.nodeId).toBe('someNodeId');
+    expect(uiWiring.nodePath).toBe('some/test/path');
+    expect(componentLocal._selectionHint(formGroup)).toBe('some/test/path');
+    expect(componentLocal._selectionTooltip(formGroup)).toBe(
+      'ID: someNodeId\nPath: some/test/path'
+    );
+  });
+
+  it('should not show a hint if the adapter provides no path', () => {
+    // Arrange
+    const MOCK_INPUT_WIRING_NAME = 'mockWiringInput';
+
+    const adapterList: Adapter[] = [
+      {
+        id: 'testid',
+        name: 'my test adapter',
+        url: 'https://dummy.de'
+      }
+    ];
+
+    const mockTransformation: WiringItem = {
+      id: 'mockWiringId1',
+      test_wiring: {
+        input_wirings: [
+          {
+            workflow_input_name: MOCK_INPUT_WIRING_NAME,
+            adapter_id: adapterList[0].id,
+            ref_id: 'someNodeId',
+            ref_id_type: 'SOURCE',
+            type: AdapterDataType.STRING,
+            filters: {
+              value: 'testRawValue'
+            }
+          }
+        ],
+        output_wirings: []
+      },
+      io_interface: {
+        inputs: [
+          {
+            id: 'mockInput1Id',
+            name: MOCK_INPUT_WIRING_NAME,
+            data_type: IOType.STRING,
+            type: IOTypeOption.REQUIRED
+          }
+        ],
+        outputs: []
+      },
+      name: 'mockWiring',
+      version_tag: '1.1.1.mock'
+    };
+
+    // Act
+    TestBed.overrideProvider(MAT_DIALOG_DATA, {
+      useValue: {
+        title: 'test20',
+        wiringItem: mockTransformation,
+        adapterList
+      }
+    });
+
+    // the path attribute is optional for generic rest adapters
+    mockAdapterService.getOneSource.and.returnValue(
+      of({
+        id: 'someNodeId',
+        name: 'testMockNode',
+        thingNodeId: 'oneTestThingNodeId',
+        type: AdapterDataType.STRING,
+        visible: true
+      } as SourceSinkNode)
+    );
+
+    const fixtureLocal = TestBed.createComponent(WiringDialogComponent);
+    const componentLocal = fixtureLocal.componentInstance;
+    componentLocal.adapterList = adapterList;
+    fixtureLocal.detectChanges();
+
+    const formGroup = componentLocal.inputFormArray.controls[0] as FormGroup;
+    const uiWiring: UiItemWiring = formGroup.getRawValue();
+
+    // Assert
+    expect(uiWiring.nodePath).toBeNull();
+    expect(componentLocal._selectionHint(formGroup)).toBe('');
+    expect(componentLocal._selectionTooltip(formGroup)).toBe('someNodeId');
+  });
+
+  it('should offer hint and tooltip for a free text filter', () => {
+    // Arrange
+    const MOCK_INPUT_WIRING_NAME = 'mockWiringInput';
+
+    const adapterList: Adapter[] = [
+      {
+        id: 'testid',
+        name: 'my test adapter',
+        url: 'https://dummy.de'
+      }
+    ];
+
+    const mockTransformation: WiringItem = {
+      id: 'mockWiringId1',
+      test_wiring: {
+        input_wirings: [
+          {
+            workflow_input_name: MOCK_INPUT_WIRING_NAME,
+            adapter_id: adapterList[0].id,
+            ref_id: 'someNodeId',
+            ref_id_type: 'SOURCE',
+            type: AdapterDataType.STRING,
+            filters: {}
+          }
+        ],
+        output_wirings: []
+      },
+      io_interface: {
+        inputs: [
+          {
+            id: 'mockInput1Id',
+            name: MOCK_INPUT_WIRING_NAME,
+            data_type: IOType.STRING,
+            type: IOTypeOption.REQUIRED
+          }
+        ],
+        outputs: []
+      },
+      name: 'mockWiring',
+      version_tag: '1.1.1.mock'
+    };
+
+    // Act
+    TestBed.overrideProvider(MAT_DIALOG_DATA, {
+      useValue: {
+        title: 'test20',
+        wiringItem: mockTransformation,
+        adapterList
+      }
+    });
+
+    mockAdapterService.getOneSource.and.returnValue(
+      of({
+        id: 'someNodeId',
+        name: 'testMockNode',
+        thingNodeId: 'oneTestThingNodeId',
+        type: AdapterDataType.STRING,
+        visible: true,
+        path: 'some/test/path',
+        filters: {
+          frequency: {
+            name: 'frequency',
+            type: 'free_text',
+            required: false,
+            default_value: '5min',
+            description: 'resampling frequency'
+          },
+          offset: {
+            name: 'offset',
+            type: 'free_text',
+            required: false
+          }
+        }
+      } as unknown as SourceSinkNode)
+    );
+
+    const fixtureLocal = TestBed.createComponent(WiringDialogComponent);
+    const componentLocal = fixtureLocal.componentInstance;
+    componentLocal.adapterList = adapterList;
+    fixtureLocal.detectChanges();
+
+    const formGroup = componentLocal.inputFormArray.controls[0] as FormGroup;
+    const filterControls = componentLocal._textFiltersFormArray(formGroup)
+      .controls as FormGroup[];
+    const frequencyFilter = filterControls[0];
+    const offsetFilter = filterControls[1];
+
+    // Assert
+    expect(frequencyFilter.get('value_frequency')?.value).toBe('5min');
+    expect(componentLocal._filterHint(frequencyFilter)).toBe(
+      'resampling frequency'
+    );
+    expect(componentLocal._filterTooltip(frequencyFilter)).toBe(
+      'Default: 5min\nresampling frequency'
+    );
+
+    // a filter without default value and description has nothing to show
+    expect(componentLocal._filterHint(offsetFilter)).toBe('');
+    expect(componentLocal._filterTooltip(offsetFilter)).toBe('');
   });
 
   it('should create form control with io item | wire to a source node', () => {
@@ -383,5 +569,9 @@ describe('WiringDialogComponent', () => {
     expect(uiWiring.ioItemId).toBe('mockInput1Id');
     expect(uiWiring.adapterId).toBe(adapterList[0].id);
     expect(uiWiring.nodeId).toBe('testNodeId1');
+    expect(uiWiring.nodePath).toBe('Plant A / Pickling Unit / Influx');
+    expect(componentLocal._selectionHint(formGroup)).toBe(
+      'Plant A / Pickling Unit / Influx'
+    );
   });
 });

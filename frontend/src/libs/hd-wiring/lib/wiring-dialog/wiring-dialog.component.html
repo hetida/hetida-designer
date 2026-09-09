@@ -165,11 +165,7 @@
                       <mat-label>Browse Sources</mat-label>
                       <input
                         readonly
-                        [title]="
-                          _stringValueOfFormControl(
-                            _getControlOrFail(inputControl, 'nodeId')
-                          )
-                        "
+                        [title]="_selectionTooltip(inputControl)"
                         class="hd-clickable"
                         (click)="
                           $event.preventDefault();
@@ -203,15 +199,10 @@
                       >
                         <mat-icon>search</mat-icon>
                       </span>
-                      @if (
-                        _getControlOrFail(inputControl, 'metaDataKey').value
-                      ) {
-                        <mat-hint
-                          >FROM NODE:
-                          {{
-                            _getControlOrFail(inputControl, 'nodeName').value
-                          }}</mat-hint
-                        >
+                      @if (_selectionHint(inputControl); as selectionHint) {
+                        <mat-hint class="hd-text-ellipsis hd-w-100">{{
+                          selectionHint
+                        }}</mat-hint>
                       }
                       <mat-error>{{
                         inputControl.get('displayName')?.errors?.message
@@ -406,6 +397,7 @@
                           <mat-label>{{ filter.get('name')?.value }}</mat-label>
                           <input
                             matInput
+                            [title]="_filterTooltip(filter)"
                             [placeholder]="filter.get('name')?.value"
                             [formControlName]="
                               'value_' + filter.get('filterKey')?.value
@@ -416,6 +408,11 @@
                                 | lowercase
                             }}"
                           />
+                          @if (_filterHint(filter); as filterHint) {
+                            <mat-hint class="hd-text-ellipsis hd-w-100">{{
+                              filterHint
+                            }}</mat-hint>
+                          }
                           <mat-error>{{
                             inputControl.get(
                               'textFilters.' +
@@ -525,11 +522,7 @@
                   >
                     <mat-label>Browse Destinations</mat-label>
                     <input
-                      [title]="
-                        _stringValueOfFormControl(
-                          _getControlOrFail(outputControl, 'nodeId')
-                        )
-                      "
+                      [title]="_selectionTooltip(outputControl)"
                       readonly
                       formControlName="displayName"
                       matInput
@@ -564,6 +557,11 @@
                     >
                       <mat-icon>search</mat-icon>
                     </span>
+                    @if (_selectionHint(outputControl); as selectionHint) {
+                      <mat-hint class="hd-text-ellipsis hd-w-100">{{
+                        selectionHint
+                      }}</mat-hint>
+                    }
                     <mat-error>{{
                       outputControl.get('nodeId')?.errors?.message
                     }}</mat-error>
@@ -604,16 +602,23 @@
                             }}</mat-label>
                             <input
                               matInput
+                              [title]="_filterTooltip(filter)"
                               [placeholder]="filter.get('name')?.value"
                               [formControlName]="
                                 'value_' + filter.get('filterKey')?.value
                               "
                               attr.data-testid="{{
-                                _getControlOrFail(outputControl, 'ioItemName') +
+                                _getControlOrFail(outputControl, 'ioItemName')
+                                  .value +
                                   '-free-text-filter-input-wiring-dialog'
                                   | lowercase
                               }}"
                             />
+                            @if (_filterHint(filter); as filterHint) {
+                              <mat-hint class="hd-text-ellipsis hd-w-100">{{
+                                filterHint
+                              }}</mat-hint>
+                            }
                             <mat-error>{{
                               outputControl.get(
                                 'textFilters.' +

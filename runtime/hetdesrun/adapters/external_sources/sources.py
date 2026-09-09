@@ -35,9 +35,10 @@ sources["open-meteo-forecast"] = ExternalSourcesStructureSource(
     path="open meteo forecast data",
     filters={
         "query_params": {
-            "name": "query params as json dict",
+            "name": "query params",
             "type": "free_text",
             "required": True,
+            "description": "json dict of query parameters for the open meteo api",
         }
     },
 )
@@ -49,9 +50,10 @@ sources["open-meteo-archive"] = ExternalSourcesStructureSource(
     path="open meteo historical weather data",
     filters={
         "query_params": {
-            "name": "query params as json dict",
+            "name": "query params",
             "type": "free_text",
             "required": True,
+            "description": "json dict of query parameters for the open meteo api",
         }
     },
 )
@@ -63,9 +65,10 @@ sources["open-meteo-historical-forecast"] = ExternalSourcesStructureSource(
     path="open meteo historical forecast data",
     filters={
         "query_params": {
-            "name": "query params as json dict",
+            "name": "query params",
             "type": "free_text",
             "required": True,
+            "description": "json dict of query parameters for the open meteo api",
         }
     },
 )
@@ -78,9 +81,10 @@ sources["energy-charts-info-prices"] = ExternalSourcesStructureSource(
     path="energy-charts.info api /prices",
     filters={
         "bzn": {
-            "name": "bidding zone (e.g. DE-LU)",
+            "name": "bidding zone",
             "type": "free_text",
             "required": True,
+            "description": "bidding zone code, e.g. DE-LU",
         }
     },
 )

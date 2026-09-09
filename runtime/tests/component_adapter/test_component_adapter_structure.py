@@ -1,15 +1,20 @@
 from unittest import mock
 
 import pytest
+from pydantic import ValidationError
 
+from hdutils import parse_value
 from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.component_adapter.structure import (
+    filter_default_value_from_input,
     get_sink_by_id,
     get_sinks,
     get_source_by_id,
     get_sources,
     get_structure,
 )
+from hetdesrun.datatypes import DataType
+from hetdesrun.persistence.models.io import InputType, TransformationInput
 
 
 def test_config_works():
@@ -138,3 +143,32 @@ def test_component_adapter_structure(  # noqa: PLR0915
 
     possible_sinks = get_sinks(filter_str="Nothing")
     assert len(possible_sinks) == 0
+
+
+def test_filter_default_value_from_input():
+    """Optional inputs without an explicit default get the string "null" as filter default
+
+    Required inputs have no default value at all, and a filter value of "null" is what the
+    runtime parses back to None for every data type.
+    """
+    required_input = TransformationInput(
+        name="required_input", data_type=DataType.Integer, type=InputType.REQUIRED
+    )
+    optional_input_without_value = TransformationInput(
+        name="optional_input_without_value", data_type=DataType.Integer, type=InputType.OPTIONAL
+    )
+    optional_input_with_value = TransformationInput(
+        name="optional_input_with_value",
+        data_type=DataType.Integer,
+        type=InputType.OPTIONAL,
+        value="42",
+    )
+
+    assert filter_default_value_from_input(required_input) is None
+    assert filter_default_value_from_input(optional_input_without_value) == "null"
+    assert filter_default_value_from_input(optional_input_with_value) == "42"
+
+    # "null" is parsable for every data type, the empty string is not
+    assert parse_value("null", "INT", True) is None
+    with pytest.raises(ValidationError):
+        parse_value("", "INT", True)
