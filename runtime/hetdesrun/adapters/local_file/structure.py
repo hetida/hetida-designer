@@ -129,9 +129,10 @@ def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
         metadataKey=generic_sink_id,
         filters={
             "file_name": StructureFilter(
-                name=f"File Name (must end with {registered_extensions_string})",
+                name="File Name",
                 type=FilterType.free_text,
                 required=False,
+                description=f"must end with {registered_extensions_string}",
             )
         },
     )
@@ -153,9 +154,10 @@ def generic_dataframe_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
         metadataKey=generic_sink_id,
         filters={
             "file_name": StructureFilter(
-                name=f"File Name (must end with {registered_extensions_string})",
+                name="File Name",
                 type=FilterType.free_text,
                 required=False,
+                description=f"must end with {registered_extensions_string}",
             )
         },
     )

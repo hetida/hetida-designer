@@ -3,6 +3,7 @@ import uuid
 import pytest
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.virtual_structure_adapter.models import (
     VirtualStructureAdapterSink,
     VirtualStructureAdapterSource,
@@ -15,6 +16,12 @@ from hetdesrun.structure.db.source_sink_service import (
     fetch_all_sinks_from_db,
     fetch_all_sources_from_db,
     fetch_sources_by_substring_match,
+)
+from hetdesrun.structure.models import (
+    Filter,
+    FilterType,
+    StructureServiceSink,
+    StructureServiceSource,
 )
 
 
@@ -188,3 +195,45 @@ def test_virtual_wiring_resolution_with_metadata_any_source():
 
     assert wf_wiring.input_wirings[0].adapter_id == sources[0].adapter_key
     assert wf_wiring.input_wirings[0].ref_id == sources[0].ref_id
+
+
+def test_virtual_structure_adapter_source_and_sink_serialize_passthrough_filters():
+    """Passthrough filters must be plain dicts in the adapter structure models.
+
+    Handing over the Filter model itself is rejected by pydantic, since the filters
+    attribute is typed as dict[str, dict].
+    """
+    passthrough_filter = Filter(
+        name="frequency",
+        internal_name="frequency",
+        type=FilterType.free_text,
+        required=False,
+    )
+
+    source = StructureServiceSource(
+        external_id="src",
+        stakeholder_key="stk",
+        name="a source",
+        type=ExternalType.TIMESERIES_FLOAT,
+        adapter_key="demo-adapter-python",
+        source_id="src_id",
+        passthrough_filters=[passthrough_filter],
+    )
+    sink = StructureServiceSink(
+        external_id="snk",
+        stakeholder_key="stk",
+        name="a sink",
+        type=ExternalType.TIMESERIES_FLOAT,
+        adapter_key="demo-adapter-python",
+        sink_id="sink_id",
+        passthrough_filters=[passthrough_filter],
+    )
+
+    struct_src = VirtualStructureAdapterSource.from_structure_service_source(source)
+    struct_sink = VirtualStructureAdapterSink.from_structure_service_sink(sink)
+
+    assert struct_src.filters is not None
+    assert struct_sink.filters is not None
+    assert struct_src.filters["frequency"]["name"] == "frequency"
+    assert struct_sink.filters["frequency"]["name"] == "frequency"
+    assert isinstance(struct_sink.filters["frequency"], dict)

@@ -110,9 +110,15 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915
         filter_names = {
             snk["filters"]["file_name"]["name"] for snk in all_snks if "file_name" in snk["filters"]
         }
-        assert filter_names == {
-            'File Name (must end with ".pkl", ".h5")',
-            'File Name (must end with ".csv", ".xlsx", ".parquet", "...")',
+        assert filter_names == {"File Name"}
+        filter_descriptions = {
+            snk["filters"]["file_name"]["description"]
+            for snk in all_snks
+            if "file_name" in snk["filters"]
+        }
+        assert filter_descriptions == {
+            'must end with ".pkl", ".h5"',
+            'must end with ".csv", ".xlsx", ".parquet", "..."',
         }
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0

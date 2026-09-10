@@ -25,7 +25,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantC.picklingUnit.influx.anomaly_score",
@@ -33,7 +40,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant C / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_NUMERIC,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantA.millingUnit.influx.anomaly_score",
@@ -41,7 +55,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant A / Milling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantA.picklingUnit.outfeed.anomaly_score",
@@ -49,7 +70,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Outfeed Anomaly Score",
         "path": "Plant A / Pickling Unit / Outfeed",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantA.millingUnit.outfeed.anomaly_score",
@@ -57,7 +85,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Outfeed Anomaly Score",
         "path": "Plant A / Milling Unit / Outfeed",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantB.picklingUnit.influx.anomaly_score",
@@ -93,7 +128,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
+        "filters": {
+            "column_names": {
+                "name": "columns",
+                "type": "free_text",
+                "required": False,
+                "description": 'json list of column names, e.g. ["a", "b"]',
+            }
+        },
     },
     {
         "id": "root.plantB.alerts",
@@ -108,7 +150,14 @@ sinks_json_objects: list[dict[str, Any]] = [
         "name": "Anomalies",
         "path": "Plant A",
         "type": ExternalType.MULTITSFRAME,
-        "filters": {"metric_names": {"name": "metrics", "type": "free_text", "required": False}},
+        "filters": {
+            "metric_names": {
+                "name": "metrics",
+                "type": "free_text",
+                "required": False,
+                "description": 'json list of metric names, e.g. ["a", "b"]',
+            }
+        },
     },
     {
         "id": "root.plantB.anomalies",

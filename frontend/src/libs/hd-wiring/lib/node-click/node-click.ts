@@ -12,6 +12,7 @@ export interface TreeNodeWithUiInfo {
   name: string;
   parentId: string | null;
   thingNodeId?: string;
+  path?: string;
   type?: AdapterDataType;
   filters?: any;
   metadataKey?: string;

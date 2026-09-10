@@ -75,6 +75,7 @@ export interface UiItemWiring {
   rawValue?: string | null | undefined;
   nodeId?: string | null | undefined;
   nodeName: string | null;
+  nodePath?: string | null;
   displayName: string | null;
   nodeType: AdapterDataType;
   metaDataKey?: string | null | undefined;
@@ -119,6 +120,7 @@ export interface FreeTextFilter {
   required: boolean;
   value?: string;
   default_value?: string;
+  description?: string;
 }
 
 export interface TextFilter extends FreeTextFilter {
@@ -406,6 +408,7 @@ export class WiringDialogComponent implements OnInit {
     let timestampMax: Moment | null = null;
     let timestampRangePickerHidden = false;
     let nodeName: string | null = null;
+    let nodePath: string | null = null;
     let textFilters: TextFilter[] = [];
     let adapterId: string | null =
       sourceType === 'INPUT_WIRING'
@@ -431,6 +434,24 @@ export class WiringDialogComponent implements OnInit {
         nodeName = Utils.isDefined(nodeId)
           ? (nodesHash[nodeId]?.name ?? inputOrOutputWiring.ref_key)
           : null;
+      }
+
+      // Load the path. Sources and sinks may provide one, thing nodes never do.
+      if (nodeId) {
+        nodePath = (nodesHash[nodeId] as SourceSinkNode)?.path ?? null;
+        if (
+          Utils.isNullOrUndefined(nodePath) &&
+          Utils.isDefined(inputOrOutputWiring.ref_key)
+        ) {
+          // For metadata wirings nodesHash is keyed by the id of the source or
+          // sink providing the metadata, not by the thing node id of the wiring.
+          for (const nodeHash of Object.values(nodesHash)) {
+            const nodeHashObj: SourceSinkNode = nodeHash as SourceSinkNode;
+            if (nodeHashObj.metadataKey === inputOrOutputWiring.ref_key) {
+              nodePath = nodeHashObj.path ?? null;
+            }
+          }
+        }
       }
 
       // Load filters.
@@ -516,6 +537,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       rawValue: manualValue,
       nodeId,
       nodeName,
+      nodePath,
       displayName: null, // Will be calculated from nodeName and metaDataKey. See @ _setInputOrOutputFormConfigurations function.
       nodeType: inputOrOutputWiring ? inputOrOutputWiring.type : null,
       metaDataKey: inputOrOutputWiring?.ref_key ?? null,
@@ -630,6 +652,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       changedAdapterId => {
         this._getControlOrFail(formGroup, 'nodeId').reset();
         this._getControlOrFail(formGroup, 'nodeName').reset();
+        this._getControlOrFail(formGroup, 'nodePath').reset();
         this._getControlOrFail(formGroup, 'displayName').reset();
         this._getControlOrFail(formGroup, 'metaDataKey').reset();
         this._getControlOrFail(formGroup, 'timestampRangeQuery').reset();
@@ -650,7 +673,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
               controlsKey !== 'filterKey' &&
               controlsKey !== 'required' &&
               controlsKey !== 'name' &&
-              controlsKey !== 'default_value'
+              controlsKey !== 'default_value' &&
+              controlsKey !== 'description'
             ) {
               const filterValue = (control as FormGroup).get(
                 controlsKey
@@ -1169,6 +1193,9 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         this._getControlOrFail(foundIoItemControl, 'nodeName').setValue(
           node.name
         );
+        this._getControlOrFail(foundIoItemControl, 'nodePath').setValue(
+          node.path ?? null
+        );
         this._getControlOrFail(foundIoItemControl, 'nodeId').setValue(node.id);
         this._getControlOrFail(foundIoItemControl, 'nodeType').setValue(
           `${DataStructureType.METADATA}(${metaDataWiringChangeEvent.metaData.dataType})`
@@ -1279,6 +1306,9 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         );
         this._getControlOrFail(foundIoItemControl, 'nodeName').setValue(
           idAndChecked.checked ? node.name : null
+        );
+        this._getControlOrFail(foundIoItemControl, 'nodePath').setValue(
+          idAndChecked.checked ? (node.path ?? null) : null
         );
 
         const nodeSourceType = nodeClickEvent.nodeSourceType;
@@ -1647,7 +1677,8 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
       [`value_${filter.key}`]: this.formBuilder.control(filter.value ?? ''),
       required: filter.required,
       name: filter.name ? filter.name : filter.key,
-      default_value: filter.default_value
+      default_value: filter.default_value,
+      description: filter.description ?? null
     });
   }
 
@@ -1834,6 +1865,7 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     this._getControlOrFail(inputControl, 'metaDataKey').reset(null);
     this._getControlOrFail(inputControl, 'nodeId').reset(null);
     this._getControlOrFail(inputControl, 'nodeName').reset(null);
+    this._getControlOrFail(inputControl, 'nodePath').reset(null);
     this._getControlOrFail(inputControl, 'nodeType').reset(null);
     this._getControlOrFail(inputControl, 'useDefaultValue').reset(false);
     this._getControlOrFail(inputControl, 'timestampRange').reset([null, null]);
@@ -1849,9 +1881,82 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
     this._getControlOrFail(outputControl, 'metaDataKey').reset(null);
     this._getControlOrFail(outputControl, 'nodeId').reset(null);
     this._getControlOrFail(outputControl, 'nodeName').reset(null);
+    this._getControlOrFail(outputControl, 'nodePath').reset(null);
     this._getControlOrFail(outputControl, 'nodeType').reset(null);
     this._getControlOrFail(outputControl, 'adapterId').reset(null);
     (this._getControlOrFail(outputControl, 'textFilters') as FormArray).clear();
+  }
+
+  /**
+   * Hint shown below the browse field of a wired source or sink. Prefers the
+   * human readable "breadcrumb"-like path of the node, but adapters are not
+   * obliged to provide one - and thing nodes never do - so it falls back to the
+   * node name for metadata wirings and to nothing at all otherwise.
+   */
+  public _selectionHint(control: AbstractControl): string {
+    const nodePath = this._stringValueOfFormControl(
+      this._getControlOrFail(control, 'nodePath')
+    );
+    const metaDataKey = this._getControlOrFail(control, 'metaDataKey').value;
+    if (Utils.string.isEmptyOrUndefined(metaDataKey)) {
+      return nodePath;
+    }
+
+    const nodeName = this._stringValueOfFormControl(
+      this._getControlOrFail(control, 'nodeName')
+    );
+    return `FROM NODE: ${Utils.string.isEmpty(nodePath) ? nodeName : nodePath}`;
+  }
+
+  /**
+   * Native tooltip of the browse field. The path is repeated here in full,
+   * since the hint below the field is truncated to a single line.
+   */
+  public _selectionTooltip(control: AbstractControl): string {
+    const nodeId = this._stringValueOfFormControl(
+      this._getControlOrFail(control, 'nodeId')
+    );
+    const nodePath = this._stringValueOfFormControl(
+      this._getControlOrFail(control, 'nodePath')
+    );
+    if (Utils.string.isEmpty(nodePath)) {
+      return nodeId;
+    }
+
+    return `ID: ${nodeId}\nPath: ${nodePath}`;
+  }
+
+  /**
+   * Hint shown below the input of a free text filter. Adapters may provide a
+   * short description for a filter, its full text is repeated in the tooltip
+   * since this hint is truncated to a single line.
+   */
+  public _filterHint(filterControl: AbstractControl): string {
+    return this._stringValueOfFormControl(
+      this._getControlOrFail(filterControl, 'description')
+    );
+  }
+
+  /**
+   * Native tooltip of the input of a free text filter, showing the default
+   * value the input has been prefilled with and the description of the filter,
+   * as far as the adapter provides them.
+   */
+  public _filterTooltip(filterControl: AbstractControl): string {
+    const defaultValue = this._stringValueOfFormControl(
+      this._getControlOrFail(filterControl, 'default_value')
+    );
+    const description = this._filterHint(filterControl);
+
+    const tooltipLines: string[] = [];
+    if (!Utils.string.isEmpty(defaultValue, false)) {
+      tooltipLines.push(`Default: ${defaultValue}`);
+    }
+    if (!Utils.string.isEmpty(description, false)) {
+      tooltipLines.push(description);
+    }
+
+    return tooltipLines.join('\n');
   }
 
   public _stringValueOfFormControl(control: AbstractControl): string {

@@ -78,7 +78,7 @@ class VirtualStructureAdapterSink(BaseModel):
             type=sink.type,
             path=sink.display_path,
             metadataKey=sink.ref_key,
-            filters={f.internal_name: f for f in sink.passthrough_filters}
+            filters={f.internal_name: f.model_dump() for f in sink.passthrough_filters}
             if sink.passthrough_filters
             else {},
         )

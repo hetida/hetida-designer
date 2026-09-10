@@ -10,7 +10,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {"latex_mode": {"name": "Latex", "type": "free_text", "required": False}},
+        "filters": {
+            "latex_mode": {
+                "name": "Latex",
+                "type": "free_text",
+                "required": False,
+                "description": 'set to "yes" to get the unit as latex',
+            }
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_pressure_unit",
@@ -35,7 +42,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant B",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {"latex_mode": {"name": "Latex", "type": "free_text", "required": False}},
+        "filters": {
+            "latex_mode": {
+                "name": "Latex",
+                "type": "free_text",
+                "required": False,
+                "description": 'set to "yes" to get the unit as latex',
+            }
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantB.plant_pressure_unit",
@@ -65,7 +79,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
+        "filters": {
+            "column_names": {
+                "name": "columns",
+                "type": "free_text",
+                "required": False,
+                "description": 'json list of column names, e.g. ["a", "b"]',
+            }
+        },
     },
     {
         "id": "root.plantB.alerts",
@@ -113,11 +134,13 @@ sources_json_objects: list[dict[str, Any]] = [
                 "name": "lower threshold",
                 "type": "free_text",
                 "required": False,
+                "description": "keep only values above this value, e.g. 93.4",
             },
             "upper_threshold": {
                 "name": "upper threshold",
                 "type": "free_text",
                 "required": False,
+                "description": "keep only values below this value, e.g. 107.9",
             },
         },
     },
@@ -153,6 +176,7 @@ sources_json_objects: list[dict[str, Any]] = [
                 "name": "frequency",
                 "type": "free_text",
                 "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
                 "default_value": "1h",
             }
         },
@@ -163,7 +187,14 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Anomaly Score",
         "path": "Plant C / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_NUMERIC,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {
+                "name": "frequency",
+                "type": "free_text",
+                "required": False,
+                "description": "pandas resampling frequency, e.g. 5min",
+            }
+        },
     },
     {
         "id": "root.plantA.picklingUnit.influx.press",
