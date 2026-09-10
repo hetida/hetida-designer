@@ -3,7 +3,7 @@
 - add Apache datafusion dependency
 - add niquest opentelemetry instrumentation. Niquest is used for fetching (timeseries) data from generic rest adapters.
 - document the optional `default_value` attribute of source/sink filters in the [adapter REST API interface documentation](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_rest_api_interface/).
-- default values of filters are now shown on hivering.
+- default values of filters are now shown on hovering.
 - the component adapter now maps a default value of json null of an optional component input to the string `"null"` for the `default_value` of the corresponding filter, so the execution dialog prefills the filter input field with `null` instead of leaving it empty.
 - fix: the virtual structure adapter raised a validation error when converting a sink with passthrough filters.
 - free text filters of sources and sinks may now provide an optional `description`. The execution dialog shows it below the input field and on hovering.
