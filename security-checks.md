@@ -28,6 +28,14 @@ docker-compose -f docker-compose-dev.yml build hetida-designer-frontend
 trivy image --ignorefile .trivyignore.yaml --ignore-unfixed hetida-designer-hetida-designer-frontend:latest
 ```
 
+Note: Some frontend fixes can be done via
+```
+npm audit --omit=dev    # check
+npm audit fix           # apply non-breaking fixes
+npm audit fix --force   # apply possibly breaking fixes. Not recommended! Better do actual angular upgrade.
+```
+
+
 **Note**: The final frontend docker image includes an sbom containing node dependencies so that a later trivy scan finds it and no separate scan of the source commit is necessary. A scan of the final image is enough.
 
 

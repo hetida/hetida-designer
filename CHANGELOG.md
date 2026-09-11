@@ -1,3 +1,4 @@
+## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.
 - add niquest opentelemetry instrumentation. Niquest is used for fetching (timeseries) data from generic rest adapters.
 - document the optional `default_value` attribute of source/sink filters in the [adapter REST API interface documentation](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_rest_api_interface/).
