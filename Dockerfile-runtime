@@ -1,6 +1,6 @@
 ##### Base stage - build-time deps only
 ARG TARGETPLATFORM=linux/amd64
-FROM --platform=${TARGETPLATFORM} python:3.14.6-slim-trixie AS base
+FROM --platform=${TARGETPLATFORM} python:3.14.7-slim-trixie AS base
 ENV TIMEOUT=900
 
 COPY ./runtime/pipt_locks.env /app/pipt_locks.env
@@ -25,13 +25,15 @@ ENV PIPT_PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
 RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --prod
 
 ##### Only Python dependencies runtime deps
-FROM --platform=${TARGETPLATFORM} python:3.14.6-slim-trixie AS runtime_base
+FROM --platform=${TARGETPLATFORM} python:3.14.7-slim-trixie AS runtime_base
 ENV TIMEOUT=900
 
 RUN apt-get -y update && apt-get -y install --no-install-recommends \
     libpq5 \
     libsnappy1v5 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/local/lib/python3.14/site-packages
+
 
 COPY --from=base /usr/local/lib/python3.14 /usr/local/lib/python3.14
 COPY --from=base /usr/local/bin /usr/local/bin
@@ -75,7 +77,7 @@ EXPOSE 8090
 CMD ["/app/start.sh"]
 
 ##### sbom stage
-FROM aquasec/trivy:0.70.0 AS sbom-generator
+FROM aquasec/trivy:0.74.0 AS sbom-generator
 COPY --from=pre-prod / /scan-target
 RUN trivy fs --format cyclonedx --output /sbom.cdx.json /scan-target
 

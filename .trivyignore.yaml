@@ -1,6 +1,25 @@
 vulnerabilities:
-  - id: CVE-2025-69720
-    statement: "ncurses: we do not expose a TUI in any image."
-  - id: CVE-2026-40356
-    statement: "to this project unrelevant kerberos mechanism."
-    expires: "2026-09-01"
+  # Example:
+  # - id: CVE-2026-40356
+  #   statement: "to this project unrelevant kerberos mechanism."
+  #   expires: "2026-09-01"
+
+  # Vendored copies inside pip itself (pip/_vendor/msgpack, pip/_vendor/pkg_resources),
+  # surfaced via pip's own CycloneDX SBOM at site-packages/pip/_vendor/bom.cdx.json.
+  # Not our dependencies: we ship msgpack >= 1.2.2 and no top-level setuptools.
+  # Scoped by purl, so a genuine finding in our own packages still surfaces.
+  - id: GHSA-6v7p-g79w-8964
+    purls:
+      - "pkg:pypi/msgpack@1.1.2"
+    statement: "msgpack vendored in pip (pip/_vendor/msgpack); only reachable via pip's CacheControl HTTP cache, and pip is not run in the image. Our own msgpack is 1.2.2."
+    expires: "2026-12-01"
+  - id: CVE-2025-47273
+    purls:
+      - "pkg:pypi/setuptools@70.3.0"
+    statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); PackageIndex is not used and pip is not run in the image. No top-level setuptools is installed."
+    expires: "2026-12-01"
+  - id: CVE-2026-59890
+    purls:
+      - "pkg:pypi/setuptools@70.3.0"
+    statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects sdist building, which never happens in the image. No top-level setuptools is installed."
+    expires: "2026-12-01"
