@@ -14,6 +14,7 @@ __pycache__
 .mypy_cache
 .s.PGSQL*
 .ruff_cache
+.mcp.json
 
 *.hd-creds
 hd-docker-compose-trafos

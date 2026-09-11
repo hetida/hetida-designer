@@ -17,6 +17,7 @@ documentation
 .pytest_cache
 .mypy_cache
 .coverage
+.mpc.json
 
 runtime/.pytest_cache
 runtime/.mypy_cache
