@@ -29,7 +29,7 @@ that it is more storage-efficient in case that multiple timeseries do not have t
 | 2024-12-01T03:00:00+00:00 |       |       |       | 45.99 |
 
 !!! info
-Note that hetida designer provides base components to convert into "wide" format dataframes and vice versa in the category "Connectors"
+Note that hetida designer provides base components to convert into "wide" format dataframes and vice versa in the category "Connectors".
 
 !!! tip "Only one metric?"
 If your data consists of exactly one timeseries, the `metric` column is constant and therefore redundant. In that case use a [SingleTSFrame](singletsframes.md) instead — it has the same representation minus the `metric` column, and still supports arbitrarily many value dimensions. The base component "Extract SingleTSFrame from MultiTSFrame" converts a single metric of a MultiTSFrame into a SingleTSFrame.
@@ -54,7 +54,7 @@ As an example consider a measurement by drones where location of measurement is 
 | 2024-12-01T01:00:00+00:00 |   drone_B.temp   |  8.7  | 51.43952210110222 | 7.032115169871234 |
 | 2024-12-01T01:00:05+00:00 |   drone_B.temp   |  8.6  | 51.43952228945781 | 7.032115457891023 |
 
-Or stock share trade events where price and number of trades shares is necessary:
+Or stock share trade events bookkeeping where price and number of trade shares is necessary:
 
 |         timestamp         | metric | price  | number |
 | :-----------------------: | :----: | :----: | :----: |
@@ -76,7 +76,7 @@ In contrast to pandas.Series the index of a MultiTSFrame should be considered ir
 In the documentation of the workflow and components the convention is to write **MultiTSFrame**, e.g.:
 
 ```
-- mutiple_timeseries (MultiTSFrame): This is an example for the documentation of an input/output with the type MultiTSFrame
+- mutiple_timeseries (MultiTSFrame): Example documentation of MultiTSFrame input
 ```
 
 ## External: Adapter System
