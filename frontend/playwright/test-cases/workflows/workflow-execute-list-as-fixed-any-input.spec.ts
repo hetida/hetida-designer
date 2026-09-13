@@ -4,7 +4,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   page,
   hetidaDesigner,
   browserName
-}) => {
+}, testInfo) => {
   // Arrange
   const componentCategory = 'Connectors';
   const componentName = 'pass through';
@@ -12,7 +12,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   const componentInputName = 'input';
   const componentOutputName = 'output';
   const workflowCategory = 'Test';
-  const workflowName = `Test list as fixed any input ${browserName}`;
+  const workflowName = `Test list as fixed any input ${browserName} ${testInfo.retry}`;
   const workflowDescription = 'Use a list as fixed any input';
   const workflowTag = '0.1.0';
   const workflowInputData = '["MockData1","MockData2"]';
@@ -65,9 +65,8 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await hetidaDesigner.clickByTestId('save-workflow-io-dialog');
 
   // Execute workflow
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Workflow ${workflowName} ${workflowTag}`
   );
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
@@ -81,29 +80,49 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   );
 });
 
-test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-  // Clear
-  const workflowCategory = 'Test';
-  const workflowName = `Test list as fixed any input ${browserName}`;
-  const workflowTag = '0.1.0';
+test.afterEach(
+  async ({ page, hetidaDesigner, backendApi, browserName }, testInfo) => {
+    // Clear
+    const workflowCategory = 'Test';
+    const workflowName = `Test list as fixed any input ${browserName} ${testInfo.retry}`;
+    const workflowTag = '0.1.0';
 
-  await hetidaDesigner.clickWorkflowsInNavigation();
-  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    `${workflowName}(${workflowTag})`
-  );
-  await page.locator('.mat-mdc-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Delete');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
-  );
-  await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+    // Nothing to remove when the test failed before it created the workflow.
+    // Driving the ui anyway would report a misleading timeout here and hide
+    // the actual failure.
+    if (
+      (await backendApi.findTransformationsByName(workflowName)).length === 0
+    ) {
+      return;
+    }
 
-  await (
+    await hetidaDesigner.clickWorkflowsInNavigation();
+    await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
+    await hetidaDesigner.rightClickItemInNavigation(
+      `${workflowName}(${workflowTag})`
+    );
+    await page.locator('.mat-mdc-menu-panel').hover();
+    await hetidaDesigner.clickOnContextMenu('Delete');
     await page.waitForSelector(
-      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
-    )
-  ).waitForElementState('hidden');
+      `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
+    );
+    await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
 
-  await hetidaDesigner.clearTest();
+    await (
+      await page.waitForSelector(
+        `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+      )
+    ).waitForElementState('hidden');
+
+    await hetidaDesigner.clearTest();
+  }
+);
+
+// Runs even when the cleanup above failed, so a leftover can never make the
+// next attempt create a second revision with the same name and tag - after
+// which every locator for that name matches more than one element.
+test.afterEach(async ({ backendApi, browserName }, testInfo) => {
+  await backendApi.deleteTransformationsByName(
+    `Test list as fixed any input ${browserName} ${testInfo.retry}`
+  );
 });
