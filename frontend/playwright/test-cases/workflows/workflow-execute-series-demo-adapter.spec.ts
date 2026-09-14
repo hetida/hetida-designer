@@ -24,9 +24,8 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   );
 
   // Open execute workflow dialog
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Workflow ${workflowName} ${workflowTag}`
   );
 
   // Reset values for adapter for second pass with other Browsers
@@ -86,9 +85,8 @@ test.afterEach(async ({ page, hetidaDesigner }) => {
   const workflowTag = '1.0.1';
   const workflowInputName = 'input_series';
 
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Workflow ${workflowName} ${workflowTag}`
   );
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-clear-input-wiring-dialog`

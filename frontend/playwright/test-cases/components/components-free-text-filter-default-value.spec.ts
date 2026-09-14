@@ -21,9 +21,8 @@ test('Send a default_value via adapter for the free_text filter to initialise, i
   );
 
   // Configure Execute
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Component ${componentName} ${componentTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Component ${componentName} ${componentTag}`
   );
 
   // Select adapter

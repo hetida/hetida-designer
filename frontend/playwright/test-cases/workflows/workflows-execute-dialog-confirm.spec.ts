@@ -13,8 +13,7 @@ test('Confirm "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
     `${workflowName}(${workflowTag})`
   );
 
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector('mat-dialog-container');
+  await hetidaDesigner.openExecuteDialog();
 
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> plotly-plot');

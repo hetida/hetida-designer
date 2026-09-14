@@ -13,8 +13,7 @@ test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
     `${componentName}(${componentTag})`
   );
 
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector('mat-dialog-container');
+  await hetidaDesigner.openExecuteDialog();
 
   // Assert
   const countDialogContainer = await page
