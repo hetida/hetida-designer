@@ -6,7 +6,7 @@
 ## Description
 This component is meant to be used via the component adapter. If hetida designer is running as part of the hetida platform it enables fetching asset data together with their metadata / properties from the asset hierarchy. For trafos employed via the hetida platform at a specific point in the hierarchy, it automatically infers the parent asset node id from the invocation context.
 
-Requires the env variable `HETIDA_PLATFORM_API_URL` to be set to the hetida platform core api, e.g. "http://test-hetida-platform-core-backend-svc:8080/api" in a K8S setup for the designer runtime or "http://core-backend:8080/api" in a docker-compose setup.
+Requires the env variable `HETIDA_PLATFORM_API_URL` to be set to the hetida platform core api, e.g. "http://test-hetida-platform-core-backend-svc:8080/api" in a K8S setup for the designer runtime or "http://core-backend:8080/api" in a docker-compose setup. Requests to it use the timeout (`EXTERNAL_REQUEST_TIMEOUT`, in seconds) and certificate verification setting (`HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS`) configured for the runtime's requests to adapters.
 
 E.g. if you want to provide a map plot with all assets below a certain asset in the hierarchy marked on the map you can fetch the relevant assets using this component and use "latitude" / "longitude" dynamic properties of your asset type. This component would then be used as component adapter source for the respective map plot component you write.
 
@@ -15,7 +15,7 @@ E.g. if you want to provide a map plot with all assets below a certain asset in 
 * "asset_node_id" ({"data_type": "STRING", "default_value": None}): The asset node id of the parent asset. If not set it is tried to obtain it from context. If neither provides it, a ValueError is raised
 * "starts_with": {"data_type": "STRING", "default_value": None}: Allows to filter assets by beginning of their name. Filtering is case-insensitive.
 * "recursive": {"data_type": "BOOLEAN", "default_value": True}: Whether child assets are collected recursively.
-* "attach_properties": {"data_type": "ANY", "default_value": None}: Can be a list / json array of property names. If that's the case these property values are explicitely added as columns (even if no asset has this property). For assets not having a property the value will be null.
+* "attach_properties": {"data_type": "ANY", "default_value": None}: Can be a list / json array of property names or a single property name. If that's the case these property values are explicitely added as columns (even if no asset has this property). For assets not having a property the value will be null.
 * "attach_all_properties": {"data_type": "BOOLEAN", "default_value": True}: This attaches all properties that actually occur somewhere in the selected asset children as a new column. If a property does not occur, it won't be added as column.
 * "drop_ref_obj_column": {"data_type": "BOOLEAN", "default_value": True}: Whether the ref object column (from which properties are collected) and the inherited properties column should be excluded from the final dataframe.
 * "name_regexp": {"data_type": "STRING", "default_value": None}: If set, filter for assets with name matching the provided regexp.
@@ -203,14 +203,17 @@ import logging
 import os
 import re
 from posixpath import join as posix_urljoin
+from typing import Any
 from uuid import UUID
 
 import httpx
 import pandas as pd
+from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
 from hdutils import ComponentInputValidationException
 from hetdesrun.runtime.context import get_hierarchy_object_info
 from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +242,9 @@ NODE_COLUMNS = (
 )
 PROPERTY_COLUMN_PREFIX = "property."
 
+# Maximum length of response text included in error messages
+MAX_ERROR_TEXT_LENGTH = 1000
+
 
 def get_platform_api_url() -> str:
     """Obtain the hetida platform core api url from the environment
@@ -262,23 +268,191 @@ async def get_external_auth_headers():
     return await get_auth_headers(external=True)
 
 
-async def fetch_node_children(platform_api_url: str, asset_node_id: str, params: dict) -> list:
-    """Obtain the children of a node from the hetida platform node children endpoint"""
-    children_url = posix_urljoin(platform_api_url, "nodes", asset_node_id, "children")
+class HetidaPlatformRequestError(Exception):
+    """A request to the hetida platform core api failed"""
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.get(
-            children_url,
-            headers=await get_external_auth_headers(),
-            params=params,
+
+def platform_error_reason(resp: httpx.Response) -> str:
+    """Extract the reason from a hetida platform error response
+
+    hetida platform error responses carry the reason in the "message" field of a json body.
+    Otherwise (e.g. html error pages of proxies) the beginning of the response text is used.
+    """
+    try:
+        message = resp.json().get("message")
+    except ValueError, AttributeError:
+        message = None
+    if isinstance(message, str) and message.strip() != "":
+        return message
+
+    text = resp.text.strip()
+    if text == "":
+        return "(empty response body)"
+    if len(text) > MAX_ERROR_TEXT_LENGTH:
+        return text[:MAX_ERROR_TEXT_LENGTH] + "..."
+    return text
+
+
+async def fetch_node_children(platform_api_url: str, asset_node_id: str, params: dict) -> list:
+    """Obtain the children of a node from the hetida platform node children endpoint
+
+    Raises HetidaPlatformRequestError if the platform cannot be reached or the request fails.
+    """
+    children_url = posix_urljoin(platform_api_url, "nodes", asset_node_id, "children")
+    request_description = f"GET {children_url}"
+    headers = await get_external_auth_headers()
+
+    try:
+        async with httpx.AsyncClient(
+            timeout=get_config().external_request_timeout,
+            verify=get_config().hd_adapters_verify_certs,
+        ) as client:
+            resp = await client.get(children_url, headers=headers, params=params)
+    except httpx.TimeoutException as e:
+        msg = (
+            f"hetida platform core api did not answer in time ({request_description}):"
+            f" {type(e).__name__}. The timeout of {get_config().external_request_timeout} s"
+            " can be configured for the runtime via EXTERNAL_REQUEST_TIMEOUT."
         )
+        logger.error(msg)
+        raise HetidaPlatformRequestError(msg) from e
+    except httpx.RequestError as e:
+        msg = (
+            f"Could not reach hetida platform core api at {platform_api_url}"
+            f" ({request_description}): {type(e).__name__}: {e}"
+        )
+        logger.error(msg)
+        raise HetidaPlatformRequestError(msg) from e
 
     if resp.status_code != 200:
-        msg = f"Request getting asset node children failed with status code: {resp.status_code}"
+        msg = (
+            f"Request to hetida platform ({request_description}) failed with status"
+            f" {resp.status_code}: {platform_error_reason(resp)}"
+        )
         logger.error(msg)
-        resp.raise_for_status()
+        raise HetidaPlatformRequestError(msg)
 
-    return resp.json()
+    try:
+        return resp.json()
+    except ValueError as e:
+        msg = f"Request to hetida platform ({request_description}) returned invalid json: {e}"
+        logger.error(msg)
+        raise HetidaPlatformRequestError(msg) from e
+
+
+class HetidaPlatformResponseError(Exception):
+    """A hetida platform response does not match what this component expects"""
+
+
+class PlatformNode(BaseModel):
+    """A node (NodeDto) of the hetida platform node children endpoint
+
+    Only contains the fields this component relies on. Validation only checks the response,
+    the component continues working with the unchanged response data (extra="allow").
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    nodeType: str
+    name: str | None = None
+    parentIdPath: str | None = None
+
+
+def describe_node(node, index: int) -> str:
+    if isinstance(node, dict):
+        if node.get("name") is not None:
+            return f"'{node['name']}' (id {node.get('id')})"
+        if node.get("id") is not None:
+            return f"with id {node['id']}"
+    return f"at index {index}"
+
+
+def format_validation_error(e: ValidationError) -> str:
+    return "; ".join(
+        (".".join(str(part) for part in error["loc"]) or "node") + ": " + error["msg"]
+        for error in e.errors(include_url=False)
+    )
+
+
+def validate_nodes(nodes: list, model: type[BaseModel], node_kind: str) -> None:
+    """Validate nodes of the node children response against a model
+
+    Raises HetidaPlatformResponseError naming the first invalid node.
+    """
+    for index, node in enumerate(nodes):
+        try:
+            model.model_validate(node)
+        except ValidationError as e:
+            raise HetidaPlatformResponseError(
+                "hetida platform node children response does not match what this component"
+                f" expects: {node_kind} {describe_node(node, index)}: {format_validation_error(e)}"
+            ) from e
+
+
+def validate_node_children(response) -> list:
+    """Validate the node children response, returning it unchanged"""
+    if not isinstance(response, list):
+        raise HetidaPlatformResponseError(
+            "hetida platform node children response does not match what this component"
+            f" expects: Expected a list of nodes, got {type(response).__name__}."
+        )
+    validate_nodes(response, PlatformNode, "node")
+    return response
+
+
+class PlatformProperty(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    label: str | None = None
+    type: str | None = None
+    value: Any = None
+
+
+class InheritedPlatformProperty(PlatformProperty):
+    inheritedFromNodeId: str | None = None
+    inheritedFromName: str | None = None
+
+
+class PlatformAssetType(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    name: str | None = None
+
+
+class AssetReference(BaseModel):
+    """referenceObject of asset nodes: the fields this component relies on"""
+
+    model_config = ConfigDict(extra="allow")
+
+    assetType: PlatformAssetType | None = None
+    properties: list[PlatformProperty] | None = None
+
+
+class AssetNode(PlatformNode):
+    """Asset node
+
+    referenceObject may be null: hetida platform removes it for nodes that are only visible
+    to reveal accessible children.
+    """
+
+    name: str
+    referenceObject: AssetReference | None = None
+    inheritedProperties: list[InheritedPlatformProperty] | None = None
+
+
+def validate_attach_properties(attach_properties) -> list[str] | None:
+    """Validate the attach_properties input, accepting a single property name, too"""
+    if isinstance(attach_properties, str):
+        return [attach_properties]
+    try:
+        return TypeAdapter(list[str] | None).validate_python(attach_properties)
+    except ValidationError as e:
+        raise ComponentInputValidationException(
+            "attach_properties must be a property name or a list of property names,"
+            f" got {attach_properties!r}.",
+            invalid_component_inputs=["attach_properties"],
+        ) from e
 
 
 def has_value(value) -> bool:
@@ -508,16 +682,21 @@ async def main(
 
     asset_node_id = ensure_asset_node_id(asset_node_id)
 
-    all_children = await fetch_node_children(
-        platform_api_url,
-        asset_node_id,
-        params={
-            "recursive": recursive,
-            "withInheritedProperties": resolve_inherited_properties,
-        },
+    attach_properties = validate_attach_properties(attach_properties)
+
+    all_children = validate_node_children(
+        await fetch_node_children(
+            platform_api_url,
+            asset_node_id,
+            params={
+                "recursive": recursive,
+                "withInheritedProperties": resolve_inherited_properties,
+            },
+        )
     )
 
     asset_children = [child for child in all_children if child["nodeType"] == "ASSET"]
+    validate_nodes(asset_children, AssetNode, "asset node")
 
     selected_children = [
         child
