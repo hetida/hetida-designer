@@ -1,26 +1,26 @@
-"""Documentation for Hetida Platform Channel Timeseries Data
+"""Documentation for Hetida Platform Signal Timeseries Data
 
-# Hetida Platform Channel Timeseries Data
+# Hetida Platform Signal Timeseries Data
 
 ## Description
-This component is meant to be used via the [component adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/component_adapter.md) via [URI Wirings](https://github.com/hetida/hetida-designer/blob/release/docs/execution/uri_wirings.md) in [hetida platform](https://hetida.io/). It enables fetching timeseries data of dynamically resolved collections of multiple hetida platform channels into a MULTITSFRAME.
+This component is meant to be used via the [component adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/component_adapter.md) via [URI Wirings](https://github.com/hetida/hetida-designer/blob/release/docs/execution/uri_wirings.md) in [hetida platform](https://hetida.io/). It enables fetching timeseries data of dynamically resolved collections of multiple hetida platform signals into a MULTITSFRAME.
 
-As an example, you might want to load all timeseries data of those channels under a certain asset in your hierarchy, that represent an energy consumption measurement, e.g. in order to sum them up.
+As an example, you might want to load all timeseries data of those signals under a certain asset in your hierarchy, that represent an energy consumption measurement, e.g. in order to sum them up.
 
 Note that typically a URI Wiring shortcut `hd://timeseries` points to the newest revision of this component.
 
 ## Inputs
-* **asset_node_id** (str, optional, default value `None`): Asset node id. If None, will be inferred from execution context which the hetida platform provides: The parent asset of the currently executed virtual channel or workflow configuration. If not provided either way, a ValueError will be raised.
+* **asset_node_id** (str, optional, default value `None`): Asset node id. If None, will be inferred from execution context which the hetida platform provides: The parent asset of the currently executed virtual signal or workflow configuration. If not provided either way, a ValueError will be raised.
 * **timestampFrom** (str): Isoformat timestamp or [dtexp](https://github.com/stewit/dtexp) expression defining start of interval to load. hetida platform will provide this automatically, but it can be overriden through an explicit value.
 * **timestampTo** (str):  Isoformat timestamp or [dtexp](https://github.com/stewit/dtexp) expression defining end of interval to load. hetida platform will provide this automatically, but it can be overriden through an explicit value.
-* **recursive** (bool, optional, default value True): If True channels are collected recursively. If False, only channels directly under the asset of `asset_node_id` are considered.
-* **starts_with** (str, optional, default value None): If set, restrict to channels with name starting with this string. Case-sensitive.
-* **name_regexp** (str, optional, default value None). If not None, only channels whose name match the provided regexp will be considered.
-* **relative_name_path_regexp** (str, optional, default value None). If not None, only channels whose explorer "relative name path" match the provided regexp will be considered.
-* **measurement** (ANY, expects str or list of strings, optional, default value `None`): Either a single string or an array of strings or null. If not null, only channels having one of the provided measurements are collected.
-* **include_ingestion_channels** (bool, optional, default value True): Whether ingestion channels should be included
-* **include_virtual_channels** (bool, optional, default value True): Whether virtual channels should be included
-* **use_as_metric** (str, optional, default value "externalTimeSeriesId"): Which field of the channel is used to identify its metric. In the resulting multitsframe this will define what is used in the metric column. Make sure to select a field with unique value per metric (e.g. "id"). Note that the values "externalTimeSeriesId" or "relativeNamePath", while being more verbose, do not necessarily have to be unique. The component aborts with a ValueError if the selected field does not uniquely identify the actually loaded metrics.
+* **recursive** (bool, optional, default value True): If True signals are collected recursively. If False, only signals directly under the asset of `asset_node_id` are considered.
+* **starts_with** (str, optional, default value None): If set, restrict to signals with name starting with this string. Case-insensitive.
+* **name_regexp** (str, optional, default value None). If not None, only signals whose name match the provided regexp will be considered.
+* **relative_name_path_regexp** (str, optional, default value None). If not None, only signals whose explorer "relative name path" match the provided regexp will be considered.
+* **measurement** (ANY, expects str or list of strings, optional, default value `None`): Either a single string or an array of strings or null. If not null, only signals having one of the provided measurements are collected.
+* **include_ingestion_signals** (bool, optional, default value True): Whether ingestion signals should be included
+* **include_virtual_signals** (bool, optional, default value True): Whether virtual signals should be included. Transient virtual signals are never included, see Details.
+* **use_as_metric** (str, optional, default value "externalTimeSeriesId"): Which field of the signal is used to identify its metric. In the resulting multitsframe this will define what is used in the metric column. Make sure to select a field with unique value per metric (e.g. "id"). Note that the values "externalTimeSeriesId" or "relativeNamePath", while being more verbose, do not necessarily have to be unique. The component aborts with a ValueError if the selected field does not uniquely identify the actually loaded metrics.
 
 ## Outputs
 
@@ -28,28 +28,32 @@ Note that typically a URI Wiring shortcut `hd://timeseries` points to the newest
 
 ## Details
 
-For trafos employed via the hetida platform at a specific point in its asset hierarchy, e.g. in virtual channels or workflow configurations, it automatically infers the current asset node id from the invocation context and collects data from there. In hetida platform you typically employ it using an URI wiring in such a configuration.
+For trafos employed via the hetida platform at a specific point in its asset hierarchy, e.g. in virtual signals or workflow configurations, it automatically infers the current asset node id from the invocation context and collects data from there. In hetida platform you typically employ it using an URI wiring in such a configuration.
 
 Requires the env variable `HETIDA_PLATFORM_API_URL` to be set for the designer runtime to point to the hetida platform core api, e.g. "http://test-hetida-platform-core-backend-svc:8080/api" in a K8S setup or "http://core-backend:8080/api" in a docker-compose setup.
 
 Since it uses the hetida platform hetida designer adapter REST service to fetch data it requires the runtime to know its adapter key and expects this adapter [to be configured](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/adapter_registration.md) for the runtime service. If the adapter key differs from `hetida-platform-adapter` it must be configured for the runtime using the `HETIDA_PLATFORM_ADAPTER_KEY` environment variable.
 
+Transient virtual signals are always excluded: They have no stored timeseries and hetida platform does not execute them when their data is requested via the hetida designer adapter. Instead it rejects the complete data request. Skipped transient signals are logged.
+
+Requires a hetida platform version whose node children endpoint provides `id`, `measurement` and `externalTimeSeriesId` in the `referenceObject` of signal nodes. With older versions the `measurement` filter selects nothing and the default `use_as_metric` value "externalTimeSeriesId" fails. Choose e.g. "relativeNamePath" or "id" instead then.
+
 Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://github.com/hetida/hetida-designer/blob/release/docs/metadata_attrs.md).
 
-You may also use this component as a good starting point to write your own variant for dynamical selection of channel timeseries data which fits your specific hetida platform setup and use cases.
+You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
 
 ## Examples
 
 E.g. the URI wiring
 ```
-hd://component-adapter/<ID_OF_THIS_COMPONENT>?measurement=energyconsumption?include_virtual_channels=false
+hd://component-adapter/<ID_OF_THIS_COMPONENT>?measurement=energyconsumption&include_virtual_signals=false
 ```
 or
 ```
-hd://timeseries?measurement=energyconsumption?include_virtual_channels=false
+hd://timeseries?measurement=energyconsumption&include_virtual_signals=false
 ```
 
-will load all ingestion channels (but not virtual channels) that have "energyconsumption" configured as measurement.
+will load all ingestion signals (but not virtual signals) that have "energyconsumption" configured as measurement.
 """
 
 import logging
@@ -58,10 +62,12 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from posixpath import join as posix_urljoin
+from uuid import UUID
 
 import httpx
 import pandas as pd
 
+from hdutils import ComponentInputValidationException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_ts_data import load_ts_data_from_adapter
 from hetdesrun.dt_utils import resolve_interval
@@ -73,7 +79,6 @@ from hetdesrun.webservice.auth_dependency import get_auth_headers
 
 logger = logging.getLogger(__name__)
 
-PLATFORM_API_URL = os.environ.get("HETIDA_PLATFORM_API_URL")
 
 HETIDA_PLATFORM_ADAPTER_KEY = os.environ.get(
     "HETIDA_PLATFORM_ADAPTER_KEY", "hetida-platform-adapter"
@@ -81,14 +86,56 @@ HETIDA_PLATFORM_ADAPTER_KEY = os.environ.get(
 EXPLORER_SEP_CHAR = "/"
 
 
+def get_platform_api_url() -> str:
+    """Obtain the hetida platform core api url from the environment
+
+    Read at execution time, so that the component can be imported on designer instances
+    without hetida platform. Raises ValueError if not set or invalid.
+    """
+    platform_api_url = os.environ.get("HETIDA_PLATFORM_API_URL", "").strip()
+    if not platform_api_url.startswith(("http://", "https://")):
+        raise ValueError(
+            "Environment variable HETIDA_PLATFORM_API_URL is "
+            + (f"invalid ({platform_api_url!r})" if platform_api_url else "not set")
+            + " for the hetida designer runtime. It must point to the hetida platform core api,"
+            ' e.g. "http://core-backend:8080/api" (docker compose) or'
+            ' "http://test-hetida-platform-core-backend-svc:8080/api" (K8S).'
+        )
+    return platform_api_url
+
+
 async def get_external_auth_headers():
     return await get_auth_headers(external=True)
+
+
+async def fetch_node_children(platform_api_url: str, asset_node_id: str, params: dict) -> list:
+    """Obtain the children of a node from the hetida platform node children endpoint"""
+    children_url = posix_urljoin(platform_api_url, "nodes", asset_node_id, "children")
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.get(
+            children_url,
+            headers=await get_external_auth_headers(),
+            params=params,
+        )
+
+    if resp.status_code != 200:
+        msg = f"Request getting asset node children failed with status code: {resp.status_code}"
+        logger.error(msg)
+        resp.raise_for_status()
+
+    return resp.json()
 
 
 def ensure_asset_node_id(asset_node_id: str | None) -> str:
     """Ensure asset node id is present, trying to load from context if not provided explicitely
 
-    Raises ValueError if id is neither provided directly nor available in context.
+    Returns the id in normalized form (lower case uuid string), since it is compared with
+    ids from hetida platform responses.
+
+    Raises ValueError if id is neither provided directly nor available in context or if the id
+    from context is not a valid UUID. Raises ComponentInputValidationException if the directly
+    provided id is not a valid UUID.
     """
     if asset_node_id is None:
         hierarchy_object = get_hierarchy_object_info()
@@ -99,18 +146,56 @@ def ensure_asset_node_id(asset_node_id: str | None) -> str:
         if hierarchy_object.parent_node_id is None:
             raise ValueError("No asset id provided: Neither directly nor by context.")
 
-        asset_node_id = str(hierarchy_object.parent_node_id)
+        try:
+            asset_node_id = str(UUID(str(hierarchy_object.parent_node_id).strip()))
+        except ValueError as e:
+            raise ValueError(
+                f"The asset node id {hierarchy_object.parent_node_id!r} provided by context"
+                " is not a valid UUID."
+            ) from e
         logger.debug(
             "Using asset node id from hierarchy_object provided via context: %s",
             asset_node_id,
         )
     else:
+        try:
+            asset_node_id = str(UUID(str(asset_node_id).strip()))
+        except ValueError as e:
+            raise ComponentInputValidationException(
+                f"The provided asset_node_id {asset_node_id!r} is not a valid UUID.",
+                invalid_component_inputs=["asset_node_id"],
+            ) from e
         logger.debug("Using asset_node_id provided directly from input: %s", asset_node_id)
     return asset_node_id
 
 
-def metric_metadata_from_child(child, attrs_from_adapter):
-    """Built metric metadata from hierarchy object"""
+def exclude_transient_signals(signal_children):
+    """Remove transient virtual signals, logging the skipped ones
+
+    Transient virtual signals have no stored timeseries and hetida platform rejects data
+    requests including them via the hetida designer adapter.
+    """
+    transient_children = [
+        child
+        for child in signal_children
+        if (child.get("referenceObject") or {}).get("isTransient", False)
+    ]
+    if len(transient_children) > 0:
+        logger.info(
+            "Skipping transient virtual signals, since they have no stored timeseries: %s",
+            ", ".join(f"'{child['name']}' (id {child['id']})" for child in transient_children),
+        )
+
+    return [child for child in signal_children if child not in transient_children]
+
+
+def metric_metadata_from_child(child, attrs_from_adapter, metric_key, metric_value):
+    """Built metric metadata from hierarchy object
+
+    metric_value is the value used for this signal in the metric column. It is set
+    under metric_key, so that metadata can be matched to the data via
+    dataset_metadata.metric_key, even if the value does not stem from the referenceObject.
+    """
 
     metric_object = deepcopy(child["referenceObject"])
     metric_object.pop("schedulerJob", None)
@@ -118,6 +203,7 @@ def metric_metadata_from_child(child, attrs_from_adapter):
     metric_object["hierarchy_object"] = child
 
     metric_object["relativeNamePath"] = child["relativeNamePath"]
+    metric_object[metric_key] = metric_value
 
     try:  # noqa: SIM105
         metric_object["inherited"] = attrs_from_adapter[child["referenceId"]][
@@ -148,8 +234,8 @@ COMPONENT_INFO = {
         "name_regexp": {"data_type": "STRING", "default_value": None},
         "relative_name_path_regexp": {"data_type": "STRING", "default_value": None},
         "measurement": {"data_type": "ANY", "default_value": None},
-        "include_ingestion_channels": {"data_type": "BOOLEAN", "default_value": True},
-        "include_virtual_channels": {"data_type": "BOOLEAN", "default_value": True},
+        "include_ingestion_signals": {"data_type": "BOOLEAN", "default_value": True},
+        "include_virtual_signals": {"data_type": "BOOLEAN", "default_value": True},
         "use_as_metric": {
             "data_type": "STRING",
             "default_value": "externalTimeSeriesId",
@@ -158,15 +244,14 @@ COMPONENT_INFO = {
     "outputs": {
         "ts_data": {"data_type": "MULTITSFRAME"},
     },
-    "name": "Hetida Platform Channel Timeseries Data",
+    "name": "Hetida Platform Signal Timeseries Data",
     "category": "hetida platform Sources",
-    "description": "Load multiple channel timeseries data from hetida platform",
-    "version_tag": "0.1.9",
-    "id": "c6378f34-6038-4127-b829-19bcd9bd405b",
+    "description": "Load multiple signal timeseries data from hetida platform",
+    "version_tag": "0.1.11",
+    "id": "0adf6cff-b7ea-4fb5-aea9-43c41cafe415",
     "revision_group_id": "c8c22f6a-b046-4c50-9364-5cbb517cfb97",
-    "state": "DISABLED",
-    "released_timestamp": "2026-02-26T21:12:06.748882+00:00",
-    "disabled_timestamp": "2026-09-24T20:38:39.533353+00:00",
+    "state": "RELEASED",
+    "released_timestamp": "2026-09-24T20:38:39.408266+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
@@ -182,58 +267,46 @@ async def main(
     name_regexp=None,
     relative_name_path_regexp=None,
     measurement=parse_default_value(COMPONENT_INFO, "measurement"),
-    include_ingestion_channels=True,
-    include_virtual_channels=True,
+    include_ingestion_signals=True,
+    include_virtual_signals=True,
     use_as_metric="externalTimeSeriesId",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
+
+    platform_api_url = get_platform_api_url()
 
     asset_node_id = ensure_asset_node_id(asset_node_id)
 
     start, end = resolve_interval(timestampFrom, timestampTo)
 
     # Obtain and filter children
-    children_url = posix_urljoin(PLATFORM_API_URL, "nodes", asset_node_id, "children")
-
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.get(
-            children_url,
-            headers=await get_external_auth_headers(),
-            params={"recursive": "true"},
-        )
-
-    if resp.status_code != 200:
-        msg = f"Request getting asset node children failed with status code: {resp.status_code}"
-        logger.error(msg)
-        resp.raise_for_status()
-
-    resp = httpx.get(
-        children_url,
-        headers=await get_external_auth_headers(),
-        params={"recursive": recursive},
+    all_children = await fetch_node_children(
+        platform_api_url, asset_node_id, params={"recursive": recursive}
     )
-    resp.raise_for_status()
 
-    all_children = resp.json()
-
-    channel_children = [
+    signal_children = [
         child
         for child in all_children
         if (
-            child["nodeType"] == "CHANNEL"
-            and (include_ingestion_channels or (include_ingestion_channels is None))
+            child["nodeType"] == "SIGNAL"
+            and (include_ingestion_signals or (include_ingestion_signals is None))
         )
         or (
-            child["nodeType"] == "VIRTUAL_CHANNEL"
-            and (include_virtual_channels or (include_virtual_channels is None))
+            child["nodeType"] == "VIRTUAL_SIGNAL"
+            and (include_virtual_signals or (include_virtual_signals is None))
         )
     ]
 
-    selected_children = channel_children
+    selected_children = exclude_transient_signals(signal_children)
 
     id_name_dict = {child["id"]: child["name"] for child in all_children}
     for child in selected_children:
+        if not child.get("parentIdPath"):
+            raise ValueError(
+                f"hetida platform returned signal node '{child['name']}' (id {child['id']})"
+                " without parentIdPath. Cannot determine its relativeNamePath."
+            )
         id_path_parts_from_root = child["parentIdPath"].split("_")[::-1]
         asset_node_id_index = id_path_parts_from_root.index(asset_node_id)
         child["relativeNamePath"] = EXPLORER_SEP_CHAR.join(
@@ -243,17 +316,6 @@ async def main(
             ]
             + [child["name"]]
         )
-
-    # Filter by measurement
-    if measurement is not None:
-        allowed_measurements = set(measurement) if isinstance(measurement, list) else {measurement}
-
-        selected_children = [
-            child
-            for child in selected_children
-            if (child_measurement := child["referenceObject"]["measurement"]) is not None
-            and child_measurement in allowed_measurements
-        ]
 
     # Filter by name prefix (case insensitive)
     selected_children = [
@@ -278,8 +340,48 @@ async def main(
             if (re.fullmatch(relative_name_path_regexp, child["relativeNamePath"]) is not None)
         ]
 
+    # Filter by measurement
+    if measurement is not None:
+        allowed_measurements = set(measurement) if isinstance(measurement, list) else {measurement}
+
+        selected_children = [
+            child
+            for child in selected_children
+            if (child_measurement := child["referenceObject"].get("measurement")) is not None
+            and child_measurement in allowed_measurements
+        ]
+
+    # Determine the values for the metric column (by signal id) and check them before
+    # loading any data
+    metric_mapping_dict = {
+        child["referenceId"]: child["referenceObject"].get(use_as_metric, child.get(use_as_metric))
+        for child in selected_children
+    }
+
+    missing_metric_values = [
+        f"'{child['name']}' (id {child['referenceId']})"
+        for child in selected_children
+        if (value := metric_mapping_dict[child["referenceId"]]) is None
+        or (isinstance(value, str) and value.strip() == "")
+    ]
+    if len(missing_metric_values) > 0:
+        raise ValueError(
+            f"The selected {use_as_metric=} has no value for the signals "
+            + ", ".join(missing_metric_values)
+            + ". Choose another field for use_as_metric, e.g. 'id' or 'relativeNamePath'."
+        )
+
+    value_to_keys = defaultdict(list)
+    for key, value in metric_mapping_dict.items():
+        value_to_keys[value].append(key)
+    duplicates = {val: keys for val, keys in value_to_keys.items() if len(keys) > 1}
+    if len(duplicates) > 0:
+        raise ValueError(
+            f"The selected {use_as_metric=} has {duplicates=} for the loaded metrics. Aborting."
+        )
+
     if len(selected_children) == 0:
-        logger.info("No children selected at all for loading channel data.")
+        logger.info("No children selected at all for loading signal data.")
         loaded_ts_data = pd.DataFrame()
 
     else:
@@ -287,9 +389,7 @@ async def main(
         loaded_ts_data = await load_ts_data_from_adapter(
             filtered_sources=[
                 FilteredSource(
-                    ref_id=child["referenceObject"][
-                        "id"
-                    ],  # channel id => will become timeseriesId column
+                    ref_id=child["referenceId"],  # signal id => will become timeseriesId column
                     ref_id_type="SOURCE",
                     filters={"timestampFrom": start, "timestampTo": end},
                     type=ExternalType.TIMESERIES_NUMERIC,
@@ -303,7 +403,7 @@ async def main(
     if len(loaded_ts_data) == 0:
         attrs = loaded_ts_data.attrs
         loaded_ts_data = pd.DataFrame(columns=["timestamp", "timeseriesId", "value"])
-        loaded_ts_data.attres = attrs
+        loaded_ts_data.attrs = attrs
 
     # metric column
     loaded_ts_data.rename(
@@ -311,25 +411,8 @@ async def main(
         inplace=True,  # noqa:PD002
     )
 
-    # At this point, "id" of child["referenceObject"] is used in the data in metric column
+    # At this point, the signal id (referenceId of the node) is used in the data in metric column
     # Now we transform the data to use the field specified by use_as_metric instead!
-
-    metric_mapping_dict = {
-        child["referenceObject"]["id"]: child["referenceObject"].get(
-            use_as_metric, child.get(use_as_metric)
-        )
-        for child in selected_children
-    }
-
-    value_to_keys = defaultdict(list)
-    for key, value in metric_mapping_dict.items():
-        value_to_keys[value].append(key)
-    duplicates = {val: keys for val, keys in value_to_keys.items() if len(keys) > 1}
-    if len(duplicates) > 0:
-        raise ValueError(
-            f"The selected {use_as_metric=} has {duplicates=} for the loaded metrics. Aborting."
-        )
-
     loaded_ts_data["metric"] = loaded_ts_data["metric"].map(metric_mapping_dict)
 
     # Set metadata accordingly
@@ -340,23 +423,28 @@ async def main(
         "dataset_metadata": {
             "metric_key": use_as_metric,
             "queried_metrics": [
-                child["referenceObject"].get(use_as_metric, child.get(use_as_metric))
-                for child in selected_children
+                metric_mapping_dict[child["referenceId"]] for child in selected_children
             ],
             "ref_interval_start_timestamp": start.isoformat(),
             "ref_interval_end_timestamp": end.isoformat(),
             "ref_interval_type": "closed",
         },
         "metrics": [
-            metric_metadata_from_child(child, attrs_from_adapter) for child in selected_children
+            metric_metadata_from_child(
+                child,
+                attrs_from_adapter,
+                metric_key=use_as_metric,
+                metric_value=metric_mapping_dict[child["referenceId"]],
+            )
+            for child in selected_children
         ],
     }
 
     # log loaded data per timeseries
 
     loaded_data_points_per_metric = {
-        metric_mapping_dict[channel_id := child["referenceObject"]["id"]]: len(
-            loaded_ts_data[loaded_ts_data.metric == metric_mapping_dict[channel_id]]
+        metric_mapping_dict[signal_id := child["referenceId"]]: len(
+            loaded_ts_data[loaded_ts_data.metric == metric_mapping_dict[signal_id]]
         )
         for child in selected_children
     }
@@ -410,67 +498,12 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": "null"},
         },
         {
-            "workflow_input_name": "include_ingestion_channels",
+            "workflow_input_name": "include_ingestion_signals",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
         {
-            "workflow_input_name": "include_virtual_channels",
-            "use_default_value": True,
-            "filters": {"value": "true"},
-        },
-        {
-            "workflow_input_name": "use_as_metric",
-            "filters": {"value": "relativeNamePath"},
-        },
-    ]
-}
-RELEASE_WIRING = TEST_WIRING_FROM_PY_FILE_IMPORT = {
-    "input_wirings": [
-        {
-            "workflow_input_name": "asset_node_id",
-            "filters": {"value": "646e2593-996c-4f60-b591-bceed1e4010b"},
-        },
-        {
-            "workflow_input_name": "timestampFrom",
-            "filters": {"value": "2026-02-04T10:00:00+00:00"},
-        },
-        {
-            "workflow_input_name": "timestampTo",
-            "filters": {"value": "2026-02-06T10:00:00+00:00"},
-        },
-        {
-            "workflow_input_name": "starts_with",
-            "use_default_value": True,
-            "filters": {"value": "null"},
-        },
-        {
-            "workflow_input_name": "recursive",
-            "use_default_value": True,
-            "filters": {"value": "true"},
-        },
-        {
-            "workflow_input_name": "name_regexp",
-            "use_default_value": True,
-            "filters": {"value": "null"},
-        },
-        {
-            "workflow_input_name": "relative_name_path_regexp",
-            "use_default_value": True,
-            "filters": {"value": "null"},
-        },
-        {
-            "workflow_input_name": "measurement",
-            "use_default_value": True,
-            "filters": {"value": "null"},
-        },
-        {
-            "workflow_input_name": "include_ingestion_channels",
-            "use_default_value": True,
-            "filters": {"value": "true"},
-        },
-        {
-            "workflow_input_name": "include_virtual_channels",
+            "workflow_input_name": "include_virtual_signals",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
@@ -520,12 +553,12 @@ RELEASE_WIRING = {
             "filters": {"value": "null"},
         },
         {
-            "workflow_input_name": "include_ingestion_channels",
+            "workflow_input_name": "include_ingestion_signals",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
         {
-            "workflow_input_name": "include_virtual_channels",
+            "workflow_input_name": "include_virtual_signals",
             "use_default_value": True,
             "filters": {"value": "true"},
         },
