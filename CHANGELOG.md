@@ -1,3 +1,5 @@
+- fix: loading data from generic REST adapters failed with "Receive buffer too long" if the response headers exceeded 16 KiB, e.g. due to a large `Data-Attributes` header (metadata). This affected versions 0.14.3 to 0.14.5. The limit now defaults to 5 MiB and can be configured via the `GENERIC_REST_ADAPTER_MAX_RESPONSE_HEADER_SIZE` environment variable, see the [adapter REST API interface documentation](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_rest_api_interface/#http-version-and-header-sizes). Framelike data fetching from generic REST adapters now always uses HTTP/1.1.
+
 ## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.
 - add niquest opentelemetry instrumentation. Niquest is used for fetching (timeseries) data from generic rest adapters.
