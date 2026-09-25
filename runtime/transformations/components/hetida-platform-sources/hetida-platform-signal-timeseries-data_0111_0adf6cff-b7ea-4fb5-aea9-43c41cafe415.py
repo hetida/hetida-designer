@@ -18,6 +18,8 @@ Note that typically a URI Wiring shortcut `hd://timeseries` points to the newest
 * **name_regexp** (str, optional, default value None). If not None, only signals whose name match the provided regexp will be considered.
 * **relative_name_path_regexp** (str, optional, default value None). If not None, only signals whose explorer "relative name path" match the provided regexp will be considered.
 * **measurement** (ANY, expects str or list of strings, optional, default value `None`): Either a single string or an array of strings or null. If not null, only signals having one of the provided measurements are collected.
+* **property_label** (str, optional, default value `None`), **property_condition** (str, optional, default value "equals"), **property_value** (ANY, optional, default value `None`): A single property filter, see "Property filters" in the Details. Only used if `property_label` is set.
+* **property_filters** (ANY, optional, default value `None`): A list (json array) of property filters, each an object with keys "label", "condition" (optional, default "equals") and "value", see "Property filters" in the Details. All property filters (including the one given via `property_label`) must apply.
 * **include_ingestion_signals** (bool, optional, default value True): Whether ingestion signals should be included
 * **include_virtual_signals** (bool, optional, default value True): Whether virtual signals should be included. Transient virtual signals are never included, see Details.
 * **use_as_metric** (str, optional, default value "externalTimeSeriesId"): Which field of the signal is used to identify its metric. In the resulting multitsframe this will define what is used in the metric column. Make sure to select a field with unique value per metric (e.g. "id", which always is the signal id). Note that the values "externalTimeSeriesId" or "relativeNamePath", while being more verbose, do not necessarily have to be unique. The component aborts with a ValueError if the selected field does not uniquely identify the actually loaded metrics.
@@ -38,6 +40,17 @@ Transient virtual signals are always excluded: They have no stored timeseries an
 
 Requires a hetida platform version whose node children endpoint provides `id`, `measurement` and `externalTimeSeriesId` in the `referenceObject` of signal nodes. With older versions the `measurement` filter and the default `use_as_metric` value "externalTimeSeriesId" fail with an error pointing this out. Choose e.g. "relativeNamePath" or "id" as `use_as_metric` then.
 
+### Property filters
+
+A property filter restricts to signals whose property with the given label satisfies a condition. The effective property value of a signal is used: Its own value, or if it does not have one, the value it inherits from the nearest ancestor in the hierarchy having a value. In hetida platform a property without value (null or empty string) means "inherit". Inherited values require a hetida platform version providing inherited properties on the node children endpoint (`withInheritedProperties` query parameter), older versions only provide the signals' own values. Signals without an effective value for the property never match.
+
+The possible conditions are:
+* "equals": The property value equals the given value (a string, number or boolean). The comparison respects the property type: FLOAT, INTEGER and BOOLEAN properties are compared as numbers or booleans (e.g. "42" equals 42 and "true" equals true), DATE properties as points in time and all others as strings.
+* "any" and "all": The given value is a comma-separated string or a list of strings. The property value is interpreted as comma-separated list, too. "any" requires at least one of the given items to occur in the property value, "all" requires all of them to occur. Items are compared as strings, ignoring surrounding whitespace, case-sensitive.
+* "exists": The signal has an effective value for the property. A given value is ignored.
+
+Invalid property filters (e.g. an unknown condition or a missing value) abort the execution before any data is loaded.
+
 Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://github.com/hetida/hetida-designer/blob/release/docs/metadata_attrs.md).
 
 You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
@@ -54,6 +67,13 @@ hd://timeseries?measurement=energyconsumption&include_virtual_signals=false
 ```
 
 will load all ingestion signals (but not virtual signals) that have "energyconsumption" configured as measurement.
+
+The URI wiring
+```
+hd://timeseries?property_label=usage&property_condition=any&property_value=heating,cooling
+```
+
+will load all signals whose (possibly inherited) property "usage" contains "heating" or "cooling" in its comma-separated value.
 """
 
 import logging
@@ -62,11 +82,19 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from posixpath import join as posix_urljoin
+from typing import Any, Literal, Self
 from uuid import UUID
 
 import httpx
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    model_validator,
+)
 
 from hdutils import ComponentInputValidationException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -213,9 +241,9 @@ def describe_node(node, index: int) -> str:
     return f"at index {index}"
 
 
-def format_validation_error(e: ValidationError) -> str:
+def format_validation_error(e: ValidationError, root_name: str = "node") -> str:
     return "; ".join(
-        (".".join(str(part) for part in error["loc"]) or "node") + ": " + error["msg"]
+        (".".join(str(part) for part in error["loc"]) or root_name) + ": " + error["msg"]
         for error in e.errors(include_url=False)
     )
 
@@ -246,6 +274,19 @@ def validate_node_children(response) -> list:
     return response
 
 
+class PlatformProperty(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    label: str | None = None
+    type: str | None = None
+    value: Any = None
+
+
+class InheritedPlatformProperty(PlatformProperty):
+    inheritedFromNodeId: str | None = None
+    inheritedFromName: str | None = None
+
+
 class SignalReference(BaseModel):
     """referenceObject of signal nodes: the fields this component relies on
 
@@ -256,6 +297,7 @@ class SignalReference(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     isTransient: bool = False
+    properties: list[PlatformProperty] | None = None
 
 
 class SignalNode(PlatformNode):
@@ -263,6 +305,7 @@ class SignalNode(PlatformNode):
     referenceId: str
     parentIdPath: str = Field(min_length=1)
     referenceObject: SignalReference
+    inheritedProperties: list[InheritedPlatformProperty] | None = None
 
 
 # referenceObject fields of signal nodes, which older hetida platform versions do not provide
@@ -296,6 +339,189 @@ def validate_measurement(measurement) -> set[str] | None:
             invalid_component_inputs=["measurement"],
         ) from e
     return None if validated is None else set(validated)
+
+
+class PropertyFilter(BaseModel):
+    """A condition on a property of signals, see "Property filters" in the documentation"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str = Field(min_length=1)
+    condition: Literal["equals", "any", "all", "exists"] = "equals"
+    value: str | bool | int | float | list[str] | None = None
+
+    @model_validator(mode="after")
+    def value_fits_condition(self) -> Self:
+        if self.condition == "equals" and (self.value is None or isinstance(self.value, list)):
+            raise ValueError(
+                "condition 'equals' requires a single value (a string, number or boolean)"
+            )
+        if self.condition in ("any", "all") and len(self.items()) == 0:
+            raise ValueError(
+                f"condition '{self.condition}' requires a comma-separated string or a list of"
+                " strings with at least one non-empty item as value"
+            )
+        return self
+
+    def items(self) -> list[str]:
+        """The value items for the conditions any and all"""
+        if self.value is None:
+            return []
+        values = self.value if isinstance(self.value, list) else str(self.value).split(",")
+        return [item.strip() for item in values if item.strip() != ""]
+
+
+def collect_property_filters(
+    property_label, property_condition, property_value, property_filters
+) -> list[PropertyFilter]:
+    """Validate the property filter inputs, returning all property filters
+
+    Raises ComponentInputValidationException for invalid property filter inputs.
+    """
+    single_filter_inputs = ["property_label", "property_condition", "property_value"]
+    collected = []
+    if property_label is not None:
+        try:
+            collected.append(
+                PropertyFilter(
+                    label=property_label,
+                    condition=property_condition if property_condition is not None else "equals",
+                    value=property_value,
+                )
+            )
+        except ValidationError as e:
+            raise ComponentInputValidationException(
+                "Invalid property filter given by property_label, property_condition and"
+                f" property_value: {format_validation_error(e, 'property filter')}",
+                invalid_component_inputs=single_filter_inputs,
+            ) from e
+    elif property_value is not None or property_condition not in (None, "equals"):
+        raise ComponentInputValidationException(
+            "property_condition and property_value require property_label to be set.",
+            invalid_component_inputs=single_filter_inputs,
+        )
+
+    if property_filters is not None:
+        try:
+            collected += TypeAdapter(list[PropertyFilter]).validate_python(
+                [property_filters] if isinstance(property_filters, dict) else property_filters
+            )
+        except ValidationError as e:
+            raise ComponentInputValidationException(
+                "Invalid property_filters, expected a list of objects with keys label,"
+                f" condition and value: {format_validation_error(e, 'property_filters')}",
+                invalid_component_inputs=["property_filters"],
+            ) from e
+    return collected
+
+
+def has_value(value) -> bool:
+    """Whether a property value is actually set
+
+    As in hetida platform, null or a blank string means "not set here, inherit from above"
+    and not an explicitely empty value.
+    """
+    return value is not None and str(value).strip() != ""
+
+
+def to_correct_value_type(prop):
+    """Convert property value according to its type
+
+    Returns None if the property has no value. Raises ValueError or TypeError if the value
+    cannot be converted.
+    """
+    value = prop.get("value")
+    if not has_value(value):
+        return None
+
+    prop_type = (prop.get("type") or "").upper()
+
+    if prop_type == "FLOAT":
+        return float(value)
+    if prop_type in {"INT", "INTEGER"}:
+        if isinstance(value, float) and not value.is_integer():
+            raise ValueError("not an integer")  # int() would silently truncate
+        return int(value)
+    if prop_type in {"BOOL", "BOOLEAN"}:
+        if isinstance(value, bool):
+            return value
+        if str(value).strip().lower() not in {"true", "false"}:
+            raise ValueError("expected true or false")
+        return str(value).strip().lower() == "true"
+
+    # everything else (string, timestamps, ...) to be left as it is: probably string
+    return value
+
+
+def effective_property(child, label: str):
+    """The effective property of a signal node: own one with value, else inherited one with value
+
+    Returns None if the signal has no effective value for the property.
+    """
+    own_properties = child["referenceObject"].get("properties") or []
+    inherited_properties = child.get("inheritedProperties") or []
+    for prop in [*own_properties, *inherited_properties]:
+        if prop.get("label") == label and has_value(prop.get("value")):
+            return prop
+    return None
+
+
+def as_comparable_string(value) -> str:
+    return str(value).lower() if isinstance(value, bool) else str(value).strip()
+
+
+def property_value_equals(prop, filter_value, child) -> bool:
+    """Compare a property with the value of an "equals" property filter respecting its type"""
+    try:
+        node_value = to_correct_value_type(prop)
+    except (ValueError, TypeError) as e:
+        origin = (
+            f", inherited from '{prop.get('inheritedFromName')}'"
+            f" (node id {prop.get('inheritedFromNodeId')})"
+            if "inheritedFromNodeId" in prop
+            else ""
+        )
+        raise ValueError(
+            f"Cannot convert value {prop.get('value')!r} of property '{prop.get('label')}'"
+            f" (type {prop.get('type')}) of signal '{child['name']}'"
+            f" (node id {child['id']}){origin}: {e}"
+        ) from e
+
+    prop_type = (prop.get("type") or "").upper()
+    if prop_type in {"FLOAT", "INT", "INTEGER", "BOOL", "BOOLEAN"}:
+        try:
+            return to_correct_value_type({"type": prop_type, "value": filter_value}) == node_value
+        except ValueError, TypeError:
+            return False  # filter value not representable in the property's type
+    if prop_type == "DATE":
+        try:
+            return bool(pd.Timestamp(filter_value) == pd.Timestamp(node_value))
+        except ValueError, TypeError:
+            pass  # compare as strings
+    return as_comparable_string(filter_value) == as_comparable_string(node_value)
+
+
+def property_filter_applies(property_filter: PropertyFilter, child) -> bool:
+    prop = effective_property(child, property_filter.label)
+    if prop is None:
+        return False
+    if property_filter.condition == "exists":
+        return True
+    if property_filter.condition == "equals":
+        return property_value_equals(prop, property_filter.value, child)
+
+    property_items = [item.strip() for item in str(prop["value"]).split(",")]
+    matches = [item in property_items for item in property_filter.items()]
+    return all(matches) if property_filter.condition == "all" else any(matches)
+
+
+def filter_by_properties(signal_children, property_filters: list[PropertyFilter]):
+    """Keep only signals to which all property filters apply"""
+    for property_filter in property_filters:
+        signal_children = [
+            child for child in signal_children if property_filter_applies(property_filter, child)
+        ]
+    return signal_children
 
 
 def ensure_asset_node_id(asset_node_id: str | None) -> str:
@@ -405,6 +631,10 @@ COMPONENT_INFO = {
         "name_regexp": {"data_type": "STRING", "default_value": None},
         "relative_name_path_regexp": {"data_type": "STRING", "default_value": None},
         "measurement": {"data_type": "ANY", "default_value": None},
+        "property_label": {"data_type": "STRING", "default_value": None},
+        "property_condition": {"data_type": "STRING", "default_value": "equals"},
+        "property_value": {"data_type": "ANY", "default_value": None},
+        "property_filters": {"data_type": "ANY", "default_value": None},
         "include_ingestion_signals": {"data_type": "BOOLEAN", "default_value": True},
         "include_virtual_signals": {"data_type": "BOOLEAN", "default_value": True},
         "use_as_metric": {
@@ -438,6 +668,10 @@ async def main(
     name_regexp=None,
     relative_name_path_regexp=None,
     measurement=parse_default_value(COMPONENT_INFO, "measurement"),
+    property_label=None,
+    property_condition="equals",
+    property_value=parse_default_value(COMPONENT_INFO, "property_value"),
+    property_filters=parse_default_value(COMPONENT_INFO, "property_filters"),
     include_ingestion_signals=True,
     include_virtual_signals=True,
     use_as_metric="externalTimeSeriesId",
@@ -450,12 +684,23 @@ async def main(
     asset_node_id = ensure_asset_node_id(asset_node_id)
 
     allowed_measurements = validate_measurement(measurement)
+    property_filters = collect_property_filters(
+        property_label, property_condition, property_value, property_filters
+    )
 
     start, end = resolve_interval(timestampFrom, timestampTo)
 
     # Obtain and filter children
     all_children = validate_node_children(
-        await fetch_node_children(platform_api_url, asset_node_id, params={"recursive": recursive})
+        await fetch_node_children(
+            platform_api_url,
+            asset_node_id,
+            params={
+                "recursive": recursive,
+                # inherited property values are only needed for property filters:
+                "withInheritedProperties": len(property_filters) > 0,
+            },
+        )
     )
 
     signal_children = [
@@ -521,6 +766,8 @@ async def main(
             if (child_measurement := child["referenceObject"].get("measurement")) is not None
             and child_measurement in allowed_measurements
         ]
+
+    selected_children = filter_by_properties(selected_children, property_filters)
 
     # Determine the values for the metric column (by signal id) and check them before
     # loading any data
@@ -676,6 +923,26 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": "null"},
         },
         {
+            "workflow_input_name": "property_label",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_condition",
+            "use_default_value": True,
+            "filters": {"value": "equals"},
+        },
+        {
+            "workflow_input_name": "property_value",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_filters",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
             "workflow_input_name": "include_ingestion_signals",
             "use_default_value": True,
             "filters": {"value": "true"},
@@ -727,6 +994,26 @@ RELEASE_WIRING = {
         },
         {
             "workflow_input_name": "measurement",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_label",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_condition",
+            "use_default_value": True,
+            "filters": {"value": "equals"},
+        },
+        {
+            "workflow_input_name": "property_value",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_filters",
             "use_default_value": True,
             "filters": {"value": "null"},
         },
