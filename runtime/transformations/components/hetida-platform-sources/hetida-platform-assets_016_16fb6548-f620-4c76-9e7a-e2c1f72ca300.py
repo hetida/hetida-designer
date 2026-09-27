@@ -19,6 +19,8 @@ E.g. if you want to provide a map plot with all assets below a certain asset in 
 * "attach_all_properties": {"data_type": "BOOLEAN", "default_value": True}: This attaches all properties that actually occur somewhere in the selected asset children as a new column. If a property does not occur, it won't be added as column.
 * "drop_ref_obj_column": {"data_type": "BOOLEAN", "default_value": True}: Whether the ref object column (from which properties are collected) and the inherited properties column should be excluded from the final dataframe.
 * "name_regexp": {"data_type": "STRING", "default_value": None}: If set, filter for assets with name matching the provided regexp.
+* "property_label": {"data_type": "STRING", "default_value": None}, "property_condition": {"data_type": "STRING", "default_value": "equals"}, "property_value": {"data_type": "ANY", "default_value": None}: A single property filter, see "Property filters" below. Only used if `property_label` is set.
+* "property_filters": {"data_type": "ANY", "default_value": None}: A list (json array) of property filters, each an object with keys "label", "condition" (optional, default "equals") and "value", see "Property filters" below. All property filters (including the one given via `property_label`) must apply.
 * "resolve_inherited_properties": {"data_type": "BOOLEAN", "default_value": True}: Whether property values an asset inherits from its ancestors in the hierarchy are used for assets not setting the respective property themselves.
 
 
@@ -34,7 +36,24 @@ E.g. if you want to provide a map plot with all assets below a certain asset in 
 * Property columns never replace or duplicate the columns of the nodes themselves ("id", "name", "description", "icon", "assetType.name", ...): If a property has the name of such a column, its column is named with the prefix "property." instead, e.g. "property.description", and a warning is logged. This applies to `attach_all_properties` as well as to `attach_properties`. The mapping from property name to column name for all attached properties is available in the `attrs` of the resulting dataframe under the key "property_columns".
 * The origin of inherited values is available as metadata in the `attrs` of the resulting dataframe under the key "inherited_properties": A mapping from asset node id to a mapping from property name to `{"inheritedFromNodeId": ..., "inheritedFromName": ...}`. It only contains properties whose value actually is inherited.
 
+### Property filters
+
+A property filter restricts to assets whose property with the given label satisfies a condition. The effective property values described above are used, i.e. inherited values are considered if `resolve_inherited_properties` is true. Assets without an effective value for the property never match.
+
+The possible conditions are:
+* "equals": The property value equals the given value (a string, number or boolean). The comparison respects the property type: FLOAT, INTEGER and BOOLEAN properties are compared as numbers or booleans (e.g. "42" equals 42 and "true" equals true), DATE properties as points in time and all others as strings.
+* "any" and "all": The given value is a comma-separated string or a list of strings. The property value is interpreted as comma-separated list, too. "any" requires at least one of the given items to occur in the property value, "all" requires all of them to occur. Items are compared as strings, ignoring surrounding whitespace, case-sensitive.
+* "exists": The asset has an effective value for the property. A given value is ignored.
+
+Invalid property filters (e.g. an unknown condition or a missing value) abort the execution before any request to hetida platform is made.
+
 ## Examples
+
+The URI wiring
+```
+hd://assets?property_label=region&property_value=North
+```
+(assuming the URI wiring shortcut `hd://assets` points to this component) will load all assets whose (possibly inherited) property "region" equals "North".
 
 Output may e.g. look like (hetida designer dataframe json):
 
@@ -203,12 +222,19 @@ import logging
 import os
 import re
 from posixpath import join as posix_urljoin
-from typing import Any
+from typing import Any, Literal, Self
 from uuid import UUID
 
 import httpx
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    model_validator,
+)
 
 from hdutils import ComponentInputValidationException
 from hetdesrun.runtime.context import get_hierarchy_object_info
@@ -368,9 +394,9 @@ def describe_node(node, index: int) -> str:
     return f"at index {index}"
 
 
-def format_validation_error(e: ValidationError) -> str:
+def format_validation_error(e: ValidationError, root_name: str = "node") -> str:
     return "; ".join(
-        (".".join(str(part) for part in error["loc"]) or "node") + ": " + error["msg"]
+        (".".join(str(part) for part in error["loc"]) or root_name) + ": " + error["msg"]
         for error in e.errors(include_url=False)
     )
 
@@ -515,6 +541,146 @@ def convert_property_value(prop, child, inherited: bool):
         ) from e
 
 
+class PropertyFilter(BaseModel):
+    """A condition on a property of assets, see "Property filters" in the documentation"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str = Field(min_length=1)
+    condition: Literal["equals", "any", "all", "exists"] = "equals"
+    value: str | bool | int | float | list[str] | None = None
+
+    @model_validator(mode="after")
+    def value_fits_condition(self) -> Self:
+        if self.condition == "equals" and (self.value is None or isinstance(self.value, list)):
+            raise ValueError(
+                "condition 'equals' requires a single value (a string, number or boolean)"
+            )
+        if self.condition in ("any", "all") and len(self.items()) == 0:
+            raise ValueError(
+                f"condition '{self.condition}' requires a comma-separated string or a list of"
+                " strings with at least one non-empty item as value"
+            )
+        return self
+
+    def items(self) -> list[str]:
+        """The value items for the conditions any and all"""
+        if self.value is None:
+            return []
+        values = self.value if isinstance(self.value, list) else str(self.value).split(",")
+        return [item.strip() for item in values if item.strip() != ""]
+
+
+def collect_property_filters(
+    property_label, property_condition, property_value, property_filters
+) -> list[PropertyFilter]:
+    """Validate the property filter inputs, returning all property filters
+
+    Raises ComponentInputValidationException for invalid property filter inputs.
+    """
+    single_filter_inputs = ["property_label", "property_condition", "property_value"]
+    collected = []
+    if property_label is not None:
+        try:
+            collected.append(
+                PropertyFilter(
+                    label=property_label,
+                    condition=property_condition if property_condition is not None else "equals",
+                    value=property_value,
+                )
+            )
+        except ValidationError as e:
+            raise ComponentInputValidationException(
+                "Invalid property filter given by property_label, property_condition and"
+                f" property_value: {format_validation_error(e, 'property filter')}",
+                invalid_component_inputs=single_filter_inputs,
+            ) from e
+    elif property_value is not None or property_condition not in (None, "equals"):
+        raise ComponentInputValidationException(
+            "property_condition and property_value require property_label to be set.",
+            invalid_component_inputs=single_filter_inputs,
+        )
+
+    if property_filters is not None:
+        try:
+            collected += TypeAdapter(list[PropertyFilter]).validate_python(
+                [property_filters] if isinstance(property_filters, dict) else property_filters
+            )
+        except ValidationError as e:
+            raise ComponentInputValidationException(
+                "Invalid property_filters, expected a list of objects with keys label,"
+                f" condition and value: {format_validation_error(e, 'property_filters')}",
+                invalid_component_inputs=["property_filters"],
+            ) from e
+    return collected
+
+
+def effective_property(child, label: str, resolve_inherited: bool):
+    """The effective property of an asset node: own one with value, else inherited one with value
+
+    Inherited properties are only considered if resolve_inherited is True. Returns None if the
+    asset has no effective value for the property.
+    """
+    ref_obj = child.get("referenceObject")
+    own_properties = (ref_obj.get("properties") or []) if isinstance(ref_obj, dict) else []
+    inherited_properties = (child.get("inheritedProperties") or []) if resolve_inherited else []
+    for prop in [*own_properties, *inherited_properties]:
+        if prop.get("label") == label and has_value(prop.get("value")):
+            return prop
+    return None
+
+
+def as_comparable_string(value) -> str:
+    return str(value).lower() if isinstance(value, bool) else str(value).strip()
+
+
+def property_value_equals(prop, filter_value, child) -> bool:
+    """Compare a property with the value of an "equals" property filter respecting its type"""
+    node_value = convert_property_value(prop, child, inherited="inheritedFromNodeId" in prop)
+
+    prop_type = (prop.get("type") or "").upper()
+    if prop_type in {"FLOAT", "INT", "INTEGER", "BOOL", "BOOLEAN"}:
+        try:
+            return to_correct_value_type({"type": prop_type, "value": filter_value}) == node_value
+        except ValueError, TypeError:
+            return False  # filter value not representable in the property's type
+    if prop_type == "DATE":
+        try:
+            return bool(pd.Timestamp(filter_value) == pd.Timestamp(node_value))
+        except ValueError, TypeError:
+            pass  # compare as strings
+    return as_comparable_string(filter_value) == as_comparable_string(node_value)
+
+
+def property_filter_applies(
+    property_filter: PropertyFilter, child, resolve_inherited: bool
+) -> bool:
+    prop = effective_property(child, property_filter.label, resolve_inherited)
+    if prop is None:
+        return False
+    if property_filter.condition == "exists":
+        return True
+    if property_filter.condition == "equals":
+        return property_value_equals(prop, property_filter.value, child)
+
+    property_items = [item.strip() for item in str(prop["value"]).split(",")]
+    matches = [item in property_items for item in property_filter.items()]
+    return all(matches) if property_filter.condition == "all" else any(matches)
+
+
+def filter_by_properties(
+    asset_children, property_filters: list[PropertyFilter], resolve_inherited: bool
+):
+    """Keep only assets to which all property filters apply"""
+    for property_filter in property_filters:
+        asset_children = [
+            child
+            for child in asset_children
+            if property_filter_applies(property_filter, child, resolve_inherited)
+        ]
+    return asset_children
+
+
 def extract_asset_type_name(child):
     """Extract the asset type name from an asset node
 
@@ -646,6 +812,10 @@ COMPONENT_INFO = {
         "attach_all_properties": {"data_type": "BOOLEAN", "default_value": True},
         "drop_ref_obj_column": {"data_type": "BOOLEAN", "default_value": True},
         "name_regexp": {"data_type": "STRING", "default_value": None},
+        "property_label": {"data_type": "STRING", "default_value": None},
+        "property_condition": {"data_type": "STRING", "default_value": "equals"},
+        "property_value": {"data_type": "ANY", "default_value": None},
+        "property_filters": {"data_type": "ANY", "default_value": None},
         "resolve_inherited_properties": {"data_type": "BOOLEAN", "default_value": True},
     },
     "outputs": {
@@ -673,6 +843,10 @@ async def main(
     attach_all_properties=True,
     drop_ref_obj_column=True,
     name_regexp=None,
+    property_label=None,
+    property_condition="equals",
+    property_value=parse_default_value(COMPONENT_INFO, "property_value"),
+    property_filters=parse_default_value(COMPONENT_INFO, "property_filters"),
     resolve_inherited_properties=True,
 ):
     # entrypoint function for this component
@@ -683,6 +857,9 @@ async def main(
     asset_node_id = ensure_asset_node_id(asset_node_id)
 
     attach_properties = validate_attach_properties(attach_properties)
+    property_filters = collect_property_filters(
+        property_label, property_condition, property_value, property_filters
+    )
 
     all_children = validate_node_children(
         await fetch_node_children(
@@ -711,6 +888,10 @@ async def main(
             for child in selected_children
             if (re.fullmatch(name_regexp, child["name"]) is not None)
         ]
+
+    selected_children = filter_by_properties(
+        selected_children, property_filters, resolve_inherited_properties
+    )
 
     effective_properties = [
         extract_effective_properties(child, resolve_inherited_properties)
@@ -809,6 +990,26 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {"value": "null"},
         },
         {
+            "workflow_input_name": "property_label",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_condition",
+            "use_default_value": True,
+            "filters": {"value": "equals"},
+        },
+        {
+            "workflow_input_name": "property_value",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_filters",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
             "workflow_input_name": "resolve_inherited_properties",
             "use_default_value": True,
             "filters": {"value": "true"},
@@ -848,6 +1049,26 @@ RELEASE_WIRING = {
         },
         {
             "workflow_input_name": "name_regexp",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_label",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_condition",
+            "use_default_value": True,
+            "filters": {"value": "equals"},
+        },
+        {
+            "workflow_input_name": "property_value",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "property_filters",
             "use_default_value": True,
             "filters": {"value": "null"},
         },
