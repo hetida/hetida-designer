@@ -38,6 +38,12 @@
   }
 
   // Angular Material overrides
+  .dark-theme {
+    & .mat-app-background {
+      background-color: #424242;
+    }
+  }
+
   .mat-mdc-form-field {
     .mat-focused {
       color: map.get($primary, 700);
