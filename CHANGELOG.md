@@ -3,6 +3,14 @@
   - asset properties include values inherited in the asset hierarchy, both components can filter assets / signals by (inherited) properties and the timeseries component always excludes transient virtual signals.
   - clearer errors for platform requests and responses. Requests use the `EXTERNAL_REQUEST_TIMEOUT` and `HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS` settings.
   - BREAKING CHANGE for URI wirings of the timeseries component: the inputs `include_ingestion_channels` / `include_virtual_channels` are renamed to `include_ingestion_signals` / `include_virtual_signals`.
+- preparations for the upgrade to plotly 7 / plotly.js 4:
+  - new revision "Simple Scatter Map Plot" 1.0.1 using the MapLibre based `scattermap` instead of the Mapbox based `scattermapbox`, which is removed in plotly 7. Revision 1.0.0 is disabled, workflows using it should be updated to the new revision. The "Visualization Demo" example workflow uses the new revision.
+  - plots created via `plotly_fig_to_json_dict` from `hdutils` and plots shown in experimental dashboards get `showSendToCloud` set to false in their config, unless configured explicitly. Otherwise plotly.js 4 by default shows a modebar button which uploads the plot including its data to Plotly Cloud.
+  - `plotly_fig_to_json_dict` sets tickmode "auto" for overlaying axes without explicitly configured tick placement (e.g. the additional y axes of plots with multiple y axes). Otherwise plotly.js 4 by default places their ticks at the tick positions of the overlaid axis (tickmode "sync").
+  - fix: the example sink component writing plots to html files in the [component adapter documentation](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/builtin_adapters/component_adapter/) failed for plots with a config, like those from `plotly_fig_to_json_dict`.
+- base component "Convert Series to SingleTSFrame" (1.0.0) parses a string index strictly as ISO 8601 timestamps. Other strings, e.g. `"01.08.2019 15:45"` which was silently interpreted month first (8th of January), are rejected with a ComponentInputValidationException now.
+- fix: the documentation of base component "Compare Timeshifted Timeseries" (1.0.0) suggested the frequency aliases `"H"` and `"M"`, which are invalid since pandas 3, and the deprecated `"d"`. It now suggests `"h"`, `"ME"` and `"D"`, and the "Visualization Demo" example workflow uses `"D"`.
+- fix: base component "Select Time Intervals" (1.0.0) triggered a pydantic warning about a model validator not returning `self`.
 
 ## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.

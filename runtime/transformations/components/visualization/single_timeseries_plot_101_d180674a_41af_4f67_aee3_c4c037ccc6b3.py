@@ -347,7 +347,7 @@ def main(
     json_to_return = plotly_fig_to_json_dict(fig)
 
     plot_target_locale = get_locale(locale)
-    json_to_return["config"] = {"displaylogo": False, "showTips": False}
+    json_to_return["config"].update({"displaylogo": False, "showTips": False})
 
     # set locale if available
     if plot_target_locale is not None:
