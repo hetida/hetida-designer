@@ -41,10 +41,7 @@ import {
 } from '../../model/transformation';
 import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
-import {
-  selectTransformationById,
-  selectTransformationsByRevisionGroupId
-} from 'src/app/store/transformation/transformation.selectors';
+import { selectTransformationsByRevisionGroupId } from 'src/app/store/transformation/transformation.selectors';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { IOConnector } from 'src/app/model/io-connector';
 import { Link } from 'src/app/model/link';
@@ -77,9 +74,10 @@ export class TransformationActionService {
   ) {}
 
   public async execute(
-    transformation: Transformation,
+    transformationOrStub: Transformation,
     useCurrentTestWiring: boolean = false
   ) {
+    const transformation = await this.ensureFull(transformationOrStub);
     if (this.isIncomplete(transformation)) {
       return;
     }
@@ -159,10 +157,9 @@ export class TransformationActionService {
       .pipe(
         tap(() => dialogRef.close()),
         switchMap(executeTestClickEvent =>
-          this.transformationStore
-            .select(selectTransformationById(executeTestClickEvent.id))
+          this.transformationService
+            .getFullTransformation(executeTestClickEvent.id)
             .pipe(
-              first(),
               map(selectedTransformation => ({
                 selectedTransformation,
                 test_wiring: executeTestClickEvent.test_wiring
@@ -186,7 +183,8 @@ export class TransformationActionService {
       .subscribe();
   }
 
-  public editDetails(transformation: Transformation): void {
+  public async editDetails(transformationOrStub: Transformation) {
+    const transformation = await this.ensureFull(transformationOrStub);
     const isReleasedOrDisabled = this.isReleasedOrDisabled(transformation);
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
@@ -237,10 +235,11 @@ export class TransformationActionService {
       .subscribe();
   }
 
-  public newRevision(transformation: Transformation): void {
-    if (!this.isReleasedOrDisabled(transformation)) {
+  public async newRevision(transformationOrStub: Transformation) {
+    if (!this.isReleasedOrDisabled(transformationOrStub)) {
       return;
     }
+    const transformation = await this.ensureFull(transformationOrStub);
     const newId = uuid().toString();
     const groupId = transformation.revision_group_id;
     const copyOfTransformation: Transformation = this.copyTransformation(
@@ -368,7 +367,8 @@ export class TransformationActionService {
     }
   }
 
-  public publish(transformation: Transformation): void {
+  public async publish(transformationOrStub: Transformation) {
+    const transformation = await this.ensureFull(transformationOrStub);
     if (this.isIncomplete(transformation)) {
       this.notificationService.warn(
         `This ${transformation.type.toLowerCase()} is incomplete and cannot be published`
@@ -467,7 +467,8 @@ export class TransformationActionService {
     }
   }
 
-  public copy(transformation: Transformation): void {
+  public async copy(transformationOrStub: Transformation) {
+    const transformation = await this.ensureFull(transformationOrStub);
     const newId = uuid().toString();
     const groupId = uuid().toString();
     const copyOfTransformation: Transformation = this.copyTransformation(
@@ -505,7 +506,8 @@ export class TransformationActionService {
     });
   }
 
-  public configureIO(transformation: Transformation) {
+  public async configureIO(transformationOrStub: Transformation) {
+    const transformation = await this.ensureFull(transformationOrStub);
     if (
       isWorkflowTransformation(transformation) &&
       transformation.content.inputs.length === 0 &&
@@ -676,6 +678,18 @@ export class TransformationActionService {
           }
         })
       );
+  }
+
+  /**
+   * Transformations passed to the public actions may be stubs from the store
+   * (see isFullTransformation), but the actions need all of their fields.
+   */
+  protected async ensureFull(
+    transformation: Transformation
+  ): Promise<Transformation> {
+    return lastValueFrom(
+      this.transformationService.ensureFullTransformation(transformation)
+    );
   }
 
   protected incrementPatch(version: string): string | null {
@@ -874,9 +888,8 @@ export class TransformationActionService {
   }
 
   private configureWorkflowIO(workflowTransformation: WorkflowTransformation) {
-    this.transformationStore
-      .select(selectTransformationById(workflowTransformation.id))
-      .pipe(first())
+    this.transformationService
+      .getFullTransformation(workflowTransformation.id)
       .subscribe(selectedTransformation => {
         if (selectedTransformation === undefined) {
           return;
