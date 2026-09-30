@@ -19,6 +19,28 @@ export function isWorkflowTransformation(
     : false;
 }
 
+/**
+ * The transformation store is populated with transformation stubs at startup:
+ * They lack content, test_wiring, release_wiring and documentation, which can be
+ * large (component code, manual input data) and are only needed when a
+ * transformation is opened, executed, copied or modified. Use
+ * TransformationService.ensureFullTransformation before accessing these fields
+ * or before sending a transformation from the store to the backend.
+ *
+ * Full transformations from the backend always contain content and test_wiring,
+ * while stubs never do.
+ */
+export function isFullTransformation(
+  transformation: Transformation | null | undefined
+): boolean {
+  return (
+    transformation !== null &&
+    transformation !== undefined &&
+    transformation.content !== undefined &&
+    transformation.test_wiring !== undefined
+  );
+}
+
 export type Transformation = ComponentTransformation | WorkflowTransformation;
 
 export enum TrafoUpdateState {

@@ -16,6 +16,7 @@ import { selectTransformationState } from '../../store/transformation/transforma
 describe('DocumentationEditorComponent', () => {
   let component: DocumentationEditorComponent;
   let fixture: ComponentFixture<DocumentationEditorComponent>;
+  let mockStore: MockStore;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -51,7 +52,7 @@ describe('DocumentationEditorComponent', () => {
         output_wirings: []
       }
     };
-    const mockStore = TestBed.inject(MockStore);
+    mockStore = TestBed.inject(MockStore);
     mockStore.overrideSelector(selectTransformationState, {
       ids: ['mockId0'],
       entities: { mockId0: transformation },
@@ -61,6 +62,11 @@ describe('DocumentationEditorComponent', () => {
     component = fixture.componentInstance;
     component.itemId = 'mockId0';
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // overridden selectors are global: reset them for the other specs
+    mockStore.resetSelectors();
   });
 
   it('should create', () => {
