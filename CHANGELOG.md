@@ -11,6 +11,7 @@
 - base component "Convert Series to SingleTSFrame" (1.0.0) parses a string index strictly as ISO 8601 timestamps. Other strings, e.g. `"01.08.2019 15:45"` which was silently interpreted month first (8th of January), are rejected with a ComponentInputValidationException now.
 - fix: the documentation of base component "Compare Timeshifted Timeseries" (1.0.0) suggested the frequency aliases `"H"` and `"M"`, which are invalid since pandas 3, and the deprecated `"d"`. It now suggests `"h"`, `"ME"` and `"D"`, and the "Visualization Demo" example workflow uses `"D"`.
 - fix: base component "Select Time Intervals" (1.0.0) triggered a pydantic warning about a model validator not returning `self`.
+- "Load Pegelonline Timeseries" (0.1.0) test and release wiring use the time range "now - 15d" to "now".
 
 ## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.

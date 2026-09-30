@@ -173,11 +173,11 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
         {
             "workflow_input_name": "timestampFrom",
-            "filters": {"value": "2025-10-15T00:00:00Z"},
+            "filters": {"value": "now - 15d"},
         },
         {
             "workflow_input_name": "timestampTo",
-            "filters": {"value": "2025-10-30T00:00:00Z"},
+            "filters": {"value": "now"},
         },
         {
             "workflow_input_name": "measurement",
@@ -194,11 +194,11 @@ RELEASE_WIRING = {
         },
         {
             "workflow_input_name": "timestampFrom",
-            "filters": {"value": "2025-10-15T00:00:00Z"},
+            "filters": {"value": "now - 15d"},
         },
         {
             "workflow_input_name": "timestampTo",
-            "filters": {"value": "2025-10-30T00:00:00Z"},
+            "filters": {"value": "now"},
         },
         {
             "workflow_input_name": "measurement",
