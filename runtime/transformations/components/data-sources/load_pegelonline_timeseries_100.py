@@ -171,14 +171,8 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "station",
             "filters": {"value": "593647aa-9fea-43ec-a7d6-6476a76ae868"},
         },
-        {
-            "workflow_input_name": "timestampFrom",
-            "filters": {"value": "now - 15d"},
-        },
-        {
-            "workflow_input_name": "timestampTo",
-            "filters": {"value": "now"},
-        },
+        {"workflow_input_name": "timestampFrom", "filters": {"value": "now - 15d"}},
+        {"workflow_input_name": "timestampTo", "filters": {"value": "now"}},
         {
             "workflow_input_name": "measurement",
             "use_default_value": True,
@@ -192,14 +186,8 @@ RELEASE_WIRING = {
             "workflow_input_name": "station",
             "filters": {"value": "593647aa-9fea-43ec-a7d6-6476a76ae868"},
         },
-        {
-            "workflow_input_name": "timestampFrom",
-            "filters": {"value": "now - 15d"},
-        },
-        {
-            "workflow_input_name": "timestampTo",
-            "filters": {"value": "now"},
-        },
+        {"workflow_input_name": "timestampFrom", "filters": {"value": "now - 15d"}},
+        {"workflow_input_name": "timestampTo", "filters": {"value": "now"}},
         {
             "workflow_input_name": "measurement",
             "use_default_value": True,

@@ -11,7 +11,7 @@ Via the PLOTLYJSON type for transformation outputs Plotly figures can be used fo
 
 To develop your own custom plot components we recommend to start with one of the existing plot base components like "Single Timeseries Plot" from the "Visualization" category and make a copy of it. The code of "Single Timeseries Plot" in particular explains how to take into account target timezone and locale information provided by an external system as context to the execution.
 
-Plotly plot generation can be turned off in automated production execution via the [run_pure_plot_operators](../integration_guide/trafo_exec_guide/execution_via_api.md#optional-parameters) flag by the caller. This disables execution of operators with just plot output(s).
+Operators with just plot output(s) are only run if the execution runs pure plot operators ([run_pure_plot_operators](../integration_guide/trafo_exec_guide/execution_via_api.md#optional-parameters)) and their plots are not discarded, e.g. wired to the drop adapter. Executions from the hetida designer user interface run them, executions via the web service endpoints by default do not. Operators providing plots together with other outputs are always run, but their component code can skip creating plots that are not needed. See [Skipping Unneeded Outputs](./component_writing/discarded_outputs.md) for details.
 
 ## ANY type for arbitrary html
 
