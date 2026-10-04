@@ -2,6 +2,7 @@ import datetime
 import io
 import json
 import logging
+import re
 from collections import defaultdict
 from enum import StrEnum
 from types import NoneType, UnionType
@@ -148,6 +149,28 @@ def get_plot_target_settings() -> PlotTargetSettings:
         logger.warning("Could not load runtime exec context, import failed! Switch to defaults.")
         # return defaults if hetdesrun is not available as import
         return PlotTargetSettings()
+
+
+def plot_output_needed(output_name: str) -> bool:
+    """Whether a plot should be created for a PLOTLYJSON output of the current component
+
+    No plot is needed if the execution does not run plot operators (run_pure_plot_operators
+    is false) or if the output is discarded, e.g. because it is wired to the drop adapter.
+    Components with plot outputs and outputs of other types can use this to skip creating
+    plots and return {} instead.
+
+    If hetdesrun is not importable, plots are needed.
+    """
+    try:
+        from hetdesrun.models.run import ConfigurationInput
+        from hetdesrun.runtime.configuration import execution_config
+        from hetdesrun.runtime.context import output_is_discarded
+    except ImportError:
+        return True
+
+    return execution_config.get(
+        ConfigurationInput()
+    ).run_pure_plot_operators and not output_is_discarded(output_name)
 
 
 class WrappedModelWithCustomObjects(BaseModel):
@@ -990,6 +1013,26 @@ def parse_default_value(component_info: dict, input_name: str) -> Any:
     return parse_value(inp["default_value"], inp["data_type"], True)
 
 
+def keep_auto_ticks_for_overlaying_axes(fig_dict_obj: dict[str, Any]) -> None:
+    """Keep automatic tick placement for overlaying axes of a plotly json dict
+
+    Since plotly.js 4, overlaying axes (e.g. the additional y axes of plots with multiple
+    y axes) place their ticks at the tick positions of the overlaid axis by default
+    (tickmode "sync"), typically resulting in tick labels at uneven values.
+
+    This sets tickmode "auto" for overlaying axes which do not configure their tick
+    placement themselves, keeping the behaviour of earlier plotly.js versions.
+    """
+    for key, axis in fig_dict_obj.get("layout", {}).items():
+        if (
+            re.fullmatch(r"[xy]axis\d*", key) is not None
+            and isinstance(axis, dict)
+            and axis.get("overlaying") not in (None, "free")
+            and not ({"tickmode", "tickvals", "dtick"} & axis.keys())
+        ):
+            axis["tickmode"] = "auto"
+
+
 def plotly_fig_to_json_dict(
     fig: Figure, add_config_settings: bool = True, update_x_axes_tickformat: bool = True
 ) -> Any:
@@ -997,6 +1040,10 @@ def plotly_fig_to_json_dict(
 
     This function can be used in visualization components to obtain the
     correct plotly json-like object from a Plotly Figure object.
+
+    Overlaying axes keep their automatic tick placement (see
+    keep_auto_ticks_for_overlaying_axes) and the "send to cloud" modebar button
+    is disabled in the config, unless explicitly configured.
 
     See visualization components from the accompanying base components for
     examples on usage.
@@ -1009,8 +1056,14 @@ def plotly_fig_to_json_dict(
 
     fig_dict_obj = serialize_plotly_fig(fig)
 
+    keep_auto_ticks_for_overlaying_axes(fig_dict_obj)
+
     if "config" not in fig_dict_obj:
         fig_dict_obj["config"] = {}
+
+    # plotly.js >= 4 shows this button by default. It uploads the plot including
+    # its data to Plotly Cloud.
+    fig_dict_obj["config"].setdefault("showSendToCloud", False)
 
     if add_config_settings and plot_target_settings.plot_target_locale is not None:
         fig_dict_obj["config"]["locale"] = plot_target_settings.plot_target_locale

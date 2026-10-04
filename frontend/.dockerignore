@@ -7,3 +7,4 @@ Dockerfile
 documentation
 .git
 .vscode
+.mpc.json

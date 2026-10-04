@@ -55,7 +55,7 @@ In contrast to pandas.Series the index of a SingleTSFrame should be considered i
 In the documentation of the workflow and components the convention is to write **SingleTSFrame**, e.g.:
 
 ```
-- single_timeseries (SingleTSFrame): This is an example for the documentation of an input/output with the type SingleTSFrame
+- single_timeseries (SingleTSFrame): Example documentation SingleTsFrame input
 ```
 
 ## Metadata

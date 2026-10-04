@@ -381,6 +381,18 @@ Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attac
 
 ## Data Endpoints
 
+#### HTTP version and header sizes
+
+The designer runtime fetches data from the `/timeseries`, `/dataframe`, `/multitsframe` and `/singletsframe` GET endpoints via HTTP/1.1, also over https (HTTP/2 and HTTP/3 are not used).
+
+The status line plus all response headers of these GET endpoints, including a possibly large `Data-Attributes` (metadata) header, may be at most 5 MiB by default. Larger responses fail with the error "Receive buffer too long". This limit can be adjusted via the `GENERIC_REST_ADAPTER_MAX_RESPONSE_HEADER_SIZE` environment variable (in bytes, default `5242880`) on the runtime service.
+
+For orientation: For 1000 timeseries requested together, each with reasonable metadata according to the [metadata conventions](../../user_guide/attached_metadata.md) (interval, ids, names and unit), the base64-encoded `Data-Attributes` header has a size of about 0.8 MiB. Avoid metadata that grows with the number of requested timeseries in each timeseries' entry (e.g. repeating the full list of `queried_metrics` for every timeseries), since the header then grows quadratically. The limit is only an upper bound: it neither preallocates memory nor slows down responses with smaller headers.
+
+If a reverse proxy (e.g. nginx or a Kubernetes ingress) is placed between the designer runtime and your adapter, it may reject large response headers of your adapter on its own, independent of the setting above. For example, nginx fails with "upstream sent too big header" if the headers exceed its `proxy_buffer_size` (4 KiB or 8 KiB by default).
+
+In the other direction, the designer runtime sends metadata as `Data-Attributes` request header to the POST endpoints. Here, the HTTP server of your adapter determines the allowed size. Many servers limit request headers to 8 KiB to 16 KiB by default (e.g. Tomcat, nginx, uvicorn). If you expect large metadata, increase this limit in your adapter's server configuration.
+
 #### /timeseries (GET)
 
 This endpoint streams several timeseries together. This endpoint is only necessary if the adapter provides timeseries data.
@@ -430,6 +442,8 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 
 Note: The designer runtime will default to an empty dictionary if no metadata is provided for a timeseries.
 
+The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
+
 #### /timeseries (POST)
 
 This endpoint accepts a single timeseries per POST request.
@@ -458,6 +472,8 @@ Metadata stored in the Pandas Series `attrs` attribute will be sent by the desig
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
 
 It is up to your adapter implementation what you do with that metadata.
+
+Make sure that the HTTP server of your adapter accepts sufficiently large request headers for this, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
 #### /dataframe (GET)
 
@@ -494,6 +510,8 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 }
 ```
 
+The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
+
 #### /dataframe (POST)
 
 Query parameters:
@@ -520,6 +538,8 @@ Again, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
 
 It is up to your adapter implementation what you do with that metadata.
+
+Make sure that the HTTP server of your adapter accepts sufficiently large request headers for this, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
 #### /multitsframe (GET)
 
@@ -567,6 +587,8 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 }
 ```
 
+The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
+
 #### /multitsframe (POST)
 
 Query parameters:
@@ -594,6 +616,8 @@ Analogous to the corresponding GET endpoint, metadata stored in the underlying P
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
 
 It is up to your adapter implementation what you do with that metadata.
+
+Make sure that the HTTP server of your adapter accepts sufficiently large request headers for this, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
 #### /singletsframe (GET)
 
@@ -625,6 +649,8 @@ Analogous to `/multitsframe`, the response is allowed to send a header `Data-Att
 
 Since a singletsframe has exactly one metric, that metric should be named via `dataset_metadata.single_metric` — see the [SINGLETSFRAME metadata example](../../user_guide/attached_metadata.md#example-for-singletsframe). We strongly recommend to send at least the metadata fields described there!
 
+The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
+
 #### /singletsframe (POST)
 
 Query parameters:
@@ -650,6 +676,8 @@ Analogous to the corresponding GET endpoint, metadata stored in the underlying P
 See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and conventions.
 
 It is up to your adapter implementation what you do with that metadata.
+
+Make sure that the HTTP server of your adapter accepts sufficiently large request headers for this, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
 ## A minimal Generic Rest adapter
 

@@ -237,6 +237,18 @@ class RuntimeConfig(BaseSettings):
             "such as a generic REST adapter"
         ),
     )
+    generic_rest_adapter_max_response_header_size: int = Field(
+        5 * 1024 * 1024,
+        validation_alias="GENERIC_REST_ADAPTER_MAX_RESPONSE_HEADER_SIZE",
+        description=(
+            "Maximum size (in bytes) of the status line plus headers of a generic REST adapter"
+            " response when loading framelike data. Responses may carry large headers, e.g. a"
+            " base64-encoded Data-Attributes header (metadata). The HTTP/1.1 parser default"
+            " of 16 KiB is too small for this. The default of 5 MiB leaves ample room for e.g."
+            " 1000 timeseries with reasonable metadata (about 0.8 MiB). The limit does not"
+            " preallocate memory nor slow down responses with smaller headers."
+        ),
+    )
     allowed_callback_url_patterns: list[str] = Field(
         default_factory=list,
         validation_alias="HD_ALLOWED_CALLBACK_URL_PATTERNS",

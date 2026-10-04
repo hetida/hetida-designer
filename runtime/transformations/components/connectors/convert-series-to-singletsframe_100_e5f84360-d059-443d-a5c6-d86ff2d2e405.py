@@ -6,7 +6,7 @@
 Convert a Series into a SingleTSFrame.
 
 ## Inputs
-* **series** (Pandas Series): The input Series must have an index that can be interpreted as timestamps. It is converted to UTC.
+* **series** (Pandas Series): The input Series must have an index of timestamps or of ISO 8601 timestamp strings. It is converted to UTC.
 * **value_column_name** (String, optional): Name of the value column of the resulting SingleTSFrame. Default: "value".
 
 ## Outputs
@@ -70,7 +70,7 @@ def main(*, series, value_column_name="value"):
         )
 
     try:
-        timestamps = pd.to_datetime(series.index, utc=True)
+        timestamps = pd.to_datetime(series.index, utc=True, format="ISO8601")
     except (ValueError, TypeError) as error:
         raise ComponentInputValidationException(
             "The index of the series cannot be interpreted as timestamps:\n" + str(error),
@@ -143,6 +143,13 @@ else:
 
     def test_unparsable_index():
         series = pd.Series([1.0, 2.0], index=["not a timestamp", "neither is this"])
+
+        with pytest.raises(ComponentInputValidationException):
+            main(series=series)
+
+    def test_non_iso_timestamps_raise():
+        # would otherwise be parsed month first, i.e. as 8th of January
+        series = pd.Series([1.0, 2.0], index=["01.08.2019 15:45", "02.08.2019 15:42"])
 
         with pytest.raises(ComponentInputValidationException):
             main(series=series)
