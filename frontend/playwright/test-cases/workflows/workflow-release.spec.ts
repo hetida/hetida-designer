@@ -4,7 +4,7 @@ test('Confirm release a workflow', async ({
   page,
   hetidaDesigner,
   browserName
-}) => {
+}, testInfo) => {
   // Arrange
   const componentCategory = 'Connectors';
   const componentName = 'pass through';
@@ -12,7 +12,7 @@ test('Confirm release a workflow', async ({
   const componentInputName = 'input';
   const componentOutputName = 'output';
   const workflowCategory = 'Test';
-  const workflowName = `Test release a workflow ${browserName}`;
+  const workflowName = `Test release a workflow ${browserName} ${testInfo.retry}`;
   const workflowDescription = 'Releases a workflow';
   const workflowTag = '0.1.0';
   const workflowInputName = 'input';
@@ -74,9 +74,8 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('save-workflow-io-dialog');
 
   // Execute workflow and get the protocol
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Workflow ${workflowName} ${workflowTag}`
   );
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-value-input-wiring-dialog`
@@ -84,9 +83,11 @@ ${workflowInputData}
   await hetidaDesigner.typeInJsonEditor(workflowInputData, browserName);
   await hetidaDesigner.clickByTestId('save-json-editor');
 
-  // TODO: Wait for a change to happen
-  // Wait for the store to update
-  await page.waitForTimeout(3000);
+  // The json editor writes its content back into the wiring form
+  // asynchronously. Executing before that lands would send an empty value.
+  await expect(
+    page.getByTestId(`${workflowInputName}-value-input-wiring-dialog`)
+  ).toHaveValue(workflowInputData, { timeout: 15000 });
 
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
@@ -134,9 +135,8 @@ ${workflowInputData}
   await hetidaDesigner.clickByTestId('cancel-workflow-io-dialog');
 
   // Get released workflow input data
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Workflow ${workflowName} ${workflowTag}`
   );
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-value-input-wiring-dialog`
@@ -180,42 +180,62 @@ ${workflowInputData}
   expect(workflowDocumentationReleased).toEqual(workflowDocumentation);
 });
 
-test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-  // Clear
-  const workflowCategory = 'Test';
-  const workflowName = `Test release a workflow ${browserName}`;
-  const workflowTag = '0.1.0';
+test.afterEach(
+  async ({ page, hetidaDesigner, backendApi, browserName }, testInfo) => {
+    // Clear
+    const workflowCategory = 'Test';
+    const workflowName = `Test release a workflow ${browserName} ${testInfo.retry}`;
+    const workflowTag = '0.1.0';
 
-  await hetidaDesigner.clickWorkflowsInNavigation();
-  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    `${workflowName}(${workflowTag})`
-  );
-  await page.locator('.mat-mdc-menu-panel').hover();
+    // Nothing to remove when the test failed before it created the workflow.
+    // Driving the ui anyway would report a misleading timeout here and hide
+    // the actual failure.
+    if (
+      (await backendApi.findTransformationsByName(workflowName)).length === 0
+    ) {
+      return;
+    }
 
-  if (
-    await page
-      .locator('.mat-mdc-menu-content >> button:has-text("Deprecate")')
-      .isVisible()
-  ) {
-    await hetidaDesigner.clickOnContextMenu('Deprecate');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
+    await hetidaDesigner.clickWorkflowsInNavigation();
+    await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
+    await hetidaDesigner.rightClickItemInNavigation(
+      `${workflowName}(${workflowTag})`
     );
-    await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
-  } else {
-    await hetidaDesigner.clickOnContextMenu('Delete');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
-    );
-    await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+    await page.locator('.mat-mdc-menu-panel').hover();
+
+    if (
+      await page
+        .locator('.mat-mdc-menu-content >> button:has-text("Deprecate")')
+        .isVisible()
+    ) {
+      await hetidaDesigner.clickOnContextMenu('Deprecate');
+      await page.waitForSelector(
+        `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
+      );
+      await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
+    } else {
+      await hetidaDesigner.clickOnContextMenu('Delete');
+      await page.waitForSelector(
+        `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
+      );
+      await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+    }
+
+    await (
+      await page.waitForSelector(
+        `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
+      )
+    ).waitForElementState('hidden');
+
+    await hetidaDesigner.clearTest();
   }
+);
 
-  await (
-    await page.waitForSelector(
-      `mat-expansion-panel:has-text("${workflowCategory}") >> .navigation-item:has-text("${workflowName}")`
-    )
-  ).waitForElementState('hidden');
-
-  await hetidaDesigner.clearTest();
+// Runs even when the cleanup above failed, so a leftover can never make the
+// next attempt create a second revision with the same name and tag - after
+// which every locator for that name matches more than one element.
+test.afterEach(async ({ backendApi, browserName }, testInfo) => {
+  await backendApi.deleteTransformationsByName(
+    `Test release a workflow ${browserName} ${testInfo.retry}`
+  );
 });

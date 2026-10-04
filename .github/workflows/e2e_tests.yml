@@ -104,7 +104,18 @@ jobs:
           export PLAYWRIGHT_BROWSERS_PATH="$GITHUB_WORKSPACE/playwright_browsers"
 
           echo "RUN PLAYWRIGHT TESTS"
-          DEBUG=pw:browser,pw:api,pw:webserver PLAYWRIGHT_TARGET_URL="http://localhost:4200" npm run e2e-all
+          PLAYWRIGHT_TARGET_URL="http://localhost:4200" npm run e2e-all
+
+      - name: Archive Playwright report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            frontend/playwright/test-reports
+            frontend/playwright/test-results
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Cleanup
         run: |
