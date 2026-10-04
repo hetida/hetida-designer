@@ -25,14 +25,15 @@ export const selectAllTransformations = createSelector(
 
 export const selectHashedTransformationLookupById = createSelector(
   selectAllTransformations,
-  (transformations): Record<string, Transformation> =>
-    transformations.reduce(
-      (acc, transformation): Record<string, Transformation> => ({
-        ...acc,
-        [transformation.id]: transformation
-      }),
-      {}
-    )
+  (transformations): Record<string, Transformation> => {
+    // Fill one object instead of spreading the accumulator in each step, which
+    // is quadratic in the number of transformations (~1 s for 3000 revisions).
+    const lookup: Record<string, Transformation> = {};
+    for (const transformation of transformations) {
+      lookup[transformation.id] = transformation;
+    }
+    return lookup;
+  }
 );
 
 export const selectTransformationById = (transformationId: string) =>
