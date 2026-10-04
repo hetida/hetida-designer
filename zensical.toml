@@ -77,6 +77,7 @@ nav = [
         { "Unit Testing" = "user_guide/component_writing/unit_testing.md"},
         { "Importing from other Component" = "user_guide/component_writing/component_import.md"},
         { "Async Component Code" = "user_guide/component_writing/async_main_function.md"},
+        { "Skipping Unneeded Outputs" = "user_guide/component_writing/discarded_outputs.md"},
         { "Special / Generated Code Parts" = "user_guide/component_writing/special_parts.md"},
         { "Pandas Objects" = "user_guide/component_writing/pandas_objects.md"},
     ]},    

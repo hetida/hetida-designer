@@ -11,7 +11,7 @@ from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_data
 from hetdesrun.models.run import HIERARCHY_SEPARATOR, ConfigurationInput
 from hetdesrun.runtime import internal_runtime_execution_logger, runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
-from hetdesrun.runtime.context import ExecutionContext
+from hetdesrun.runtime.context import ExecutionContext, discarded_outputs_context
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,
@@ -45,6 +45,7 @@ class Node(Protocol):
     operator_hierarchical_id: str = "UNKNOWN"
     operator_hierarchical_name: str = "UNKNOWN"
     context: ExecutionContext
+    inputs: dict[str, tuple[Node, str]]
 
     @cached_property
     async def result(self) -> dict[str, Any]:  # Outputs can have any type
@@ -81,6 +82,7 @@ class ComputationNode:
         component_tag: str = "UNKNOWN",
         operator_hierarchical_id: str = "UNKNOWN",
         operator_hierarchical_name: str = "UNKNOWN",
+        output_names: list[str] | None = None,
     ) -> None:
         """
         inputs is a dict {input_name : (another_node, output_name)}, i.e. mapping input names to
@@ -91,6 +93,10 @@ class ComputationNode:
 
         operator_hierarchical_id, component_id, operator_hierarchical_name and component_name can be
         provided to enrich logging and exception messages.
+
+        output_names are the names of the outputs declared by the component. Only these outputs
+        can be marked as discarded (see mark_discarded_outputs). If the node has only plot outputs
+        and all of them are discarded, func is not run.
 
         The computation node inputs may or may not be complete, i.e. all required inputs are given
         or not. If not complete, computation of result may simply fail, e.g. with
@@ -114,6 +120,9 @@ class ComputationNode:
         self._in_computation = False  # to detect cycles
 
         self.has_only_plot_outputs = has_only_plot_outputs
+        self.output_names = output_names if output_names is not None else []
+        # outputs whose values are not used anywhere, provided to the component code
+        self.discarded_outputs: frozenset[str] = frozenset()
         self.operator_hierarchical_id = operator_hierarchical_id
         self.operator_hierarchical_name = operator_hierarchical_name
         self.context = ExecutionContext(
@@ -129,6 +138,18 @@ class ComputationNode:
 
     def add_inputs(self, new_inputs: dict[str, tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)
+
+    @property
+    def has_only_discarded_plot_outputs(self) -> bool:
+        """Whether the node has outputs, all of them plots, and all of them are discarded
+
+        Nodes without outputs never count as such, since they may be run for side effects.
+        """
+        return (
+            self.has_only_plot_outputs
+            and len(self.output_names) > 0
+            and self.discarded_outputs == frozenset(self.output_names)
+        )
 
     def _infer_required_params(self) -> list[str]:
         """Infer the function params which are actually required (i.e. no default value)"""
@@ -256,8 +277,18 @@ class ComputationNode:
             internal_runtime_execution_logger.debug("Starting computation")
 
         # Actual execution of current node
+        function_result: dict[str, Any]
         try:
-            function_result = await self._run_comp_func(input_values)
+            if self.has_only_discarded_plot_outputs:
+                # Nobody gets the plots, so the component code is not run. The inputs are
+                # gathered anyway to keep the order in which the other nodes are run.
+                internal_runtime_execution_logger.debug(
+                    "Skipping computation since all plot outputs are discarded"
+                )
+                function_result = {output_name: {} for output_name in self.output_names}
+            else:
+                with discarded_outputs_context(self.discarded_outputs):
+                    function_result = await self._run_comp_func(input_values)
         except Exception:
             raise
         finally:
@@ -442,6 +473,51 @@ class Workflow:
         execution_context_filter.clear_context(keys=list(context_dict.keys()))
 
         return results
+
+
+def mark_discarded_outputs(wf: Workflow, discarded_wf_output_names: set[str]) -> None:
+    """Determine for each computation node which of its outputs are discarded
+
+    An output of a node is used if it is linked to an input of another node or if it is
+    exposed as an output of the surrounding workflow which is used. The outputs of the
+    outermost workflow wf are used unless contained in discarded_wf_output_names.
+
+    The outputs of a computation node which are not used are set as its discarded_outputs.
+    """
+    used_outputs: set[tuple[Node, str]] = {
+        (wf, wf_output_name)
+        for wf_output_name in wf.output_mappings
+        if wf_output_name not in discarded_wf_output_names
+    }
+    computation_nodes: list[ComputationNode] = []
+
+    def gather_linked_outputs(node: Node) -> None:
+        used_outputs.update(node.inputs.values())
+        if isinstance(node, Workflow):
+            for sub_node in node.sub_nodes:
+                gather_linked_outputs(sub_node)
+        else:
+            assert isinstance(node, ComputationNode)  # hint for mypy  # noqa: S101
+            computation_nodes.append(node)
+
+    gather_linked_outputs(wf)
+
+    # A used workflow output uses the output of the sub node it is exposed from
+    unresolved_outputs = list(used_outputs)
+    while len(unresolved_outputs) > 0:
+        node, output_name = unresolved_outputs.pop()
+        if isinstance(node, Workflow) and output_name in node.output_mappings:
+            sub_node_output = node.output_mappings[output_name]
+            if sub_node_output not in used_outputs:
+                used_outputs.add(sub_node_output)
+                unresolved_outputs.append(sub_node_output)
+
+    for computation_node in computation_nodes:
+        computation_node.discarded_outputs = frozenset(
+            output_name
+            for output_name in computation_node.output_names
+            if (computation_node, output_name) not in used_outputs
+        )
 
 
 def obtain_all_nodes(wf: Workflow) -> list[ComputationNode]:
