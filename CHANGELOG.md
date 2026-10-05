@@ -14,6 +14,7 @@
 - "Load Pegelonline Timeseries" (0.1.0) test and release wiring use the time range "now - 15d" to "now".
 - components can find out whether the value of one of their outputs is discarded during the current execution via `output_is_discarded` from `hetdesrun.runtime.context`. This is the case if the output is not linked to another operator and the workflow output it is exposed as is wired to the drop adapter (or to the plot adapter while `run_pure_plot_operators` is false), also in nested workflows. This allows components with plot and data outputs to skip creating plots that nobody gets, e.g. in scheduled executions, which always run plot operators. `plot_output_needed` from `hdutils` combines this with `run_pure_plot_operators` for plot outputs. See [Skipping Unneeded Outputs](https://hetida.github.io/hetida-designer/user_guide/component_writing/discarded_outputs/).
 - operators with only plot outputs are not run if all of their outputs are discarded, e.g. wired to the drop adapter, even if `run_pure_plot_operators` is true (e.g. in scheduled executions). The operators providing their inputs are run anyway in the same order as before, and operators without outputs are always run.
+- runtime/backend Python dependency upgrades
 
 ## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.
