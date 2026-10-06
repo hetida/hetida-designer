@@ -4,13 +4,25 @@
       {{ title }} {{ wiringItem.name }}
       {{ wiringItem.version_tag }}
     </h4>
-    <button
-      (click)="_onCancel()"
-      mat-icon-button
-      data-testid="close-wiring-dialog"
-    >
-      <mat-icon>close</mat-icon>
-    </button>
+    <div class="hd-d-flex">
+      @if (_hasReleaseWiring()) {
+        <button
+          title="Reset to Release Wiring"
+          (click)="_resetToReleaseWiring()"
+          mat-icon-button
+          data-testid="reset-to-release-wiring-wiring-dialog"
+        >
+          <mat-icon>settings_backup_restore</mat-icon>
+        </button>
+      }
+      <button
+        (click)="_onCancel()"
+        mat-icon-button
+        data-testid="close-wiring-dialog"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
   </div>
 }
 

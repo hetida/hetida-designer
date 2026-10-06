@@ -21,7 +21,7 @@ import {
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IOType, IOTypeOption } from 'hetida-flowchart';
 import moment, { Moment } from 'moment';
-import { combineLatest, Observable, of, Subject } from 'rxjs';
+import { combineLatest, Observable, of, Subject, Subscription } from 'rxjs';
 import { catchError, map, startWith, switchMap, tap } from 'rxjs/operators';
 import {
   Adapter,
@@ -109,6 +109,9 @@ export interface IoInterface {
 export interface WiringItem {
   id: string;
   test_wiring: TestWiring;
+  // Stored by the backend on release, so only released and deprecated
+  // transformations have one. The dialog offers to reset to it if present.
+  release_wiring?: TestWiring | null;
   io_interface: IoInterface;
   name?: string;
   version_tag?: string;
@@ -184,6 +187,8 @@ export class WiringDialogComponent implements OnInit {
   private _saveAdapterIdInput = '';
   private _saveAdapterIdOutput = '';
 
+  private _loadWiringSubscription?: Subscription;
+
   private readonly SOURCE_TYPE: SourceType = 'INPUT_WIRING';
   private readonly SINK_TYPE: SourceType = 'OUTPUT_WIRING';
 
@@ -211,9 +216,32 @@ export class WiringDialogComponent implements OnInit {
       'no adapters are provided, if you don`t have any adapter implemented yet, you can pass an empty array'
     );
 
-    const standardWiring: TestWiring | undefined = this.wiringItem.test_wiring;
+    this._loadWiring(this.wiringItem.test_wiring);
+  }
 
-    of(this.adapterList)
+  public _hasReleaseWiring(): boolean {
+    return Utils.isDefined(this.wiringItem.release_wiring);
+  }
+
+  /**
+   * Replaces whatever is entered in the dialog with the wiring stored on
+   * release. Nothing is saved until the dialog is confirmed.
+   */
+  public _resetToReleaseWiring(): void {
+    const releaseWiring = this.wiringItem.release_wiring;
+    Utils.assert(releaseWiring, 'no release wiring to reset to');
+    this._jsonImportErrorStatus$.next('');
+    this._loadWiring(releaseWiring);
+  }
+
+  /**
+   * Builds the form from the given wiring. The sources and sinks it refers to
+   * are fetched from their adapters first, to show their names and filters.
+   */
+  private _loadWiring(standardWiring: TestWiring | undefined): void {
+    // A form still being built from a previous wiring must not replace this one.
+    this._loadWiringSubscription?.unsubscribe();
+    this._loadWiringSubscription = of(this.adapterList)
       .pipe(
         tap(availableAdapters => {
           this._availableAdapters = availableAdapters;
