@@ -39,6 +39,17 @@ interface TransformationStub {
 interface Transformation extends TransformationStub {
   documentation: string;
   content: string;
+  test_wiring: unknown;
+  release_wiring: unknown;
+}
+
+interface Schedule {
+  id: string;
+  name: string;
+  active: boolean;
+  cron_expression: string;
+  transformation_id: string | null;
+  wiring: unknown;
 }
 
 const withTrailingSlash = (url: string): string =>
@@ -205,6 +216,27 @@ export class BackendApi {
     }
   }
 
+  /**
+   * Replaces the test wiring, which unlike most of a transformation may still
+   * change once it is released or deprecated.
+   */
+  public async updateTestWiring(
+    id: string,
+    testWiring: unknown
+  ): Promise<void> {
+    const transformation = await this.getTransformation(id);
+    const response = await this.request.put(
+      `${this.apiUrl}/transformations/${id}`,
+      { data: { ...transformation, test_wiring: testWiring } }
+    );
+
+    if (!response.ok()) {
+      throw new Error(
+        `Could not update the test wiring of ${id}: ${response.status()} ${await response.text()}`
+      );
+    }
+  }
+
   public async getTransformation(id: string): Promise<Transformation> {
     const response = await this.request.get(
       `${this.apiUrl}/transformations/${id}`
@@ -257,5 +289,80 @@ export class BackendApi {
     }
 
     return (await response.json()) as TransformationStub[];
+  }
+
+  /**
+   * Creates an inactive schedule, so that it never runs during a test.
+   */
+  public async createSchedule(
+    name: string,
+    transformationId: string,
+    wiring: unknown
+  ): Promise<string> {
+    const id = randomUUID();
+    const response = await this.request.post(`${this.apiUrl}/schedules`, {
+      data: {
+        id,
+        name,
+        active: false,
+        cron_expression: '*/5 * * * *',
+        transformation_id: transformationId,
+        wiring
+      }
+    });
+
+    if (!response.ok()) {
+      throw new Error(
+        `Could not create schedule ${name}: ${response.status()} ${await response.text()}`
+      );
+    }
+
+    return id;
+  }
+
+  public async getSchedule(id: string): Promise<Schedule> {
+    const schedule = (await this.getSchedules()).find(
+      candidate => candidate.id === id
+    );
+    if (schedule === undefined) {
+      throw new Error(`Could not find schedule ${id}`);
+    }
+
+    return schedule;
+  }
+
+  /**
+   * Removes every schedule with exactly this name. Does nothing when there is
+   * none, so it is safe to call from an afterEach hook.
+   */
+  public async deleteSchedulesByName(name: string): Promise<void> {
+    const schedules = (await this.getSchedules()).filter(
+      schedule => schedule.name === name
+    );
+    for (const schedule of schedules) {
+      const response = await this.request.delete(
+        `${this.apiUrl}/schedules/${schedule.id}`
+      );
+
+      if (!response.ok()) {
+        throw new Error(
+          `Could not delete schedule ${schedule.name}, id ${schedule.id}: ` +
+            `${response.status()} ${response.statusText()}`
+        );
+      }
+    }
+  }
+
+  // The backend has no endpoint for a single schedule.
+  private async getSchedules(): Promise<Schedule[]> {
+    const response = await this.request.get(`${this.apiUrl}/schedules`);
+
+    if (!response.ok()) {
+      throw new Error(
+        `Could not read schedules: ${response.status()} ${response.statusText()}`
+      );
+    }
+
+    return (await response.json()) as Schedule[];
   }
 }

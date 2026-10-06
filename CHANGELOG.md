@@ -1,3 +1,4 @@
+- For released and deprecated trafos, the wiring dialog now has a button to reset the wiring to the release wiring.
 - extend API documentation page to include maintenance endpoints and Blob storage adapter
 
 ## 0.14.6
