@@ -2118,6 +2118,29 @@ _slugify_arg() {
     printf "%s" "$1" | _slugify
 }
 
+# Turn an already slugified string into a valid python identifier, usable as
+# package (directory) or module (file) name:
+# Must not be empty, must not start with a digit and must not be a keyword.
+_python_identifier() {
+    # Note: Do not slugify again here since that would remove underscores.
+    local name="$1"
+
+    if [[ -z "$name" ]] || [[ "$name" =~ ^[0-9] ]]; then
+        name="_$name"
+    fi
+
+    case "$name" in
+    and | as | assert | async | await | break | class | continue | def | del | \
+        elif | else | except | finally | for | from | global | if | import | in | \
+        is | lambda | nonlocal | not | or | pass | raise | return | try | while | \
+        with | yield)
+        name="${name}_"
+        ;;
+    esac
+
+    printf "%s" "$name"
+}
+
 _subpath_no_slugify() {
     _id="$1"
     _name="$2"
@@ -2171,6 +2194,10 @@ _export_to_dir() {
         local extension
         if $EXPORT_COMPONENTS_AS_PY_FILES && [[ "$_type" == "component" ]]; then
             extension="py"
+            # category directory becomes a python package (see __init__.py below)
+            # and the file a module in it. The file name starts with the name.
+            _category="$(_python_identifier "$_category")"
+            _name="$(_python_identifier "$_name")"
         else
             extension="json"
         fi
