@@ -1722,6 +1722,449 @@
         }
       }
     },
+    "/adapters/blob/info": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Info Endpoint",
+        "operationId": "get_info_endpoint_adapters_blob_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/structure": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Structure Endpoint",
+        "operationId": "get_structure_endpoint_adapters_blob_structure_get",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parentid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sources Endpoint",
+        "operationId": "get_sources_endpoint_adapters_blob_sources_get",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__MultipleSourcesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sinks Endpoint",
+        "operationId": "get_sinks_endpoint_adapters_blob_sinks_get",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__MultipleSinksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources/{sourceId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sources Metadata",
+        "description": "Get metadata attached to sources\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_sources_metadata_adapters_blob_sources__sourceId__metadata_get",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sourceid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Sources Metadata Adapters Blob Sources  Sourceid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources/{sourceId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Source",
+        "operationId": "get_single_source_adapters_blob_sources__sourceId__get",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sourceid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlobStorageStructureSource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks/{sinkId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sinks Metadata",
+        "description": "Get metadata attached to sinks\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_sinks_metadata_adapters_blob_sinks__sinkId__metadata_get",
+        "parameters": [
+          {
+            "name": "sinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sinkid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Sinks Metadata Adapters Blob Sinks  Sinkid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks/{sinkId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Sink",
+        "operationId": "get_single_sink_adapters_blob_sinks__sinkId__get",
+        "parameters": [
+          {
+            "name": "sinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sinkid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlobStorageStructureSink"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/thingNodes/{thingNodeId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Thing Nodes Metadata",
+        "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_thing_nodes_metadata_adapters_blob_thingNodes__thingNodeId__metadata_get",
+        "parameters": [
+          {
+            "name": "thingNodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Thingnodeid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Thing Nodes Metadata Adapters Blob Thingnodes  Thingnodeid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/thingNodes/{thingNodeId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Thingnode",
+        "operationId": "get_single_thingNode_adapters_blob_thingNodes__thingNodeId__get",
+        "parameters": [
+          {
+            "name": "thingNodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Thingnodeid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureThingNode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/engine/runtime": {
       "post": {
         "tags": [
@@ -5665,6 +6108,431 @@
           }
         }
       }
+    },
+    "/api/maintenance/reset_test_wiring_to_release_wiring": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Reset test wiring of released transformation revision to their release wiring",
+        "description": "Reset the current test wiring to the stored release wiring\n\nThis affects released and deprecated transformation revisions.\n\n**Warning**: This resets test wirings. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_reset_test_wiring_to_release_wiring_api_maintenance_reset_test_wiring_to_release_wiring_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/deprecate_all_but_latest_per_group": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Deprecate old transformation revision and keep only latest",
+        "description": "Deprecate old transformation revision and keep only latest\n\nA transformation revision is considered \"old\" if it is released and there is a newer\nreleased transformation revision (i.e. newer release timestamp) in the same group.\n\nNote that this has nothing to to with version tags or any versioning scheme!\n\n**Warning**: This deprecates transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_deprecate_all_but_latest_per_group_api_maintenance_deprecate_all_but_latest_per_group_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/delete_drafts": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "delete all transformation revisions with state DRAFT",
+        "description": "Delete all transformation revisions with state DRAFT\n\n**Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_delete_drafts_api_maintenance_delete_drafts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/delete_unused_deprecated": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "delete all unused deprecated transformation revisions",
+        "description": "Delete all unused deprecated transformation revisions\n\n'Unused' deprecated transformation revisions are those that are either not used in any workflow\nor are used only in workflows that are themselves deprecated (and therefore will be deleted as\nwell).\n\nThis handles nesting, i.e., a deprecated transformation revision will not be deleted if it is\nused indirectly across multiple nesting levels in a workflow which is not deprecated.\n\nTo prevent certain transformations from being deleted, use the exclude body-parameter and\nprovide a list of transformation UUIDs, for example: \"exclude\":[\"uuid1\",\"uuid2\",...].\nBy default, all unused deprecated transformations are deleted.\n\nTo prevent recently deprecated transformations from being deleted, use the cutoff_date\nbody-parameter. This parameter restricts deletion to transformations that were disabled before\nthe specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:\n\"cutoff_date\":\"2026-01-01T00:00:00Z\". By default, all unused deprecated transformations are\ndeleted.\n\n**Warning**: This action permanently deletes transformation revisions. We recommend creating\na backup (for example, by exporting all transformation revisions) before using this action.",
+        "operationId": "maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/purge": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "purge and deploy base trafos afterwards",
+        "description": "Purge and reinstall base components/workflows\n\nThis deletes all transformation revisions and afterwards deploys the base\ncomponents and workflows present in the running backend instance's image at the\ndefault path.\n\n**Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_purge_api_maintenance_purge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/deploy_base_trafos": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Deploy base trafos from the running backend",
+        "description": "Deploy base trafos from the running backend\n\nThis deploys base trafos from the running backend, i.e. from its\n./transformations directory. This is similar to what autodeploy does\nat the first start, but allows to trigger this manually, e.g. when new\nor improved base trafos arrive in a new backend version.\n\nAs already said, this is useful after updating the backend/runtime to a newer\nversion which comes with new or improved base transformations, since\nthose won't be deployed automatically even with active autodeploy if the\nHD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true (see\nhttps://github.com/hetida/hetida-designer/blob/release/docs/base_component_deployment.md\n).\n\nActivating the available query parameter options can affect existing workflow\nexecution and reproducibility if trafo revisions used in them are overwritten\nor changed. Please double-check whether this is what you want!",
+        "operationId": "deploy_base_trafos_api_maintenance_deploy_base_trafos_post",
+        "parameters": [
+          {
+            "name": "allow_overwrite_released",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether released trafo revisions are overwritten. If inactive changes/improvements on existing trafo revisions will not be deployed. If active this may negatively affect existing worklows if changes introduce bugs and in particular undermines reproducibility!",
+              "default": false,
+              "title": "Allow Overwrite Released"
+            },
+            "description": "Whether released trafo revisions are overwritten. If inactive changes/improvements on existing trafo revisions will not be deployed. If active this may negatively affect existing worklows if changes introduce bugs and in particular undermines reproducibility!"
+          },
+          {
+            "name": "update_component_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether autogenerated component code will be automatically updated during import. This may introduce bugs and negatively affect reproducibility.",
+              "default": false,
+              "title": "Update Component Code"
+            },
+            "description": "Whether autogenerated component code will be automatically updated during import. This may introduce bugs and negatively affect reproducibility."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/trigger_autoimport": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Trigger autoimport",
+        "description": "Triggers autoimport from the configured autoimport directory\n\nThis uses the autoimport system which allows to provide config files\ncontaining import options and filters. The autoimport directory is\nconfigured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.",
+        "operationId": "trigger_autoimport_api_maintenance_trigger_autoimport_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5814,6 +6682,182 @@
         },
         "type": "object",
         "title": "AllMeasuredSteps"
+      },
+      "BlobStorageStructureSink": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "thingNodeId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Thingnodeid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Display path used in Designer Frontend"
+          },
+          "metadataKey": {
+            "type": "string",
+            "title": "Metadatakey"
+          },
+          "type": {
+            "type": "string",
+            "const": "metadata(any)",
+            "title": "Type",
+            "default": "metadata(any)"
+          },
+          "visible": {
+            "type": "boolean",
+            "const": true,
+            "title": "Visible",
+            "default": true
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/StructureFilter"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filters",
+            "default": {
+              "object_key_suffix": {
+                "description": "<UTC timestamp> - <UUID>",
+                "name": "Object Key Suffix",
+                "required": false,
+                "type": "free_text"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "thingNodeId",
+          "name",
+          "path",
+          "metadataKey"
+        ],
+        "title": "BlobStorageStructureSink"
+      },
+      "BlobStorageStructureSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "thingNodeId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Thingnodeid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Display path used in Designer Frontend"
+          },
+          "metadataKey": {
+            "type": "string",
+            "title": "Metadatakey"
+          },
+          "type": {
+            "type": "string",
+            "const": "metadata(any)",
+            "title": "Type",
+            "default": "metadata(any)"
+          },
+          "visible": {
+            "type": "boolean",
+            "const": true,
+            "title": "Visible",
+            "default": true
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/StructureFilter"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filters",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "thingNodeId",
+          "name",
+          "path",
+          "metadataKey"
+        ],
+        "title": "BlobStorageStructureSource"
+      },
+      "Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post": {
+        "properties": {
+          "maintenance_payload": {
+            "$ref": "#/components/schemas/MaintenancePayload"
+          },
+          "exclude": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude"
+          },
+          "cutoff_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cutoff Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "maintenance_payload"
+        ],
+        "title": "Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post"
       },
       "Body_update_structure_endpoint_api_structure_update_put": {
         "properties": {
@@ -7595,6 +8639,28 @@
           "path"
         ],
         "title": "LocalFileStructureSource"
+      },
+      "MaintenanceActionResult": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "MaintenanceActionResult"
       },
       "MaintenancePayload": {
         "properties": {
@@ -11221,6 +12287,131 @@
         },
         "type": "object",
         "title": "WorkflowWiring"
+      },
+      "hetdesrun__adapters__blob_storage__models__MultipleSinksResponse": {
+        "properties": {
+          "resultCount": {
+            "type": "integer",
+            "title": "Resultcount"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSink"
+            },
+            "type": "array",
+            "title": "Sinks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resultCount",
+          "sinks"
+        ],
+        "title": "MultipleSinksResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__MultipleSourcesResponse": {
+        "properties": {
+          "resultCount": {
+            "type": "integer",
+            "title": "Resultcount"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resultCount",
+          "sources"
+        ],
+        "title": "MultipleSourcesResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__StructureResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "thingNodes": {
+            "items": {
+              "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureThingNode"
+            },
+            "type": "array",
+            "title": "Thingnodes"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSink"
+            },
+            "type": "array",
+            "title": "Sinks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "thingNodes",
+          "sources",
+          "sinks"
+        ],
+        "title": "StructureResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__StructureThingNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9]+$",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "StructureThingNode"
       },
       "hetdesrun__adapters__component_adapter__models__MultipleSinksResponse": {
         "properties": {

@@ -39,9 +39,41 @@ export class TransformationHttpService {
     });
   }
 
-  public fetchTransformations(): Observable<Array<Transformation>> {
+  /**
+   * Fetch all transformations as stubs, i.e. without content, test_wiring,
+   * release_wiring and documentation. See isFullTransformation.
+   */
+  public fetchTransformationStubs(): Observable<Array<Transformation>> {
+    const url = `${this.apiEndpoint}/transformations/stubs`;
+    // In contrast to the other transformation endpoints the stubs endpoint does
+    // not omit attributes with value null. Omit them here, since the frontend
+    // treats null and missing attributes differently.
+    return this.httpClient
+      .get(url, { responseType: 'text' })
+      .pipe(
+        map(
+          body =>
+            JSON.parse(body, (_key, value: unknown) =>
+              value === null ? undefined : value
+            ) as Array<Transformation>
+        )
+      );
+  }
+
+  public fetchTransformation(id: string): Observable<Transformation> {
+    const url = `${this.apiEndpoint}/transformations/${id}`;
+    return this.httpClient.get<Transformation>(url);
+  }
+
+  public fetchTransformationsByIds(
+    ids: string[]
+  ): Observable<Array<Transformation>> {
+    let params = new HttpParams();
+    for (const id of ids) {
+      params = params.append('id', id);
+    }
     const url = `${this.apiEndpoint}/transformations`;
-    return this.httpClient.get<Array<Transformation>>(url);
+    return this.httpClient.get<Array<Transformation>>(url, { params });
   }
 
   public createTransformation(

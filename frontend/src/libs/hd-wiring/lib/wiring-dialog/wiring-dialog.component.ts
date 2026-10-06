@@ -445,12 +445,12 @@ export class WiringDialogComponent implements OnInit {
         ) {
           // For metadata wirings nodesHash is keyed by the id of the source or
           // sink providing the metadata, not by the thing node id of the wiring.
-          for (const nodeHash of Object.values(nodesHash)) {
-            const nodeHashObj: SourceSinkNode = nodeHash as SourceSinkNode;
-            if (nodeHashObj.metadataKey === inputOrOutputWiring.ref_key) {
-              nodePath = nodeHashObj.path ?? null;
-            }
-          }
+          const metadataNode = Object.values(nodesHash).find(
+            nodeHash =>
+              (nodeHash as SourceSinkNode).metadataKey ===
+              inputOrOutputWiring.ref_key
+          ) as SourceSinkNode | undefined;
+          nodePath = metadataNode?.path ?? null;
         }
       }
 

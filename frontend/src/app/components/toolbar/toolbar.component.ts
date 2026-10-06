@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
-import { of, ReplaySubject, timer } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -29,7 +29,10 @@ import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 })
 export class ToolbarComponent implements OnInit {
   public transformation: Transformation | undefined;
-  public incompleteFlag = false;
+  // Starts out incomplete: until the transformation is loaded there is nothing
+  // that could be executed, and reporting it as complete would offer actions
+  // that then silently do nothing.
+  public incompleteFlag = true;
 
   private readonly _transformationId$ = new ReplaySubject<string>();
   private readonly _destroyRef = inject(DestroyRef);
@@ -46,17 +49,10 @@ export class ToolbarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    timer(0, 100)
-      .pipe(
-        takeUntilDestroyed(this._destroyRef),
-        switchMap(() =>
-          of(this.transformationActionService.isIncomplete(this.transformation))
-        )
-      )
-      .subscribe(isIncomplete => {
-        this.incompleteFlag = isIncomplete;
-      });
-
+    // `incompleteFlag` used to be recomputed by a 100ms timer, which ran change
+    // detection ten times a second for every open tab. It can only change when
+    // the transformation does, and every edit is dispatched to the store, so
+    // deriving it from the same subscription is both cheaper and more accurate.
     this._transformationId$
       .pipe(
         takeUntilDestroyed(this._destroyRef),
@@ -68,6 +64,8 @@ export class ToolbarComponent implements OnInit {
       )
       .subscribe(transformation => {
         this.transformation = transformation;
+        this.incompleteFlag =
+          this.transformationActionService.isIncomplete(transformation);
       });
   }
 

@@ -302,6 +302,28 @@ def get_plot_target_settings() -> PlotTargetSettings:
         return PlotTargetSettings()
 
 
+def plot_output_needed(output_name: str) -> bool:
+    """Whether a plot should be created for a PLOTLYJSON output of the current component
+
+    No plot is needed if the execution does not run plot operators (run_pure_plot_operators
+    is false) or if the output is discarded, e.g. because it is wired to the drop adapter.
+    Components with plot outputs and outputs of other types can use this to skip creating
+    plots and return {} instead.
+
+    If hetdesrun is not importable, plots are needed.
+    """
+    try:
+        from hetdesrun.models.run import ConfigurationInput
+        from hetdesrun.runtime.configuration import execution_config
+        from hetdesrun.runtime.context import output_is_discarded
+    except ImportError:
+        return True
+
+    return execution_config.get(
+        ConfigurationInput()
+    ).run_pure_plot_operators and not output_is_discarded(output_name)
+
+
 class WrappedModelWithCustomObjects(BaseModel):
     model: Any = None
     custom_objects: dict[str, Any]

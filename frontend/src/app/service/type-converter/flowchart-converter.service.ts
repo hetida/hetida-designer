@@ -12,6 +12,7 @@ import { Connector } from 'src/app/model/connector';
 import { Position } from 'src/app/model/position';
 import { v4 as UUID } from 'uuid';
 import {
+  isWorkflowTransformation,
   Transformation,
   WorkflowTransformation
 } from '../../model/transformation';
@@ -34,11 +35,15 @@ export class FlowchartConverterService {
   ): FlowchartConfiguration {
     const position: Position = null;
 
+    // Undefined for components and for workflow stubs (see isFullTransformation),
+    // whose preview is then based on the io_interface only.
+    const workflowContent = isWorkflowTransformation(transformation)
+      ? transformation.content
+      : undefined;
+
     const inputs: IO[] =
-      typeof transformation.content !== 'string'
-        ? (transformation as WorkflowTransformation).content.inputs.map(
-            ioConnector => ({ ...ioConnector })
-          )
+      workflowContent !== undefined
+        ? workflowContent.inputs.map(ioConnector => ({ ...ioConnector }))
         : transformation.io_interface.inputs;
 
     const operator = {
@@ -46,12 +51,12 @@ export class FlowchartConverterService {
       transformation_id: transformation.id,
       inputs: inputs
         .map(input => {
-          if (typeof transformation.content !== 'string') {
-            const inputConnector = transformation.content.inputs.filter(
+          if (workflowContent !== undefined) {
+            const inputConnector = workflowContent.inputs.filter(
               contentInput => contentInput.id === input.id
             );
             if (inputConnector.length > 0) {
-              transformation.content.operators
+              workflowContent.operators
                 .filter(opt => opt.id === inputConnector[0].operator_id)
                 .forEach(foundOperator => {
                   foundOperator.inputs.forEach(operatorInput => {
@@ -74,12 +79,12 @@ export class FlowchartConverterService {
           };
         }),
       outputs: transformation.io_interface.outputs.map(output => {
-        if (typeof transformation.content !== 'string') {
-          const outputConnector = transformation.content.outputs.filter(
+        if (workflowContent !== undefined) {
+          const outputConnector = workflowContent.outputs.filter(
             contentOutput => contentOutput.id === output.id
           );
           if (outputConnector.length > 0) {
-            transformation.content.operators
+            workflowContent.operators
               .filter(opt => opt.id === outputConnector[0].operator_id)
               .forEach(foundOperator => {
                 foundOperator.outputs.forEach(operatorOutput => {

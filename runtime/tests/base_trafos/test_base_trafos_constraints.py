@@ -47,7 +47,7 @@ def test_base_trafos_can_be_loaded_from_dir():
     trafo_dict, _ = load_transformation_revisions_from_directory("./transformations")
 
 
-def test_base_trafos_only_contain_direct_provisioning_wirings():
+def test_base_trafos_only_contain_direct_provisioning_or_drop_wirings():
     """Base trafos wirings should not contain arbitrary adapter wirings
 
     Otherwise they are unusable in environments/installations where that adapter is
@@ -56,7 +56,9 @@ def test_base_trafos_only_contain_direct_provisioning_wirings():
     In particular the frontend execution dialog (hd-wiring) does not handle this
     situation gracefully at the moment.
 
-    Hence we include a test that ensures this.
+    Hence we include a test that ensures this. Outputs may additionally be wired to the
+    built-in drop adapter, e.g. the data output of a component which also provides a plot
+    of this data.
     """
 
     trafo_dict, path_dict = load_transformation_revisions_from_directory("./transformations")
@@ -71,9 +73,9 @@ def test_base_trafos_only_contain_direct_provisioning_wirings():
                     f" with id {trafo_id} from file {path_dict[trafo_id]}."
                 )
             for outp_wiring in trafo.test_wiring.output_wirings:
-                assert outp_wiring.adapter_id == "direct_provisioning", (
+                assert outp_wiring.adapter_id in {"direct_provisioning", "drop"}, (
                     f"Found {outp_wiring.adapter_id} as adapter_id in test_wiring output wiring for"
-                    f" input {outp_wiring.workflow_output_name} of base trafo "
+                    f" output {outp_wiring.workflow_output_name} of base trafo "
                     f"{trafo.name} ({trafo.version_tag})"
                     f" with id {trafo_id} from file {path_dict[trafo_id]}."
                 )
@@ -86,9 +88,9 @@ def test_base_trafos_only_contain_direct_provisioning_wirings():
                     f" with id {trafo_id} from file {path_dict[trafo_id]}."
                 )
             for outp_wiring in trafo.release_wiring.output_wirings:
-                assert outp_wiring.adapter_id == "direct_provisioning", (
+                assert outp_wiring.adapter_id in {"direct_provisioning", "drop"}, (
                     f"Found {outp_wiring.adapter_id} as adapter_id in release_wiring output wiring"
-                    f" for input {outp_wiring.workflow_output_name} of base trafo "
+                    f" for output {outp_wiring.workflow_output_name} of base trafo "
                     f"{trafo.name} ({trafo.version_tag})"
                     f" with id {trafo_id} from file {path_dict[trafo_id]}."
                 )

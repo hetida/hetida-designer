@@ -1,5 +1,9 @@
+- extend API documentation page to include maintenance endpoints and Blob storage adapter
+
+## 0.14.6
+
 - fix: loading data from generic REST adapters failed with "Receive buffer too long" if the response headers exceeded 16 KiB, e.g. due to a large `Data-Attributes` header (metadata). This affected versions 0.14.3 to 0.14.5. The limit now defaults to 5 MiB and can be configured via the `GENERIC_REST_ADAPTER_MAX_RESPONSE_HEADER_SIZE` environment variable, see the [adapter REST API interface documentation](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_rest_api_interface/#http-version-and-header-sizes). Framelike data fetching from generic REST adapters now always uses HTTP/1.1.
-- fixes and improvements: hetida platform source components working with hetida platform versions >= 2603.1010. New revisions "Hetida Platform Assets" 0.1.6 and "Hetida Platform Signal Timeseries Data" 0.1.11. If used, URI wiring shortcuts (`HETIDA_DESIGNER_URI_WIRING_SHORTCUTS`, e.g. for `hd://assets` and `hd://timeseries`) should be updated to the new component ids.
+- fixes and improvements: hetida platform source components working with hetida platform versions >= 2603.1010. New revisions "Hetida Platform Assets" 0.1.6 and "Hetida Platform Signal Timeseries Data" 0.1.11. I adapter f used, URI wiring shortcuts (`HETIDA_DESIGNER_URI_WIRING_SHORTCUTS`, e.g. for `hd://assets` and `hd://timeseries`) should be updated to the new component ids.
   - asset properties include values inherited in the asset hierarchy, both components can filter assets / signals by (inherited) properties and the timeseries component always excludes transient virtual signals.
   - clearer errors for platform requests and responses. Requests use the `EXTERNAL_REQUEST_TIMEOUT` and `HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS` settings.
   - BREAKING CHANGE for URI wirings of the timeseries component: the inputs `include_ingestion_channels` / `include_virtual_channels` are renamed to `include_ingestion_signals` / `include_virtual_signals`.
@@ -11,6 +15,10 @@
 - base component "Convert Series to SingleTSFrame" (1.0.0) parses a string index strictly as ISO 8601 timestamps. Other strings, e.g. `"01.08.2019 15:45"` which was silently interpreted month first (8th of January), are rejected with a ComponentInputValidationException now.
 - fix: the documentation of base component "Compare Timeshifted Timeseries" (1.0.0) suggested the frequency aliases `"H"` and `"M"`, which are invalid since pandas 3, and the deprecated `"d"`. It now suggests `"h"`, `"ME"` and `"D"`, and the "Visualization Demo" example workflow uses `"D"`.
 - fix: base component "Select Time Intervals" (1.0.0) triggered a pydantic warning about a model validator not returning `self`.
+- "Load Pegelonline Timeseries" (0.1.0) test and release wiring use the time range "now - 15d" to "now".
+- components can find out whether the value of one of their outputs is discarded during the current execution via `output_is_discarded` from `hetdesrun.runtime.context`. This is the case if the output is not linked to another operator and the workflow output it is exposed as is wired to the drop adapter (or to the plot adapter while `run_pure_plot_operators` is false), also in nested workflows. This allows components with plot and data outputs to skip creating plots that nobody gets, e.g. in scheduled executions, which always run plot operators. `plot_output_needed` from `hdutils` combines this with `run_pure_plot_operators` for plot outputs. See [Skipping Unneeded Outputs](https://hetida.github.io/hetida-designer/user_guide/component_writing/discarded_outputs/).
+- operators with only plot outputs are not run if all of their outputs are discarded, e.g. wired to the drop adapter, even if `run_pure_plot_operators` is true (e.g. in scheduled executions). The operators providing their inputs are run anyway in the same order as before, and operators without outputs are always run.
+- runtime/backend Python dependency upgrades
 
 ## 0.14.5
 - fix frontend relative uri behaviour for monaco editor and auth to default to full uri path, not just domain.

@@ -8,10 +8,13 @@ import {
   ViewChild
 } from '@angular/core';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { Subscription } from 'rxjs';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import {
+  isFullTransformation,
   isWorkflowTransformation,
   Transformation
 } from '../../model/transformation';
@@ -33,17 +36,30 @@ export class TransformationContextMenuComponent
   _isWorkflowWithoutIo: boolean;
 
   _transformation: Transformation;
+  private fullTransformationSubscription: Subscription | undefined;
+
   @Input()
   set transformation(transformation: Transformation) {
-    // show or hide execute button
-    this._isIncomplete =
-      this.transformationActionService.isIncomplete(transformation);
     this._isNotPublished = transformation.state === RevisionState.DRAFT;
-    // show or hide configureIO button in workflows
-    this._isWorkflowWithoutIo =
-      isWorkflowTransformation(transformation) &&
-      this.transformationActionService.isWorkflowWithoutIo(transformation);
     this._transformation = transformation;
+    this.fullTransformationSubscription?.unsubscribe();
+
+    if (isFullTransformation(transformation)) {
+      this.setContentDependentFlags(transformation);
+      return;
+    }
+
+    // Stubs from the store lack the content these flags depend on. Hide the
+    // respective entries until the full transformation is loaded.
+    this._isIncomplete = true;
+    this._isWorkflowWithoutIo = true;
+    this.fullTransformationSubscription = this.transformationService
+      .getFullTransformation(transformation.id)
+      .subscribe(fullTransformation => {
+        this._transformation = fullTransformation;
+        this.setContentDependentFlags(fullTransformation);
+        this.changeDetector.markForCheck();
+      });
   }
 
   get transformation(): Transformation {
@@ -53,6 +69,7 @@ export class TransformationContextMenuComponent
   constructor(
     public readonly changeDetector: ChangeDetectorRef,
     private readonly transformationActionService: TransformationActionService,
+    private readonly transformationService: TransformationService,
     private readonly tabItemService: TabItemService
   ) {}
 
@@ -64,6 +81,7 @@ export class TransformationContextMenuComponent
   }
 
   ngOnDestroy(): void {
+    this.fullTransformationSubscription?.unsubscribe();
     this._trigger.closeMenu();
   }
 
@@ -108,5 +126,15 @@ export class TransformationContextMenuComponent
 
   deprecate() {
     this.transformationActionService.deprecate(this.transformation);
+  }
+
+  private setContentDependentFlags(transformation: Transformation): void {
+    // show or hide execute button
+    this._isIncomplete =
+      this.transformationActionService.isIncomplete(transformation);
+    // show or hide configureIO button in workflows
+    this._isWorkflowWithoutIo =
+      isWorkflowTransformation(transformation) &&
+      this.transformationActionService.isWorkflowWithoutIo(transformation);
   }
 }
