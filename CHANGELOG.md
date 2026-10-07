@@ -1,3 +1,4 @@
+- The edit details dialog ("Properties...") of components and workflows lists the workflows using them, directly as operator or nested in other workflows. Imports in component code are not considered. The new endpoint `GET /api/transformations/{id}/containing_workflows` provides this information.
 - For released and deprecated trafos, the wiring dialog now has a button to reset the wiring to the release wiring.
 - extend API documentation page to include maintenance endpoints and Blob storage adapter
 

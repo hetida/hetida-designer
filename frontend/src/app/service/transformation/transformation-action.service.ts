@@ -201,6 +201,7 @@ export class TransformationActionService {
         actionCancel: 'Cancel',
         deleteButtonText: 'Delete Draft',
         showDeleteButton: transformation.state === RevisionState.DRAFT,
+        showContainingWorkflows: true,
         transformation: Utils.deepCopy(transformation),
         disabledState: {
           name: isReleasedOrDisabled,

@@ -4488,6 +4488,72 @@
         }
       }
     },
+    "/api/transformations/{id}/containing_workflows": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the workflows containing the transformation revision directly or nested.",
+        "description": "Get the workflows which contain the transformation revision\n\nThis includes workflows which contain it only nested, i.e. as operator of a workflow\nwhich is itself contained in them, at arbitrary nesting depth. Imports of components\nin the code of other components are not taken into account.\n\nA workflow is listed as it was stored the last time: Changes of a DRAFT workflow nested\nin another DRAFT workflow are only reflected after the latter is stored again, e.g. by\nupgrading its operators.",
+        "operationId": "get_containing_workflows_api_transformations__id__containing_workflows_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the containing workflows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContainingWorkflow"
+                  },
+                  "title": "Response Get Containing Workflows Api Transformations  Id  Containing Workflows Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Transformation revision not found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}/upgrade_operators/{operator_id}": {
       "put": {
         "tags": [
@@ -7308,6 +7374,55 @@
           "position"
         ],
         "title": "Connector"
+      },
+      "ContainingWorkflow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version_tag": {
+            "type": "string",
+            "title": "Version Tag"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "direct_operator_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Direct Operator Ids",
+            "description": "Ids of the operators of this workflow which are instances of the transformation revision. Empty if it is only contained nested."
+          },
+          "via_workflow_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Via Workflow Ids",
+            "description": "Ids of the workflow revisions which are instantiated as operators of this workflow and contain the transformation revision. Empty if it is only contained directly."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version_tag",
+          "state",
+          "direct_operator_ids",
+          "via_workflow_ids"
+        ],
+        "title": "ContainingWorkflow",
+        "description": "Workflow revision containing a transformation revision directly and/or nested\n\nDirectly means as operator of the workflow, nested means as operator of a workflow\nwhich itself is contained in the workflow, at arbitrary nesting depth."
       },
       "DataType": {
         "type": "string",

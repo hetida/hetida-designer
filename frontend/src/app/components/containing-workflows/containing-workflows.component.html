@@ -1,0 +1,26 @@
+<div
+  class="containing-workflows"
+  data-testid="containing-workflows"
+  title="Workflows containing this as operator, directly or nested in other workflows. Imports in component code are not considered."
+>
+  @if (_loadingFailed) {
+    Could not load the workflows using this.
+  } @else if (_rows === undefined) {
+    Loading the workflows using this...
+  } @else if (_rows.length === 0) {
+    Not used in any workflow.
+  } @else {
+    Used in {{ _rows.length }}
+    {{ _rows.length === 1 ? 'workflow' : 'workflows' }}:
+    <ul class="containing-workflows__list">
+      @for (row of _rows; track row.id) {
+        <li>
+          <a [routerLink]="[]" [queryParams]="{ id: row.id }" target="_blank">{{
+            row.label
+          }}</a
+          >, {{ row.state }} — {{ row.containedHow }}
+        </li>
+      }
+    </ul>
+  }
+</div>

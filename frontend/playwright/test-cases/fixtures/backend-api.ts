@@ -28,10 +28,20 @@ interface IoInterface {
   outputs: { id: string; name: string; data_type: string }[];
 }
 
+export interface WorkflowDefinition {
+  name: string;
+  category: string;
+  versionTag: string;
+  /** One operator is added for each id, a transformation may occur repeatedly. */
+  operatorTransformationIds: string[];
+}
+
 interface TransformationStub {
   id: string;
+  revision_group_id: string;
   name: string;
   version_tag: string;
+  type: 'COMPONENT' | 'WORKFLOW';
   state: 'DRAFT' | 'RELEASED' | 'DISABLED';
   io_interface: IoInterface;
 }
@@ -185,6 +195,73 @@ export class BackendApi {
     if (!updated.ok()) {
       throw new Error(
         `Could not write code for ${component.name}: ${updated.status()} ${await updated.text()}`
+      );
+    }
+
+    return id;
+  }
+
+  /**
+   * Creates a draft workflow with the given operators, without any links.
+   *
+   * The backend adds unnamed workflow inputs and outputs for the inputs and
+   * outputs of the operators.
+   */
+  public async createWorkflow(workflow: WorkflowDefinition): Promise<string> {
+    const id = randomUUID();
+    const operators = [];
+    for (const transformationId of workflow.operatorTransformationIds) {
+      const transformation = await this.getTransformation(transformationId);
+      operators.push({
+        id: randomUUID(),
+        revision_group_id: transformation.revision_group_id,
+        name: transformation.name,
+        type: transformation.type,
+        state: transformation.state,
+        version_tag: transformation.version_tag,
+        transformation_id: transformation.id,
+        inputs: transformation.io_interface.inputs.map(input => ({
+          id: randomUUID(),
+          name: input.name,
+          data_type: input.data_type,
+          position: { x: 0, y: 0 }
+        })),
+        outputs: transformation.io_interface.outputs.map(output => ({
+          id: randomUUID(),
+          name: output.name,
+          data_type: output.data_type,
+          position: { x: 0, y: 0 }
+        })),
+        position: { x: 0, y: 200 * operators.length }
+      });
+    }
+
+    const response = await this.request.post(`${this.apiUrl}/transformations`, {
+      data: {
+        id,
+        revision_group_id: randomUUID(),
+        name: workflow.name,
+        category: workflow.category,
+        description: '',
+        version_tag: workflow.versionTag,
+        type: 'WORKFLOW',
+        state: 'DRAFT',
+        documentation: '',
+        io_interface: { inputs: [], outputs: [] },
+        test_wiring: { input_wirings: [], output_wirings: [] },
+        content: {
+          operators,
+          links: [],
+          inputs: [],
+          outputs: [],
+          constants: []
+        }
+      }
+    });
+
+    if (!response.ok()) {
+      throw new Error(
+        `Could not create ${workflow.name}: ${response.status()} ${await response.text()}`
       );
     }
 

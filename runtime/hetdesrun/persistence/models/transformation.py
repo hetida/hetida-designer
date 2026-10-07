@@ -323,6 +323,34 @@ class TransformationRevisionStub(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
 
+class ContainingWorkflow(BaseModel):
+    """Workflow revision containing a transformation revision directly and/or nested
+
+    Directly means as operator of the workflow, nested means as operator of a workflow
+    which itself is contained in the workflow, at arbitrary nesting depth.
+    """
+
+    id: UUID  # noqa: A003
+    name: str
+    version_tag: str
+    state: State
+    direct_operator_ids: list[UUID] = Field(
+        ...,
+        description=(
+            "Ids of the operators of this workflow which are instances of the"
+            " transformation revision. Empty if it is only contained nested."
+        ),
+    )
+    via_workflow_ids: list[UUID] = Field(
+        ...,
+        description=(
+            "Ids of the workflow revisions which are instantiated as operators of this"
+            " workflow and contain the transformation revision. Empty if it is only"
+            " contained directly."
+        ),
+    )
+
+
 class TransformationRevision(TransformationRevisionStub):
     """Either a component revision or a workflow revision
 
