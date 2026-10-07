@@ -41,6 +41,20 @@ describe('TransformationHttpService', () => {
     expect(transformationHttpService).toBeTruthy();
   });
 
+  it('should fetch the workflows containing a transformation', () => {
+    let containingWorkflows: unknown;
+    transformationHttpService
+      .fetchContainingWorkflows('some-id')
+      .subscribe(response => (containingWorkflows = response));
+
+    const request = httpTestingController.expectOne(
+      '/api/transformations/some-id/containing_workflows'
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+    expect(containingWorkflows).toEqual([]);
+  });
+
   it('should run pure plot operators when executing transformations', () => {
     transformationHttpService
       .executeTransformation('some-id', {

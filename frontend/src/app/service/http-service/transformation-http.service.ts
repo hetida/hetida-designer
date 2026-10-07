@@ -13,6 +13,7 @@ import {
   UnitTestResults
 } from '../../model/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
+import { ContainingWorkflow } from '../../model/containing-workflow';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { NotificationService } from 'src/app/service/notifications/notification.service';
 
@@ -63,6 +64,13 @@ export class TransformationHttpService {
   public fetchTransformation(id: string): Observable<Transformation> {
     const url = `${this.apiEndpoint}/transformations/${id}`;
     return this.httpClient.get<Transformation>(url);
+  }
+
+  public fetchContainingWorkflows(
+    id: string
+  ): Observable<Array<ContainingWorkflow>> {
+    const url = `${this.apiEndpoint}/transformations/${id}/containing_workflows`;
+    return this.httpClient.get<Array<ContainingWorkflow>>(url);
   }
 
   public fetchTransformationsByIds(

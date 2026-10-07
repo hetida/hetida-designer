@@ -26,6 +26,8 @@ from hetdesrun.trafoutils.io.load import (
     load_python_file,
     transformation_revision_from_python_code,
 )
+from hetdesrun.trafoutils.trafo_collection import TrafoCollection
+from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 from hetdesrun.utils import State, get_uuid_from_seed
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
@@ -1232,6 +1234,59 @@ async def test_get_transformation_revision_by_id_with_inexistent_workflow(
                 "/api/transformations/",
                 str(get_uuid_from_seed("inexistent workflow")),
             )
+        )
+    assert response.status_code == 404
+    assert "Found no" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_get_containing_workflows(async_test_client, mocked_clean_test_db_session):
+    with TrafoCollection(save_to_db=True) as tc:
+        pt_string = tc.add_from_json_file(
+            "transformations/components/connectors/"
+            "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json"
+        )
+        with WorkflowConstructor(trafo_collector=tc, name="Inner", version_tag="1.0.0") as inner:
+            inner_op = inner.op(pt_string)
+        with WorkflowConstructor(trafo_collector=tc, name="Outer", version_tag="1.0.0") as outer:
+            outer.op(inner.result)
+
+    async with async_test_client as ac:
+        response = await ac.get(f"/api/transformations/{pt_string.id}/containing_workflows")
+        response_outer = await ac.get(
+            f"/api/transformations/{outer.result.id}/containing_workflows"
+        )
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(inner.result.id),
+            "name": "Inner",
+            "version_tag": "1.0.0",
+            "state": "DRAFT",
+            "direct_operator_ids": [str(inner_op.operator.id)],
+            "via_workflow_ids": [],
+        },
+        {
+            "id": str(outer.result.id),
+            "name": "Outer",
+            "version_tag": "1.0.0",
+            "state": "DRAFT",
+            "direct_operator_ids": [],
+            "via_workflow_ids": [str(inner.result.id)],
+        },
+    ]
+    assert response_outer.status_code == 200
+    assert response_outer.json() == []
+
+
+@pytest.mark.asyncio
+async def test_get_containing_workflows_of_inexistent_transformation_revision(
+    async_test_client, mocked_clean_test_db_session
+):
+    async with async_test_client as ac:
+        response = await ac.get(
+            "/api/transformations/"
+            f"{get_uuid_from_seed('inexistent transformation revision')}/containing_workflows"
         )
     assert response.status_code == 404
     assert "Found no" in response.json()["detail"]

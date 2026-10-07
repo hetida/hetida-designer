@@ -25,6 +25,7 @@ from hetdesrun.persistence.models.exceptions import (
     TypeConflict,
 )
 from hetdesrun.persistence.models.transformation import (
+    ContainingWorkflow,
     TransformationRevision,
     TransformationRevisionStub,
 )
@@ -790,6 +791,77 @@ def filter_unused_transformation_ids(transformation_ids: list[UUID]) -> set[UUID
         )
 
     return {tr_id for tr_id in transformation_ids if tr_id not in used_ids}
+
+
+def select_containing_workflows(transformation_id: UUID) -> list[ContainingWorkflow]:
+    """Determine the workflows containing a transformation revision directly or nested
+
+    This relies on the nestings stored with each workflow. They reflect the nested
+    workflows as they were when the containing workflow was stored the last time, i.e.
+    changes of a DRAFT workflow nested in another DRAFT workflow only show up after the
+    latter is stored again, e.g. by upgrading its operators.
+
+    The result is ordered by name and version tag of the containing workflows.
+
+    This does not check for component imports!
+    """
+    with get_session()() as session, session.begin():
+        if (
+            session.execute(
+                select(TransformationRevisionDBModel.id).where(
+                    TransformationRevisionDBModel.id == transformation_id
+                )
+            ).scalar_one_or_none()
+            is None
+        ):
+            raise DBNotFoundError(
+                f"Found no transformation revision in database with id {transformation_id}"
+            )
+
+        rows = session.execute(
+            select(
+                NestingDBModel.workflow_id,
+                NestingDBModel.depth,
+                NestingDBModel.via_operator_id,
+                NestingDBModel.via_transformation_id,
+                TransformationRevisionDBModel.name,
+                TransformationRevisionDBModel.version_tag,
+                TransformationRevisionDBModel.state,
+            )
+            .join(
+                TransformationRevisionDBModel,
+                TransformationRevisionDBModel.id == NestingDBModel.workflow_id,
+            )
+            .where(NestingDBModel.nested_transformation_id == transformation_id)
+        ).all()
+
+    containing_workflows_by_id: dict[UUID, ContainingWorkflow] = {}
+    for row in rows:
+        containing_workflow = containing_workflows_by_id.setdefault(
+            row.workflow_id,
+            ContainingWorkflow(
+                id=row.workflow_id,
+                name=row.name,
+                version_tag=row.version_tag,
+                state=row.state,
+                direct_operator_ids=[],
+                via_workflow_ids=[],
+            ),
+        )
+        if row.depth == 1:
+            containing_workflow.direct_operator_ids.append(row.via_operator_id)
+        elif row.via_transformation_id not in containing_workflow.via_workflow_ids:
+            # several nesting rows lead through the same nested workflow if it contains
+            # the transformation revision more than once
+            containing_workflow.via_workflow_ids.append(row.via_transformation_id)
+
+    return sorted(
+        containing_workflows_by_id.values(),
+        key=lambda containing_workflow: (
+            containing_workflow.name,
+            containing_workflow.version_tag,
+        ),
+    )
 
 
 def get_distinct_categories(types: set[Type] | None = None) -> list[str]:

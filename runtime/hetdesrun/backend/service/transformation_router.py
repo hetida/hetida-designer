@@ -76,12 +76,14 @@ from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
     read_component_imports_recursively,
     read_single_transformation_revision,
+    select_containing_workflows,
     select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import (
+    ContainingWorkflow,
     TrafoUpdateState,
     TransformationRevision,
     TransformationRevisionStub,
@@ -572,6 +574,42 @@ async def get_transformation_revision_by_id(
     logger.debug(transformation_revision.model_dump_json())
 
     return transformation_revision
+
+
+@transformation_router.get(
+    "/{id}/containing_workflows",
+    response_model=list[ContainingWorkflow],
+    summary="Returns the workflows containing the transformation revision directly or nested.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the containing workflows"},
+        status.HTTP_404_NOT_FOUND: {"description": "Transformation revision not found"},
+    },
+)
+async def get_containing_workflows(
+    id: UUID = Path(  # noqa: A002
+        ...,
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
+    ),
+) -> list[ContainingWorkflow]:
+    """Get the workflows which contain the transformation revision
+
+    This includes workflows which contain it only nested, i.e. as operator of a workflow
+    which is itself contained in them, at arbitrary nesting depth. Imports of components
+    in the code of other components are not taken into account.
+
+    A workflow is listed as it was stored the last time: Changes of a DRAFT workflow nested
+    in another DRAFT workflow are only reflected after the latter is stored again, e.g. by
+    upgrading its operators.
+    """
+    logger.info("get workflows containing transformation revision %s", id)
+
+    try:
+        return select_containing_workflows(id)
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
 
 @transformation_router.put(
