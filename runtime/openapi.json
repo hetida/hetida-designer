@@ -4257,6 +4257,556 @@
         }
       }
     },
+    "/api/transformations/revision_groups": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the latest / highest transformation revision of each revision group",
+        "description": "Get the latest / highest transformation revision of each revision group.\n\n* latest: The revision with the newest release timestamp. This is the revision\n  the execute-latest endpoints execute.\n* highest: The revision with the highest semantic version (see https://semver.org)\n  as version tag. Pre-releases are lower than the corresponding release and build\n  metadata is ignored. Revisions whose version tag is not a semantic version are\n  ignored, so a revision can be prevented from becoming the highest by giving it\n  such a version tag. This is the revision the execute-highest endpoints execute.\n\nBy default only released revisions are considered. Deprecated revisions and, only\nfor highest, drafts can be included.\n\nThe filters are applied first: For each revision group with at least one revision\nmatching all filters, the latest / highest of its revisions matching the filters is\nreturned. The filters are logically combined as follows\n* OR for the same filter, e.g. providing two categories will yield revisions of both.\n* AND between different filters.\n\nThe result is ordered by name and revision group id.",
+        "operationId": "get_selected_transformation_revisions_of_revision_groups_api_transformations_revision_groups_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Type"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified type.",
+              "title": "Type"
+            },
+            "description": "Filter for specified type."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of categories.",
+              "title": "Category"
+            },
+            "description": "Filter for specified list of categories."
+          },
+          {
+            "name": "category_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category prefix that must be matched exactly (case-sensitive).",
+              "title": "Category Prefix"
+            },
+            "description": "Category prefix that must be matched exactly (case-sensitive)."
+          },
+          {
+            "name": "revision_group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of revision group ids.",
+              "title": "Revision Group Id"
+            },
+            "description": "Filter for specified list of revision group ids."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of names.",
+              "title": "Name"
+            },
+            "description": "Filter for specified list of names."
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revisions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransformationRevision-Output"
+                  },
+                  "title": "Response Get Selected Transformation Revisions Of Revision Groups Api Transformations Revision Groups Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/stubs": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns stubs of the latest / highest transformation revision of each revision group",
+        "description": "Get stubs of the latest / highest transformation revision of each revision group.\n\nThe revisions are selected exactly as by the endpoint /transformations/revision_groups,\nsee there. Stubs are described at the endpoint /transformations/stubs.",
+        "operationId": "get_selected_transformation_revision_stubs_of_revision_groups_api_transformations_revision_groups_stubs_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Type"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified type.",
+              "title": "Type"
+            },
+            "description": "Filter for specified type."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of categories.",
+              "title": "Category"
+            },
+            "description": "Filter for specified list of categories."
+          },
+          {
+            "name": "category_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category prefix that must be matched exactly (case-sensitive).",
+              "title": "Category Prefix"
+            },
+            "description": "Category prefix that must be matched exactly (case-sensitive)."
+          },
+          {
+            "name": "revision_group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of revision group ids.",
+              "title": "Revision Group Id"
+            },
+            "description": "Filter for specified list of revision group ids."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of names.",
+              "title": "Name"
+            },
+            "description": "Filter for specified list of names."
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision stubs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransformationRevisionStub"
+                  },
+                  "title": "Response Get Selected Transformation Revision Stubs Of Revision Groups Api Transformations Revision Groups Stubs Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/{revision_group_id}": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the latest / highest transformation revision of a revision group",
+        "description": "Get the latest / highest transformation revision of a revision group.\n\nThe revision is selected exactly as by the endpoint /transformations/revision_groups,\nsee there. In particular it is the revision the execute-latest respectively\nexecute-highest endpoints execute.",
+        "operationId": "get_selected_transformation_revision_of_revision_group_api_transformations_revision_groups__revision_group_id__get",
+        "parameters": [
+          {
+            "name": "revision_group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Revision Group Id"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformationRevision-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "The revision group has no revision which can be selected"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/{revision_group_id}/stub": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the stub of the latest / highest transformation revision of a revision group",
+        "description": "Get the stub of the latest / highest transformation revision of a revision group.\n\nThe revision is selected exactly as by the endpoint /transformations/revision_groups,\nsee there. In particular it is the revision the execute-latest respectively\nexecute-highest endpoints execute. Stubs are described at the endpoint\n/transformations/stubs.",
+        "operationId": "get_selected_transformation_revision_stub_of_revision_group_api_transformations_revision_groups__revision_group_id__stub_get",
+        "parameters": [
+          {
+            "name": "revision_group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Revision Group Id"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision stub",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformationRevisionStub"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "The revision group has no revision which can be selected"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
     "/api/transformations/{id}": {
       "get": {
         "tags": [
@@ -4691,6 +5241,7 @@
           "transformations"
         ],
         "summary": "Upgrade operators in a DRAFT workflow transformation revision.",
+        "description": "Upgrade the operators of a DRAFT workflow transformation revision.\n\n* Operators of DRAFT transformation revisions are updated to the current state of\n  their transformation revision.\n* Operators of RELEASED or DISABLED transformation revisions are upgraded to the latest\n  released revision of their revision group. This is the revision provided by the\n  endpoint /transformations/revision_groups/{revision_group_id} with by=latest and executed\n  by the execute-latest endpoints. If their revision group has no released revision, they\n  are kept.",
         "operationId": "upgrade_workflow_operators_api_transformations__id__upgrade_operators_put",
         "parameters": [
           {
@@ -5023,7 +5574,7 @@
           "transformations"
         ],
         "summary": "Executes the latest transformation revision of a revision group",
-        "description": "Execute the latest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "description": "Execute the latest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database. Deprecated revisions are only\nconsidered if include_deprecated is set to true. This is the revision obtained from the\nendpoint /transformations/revision_groups/{revision_group_id} with by=latest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_latest_transformation_revision_endpoint_api_transformations_execute_latest_post",
         "requestBody": {
           "content": {
@@ -5080,7 +5631,7 @@
           "transformations"
         ],
         "summary": "Executes the latest transformation revision of a revision group asynchronously",
-        "description": "Execute the latest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "description": "Execute the latest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database. Deprecated revisions are only\nconsidered if include_deprecated is set to true. This is the revision obtained from the\nendpoint /transformations/revision_groups/{revision_group_id} with by=latest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_asynchronous_latest_transformation_revision_endpoint_api_transformations_execute_latest_async_post",
         "parameters": [
           {
@@ -5157,6 +5708,178 @@
               "application/json": {
                 "schema": {
                   "title": "Response Execute Asynchronous Latest Transformation Revision Endpoint Api Transformations Execute Latest Async Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transformations/execute-highest": {
+      "post": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Executes the highest transformation revision of a revision group",
+        "description": "Execute the highest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe highest transformation will be determined by semantic versioning (see https://semver.org)\nof the version tags of the released revisions of the revision group which are stored in the\ndatabase. Revisions whose version tag is not a semantic version are ignored. Deprecated\nrevisions and drafts are only considered if include_deprecated respectively include_drafts\nis set to true. This is the revision obtained from the endpoint\n/transformations/revision_groups/{revision_group_id} with by=highest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "operationId": "execute_highest_transformation_revision_endpoint_api_transformations_execute_highest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecHighestByGroupIdInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully executed the highest transformation revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transformations/execute-highest-async": {
+      "post": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Executes the highest transformation revision of a revision group asynchronously",
+        "description": "Execute the highest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe highest transformation will be determined by semantic versioning (see https://semver.org)\nof the version tags of the released revisions of the revision group which are stored in the\ndatabase. Revisions whose version tag is not a semantic version are ignored. Deprecated\nrevisions and drafts are only considered if include_deprecated respectively include_drafts\nis set to true. This is the revision obtained from the endpoint\n/transformations/revision_groups/{revision_group_id} with by=highest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "operationId": "execute_asynchronous_highest_transformation_revision_endpoint_api_transformations_execute_highest_async_post",
+        "parameters": [
+          {
+            "name": "callback_url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri",
+              "minLength": 1,
+              "maxLength": 2083,
+              "description": "If provided execute asynchronous and post response to callback_url",
+              "title": "Callback Url"
+            },
+            "description": "If provided execute asynchronous and post response to callback_url"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecHighestByGroupIdInput"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "receive_execution_response": {
+            "{$callback_url}": {
+              "post": {
+                "summary": "Receive Execution Response",
+                "operationId": "receive_execution_response__callback_url__post",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Input"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted execution request for highest revision of revision group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Execute Asynchronous Highest Transformation Revision Endpoint Api Transformations Execute Highest Async Post"
                 }
               }
             }
@@ -7509,6 +8232,57 @@
         ],
         "title": "ExecByIdInput"
       },
+      "ExecHighestByGroupIdInput": {
+        "properties": {
+          "revision_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Group Id"
+          },
+          "wiring": {
+            "$ref": "#/components/schemas/WorkflowWiring"
+          },
+          "resolved_reproducibility_references": {
+            "$ref": "#/components/schemas/ReproducibilityReference",
+            "description": "Resolved references to information needed to reproduce an execution result.The provided data can be used to replace data that would usually be produced at runtime."
+          },
+          "run_pure_plot_operators": {
+            "type": "boolean",
+            "title": "Run Pure Plot Operators",
+            "description": "Whether pure plot components should be run.",
+            "default": false
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id",
+            "description": "Optional job id, that can be used to track an execution job."
+          },
+          "runtime_execution_context": {
+            "$ref": "#/components/schemas/RuntimeExecutionContext",
+            "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
+          },
+          "include_deprecated": {
+            "type": "boolean",
+            "title": "Include Deprecated",
+            "description": "Whether deprecated (DISABLED) revisions may be selected for execution.",
+            "default": false
+          },
+          "include_drafts": {
+            "type": "boolean",
+            "title": "Include Drafts",
+            "description": "Whether DRAFT revisions may be selected for execution.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision_group_id",
+          "wiring"
+        ],
+        "title": "ExecHighestByGroupIdInput",
+        "description": "Payload for executing the highest revision of a revision group\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the highest revision with the same input as before will not work, but will result\nin errors.\n\nThe highest transformation will be determined by semantic versioning of the version tags of the\nreleased revisions of the revision group which are stored in the database. Revisions whose\nversion tag is not a semantic version are ignored.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
+      },
       "ExecLatestByGroupIdInput": {
         "properties": {
           "revision_group_id": {
@@ -7538,6 +8312,12 @@
           "runtime_execution_context": {
             "$ref": "#/components/schemas/RuntimeExecutionContext",
             "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
+          },
+          "include_deprecated": {
+            "type": "boolean",
+            "title": "Include Deprecated",
+            "description": "Whether deprecated (DISABLED) revisions may be selected for execution.",
+            "default": false
           }
         },
         "type": "object",
@@ -7546,7 +8326,7 @@
           "wiring"
         ],
         "title": "ExecLatestByGroupIdInput",
-        "description": "Payload for execute-latest kafka endpoint\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nlatest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the last revision with the same input as before will not work, but will result in\nerrors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
+        "description": "Payload for executing the latest revision of a revision group\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nlatest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the latest revision with the same input as before will not work, but will result in\nerrors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
       },
       "ExecutionEngine": {
         "type": "string",
@@ -9301,6 +10081,15 @@
           "failure"
         ],
         "title": "Result"
+      },
+      "RevisionSelection": {
+        "type": "string",
+        "enum": [
+          "latest",
+          "highest"
+        ],
+        "title": "RevisionSelection",
+        "description": "Criterion for selecting one revision of a revision group\n\nLATEST selects the revision with the newest release timestamp.\nHIGHEST selects the revision with the highest semantic version as version tag,\nignoring revisions whose version tag is not a semantic version."
       },
       "RuntimeExecutionContext": {
         "properties": {

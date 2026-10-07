@@ -254,7 +254,8 @@ class RuntimeConfig(BaseSettings):
         validation_alias="HD_ALLOWED_CALLBACK_URL_PATTERNS",
         description=(
             "Allowlist of URL patterns that the callback_url of the asynchronous"
-            " execution endpoints (/execute-async, /execute-latest-async) must match."
+            " execution endpoints (/execute-async, /execute-latest-async,"
+            " /execute-highest-async) must match."
             " A caller-supplied callback_url is only accepted if it matches at least one"
             " pattern here; otherwise the request is rejected. This prevents the backend"
             " from being abused to POST execution results (and, depending on the outgoing"

@@ -4,7 +4,7 @@ import json
 import logging
 from copy import deepcopy
 from posixpath import join as posix_urljoin
-from typing import Annotated, Any
+from typing import Annotated, Any, NamedTuple
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -60,7 +60,13 @@ from hetdesrun.exportimport.importing import (
     import_importable,
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
-from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
+from hetdesrun.models.execution import (
+    ExecByIdInput,
+    ExecByRevisionGroupIdInput,
+    ExecHighestByGroupIdInput,
+    ExecLatestByGroupIdInput,
+)
+from hetdesrun.models.revision_selection import RevisionSelection, validate_revision_selection
 from hetdesrun.models.run import UnitTestPayload, UnitTestResults
 from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -72,10 +78,10 @@ from hetdesrun.persistence.dbservice.exceptions import (
 from hetdesrun.persistence.dbservice.revision import (
     ComponentImportComponentError,
     delete_single_transformation_revision,
-    get_latest_revision_id,
     get_multiple_transformation_revisions,
     read_component_imports_recursively,
     read_single_transformation_revision,
+    read_single_transformation_revision_stub,
     select_containing_workflows,
     select_multiple_transformation_revision_stubs,
     store_single_transformation_revision,
@@ -106,6 +112,12 @@ from hetdesrun.trafoutils.nestings import MissingReferencedTransformation, Nesti
 from hetdesrun.trafoutils.upgrade_operators import (
     upgrade_operators_in_workflow,
     upgrade_workflow_operator_in_place,
+)
+from hetdesrun.trafoutils.versioning import (
+    load_selected_revision_stubs,
+    load_selected_revisions,
+    select_revision_id_of_group,
+    select_revision_ids_per_group,
 )
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import (
@@ -544,6 +556,301 @@ async def get_all_transformation_revision_stubs(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     return trafo_stubs
+
+
+class RevisionSelectionOptions(NamedTuple):
+    by: RevisionSelection
+    include_deprecated: bool
+    include_drafts: bool
+
+
+def revision_selection_options(
+    by: RevisionSelection = Query(
+        RevisionSelection.LATEST,
+        description=(
+            "Select the latest revision (by release timestamp) or the highest revision"
+            " (by semantic versioning of the version tags, ignoring revisions whose version"
+            " tag is not a semantic version)."
+        ),
+    ),
+    include_deprecated: bool = Query(
+        False,
+        description="Set to True to also consider deprecated revisions (state DISABLED).",
+    ),
+    include_drafts: bool = Query(
+        False,
+        description=(
+            "Set to True to also consider revisions with state DRAFT. Only possible if by is"
+            " highest, since drafts have no release timestamp."
+        ),
+    ),
+) -> RevisionSelectionOptions:
+    try:
+        validate_revision_selection(by, include_drafts)
+    except ValueError as err:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(err)) from err
+    return RevisionSelectionOptions(by, include_deprecated, include_drafts)
+
+
+@transformation_router.get(
+    "/revision_groups",
+    response_model=list[TransformationRevision],
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the latest / highest transformation revision of each revision group",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the transformation revisions"},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Drafts can only be included for the highest revision"
+        },
+    },
+)
+async def get_selected_transformation_revisions_of_revision_groups(
+    selection: Annotated[RevisionSelectionOptions, Depends(revision_selection_options)],
+    type: Type  # noqa: A002
+    | None = Query(
+        None,
+        description="Filter for specified type.",
+    ),
+    categories: list[ValidStr] | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_ids: list[UUID] | None = Query(
+        None,
+        description="Filter for specified list of revision group ids.",
+        alias="revision_group_id",
+    ),
+    names: list[NonEmptyValidStr] | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+) -> list[TransformationRevision]:
+    """Get the latest / highest transformation revision of each revision group.
+
+    * latest: The revision with the newest release timestamp. This is the revision
+      the execute-latest endpoints execute.
+    * highest: The revision with the highest semantic version (see https://semver.org)
+      as version tag. Pre-releases are lower than the corresponding release and build
+      metadata is ignored. Revisions whose version tag is not a semantic version are
+      ignored, so a revision can be prevented from becoming the highest by giving it
+      such a version tag. This is the revision the execute-highest endpoints execute.
+
+    By default only released revisions are considered. Deprecated revisions and, only
+    for highest, drafts can be included.
+
+    The filters are applied first: For each revision group with at least one revision
+    matching all filters, the latest / highest of its revisions matching the filters is
+    returned. The filters are logically combined as follows
+    * OR for the same filter, e.g. providing two categories will yield revisions of both.
+    * AND between different filters.
+
+    The result is ordered by name and revision group id.
+    """
+    logger.info(
+        "get %s transformation revision of each revision group with %s",
+        selection.by,
+        repr(selection),
+    )
+    try:
+        transformation_revisions = load_selected_revisions(
+            select_revision_ids_per_group(
+                by=selection.by,
+                include_deprecated=selection.include_deprecated,
+                include_drafts=selection.include_drafts,
+                type=type,
+                categories=categories,
+                category_prefix=category_prefix,
+                revision_group_ids=revision_group_ids,
+                names=names,
+            )
+        )
+    except DBIntegrityError as err:
+        msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    return transformation_revisions
+
+
+@transformation_router.get(
+    "/revision_groups/stubs",
+    response_model=list[TransformationRevisionStub],
+    summary="Returns stubs of the latest / highest transformation revision of each revision group",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the transformation revision stubs"},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Drafts can only be included for the highest revision"
+        },
+    },
+)
+async def get_selected_transformation_revision_stubs_of_revision_groups(
+    selection: Annotated[RevisionSelectionOptions, Depends(revision_selection_options)],
+    type: Type  # noqa: A002
+    | None = Query(
+        None,
+        description="Filter for specified type.",
+    ),
+    categories: list[ValidStr] | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_ids: list[UUID] | None = Query(
+        None,
+        description="Filter for specified list of revision group ids.",
+        alias="revision_group_id",
+    ),
+    names: list[NonEmptyValidStr] | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+) -> list[TransformationRevisionStub]:
+    """Get stubs of the latest / highest transformation revision of each revision group.
+
+    The revisions are selected exactly as by the endpoint /transformations/revision_groups,
+    see there. Stubs are described at the endpoint /transformations/stubs.
+    """
+    logger.info(
+        "get stubs of %s transformation revision of each revision group with %s",
+        selection.by,
+        repr(selection),
+    )
+    try:
+        trafo_stubs = load_selected_revision_stubs(
+            select_revision_ids_per_group(
+                by=selection.by,
+                include_deprecated=selection.include_deprecated,
+                include_drafts=selection.include_drafts,
+                type=type,
+                categories=categories,
+                category_prefix=category_prefix,
+                revision_group_ids=revision_group_ids,
+                names=names,
+            )
+        )
+    except DBIntegrityError as err:
+        msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    return trafo_stubs
+
+
+@transformation_router.get(
+    "/revision_groups/{revision_group_id}",
+    response_model=TransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the latest / highest transformation revision of a revision group",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the transformation revision"},
+        status.HTTP_404_NOT_FOUND: {
+            "description": "The revision group has no revision which can be selected"
+        },
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Drafts can only be included for the highest revision"
+        },
+    },
+)
+async def get_selected_transformation_revision_of_revision_group(
+    selection: Annotated[RevisionSelectionOptions, Depends(revision_selection_options)],
+    revision_group_id: UUID = Path(
+        ...,
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
+    ),
+) -> TransformationRevision:
+    """Get the latest / highest transformation revision of a revision group.
+
+    The revision is selected exactly as by the endpoint /transformations/revision_groups,
+    see there. In particular it is the revision the execute-latest respectively
+    execute-highest endpoints execute.
+    """
+    logger.info(
+        "get %s transformation revision of revision group %s with %s",
+        selection.by,
+        revision_group_id,
+        repr(selection),
+    )
+    try:
+        transformation_revision = read_single_transformation_revision(
+            select_revision_id_of_group(
+                revision_group_id,
+                by=selection.by,
+                include_deprecated=selection.include_deprecated,
+                include_drafts=selection.include_drafts,
+            )
+        )
+    except DBNotFoundError as err:
+        msg = (
+            f"Could not find {selection.by} transformation revision"
+            f" of revision group {revision_group_id}:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    return transformation_revision
+
+
+@transformation_router.get(
+    "/revision_groups/{revision_group_id}/stub",
+    response_model=TransformationRevisionStub,
+    summary="Returns the stub of the latest / highest transformation revision of a revision group",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the transformation revision stub"},
+        status.HTTP_404_NOT_FOUND: {
+            "description": "The revision group has no revision which can be selected"
+        },
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Drafts can only be included for the highest revision"
+        },
+    },
+)
+async def get_selected_transformation_revision_stub_of_revision_group(
+    selection: Annotated[RevisionSelectionOptions, Depends(revision_selection_options)],
+    revision_group_id: UUID = Path(
+        ...,
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
+    ),
+) -> TransformationRevisionStub:
+    """Get the stub of the latest / highest transformation revision of a revision group.
+
+    The revision is selected exactly as by the endpoint /transformations/revision_groups,
+    see there. In particular it is the revision the execute-latest respectively
+    execute-highest endpoints execute. Stubs are described at the endpoint
+    /transformations/stubs.
+    """
+    logger.info(
+        "get stub of %s transformation revision of revision group %s with %s",
+        selection.by,
+        revision_group_id,
+        repr(selection),
+    )
+    try:
+        trafo_stub = read_single_transformation_revision_stub(
+            select_revision_id_of_group(
+                revision_group_id,
+                by=selection.by,
+                include_deprecated=selection.include_deprecated,
+                include_drafts=selection.include_drafts,
+            )
+        )
+    except DBNotFoundError as err:
+        msg = (
+            f"Could not find {selection.by} transformation revision"
+            f" of revision group {revision_group_id}:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
+    return trafo_stub
 
 
 @transformation_router.get(
@@ -1035,6 +1342,16 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
     expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> UpdatedTransformationRevision:
+    """Upgrade the operators of a DRAFT workflow transformation revision.
+
+    * Operators of DRAFT transformation revisions are updated to the current state of
+      their transformation revision.
+    * Operators of RELEASED or DISABLED transformation revisions are upgraded to the latest
+      released revision of their revision group. This is the revision provided by the
+      endpoint /transformations/revision_groups/{revision_group_id} with by=latest and executed
+      by the execute-latest endpoints. If their revision group has no released revision, they
+      are kept.
+    """
     logger.info("Upgrade workflow %s operators", id)
 
     if updated_transformation_revision.type is not Type.WORKFLOW:
@@ -1063,10 +1380,12 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg)
 
-    # TODO: expose options "only_check_deprecated" and "use_release_date"
+    # TODO: expose options "only_check_deprecated" and "by"
     try:
         upgraded_operators_trafo_rev = upgrade_operators_in_workflow(
-            updated_transformation_revision, only_check_deprecated=False, use_release_date=True
+            updated_transformation_revision,
+            only_check_deprecated=False,
+            by=RevisionSelection.LATEST,
         )
     except DBIntegrityError as err:
         msg = f"Integrity error in DB when upgrading operators for id {id}:\n{str(err)}"
@@ -1685,22 +2004,136 @@ async def execute_asynchronous_transformation_revision_endpoint(
     return {"message": f"Execution request with job_id={exec_by_id.job_id} accepted"}
 
 
-async def handle_latest_trafo_revision_execution_request(
-    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
+async def handle_revision_group_execution_request(
+    exec_by_group_id_input: ExecByRevisionGroupIdInput,
+    by: RevisionSelection,
+    include_drafts: bool = False,
 ) -> ExecutionResponseFrontendDto:
     try:
-        id_ = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
+        id_ = select_revision_id_of_group(
+            exec_by_group_id_input.revision_group_id,
+            by=by,
+            include_deprecated=exec_by_group_id_input.include_deprecated,
+            include_drafts=include_drafts,
+        )
     except DBNotFoundError as err:
         msg = (
             "Could not find any transformation revision with "
-            f"revision group id {exec_latest_by_group_id_input.revision_group_id}:\n{str(err)}"
+            f"revision group id {exec_by_group_id_input.revision_group_id}:\n{str(err)}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id_)
+    exec_by_id_input = exec_by_group_id_input.to_exec_by_id(id_)
 
     return await handle_trafo_revision_execution_request(exec_by_id_input)
+
+
+async def execute_revision_of_group(
+    exec_by_group_id_input: ExecByRevisionGroupIdInput,
+    by: RevisionSelection,
+    include_drafts: bool = False,
+) -> MsgSpecJSONResponse:
+    with logfire.span(
+        "backend execution request handling without fastapi parsing",
+        revision_group_id=str(exec_by_group_id_input.revision_group_id),
+        revision_selection=str(by),
+        job_id=str(exec_by_group_id_input.job_id),
+        hierarchy_object=exec_by_group_id_input.runtime_execution_context.hierarchy_object,
+    ) as backend_exec_span:
+        exec_result = await handle_revision_group_execution_request(
+            exec_by_group_id_input, by, include_drafts
+        )
+        backend_exec_span.set_attribute("trafo_id", exec_result.tr_id)
+        backend_exec_span.set_attribute("trafo_name", exec_result.tr_name)
+        backend_exec_span.set_attribute("trafo_tag", exec_result.tr_tag)
+
+        with logfire.span("backend execution result serialization without fastapi"):
+            dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
+            msgspec_result = MsgSpecJSONResponse(content=dict_like_obj)
+
+    return msgspec_result
+
+
+async def execute_revision_of_group_and_post(
+    exec_by_group_id_input: ExecByRevisionGroupIdInput,
+    by: RevisionSelection,
+    include_drafts: bool,
+    callback_url: HttpUrl,
+) -> None:
+    # necessary general try-except block due to issue of starlette exception handler
+    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
+    try:
+        try:
+            with logfire.span(
+                "backend execution request handling without fastapi parsing",
+                revision_group_id=str(exec_by_group_id_input.revision_group_id),
+                revision_selection=str(by),
+                job_id=str(exec_by_group_id_input.job_id),
+                hierarchy_object=exec_by_group_id_input.runtime_execution_context.hierarchy_object,
+            ) as backend_exec_span:
+                result = await handle_revision_group_execution_request(
+                    exec_by_group_id_input, by, include_drafts
+                )
+                backend_exec_span.set_attribute("trafo_id", result.tr_id)
+                backend_exec_span.set_attribute("trafo_name", result.tr_name)
+                backend_exec_span.set_attribute("trafo_tag", result.tr_tag)
+
+                logger.info(
+                    "Finished execution with job_id=%s",
+                    str(exec_by_group_id_input.job_id),
+                )
+        except HTTPException as http_exc:
+            logger.error(
+                "Execution with job_id=%s as background task failed:\n%s",
+                str(exec_by_group_id_input.job_id),
+                str(http_exc.detail),
+            )
+            # no re-raise reasonable due to issue mentioned above
+        else:
+            with logfire.span("Send exec result to callback_url"):
+                await send_result_to_callback_url(callback_url, result)
+                logger.info(
+                    "Sent result of execution with job_id %s",
+                    str(exec_by_group_id_input.job_id),
+                )
+    except Exception as e:
+        logger.error(
+            "An unexpected error occurred during execution with job_id=%s as background task:\n%s",
+            str(exec_by_group_id_input.job_id),
+            str(e),
+        )
+        raise e
+
+
+def accept_asynchronous_revision_group_execution(
+    exec_by_group_id_input: ExecByRevisionGroupIdInput,
+    by: RevisionSelection,
+    include_drafts: bool,
+    background_tasks: BackgroundTasks,
+    callback_url: HttpUrl,
+) -> dict[str, str]:
+    if not callback_url_is_allowed(str(callback_url)):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "The provided callback_url is not allowed. It must match one of the"
+                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
+            ),
+        )
+
+    background_tasks.add_task(
+        execute_revision_of_group_and_post,
+        exec_by_group_id_input,
+        by,
+        include_drafts,
+        callback_url,
+    )
+
+    return {
+        "message": f"Execution request for {by} revision with "
+        f"job_id={exec_by_group_id_input.job_id} accepted"
+    }
 
 
 @transformation_router.post(
@@ -1727,79 +2160,16 @@ async def execute_latest_transformation_revision_endpoint(
     calling this endpoint with the same payload as before will not work, but will result in errors.
 
     The latest transformation will be determined by the released_timestamp of the released revisions
-    of the revision group which are stored in the database.
+    of the revision group which are stored in the database. Deprecated revisions are only
+    considered if include_deprecated is set to true. This is the revision obtained from the
+    endpoint /transformations/revision_groups/{revision_group_id} with by=latest.
 
     This transformation will be loaded from the DB and executed with the wiring sent in the request
     body.
 
     The test wiring will not be updated.
     """
-
-    with logfire.span(
-        "backend execution request handling without fastapi parsing",
-        revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
-        job_id=str(exec_latest_by_group_id_input.job_id),
-        hierarchy_object=exec_latest_by_group_id_input.runtime_execution_context.hierarchy_object,
-    ) as backend_exec_span:
-        exec_result = await handle_latest_trafo_revision_execution_request(
-            exec_latest_by_group_id_input
-        )
-        backend_exec_span.set_attribute("trafo_id", exec_result.tr_id)
-        backend_exec_span.set_attribute("trafo_name", exec_result.tr_name)
-        backend_exec_span.set_attribute("trafo_tag", exec_result.tr_tag)
-
-        with logfire.span("backend execution result serialization without fastapi"):
-            dict_like_obj = handle_frontend_exec_response_dict_serialisation(exec_result)
-            msgspec_result = MsgSpecJSONResponse(content=dict_like_obj)
-
-    return msgspec_result
-
-
-async def execute_latest_and_post(
-    exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
-) -> None:
-    # necessary general try-except block due to issue of starlette exception handler
-    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
-    try:
-        try:
-            with logfire.span(
-                "backend execution request handling without fastapi parsing",
-                revision_group_id=str(exec_latest_by_group_id_input.revision_group_id),
-                job_id=str(exec_latest_by_group_id_input.job_id),
-                hierarchy_object=exec_latest_by_group_id_input.runtime_execution_context.hierarchy_object,
-            ) as backend_exec_span:
-                result = await handle_latest_trafo_revision_execution_request(
-                    exec_latest_by_group_id_input
-                )
-                backend_exec_span.set_attribute("trafo_id", result.tr_id)
-                backend_exec_span.set_attribute("trafo_name", result.tr_name)
-                backend_exec_span.set_attribute("trafo_tag", result.tr_tag)
-
-                logger.info(
-                    "Finished execution with job_id=%s",
-                    str(exec_latest_by_group_id_input.job_id),
-                )
-        except HTTPException as http_exc:
-            logger.error(
-                "Execution with job_id=%s as background task failed:\n%s",
-                str(exec_latest_by_group_id_input.job_id),
-                str(http_exc.detail),
-            )
-            # no re-raise reasonable due to issue mentioned above
-        else:
-            with logfire.span("Send exec result to callback_url"):
-                await send_result_to_callback_url(callback_url, result)
-                logger.info(
-                    "Sent result of execution with job_id %s",
-                    str(exec_latest_by_group_id_input.job_id),
-                )
-    except Exception as e:
-        logger.error(
-            "An unexpected error occurred during execution with job_id=%s as background task:\n%s",
-            str(exec_latest_by_group_id_input.job_id),
-            str(e),
-        )
-        raise e
+    return await execute_revision_of_group(exec_latest_by_group_id_input, RevisionSelection.LATEST)
 
 
 @transformation_router.post(
@@ -1835,28 +2205,117 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
     You should have implemented an appropriate endpoint before using this one.
 
     The latest transformation will be determined by the released_timestamp of the released revisions
-    of the revision group which are stored in the database.
+    of the revision group which are stored in the database. Deprecated revisions are only
+    considered if include_deprecated is set to true. This is the revision obtained from the
+    endpoint /transformations/revision_groups/{revision_group_id} with by=latest.
 
     This transformation will be loaded from the DB and executed with the wiring sent in the request
     body.
 
     The test wiring will not be updated.
     """
-    if not callback_url_is_allowed(str(callback_url)):
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "The provided callback_url is not allowed. It must match one of the"
-                " patterns configured via HD_ALLOWED_CALLBACK_URL_PATTERNS."
-            ),
-        )
+    return accept_asynchronous_revision_group_execution(
+        exec_latest_by_group_id_input,
+        RevisionSelection.LATEST,
+        False,
+        background_tasks,
+        callback_url,
+    )
 
-    background_tasks.add_task(execute_latest_and_post, exec_latest_by_group_id_input, callback_url)
 
-    return {
-        "message": "Execution request for latest revision with "
-        f"job_id={exec_latest_by_group_id_input.job_id} accepted"
-    }
+@transformation_router.post(
+    "/execute-highest",
+    response_model=ExecutionResponseFrontendDto,
+    summary="Executes the highest transformation revision of a revision group",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the highest transformation revision"
+        }
+    },
+    dependencies=[Depends(inject_runtime_http_client)],
+)
+async def execute_highest_transformation_revision_endpoint(
+    exec_highest_by_group_id_input: ExecHighestByGroupIdInput,
+) -> MsgSpecJSONResponse:
+    """Execute the highest transformation revision of a revision group.
+
+    WARNING: Even when the input is not changed, the execution response might change if a new
+    highest transformation revision exists.
+
+    WARNING: The inputs and outputs may be different for different revisions. In such a case,
+    calling this endpoint with the same payload as before will not work, but will result in errors.
+
+    The highest transformation will be determined by semantic versioning (see https://semver.org)
+    of the version tags of the released revisions of the revision group which are stored in the
+    database. Revisions whose version tag is not a semantic version are ignored. Deprecated
+    revisions and drafts are only considered if include_deprecated respectively include_drafts
+    is set to true. This is the revision obtained from the endpoint
+    /transformations/revision_groups/{revision_group_id} with by=highest.
+
+    This transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+    return await execute_revision_of_group(
+        exec_highest_by_group_id_input,
+        RevisionSelection.HIGHEST,
+        exec_highest_by_group_id_input.include_drafts,
+    )
+
+
+@transformation_router.post(
+    "/execute-highest-async",
+    callbacks=callback_router.routes,
+    summary="Executes the highest transformation revision of a revision group asynchronously",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        status.HTTP_202_ACCEPTED: {
+            "description": "Accepted execution request for highest revision of revision group"
+        },
+    },
+    dependencies=[Depends(inject_runtime_http_client)],
+)
+async def execute_asynchronous_highest_transformation_revision_endpoint(
+    exec_highest_by_group_id_input: ExecHighestByGroupIdInput,
+    background_tasks: BackgroundTasks,
+    callback_url: HttpUrl = Query(
+        ...,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+) -> Any:
+    """Execute the highest transformation revision of a revision group asynchronously.
+
+    WARNING: Even when the input is not changed, the execution response might change if a new
+    highest transformation revision exists.
+
+    WARNING: The inputs and outputs may be different for different revisions. In such a case,
+    calling this endpoint with the same payload as before will not work, but will result in errors.
+
+    A valid input is accepted with a corresponding response and the execution then runs in the
+    background. The result of the execution is sent to the specified callback_url.
+    You should have implemented an appropriate endpoint before using this one.
+
+    The highest transformation will be determined by semantic versioning (see https://semver.org)
+    of the version tags of the released revisions of the revision group which are stored in the
+    database. Revisions whose version tag is not a semantic version are ignored. Deprecated
+    revisions and drafts are only considered if include_deprecated respectively include_drafts
+    is set to true. This is the revision obtained from the endpoint
+    /transformations/revision_groups/{revision_group_id} with by=highest.
+
+    This transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+    return accept_asynchronous_revision_group_execution(
+        exec_highest_by_group_id_input,
+        RevisionSelection.HIGHEST,
+        exec_highest_by_group_id_input.include_drafts,
+        background_tasks,
+        callback_url,
+    )
 
 
 @transformation_router.put(

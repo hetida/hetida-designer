@@ -1,4 +1,6 @@
+import datetime
 import logging
+from typing import NamedTuple
 from uuid import UUID
 
 from pydantic import StrictInt, StrictStr
@@ -892,6 +894,7 @@ def multiple_trafo_select_filtered(
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
     states: list[State] | None = None,
+    revision_group_ids: list[UUID] | None = None,
 ) -> Select:
     selection = select(TransformationRevisionDBModel)
 
@@ -910,6 +913,10 @@ def multiple_trafo_select_filtered(
     if revision_group_id is not None:
         selection = selection.where(
             TransformationRevisionDBModel.revision_group_id == revision_group_id
+        )
+    if revision_group_ids is not None:
+        selection = selection.where(
+            TransformationRevisionDBModel.revision_group_id.in_(revision_group_ids)
         )
     if ids is not None:
         selection = selection.where(TransformationRevisionDBModel.id.in_(ids))
@@ -933,6 +940,7 @@ def select_multiple_transformation_revision_stubs(
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
     states: list[State] | None = None,
+    revision_group_ids: list[UUID] | None = None,
 ) -> list[TransformationRevisionStub]:
     """Filterable selection of transformation revision stubs from db
 
@@ -949,6 +957,7 @@ def select_multiple_transformation_revision_stubs(
             names=names,
             include_deprecated=include_deprecated,
             states=states,
+            revision_group_ids=revision_group_ids,
         )
         selection = selection.options(
             load_only(
@@ -970,6 +979,19 @@ def select_multiple_transformation_revision_stubs(
         return [TransformationRevisionStub.from_orm_model(result) for result in results]
 
 
+def read_single_transformation_revision_stub(
+    id: UUID,  # noqa: A002
+) -> TransformationRevisionStub:
+    stubs = select_multiple_transformation_revision_stubs(ids=[id])
+
+    if len(stubs) == 0:
+        msg = f"Found no transformation revision in database with id {id}"
+        logger.error(msg)
+        raise DBNotFoundError(msg)
+
+    return stubs[0]
+
+
 def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
@@ -980,6 +1002,7 @@ def select_multiple_transformation_revisions(
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
     states: list[State] | None = None,
+    revision_group_ids: list[UUID] | None = None,
 ) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
 
@@ -994,6 +1017,7 @@ def select_multiple_transformation_revisions(
             names=names,
             include_deprecated=include_deprecated,
             states=states,
+            revision_group_ids=revision_group_ids,
         )
 
         results = session.execute(selection).scalars().all()
@@ -1084,26 +1108,42 @@ def get_all_nested_transformation_revisions(
     return nested_trafos_by_id
 
 
-def get_latest_revision_id(revision_group_id: UUID) -> UUID:
-    # Select only the id of the newest released revision instead of loading every
-    # released revision of the group (with full content) and sorting in Python.
+class RevisionSelectionRow(NamedTuple):
+    """The attributes needed to select a revision of a revision group"""
+
+    id: UUID  # noqa: A003
+    revision_group_id: UUID
+    version_tag: str
+    released_timestamp: datetime.datetime | None
+
+
+def select_revision_selection_rows(
+    states: list[State],
+    type: Type | None = None,  # noqa: A002
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
+    revision_group_ids: list[UUID] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+) -> list[RevisionSelectionRow]:
+    """Filterable selection of the attributes needed to select revisions of revision groups
+
+    Only these columns are loaded from db, in particular no content, wirings or documentation
+    of revisions which are not selected in the end.
+    """
     with get_session()() as session, session.begin():
-        latest_revision_id: UUID | None = session.execute(
-            select(TransformationRevisionDBModel.id)
-            .where(
-                TransformationRevisionDBModel.revision_group_id == revision_group_id,
-                TransformationRevisionDBModel.state == State.RELEASED,
-            )
-            .order_by(TransformationRevisionDBModel.released_timestamp.desc())
-            .limit(1)
-        ).scalar_one_or_none()
-
-    if latest_revision_id is None:
-        msg = (
-            f"no released transformation revisions with revision group id {revision_group_id} "
-            f"found in the database"
+        selection = multiple_trafo_select_filtered(
+            type=type,
+            categories=categories,
+            category_prefix=category_prefix,
+            revision_group_ids=revision_group_ids,
+            names=names,
+            states=states,
+        ).with_only_columns(
+            TransformationRevisionDBModel.id,
+            TransformationRevisionDBModel.revision_group_id,
+            TransformationRevisionDBModel.version_tag,
+            TransformationRevisionDBModel.released_timestamp,
         )
-        logger.error(msg)
-        raise DBNotFoundError(msg)
+        results = session.execute(selection).all()
 
-    return latest_revision_id
+    return [RevisionSelectionRow(*result) for result in results]
