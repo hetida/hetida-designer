@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 from copy import deepcopy
@@ -11,7 +12,11 @@ from fastapi import HTTPException
 
 from hetdesrun.backend.service import transformation_router as tr_module
 from hetdesrun.component.code import expand_code, update_code
-from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
+from hetdesrun.models.execution import (
+    ExecByIdInput,
+    ExecHighestByGroupIdInput,
+    ExecLatestByGroupIdInput,
+)
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
@@ -2071,7 +2076,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
         with caplog.at_level(logging.ERROR):
             with mock.patch(
                 "hetdesrun.backend.service.transformation_router."
-                "handle_latest_trafo_revision_execution_request",
+                "handle_revision_group_execution_request",
                 side_effect=HTTPException(404),
             ):
                 await ac.post(
@@ -2087,7 +2092,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
             caplog.clear()
             with mock.patch(
                 "hetdesrun.backend.service.transformation_router."
-                "handle_latest_trafo_revision_execution_request",
+                "handle_revision_group_execution_request",
                 side_effect=Exception,
             ):
                 with pytest.raises(Exception):  # noqa: PT011,B017
@@ -2100,6 +2105,146 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                 assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
                 assert "background task" in caplog.text
                 assert "unexpected error" in caplog.text
+
+
+def store_component_1_revisions_with_hotfix_released_last() -> None:
+    """Store two released revisions of component 1 with differing outputs
+
+    The lower revision 1.0.0 (INT output) is released after 1.0.1 (STRING output),
+    so the latest and the highest revision differ.
+    """
+    tr_component_1_new_revision = TransformationRevision(**tr_json_component_1_new_revision)
+    tr_component_1_new_revision.content = update_code(tr_component_1_new_revision)
+    tr_component_1_new_revision.release()
+    tr_component_1_new_revision.released_timestamp = datetime.datetime(
+        2025, 1, 1, tzinfo=datetime.UTC
+    )
+    store_single_transformation_revision(tr_component_1_new_revision)
+
+    tr_component_1 = TransformationRevision(**tr_json_component_1)
+    tr_component_1.content = update_code(tr_component_1)
+    tr_component_1.release()
+    tr_component_1.released_timestamp = datetime.datetime(2025, 1, 2, tzinfo=datetime.UTC)
+    store_single_transformation_revision(tr_component_1)
+
+
+@pytest.mark.asyncio
+async def test_execute_highest_for_transformation_revision_works(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_component_1_revisions_with_hotfix_released_last()
+
+    exec_highest_by_group_id_input = ExecHighestByGroupIdInput(
+        revision_group_id=get_uuid_from_seed("group of component 1"),
+        wiring=TransformationRevision(**tr_json_component_1).test_wiring,
+        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+    )
+
+    async with async_test_client as ac:
+        highest_response = await ac.post(
+            "/api/transformations/execute-highest",
+            json=json.loads(exec_highest_by_group_id_input.model_dump_json()),
+        )
+        latest_response = await ac.post(
+            "/api/transformations/execute-latest",
+            json=json.loads(
+                exec_highest_by_group_id_input.model_dump_json(exclude={"include_drafts"})
+            ),
+        )
+
+    assert highest_response.status_code == 200
+    resp_data = highest_response.json()
+    assert resp_data["tr_tag"] == "1.0.1"
+    assert resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
+    assert UUID(resp_data["job_id"]) == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
+
+    assert latest_response.status_code == 200
+    assert latest_response.json()["tr_tag"] == "1.0.0"
+    assert latest_response.json()["output_types_by_output_name"]["operator_output"] == "INT"
+
+
+@pytest.mark.asyncio
+async def test_execute_highest_for_transformation_revision_no_semver_revision_in_db(
+    async_test_client, mocked_clean_test_db_session
+):
+    tr_component_1 = TransformationRevision(**tr_json_component_1)
+    tr_component_1.content = update_code(tr_component_1)
+    tr_component_1.version_tag = "custom"
+    tr_component_1.release()
+    store_single_transformation_revision(tr_component_1)
+
+    exec_highest_by_group_id_input = ExecHighestByGroupIdInput(
+        revision_group_id=tr_component_1.revision_group_id,
+        wiring=tr_component_1.test_wiring,
+    )
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute-highest",
+            json=json.loads(exec_highest_by_group_id_input.model_dump_json()),
+        )
+
+    assert response.status_code == 404
+    assert "and a semantic version as version tag" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_execute_highest_async_for_transformation_revision_works(
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
+):
+    store_component_1_revisions_with_hotfix_released_last()
+
+    exec_highest_by_group_id_input = ExecHighestByGroupIdInput(
+        revision_group_id=get_uuid_from_seed("group of component 1"),
+        wiring=TransformationRevision(**tr_json_component_1).test_wiring,
+        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+    )
+
+    send_mock = mock.AsyncMock()
+    with mock.patch(
+        "hetdesrun.backend.service.transformation_router.send_result_to_callback_url",
+        new=send_mock,
+    ):
+        async with async_test_client as ac:
+            response = await ac.post(
+                "/api/transformations/execute-highest-async",
+                json=json.loads(exec_highest_by_group_id_input.model_dump_json()),
+                params={"callback_url": "http://callback-url.com/"},
+            )
+
+        assert response.status_code == 202
+        assert "highest revision" in response.json()["message"]
+        assert "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
+        assert send_mock.called
+        func_name, args, kwargs = send_mock.mock_calls[0]
+        assert str(args[0]) == "http://callback-url.com/"
+        assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
+        assert args[1].tr_tag == "1.0.1"
+        assert args[1].output_types_by_output_name == {"operator_output": "STRING"}
+
+
+@pytest.mark.asyncio
+async def test_execute_highest_async_callback_url_not_allowed(
+    async_test_client, mocked_clean_test_db_session, allow_test_callback_url
+):
+    exec_highest_by_group_id_input = ExecHighestByGroupIdInput(
+        revision_group_id=get_uuid_from_seed("group of component 1"),
+        wiring=TransformationRevision(**tr_json_component_1).test_wiring,
+    )
+
+    with mock.patch(
+        "hetdesrun.backend.service.transformation_router.execute_revision_of_group_and_post",
+    ) as mocked_execute_and_post:
+        async with async_test_client as ac:
+            response = await ac.post(
+                "/api/transformations/execute-highest-async",
+                json=json.loads(exec_highest_by_group_id_input.model_dump_json()),
+                params={"callback_url": "http://evil.example.com/"},
+            )
+
+    assert response.status_code == 400
+    assert "HD_ALLOWED_CALLBACK_URL_PATTERNS" in response.json()["detail"]
+    mocked_execute_and_post.assert_not_called()
 
 
 @pytest.mark.asyncio

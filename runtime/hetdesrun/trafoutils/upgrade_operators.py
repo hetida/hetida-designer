@@ -2,6 +2,7 @@ import logging
 from uuid import UUID, uuid4
 
 from hdutils import DataType
+from hetdesrun.models.revision_selection import RevisionSelection
 from hetdesrun.persistence.models.io import (
     InputType,
     OperatorInput,
@@ -18,7 +19,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.versioning import (
     get_current_revision_for_drafts,
-    get_newest_released_trafo_rev,
+    select_revisions_of_groups,
 )
 from hetdesrun.utils import State, Type
 
@@ -779,7 +780,7 @@ def upgrade_operators_with_providided_revisions(
 def upgrade_operators_in_workflow(
     trafo: TransformationRevision,
     only_check_deprecated: bool = True,
-    use_release_date: bool = False,
+    by: RevisionSelection = RevisionSelection.LATEST,
     same_revision_no_op: bool = False,
 ) -> TransformationRevision:
     """Upgrades operators in workflow
@@ -789,7 +790,9 @@ def upgrade_operators_in_workflow(
     in the docstring of upgrade_operators_with_providided_revisions.
 
     Basically draft operators are upgraded to the current draft state (same revision)
-    and released operators are upgraded to the "newest" revision of their trafo rev group.
+    and released operators are upgraded to the latest / highest released revision of
+    their trafo rev group. This is selected exactly as for the endpoints providing or
+    executing the latest / highest revision of a revision group.
     """
 
     if trafo.type is not Type.WORKFLOW:
@@ -807,38 +810,15 @@ def upgrade_operators_in_workflow(
         trafo, only_check_deprecated=only_check_deprecated
     )
 
-    # map revision_group_id to trafo_rev ids that are requested to be found a newer rev
-    trafo_revision_group_ids_to_check_for_newer_released_revs: dict[UUID, list[UUID]] = {}
+    draft_trafo_ids = {
+        op.transformation_id for op in operators_to_check.values() if op.state is State.DRAFT
+    }
+    revision_group_ids = {op.revision_group_id for op in operators_to_check.values()}
 
-    draft_trafo_ids = []
-
-    for op in operators_to_check.values():
-        if op.state is State.DRAFT:
-            draft_trafo_ids.append(op.transformation_id)
-        if (
-            trafo_revision_group_ids_to_check_for_newer_released_revs.get(  # noqa: SIM910
-                op.transformation_id,
-                None,
-            )
-            is None
-        ):
-            trafo_revision_group_ids_to_check_for_newer_released_revs[op.revision_group_id] = []
-
-        trafo_revision_group_ids_to_check_for_newer_released_revs[op.revision_group_id].append(
-            op.transformation_id
-        )
-
-    trafo_revision_group_ids_to_check_for_newer_released_revs_list = list(
-        trafo_revision_group_ids_to_check_for_newer_released_revs.keys()
-    )
-
-    newer_by_trafo_group_id = get_newest_released_trafo_rev(
-        trafo_revision_group_ids_to_check_for_newer_released_revs_list,
-        use_release_date=use_release_date,
-    )
+    newer_by_trafo_group_id = select_revisions_of_groups(revision_group_ids, by=by)
 
     current_revisions_for_draft_operators_by_trafo_id = get_current_revision_for_drafts(
-        set(draft_trafo_ids)
+        draft_trafo_ids
     )
 
     updated_trafo = upgrade_operators_with_providided_revisions(

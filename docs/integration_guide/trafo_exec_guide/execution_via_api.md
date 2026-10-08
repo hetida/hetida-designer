@@ -18,12 +18,20 @@ Additionally, the latest (by release timestamp!) released revision of a revision
 
 `/api/transformations/execute-latest`
 
+and the highest (by [semantic versioning](https://semver.org) of the version tags!) released revision of a revision group through the POST web service endpoint
+
+`/api/transformations/execute-highest`.
+
+For the highest revision, revisions whose version tag is not a semantic version are ignored, see [A note on version tags](../../user_guide/versioning_and_lifecycle.md#a-note-on-version-tags). The revision which is executed is exactly the one provided by the GET endpoint `/api/transformations/revision_groups/{revision_group_id}` with query parameter `by` set to `latest` respectively `highest`.
+
 !!! warning "Warning"
-    Depending on the latest revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
+    Depending on the latest / highest revision present, these endpoints might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
 
 ## JSON payload and response
 
-The payload for the two endpoints is almost the same. The only difference is that either the revision id is provided with the key "id" or the id of the revision group with the key "revision_group_id".
+The payload for these endpoints is almost the same. The only difference is that either the revision id is provided with the key "id" or the id of the revision group with the key "revision_group_id".
+
+Additionally the payload for `execute-latest` and `execute-highest` may contain `"include_deprecated": true` to consider deprecated revisions, too. The payload for `execute-highest` may moreover contain `"include_drafts": true` to consider DRAFT revisions, too.
 
 The payload for the execute endpoint looks as follows:
 
@@ -302,9 +310,11 @@ Instead of waiting for the response with the execution result, it is possible to
 
 `/api/transformations/execute-async`
 
-or for the execution of the latest revision to the corresponding POST web service endpoint
+or for the execution of the latest respectively highest revision to the corresponding POST web service endpoints
 
-`/api/transformations/execute-latest-async`.
+`/api/transformations/execute-latest-async`
+
+`/api/transformations/execute-highest-async`.
 
 The execution result is then sent to the specified callback url in the request body once it has been determined.
 

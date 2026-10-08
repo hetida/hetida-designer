@@ -1,4 +1,5 @@
 import asyncio
+import json
 from unittest import mock
 from uuid import UUID
 
@@ -7,6 +8,8 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.execution import TrafoExecutionError
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.models.revision_selection import RevisionSelection
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 from hetdesrun.webservice.config import get_config
 
 exec_by_id_input_msg = r"""
@@ -241,12 +244,20 @@ async def test_consumer_successful_exec_by_id_input():
 @pytest.mark.asyncio
 async def test_consumer_successful_exec_latest_by_group_id_input():
     with mock.patch(
-        "hetdesrun.backend.kafka.consumer.get_latest_revision_id",
+        "hetdesrun.backend.kafka.consumer.select_revision_id_of_group",
         return_value=UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89"),
-    ) as _mocked_get_latest_id:
+    ) as mocked_select_id:
         results, kafka_ctx, mocked_producer = await run_kafka_msg(exec_latest_by_group_id_input_msg)
 
         assert kafka_ctx.last_unhandled_exception is None
+
+        # messages without "by" execute the latest revision, as before
+        mocked_select_id.assert_called_once_with(
+            UUID("d0d40c45-aef0-424a-a8f4-b16cd5f8b129"),
+            by=RevisionSelection.LATEST,
+            include_deprecated=False,
+            include_drafts=False,
+        )
 
         # check result message is shipped:
         mocked_producer.send_and_wait.assert_called_once()
@@ -255,6 +266,57 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
             key=None,
             value=exec_result.model_dump_json().encode("utf8"),
         )
+
+
+@pytest.mark.asyncio
+async def test_consumer_successful_exec_highest_by_group_id_input():
+    msg_dict = json.loads(exec_latest_by_group_id_input_msg)
+    msg_dict["by"] = "highest"
+    msg_dict["include_deprecated"] = True
+    msg_dict["include_drafts"] = True
+
+    with mock.patch(
+        "hetdesrun.backend.kafka.consumer.select_revision_id_of_group",
+        return_value=UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89"),
+    ) as mocked_select_id:
+        results, kafka_ctx, mocked_producer = await run_kafka_msg(json.dumps(msg_dict))
+
+        assert kafka_ctx.last_unhandled_exception is None
+        mocked_select_id.assert_called_once_with(
+            UUID("d0d40c45-aef0-424a-a8f4-b16cd5f8b129"),
+            by=RevisionSelection.HIGHEST,
+            include_deprecated=True,
+            include_drafts=True,
+        )
+        mocked_producer.send_and_wait.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_consumer_exec_latest_by_group_id_input_with_drafts_invalid():
+    msg_dict = json.loads(exec_latest_by_group_id_input_msg)
+    msg_dict["include_drafts"] = True
+
+    with mock.patch(
+        "hetdesrun.backend.kafka.consumer.select_revision_id_of_group",
+    ) as mocked_select_id:
+        results, kafka_ctx, mocked_producer = await run_kafka_msg(json.dumps(msg_dict))
+
+        assert isinstance(kafka_ctx.last_unhandled_exception, ValidationError)
+        assert "Including drafts is only possible" in str(kafka_ctx.last_unhandled_exception)
+        mocked_select_id.assert_not_called()
+        mocked_producer.send_and_wait.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_consumer_exec_by_group_id_input_no_selectable_revision():
+    with mock.patch(
+        "hetdesrun.backend.kafka.consumer.select_revision_id_of_group",
+        side_effect=DBNotFoundError("no released transformation revisions"),
+    ):
+        results, kafka_ctx, mocked_producer = await run_kafka_msg(exec_latest_by_group_id_input_msg)
+
+        assert isinstance(kafka_ctx.last_unhandled_exception, DBNotFoundError)
+        mocked_producer.send_and_wait.assert_not_called()
 
 
 @pytest.mark.asyncio

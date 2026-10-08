@@ -14,7 +14,6 @@ from hetdesrun.persistence.dbservice.revision import (
     filter_unused_transformation_ids,
     get_all_nested_transformation_revisions,
     get_distinct_categories,
-    get_latest_revision_id,
     get_multiple_transformation_revisions,
     is_modifiable,
     is_unused,
@@ -994,40 +993,6 @@ def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
     stored_operator = stored_workflow.content.operators[0]
     assert stored_operator.transformation_id == tr_component.id
     assert stored_operator.state == State.DISABLED
-
-
-def test_get_latest_revision_id(mocked_clean_test_db_session):
-    tr_template_id = get_uuid_from_seed("object_template")
-    tr_object_template = TransformationRevision(
-        id=get_uuid_from_seed("test_get_latest_revision_0"),
-        revision_group_id=tr_template_id,
-        name="Test",
-        description="Test description",
-        version_tag="1.0.0",
-        category="Test category",
-        state=State.DRAFT,
-        type=Type.COMPONENT,
-        content="code",
-        io_interface=IOInterface(),
-        test_wiring=WorkflowWiring(),
-        documentation="",
-    )
-
-    tr_object_1 = tr_object_template.model_copy()
-    tr_object_1.id = get_uuid_from_seed("test_get_latest_revision_1")
-    tr_object_1.version_tag = "1.0.1"
-    tr_object_1.release()
-    store_single_transformation_revision(tr_object_1)
-
-    tr_object_2 = tr_object_template.model_copy()
-    tr_object_2.id = get_uuid_from_seed("test_get_latest_revision_2")
-    tr_object_2.version_tag = "1.0.2"
-    tr_object_2.release()
-    store_single_transformation_revision(tr_object_2)
-
-    assert get_latest_revision_id(tr_template_id) == get_uuid_from_seed(
-        "test_get_latest_revision_2"
-    )
 
 
 def test_select_containing_workflows(mocked_clean_test_db_session):
