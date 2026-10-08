@@ -1,46 +1,109 @@
+import asyncio
 import datetime
 import json
 import logging
+import math
+from typing import Annotated
 
 import aiokafka
-from pydantic import AwareDatetime, BaseModel, Field, field_serializer
-from pydantic_settings import BaseSettings
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    Field,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
+from pydantic_settings import BaseSettings, NoDecode
+
+logger = logging.getLogger(__name__)
+
 
 class KafkaConfig(BaseSettings):
     """Class that loads environment variables regarding the kafka connection configuration.
 
     Attributes
     ----------
-    server : str
-        Kafka server, loaded from "KAFKA_SERVER"
-    tenant : str
-        Kafka tenant, loaded from "KAFKA_TENANT"
+    servers : list[str]
+        Kafka bootstrap servers, loaded from "HETIDA_PLATFORM_KAFKA_SERVERS".
+        At least one entry is required.
+    tenants : list[str]
+        Tenant ids the data is sent to, loaded from "HETIDA_PLATFORM_KAFKA_TENANTS".
+        At least one entry is required.
     topic : str
-        Kafka topic, loaded from "KAFKA_TOPIC"
+        Kafka topic, loaded from "HETIDA_PLATFORM_KAFKA_TIMESERIES_INGESTION_TOPIC".
+        Must not be empty.
+
+    `servers` and `tenants` accept a JSON list, e.g.
+    HETIDA_PLATFORM_KAFKA_SERVERS='["kafka-1:9092","kafka-2:9092"]', or a plain
+    string, e.g. HETIDA_PLATFORM_KAFKA_SERVERS='kafka:9092', both from the
+    environment and when passed directly as argument. Entries are additionally
+    split at commas, e.g. HETIDA_PLATFORM_KAFKA_SERVERS='kafka-1:9092,kafka-2:9092'.
+    If "HETIDA_PLATFORM_KAFKA_SERVERS" or
+    "HETIDA_PLATFORM_KAFKA_TIMESERIES_INGESTION_TOPIC" is missing, creating the
+    config fails with a ValidationError naming the variable.
     """
 
-    server: str = Field(
-        alias="KAFKA_SERVER",
-        default="nothing-to-load",
-        description="Kafka server",
+    # NoDecode: pydantic-settings passes the raw environment value to the validator
+    # below instead of decoding it as JSON itself.
+    servers: Annotated[list[str], NoDecode] = Field(
+        alias="HETIDA_PLATFORM_KAFKA_SERVERS",
+        min_length=1,
+        description="Kafka bootstrap servers",
     )
-    tenant: str = Field(
-        alias="KAFKA_TENANT",
-        default="nothing-to_load",
-        description="Kafka tenant",
+    tenants: Annotated[list[str], NoDecode] = Field(
+        alias="HETIDA_PLATFORM_KAFKA_TENANTS",
+        min_length=1,
+        description="Tenant ids the data is sent to",
     )
-    topic: str = Field(alias="KAFKA_TOPIC", default="")
+    topic: str = Field(
+        alias="HETIDA_PLATFORM_KAFKA_TIMESERIES_INGESTION_TOPIC",
+        min_length=1,
+        description="Kafka topic",
+    )
+
+    @field_validator("servers", "tenants", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        # Handles values from the environment and passed as argument (e.g. the
+        # tenant input in main) alike. A string not starting with "[" is taken
+        # as a single entry.
+        if not isinstance(v, str):
+            return v
+        v = v.strip()
+        if v.startswith("["):
+            return json.loads(v)
+        return [v] if v else []
+
+    @field_validator("servers", "tenants")
+    @classmethod
+    def split_comma_separated(cls, v, info: ValidationInfo):
+        # One server / tenant per list entry, aiokafka does not split list entries.
+        # Runs after the list validation, so min_length does not cover entries
+        # consisting only of commas.
+        items = [item.strip() for entry in v for item in entry.split(",")]
+        items = [item for item in items if item]
+        if not items:
+            raise ValueError(f"At least one entry in {info.field_name} is required")
+        return items
+
 
 class KafkaTemplate(BaseModel):
-    """Class that corresponds to the standard format of kafka payloads for the platform.
+    """Class that corresponds to the format of a single data point in kafka payloads
+    for the platform.
+
+    Only numeric values are supported, since the platform stores time series values
+    as floating point numbers. Values that cannot be converted to float, e.g. text,
+    make the execution fail with a ValidationError. Data points with NaN or
+    infinite value are skipped by `main`.
 
     Attributes
     ----------
     timestamp : AwareDatetime
-        Timezone aware, isoformatable datetime, e.g., "%Y-%m-%dT%H:%M:%S.%fZ"
+        Timezone aware datetime, serialized via `isoformat()`.
     metric : str
         Key of timeseries (=alias) in database.
-    value : value
+    value : float
         Measured value.
     """
 
@@ -52,104 +115,100 @@ class KafkaTemplate(BaseModel):
     def serialize_dt(self, timestamp: datetime.datetime, _info):
         return timestamp.isoformat()
 
+
 class KafkaHandler:
     """Class that handles the delivery of messages to kafka.
+
+    Use it as async context manager: the producer is started on entering the
+    `async with` block and stopped on leaving it.
 
     Attributes
     ----------
     config : KafkaConfig
-        kafka configuration info
-    group_members : OrderedDict[str, GroupMember]
-        Dictionary with expected group members to get data from.
+        Kafka configuration info.
     kafka_producer : aiokafka.AIOKafkaProducer | None
-        Initialized Kafka Producer to sent messages with.
-        If it is none, the Kafka producer is not initialized yet.
+        Started Kafka producer to send messages with.
+        None outside of the `async with` block.
+    max_data_points_per_message : int
+        Upper limit of data points per kafka message. Keeps messages well below the
+        default maximum message size of 1 MB, since every data point is contained
+        twice (in "payloads" and in "originalPayload").
     """
 
-    timestamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+    max_data_points_per_message = 1000
 
-    def __init__(
-        self,
-        config: KafkaConfig
-    ):
+    def __init__(self, config: KafkaConfig):
         self.config = config
         self.kafka_producer: aiokafka.AIOKafkaProducer | None = None
 
-    async def set_kafka_producer(self):
-        """Initializes Kafka producer."""
+    async def __aenter__(self):
+        producer = aiokafka.AIOKafkaProducer(bootstrap_servers=self.config.servers)
         try:
-            self.kafka_producer = aiokafka.AIOKafkaProducer(bootstrap_servers=self.config.server)
-            await self.kafka_producer.start()
-        except aiokafka.errors.KafkaConnectionError:
-            await self.unset_kafka_producer()
+            await producer.start()
+        except Exception:
+            # A failed start() leaves the client's connections open, and
+            # AIOKafkaProducer.__aexit__ is not called in that case.
+            await producer.stop()
             raise
+        self.kafka_producer = producer
+        return self
 
-    async def unset_kafka_producer(self):
-        """Initializes Kafka producer."""
+    async def __aexit__(self, *exc_info):
         if self.kafka_producer is None:
             return
         await self.kafka_producer.stop()
         self.kafka_producer = None
 
-    async def send_msg_to_kafka(self, payload: list[dict], original_payload: str):
-        """Send message to kafka.
-
-        Parameters
-        ----------
-        payload : list[dict]
-            Prepared payload from `prepare_payload`.
-        original_payload : str
-            Prepared payload from `prepare_payload` as string.
-
-        Raises
-        ------
-        ImportError
-            If Kafka producer is not initialized beforehand with `set_kafka_producer`.
-        """
-        tenant = self.config.tenant
-        kafka_payload = {
-            "tenantId": tenant,
-            "topic": self.config.topic,
-            "originalPayload": str(original_payload),
-            "payloads": payload,
-        }
-
-        if self.kafka_producer is None:
-            raise ImportError("Cannot import kafka producer - is it already defined?")
-
-        await self.kafka_producer.send_and_wait(
-            self.config.topic,
-            json.dumps(kafka_payload).encode(),
-        )
-
     async def send_msg_to_kafka(self, payload: list[dict]):
-        """Send message to kafka.
+        """Send data points to kafka, once per configured tenant.
+
+        The data points are split into messages of at most
+        `max_data_points_per_message` data points each.
 
         Parameters
         ----------
         payload : list[dict]
-            Prepared payload.
+            Data points as dumped `KafkaTemplate` objects.
 
         Raises
         ------
-        ImportError
-            If Kafka producer is not initialized beforehand with `set_kafka_producer`.
+        RuntimeError
+            If called outside of the `async with` block.
+        ValueError
+            If a data point has a NaN or infinite value, which is not valid JSON.
         """
-        tenant = self.config.tenant
-        kafka_payload = {
-            "tenantId": tenant,
-            "topic": self.config.topic,
-            "payloads": payload,
-        }
-
         if self.kafka_producer is None:
-            raise ImportError("Cannot import kafka producer - is it already defined?")
+            raise RuntimeError(
+                "Kafka producer is not started - use KafkaHandler with `async with`."
+            )
 
-        await self.kafka_producer.send_and_wait(
+        deliveries = []
+        for start in range(0, len(payload), self.max_data_points_per_message):
+            chunk = payload[start : start + self.max_data_points_per_message]
+            original_payload = json.dumps(chunk, allow_nan=False)
+            for tenant in self.config.tenants:
+                kafka_payload = {
+                    "tenantId": tenant,
+                    "topic": self.config.topic,
+                    "origin": "UNKNOWN",
+                    "originalPayload": original_payload,
+                    "payloads": chunk,
+                }
+                deliveries.append(
+                    await self.kafka_producer.send(
+                        self.config.topic,
+                        json.dumps(kafka_payload, allow_nan=False).encode(),
+                    )
+                )
+        # send() only enqueues; wait for all acknowledgements together so aiokafka can batch.
+        await asyncio.gather(*deliveries)
+        logger.info(
+            "Sent %d data point(s) in %d message(s) to topic %s",
+            len(payload),
+            len(deliveries),
             self.config.topic,
-            json.dumps(kafka_payload).encode(),
         )
-logger = logging.getLogger(__name__)
+
 
 # %%
 # ***** DO NOT EDIT LINES BELOW *****
@@ -178,14 +237,25 @@ async def main(*, data, tenant):
     # ***** DO NOT EDIT LINES ABOVE *****
 
     # write your function code here.
-    config = KafkaConfig(KAFKA_TENANT=tenant)
-    kafka_handler = KafkaHandler(config)
-    await kafka_handler.set_kafka_producer()
-    await kafka_handler.send_msg_to_kafka(
-        [
-            KafkaTemplate(**record).model_dump()
-            for record in data.to_dict(orient="records")
-        ]
-    )
-    
+    config = KafkaConfig(HETIDA_PLATFORM_KAFKA_TENANTS=tenant)
+
+    data_points = [
+        KafkaTemplate(**record).model_dump() for record in data.to_dict(orient="records")
+    ]
+    # NaN and infinite values are not valid JSON, the platform would reject the whole message.
+    finite_data_points = [point for point in data_points if math.isfinite(point["value"])]
+    if len(finite_data_points) < len(data_points):
+        logger.warning(
+            "Skipping %d data point(s) with NaN or infinite value",
+            len(data_points) - len(finite_data_points),
+        )
+
+    if not finite_data_points:
+        logger.info("No data points to send")
+        return
+
+    async with KafkaHandler(config) as kafka_handler:
+        await kafka_handler.send_msg_to_kafka(finite_data_points)
+
+
 # %%
