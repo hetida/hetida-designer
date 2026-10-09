@@ -31,6 +31,8 @@ retry() {
     done
 }
 _true_equiv="@(|true|yes|y|ok|on|1)"
+# like _true_equiv, but unset / empty is false
+_explicit_true_equiv="@(true|yes|y|ok|on|1)"
 
 # Run migrations if this is run as backend service.
 _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
@@ -53,7 +55,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
         else
             echo "DB CONTAINS $nof_db_entries VALUES"
             echo "HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY=$HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY"
-            if [[ "$_preserve_db_entries" == $_true_equiv ]]; then
+            if [[ "$_preserve_db_entries" == $_explicit_true_equiv ]]; then
                 echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             else
                 echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
