@@ -15,11 +15,12 @@ This component allows to fetch a single such timeseries from the API.
 * measurement (STRING): Either "W" for water level or "Q" for discharge
 
 ## Outputs
-* timeseries (SERIES): The loaded timeseries. Station metadata is made available via the .attrs attribute.
+* timeseries (SERIES): The loaded timeseries with a UTC datetime index. Station metadata is made available via the .attrs attribute.
 
 ## Details
 * Currently Pegelonline provides data for the last 30 days. Historical data can be downloaded separately but cannot be accessed via the API and therefore not via this component.
 * Identifying stations via its shortname required loading the full station list. Using UUID therefore
+* Pegelonline provides timestamps in German local time (CET / CEST). They are converted to UTC.
 
 ## Examples
 E.g https://pegelonline.wsv.de/webservices/rest-api/v2/stations/593647aa-9fea-43ec-a7d6-6476a76ae868.json is a station that provides water level data which you can query either using the UUID or its shortname "BONN".
@@ -97,7 +98,7 @@ def load_pegelonline_timeseries(
         measurement: 'W' for water level, 'Q' for discharge
 
     Returns:
-        pd.Series with DatetimeIndex and values
+        pd.Series with UTC DatetimeIndex and values
     """
 
     url = f"https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations/{str(station_uuid)}/{measurement}/measurements.json"
@@ -112,8 +113,10 @@ def load_pegelonline_timeseries(
     response = requests.get(url, params=params, headers={"Accept-Encoding": "gzip"}, timeout=30)
     response.raise_for_status()
 
-    data = pd.DataFrame(response.json())
-    data["timestamp"] = pd.to_datetime(data["timestamp"])
+    data = pd.DataFrame(response.json(), columns=["timestamp", "value"])
+    # Timestamps have offsets of German local time, which differ before and
+    # after daylight saving time changes. utc=True converts them to UTC.
+    data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
 
     return pd.Series(
         data=data["value"].values,
