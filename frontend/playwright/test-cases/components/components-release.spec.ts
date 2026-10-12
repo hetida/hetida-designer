@@ -1,19 +1,25 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('Confirm release a component', async ({
+// What is under test is releasing, so the component is created through the rest
+// api. Assembling one through the create dialog, the io dialog and the code
+// editor first would put a dozen steps in front of the first assertion, none of
+// which this test is about - see components-create.spec.ts for those.
+test('Releasing a component preserves its definition', async ({
   page,
   hetidaDesigner,
+  backendApi,
   browserName
-}) => {
+}, testInfo) => {
   // Arrange
   const componentCategory = 'Test';
-  const componentName = `Test release a component ${browserName}`;
+  const componentName = `Test release a component ${browserName} ${testInfo.retry}`;
   const componentDescription = 'Releases a component';
   const componentTag = '0.1.0';
   const componentInputName = 'input';
   const componentOutputName = 'output';
   const componentInputData = '["MockData1","MockData2"]';
-  const componentPythonCode = `return {"${componentOutputName}": ${componentInputName}}`;
+  // The protocol viewer pretty prints the returned value.
+  const expectedOutput = '[\n  "MockData1",\n  "MockData2"\n]';
   const componentDocumentation = `# ${componentName}
 ## Description
 ${componentDescription}
@@ -21,188 +27,129 @@ ${componentDescription}
 ${componentInputName}
 ## Outputs
 ${componentOutputName}
-## Examples
-The json input of a typical call of this component is:
-\`\`\`JSON
-${componentInputData}
-\`\`\`
 `;
 
+  const componentId = await backendApi.createComponent({
+    name: componentName,
+    category: componentCategory,
+    description: componentDescription,
+    versionTag: componentTag,
+    inputs: [{ name: componentInputName, dataType: 'ANY' }],
+    outputs: [{ name: componentOutputName, dataType: 'ANY' }],
+    functionBody: `return {"${componentOutputName}": ${componentInputName}}`,
+    documentation: componentDocumentation,
+    testWiring: {
+      input_wirings: [
+        {
+          workflow_input_name: componentInputName,
+          adapter_id: 'direct_provisioning',
+          filters: { value: componentInputData }
+        }
+      ],
+      output_wirings: []
+    }
+  });
+
+  // The navigation is filled on page load, so it has to be told about the
+  // component that was created through the api afterwards.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
   // Act
-  // Add a new test component
   await hetidaDesigner.clickComponentsInNavigation();
-  await hetidaDesigner.clickAddButtonInNavigation('Add component');
-  await page.waitForSelector(
-    'mat-dialog-container:has-text("Create new component")'
-  );
-  await hetidaDesigner.typeInInputById('name', componentName);
-  await hetidaDesigner.typeInInputById('category', componentCategory);
-  await hetidaDesigner.typeInInputById('description', componentDescription);
-  await hetidaDesigner.typeInInputById('tag', componentTag);
-  await hetidaDesigner.clickByTestId(
-    'create component-copy-transformation-dialog'
+  await hetidaDesigner.clickCategoryInNavigation(componentCategory);
+  await hetidaDesigner.doubleClickItemInNavigation(
+    `${componentName}(${componentTag})`
   );
 
-  // Configure component I/O
-  await hetidaDesigner.clickIconInToolbar('Configure_IO');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
-  );
-  await hetidaDesigner.clickByTestId('add-input-component-io-dialog');
-  await hetidaDesigner.typeInInputByTestId(
-    'new_input_1-label-input-component-io-dialog',
-    componentInputName
-  );
-  await hetidaDesigner.clickByTestId('add-output-component-io-dialog');
-  await hetidaDesigner.typeInInputByTestId(
-    'new_output_1-label-output-component-io-dialog',
-    componentOutputName
-  );
-  await hetidaDesigner.clickByTestId('save-component-io-dialog');
-
-  // Add component python code and remove "pass"
-  await hetidaDesigner.typeInComponentEditor(componentPythonCode, 12);
-
-  // Execute component and get the protocol
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Component ${componentName} ${componentTag}")`
-  );
-  await hetidaDesigner.clickByTestId(
-    `${componentInputName}-value-input-wiring-dialog`
-  );
-  await hetidaDesigner.typeInJsonEditor(componentInputData, browserName);
-  await hetidaDesigner.clickByTestId('save-json-editor');
-
-  // TODO: Wait for a change to happen
-  // Wait for the store to update
-  await page.waitForTimeout(3000);
-
-  await hetidaDesigner.clickByTestId('execute-wiring-dialog');
-  await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
-  const outputProtocol = await page
-    .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
-    .innerText();
-
-  // Add component documentation
-  await hetidaDesigner.clickIconInToolbar('Open_documentation');
-  await page.waitForSelector('hd-documentation-editor >> textarea');
-  await hetidaDesigner.typeInDocumentationEditor(componentDocumentation);
-  await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
-
-  // Publish component
-  await hetidaDesigner.clickTabInNavigation(2);
   await hetidaDesigner.clickIconInToolbar('Publish');
   await hetidaDesigner.clickByTestId('publish component-confirm-dialog');
 
-  // Get released component details
+  // Everything below only means something once the release actually happened.
+  await expect
+    .poll(async () => (await backendApi.getTransformation(componentId)).state, {
+      timeout: 15000
+    })
+    .toEqual('RELEASED');
+
+  // Assert
+  // Soft, so that one aspect that was not preserved does not hide the others.
+
+  // Details
   await hetidaDesigner.clickIconInToolbar('Edit');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Edit component ${componentName} ${componentTag}")`
   );
-  const componentNameReleased = await page.inputValue('#name');
-  const componentCategoryReleased = await page.inputValue('#category');
-  const componentDescriptionReleased = await page.inputValue('#description');
-  const componentTagReleased = await page.inputValue('#tag');
+  expect.soft(await page.inputValue('#name')).toEqual(componentName);
+  expect.soft(await page.inputValue('#category')).toEqual(componentCategory);
+  expect
+    .soft(await page.inputValue('#description'))
+    .toEqual(componentDescription);
+  expect.soft(await page.inputValue('#tag')).toEqual(componentTag);
   await hetidaDesigner.clickByTestId('cancel-copy-transformation-dialog');
 
-  // Get released component I/O
+  // Inputs and outputs
   await hetidaDesigner.clickIconInToolbar('Configure_IO');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
-  const componentInputReleased = await page
-    .getByTestId(`${componentInputName}-label-input-component-io-dialog`)
-    .inputValue();
-  const componentOutputReleased = await page
-    .getByTestId(`${componentOutputName}-label-output-component-io-dialog`)
-    .inputValue();
+  expect
+    .soft(
+      await page
+        .getByTestId(`${componentInputName}-label-input-component-io-dialog`)
+        .inputValue()
+    )
+    .toEqual(componentInputName);
+  expect
+    .soft(
+      await page
+        .getByTestId(`${componentOutputName}-label-output-component-io-dialog`)
+        .inputValue()
+    )
+    .toEqual(componentOutputName);
   await hetidaDesigner.clickByTestId('cancel-component-io-dialog');
 
-  // Get released component input data
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Execute Component ${componentName} ${componentTag}")`
+  // Test wiring
+  await hetidaDesigner.openExecuteDialog(
+    `Execute Component ${componentName} ${componentTag}`
   );
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-value-input-wiring-dialog`
   );
   await page.waitForSelector('hd-json-editor >> .view-lines:has-text("Mock")');
-  const componentInputDataReleased = await page
-    .locator('hd-json-editor >> .view-lines')
-    .innerText();
+  expect
+    .soft(await page.locator('hd-json-editor >> .view-lines').innerText())
+    .toEqual(componentInputData);
   await hetidaDesigner.clickByTestId('cancel-json-editor');
 
-  // Get released component protocol
+  // Code, by way of what it returns
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
-  const outputProtocolReleased = await page
-    .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
-    .innerText();
+  await expect
+    .soft(
+      page.locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
+    )
+    .toHaveText(expectedOutput);
 
-  // Get released component documentation
+  // Documentation. A released component shows it read only, so there is no
+  // textarea to read it back from - check what is rendered, and compare the
+  // stored text through the api.
   await hetidaDesigner.clickIconInToolbar('Open_documentation');
-  await page.waitForSelector(
-    'hd-documentation-editor >> .editor-and-preview__preview'
-  );
-  await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
-  const workflowDocumentationReleased = await page.inputValue(
-    'hd-documentation-editor >> textarea'
-  );
-
-  // Assert
-  // Edit details
-  expect(componentNameReleased).toEqual(componentName);
-  expect(componentCategoryReleased).toEqual(componentCategory);
-  expect(componentDescriptionReleased).toEqual(componentDescription);
-  expect(componentTagReleased).toEqual(componentTag);
-  // Configure I/O
-  expect(componentInputReleased).toEqual(componentInputName);
-  expect(componentOutputReleased).toEqual(componentOutputName);
-  // Execute
-  expect(componentInputDataReleased).toEqual(componentInputData);
-  expect(outputProtocolReleased).toEqual(outputProtocol);
-  // Documentation
-  expect(workflowDocumentationReleased).toEqual(componentDocumentation);
+  await expect
+    .soft(
+      page.locator('hd-documentation-editor >> .editor-and-preview__preview')
+    )
+    .toContainText(componentDescription);
+  expect
+    .soft((await backendApi.getTransformation(componentId)).documentation)
+    .toEqual(componentDocumentation);
 });
 
-test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-  // Clear
-  const componentCategory = 'Test';
-  const componentName = `Test release a component ${browserName}`;
-  const componentTag = '0.1.0';
-
-  await hetidaDesigner.clickComponentsInNavigation();
-  await hetidaDesigner.searchInNavigation(`${componentName}`);
-  await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    `${componentName}(${componentTag})`
+// Cleanup goes through the rest api: a cleanup that drives the navigation
+// menu can hang until the test timeout when it cannot find its target, and
+// then leaves the transformation behind for the next attempt. Deleting and
+// deprecating from the context menu have their own test.
+test.afterEach(async ({ backendApi, browserName }, testInfo) => {
+  await backendApi.deleteTransformationsByName(
+    `Test release a component ${browserName} ${testInfo.retry}`
   );
-  await page.locator('.mat-mdc-menu-panel').hover();
-
-  if (
-    await page
-      .locator('.mat-mdc-menu-content >> button:has-text("Deprecate")')
-      .isVisible()
-  ) {
-    await hetidaDesigner.clickOnContextMenu('Deprecate');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
-    );
-    await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
-  } else {
-    await hetidaDesigner.clickOnContextMenu('Delete');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
-    );
-    await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
-  }
-
-  await (
-    await page.waitForSelector(
-      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
-    )
-  ).waitForElementState('hidden');
-
-  await hetidaDesigner.clearTest();
 });

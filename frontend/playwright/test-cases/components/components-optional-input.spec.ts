@@ -3,11 +3,12 @@ import { expect, test } from '../fixtures/fixture';
 test('Create a component with Optional Input and Default Value', async ({
   page,
   hetidaDesigner,
+  backendApi,
   browserName
-}) => {
+}, testInfo) => {
   // Arrange
   const componentCategory = 'Test';
-  const componentName = `Test Optional Input component ${browserName}`;
+  const componentName = `Test Optional Input component ${browserName} ${testInfo.retry}`;
   const componentDescription =
     'Releases a component with Optional Input and Default Value';
   const componentTag = '0.1.0';
@@ -61,8 +62,21 @@ test('Create a component with Optional Input and Default Value', async ({
   );
   await hetidaDesigner.clickByTestId('save-component-io-dialog');
 
-  // Wait for the store to update
-  await page.waitForTimeout(2000);
+  // Saving the io dialog is asynchronous, and publishing releases whatever the
+  // backend already has - so the inputs and outputs have to have arrived there
+  // before going on, or an empty io interface gets released.
+  await expect
+    .poll(
+      async () => {
+        const [stub] =
+          await backendApi.findTransformationsByName(componentName);
+        return stub === undefined
+          ? ''
+          : `${stub.io_interface.inputs.length}/${stub.io_interface.outputs.length}`;
+      },
+      { timeout: 15000 }
+    )
+    .toEqual('1/1');
 
   // Publish component
   await hetidaDesigner.clickIconInToolbar('Publish');
@@ -86,30 +100,50 @@ test('Create a component with Optional Input and Default Value', async ({
   expect(componentDefaultValueReleased).toEqual(inputDefaultValue);
 });
 
-test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-  // Clear
-  const componentCategory = 'Test';
-  const componentName = `Test Optional Input component ${browserName}`;
-  const componentTag = '0.1.0';
+test.afterEach(
+  async ({ page, hetidaDesigner, backendApi, browserName }, testInfo) => {
+    // Clear
+    const componentCategory = 'Test';
+    const componentName = `Test Optional Input component ${browserName} ${testInfo.retry}`;
+    const componentTag = '0.1.0';
 
-  await hetidaDesigner.clickComponentsInNavigation();
-  await hetidaDesigner.searchInNavigation(componentName);
-  await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    `${componentName}(${componentTag})`
-  );
-  await page.locator('.mat-mdc-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Deprecate');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
-  );
-  await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+    // Nothing to remove when the test failed before it created the component.
+    // Driving the ui anyway would report a misleading timeout here and hide
+    // the actual failure.
+    if (
+      (await backendApi.findTransformationsByName(componentName)).length === 0
+    ) {
+      return;
+    }
 
-  await (
+    await hetidaDesigner.clickComponentsInNavigation();
+    await hetidaDesigner.searchInNavigation(componentName);
+    await hetidaDesigner.clickCategoryInNavigation(componentCategory);
+    await hetidaDesigner.rightClickItemInNavigation(
+      `${componentName}(${componentTag})`
+    );
+    await page.locator('.mat-mdc-menu-panel').hover();
+    await hetidaDesigner.clickOnContextMenu('Deprecate');
     await page.waitForSelector(
-      `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
-    )
-  ).waitForElementState('hidden');
+      `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
+    );
+    await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
 
-  await hetidaDesigner.clearTest();
+    await (
+      await page.waitForSelector(
+        `mat-expansion-panel:has-text("${componentCategory}") >> .navigation-item:has-text("${componentName}")`
+      )
+    ).waitForElementState('hidden');
+
+    await hetidaDesigner.clearTest();
+  }
+);
+
+// Runs even when the cleanup above failed, so a leftover can never make the
+// next attempt create a second revision with the same name and tag - after
+// which every locator for that name matches more than one element.
+test.afterEach(async ({ backendApi, browserName }, testInfo) => {
+  await backendApi.deleteTransformationsByName(
+    `Test Optional Input component ${browserName} ${testInfo.retry}`
+  );
 });

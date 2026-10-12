@@ -256,6 +256,9 @@ describe('Transformation selectors', () => {
     // Assert
     expect(hashedTransformationLookupById.mockId3.id).toBe(ids[0]);
     expect(hashedTransformationLookupById.mockId4.id).toBe(ids[1]);
+    expect(Object.keys(hashedTransformationLookupById)).toEqual(
+      mockEntityState.ids as string[]
+    );
   });
 
   it('#selectTransformationById should return a transformation selected by id', () => {

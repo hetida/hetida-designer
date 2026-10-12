@@ -13,8 +13,7 @@ test('Open "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
     `${workflowName}(${workflowTag})`
   );
 
-  await hetidaDesigner.clickIconInToolbar('Execute');
-  await page.waitForSelector('mat-dialog-container');
+  await hetidaDesigner.openExecuteDialog();
 
   // Assert
   const countDialogContainer = await page

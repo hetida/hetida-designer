@@ -15,12 +15,10 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.runtime_http_client import runtime_http_client
-from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.persistence.dbservice.revision import (
-    DBNotFoundError,
-    get_latest_revision_id,
-)
+from hetdesrun.models.execution import ExecByIdInput, ExecByRevisionGroupIdKafkaInput
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 from hetdesrun.service.serialization_helpers import handle_frontend_exec_response_dict_serialisation
+from hetdesrun.trafoutils.versioning import select_revision_id_of_group
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -169,44 +167,41 @@ async def consume_execution_trigger_message(
                 exec_by_id_input = ExecByIdInput.model_validate_json(msg.value.decode("utf8"))
             except ValidationError as validate_exec_by_id_input_error:
                 try:
-                    exec_latest_by_group_id_input = ExecLatestByGroupIdInput.model_validate_json(
+                    exec_by_group_id_input = ExecByRevisionGroupIdKafkaInput.model_validate_json(
                         msg.value.decode("utf8")
                     )
-                except ValidationError as validate_exec_latest_by_group_id_input_error:
+                except ValidationError as validate_exec_by_group_id_input_error:
                     log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
                         f" payload for execution.\n"
                         f"Validation Error assuming ExecByIdInput was\n"
                         f"{str(validate_exec_by_id_input_error)}\n"
-                        f"Validation Error assuming ExecLatestByGroupIdInput was\n"
-                        f"{str(validate_exec_latest_by_group_id_input_error)}\n"
+                        f"Validation Error assuming ExecByRevisionGroupIdKafkaInput was\n"
+                        f"{str(validate_exec_by_group_id_input_error)}\n"
                         f"Aborting."
                     )
-                    kafka_ctx.last_unhandled_exception = (
-                        validate_exec_latest_by_group_id_input_error
-                    )
+                    kafka_ctx.last_unhandled_exception = validate_exec_by_group_id_input_error
                     logger.error(log_msg)
                     continue
                 try:
-                    latest_id = get_latest_revision_id(
-                        exec_latest_by_group_id_input.revision_group_id
+                    selected_id = select_revision_id_of_group(
+                        exec_by_group_id_input.revision_group_id,
+                        by=exec_by_group_id_input.by,
+                        include_deprecated=exec_by_group_id_input.include_deprecated,
+                        include_drafts=exec_by_group_id_input.include_drafts,
                     )
                 except DBNotFoundError as e:
                     log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to receive"
-                        f" id of latest revision of revision group "
-                        f"{exec_latest_by_group_id_input.revision_group_id} from datatbase.\n"
+                        f" id of {exec_by_group_id_input.by} revision of revision group "
+                        f"{exec_by_group_id_input.revision_group_id} from database:\n"
+                        f"{str(e)}\n"
                         f"Aborting."
                     )
                     kafka_ctx.last_unhandled_exception = e
                     logger.error(log_msg)
                     continue
-                exec_by_id_input = ExecByIdInput(
-                    id=latest_id,
-                    wiring=exec_latest_by_group_id_input.wiring,
-                    run_pure_plot_operators=exec_latest_by_group_id_input.run_pure_plot_operators,
-                    job_id=exec_latest_by_group_id_input.job_id,
-                )
+                exec_by_id_input = exec_by_group_id_input.to_exec_by_id(selected_id)
             logger.info(
                 "Start execution of trafo rev %s with job_id=%s from Kafka consumer %s",
                 str(exec_by_id_input.id),

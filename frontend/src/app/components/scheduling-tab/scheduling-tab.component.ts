@@ -9,7 +9,14 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable, of, combineLatest, Subject, EMPTY } from 'rxjs';
-import { tap, finalize, switchMap, first, map } from 'rxjs/operators';
+import {
+  tap,
+  finalize,
+  switchMap,
+  first,
+  map,
+  takeUntil
+} from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ExecutionDialogData, WiringDialogComponent } from 'hd-wiring';
@@ -145,9 +152,16 @@ export class SchedulingTabComponent implements OnInit {
     if (schedule.transformation_id) {
       combineLatest([
         this.transformationHttpService.getAdapterList(),
-        this.transformationStore
-          .select(selectTransformationById(schedule.transformation_id))
-          .pipe(first())
+        this.getScheduleTrafo(schedule).pipe(
+          // The store mostly holds stubs, which lack the release wiring.
+          switchMap(transformation =>
+            transformation
+              ? this.transformationService.ensureFullTransformation(
+                  transformation
+                )
+              : of(transformation)
+          )
+        )
       ])
         .pipe(
           switchMap(([adapterList, transformation]) => {
@@ -168,6 +182,7 @@ export class SchedulingTabComponent implements OnInit {
                   wiringItem: {
                     name: transformation.name,
                     test_wiring: schedule.wiring,
+                    release_wiring: transformation.release_wiring,
                     id: transformation.id,
                     version_tag: transformation.version_tag,
                     io_interface: transformation.io_interface
@@ -179,14 +194,9 @@ export class SchedulingTabComponent implements OnInit {
 
             this.wiringConfigService.confirmationButtonText = 'Save Wiring';
 
-            dialogRef.componentInstance.cancelDialogClick.subscribe(
-              () => {
-                dialogRef.close();
-              },
-              finalize(() => {
-                this.wiringConfigService.resetToDefaults();
-              })
-            );
+            dialogRef.componentInstance.cancelDialogClick.subscribe(() => {
+              dialogRef.close();
+            });
 
             return dialogRef.componentInstance.confirmClick.pipe(
               first(),
@@ -197,6 +207,9 @@ export class SchedulingTabComponent implements OnInit {
                   dialogRef.close();
                 }
               }),
+              // The config is shared with all other wiring dialogs, so the
+              // button text must be reset however this one is closed.
+              takeUntil(dialogRef.afterClosed()),
               finalize(() => {
                 this.wiringConfigService.resetToDefaults();
               })

@@ -19,7 +19,7 @@
     "test-docker": "ng test --karma-config ./src/karma-docker.conf.js",
     "lint": "ng lint",
     "format:all": "prettier --write \"src/**/*.{js,ts,json,html,scss}\"",
-    "format:staged": "pretty-quick --staged",
+    "format:staged": "pretty-quick --staged --pattern \"frontend/**\"",
     "e2e-all": "playwright test --config=./playwright/playwright.config.ts",
     "e2e-chromium": "playwright test --config=./playwright/playwright.config.ts --project=chromium",
     "test-headless": "ng test --watch=false --browsers=ChromeHeadless",

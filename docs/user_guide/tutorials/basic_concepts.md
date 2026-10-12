@@ -60,6 +60,8 @@ you can observe the trafo revision uuid and its revision group uuid:
   ![Edit dialog uuids](../../assets/edit_dialog_uuids.png){ width="500" }
 </figure>
 
+Below them the dialog lists the workflows using the transformation revision, either directly as operator or nested in other workflows. Imports in component code are not considered.
+
 See [Versioning and Lifecycle](../versioning_and_lifecycle.md) for more details.
 
 ### Workflow, Workflow Revision

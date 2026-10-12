@@ -1,13 +1,21 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { EMPTY, Observable, of } from 'rxjs';
-import { finalize, first, switchMap, switchMapTo, tap } from 'rxjs/operators';
+import { EMPTY, forkJoin, Observable, of } from 'rxjs';
+import {
+  finalize,
+  first,
+  shareReplay,
+  switchMap,
+  switchMapTo,
+  tap
+} from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { TransformationType } from '../../enums/transformation-type';
 import { RevisionState } from '../../enums/revision-state';
 import { IAppState } from '../../store/app.state';
 import {
   ComponentTransformation,
+  isFullTransformation,
   Transformation,
   TrafoUpdateState,
   WorkflowTransformation,
@@ -24,6 +32,8 @@ import {
   setAllTransformations,
   updateTransformation
 } from '../../store/transformation/transformation.actions';
+import { selectTransformationById } from '../../store/transformation/transformation.selectors';
+import { selectOrderedTabItems } from '../../store/tab-item/tab-item.selectors';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { TestWiring } from 'hd-wiring';
 import {
@@ -39,6 +49,11 @@ import { NotificationService } from 'src/app/service/notifications/notification.
   providedIn: 'root'
 })
 export class TransformationService {
+  private readonly fullTransformationRequests = new Map<
+    string,
+    Observable<Transformation>
+  >();
+
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
     private readonly localStorageService: LocalStorageService,
@@ -210,12 +225,94 @@ export class TransformationService {
     };
   }
 
+  /**
+   * Load all transformations as stubs into the store (see isFullTransformation).
+   *
+   * The transformations of open tabs are loaded fully in the same step, so that
+   * their editors never see a stub when this is called again, e.g. after an import.
+   */
   fetchAllTransformations(): void {
-    this.transformationHttpService
-      .fetchTransformations()
-      .subscribe(transformations => {
-        this.store.dispatch(setAllTransformations(transformations));
+    this.store
+      .select(selectOrderedTabItems)
+      .pipe(
+        first(),
+        switchMap(tabItems => {
+          const openTransformationIds = [
+            ...new Set(
+              tabItems
+                .map(tabItem => tabItem.transformationId)
+                .filter(id => Utils.isDefined(id))
+            )
+          ];
+          return forkJoin([
+            this.transformationHttpService.fetchTransformationStubs(),
+            openTransformationIds.length > 0
+              ? this.transformationHttpService.fetchTransformationsByIds(
+                  openTransformationIds
+                )
+              : of<Transformation[]>([])
+          ]);
+        })
+      )
+      .subscribe(([stubs, fullTransformations]) => {
+        const fullTransformationsById = new Map(
+          fullTransformations.map(transformation => [
+            transformation.id,
+            transformation
+          ])
+        );
+        this.store.dispatch(
+          setAllTransformations(
+            stubs.map(stub => fullTransformationsById.get(stub.id) ?? stub)
+          )
+        );
       });
+  }
+
+  /**
+   * Get the full transformation (see isFullTransformation) with the given id:
+   * from the store if it is fully loaded there, otherwise from the backend,
+   * putting it into the store.
+   */
+  getFullTransformation(id: string): Observable<Transformation> {
+    return this.store.select(selectTransformationById(id)).pipe(
+      first(),
+      switchMap(transformation =>
+        isFullTransformation(transformation)
+          ? of(transformation)
+          : this.fetchFullTransformation(id)
+      )
+    );
+  }
+
+  /**
+   * Return the given transformation itself if it is full, otherwise its full
+   * version (see getFullTransformation). Returning the given object keeps changes
+   * that are not in the store, e.g. of the workflow currently being edited.
+   */
+  ensureFullTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return isFullTransformation(transformation)
+      ? of(transformation)
+      : this.getFullTransformation(transformation.id);
+  }
+
+  private fetchFullTransformation(id: string): Observable<Transformation> {
+    // Share concurrent requests for the same transformation, e.g. when a tab is
+    // opened while the context menu is still loading the transformation.
+    let request = this.fullTransformationRequests.get(id);
+    if (request === undefined) {
+      request = this.transformationHttpService.fetchTransformation(id).pipe(
+        tap(transformation =>
+          this.store.dispatch(updateTransformation(transformation))
+        ),
+        finalize(() => this.fullTransformationRequests.delete(id)),
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      this.fullTransformationRequests.set(id, request);
+    }
+    return request;
   }
 
   deleteTransformation(id: string): Observable<DeleteResult> {
@@ -244,22 +341,32 @@ export class TransformationService {
     );
   }
 
+  // releaseTransformation and disableTransformation may be called with stubs
+  // from the store, e.g. for the other revisions of a revision group.
   releaseTransformation(
     transformation: Transformation
   ): Observable<UpdatedTransformation> {
-    const copyOfTransformation = Utils.deepCopy(transformation);
-    copyOfTransformation.state = RevisionState.RELEASED;
-    copyOfTransformation.released_timestamp = new Date().toISOString();
-    return this.updateTransformation(copyOfTransformation);
+    return this.ensureFullTransformation(transformation).pipe(
+      switchMap(fullTransformation => {
+        const copyOfTransformation = Utils.deepCopy(fullTransformation);
+        copyOfTransformation.state = RevisionState.RELEASED;
+        copyOfTransformation.released_timestamp = new Date().toISOString();
+        return this.updateTransformation(copyOfTransformation);
+      })
+    );
   }
 
   disableTransformation(
     transformation: Transformation
   ): Observable<Transformation> {
-    const copyOfTransformation = Utils.deepCopy(transformation);
-    copyOfTransformation.state = RevisionState.DISABLED;
-    copyOfTransformation.disabled_timestamp = new Date().toISOString();
-    return this.updateTransformation(copyOfTransformation);
+    return this.ensureFullTransformation(transformation).pipe(
+      switchMap(fullTransformation => {
+        const copyOfTransformation = Utils.deepCopy(fullTransformation);
+        copyOfTransformation.state = RevisionState.DISABLED;
+        copyOfTransformation.disabled_timestamp = new Date().toISOString();
+        return this.updateTransformation(copyOfTransformation);
+      })
+    );
   }
 
   testTransformation(

@@ -587,6 +587,10 @@ def ensure_working_plotly_json(plotly_json: dict[str, Any]) -> dict[str, Any]:
     plotly_json["layout"]["width"] = "100%"
     plotly_json["layout"]["height"] = "100%"
 
+    # plotly.js >= 4 shows this button by default. It uploads the plot including
+    # its data to Plotly Cloud.
+    plotly_json.setdefault("config", {}).setdefault("showSendToCloud", False)
+
     return plotly_json
 
 

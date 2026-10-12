@@ -574,4 +574,123 @@ describe('WiringDialogComponent', () => {
       'Plant A / Pickling Unit / Influx'
     );
   });
+
+  it('should not offer a reset without release wiring', () => {
+    // Act
+    fixture = TestBed.createComponent(WiringDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // Assert
+    expect(component._hasReleaseWiring()).toBeFalse();
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="reset-to-release-wiring-wiring-dialog"]'
+      )
+    ).toBeNull();
+  });
+
+  it('should reset the form to the release wiring', () => {
+    // Arrange
+    const MOCK_INPUT_WIRING_NAME = 'mockWiringInput';
+
+    const adapterList: Adapter[] = [
+      {
+        id: 'testid',
+        name: 'my test adapter',
+        url: 'https://dummy.de'
+      }
+    ];
+
+    const mockTransformation: WiringItem = {
+      id: 'mockWiringId1',
+      test_wiring: {
+        input_wirings: [
+          {
+            workflow_input_name: MOCK_INPUT_WIRING_NAME,
+            adapter_id: 'direct_provisioning',
+            filters: {
+              value: 'testValue'
+            }
+          }
+        ],
+        output_wirings: []
+      },
+      release_wiring: {
+        input_wirings: [
+          {
+            workflow_input_name: MOCK_INPUT_WIRING_NAME,
+            adapter_id: adapterList[0].id,
+            ref_id: 'releaseNodeId',
+            ref_id_type: 'SOURCE',
+            type: AdapterDataType.STRING,
+            filters: {}
+          }
+        ],
+        output_wirings: []
+      },
+      io_interface: {
+        inputs: [
+          {
+            id: 'mockInput1Id',
+            name: MOCK_INPUT_WIRING_NAME,
+            data_type: IOType.STRING,
+            type: IOTypeOption.REQUIRED
+          }
+        ],
+        outputs: []
+      },
+      name: 'mockWiring',
+      version_tag: '1.1.1.mock'
+    };
+
+    TestBed.overrideProvider(MAT_DIALOG_DATA, {
+      useValue: {
+        title: 'test20',
+        wiringItem: mockTransformation,
+        adapterList
+      }
+    });
+
+    mockAdapterService.getOneSource.and.returnValue(
+      of({
+        id: 'releaseNodeId',
+        name: 'releaseNode',
+        thingNodeId: 'oneTestThingNodeId',
+        type: AdapterDataType.STRING,
+        visible: true,
+        path: 'release/node/path'
+      } as unknown as SourceSinkNode)
+    );
+
+    const fixtureLocal = TestBed.createComponent(WiringDialogComponent);
+    const componentLocal = fixtureLocal.componentInstance;
+    fixtureLocal.detectChanges();
+
+    componentLocal.inputFormArray.controls[0]
+      .get('rawValue')
+      ?.setValue('changedValue');
+
+    // Act
+    const resetButton: HTMLButtonElement =
+      fixtureLocal.nativeElement.querySelector(
+        '[data-testid="reset-to-release-wiring-wiring-dialog"]'
+      );
+    resetButton.click();
+
+    const uiWiring: UiItemWiring = (
+      componentLocal.inputFormArray.controls[0] as FormGroup
+    ).getRawValue();
+
+    // Assert
+    expect(mockAdapterService.getOneSource).toHaveBeenCalledWith(
+      'releaseNodeId',
+      adapterList[0].url
+    );
+    expect(uiWiring.adapterId).toBe(adapterList[0].id);
+    expect(uiWiring.nodeId).toBe('releaseNodeId');
+    expect(uiWiring.displayName).toBe('releaseNode');
+    expect(uiWiring.nodePath).toBe('release/node/path');
+    expect(uiWiring.rawValue).toBeNull();
+  });
 });

@@ -6,7 +6,7 @@ For both workflows and components what you are actually working on is always a r
 
 The same of course applies to the more general terms "transformation revision" and "transformation" (remember: components and workflows are both transformations in hetida designer terminology)
 
-hetida designer does not track history between revisions explicitely. Instead, as explained in [Basic concepts](./tutorials/basic_concepts.md) revisions are loosley coupled via a common **revision group**. In particular there is no linear history. Revisions in the same revision group even do not necessarily share the same IO interface or other properties. They can be completely different. There only is a "latest" concept allowing to identify the latest, released (non-deprecated) transformation (by its release timestamp) of a revision group. Being in the same revision group is relevant for features like selecting alternative revisions and auto-updating revisions for operators in workflows. Both take into account only revisions of the same revision group. But again: We do not enforce a linear history!
+hetida designer does not track history between revisions explicitely. Instead, as explained in [Basic concepts](./tutorials/basic_concepts.md) revisions are loosley coupled via a common **revision group**. In particular there is no linear history. Revisions in the same revision group even do not necessarily share the same IO interface or other properties. They can be completely different. There only are the concepts of the "latest" revision of a revision group, i.e. the released (non-deprecated) revision with the newest release timestamp, and of the "highest" revision, i.e. the released (non-deprecated) revision with the highest semantic version as version tag (see [A note on version tags](#a-note-on-version-tags)). Being in the same revision group is relevant for features like selecting alternative revisions and auto-updating revisions for operators in workflows. Both take into account only revisions of the same revision group. But again: We do not enforce a linear history!
 
 Moreover components and workflows have a **lifecycle state**: DRAFT, RELEASED or DEPRECATED. This state determines how and where they can be used and whether they can be edited/changed.
 
@@ -27,7 +27,7 @@ If later you need to change the component you have to create a new revision for 
 
 Note that even when publishing this new second revision of your component the instances of your first revision in existing workflows won't be updated automatically! This protects working workflows from unexpected changes in their behaviour and again this is necessary to guarantee stability and reproducibility of workflow execution.
 
-Instead you have to manually update your workflows and replace the old revision with the new one. However there is a mechanism supporting you which is called "deprecation". Furthermore the workflow editor provides a button for DRAFT workflows that automatically updates all operators to the newest released revision in their revision group.
+Instead you have to manually update your workflows and replace the old revision with the new one. However there is a mechanism supporting you which is called "deprecation". Furthermore the workflow editor provides a button for DRAFT workflows that automatically updates all operators to the "latest" revision in their revision group, i.e. the released revision with the newest release timestamp.
 
 For completely analogous reasons, if this component revision is imported in another one that other one will not be updated to point to the new revision automatically!
 
@@ -50,12 +50,16 @@ Workflows also have revisions and they work completely the same as with the comp
 
 Also deprecating and updating workflow revision instances works the same way and copying workflows is completely analogous.
 
-Note that for workflows in DRAFT mode there is a button that upgrades all their operators to the newest revision of their referenced transformation's revision group.
+Note that for workflows in DRAFT mode there is a button that upgrades all their operators to the latest released revision of their referenced transformation's revision group.
 
 ## A note on version tags
 The hetida designer does not require the tags to follow any particular pattern. They are simply identifiers for the different revisions and can be used similarly to Docker image tags. You are free to use more meaningful strings than version numbers. Just note that the tags must be short (20 characters maximum) and unique within the revision group.
 
 That said, we recommend to stick to a consistent and meaningful versionig schema like [semantic versioning](https://semver.org/).
+
+Semantic versioning is also what determines the "highest" revision of a revision group: Only version tags which are valid semantic versions are taken into account, e.g. `1.2.3` or `2.0.0-rc.1`, but not `v1.2.3` or `1.2`. They are compared by their semantic versioning precedence, i.e. `1.10.0` is higher than `1.9.0`, pre-releases are lower than the corresponding release (`2.0.0-rc.1` is lower than `2.0.0`, but higher than `1.9.0`) and build metadata (e.g. `+build.1`) is ignored. Hence if a revision should never become the highest revision of its revision group, give it a version tag which is not a semantic version.
+
+The latest and the highest revision of revision groups can be obtained via the [API](../integration_guide/api.md) endpoints `/api/transformations/revision_groups` (one revision for each revision group, with filters similar to `/api/transformations`), `/api/transformations/revision_groups/{revision_group_id}` and their variants for stubs, using the query parameter `by` with value `latest` (default) or `highest`. They can be executed via the `execute-latest` and `execute-highest` endpoints, see [Executing Transformation via Backend API](../integration_guide/trafo_exec_guide/execution_via_api.md). By default all of them only consider released revisions. Deprecated revisions and, for the highest revision, also drafts can be included.
 
 ## Conflicts
 Conflicts can occur if you import components/workflows and your installation already includes a revision with the same tag in the same revision group (but different id). E.g. if you start a new revision for a pre-installed base component using the next semver tag and a hetida designer upgrade wants to deploy its own new revision with the same tag, the upgrade will fail.

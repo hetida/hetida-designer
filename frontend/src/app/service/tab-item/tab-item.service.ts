@@ -24,22 +24,31 @@ export class TabItemService {
   ) {}
 
   addTransformationTab(transformationId: string): void {
-    this.addTabItem({
-      transformationId,
-      tabItemType: TabItemType.TRANSFORMATION
-    });
-    this.queryParameterService.addQueryParameter(transformationId);
+    // editors, toolbar and documentation of a tab need the full transformation
+    this.transformationService
+      .getFullTransformation(transformationId)
+      .subscribe(() => {
+        this.addTabItem({
+          transformationId,
+          tabItemType: TabItemType.TRANSFORMATION
+        });
+        this.queryParameterService.addQueryParameter(transformationId);
+      });
   }
 
   addDocumentationTab(
     transformationId: string,
     initialDocumentationEditMode: boolean
   ): void {
-    this.addTabItem({
-      transformationId,
-      tabItemType: TabItemType.DOCUMENTATION,
-      initialDocumentationEditMode
-    });
+    this.transformationService
+      .getFullTransformation(transformationId)
+      .subscribe(() => {
+        this.addTabItem({
+          transformationId,
+          tabItemType: TabItemType.DOCUMENTATION,
+          initialDocumentationEditMode
+        });
+      });
   }
 
   deselectActiveTabItem(): void {

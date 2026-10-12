@@ -22,14 +22,20 @@ const config: PlaywrightTestConfig = {
   workers: 1,
   fullyParallel: false,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? [['github'], ['list']] : [['list'], ['html', { outputFolder: './test-reports' }]],
+  reporter: process.env.CI
+    ? [
+        ['github'],
+        ['list'],
+        ['html', { outputFolder: './test-reports', open: 'never' }]
+      ]
+    : [['list'], ['html', { outputFolder: './test-reports' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Headless */
     headless: true,
     viewport: { width: 1280, height: 720 },
     /* HTTPS Errors */
-    ignoreHTTPSErrors: true,  // Firefox and Safari Webkit are throwing HTTPS Errors
+    ignoreHTTPSErrors: true, // Firefox and Safari Webkit are throwing HTTPS Errors
     /* Video Screenshot */
     video: 'off',
     screenshot: 'only-on-failure',

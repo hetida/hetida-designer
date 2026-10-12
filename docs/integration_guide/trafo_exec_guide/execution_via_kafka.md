@@ -34,7 +34,7 @@ The execution response will be sent to the topic configured via `HETIDA_DESIGNER
 
 See details for the `/api/transformations/execute` endpoint of the [API](../api.md).
 
-Alternatively you can also send an execution request in the format of the `/api/transformations/execute-latest` API endpoint to execute the latest released transformation of a transformation revision group.
+Alternatively you can also send an execution request in the format of the `/api/transformations/execute-latest` API endpoint to execute the latest released transformation of a transformation revision group. To execute the highest revision (by semantic versioning) instead, add `"by": "highest"` to the payload. The other options of the `/api/transformations/execute-highest` API endpoint payload, like `include_drafts`, are available, too.
 
 ## Technical details on the Kafka execution consumer and scaling
 The Kafka execution consumer (and producer for sending results) runs in the backend web service application: One consumer / producer pair is initialized per uvicorn worker process. Consumers are part of a consumer group specified via configuration (see above). By default messages are distributed to topic partitions automatically using the key of the Kafka message. Therefore it makes sense to use something like a job name or job id as message key.

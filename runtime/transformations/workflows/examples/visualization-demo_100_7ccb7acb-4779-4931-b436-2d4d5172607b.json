@@ -1282,9 +1282,9 @@
                 },
                 "revision_group_id": "dc909fa2-93fa-3205-e31d-b05f944cbd29",
                 "state": "RELEASED",
-                "transformation_id": "dc909fa2-93fa-3205-e31d-b05f944cbd29",
+                "transformation_id": "cf142da3-2bd2-4a77-9897-3ebc1d37075d",
                 "type": "COMPONENT",
-                "version_tag": "1.0.0"
+                "version_tag": "1.0.1"
             },
             {
                 "id": "2602969e-04f3-446c-973f-f84c2b358204",
@@ -2266,7 +2266,7 @@
             {
                 "adapter_id": "direct_provisioning",
                 "filters": {
-                    "value": "d"
+                    "value": "D"
                 },
                 "use_default_value": false,
                 "workflow_input_name": "comp_shifed_freq"

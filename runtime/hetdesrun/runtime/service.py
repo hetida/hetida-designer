@@ -12,6 +12,7 @@ from hetdesrun.component.load import prepare_component_import_context
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
     AllMeasuredSteps,
+    ConfigurationInput,
     ProcessStage,
     RuntimeMemoryInfo,
     UnitTestPayload,
@@ -19,6 +20,7 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.reference_context import set_reproducibility_reference_context
 from hetdesrun.runtime import (
     ComponentException,
@@ -33,7 +35,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,
     parse_workflow_input,
 )
-from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
+from hetdesrun.runtime.engine.plain.workflow import mark_discarded_outputs, obtain_all_nodes
 from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import (
     _get_execution_context,
@@ -81,6 +83,25 @@ def prepare_runtime_context_bindings(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,
     )
+
+
+def discarded_wf_output_names(
+    workflow_wiring: WorkflowWiring, configuration: ConfigurationInput
+) -> set[str]:
+    """Names of the workflow outputs whose values are not used
+
+    These are outputs wired to the drop adapter and, if pure plot operators are not run,
+    outputs wired to the plot adapter, which then sends empty plots. If individual node results
+    are requested, all output values are used.
+    """
+    if configuration.return_individual_node_results:
+        return set()
+    return {
+        output_wiring.workflow_output_name
+        for output_wiring in workflow_wiring.output_wirings
+        if output_wiring.adapter_id == "drop"
+        or (output_wiring.adapter_id == "plot" and configuration.run_pure_plot_operators is False)
+    }
 
 
 def handle_runtime_exec_result_logging(
@@ -323,6 +344,13 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
                     measured_steps=measured_steps,
                     mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
                 )
+
+            mark_discarded_outputs(
+                parsed_wf,
+                discarded_wf_output_names(
+                    runtime_input.workflow_wiring, runtime_input.configuration
+                ),
+            )
 
         # run workflow
         currently_executed_process_stage = ProcessStage.EXECUTING_COMPONENT_CODE

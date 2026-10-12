@@ -89,6 +89,38 @@ Note that for releasing, all imported components must also be released.
 Note also that `import_comp` must be called in a global assignment statement for this to work.
 
 
+## [Skipping plots and expensive computations for unneeded outputs](./discarded_outputs.md)
+
+Components with only plot outputs are not run if nobody gets their plots. All other components are run and compute all of their outputs, even outputs wired to the drop adapter. Components providing a plot together with other outputs can skip creating the plot if nobody gets it, e.g. because the plot output is wired to the drop adapter or the execution does not run plot operators:
+
+```python
+from hdutils import plot_output_needed
+
+...
+
+def main(*, series):
+    ...
+    return {
+        "cleaned_series": cleaned_series,
+        "plot": create_plot(cleaned_series) if plot_output_needed("plot") else {},
+    }
+```
+
+Likewise expensive computations for other outputs can be skipped if the output is discarded:
+
+```python
+from hetdesrun.runtime.context import output_is_discarded
+
+...
+
+def main(*, dataframe):
+    ...
+    statistics = None if output_is_discarded("statistics") else compute_statistics(dataframe)
+    return {"result": result, "statistics": statistics}
+```
+
+Remember: To explicitely trigger discarding for both cases, simply wire the output to the drop adapter.
+
 ## Resolving possibly relative time intervals
 Especially relevant for component adapter source components for MULTITSFRAME or SERIES:
 

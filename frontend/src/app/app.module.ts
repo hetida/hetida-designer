@@ -48,6 +48,7 @@ import { ComponentIODialogComponent } from './components/component-io-dialog/com
 import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm-dialog.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
 import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
+import { ContainingWorkflowsComponent } from './components/containing-workflows/containing-workflows.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
 import { HomeTabComponent } from './components/home-tab/home-tab.component';
@@ -128,6 +129,7 @@ const monacoConfig: NgxMonacoEditorConfig = {
     PopoverTransformationComponent,
     NavigationItemComponent,
     CopyTransformationDialogComponent,
+    ContainingWorkflowsComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
     TransformationContextMenuComponent,

@@ -1,6 +1,6 @@
 # Deployment of Base Component and Workflows
 
-If the hetida designer database is empty the included base components and workflows will be deployed automatically.
+At each start of the backend the included base components and workflows are deployed automatically, also if the hetida designer database is not empty (see below).
 
 You can suppress the auto-deployment by setting the environment variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 
@@ -18,16 +18,17 @@ You can suppress the auto-deployment by setting the environment variable `HD_BAC
 ...
 ```
 
-You can also activate auto-deployment behavior even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
-In that case the base components and workflows stored in your database are overwritten by the  version in the image andthis might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
+If the database is not empty, the base components and workflows stored in your database are overwritten by the version in the image. This way fixes of base components and workflows arrive with a new image, even if they are made in already released revisions. This might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
+
+You can disable auto-deployment if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `true` in the `docker-compose.yml` or `docker-compose-dev.yml` file. Up to version 0.14.6 this was the default.
 
 You can disable overwriting released and disabled components and workflows during the auto-deployment by setting the environment variable `HD_BACKEND_ALLOW_OVERWRITE_RELEASED` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 
 !!! tip "Recommendation"
 
-    It is recommended to allow overwriting so that bug fixes of released components and workflows are automatically deployed. If you disabled overwriting during auto-deploy, you can deploy such updates manually as described below.
+    It is recommended to allow overwriting so that bug fixes of released components and workflows are automatically deployed. If you preserve the database or disabled overwriting during auto-deploy, you can deploy such updates manually as described below.
 
-Not setting these environement variables has the same result as setting them to `true`.
+Not setting `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` or `HD_BACKEND_ALLOW_OVERWRITE_RELEASED` has the same result as setting them to `true`. Not setting `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` has the same result as setting it to `false`.
 
 ## Manual Deployment of Base Component and Workflows
 If you de-activated auto-deployment of base components and workflows and want to deploy them now at a later stage, you should run

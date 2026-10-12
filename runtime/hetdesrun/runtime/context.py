@@ -1,4 +1,6 @@
 import contextvars
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
@@ -95,3 +97,34 @@ def get_hierarchy_object_info() -> HierarchyObject:
 def get_global_time_interval_info() -> TimeInterval:
     runtime_context = get_runtime_exec_context()
     return runtime_context.global_time_interval
+
+
+_DISCARDED_OUTPUTS_CONTEXT_VAR: contextvars.ContextVar[frozenset[str]] = contextvars.ContextVar(
+    "discarded_outputs", default=frozenset()
+)
+
+
+@contextmanager
+def discarded_outputs_context(discarded_outputs: frozenset[str]) -> Generator[None]:
+    """Provide the discarded outputs of the currently executed component"""
+    token = _DISCARDED_OUTPUTS_CONTEXT_VAR.set(discarded_outputs)
+    try:
+        yield
+    finally:
+        _DISCARDED_OUTPUTS_CONTEXT_VAR.reset(token)
+
+
+def output_is_discarded(output_name: str) -> bool:
+    """Whether the value of an output of the currently executed component is discarded
+
+    An output is discarded if its value is not used anywhere in the current execution: It is
+    not linked to an operator input and every workflow output it is exposed as is wired to the
+    drop adapter or, if pure plot operators are not run, to the plot adapter.
+
+    Components can use this to skip expensive computations for discarded outputs, e.g. plots,
+    and return a placeholder like {} or None instead.
+
+    Outside of a workflow execution in the runtime, e.g. in unit tests of components,
+    no output is discarded.
+    """
+    return output_name in _DISCARDED_OUTPUTS_CONTEXT_VAR.get()

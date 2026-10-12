@@ -112,7 +112,7 @@ class TimeInterval(BaseModel):
                 "To be valid, a time interval must be non-empty, i.e the start timestamp must be "
                 "earlier than the end timestamp."
             )
-        return values
+        return self
 
 
 # ***** DO NOT EDIT LINES BELOW *****

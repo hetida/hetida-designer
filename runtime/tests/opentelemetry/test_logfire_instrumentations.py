@@ -22,6 +22,14 @@ def activate_logfire() -> Generator:
 
 
 @pytest.fixture(scope="function")  # noqa: PT003
+def distributed_tracing_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    # capfire calls logfire.configure after init_app did, thereby resetting the
+    # distributed_tracing=True set there to logfire's default (extract, but warn).
+    # Without the argument, logfire.configure falls back to this environment variable.
+    monkeypatch.setenv("LOGFIRE_DISTRIBUTED_TRACING", "true")
+
+
+@pytest.fixture(scope="function")  # noqa: PT003
 def deactivate_auth() -> Generator:
     with mock.patch("hetdesrun.webservice.config.runtime_config.auth", new=False) as _fixture:
         yield _fixture
@@ -45,6 +53,7 @@ async def test_logfire_activation(
     mocked_clean_test_db_session,
     async_test_client,
     async_test_client_with_logfire,
+    distributed_tracing_via_env,
     capfire: CaptureLogfire,
 ):
 

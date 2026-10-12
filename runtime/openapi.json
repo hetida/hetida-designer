@@ -1642,6 +1642,449 @@
         }
       }
     },
+    "/adapters/blob/info": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Info Endpoint",
+        "operationId": "get_info_endpoint_adapters_blob_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/structure": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Structure Endpoint",
+        "operationId": "get_structure_endpoint_adapters_blob_structure_get",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parentid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sources Endpoint",
+        "operationId": "get_sources_endpoint_adapters_blob_sources_get",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__MultipleSourcesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sinks Endpoint",
+        "operationId": "get_sinks_endpoint_adapters_blob_sinks_get",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__MultipleSinksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources/{sourceId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sources Metadata",
+        "description": "Get metadata attached to sources\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_sources_metadata_adapters_blob_sources__sourceId__metadata_get",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sourceid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Sources Metadata Adapters Blob Sources  Sourceid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sources/{sourceId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Source",
+        "operationId": "get_single_source_adapters_blob_sources__sourceId__get",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sourceid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlobStorageStructureSource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks/{sinkId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Sinks Metadata",
+        "description": "Get metadata attached to sinks\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_sinks_metadata_adapters_blob_sinks__sinkId__metadata_get",
+        "parameters": [
+          {
+            "name": "sinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sinkid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Sinks Metadata Adapters Blob Sinks  Sinkid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/sinks/{sinkId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Sink",
+        "operationId": "get_single_sink_adapters_blob_sinks__sinkId__get",
+        "parameters": [
+          {
+            "name": "sinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Sinkid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlobStorageStructureSink"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/thingNodes/{thingNodeId}/metadata": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Thing Nodes Metadata",
+        "description": "Get metadata attached to thing Nodes.\n\nThis adapter does not implement attached metadata. Therefore this will always result\nin an empty list!",
+        "operationId": "get_thing_nodes_metadata_adapters_blob_thingNodes__thingNodeId__metadata_get",
+        "parameters": [
+          {
+            "name": "thingNodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Thingnodeid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {},
+                  "title": "Response Get Thing Nodes Metadata Adapters Blob Thingnodes  Thingnodeid  Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adapters/blob/thingNodes/{thingNodeId}": {
+      "get": {
+        "tags": [
+          "blob storage adapter"
+        ],
+        "summary": "Get Single Thingnode",
+        "operationId": "get_single_thingNode_adapters_blob_thingNodes__thingNodeId__get",
+        "parameters": [
+          {
+            "name": "thingNodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+              "title": "Thingnodeid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureThingNode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/engine/runtime": {
       "post": {
         "tags": ["runtime"],
@@ -3676,6 +4119,556 @@
         }
       }
     },
+    "/api/transformations/revision_groups": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the latest / highest transformation revision of each revision group",
+        "description": "Get the latest / highest transformation revision of each revision group.\n\n* latest: The revision with the newest release timestamp. This is the revision\n  the execute-latest endpoints execute.\n* highest: The revision with the highest semantic version (see https://semver.org)\n  as version tag. Pre-releases are lower than the corresponding release and build\n  metadata is ignored. Revisions whose version tag is not a semantic version are\n  ignored, so a revision can be prevented from becoming the highest by giving it\n  such a version tag. This is the revision the execute-highest endpoints execute.\n\nBy default only released revisions are considered. Deprecated revisions and, only\nfor highest, drafts can be included.\n\nThe filters are applied first: For each revision group with at least one revision\nmatching all filters, the latest / highest of its revisions matching the filters is\nreturned. The filters are logically combined as follows\n* OR for the same filter, e.g. providing two categories will yield revisions of both.\n* AND between different filters.\n\nThe result is ordered by name and revision group id.",
+        "operationId": "get_selected_transformation_revisions_of_revision_groups_api_transformations_revision_groups_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Type"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified type.",
+              "title": "Type"
+            },
+            "description": "Filter for specified type."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of categories.",
+              "title": "Category"
+            },
+            "description": "Filter for specified list of categories."
+          },
+          {
+            "name": "category_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category prefix that must be matched exactly (case-sensitive).",
+              "title": "Category Prefix"
+            },
+            "description": "Category prefix that must be matched exactly (case-sensitive)."
+          },
+          {
+            "name": "revision_group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of revision group ids.",
+              "title": "Revision Group Id"
+            },
+            "description": "Filter for specified list of revision group ids."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of names.",
+              "title": "Name"
+            },
+            "description": "Filter for specified list of names."
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revisions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransformationRevision-Output"
+                  },
+                  "title": "Response Get Selected Transformation Revisions Of Revision Groups Api Transformations Revision Groups Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/stubs": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns stubs of the latest / highest transformation revision of each revision group",
+        "description": "Get stubs of the latest / highest transformation revision of each revision group.\n\nThe revisions are selected exactly as by the endpoint /transformations/revision_groups,\nsee there. Stubs are described at the endpoint /transformations/stubs.",
+        "operationId": "get_selected_transformation_revision_stubs_of_revision_groups_api_transformations_revision_groups_stubs_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Type"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified type.",
+              "title": "Type"
+            },
+            "description": "Filter for specified type."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of categories.",
+              "title": "Category"
+            },
+            "description": "Filter for specified list of categories."
+          },
+          {
+            "name": "category_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category prefix that must be matched exactly (case-sensitive).",
+              "title": "Category Prefix"
+            },
+            "description": "Category prefix that must be matched exactly (case-sensitive)."
+          },
+          {
+            "name": "revision_group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of revision group ids.",
+              "title": "Revision Group Id"
+            },
+            "description": "Filter for specified list of revision group ids."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[\\w ,\\.\\-\\(\\)\\&\\+=/]+$"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for specified list of names.",
+              "title": "Name"
+            },
+            "description": "Filter for specified list of names."
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision stubs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransformationRevisionStub"
+                  },
+                  "title": "Response Get Selected Transformation Revision Stubs Of Revision Groups Api Transformations Revision Groups Stubs Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/{revision_group_id}": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the latest / highest transformation revision of a revision group",
+        "description": "Get the latest / highest transformation revision of a revision group.\n\nThe revision is selected exactly as by the endpoint /transformations/revision_groups,\nsee there. In particular it is the revision the execute-latest respectively\nexecute-highest endpoints execute.",
+        "operationId": "get_selected_transformation_revision_of_revision_group_api_transformations_revision_groups__revision_group_id__get",
+        "parameters": [
+          {
+            "name": "revision_group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Revision Group Id"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformationRevision-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "The revision group has no revision which can be selected"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
+    "/api/transformations/revision_groups/{revision_group_id}/stub": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the stub of the latest / highest transformation revision of a revision group",
+        "description": "Get the stub of the latest / highest transformation revision of a revision group.\n\nThe revision is selected exactly as by the endpoint /transformations/revision_groups,\nsee there. In particular it is the revision the execute-latest respectively\nexecute-highest endpoints execute. Stubs are described at the endpoint\n/transformations/stubs.",
+        "operationId": "get_selected_transformation_revision_stub_of_revision_group_api_transformations_revision_groups__revision_group_id__stub_get",
+        "parameters": [
+          {
+            "name": "revision_group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Revision Group Id"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RevisionSelection",
+              "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version).",
+              "default": "latest"
+            },
+            "description": "Select the latest revision (by release timestamp) or the highest revision (by semantic versioning of the version tags, ignoring revisions whose version tag is not a semantic version)."
+          },
+          {
+            "name": "include_deprecated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider deprecated revisions (state DISABLED).",
+              "default": false,
+              "title": "Include Deprecated"
+            },
+            "description": "Set to True to also consider deprecated revisions (state DISABLED)."
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp.",
+              "default": false,
+              "title": "Include Drafts"
+            },
+            "description": "Set to True to also consider revisions with state DRAFT. Only possible if by is highest, since drafts have no release timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the transformation revision stub",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformationRevisionStub"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "The revision group has no revision which can be selected"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Drafts can only be included for the highest revision"
+          }
+        }
+      }
+    },
     "/api/transformations/{id}": {
       "get": {
         "tags": ["transformations"],
@@ -3899,6 +4892,72 @@
         }
       }
     },
+    "/api/transformations/{id}/containing_workflows": {
+      "get": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Returns the workflows containing the transformation revision directly or nested.",
+        "description": "Get the workflows which contain the transformation revision\n\nThis includes workflows which contain it only nested, i.e. as operator of a workflow\nwhich is itself contained in them, at arbitrary nesting depth. Imports of components\nin the code of other components are not taken into account.\n\nA workflow is listed as it was stored the last time: Changes of a DRAFT workflow nested\nin another DRAFT workflow are only reflected after the latter is stored again, e.g. by\nupgrading its operators.",
+        "operationId": "get_containing_workflows_api_transformations__id__containing_workflows_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got the containing workflows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContainingWorkflow"
+                  },
+                  "title": "Response Get Containing Workflows Api Transformations  Id  Containing Workflows Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Transformation revision not found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/transformations/{id}/upgrade_operators/{operator_id}": {
       "put": {
         "tags": ["transformations"],
@@ -4032,6 +5091,7 @@
       "put": {
         "tags": ["transformations"],
         "summary": "Upgrade operators in a DRAFT workflow transformation revision.",
+        "description": "Upgrade the operators of a DRAFT workflow transformation revision.\n\n* Operators of DRAFT transformation revisions are updated to the current state of\n  their transformation revision.\n* Operators of RELEASED or DISABLED transformation revisions are upgraded to the latest\n  released revision of their revision group. This is the revision provided by the\n  endpoint /transformations/revision_groups/{revision_group_id} with by=latest and executed\n  by the execute-latest endpoints. If their revision group has no released revision, they\n  are kept.",
         "operationId": "upgrade_workflow_operators_api_transformations__id__upgrade_operators_put",
         "parameters": [
           {
@@ -4356,7 +5416,7 @@
       "post": {
         "tags": ["transformations"],
         "summary": "Executes the latest transformation revision of a revision group",
-        "description": "Execute the latest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "description": "Execute the latest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database. Deprecated revisions are only\nconsidered if include_deprecated is set to true. This is the revision obtained from the\nendpoint /transformations/revision_groups/{revision_group_id} with by=latest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_latest_transformation_revision_endpoint_api_transformations_execute_latest_post",
         "requestBody": {
           "content": {
@@ -4411,7 +5471,7 @@
       "post": {
         "tags": ["transformations"],
         "summary": "Executes the latest transformation revision of a revision group asynchronously",
-        "description": "Execute the latest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "description": "Execute the latest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new latest\ntransformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database. Deprecated revisions are only\nconsidered if include_deprecated is set to true. This is the revision obtained from the\nendpoint /transformations/revision_groups/{revision_group_id} with by=latest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
         "operationId": "execute_asynchronous_latest_transformation_revision_endpoint_api_transformations_execute_latest_async_post",
         "parameters": [
           {
@@ -4488,6 +5548,178 @@
               "application/json": {
                 "schema": {
                   "title": "Response Execute Asynchronous Latest Transformation Revision Endpoint Api Transformations Execute Latest Async Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transformations/execute-highest": {
+      "post": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Executes the highest transformation revision of a revision group",
+        "description": "Execute the highest transformation revision of a revision group.\n\nWARNING: Even when the input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nThe highest transformation will be determined by semantic versioning (see https://semver.org)\nof the version tags of the released revisions of the revision group which are stored in the\ndatabase. Revisions whose version tag is not a semantic version are ignored. Deprecated\nrevisions and drafts are only considered if include_deprecated respectively include_drafts\nis set to true. This is the revision obtained from the endpoint\n/transformations/revision_groups/{revision_group_id} with by=highest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "operationId": "execute_highest_transformation_revision_endpoint_api_transformations_execute_highest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecHighestByGroupIdInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully executed the highest transformation revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transformations/execute-highest-async": {
+      "post": {
+        "tags": [
+          "transformations"
+        ],
+        "summary": "Executes the highest transformation revision of a revision group asynchronously",
+        "description": "Execute the highest transformation revision of a revision group asynchronously.\n\nWARNING: Even when the input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\ncalling this endpoint with the same payload as before will not work, but will result in errors.\n\nA valid input is accepted with a corresponding response and the execution then runs in the\nbackground. The result of the execution is sent to the specified callback_url.\nYou should have implemented an appropriate endpoint before using this one.\n\nThe highest transformation will be determined by semantic versioning (see https://semver.org)\nof the version tags of the released revisions of the revision group which are stored in the\ndatabase. Revisions whose version tag is not a semantic version are ignored. Deprecated\nrevisions and drafts are only considered if include_deprecated respectively include_drafts\nis set to true. This is the revision obtained from the endpoint\n/transformations/revision_groups/{revision_group_id} with by=highest.\n\nThis transformation will be loaded from the DB and executed with the wiring sent in the request\nbody.\n\nThe test wiring will not be updated.",
+        "operationId": "execute_asynchronous_highest_transformation_revision_endpoint_api_transformations_execute_highest_async_post",
+        "parameters": [
+          {
+            "name": "callback_url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri",
+              "minLength": 1,
+              "maxLength": 2083,
+              "description": "If provided execute asynchronous and post response to callback_url",
+              "title": "Callback Url"
+            },
+            "description": "If provided execute asynchronous and post response to callback_url"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecHighestByGroupIdInput"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "receive_execution_response": {
+            "{$callback_url}": {
+              "post": {
+                "summary": "Receive Execution Response",
+                "operationId": "receive_execution_response__callback_url__post",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Input"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ExecutionResponseFrontendDto-Output"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted execution request for highest revision of revision group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Execute Asynchronous Highest Transformation Revision Endpoint Api Transformations Execute Highest Async Post"
                 }
               }
             }
@@ -5473,6 +6705,431 @@
           }
         }
       }
+    },
+    "/api/maintenance/reset_test_wiring_to_release_wiring": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Reset test wiring of released transformation revision to their release wiring",
+        "description": "Reset the current test wiring to the stored release wiring\n\nThis affects released and deprecated transformation revisions.\n\n**Warning**: This resets test wirings. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_reset_test_wiring_to_release_wiring_api_maintenance_reset_test_wiring_to_release_wiring_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/deprecate_all_but_latest_per_group": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Deprecate old transformation revision and keep only latest",
+        "description": "Deprecate old transformation revision and keep only latest\n\nA transformation revision is considered \"old\" if it is released and there is a newer\nreleased transformation revision (i.e. newer release timestamp) in the same group.\n\nNote that this has nothing to to with version tags or any versioning scheme!\n\n**Warning**: This deprecates transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_deprecate_all_but_latest_per_group_api_maintenance_deprecate_all_but_latest_per_group_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/delete_drafts": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "delete all transformation revisions with state DRAFT",
+        "description": "Delete all transformation revisions with state DRAFT\n\n**Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_delete_drafts_api_maintenance_delete_drafts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/delete_unused_deprecated": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "delete all unused deprecated transformation revisions",
+        "description": "Delete all unused deprecated transformation revisions\n\n'Unused' deprecated transformation revisions are those that are either not used in any workflow\nor are used only in workflows that are themselves deprecated (and therefore will be deleted as\nwell).\n\nThis handles nesting, i.e., a deprecated transformation revision will not be deleted if it is\nused indirectly across multiple nesting levels in a workflow which is not deprecated.\n\nTo prevent certain transformations from being deleted, use the exclude body-parameter and\nprovide a list of transformation UUIDs, for example: \"exclude\":[\"uuid1\",\"uuid2\",...].\nBy default, all unused deprecated transformations are deleted.\n\nTo prevent recently deprecated transformations from being deleted, use the cutoff_date\nbody-parameter. This parameter restricts deletion to transformations that were disabled before\nthe specified date. The parameter must be an ISO 8601-formatted UTC timestamp, for example:\n\"cutoff_date\":\"2026-01-01T00:00:00Z\". By default, all unused deprecated transformations are\ndeleted.\n\n**Warning**: This action permanently deletes transformation revisions. We recommend creating\na backup (for example, by exporting all transformation revisions) before using this action.",
+        "operationId": "maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/purge": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "purge and deploy base trafos afterwards",
+        "description": "Purge and reinstall base components/workflows\n\nThis deletes all transformation revisions and afterwards deploys the base\ncomponents and workflows present in the running backend instance's image at the\ndefault path.\n\n**Warning**: This irrevocably deletes transformation revisions. We recommend to backup, e.g.\nexporting / getting all transformation revisions before using this action!",
+        "operationId": "maintenance_purge_api_maintenance_purge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/deploy_base_trafos": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Deploy base trafos from the running backend",
+        "description": "Deploy base trafos from the running backend\n\nThis deploys base trafos from the running backend, i.e. from its\n./transformations directory. This is similar to what autodeploy does\nat the first start, but allows to trigger this manually, e.g. when new\nor improved base trafos arrive in a new backend version.\n\nAs already said, this is useful after updating the backend/runtime to a newer\nversion which comes with new or improved base transformations, since\nthose won't be deployed automatically even with active autodeploy if the\nHD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true (see\nhttps://github.com/hetida/hetida-designer/blob/release/docs/base_component_deployment.md\n).\n\nActivating the available query parameter options can affect existing workflow\nexecution and reproducibility if trafo revisions used in them are overwritten\nor changed. Please double-check whether this is what you want!",
+        "operationId": "deploy_base_trafos_api_maintenance_deploy_base_trafos_post",
+        "parameters": [
+          {
+            "name": "allow_overwrite_released",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether released trafo revisions are overwritten. If inactive changes/improvements on existing trafo revisions will not be deployed. If active this may negatively affect existing worklows if changes introduce bugs and in particular undermines reproducibility!",
+              "default": false,
+              "title": "Allow Overwrite Released"
+            },
+            "description": "Whether released trafo revisions are overwritten. If inactive changes/improvements on existing trafo revisions will not be deployed. If active this may negatively affect existing worklows if changes introduce bugs and in particular undermines reproducibility!"
+          },
+          {
+            "name": "update_component_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether autogenerated component code will be automatically updated during import. This may introduce bugs and negatively affect reproducibility.",
+              "default": false,
+              "title": "Update Component Code"
+            },
+            "description": "Whether autogenerated component code will be automatically updated during import. This may introduce bugs and negatively affect reproducibility."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maintenance/trigger_autoimport": {
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "Trigger autoimport",
+        "description": "Triggers autoimport from the configured autoimport directory\n\nThis uses the autoimport system which allows to provide config files\ncontaining import options and filters. The autoimport directory is\nconfigured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.",
+        "operationId": "trigger_autoimport_api_maintenance_trigger_autoimport_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenancePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceActionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5617,6 +7274,182 @@
         },
         "type": "object",
         "title": "AllMeasuredSteps"
+      },
+      "BlobStorageStructureSink": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "thingNodeId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Thingnodeid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Display path used in Designer Frontend"
+          },
+          "metadataKey": {
+            "type": "string",
+            "title": "Metadatakey"
+          },
+          "type": {
+            "type": "string",
+            "const": "metadata(any)",
+            "title": "Type",
+            "default": "metadata(any)"
+          },
+          "visible": {
+            "type": "boolean",
+            "const": true,
+            "title": "Visible",
+            "default": true
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/StructureFilter"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filters",
+            "default": {
+              "object_key_suffix": {
+                "description": "<UTC timestamp> - <UUID>",
+                "name": "Object Key Suffix",
+                "required": false,
+                "type": "free_text"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "thingNodeId",
+          "name",
+          "path",
+          "metadataKey"
+        ],
+        "title": "BlobStorageStructureSink"
+      },
+      "BlobStorageStructureSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "thingNodeId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Thingnodeid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Display path used in Designer Frontend"
+          },
+          "metadataKey": {
+            "type": "string",
+            "title": "Metadatakey"
+          },
+          "type": {
+            "type": "string",
+            "const": "metadata(any)",
+            "title": "Type",
+            "default": "metadata(any)"
+          },
+          "visible": {
+            "type": "boolean",
+            "const": true,
+            "title": "Visible",
+            "default": true
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/StructureFilter"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filters",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "thingNodeId",
+          "name",
+          "path",
+          "metadataKey"
+        ],
+        "title": "BlobStorageStructureSource"
+      },
+      "Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post": {
+        "properties": {
+          "maintenance_payload": {
+            "$ref": "#/components/schemas/MaintenancePayload"
+          },
+          "exclude": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude"
+          },
+          "cutoff_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cutoff Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "maintenance_payload"
+        ],
+        "title": "Body_maintenance_delete_unused_deprecated_api_maintenance_delete_unused_deprecated_post"
       },
       "Body_update_structure_endpoint_api_structure_update_put": {
         "properties": {
@@ -6022,6 +7855,55 @@
         "required": ["data_type", "position"],
         "title": "Connector"
       },
+      "ContainingWorkflow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version_tag": {
+            "type": "string",
+            "title": "Version Tag"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "direct_operator_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Direct Operator Ids",
+            "description": "Ids of the operators of this workflow which are instances of the transformation revision. Empty if it is only contained nested."
+          },
+          "via_workflow_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Via Workflow Ids",
+            "description": "Ids of the workflow revisions which are instantiated as operators of this workflow and contain the transformation revision. Empty if it is only contained directly."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version_tag",
+          "state",
+          "direct_operator_ids",
+          "via_workflow_ids"
+        ],
+        "title": "ContainingWorkflow",
+        "description": "Workflow revision containing a transformation revision directly and/or nested\n\nDirectly means as operator of the workflow, nested means as operator of a workflow\nwhich itself is contained in the workflow, at arbitrary nesting depth."
+      },
       "DataType": {
         "type": "string",
         "enum": [
@@ -6101,6 +7983,57 @@
         "required": ["id"],
         "title": "ExecByIdInput"
       },
+      "ExecHighestByGroupIdInput": {
+        "properties": {
+          "revision_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Group Id"
+          },
+          "wiring": {
+            "$ref": "#/components/schemas/WorkflowWiring"
+          },
+          "resolved_reproducibility_references": {
+            "$ref": "#/components/schemas/ReproducibilityReference",
+            "description": "Resolved references to information needed to reproduce an execution result.The provided data can be used to replace data that would usually be produced at runtime."
+          },
+          "run_pure_plot_operators": {
+            "type": "boolean",
+            "title": "Run Pure Plot Operators",
+            "description": "Whether pure plot components should be run.",
+            "default": false
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id",
+            "description": "Optional job id, that can be used to track an execution job."
+          },
+          "runtime_execution_context": {
+            "$ref": "#/components/schemas/RuntimeExecutionContext",
+            "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
+          },
+          "include_deprecated": {
+            "type": "boolean",
+            "title": "Include Deprecated",
+            "description": "Whether deprecated (DISABLED) revisions may be selected for execution.",
+            "default": false
+          },
+          "include_drafts": {
+            "type": "boolean",
+            "title": "Include Drafts",
+            "description": "Whether DRAFT revisions may be selected for execution.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision_group_id",
+          "wiring"
+        ],
+        "title": "ExecHighestByGroupIdInput",
+        "description": "Payload for executing the highest revision of a revision group\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nhighest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the highest revision with the same input as before will not work, but will result\nin errors.\n\nThe highest transformation will be determined by semantic versioning of the version tags of the\nreleased revisions of the revision group which are stored in the database. Revisions whose\nversion tag is not a semantic version are ignored.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
+      },
       "ExecLatestByGroupIdInput": {
         "properties": {
           "revision_group_id": {
@@ -6130,12 +8063,18 @@
           "runtime_execution_context": {
             "$ref": "#/components/schemas/RuntimeExecutionContext",
             "description": "Settings provided by the execution request that may influence execution and can be accessed in component code."
+          },
+          "include_deprecated": {
+            "type": "boolean",
+            "title": "Include Deprecated",
+            "description": "Whether deprecated (DISABLED) revisions may be selected for execution.",
+            "default": false
           }
         },
         "type": "object",
         "required": ["revision_group_id", "wiring"],
         "title": "ExecLatestByGroupIdInput",
-        "description": "Payload for execute-latest kafka endpoint\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nlatest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the last revision with the same input as before will not work, but will result in\nerrors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
+        "description": "Payload for executing the latest revision of a revision group\n\nWARNING: Even when this input is not changed, the execution response might change if a new\nlatest transformation revision exists.\n\nWARNING: The inputs and outputs may be different for different revisions. In such a case,\nexecuting the latest revision with the same input as before will not work, but will result in\nerrors.\n\nThe latest transformation will be determined by the released_timestamp of the released revisions\nof the revision group which are stored in the database.\n\nThis transformation will be loaded from the DB and executed with the wiring sent with this\npayload."
       },
       "ExecutionEngine": {
         "type": "string",
@@ -7272,6 +9211,28 @@
         "required": ["id", "thingNodeId", "name", "path"],
         "title": "LocalFileStructureSource"
       },
+      "MaintenanceActionResult": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "MaintenanceActionResult"
+      },
       "MaintenancePayload": {
         "properties": {
           "maintenance_secret": {
@@ -7761,6 +9722,15 @@
         "type": "string",
         "enum": ["ok", "failure"],
         "title": "Result"
+      },
+      "RevisionSelection": {
+        "type": "string",
+        "enum": [
+          "latest",
+          "highest"
+        ],
+        "title": "RevisionSelection",
+        "description": "Criterion for selecting one revision of a revision group\n\nLATEST selects the revision with the newest release timestamp.\nHIGHEST selects the revision with the highest semantic version as version tag,\nignoring revisions whose version tag is not a semantic version."
       },
       "RuntimeExecutionContext": {
         "properties": {
@@ -10731,6 +12701,131 @@
         },
         "type": "object",
         "title": "WorkflowWiring"
+      },
+      "hetdesrun__adapters__blob_storage__models__MultipleSinksResponse": {
+        "properties": {
+          "resultCount": {
+            "type": "integer",
+            "title": "Resultcount"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSink"
+            },
+            "type": "array",
+            "title": "Sinks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resultCount",
+          "sinks"
+        ],
+        "title": "MultipleSinksResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__MultipleSourcesResponse": {
+        "properties": {
+          "resultCount": {
+            "type": "integer",
+            "title": "Resultcount"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resultCount",
+          "sources"
+        ],
+        "title": "MultipleSourcesResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__StructureResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "thingNodes": {
+            "items": {
+              "$ref": "#/components/schemas/hetdesrun__adapters__blob_storage__models__StructureThingNode"
+            },
+            "type": "array",
+            "title": "Thingnodes"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "sinks": {
+            "items": {
+              "$ref": "#/components/schemas/BlobStorageStructureSink"
+            },
+            "type": "array",
+            "title": "Sinks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "thingNodes",
+          "sources",
+          "sinks"
+        ],
+        "title": "StructureResponse"
+      },
+      "hetdesrun__adapters__blob_storage__models__StructureThingNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$",
+            "title": "Id"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-zA-Z0-9:+\\-/_-]+(|(.h5|.pkl|.custom_objects_pkl))$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9]+$",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "StructureThingNode"
       },
       "hetdesrun__adapters__component_adapter__models__MultipleSinksResponse": {
         "properties": {

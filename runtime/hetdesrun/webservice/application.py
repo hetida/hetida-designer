@@ -328,7 +328,13 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         )
 
     if get_config().otel_via_logfire_active:
-        logfire.configure(send_to_logfire=False)
+        logfire.configure(
+            send_to_logfire=False,
+            # Incoming trace context is intended (e.g. backend -> runtime requests via the
+            # instrumented httpx client). Without explicitly setting this, logfire still
+            # extracts the context but warns about it on the first such request.
+            distributed_tracing=True,
+        )
 
         # we use the asgi instrumentation, not the fastapi instrumentation:
         # Reason is that typical execution requests of e.g. the "Volatility Detection Example"

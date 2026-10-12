@@ -12,6 +12,7 @@ from httpx import ASGITransport, AsyncClient
 from hdutils import serialize_multitsframe_raw
 from hetdesrun.backend.service.dashboarding import (
     HTML_FILE_RESULT_SIZING_STYLE_TAG,
+    ensure_working_plotly_json,
     file_result_kind,
     file_result_to_base64,
     file_result_to_gridstack_div,
@@ -247,6 +248,16 @@ def test_actually_update_wiring_from_query_parameters():
         and positionings_by_name["outp_3"].w == 6
         and positionings_by_name["outp_3"].h == 6
     )
+
+
+def test_ensure_working_plotly_json_disables_send_to_cloud():
+    assert ensure_working_plotly_json({"data": [], "layout": {}})["config"] == {
+        "showSendToCloud": False
+    }
+    # explicit config is kept
+    assert ensure_working_plotly_json(
+        {"data": [], "layout": {}, "config": {"showSendToCloud": True, "displaylogo": False}}
+    )["config"] == {"showSendToCloud": True, "displaylogo": False}
 
 
 def test_is_file_like_result_detection():

@@ -111,6 +111,12 @@
         : '-'
     }}</small
   >
+  @if (data.showContainingWorkflows) {
+    <mat-divider class="copy-transformation__divider"></mat-divider>
+    <hd-containing-workflows
+      [transformationId]="data.transformation.id"
+    ></hd-containing-workflows>
+  }
 </div>
 <div
   [ngClass]="{

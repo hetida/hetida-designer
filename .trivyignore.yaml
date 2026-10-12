@@ -4,9 +4,10 @@ vulnerabilities:
   #   statement: "to this project unrelevant kerberos mechanism."
   #   expires: "2026-09-01"
 
-  # Vendored copies inside pip itself (pip/_vendor/msgpack, pip/_vendor/pkg_resources),
-  # surfaced via pip's own CycloneDX SBOM at site-packages/pip/_vendor/bom.cdx.json.
-  # Not our dependencies: we ship msgpack >= 1.2.2 and no top-level setuptools.
+  # Vendored copies inside pip itself (pip/_vendor/msgpack, pip/_vendor/pkg_resources,
+  # pip/_vendor/urllib3), surfaced via pip's own CycloneDX SBOM at
+  # site-packages/pip/_vendor/bom.cdx.json.
+  # Not our dependencies: we ship msgpack >= 1.2.2, urllib3 >= 2.8.0 and no top-level setuptools.
   # Scoped by purl, so a genuine finding in our own packages still surfaces.
   - id: GHSA-6v7p-g79w-8964
     purls:
@@ -22,4 +23,19 @@ vulnerabilities:
     purls:
       - "pkg:pypi/setuptools@70.3.0"
     statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects sdist building, which never happens in the image. No top-level setuptools is installed."
+    expires: "2026-12-01"
+  - id: CVE-2026-97687
+    purls:
+      - "pkg:pypi/urllib3@2.7.0"
+    statement: "urllib3 vendored in pip (pip/_vendor/urllib3); HTTPS proxy TLS handling is only reachable via pip's network access, and pip is not run in the image. Our own urllib3 is 2.8.0."
+    expires: "2026-12-01"
+  - id: CVE-2026-97689
+    purls:
+      - "pkg:pypi/urllib3@2.7.0"
+    statement: "urllib3 vendored in pip (pip/_vendor/urllib3); chunked response streaming is only reachable via pip's network access, and pip is not run in the image. Our own urllib3 is 2.8.0."
+    expires: "2026-12-01"
+  - id: CVE-2026-97688
+    purls:
+      - "pkg:pypi/urllib3@2.7.0"
+    statement: "urllib3 vendored in pip (pip/_vendor/urllib3); chunked deflate streaming is only reachable via pip's network access, and pip is not run in the image. Our own urllib3 is 2.8.0."
     expires: "2026-12-01"

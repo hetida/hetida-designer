@@ -8,6 +8,7 @@ import threading
 
 import httpx
 import niquests
+from niquests.packages.urllib3.contrib.hface.protocols.http1 import HTTP1ProtocolHyperImpl
 
 from hetdesrun.webservice.config import get_config
 
@@ -71,9 +72,44 @@ async def close_generic_rest_adapter_clients() -> None:
 # The framelike load path (timeseries / dataframe / multitsframe GET) streams the response body
 # straight into pyarrow's JSON reader, which needs a synchronous, readable file-like (``resp.raw``).
 # We therefore keep a blocking niquests.Session per adapter here (instead of the async httpx client
-# above). niquests (HTTP/2+3 capable) is generally faster than requests for this
+# above). niquests is generally faster than requests for this.
+#
+# The sessions are restricted to HTTP/1.1 (no HTTP/2 via TLS ALPN, no HTTP/3 via Alt-Svc), so that
+# every adapter request - http or https - takes the same code path, on which the response header
+# size limit is raised (see below). Framelike loads are few large streamed responses, which do not
+# profit from HTTP/2 multiplexing: measured over TLS, HTTP/1.1 was even slightly faster than HTTP/2.
 _generic_rest_adapter_sync_sessions: dict[str, niquests.Session] = {}
 _generic_rest_adapter_sync_sessions_lock = threading.Lock()
+
+_h11_limit_patched = False
+
+
+def _raise_niquests_h11_response_header_limit() -> None:
+    """Raise the HTTP/1.1 response head size limit of niquests (urllib3-future).
+
+    urllib3-future parses HTTP/1.1 with h11, constructed with h11's default limit of 16 KiB for
+    the status line plus headers, and offers no way to configure it. Generic REST adapters may send
+    larger headers (e.g. a base64-encoded Data-Attributes header), which then fails with
+    "Receive buffer too long". The previously used requests / http.client allowed 64 KiB per header
+    line and httpx (httpcore) allows 100 KiB.
+
+    We therefore raise the limit on each h11 connection created by urllib3-future. This only
+    affects urllib3-future: h11 connections of uvicorn and httpx keep their own limits.
+    """
+    global _h11_limit_patched  # noqa: PLW0603
+    if _h11_limit_patched:
+        return
+
+    original_init = HTTP1ProtocolHyperImpl.__init__
+
+    def patched_init(self: HTTP1ProtocolHyperImpl) -> None:
+        original_init(self)
+        self._connection._max_incomplete_event_size = (
+            get_config().generic_rest_adapter_max_response_header_size
+        )
+
+    HTTP1ProtocolHyperImpl.__init__ = patched_init  # type: ignore[method-assign]
+    _h11_limit_patched = True
 
 
 def get_generic_rest_adapter_sync_session(adapter_key: str) -> niquests.Session:
@@ -89,7 +125,8 @@ def get_generic_rest_adapter_sync_session(adapter_key: str) -> niquests.Session:
     with _generic_rest_adapter_sync_sessions_lock:
         session = _generic_rest_adapter_sync_sessions.get(adapter_key)
         if session is None:
-            session = niquests.Session()
+            _raise_niquests_h11_response_header_limit()
+            session = niquests.Session(disable_http2=True, disable_http3=True)
             _generic_rest_adapter_sync_sessions[adapter_key] = session
         return session
 

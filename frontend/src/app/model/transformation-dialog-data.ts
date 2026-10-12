@@ -7,6 +7,7 @@ export interface TransformationDialogData {
   actionCancel: string;
   deleteButtonText?: string;
   showDeleteButton?: boolean;
+  showContainingWorkflows?: boolean;
   transformation?: Transformation;
   disabledState: {
     name: boolean;

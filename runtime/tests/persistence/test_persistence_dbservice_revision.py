@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from unittest import mock
 from uuid import UUID, uuid4
@@ -13,12 +14,12 @@ from hetdesrun.persistence.dbservice.revision import (
     filter_unused_transformation_ids,
     get_all_nested_transformation_revisions,
     get_distinct_categories,
-    get_latest_revision_id,
     get_multiple_transformation_revisions,
     is_modifiable,
     is_unused,
     read_multiple_transformation_revisions_by_id,
     read_single_transformation_revision,
+    select_containing_workflows,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
@@ -33,6 +34,8 @@ from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.trafo_collection import TrafoCollection
+from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 # Note: foreign key enforcement for sqlite is enabled centrally in
@@ -992,35 +995,55 @@ def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
     assert stored_operator.state == State.DISABLED
 
 
-def test_get_latest_revision_id(mocked_clean_test_db_session):
-    tr_template_id = get_uuid_from_seed("object_template")
-    tr_object_template = TransformationRevision(
-        id=get_uuid_from_seed("test_get_latest_revision_0"),
-        revision_group_id=tr_template_id,
-        name="Test",
-        description="Test description",
-        version_tag="1.0.0",
-        category="Test category",
-        state=State.DRAFT,
-        type=Type.COMPONENT,
-        content="code",
-        io_interface=IOInterface(),
-        test_wiring=WorkflowWiring(),
-        documentation="",
-    )
+def test_select_containing_workflows(mocked_clean_test_db_session):
+    connectors_dir = os.path.join("transformations", "components", "connectors")
+    with TrafoCollection(save_to_db=True) as tc:
+        pt_string = tc.add_from_json_file(
+            os.path.join(
+                connectors_dir, "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json"
+            )
+        )
+        pt_integer = tc.add_from_json_file(
+            os.path.join(
+                connectors_dir,
+                "pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
+            )
+        )
+        with WorkflowConstructor(trafo_collector=tc, name="Inner", version_tag="1.0.0") as inner:
+            inner_op_1 = inner.op(pt_string, "first")
+            inner_op_2 = inner.op(pt_string, "second")
+        with WorkflowConstructor(trafo_collector=tc, name="Outer", version_tag="1.0.0") as outer:
+            outer.op(inner.result)
+            outer_op = outer.op(pt_string)
+        with WorkflowConstructor(trafo_collector=tc, name="Top", version_tag="1.0.0") as top:
+            top.op(outer.result)
+        with WorkflowConstructor(trafo_collector=tc, name="Int", version_tag="1.0.0") as integer:
+            integer.op(pt_integer)
 
-    tr_object_1 = tr_object_template.model_copy()
-    tr_object_1.id = get_uuid_from_seed("test_get_latest_revision_1")
-    tr_object_1.version_tag = "1.0.1"
-    tr_object_1.release()
-    store_single_transformation_revision(tr_object_1)
+    containing_pt_string = select_containing_workflows(pt_string.id)
+    # ordered by name
+    assert [cw.name for cw in containing_pt_string] == ["Inner", "Outer", "Top"]
+    containing_inner, containing_outer, containing_top = containing_pt_string
 
-    tr_object_2 = tr_object_template.model_copy()
-    tr_object_2.id = get_uuid_from_seed("test_get_latest_revision_2")
-    tr_object_2.version_tag = "1.0.2"
-    tr_object_2.release()
-    store_single_transformation_revision(tr_object_2)
+    assert containing_inner.id == inner.result.id
+    assert containing_inner.version_tag == "1.0.0"
+    assert containing_inner.state is State.DRAFT
+    assert set(containing_inner.direct_operator_ids) == {
+        inner_op_1.operator.id,
+        inner_op_2.operator.id,
+    }
+    assert containing_inner.via_workflow_ids == []
 
-    assert get_latest_revision_id(tr_template_id) == get_uuid_from_seed(
-        "test_get_latest_revision_2"
-    )
+    # contained directly and nested, with two nestings via the same workflow
+    assert containing_outer.direct_operator_ids == [outer_op.operator.id]
+    assert containing_outer.via_workflow_ids == [inner.result.id]
+
+    assert containing_top.direct_operator_ids == []
+    assert containing_top.via_workflow_ids == [outer.result.id]
+
+    assert [cw.name for cw in select_containing_workflows(inner.result.id)] == ["Outer", "Top"]
+    assert [cw.name for cw in select_containing_workflows(pt_integer.id)] == ["Int"]
+    assert select_containing_workflows(top.result.id) == []
+
+    with pytest.raises(DBNotFoundError):
+        select_containing_workflows(get_uuid_from_seed("inexistent transformation revision"))

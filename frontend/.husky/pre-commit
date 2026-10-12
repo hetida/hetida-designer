@@ -1,6 +1,7 @@
 # frontend/.husky/pre-commit
 
-if git status --porcelain | grep -e '^M' | grep -q 'frontend/'; then
+# Only if staged changes include added, copied, modified or renamed frontend files
+if git diff --cached --name-only --diff-filter=ACMR | grep -q '^frontend/'; then
   cd frontend
 
   npm run lint

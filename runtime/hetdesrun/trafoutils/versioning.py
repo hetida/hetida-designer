@@ -1,16 +1,27 @@
 """Function around semantic versioning and released_timestamp"""
 
-import datetime
-from functools import cmp_to_key
-from typing import Any, Literal
+from collections.abc import Iterable
+from typing import Any
 from uuid import UUID
 
 import semver
 
-from hetdesrun.persistence.dbservice.revision import get_multiple_transformation_revisions
-from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.models.revision_selection import RevisionSelection, validate_revision_selection
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
+from hetdesrun.persistence.dbservice.revision import (
+    RevisionSelectionRow,
+    get_multiple_transformation_revisions,
+    select_multiple_transformation_revision_stubs,
+    select_multiple_transformation_revisions,
+    select_revision_selection_rows,
+)
+from hetdesrun.persistence.models.transformation import (
+    TransformationRevision,
+    TransformationRevisionStub,
+)
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.utils import State
+from hetdesrun.utils import State, Type
 
 
 def parse_semver_or_None(version_tag: str) -> semver.Version | None:
@@ -23,95 +34,6 @@ def parse_semver_or_None(version_tag: str) -> semver.Version | None:
     return ver
 
 
-def safe_compare(
-    item1: tuple[Any, semver.Version | None], item2: tuple[Any, semver.Version | None]
-) -> Literal[-1, 0, 1]:
-    val1 = item1[1]
-    val2 = item2[1]
-
-    # Handle None cases
-    if val1 is None and val2 is None:
-        return 0
-    if val1 is None:
-        return -1  # None comes first
-    if val2 is None:
-        return 1
-
-    # handle non-None case by defering to semvers comparison operators
-    return -1 if val1 < val2 else (1 if val2 < val1 else 0)
-
-
-def get_newest_by_semver(trafos: list[TransformationRevision]) -> TransformationRevision | None:
-    if len(trafos) == 0:
-        return None
-
-    trafos_by_id = {trafo.id: trafo for trafo in trafos}
-    trafo_versions_by_id = {trafo.id: parse_semver_or_None(trafo.version_tag) for trafo in trafos}
-
-    sorted_items = sorted(trafo_versions_by_id.items(), key=cmp_to_key(safe_compare))
-    winner_id, winner_version = sorted_items[-1]
-
-    if winner_version is None:
-        return None
-
-    return trafos_by_id[winner_id]
-
-
-def get_newest_released_revision(
-    trafos: list[TransformationRevision], use_release_date: bool = False
-) -> TransformationRevision | None:
-    """Among the given trafos, find the newest
-
-    Returns None if a newest cannot be found for whatever reason.
-
-    Defaults to using semver versioning, returning None if nothing is parsable as semver.
-
-    Uses released_date timestampt instead if use_release_date is True.
-    """
-
-    if len(trafos) == 0:
-        return None
-
-    if use_release_date:
-        return sorted(
-            trafos,
-            key=lambda x: (
-                x.released_timestamp or datetime.datetime.min.replace(tzinfo=datetime.UTC)
-            ),
-        )[-1]
-
-    return get_newest_by_semver(trafos)
-
-
-def get_newest_released_trafo_rev(
-    trafo_revision_group_ids: list[UUID], use_release_date: bool = False
-) -> dict[UUID, TransformationRevision | None]:
-    """Get possibly newest revision from db
-
-    If no newer, released (not DRAFT, not DISABLED) transformation is
-    found in the same transformation revision group, None is returned for
-    that trafo revision.
-
-    "Newer" can be chosen to be evaluated by using the release_timestamp. The
-    default uses semantic versioning.
-    """
-
-    newest_per_revision_group: dict[UUID, TransformationRevision | None] = {}
-    for rev_group_id in trafo_revision_group_ids:
-        released_trafos_in_revision_group = get_multiple_transformation_revisions(
-            FilterParams(
-                state=State.RELEASED,
-                revision_group_id=rev_group_id,
-                include_dependencies=False,
-            )
-        )
-        newest_per_revision_group[rev_group_id] = get_newest_released_revision(
-            released_trafos_in_revision_group, use_release_date=use_release_date
-        )
-
-    return newest_per_revision_group
-
-
 def get_current_revision_for_drafts(trafo_ids: set[UUID]) -> dict[UUID, TransformationRevision]:
     draft_trafos = get_multiple_transformation_revisions(
         FilterParams(
@@ -120,3 +42,168 @@ def get_current_revision_for_drafts(trafo_ids: set[UUID]) -> dict[UUID, Transfor
         )
     )
     return {trafo.id: trafo for trafo in draft_trafos}
+
+
+def revision_selection_states(include_deprecated: bool, include_drafts: bool) -> list[State]:
+    """States of the revisions which may be selected as latest / highest revision"""
+    states = [State.RELEASED]
+    if include_deprecated:
+        states.append(State.DISABLED)
+    if include_drafts:
+        states.append(State.DRAFT)
+    return states
+
+
+def revision_selection_key(
+    row: RevisionSelectionRow, by: RevisionSelection
+) -> tuple[Any, ...] | None:
+    """Key by which the latest / highest revision of a revision group is the maximum
+
+    Returns None if the revision cannot be selected: For LATEST if it has no release
+    timestamp (drafts), for HIGHEST if its version tag is no semantic version.
+
+    Semantic versions are compared by their precedence, i.e. pre-releases are lower
+    than the corresponding release and build metadata is ignored.
+
+    Ties are broken deterministically: For LATEST by the id. For HIGHEST (version tags
+    differing only in build metadata) by the release timestamp, where released revisions
+    win against drafts, and then by the id.
+    """
+    if by is RevisionSelection.LATEST:
+        if row.released_timestamp is None:
+            return None
+        return (row.released_timestamp, row.id)
+
+    version = parse_semver_or_None(row.version_tag)
+    if version is None:
+        return None
+    # checking for presence first avoids comparing a release timestamp with None
+    return (version, row.released_timestamp is not None, row.released_timestamp, row.id)
+
+
+def pick_revision_ids_per_group(
+    rows: Iterable[RevisionSelectionRow], by: RevisionSelection
+) -> dict[UUID, UUID]:
+    """Pick the latest / highest revision of each revision group among the given rows
+
+    Returns a dict mapping revision group ids to the id of the picked revision. Revision
+    groups without a revision which can be selected are missing.
+    """
+    picked_keys: dict[UUID, tuple[Any, ...]] = {}
+    picked_ids: dict[UUID, UUID] = {}
+    for row in rows:
+        key = revision_selection_key(row, by)
+        if key is None:
+            continue
+        if row.revision_group_id not in picked_keys or key > picked_keys[row.revision_group_id]:
+            picked_keys[row.revision_group_id] = key
+            picked_ids[row.revision_group_id] = row.id
+    return picked_ids
+
+
+def select_revision_ids_per_group(
+    by: RevisionSelection = RevisionSelection.LATEST,
+    include_deprecated: bool = False,
+    include_drafts: bool = False,
+    type: Type | None = None,  # noqa: A002
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
+    revision_group_ids: list[UUID] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+) -> dict[UUID, UUID]:
+    """Select the latest / highest revision of each revision group from db
+
+    By default only released revisions are considered. Deprecated revisions can be
+    included and, only for HIGHEST, drafts, too.
+
+    The filters are applied first: Revision groups with at least one revision matching
+    all filters are considered and among their revisions matching the filters the
+    latest / highest is selected.
+
+    Returns a dict mapping revision group ids to the id of the selected revision.
+    """
+    validate_revision_selection(by, include_drafts)
+    rows = select_revision_selection_rows(
+        states=revision_selection_states(include_deprecated, include_drafts),
+        type=type,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_ids=revision_group_ids,
+        names=names,
+    )
+    return pick_revision_ids_per_group(rows, by)
+
+
+def select_revision_id_of_group(
+    revision_group_id: UUID,
+    by: RevisionSelection = RevisionSelection.LATEST,
+    include_deprecated: bool = False,
+    include_drafts: bool = False,
+) -> UUID:
+    """Select the latest / highest revision of one revision group from db
+
+    All endpoints providing or executing the latest / highest revision of a revision
+    group rely on this, so that they always agree on the selected revision.
+
+    Raises DBNotFoundError if the revision group has no revision which can be selected.
+    """
+    selected = select_revision_ids_per_group(
+        by=by,
+        include_deprecated=include_deprecated,
+        include_drafts=include_drafts,
+        revision_group_ids=[revision_group_id],
+    )
+    if revision_group_id not in selected:
+        states = " or ".join(
+            state.lower() if state is not State.DISABLED else "deprecated"
+            for state in revision_selection_states(include_deprecated, include_drafts)
+        )
+        semver_hint = (
+            " and a semantic version as version tag" if by is RevisionSelection.HIGHEST else ""
+        )
+        raise DBNotFoundError(
+            f"no {states} transformation revisions with revision group id"
+            f" {revision_group_id}{semver_hint} found in the database"
+        )
+    return selected[revision_group_id]
+
+
+def select_revisions_of_groups(
+    revision_group_ids: Iterable[UUID],
+    by: RevisionSelection = RevisionSelection.LATEST,
+) -> dict[UUID, TransformationRevision | None]:
+    """Select the latest / highest released revision of each given revision group from db
+
+    The revisions are selected exactly as by select_revision_id_of_group. Revision groups
+    without a revision which can be selected are mapped to None.
+    """
+    revision_group_ids = list(revision_group_ids)
+    selected_ids = select_revision_ids_per_group(by=by, revision_group_ids=revision_group_ids)
+    trafos_by_id = {
+        trafo.id: trafo
+        for trafo in select_multiple_transformation_revisions(ids=list(selected_ids.values()))
+    }
+    return {
+        revision_group_id: (
+            trafos_by_id.get(selected_ids[revision_group_id])
+            if revision_group_id in selected_ids
+            else None
+        )
+        for revision_group_id in revision_group_ids
+    }
+
+
+def load_selected_revision_stubs(
+    revision_ids_by_group: dict[UUID, UUID],
+) -> list[TransformationRevisionStub]:
+    """Load stubs of selected revisions ordered by name and revision group id"""
+    stubs = select_multiple_transformation_revision_stubs(ids=list(revision_ids_by_group.values()))
+    return sorted(stubs, key=lambda stub: (stub.name, str(stub.revision_group_id)))
+
+
+def load_selected_revisions(
+    revision_ids_by_group: dict[UUID, UUID],
+) -> list[TransformationRevision]:
+    """Load selected revisions ordered by name and revision group id"""
+    trafos = select_multiple_transformation_revisions(ids=list(revision_ids_by_group.values()))
+    return sorted(trafos, key=lambda trafo: (trafo.name, str(trafo.revision_group_id)))
