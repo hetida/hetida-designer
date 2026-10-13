@@ -32,9 +32,20 @@
     color: map.get($primary, 500);
   }
 
-  // Hetida Flowchart overrides
+  a {
+    color: colors.$hd-blue;
+  }
+
+  // hetida-flowchart overrides
   .hetida-flowchart-svg {
     background-color: map.get($secondary, 700);
+  }
+
+  // hd-wiring overrides
+  .node-wiring-context-menu-titel,
+  .meta-data-wiring-modal-assign-to-icon,
+  .meta-data-wiring-modal-assign-to-label {
+    color: map.get($primary, 500);
   }
 
   // Angular Material overrides
@@ -51,7 +62,7 @@
   }
 
   .mat-mdc-text-field-wrapper {
-    background-color: map.get($secondary, 500) !important;
+    background-color: map.get($primary, 800) !important;
   }
 
   .mat-mdc-form-field-focus-overlay {
@@ -207,14 +218,29 @@
       // Won't work with map-get or variables
       --mat-dialog-supporting-text-color: #ffffff !important;
 
-      & .mat-mdc-dialog-title {
+      .mat-mdc-dialog-title {
         color: colors.$hd-black !important;
+      }
+
+      .mat-mdc-select {
+        --mat-select-enabled-trigger-text-color: #ffffff !important;
+        --mat-select-disabled-trigger-text-color: gray !important;
+        --mat-select-placeholder-text-color: #ffffff !important;
+        // TODO: Fix for material 17, they used enabled arrow-color for a disabled select box
+        --mat-select-enabled-arrow-color: gray !important;
       }
 
       .mat-mdc-text-field-wrapper
         .mat-mdc-form-field-flex
         .mat-mdc-floating-label {
         color: colors.$hd-white !important;
+      }
+
+      .mat-mdc-text-field-wrapper .mat-mdc-input-element {
+        color: colors.$hd-white !important;
+        &:disabled {
+          color: gray !important;
+        }
       }
 
       & .hetida-context-menu {
@@ -311,15 +337,15 @@
     }
   }
 
-  .mat-mdc-snack-bar-container {
-    background-color: colors.$hd-pink;
-    --mat-snackbar-container-color: $hd-pink;
+  .mat-mdc-snack-bar-container .mat-mdc-snackbar-surface {
+    background-color: colors.$hd-pink !important;
+    --mat-snackbar-container-color: $hd-pink !important;
   }
 
   .dark-theme {
-    & .mat-mdc-snack-bar-container {
-      color: rgba(colors.$hd-white, 0.7) !important;
-      --mat-snackbar-supporting-text-color: rgba($hd-white, 0.7) !important;
+    & .mat-mdc-snack-bar-container .mat-mdc-snackbar-surface {
+      color: colors.$hd-white;
+      --mat-snackbar-supporting-text-color: $hd-white;
       background-color: colors.$hd-pink;
       --mat-snackbar-container-color: $hd-pink;
     }
@@ -334,6 +360,13 @@
       tr.mat-mdc-row:hover {
         background-color: rgba(colors.$hd-yellow, 0.33);
       }
+    }
+  }
+
+  .dark-theme {
+    & .drag-prompt {
+      color: rgba(colors.$hd-grey, 0.8);
+      border: 1px dashed rgba(colors.$hd-grey, 0.8);
     }
   }
 
