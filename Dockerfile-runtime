@@ -27,6 +27,9 @@ RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --prod
 ##### Only Python dependencies runtime deps
 FROM --platform=${TARGETPLATFORM} python:3.14.8-slim-trixie AS runtime_base
 ENV TIMEOUT=900
+# Arrow's jemalloc returns freed memory to the OS ~1s after use, while its default (mimalloc)
+# keeps it in long-lived workers. Falls back to mimalloc where pyarrow lacks jemalloc (arm64).
+ENV ARROW_DEFAULT_MEMORY_POOL=jemalloc
 
 RUN apt-get -y update && apt-get -y install --no-install-recommends \
     libpq5 \
@@ -53,6 +56,7 @@ WORKDIR /app
 
 ##### Test stage, needs Python dependencies build-time deps to built dev dependencies
 FROM base AS test
+ENV ARROW_DEFAULT_MEMORY_POOL=jemalloc
 COPY ./runtime /app
 COPY ./VERSION /app/VERSION
 RUN chmod +x /app/start.sh
