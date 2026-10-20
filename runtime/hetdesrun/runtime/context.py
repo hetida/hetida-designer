@@ -18,19 +18,63 @@ class ExecutionContext(BaseModel):
 
 
 class HierarchyObject(BaseModel):
-    type: str | None = None
-    id: str | None = None
-    node_id: str | None = None
-    parent_node_id: str | None = None
-    hierarchy_display_path: str | None = None
-    name: str | None = None
-    tenant_id: str | None = None
-    tenant_name: str | None = None
+    """Hierarchy Object from which a transformation is executed
+
+    In some contexts like hetida platform, execution often arises from a certain point in
+    a hierarchy of objects/assets. For the purpose of obtaining and using additional data and
+    information it is desirable to know that hierarchy location.
+
+    As an example consider a workflow that does anomaly detection on a plant. It needs to be able
+    to fetch sensor timeseries data of sensors located at or below that plant in the hierarchy.
+
+    All fields are optional, for running trafos from other contexts. But if the execution arises
+    from a place in a hierarchy, they should be set accordingly.
+    """
+
+    type: str | None = Field(
+        None,
+        description="The type of the object, e.g. a virtual signal or a workflow configuration",
+    )
+    id: str | None = Field(None, description="The id, e.g. the id of the virtual signal")
+    node_id: str | None = Field(None, description="The id of the corresponding hierarchy node")
+    parent_node_id: str | None = Field(
+        None,
+        description="The id of the parent node in the hierarchy, e.g. of the asset the virtual"
+        " signal belongs to. Components like the hetida platform sources use it as the asset node"
+        " whose data they fetch if no asset node id is provided explicitly.",
+    )
+    hierarchy_display_path: str | None = Field(
+        None,
+        description="A displayable human-readable path of the respective object. May be used"
+        " in plots or visualization as well as logging. Should use / as separator",
+    )
+    name: str | None = Field(
+        None, description="Name of the object, e.g. the virtual signal or workflow configuration"
+    )
+    tenant_id: str | None = Field(None, description="Tenant id in multi-tenant systems")
+    tenant_name: str | None = Field(
+        None, description="Human readable tenant name. For use in visualizations and logging."
+    )
 
 
 class TimeInterval(BaseModel):
-    timestampFrom: str | None = None
-    timestampTo: str | None = None
+    """A relative or absolute time interval with both sides optional
+
+    Relative expressions for start or end can be provided via the
+    [dtexp](https://github.com/stewit/dtexp) expression language. Both start and end are optional
+    to model time intervals where one or both sides are not known yet.
+    """
+
+    timestampFrom: str | None = Field(
+        None,
+        description="A dtexp relative expression or an absolute isoformat timezone-aware timestamp,"
+        " ideally with explicit offset. UTC is strongly recommended.",
+    )
+    timestampTo: str | None = Field(
+        None,
+        description="A dtexp relative expression or an absolute isoformat timezone-aware timestamp,"
+        " ideally with explicit offset. UTC is strongly recommended.",
+    )
 
 
 class RuntimeExecutionContext(BaseModel):
@@ -41,18 +85,29 @@ class RuntimeExecutionContext(BaseModel):
     information is available via inputs / filters etc.
     """
 
-    plot_target_settings: PlotTargetSettings = Field(default_factory=PlotTargetSettings)
+    plot_target_settings: PlotTargetSettings = Field(
+        default_factory=PlotTargetSettings,
+        description="Settings like timezone, locale or darkmode that plot components should use,"
+        " e.g. those of the frontend or dashboard displaying the plots or to provide plots back to"
+        " the calling system (like hetida platform) to display them there according to their"
+        " styling",
+    )
 
     hierarchy_object: HierarchyObject = Field(
         default_factory=HierarchyObject,
-        description="Additional information on a hierarchy from which a trafo is executed",
+        description="Additional information on the point in the hierarchy from which a trafo is"
+        " executed",
     )
 
     global_time_interval: TimeInterval = Field(
         default_factory=TimeInterval,
         description=(
-            "A global time interval that should be assumed if explicit time interval"
-            " information is missing"
+            "A global time interval that should be assumed everywhere where explicit time interval"
+            " information is missing. E.g. when a transformation is called from a dashboard,"
+            " the dashboard's time interval should be set here. Absolute time intervals are"
+            " preferred for reproducibility. This time interval is then part of the execution"
+            " context and can be referred to and used in component code. E.g. to determine plot"
+            " ranges or data fetching ranges"
         ),
     )
 

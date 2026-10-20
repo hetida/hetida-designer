@@ -8983,7 +8983,8 @@
                 "type": "null"
               }
             ],
-            "title": "Type"
+            "title": "Type",
+            "description": "The type of the object, e.g. a virtual signal or a workflow configuration"
           },
           "id": {
             "anyOf": [
@@ -8994,7 +8995,8 @@
                 "type": "null"
               }
             ],
-            "title": "Id"
+            "title": "Id",
+            "description": "The id, e.g. the id of the virtual signal"
           },
           "node_id": {
             "anyOf": [
@@ -9005,7 +9007,8 @@
                 "type": "null"
               }
             ],
-            "title": "Node Id"
+            "title": "Node Id",
+            "description": "The id of the corresponding hierarchy node"
           },
           "parent_node_id": {
             "anyOf": [
@@ -9016,7 +9019,8 @@
                 "type": "null"
               }
             ],
-            "title": "Parent Node Id"
+            "title": "Parent Node Id",
+            "description": "The id of the parent node in the hierarchy, e.g. of the asset the virtual signal belongs to. Components like the hetida platform sources use it as the asset node whose data they fetch if no asset node id is provided explicitly."
           },
           "hierarchy_display_path": {
             "anyOf": [
@@ -9027,7 +9031,8 @@
                 "type": "null"
               }
             ],
-            "title": "Hierarchy Display Path"
+            "title": "Hierarchy Display Path",
+            "description": "A displayable human-readable path of the respective object. May be used in plots or visualization as well as logging. Should use / as separator"
           },
           "name": {
             "anyOf": [
@@ -9038,7 +9043,8 @@
                 "type": "null"
               }
             ],
-            "title": "Name"
+            "title": "Name",
+            "description": "Name of the object, e.g. the virtual signal or workflow configuration"
           },
           "tenant_id": {
             "anyOf": [
@@ -9049,7 +9055,8 @@
                 "type": "null"
               }
             ],
-            "title": "Tenant Id"
+            "title": "Tenant Id",
+            "description": "Tenant id in multi-tenant systems"
           },
           "tenant_name": {
             "anyOf": [
@@ -9060,11 +9067,13 @@
                 "type": "null"
               }
             ],
-            "title": "Tenant Name"
+            "title": "Tenant Name",
+            "description": "Human readable tenant name. For use in visualizations and logging."
           }
         },
         "type": "object",
-        "title": "HierarchyObject"
+        "title": "HierarchyObject",
+        "description": "Hierarchy Object from which a transformation is executed\n\nIn some contexts like hetida platform, execution often arises from a certain point in\na hierarchy of objects/assets. For the purpose of obtaining and using additional data and\ninformation it is desirable to know that hierarchy location.\n\nAs an example consider a workflow that does anomaly detection on a plant. It needs to be able\nto fetch sensor timeseries data of sensors located at or below that plant in the hierarchy.\n\nAll fields are optional, for running trafos from other contexts. But if the execution arises\nfrom a place in a hierarchy, they should be set accordingly."
       },
       "IOInterface": {
         "properties": {
@@ -10094,15 +10103,16 @@
       "RuntimeExecutionContext": {
         "properties": {
           "plot_target_settings": {
-            "$ref": "#/components/schemas/PlotTargetSettings"
+            "$ref": "#/components/schemas/PlotTargetSettings",
+            "description": "Settings like timezone, locale or darkmode that plot components should use, e.g. those of the frontend or dashboard displaying the plots or to provide plots back to the calling system (like hetida platform) to display them there according to their styling"
           },
           "hierarchy_object": {
             "$ref": "#/components/schemas/HierarchyObject",
-            "description": "Additional information on a hierarchy from which a trafo is executed"
+            "description": "Additional information on the point in the hierarchy from which a trafo is executed"
           },
           "global_time_interval": {
             "$ref": "#/components/schemas/TimeInterval",
-            "description": "A global time interval that should be assumed if explicit time interval information is missing"
+            "description": "A global time interval that should be assumed everywhere where explicit time interval information is missing. E.g. when a transformation is called from a dashboard, the dashboard's time interval should be set here. Absolute time intervals are preferred for reproducibility. This time interval is then part of the execution context and can be referred to and used in component code. E.g. to determine plot ranges or data fetching ranges"
           }
         },
         "type": "object",
@@ -11233,7 +11243,8 @@
                 "type": "null"
               }
             ],
-            "title": "Timestampfrom"
+            "title": "Timestampfrom",
+            "description": "A dtexp relative expression or an absolute isoformat timezone-aware timestamp, ideally with explicit offset. UTC is strongly recommended."
           },
           "timestampTo": {
             "anyOf": [
@@ -11244,11 +11255,13 @@
                 "type": "null"
               }
             ],
-            "title": "Timestampto"
+            "title": "Timestampto",
+            "description": "A dtexp relative expression or an absolute isoformat timezone-aware timestamp, ideally with explicit offset. UTC is strongly recommended."
           }
         },
         "type": "object",
-        "title": "TimeInterval"
+        "title": "TimeInterval",
+        "description": "A relative or absolute time interval with both sides optional\n\nRelative expressions for start or end can be provided via the\n[dtexp](https://github.com/stewit/dtexp) expression language. Both start and end are optional\nto model time intervals where one or both sides are not known yet."
       },
       "TrafoUpdateProcessSummary": {
         "properties": {
