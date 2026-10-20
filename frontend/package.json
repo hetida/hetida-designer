@@ -16,7 +16,7 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "test-docker": "ng test --karma-config ./src/karma-docker.conf.js",
+    "test-docker": "ng test --watch=false --karma-config ./src/karma-docker.conf.js",
     "lint": "ng lint",
     "format:all": "prettier --write \"src/**/*.{js,ts,json,html,scss}\"",
     "format:staged": "pretty-quick --staged --pattern \"frontend/**\"",
