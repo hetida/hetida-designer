@@ -188,4 +188,4 @@ it('SVGHelper findAllLinksForIO', () => {
   }
 });
 
-it('SVGHelper checkForCycle');
+xit('SVGHelper checkForCycle');

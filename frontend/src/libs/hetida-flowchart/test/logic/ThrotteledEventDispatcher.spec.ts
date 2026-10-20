@@ -1,1 +1,1 @@
-it('ThrotteledEventDispatcher');
+xit('ThrotteledEventDispatcher');
