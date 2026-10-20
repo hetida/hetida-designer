@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "Launch Edge (localhost)",
-      "type": "pwa-msedge",
+      "type": "msedge",
       "request": "launch",
       "url": "http://localhost:4200",
       "webRoot": "${workspaceFolder}",

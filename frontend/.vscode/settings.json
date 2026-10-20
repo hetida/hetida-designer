@@ -1,11 +1,5 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.tslint": "explicit"
-  },
-  "[typescript]": {
-    "editor.formatOnSave": false
-  },
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "prettier.enable": true
 }
