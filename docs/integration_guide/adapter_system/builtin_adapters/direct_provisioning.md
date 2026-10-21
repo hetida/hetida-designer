@@ -7,7 +7,7 @@ In particular this includes "manual input" selected in the hetida designer execu
 The direct provisioning adapter is always active and does not need any configuration. Its key is "direct_provisioning".
 
 !!! tip "Unwired Outputs"
-Note that unwired outputs are automatically considered to be wired to the direct provisioning adapter, i.e. their result is returned together with the execution response.
+    Note that unwired outputs are automatically considered to be wired to the direct provisioning adapter, i.e. their result is returned together with the execution response.
 
 ## Direct provisioning Wirings
 
@@ -35,7 +35,7 @@ A direct provisioning input wiring just has to provide the value as JSON seriali
 E.g. for an input of type INT it is `"filters": {"value": "42"}`. For more complex objects, proper escaping is required. The JSON formats for more complex objects of types like DATAFRAME etc. is described below under [manual input](#manual-input).
 
 !!! warning
-Note that direct provisioning is not recommended for mass data due to (de)serialization overhead and often limited payload sizes. It is preferred for single value parameters, e.g. single float, int, bool or string values.
+    Note that direct provisioning is not recommended for mass data due to (de)serialization overhead and often limited payload sizes. It is preferred for single value parameters, e.g. single float, int, bool or string values.
 
 ### Output Wiring
 
@@ -70,7 +70,7 @@ Note that for SERIES, DATAFRAME, MULTITSFRAME and SINGLETSFRAME you can add meta
 This dialog additionally allows to import a json or csv file from disk via clicking on "Import JSON/CSV". For json files the required format agrees with the format for entering data into the dialogs editor. This format and the format required for CSVs is described below.
 
 !!! warning
-Importing JSON/CSV files this way has restrictive limits on data size. Since the data is stored as json and send via Web Requests, importing larger files and trying to execute a workflow will soon run into either request size limits or timeouts (and frontend errors). It is recommended to use the [local file adapter](./local_file_adapter.md) for any file that is not very small.
+    Importing JSON/CSV files this way has restrictive limits on data size. Since the data is stored as json and send via Web Requests, importing larger files and trying to execute a workflow will soon run into either request size limits or timeouts (and frontend errors). It is recommended to use the [local file adapter](./local_file_adapter.md) for any file that is not very small.
 
 ### JSON Formats
 

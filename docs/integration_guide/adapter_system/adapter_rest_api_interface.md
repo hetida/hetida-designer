@@ -133,9 +133,9 @@ Response:
 - `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now. If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
   Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
 
-      !!! info "Handling of filters"
-          If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
-          The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
+    !!! info "Handling of filters"
+        If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
+        The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
 - a filter may provide an optional `default_value`. The execution dialog prefills the input field of that filter with it, so the user only has to enter something if the default does not fit. The prefilled value is treated like any other entered value, i.e. it is stored in the wiring and sent back to the adapter on execution - the adapter does not have to apply the default itself. Like every filter value it is transferred as a string, so structured defaults have to be provided as their json text. The built-in component adapter for example maps the default values of a component's inputs to filter default values and thus sends `{"__DEFAULT__": {"offset": 0.0, "factor": 3.0, "frequency": "1h"}}` for an input with such a value.
 

@@ -20,6 +20,13 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from demo_adapter_python import VERSION
+from demo_adapter_python.attached_metadata import (
+    TEMPERATURE_METRICS,
+    series_metadata,
+    stored_multitsframe_metadata,
+    temp_with_state_metadata,
+    temperatures_metadata,
+)
 from demo_adapter_python.config import demo_adapter_config
 from demo_adapter_python.demo_data.sinks import get_sinks
 from demo_adapter_python.demo_data.sources import get_sources
@@ -560,7 +567,6 @@ def return_stored_anomaly_score(
                 "value": stored_df["value"],
             }
         )
-        ts_df.attrs = stored_df.attrs
     else:
         ts_df = pd.DataFrame(
             {
@@ -569,15 +575,6 @@ def return_stored_anomaly_score(
                 "value": [],
             }
         )
-    # do not overwrite stored attributes!
-    ts_df.attrs.update(
-        {
-            "ref_interval_start_timestamp": from_timestamp.isoformat(),
-            "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-            "ref_interval_type": "closed",
-            "ref_metrics": [ts_id],
-        }
-    )
 
     return ts_df
 
@@ -633,22 +630,10 @@ async def timeseries(
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
-        if len(ts_df.attrs) != 0:
-            logger.debug("which has attributes %s", str(ts_df.attrs))
-            collected_attrs[ts_id] = ts_df.attrs
-            collected_attrs[ts_id].update(
-                {
-                    "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                    "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                    "ref_interval_type": "closed",
-                    "ref_metrics": [ts_id],
-                }
-            )
+        collected_attrs[ts_id] = series_metadata(ts_id, from_timestamp, to_timestamp)
 
     io_stream.seek(0)
-    headers = {}
-    if len(collected_attrs) != 0:
-        headers["Data-Attributes"] = encode_attributes(collected_attrs)
+    headers = {"Data-Attributes": encode_attributes(collected_attrs)}
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
@@ -896,13 +881,7 @@ async def multitsframe(
         offset = 100.0 if "plantA" in mtsf_id else 30.0
         factor = 10.0 if "plantA" in mtsf_id else 5.0
         mtsf_records = []
-        metrics = [
-            "Pickling Outfeed Temperature",
-            "Pickling Influx Temperature",
-            "Milling Outfeed Temperature",
-            "Milling Influx Temperature",
-        ]
-        for metric in metrics:
+        for metric in TEMPERATURE_METRICS:
             values = np.random.randn(len(dt_range)) * factor + offset
             ts_records = [
                 {"timestamp": dt_range[idx], "metric": metric, "value": values[idx]}
@@ -928,14 +907,7 @@ async def multitsframe(
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
-        mtsf.attrs.update(
-            {
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-                "ref_metrics": metrics,
-            }
-        )
+        mtsf.attrs = temperatures_metadata(mtsf_id, from_timestamp, to_timestamp)
     elif mtsf_id.endswith("anomalies"):
         stored_mtsf = get_value_from_store(mtsf_id)
         stored_mtsf["timestamp"] = pd.to_datetime(stored_mtsf["timestamp"])
@@ -943,13 +915,11 @@ async def multitsframe(
             (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) > from_timestamp)
             & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) < to_timestamp)
         ]
-        mtsf.attrs.update(
-            {
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-                "ref_metrics": mtsf["metric"].unique().tolist(),
-            }
+        # all stored metrics are queried, also those without data in the interval
+        mtsf.attrs = stored_multitsframe_metadata(
+            sorted({str(metric) for metric in stored_mtsf["metric"]}),
+            from_timestamp,
+            to_timestamp,
         )
     else:
         raise HTTPException(
@@ -1075,27 +1045,7 @@ async def singletsframe(
             "state": ["ok" if value > offset - factor else "suspicious" for value in values],
         }
     )
-    stsf.attrs.update(
-        {
-            "dataset_metadata": {
-                "single_metric": stsf_id,
-                "metric_key": "id",
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-            },
-            "metrics": [
-                {
-                    "id": stsf_id,
-                    "name": "Influx Temperature With State",
-                    "value_dimensions": [
-                        {"column": "value", "name": "temperature", "unit": "°C"},
-                        {"column": "state", "name": "state", "unit": None},
-                    ],
-                }
-            ],
-        }
-    )
+    stsf.attrs = temp_with_state_metadata(stsf_id, from_timestamp, to_timestamp)
 
     headers = {}
     logger.debug("loading singletsframe %s", str(stsf))

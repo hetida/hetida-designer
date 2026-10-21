@@ -446,10 +446,116 @@ async def test_sending_attrs_via_get_multitsframe(
 
         df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
-        assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
-        assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
-        assert df_attrs["ref_interval_type"] == "closed"
-        assert df_attrs["ref_metrics"] == []
+        # metrics written by other tests
+        stored_metrics = sorted(set(get_value_from_store("root.plantA.anomalies")["metric"]))
+        assert df_attrs["dataset_metadata"] == {
+            "metric_key": "id",
+            "queried_metrics": stored_metrics,
+            "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
+            "ref_interval_end_timestamp": "2020-01-01T00:00:00+00:00",
+            "ref_interval_type": "closed",
+        }
+        assert [metric["id"] for metric in df_attrs["metrics"]] == stored_metrics
+
+
+@pytest.mark.asyncio
+async def test_metadata_of_written_multitsframe(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        mtsf_id = "root.plantB.anomalies"
+        await client.post(
+            f"/multitsframe?id={mtsf_id}",
+            json=[
+                {"metric": "b", "timestamp": "2020-01-01T00:00:00Z", "value": 12.3},
+                {"metric": "a", "timestamp": "2020-01-03T00:00:00Z", "value": 11.9},
+            ],
+            headers={"Data-Attributes": encode_attributes({"test": "Hello world!"})},
+        )
+
+        response = await client.get(
+            f"/multitsframe?id={mtsf_id}"
+            f"&from={quote('2020-01-01T12:00:00+02:00')}"
+            f"&to={quote('2020-01-02T02:00:00+02:00')}"
+        )
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        # all written metrics, also those without data in the interval
+        assert df_attrs == {
+            "dataset_metadata": {
+                "metric_key": "id",
+                "queried_metrics": ["a", "b"],
+                "ref_interval_start_timestamp": "2020-01-01T10:00:00+00:00",
+                "ref_interval_end_timestamp": "2020-01-02T00:00:00+00:00",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "id": metric,
+                    "name": metric,
+                    "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                }
+                for metric in ["a", "b"]
+            ],
+        }
+
+
+@pytest.mark.asyncio
+async def test_metadata_of_temperatures_multitsframe(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        response = await client.get(
+            "/multitsframe?id=root.plantA.temperatures"
+            f"&from={quote('2020-01-01T00:00:00Z')}"
+            f"&to={quote('2020-01-01T05:00:00Z')}"
+        )
+
+        mtsf = pd.read_json(io.StringIO(response.text), lines=True)
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert df_attrs["dataset_metadata"]["metric_key"] == "name"
+        assert set(df_attrs["dataset_metadata"]["queried_metrics"]) == set(mtsf["metric"])
+        assert [metric["name"] for metric in df_attrs["metrics"]] == df_attrs["dataset_metadata"][
+            "queried_metrics"
+        ]
+        assert df_attrs["metrics"][1] == {
+            "id": "root.plantA.picklingUnit.influx.temp",
+            "name": "Pickling Influx Temperature",
+            "value_dimensions": [
+                {
+                    "column": "value",
+                    "unit": "°F",
+                    "measurement": "temperature",
+                    "value_data_type": "float",
+                }
+            ],
+            "default_aggregation_method": "MEAN",
+        }
+
+
+@pytest.mark.asyncio
+async def test_metadata_of_singletsframe(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        stsf_id = "root.plantB.picklingUnit.influx.temp_with_state"
+        response = await client.get(
+            f"/singletsframe?id={stsf_id}"
+            f"&from={quote('2020-01-01T00:00:00Z')}"
+            f"&to={quote('2020-01-01T05:00:00Z')}"
+        )
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert df_attrs["dataset_metadata"] == {
+            "metric_key": "id",
+            "single_metric": stsf_id,
+            "queried_metrics": [stsf_id],
+            "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
+            "ref_interval_end_timestamp": "2020-01-01T05:00:00+00:00",
+            "ref_interval_type": "closed",
+        }
+        assert [metric["id"] for metric in df_attrs["metrics"]] == [stsf_id]
+        assert [
+            (value_dimension["column"], value_dimension["unit"])
+            for value_dimension in df_attrs["metrics"][0]["value_dimensions"]
+        ] == [("value", "°C"), ("state", None)]
 
 
 @pytest.mark.asyncio
@@ -505,10 +611,61 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
 
         df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
-        assert ts_id in df_attrs
-        assert "ref_interval_stop_timestamp" in df_attrs[ts_id]
-        assert df_attrs[ts_id]["ref_interval_stop_timestamp"] != "2020-01-01T00:00:00.000000000Z"
-        assert df_attrs[ts_id]["ref_interval_stop_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert df_attrs == {
+            ts_id: {
+                "dataset_metadata": {
+                    "metric_key": "id",
+                    "single_metric": ts_id,
+                    "queried_metrics": [ts_id],
+                    "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
+                    "ref_interval_end_timestamp": "2020-01-01T00:00:00+00:00",
+                    "ref_interval_type": "closed",
+                },
+                "metrics": [
+                    {
+                        "id": ts_id,
+                        "name": "Influx Anomaly Score",
+                        "value_dimensions": [
+                            {
+                                "column": "value",
+                                "unit": None,
+                                "measurement": "anomaly score",
+                                "value_data_type": "float",
+                            }
+                        ],
+                        "default_aggregation_method": "MAX",
+                    }
+                ],
+            }
+        }
+
+
+@pytest.mark.asyncio
+async def test_metadata_of_each_timeseries(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        ts_ids = [
+            "root.plantA.picklingUnit.influx.temp",
+            "root.plantB.millingUnit.outfeed.press",
+            "unknown.timeseries",
+        ]
+
+        response = await client.get(
+            "/timeseries",
+            params={"id": ts_ids, "from": "2020-01-01T00:00:00Z", "to": "2020-01-01T03:00:00Z"},
+        )
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert list(df_attrs) == ts_ids
+        assert [
+            (metric["name"], metric["value_dimensions"][0]["unit"])
+            for ts_id in ts_ids
+            for metric in df_attrs[ts_id]["metrics"]
+        ] == [
+            ("Influx Temperature", "°F"),
+            ("Outfeed Pressure", "bar"),
+            ("unknown.timeseries", None),
+        ]
 
 
 @pytest.mark.asyncio

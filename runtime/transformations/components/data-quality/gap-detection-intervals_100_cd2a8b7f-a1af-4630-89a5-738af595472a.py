@@ -14,17 +14,19 @@ DataFrame with information about the gaps.
 
 - **interval_start_timestamp** (String, default value: null):
   Desired start timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_interval_start_timestamp" (or "from") that will be used if no **interval_start_timestamp**
-  is provided.
+  Alternatively, `ref_interval_start_timestamp` of the dataset metadata of **timeseries** (see the
+  [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **interval_start_timestamp** is provided. For metadata in the former format, the key
+  "ref_interval_start_timestamp" (or "from") directly in its `.attrs` entry is used instead.
   If neither is defined, the processing range begins with the first data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
 - **interval_end_timestamp** (String, default value: null):
   Desired end timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_interval_end_timestamp" (or "to") that will be used if no **interval_end_timestamp** is
-  provided.
+  Alternatively, `ref_interval_end_timestamp` of the dataset metadata of **timeseries** (see the
+  [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **interval_end_timestamp** is provided. For metadata in the former format, the key
+  "ref_interval_end_timestamp" (or "to") directly in its `.attrs` entry is used instead.
   If neither is defined, the processing range ends with the last data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
@@ -32,8 +34,9 @@ DataFrame with information about the gaps.
   If true, the function will automatically determine the expected data frequency based on the
   **timeseries** index and **expected_data_frequency** must not be set.
   If false, an **expected_data_frequency** must be set.
-  If "ref_data_frequency" is contained in the attributes of **timeseries** this value will be used
-  for the **expected_data_frequency** and **auto_frequency_determination** will be set to false.
+  If the metadata of **timeseries** provides `ref_data_frequency` (see
+  **expected_data_frequency**), this value will be used for the **expected_data_frequency** and
+  **auto_frequency_determination** will be set to false.
 
 - **auto_freq_percentile** (Float, default value: 0.5):
   Only relevant when **auto_frequency_determination** is true.
@@ -55,8 +58,10 @@ DataFrame with information about the gaps.
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_data_frequency" that will be used if no **expected_data_frequency** is provided.
+  Alternatively, `ref_data_frequency` of the dataset metadata of **timeseries** (see the [metadata
+  conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is used if
+  no **expected_data_frequency** is provided. For metadata in the former format, the key
+  "ref_data_frequency" directly in its `.attrs` entry is used instead.
   In that case **auto_frequency_determination** will be set to false.
 
 - **expected_data_freq_allowed_variance_factor** (Float, default value: 1.0):
@@ -74,6 +79,11 @@ DataFrame with information about the gaps.
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
+  Alternatively, `ref_data_frequency_offset` of the dataset metadata of **timeseries** (see the
+  [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **expected_data_frequency_offset** is provided. For metadata in the former format, the
+  key "ref_data_frequency_offset" directly in its `.attrs` entry is used instead.
+  In that case **auto_frequency_determination** will be set to false.
 
 - **externally_determined_gap_timestamps** (Series, default value: null):
   Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
@@ -82,7 +92,7 @@ DataFrame with information about the gaps.
   Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
   which all have a datatime64 dtype.
 
-- **deactivate_internal_gap_detection** (bool, default value: false):
+- **deactivate_freq_based_gap_detection** (bool, default value: false):
   Set to `true` to disable any gap detection and only determine the gap_info for
   **externally_determined_gap_timestamps** and **externally_determined_gap_intervals**.
 
@@ -412,7 +422,7 @@ by downtime or outages, where the data is likely to be atypical and should there
 in the analysis.
 Gap points can be specified in a series, whereas gap intervals must be specified by a data frame
 containing the expected columns.Further gap detection can be disabled by setting
-**deactivate_internal_gap_detection** to true.
+**deactivate_freq_based_gap_detection** to true.
 The example JSON input
 ```
 {
@@ -459,7 +469,7 @@ The example JSON input
             "end_inclusive": false
         }
     ],
-    "deactivate_internal_gap_detection": true,
+    "deactivate_freq_based_gap_detection": true,
 }
 ```
 then results in the following output with only those (parts of the) externally determined gaps,
@@ -514,6 +524,8 @@ which overlap with the time interval of interest:
 ```
 """
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -563,6 +575,22 @@ def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
                 error_code=422,
                 invalid_component_inputs=[input_name],
             ) from err
+
+
+def dataset_metadatum(timeseries: pd.Series, key: str, *former_keys: str) -> Any:
+    """A dataset metadata field from the metadata of the timeseries
+
+    Following the metadata conventions the field is part of attrs["dataset_metadata"]. As
+    fallback, the field (or one of the former_keys) is taken directly from attrs, as in the
+    former metadata format. Returns None if it is not set.
+    """
+    dataset_metadata = timeseries.attrs.get("dataset_metadata")
+    if isinstance(dataset_metadata, dict) and dataset_metadata.get(key) is not None:
+        return dataset_metadata[key]
+    for flat_key in (key, *former_keys):
+        if timeseries.attrs.get(flat_key) is not None:
+            return timeseries.attrs[flat_key]
+    return None
 
 
 class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
@@ -633,9 +661,9 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     @field_validator("interval_end_timestamp")
     @classmethod
     def check_interval_end_timestamp_later_than_interval_start_timestamp(
-        cls, interval_end_timestamp: pd.Timestamp | None, values: dict
+        cls, interval_end_timestamp: pd.Timestamp | None, info: ValidationInfo
     ) -> pd.Timestamp | None:
-        interval_start_timestamp = values["interval_start_timestamp"]
+        interval_start_timestamp = info.data["interval_start_timestamp"]
         if (
             None not in (interval_start_timestamp, interval_end_timestamp)
             and interval_start_timestamp > interval_end_timestamp
@@ -677,9 +705,9 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     @field_validator("expected_data_frequency_str")
     @classmethod
     def check_correct_input_param_combination_with_expected_data_frequency(
-        cls, expected_data_frequency_str: str, values: dict
+        cls, expected_data_frequency_str: str, info: ValidationInfo
     ) -> str:
-        auto_frequency_determination = values["auto_frequency_determination"]
+        auto_frequency_determination = info.data["auto_frequency_determination"]
         if auto_frequency_determination is False:
             if expected_data_frequency_str is None:
                 raise ComponentInputValidationException(
@@ -719,12 +747,12 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     @field_validator("expected_data_frequency_offset_str")
     @classmethod
     def check_correct_input_param_combination_with_expected_data_frequency_offset(
-        cls, expected_data_frequency_offset_str: str, values: dict
+        cls, expected_data_frequency_offset_str: str, info: ValidationInfo
     ) -> str:
         if expected_data_frequency_offset_str is None:
             return None
-        auto_frequency_determination = values["auto_frequency_determination"]
-        expected_data_frequency_str = values["expected_data_frequency_str"]
+        auto_frequency_determination = info.data["auto_frequency_determination"]
+        expected_data_frequency_str = info.data["expected_data_frequency_str"]
         if auto_frequency_determination is True:
             raise ComponentInputValidationException(
                 "The expected_data_frequency_offset_str must not be set, "
@@ -1147,6 +1175,7 @@ def constrict_intervals_df_to_interval(
     interval_start_timestamp: pd.Timestamp | None,
     interval_end_timestamp: pd.Timestamp | None,
 ) -> pd.DataFrame:
+    gap_intervals = gap_intervals.copy()  # do not change the input
     if interval_start_timestamp is not None:
         gap_start_before_interval_start_index = gap_intervals[
             gap_intervals["start_time"] < interval_start_timestamp
@@ -1406,27 +1435,28 @@ def main(
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     if interval_start_timestamp is None:
-        if "ref_interval_start_timestamp" in timeseries.attrs:
-            interval_start_timestamp = timeseries.attrs["ref_interval_start_timestamp"]
-        elif "from" in timeseries.attrs:
-            interval_start_timestamp = timeseries.attrs["from"]
+        interval_start_timestamp = dataset_metadatum(
+            timeseries, "ref_interval_start_timestamp", "from"
+        )
 
     if interval_end_timestamp is None:
-        if "ref_interval_end_timestamp" in timeseries.attrs:
-            interval_end_timestamp = timeseries.attrs["ref_interval_end_timestamp"]
-        elif "to" in timeseries.attrs:
-            interval_end_timestamp = timeseries.attrs["to"]
+        interval_end_timestamp = dataset_metadatum(timeseries, "ref_interval_end_timestamp", "to")
 
-    if expected_data_frequency is None and "ref_data_frequency" in timeseries.attrs:
-        expected_data_frequency = timeseries.attrs["ref_data_frequency"]
-        freqstr2timedelta(expected_data_frequency, 'timeseries.attrs["ref_data_frequency"]')
+    if expected_data_frequency is None and (
+        (ref_data_frequency := dataset_metadatum(timeseries, "ref_data_frequency")) is not None
+    ):
+        expected_data_frequency = ref_data_frequency
+        freqstr2timedelta(expected_data_frequency, "ref_data_frequency of the timeseries metadata")
         auto_frequency_determination = False
 
-    if expected_data_frequency_offset is None and "ref_data_frequency_offset" in timeseries.attrs:
-        expected_data_frequency_offset = timeseries.attrs["ref_data_frequency_offset"]
+    if expected_data_frequency_offset is None and (
+        (ref_data_frequency_offset := dataset_metadatum(timeseries, "ref_data_frequency_offset"))
+        is not None
+    ):
+        expected_data_frequency_offset = ref_data_frequency_offset
         freqstr2timedelta(
             expected_data_frequency_offset,
-            'timeseries.attrs["ref_data_frequency_offset"]',
+            "ref_data_frequency_offset of the timeseries metadata",
         )
         auto_frequency_determination = False
 
@@ -1529,6 +1559,98 @@ def main(
             input_params.expected_data_frequency
         ).freqstr,
     }
+
+
+# Testing
+try:
+    import pytest
+except ImportError:
+    pass
+else:
+    METADATA_FOLLOWING_CONVENTIONS = {
+        "dataset_metadata": {
+            "metric_key": "id",
+            "single_metric": "level",
+            "queried_metrics": ["level"],
+            "ref_interval_start_timestamp": "2020-01-01T00:58:00+00:00",
+            "ref_interval_end_timestamp": "2020-01-01T01:06:00+00:00",
+            "ref_interval_type": "closed",
+            "ref_data_frequency": "1min",
+        }
+    }
+
+    def timeseries_with_metadata(attrs):
+        timeseries = pd.Series(
+            [1.0, 2.0, 3.0, 4.0],
+            index=pd.date_range("2020-01-01T01:00:00Z", periods=4, freq="1min"),
+        )
+        timeseries.attrs = attrs
+        return timeseries
+
+    @pytest.mark.parametrize(
+        "attrs",
+        [
+            METADATA_FOLLOWING_CONVENTIONS,
+            # former metadata format
+            {
+                "ref_interval_start_timestamp": "2020-01-01T00:58:00+00:00",
+                "ref_interval_end_timestamp": "2020-01-01T01:06:00+00:00",
+                "ref_data_frequency": "1min",
+            },
+            {
+                "from": "2020-01-01T00:58:00+00:00",
+                "to": "2020-01-01T01:06:00+00:00",
+                "ref_data_frequency": "1min",
+            },
+            # the metadata conventions take precedence over the former format
+            METADATA_FOLLOWING_CONVENTIONS
+            | {
+                "ref_interval_start_timestamp": "2020-01-01T01:00:00+00:00",
+                "ref_data_frequency": "2min",
+            },
+        ],
+    )
+    def test_ref_interval_and_data_frequency_from_metadata(attrs):
+        result = main(timeseries=timeseries_with_metadata(attrs))
+
+        assert result["data_frequency"] == "min"  # noqa: S101
+        assert result["gap_info"][["start_time", "end_time"]].to_dict(orient="list") == {  # noqa: S101
+            "start_time": [
+                pd.Timestamp("2020-01-01T00:58:00Z"),
+                pd.Timestamp("2020-01-01T01:03:00Z"),
+            ],
+            "end_time": [
+                pd.Timestamp("2020-01-01T01:00:00Z"),
+                pd.Timestamp("2020-01-01T01:06:00Z"),
+            ],
+        }
+
+    def test_externally_determined_gap_intervals_input_is_not_changed():
+        gap_intervals = pd.DataFrame(
+            {
+                "start_time": pd.to_datetime(["2020-01-01T00:50:00Z"]),
+                "end_time": pd.to_datetime(["2020-01-01T00:59:00Z"]),
+                "start_inclusive": [True],
+                "end_inclusive": [True],
+            }
+        )
+        expected_gap_intervals = gap_intervals.copy()
+
+        main(
+            timeseries=timeseries_with_metadata(METADATA_FOLLOWING_CONVENTIONS),
+            externally_determined_gap_intervals=gap_intervals,
+        )
+
+        pd.testing.assert_frame_equal(gap_intervals, expected_gap_intervals)
+
+    def test_inputs_take_precedence_over_metadata():
+        result = main(
+            timeseries=timeseries_with_metadata(METADATA_FOLLOWING_CONVENTIONS),
+            interval_start_timestamp="2020-01-01T01:00:00+00:00",
+            interval_end_timestamp="2020-01-01T01:03:00+00:00",
+        )
+
+        assert len(result["gap_info"]) == 0  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

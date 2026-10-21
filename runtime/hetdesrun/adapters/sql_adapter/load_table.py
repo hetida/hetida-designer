@@ -153,20 +153,64 @@ def prepare_validate_loaded_raw_multitsframe(
         )
         raise AdapterHandlingException(msg) from e
 
-    # setting meta data (attrs)
-    validated_multi_ts_frame.attrs = {
+    validated_multi_ts_frame.attrs = multitsframe_metadata(
+        validated_multi_ts_frame,
+        ts_table_config,
+        metrics_list,
+        from_datetime,
+        to_datetime,
+    )
+
+    return validated_multi_ts_frame
+
+
+def multitsframe_metadata(
+    multits_frame: pd.DataFrame,
+    ts_table_config: TimeseriesTableConfig,
+    metrics_list: list[str] | None,
+    from_datetime: datetime.datetime,
+    to_datetime: datetime.datetime,
+) -> dict:
+    """Metadata of a loaded multitsframe following the metadata conventions
+
+    The queried metrics are the requested ones or, if all metrics were requested (metrics_list
+    is None), those occurring in the loaded data. The database provides no further information
+    on the metrics, so their id serves as name and their value dimensions have neither unit nor
+    measurement.
+    """
+    if metrics_list is None:
+        queried_metrics = sorted(multits_frame["metric"].unique().tolist())
+    elif ts_table_config.metric_type == "int":
+        # as in the metric column, e.g. "7" for a requested "07"
+        queried_metrics = [str(int(metric)) for metric in metrics_list]
+    else:
+        queried_metrics = metrics_list
+    queried_metrics = list(dict.fromkeys(queried_metrics))  # without duplicates
+
+    value_columns = [
+        column for column in multits_frame.columns if column not in ("timestamp", "metric")
+    ]
+
+    return {
         "dataset_metadata": {
+            "metric_key": "id",
+            "queried_metrics": queried_metrics,
             "ref_interval_start_timestamp": from_datetime.isoformat(),
             "ref_interval_end_timestamp": to_datetime.isoformat(),
             "ref_interval_type": "closed",
         },
+        "metrics": [
+            {
+                "id": metric,
+                "name": metric,
+                "value_dimensions": [
+                    {"column": column, "unit": None, "measurement": None}
+                    for column in value_columns
+                ],
+            }
+            for metric in queried_metrics
+        ],
     }
-    if metrics_list is not None:
-        validated_multi_ts_frame.attrs.update(
-            {"by_metric": {metric: {} for metric in metrics_list}}
-        )
-
-    return validated_multi_ts_frame
 
 
 def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> pd.DataFrame:
