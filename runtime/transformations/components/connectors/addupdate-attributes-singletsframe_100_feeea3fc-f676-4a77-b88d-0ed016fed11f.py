@@ -14,12 +14,14 @@ If you wish to attach metadata to a SingleTSFrame, please follow the conventions
 * **singletsframe** (SingleTSFrame): The input singletsframe with added attributes.
 
 ## Details
-Adds attributes to a SingleTSFrame. Adding an attribute with a key, that is already included in the attributes of the singletsframe, will update the corresponding value.
+Adds attributes to a SingleTSFrame. Adding an attribute with a key, that is already included in the attributes of the singletsframe, will update the corresponding value. E.g. providing "dataset_metadata" replaces the complete dataset metadata. The input singletsframe itself is not changed.
 
 **Note:** Selecting "Only Output" for the output singletsframe means that it is wired to the "direct provisioning" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the "Extract Attributes (SingleTSFrame)" component.
 
 **Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key "Data-Attributes" in the header. To process the attributes, the adapter should be implemented accordingly.
 """
+
+import copy
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -48,9 +50,57 @@ def main(*, singletsframe, attributes):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    singletsframe.attrs.update(attributes)
+    # a copy, since the input may also be used elsewhere in the workflow
+    updated_singletsframe = singletsframe.copy()
+    updated_singletsframe.attrs = copy.deepcopy(singletsframe.attrs)
+    updated_singletsframe.attrs.update(copy.deepcopy(attributes))
 
-    return {"singletsframe": singletsframe}
+    return {"singletsframe": updated_singletsframe}
+
+
+# Testing
+try:
+    import pandas as pd
+    import pytest
+except ImportError:
+    pass
+else:
+
+    @pytest.fixture
+    def singletsframe():
+        singletsframe = pd.DataFrame(
+            {
+                "timestamp": pd.to_datetime(["2019-08-01T15:42:36.000Z"], utc=True),
+                "value": [1.0],
+            }
+        )
+        singletsframe.attrs = {"dataset_metadata": {"single_metric": "abc.temp"}, "a": 1}
+        return singletsframe
+
+    def test_adds_and_updates_attributes(singletsframe):
+        attributes = {"a": 2, "metrics": [{"id": "abc.temp", "name": "Temperature"}]}
+
+        result = main(singletsframe=singletsframe, attributes=attributes)["singletsframe"]
+
+        assert result.attrs == {  # noqa: S101
+            "dataset_metadata": {"single_metric": "abc.temp"},
+            "a": 2,
+            "metrics": [{"id": "abc.temp", "name": "Temperature"}],
+        }
+        assert list(result["value"]) == [1.0]  # noqa: S101
+
+    def test_input_is_not_changed(singletsframe):
+        attributes = {"a": 2, "metrics": [{"id": "abc.temp"}]}
+
+        result = main(singletsframe=singletsframe, attributes=attributes)["singletsframe"]
+        result.attrs["dataset_metadata"]["metric_key"] = "id"
+        result.attrs["metrics"][0]["name"] = "Temperature"
+
+        assert singletsframe.attrs == {  # noqa: S101
+            "dataset_metadata": {"single_metric": "abc.temp"},
+            "a": 1,
+        }
+        assert attributes == {"a": 2, "metrics": [{"id": "abc.temp"}]}  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

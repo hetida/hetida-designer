@@ -18,8 +18,11 @@ A MULTITSFRAME holds multiple metrics, distinguished by its "metric" column. A S
 The metadata (`.attrs`) is narrowed down accordingly following the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/):
 
 * `dataset_metadata.single_metric` is set to **metric**,
+* `dataset_metadata.queried_metrics` is reduced to **metric**,
 * the `metrics` entries are reduced to the one entry belonging to **metric** (identified via `dataset_metadata.metric_key`, defaulting to "id"),
 * everything else, in particular `value_dimensions_shared`, is carried over unchanged.
+
+So metadata following the conventions for a MULTITSFRAME follows them for the resulting SINGLETSFRAME, too.
 
 Raises a ComponentInputValidationException if **metric** does not occur in the multitsframe.
 
@@ -49,9 +52,9 @@ from hdutils import ComponentInputValidationException
 def narrow_metadata_to_metric(attrs, metric):
     """Reduce multitsframe metadata to the metadata of a single metric
 
-    Sets dataset_metadata.single_metric and keeps only the entry of the given metric in
-    the "metrics" metadata. Also handles the simpler / older metadata structures where
-    metric metadata is a dict keyed by metric.
+    Sets dataset_metadata.single_metric, reduces dataset_metadata.queried_metrics to the given
+    metric and keeps only the entry of the given metric in the "metrics" metadata. Also handles
+    the simpler / older metadata structures where metric metadata is a dict keyed by metric.
     """
     narrowed = copy.deepcopy(attrs) if attrs else {}
 
@@ -60,6 +63,8 @@ def narrow_metadata_to_metric(attrs, metric):
         dataset_metadata = {}
         narrowed["dataset_metadata"] = dataset_metadata
     dataset_metadata["single_metric"] = metric
+    if isinstance(dataset_metadata.get("queried_metrics"), list):
+        dataset_metadata["queried_metrics"] = [metric]
     metric_key = dataset_metadata.get("metric_key") or "id"
 
     if isinstance(narrowed.get("metrics"), list):
@@ -125,6 +130,7 @@ try:
 except ImportError:
     pass
 else:
+    from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
     @pytest.fixture
     def multitsframe():
@@ -175,6 +181,38 @@ else:
         ]
         # input attrs must not be modified
         assert len(multitsframe.attrs["metrics"]) == 2  # noqa: S101
+
+    def test_metadata_follows_conventions(multitsframe):
+        multitsframe.attrs = {
+            "dataset_metadata": {
+                "metric_key": "external_id",
+                "queried_metrics": ["a", "b", "c"],
+                "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+                "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "external_id": metric,
+                    "id": f"id of {metric}",
+                    "name": f"Metric {metric}",
+                    "value_dimensions": [
+                        {"column": "value", "unit": "°C", "measurement": "temperature"},
+                        {"column": "state", "unit": None, "measurement": None},
+                    ],
+                }
+                for metric in ["a", "b", "c"]
+            ],
+        }
+        assert check_metadata_conventions(multitsframe) == []  # noqa: S101
+
+        singletsframe = main(multitsframe=multitsframe, metric="b")["singletsframe"]
+
+        assert check_metadata_conventions(singletsframe, "SINGLETSFRAME") == []  # noqa: S101
+        assert singletsframe.attrs["dataset_metadata"]["queried_metrics"] == ["b"]  # noqa: S101
+        assert [metric["id"] for metric in singletsframe.attrs["metrics"]] == [  # noqa: S101
+            "id of b"
+        ]
 
     def test_works_without_metadata(multitsframe):
         multitsframe.attrs = {}

@@ -15,7 +15,7 @@ Convert a Series into a SingleTSFrame.
 ## Details
 A SERIES and a SINGLETSFRAME both represent a single timeseries. The difference is that a SERIES is one-dimensional and carries its timestamps in the index, while a SINGLETSFRAME carries its timestamps in a "timestamp" column and can have arbitrarily many value dimensions. This component therefore moves the index into a "timestamp" column and the values into a single value column.
 
-The attributes (`.attrs`) of the series are carried over unchanged, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types, namely via `dataset_metadata.single_metric`. If the series has a name and no `single_metric` is set in the metadata, the series name is used as `single_metric`.
+The attributes (`.attrs`) of the series are carried over, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types, namely via `dataset_metadata.single_metric`. If the series has a name and no `single_metric` is set in the metadata, the series name is used as `single_metric`. If **value_column_name** is not "value", the value dimension "value" of the metadata is renamed accordingly, so that metadata following the conventions for a SERIES follows them for the resulting SINGLETSFRAME, too.
 
 Raises a ComponentInputValidationException if the index of the series cannot be interpreted as timestamps.
 
@@ -36,6 +36,23 @@ import copy
 import pandas as pd
 
 from hdutils import ComponentInputValidationException
+
+
+def rename_value_dimension(attrs, column, new_column):
+    """Rename a value dimension in metadata following the metadata conventions
+
+    Renames it in the value dimensions of all metrics and in the shared value dimensions.
+    Changes attrs in place.
+    """
+    metrics = attrs.get("metrics") if isinstance(attrs.get("metrics"), list) else []
+    for value_dimensions in [
+        *(metric.get("value_dimensions") for metric in metrics if isinstance(metric, dict)),
+        attrs.get("value_dimensions_shared"),
+    ]:
+        for value_dimension in value_dimensions if isinstance(value_dimensions, list) else []:
+            if isinstance(value_dimension, dict) and value_dimension.get("column") == column:
+                value_dimension["column"] = new_column
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -87,6 +104,8 @@ def main(*, series, value_column_name="value"):
         dataset_metadata = attrs.setdefault("dataset_metadata", {})
         if isinstance(dataset_metadata, dict) and dataset_metadata.get("single_metric") is None:
             dataset_metadata["single_metric"] = str(series.name)
+    if value_column_name != "value":
+        rename_value_dimension(attrs, "value", value_column_name)
     singletsframe.attrs = attrs
 
     return {"singletsframe": singletsframe}
@@ -98,6 +117,7 @@ try:
 except ImportError:
     pass
 else:
+    from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
     @pytest.fixture
     def series():
@@ -136,6 +156,46 @@ else:
         singletsframe = main(series=series, value_column_name="temperature")["singletsframe"]
 
         assert list(singletsframe.columns) == ["timestamp", "temperature"]  # noqa: S101
+
+    @pytest.fixture
+    def series_metadata():
+        # following the metadata conventions for a SERIES
+        return {
+            "dataset_metadata": {
+                "metric_key": "id",
+                "single_metric": "abc.temp",
+                "queried_metrics": ["abc.temp"],
+                "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+                "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "id": "abc.temp",
+                    "name": "Temperature",
+                    "value_dimensions": [
+                        {"column": "value", "unit": "°C", "measurement": "temperature"}
+                    ],
+                }
+            ],
+            "value_dimensions_shared": [{"column": "value", "description": "Measured"}],
+        }
+
+    @pytest.mark.parametrize("value_column_name", ["value", "temperature"])
+    def test_metadata_follows_conventions(series, series_metadata, value_column_name):
+        series.attrs = series_metadata
+        assert check_metadata_conventions(series) == []  # noqa: S101
+
+        singletsframe = main(series=series, value_column_name=value_column_name)["singletsframe"]
+
+        assert check_metadata_conventions(singletsframe, "SINGLETSFRAME") == []  # noqa: S101
+        value_dimension = singletsframe.attrs["metrics"][0]["value_dimensions"][0]
+        assert value_dimension["column"] == value_column_name  # noqa: S101
+        assert singletsframe.attrs["value_dimensions_shared"][0]["column"] == (  # noqa: S101
+            value_column_name
+        )
+        # input attrs must not be modified
+        assert series.attrs == series_metadata  # noqa: S101
 
     def test_invalid_value_column_name(series):
         with pytest.raises(ComponentInputValidationException):
