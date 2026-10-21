@@ -273,7 +273,9 @@ class InputWiring(BaseModel):
             " and relies on parsing at a later stage in the execution process."
             " The Virtual Structure adapter allows to set a meta_data attribute"
             " in virtual sources. Its value is provided as attrs to the actual"
-            " adapter's wiring then."
+            " adapter's wiring then. For SERIES, SINGLETSFRAME and MULTITSFRAME the resulting"
+            " metadata should follow the metadata conventions specified by the schemas"
+            " SeriesMetadata, SingleTSFrameMetadata and MultiTSFrameMetadata."
         ),
     )
 

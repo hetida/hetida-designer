@@ -65,7 +65,7 @@ General information about the adapter.
 This endpoints allows for hierarchical browsing of data sources / data sinks. It returns exactly one level of the hierarchy (e.g. used by the hetida designer frontend for lazy loading). The nodes of the hierarchy are called thingNodes.
 
 - query parameters:
-  - `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks) and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
+    - `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks) and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
 
 Response:
 
@@ -144,7 +144,7 @@ Response:
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering and is displayed below the selected source/sink in the wiring dialog.
 
 !!! info "Metadata in hierarchy"
-Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
+    Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
 
 ```
 /thingNodes/{thingNodeId}/metadata/{metadataKey}
@@ -298,7 +298,7 @@ On the one side metadata endpoints tell which metadatum is available at every so
 On the other side these endpoints directly return metadata values and are accessed from the runtime-side generic rest adapter implementation to obtain wired metadata or to send them.
 
 !!! info "Not providing/receiving Metadata"
-If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
+    If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
 
 #### Query parameters for metadata endpoints
 
@@ -391,6 +391,8 @@ For orientation: For 1000 timeseries requested together, each with reasonable me
 
 If a reverse proxy (e.g. nginx or a Kubernetes ingress) is placed between the designer runtime and your adapter, it may reject large response headers of your adapter on its own, independent of the setting above. For example, nginx fails with "upstream sent too big header" if the headers exceed its `proxy_buffer_size` (4 KiB or 8 KiB by default).
 
+The runtime can be configured to check the received metadata against the metadata conventions, see [Validating received metadata](adapter_registration.md#validating-received-metadata).
+
 In the other direction, the designer runtime sends metadata as `Data-Attributes` request header to the POST endpoints. Here, the HTTP server of your adapter determines the allowed size. Many servers limit request headers to 8 KiB to 16 KiB by default (e.g. Tomcat, nginx, uvicorn). If you expect large metadata, increase this limit in your adapter's server configuration.
 
 #### /timeseries (GET)
@@ -422,20 +424,63 @@ Type of value must be the datatype of the timeseries source, i.e. if the timeser
 
 Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
-For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata, e.g.:
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata. The metadata of each timeseries should follow the metadata conventions for SERIES, which are specified by the `SeriesMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). Additional fields are allowed, like `anomalies` in the following example. Checking metadata warns about them, in case they are misspelled.
 
 ```json
 {
   "id_1": {
-    "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
-    "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
-    "ref_interval_type": "closed"
+    "dataset_metadata": {
+      "metric_key": "id",
+      "single_metric": "id_1",
+      "queried_metrics": [
+        "id_1"
+      ],
+      "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+      "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+      "ref_interval_type": "closed"
+    },
+    "metrics": [
+      {
+        "id": "id_1",
+        "name": "Milling Influx Temperature",
+        "value_dimensions": [
+          {
+            "column": "value",
+            "unit": "°C",
+            "measurement": "temperature"
+          }
+        ]
+      }
+    ]
   },
   "id_2": {
-    "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
-    "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
-    "ref_interval_type": "closed",
-    "anomalies": ["2020-03-11T14:45:00.000000000Z", "2020-03-11T14:48:00.000000000Z"]
+    "dataset_metadata": {
+      "metric_key": "id",
+      "single_metric": "id_2",
+      "queried_metrics": [
+        "id_2"
+      ],
+      "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+      "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+      "ref_interval_type": "closed"
+    },
+    "metrics": [
+      {
+        "id": "id_2",
+        "name": "Milling Outfeed Temperature",
+        "value_dimensions": [
+          {
+            "column": "value",
+            "unit": "°C",
+            "measurement": "temperature"
+          }
+        ]
+      }
+    ],
+    "anomalies": [
+      "2020-03-11T14:45:00.000000000Z",
+      "2020-03-11T14:48:00.000000000Z"
+    ]
   }
 }
 ```
@@ -531,7 +576,7 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-##### Retrieving attached timeseries metadata
+##### Retrieving attached dataframe metadata
 
 Again, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
@@ -565,27 +610,72 @@ This response will always have the entries `metric`, `timestamp` and `value`. Ne
 
 Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
-For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata. It should follow the metadata conventions for MULTITSFRAME, which are specified by the `MultiTSFrameMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). An example:
 
 ```json
 {
-  "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
-  "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
-  "ref_interval_type": "closed",
-  "ref_metrics": [
-    "Milling Influx Temperature",
-    "Milling Outfeed Temperature",
-    "Pickling Influx Temperature",
-    "Pickling Outfeed Temperature"
-  ],
-  "column_units": {
-    "Milling Influx Temperature": "C",
-    "Milling Outfeed Temperature": "C",
-    "Pickling Influx Temperature": "C",
-    "Pickling Outfeed Temperature": "C"
-  }
+  "dataset_metadata": {
+    "metric_key": "id",
+    "queried_metrics": [
+      "Milling Influx Temperature",
+      "Milling Outfeed Temperature",
+      "Pickling Influx Temperature",
+      "Pickling Outfeed Temperature"
+    ],
+    "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+    "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+    "ref_interval_type": "closed"
+  },
+  "metrics": [
+    {
+      "id": "Milling Influx Temperature",
+      "name": "Milling Influx Temperature",
+      "value_dimensions": [
+        {
+          "column": "value",
+          "unit": "°C",
+          "measurement": "temperature"
+        }
+      ]
+    },
+    {
+      "id": "Milling Outfeed Temperature",
+      "name": "Milling Outfeed Temperature",
+      "value_dimensions": [
+        {
+          "column": "value",
+          "unit": "°C",
+          "measurement": "temperature"
+        }
+      ]
+    },
+    {
+      "id": "Pickling Influx Temperature",
+      "name": "Pickling Influx Temperature",
+      "value_dimensions": [
+        {
+          "column": "value",
+          "unit": "°C",
+          "measurement": "temperature"
+        }
+      ]
+    },
+    {
+      "id": "Pickling Outfeed Temperature",
+      "name": "Pickling Outfeed Temperature",
+      "value_dimensions": [
+        {
+          "column": "value",
+          "unit": "°C",
+          "measurement": "temperature"
+        }
+      ]
+    }
+  ]
 }
 ```
+
+Here the entries of the `metric` column are the `id`s of the metrics under `metrics`, since `dataset_metadata.metric_key` is `"id"`.
 
 The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
@@ -600,9 +690,9 @@ Payload:
 
 ```json
 [
-  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
-  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
-  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3},
+  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7},
+  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4},
   {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
 ]
 ```
@@ -641,13 +731,13 @@ Response (Line delimited Stream of Json records):
 This response will always have a `timestamp` entry plus at least one further entry. Each entry besides `timestamp` is a value dimension of the timeseries — in the example above `value` and `state`. `timestamp` may not be `null`, must be an ISO-8601 timestamp and should always have UTC timezone.
 
 !!! info "no metric field"
-An entry named `metric` is not forbidden, but it is _not_ interpreted as a metric — it would simply be another value dimension. If your data has several metrics, offer it as a `multitsframe` source instead.
+    An entry named `metric` is not forbidden, but it is _not_ interpreted as a metric — it would simply be another value dimension. If your data has several metrics, offer it as a `multitsframe` source instead.
 
 ##### Attaching metadata to the singletsframe
 
 Analogous to `/multitsframe`, the response is allowed to send a header `Data-Attributes` containing a base64 encoded UTF8-encoded JSON String representing the metadata that is attached to the Pandas DataFrame objects' `attrs` attribute.
 
-Since a singletsframe has exactly one metric, that metric should be named via `dataset_metadata.single_metric` — see the [SINGLETSFRAME metadata example](../../user_guide/attached_metadata.md#example-for-singletsframe). We strongly recommend to send at least the metadata fields described there!
+It should follow the metadata conventions for SINGLETSFRAME, which are specified by the `SingleTSFrameMetadata` schema in the [openapi.json](../api.md) of the backend. Since a singletsframe has exactly one metric, that metric is named via `dataset_metadata.single_metric` — see the [SINGLETSFRAME metadata example](../../user_guide/attached_metadata.md#example-for-singletsframe).
 
 The size of this header is limited, see [HTTP version and header sizes](#http-version-and-header-sizes).
 
@@ -662,7 +752,7 @@ Payload:
 
 ```json
 [
-  {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3, "score": 0.7}
+  {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3, "score": 0.7},
   {"timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7, "score": 0.2}
 ]
 ```

@@ -9,6 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class IntervalType(StrEnum):
+    """Which boundaries belong to a time interval
+
+    closed: both, open: none, left_closed / right_open: only the start,
+    right_closed / left_open: only the end.
+    """
+
     CLOSED = "closed"
     LEFT_CLOSED = "left_closed"
     RIGHT_CLOSED = "right_closed"

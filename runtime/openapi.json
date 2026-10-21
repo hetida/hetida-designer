@@ -6898,6 +6898,63 @@
         }
       }
     },
+    "/api/metadata-conventions/check/{data_type}": {
+      "post": {
+        "tags": [
+          "metadata conventions"
+        ],
+        "summary": "Check metadata against the metadata conventions",
+        "description": "Check metadata and optionally data against the metadata conventions\n\nExpects the metadata and optionally the data in the wrapped format of the direct provisioning\nadapter. The data is parsed like a direct provisioning input of the data type.\n\nViolations of the metadata conventions are reported as errors, likely mistakes, e.g. metadata\nnot matching the data, as warnings. Their locations refer to the request body, e.g.\n`__metadata__.metrics[0].value_dimensions[1].column` or `__data__` if the data cannot be\nparsed.",
+        "operationId": "check_metadata_conventions_endpoint_api_metadata_conventions_check__data_type__post",
+        "parameters": [
+          {
+            "name": "data_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "SERIES",
+                "SINGLETSFRAME",
+                "MULTITSFRAME"
+              ],
+              "type": "string",
+              "title": "Data Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WrappedTimeseriesData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checked, the result contains the found issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataCheckResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Request is not in the wrapped format of the data type"
+          }
+        }
+      }
+    },
     "/api/maintenance/reset_test_wiring_to_release_wiring": {
       "post": {
         "tags": [
@@ -7353,6 +7410,22 @@
           "internalUrl"
         ],
         "title": "AdapterFrontendDto"
+      },
+      "AggregationMethod": {
+        "type": "string",
+        "enum": [
+          "MEAN",
+          "AVG",
+          "MEDIAN",
+          "SUM",
+          "MIN",
+          "MAX",
+          "FIRST",
+          "LAST",
+          "COUNT"
+        ],
+        "title": "AggregationMethod",
+        "description": "How a timeseries should be aggregated by default, e.g. in coarser intervals\n\nAVG is an alias of MEAN."
       },
       "AllMeasuredSteps": {
         "properties": {
@@ -9121,6 +9194,13 @@
         ],
         "title": "InfoResponse"
       },
+      "InheritedMetricMetadata": {
+        "properties": {},
+        "additionalProperties": true,
+        "type": "object",
+        "title": "InheritedMetricMetadata",
+        "description": "Properties a metric inherits from objects higher up in a hierarchy\n\nArbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest\noccurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers\nonly use inherited properties as last resort and not for information describing the metric\nitself, like its unit or names.\n\nE.g. the hetida platform provides the effective property values of a signal here, keyed by\nproperty label: its own values, otherwise the value of the nearest asset above it having one."
+      },
       "InputType": {
         "type": "string",
         "enum": [
@@ -9243,7 +9323,7 @@
               }
             ],
             "title": "Attrs",
-            "description": "Additional metadata that should update a attrs attribute of type dict the the loaded object after loading. This will be applied using a shallow dict update, so its entries may overwrite same-named entries in the attrs dict of the object provided by the adapter. This does only work for adapters that provide the correct object themself. E.g. It does not work for the direct_provisioning adapter which provides the filter \"value\" as is (e.g. string) and relies on parsing at a later stage in the execution process. The Virtual Structure adapter allows to set a meta_data attribute in virtual sources. Its value is provided as attrs to the actual adapter's wiring then."
+            "description": "Additional metadata that should update a attrs attribute of type dict the the loaded object after loading. This will be applied using a shallow dict update, so its entries may overwrite same-named entries in the attrs dict of the object provided by the adapter. This does only work for adapters that provide the correct object themself. E.g. It does not work for the direct_provisioning adapter which provides the filter \"value\" as is (e.g. string) and relies on parsing at a later stage in the execution process. The Virtual Structure adapter allows to set a meta_data attribute in virtual sources. Its value is provided as attrs to the actual adapter's wiring then. For SERIES, SINGLETSFRAME and MULTITSFRAME the resulting metadata should follow the metadata conventions specified by the schemas SeriesMetadata, SingleTSFrameMetadata and MultiTSFrameMetadata."
           }
         },
         "type": "object",
@@ -9251,6 +9331,19 @@
           "workflow_input_name"
         ],
         "title": "InputWiring"
+      },
+      "IntervalType": {
+        "type": "string",
+        "enum": [
+          "closed",
+          "left_closed",
+          "right_closed",
+          "open",
+          "left_open",
+          "right_open"
+        ],
+        "title": "IntervalType",
+        "description": "Which boundaries belong to a time interval\n\nclosed: both, open: none, left_closed / right_open: only the start,\nright_closed / left_open: only the end."
       },
       "KafkaAdapterStructureSink": {
         "properties": {
@@ -9581,6 +9674,740 @@
           "maintenance_secret"
         ],
         "title": "MaintenancePayload"
+      },
+      "MetadataCheckResult": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid",
+            "description": "Whether no errors were found. There may be warnings nevertheless."
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/MetadataConventionIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "issues"
+        ],
+        "title": "MetadataCheckResult",
+        "description": "Result of checking metadata against the metadata conventions"
+      },
+      "MetadataConventionIssue": {
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/MetadataIssueSeverity"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location",
+            "description": "Where the issue occurs, e.g. metrics[0].value_dimensions[1].column in the checked metadata. Empty for the checked object as a whole."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "location",
+          "message"
+        ],
+        "title": "MetadataConventionIssue",
+        "description": "Issue found when checking metadata against the metadata conventions"
+      },
+      "MetadataIssueSeverity": {
+        "type": "string",
+        "enum": [
+          "error",
+          "warning"
+        ],
+        "title": "MetadataIssueSeverity",
+        "description": "Severity of an issue found when checking metadata against the metadata conventions\n\nerror: Violates the conventions, so helpers and components may misinterpret the metadata.\nwarning: Likely a mistake, e.g. metadata not matching the data."
+      },
+      "MetricComment": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the comment, e.g. a UUID"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date",
+            "description": "Start of the time range the comment refers to"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date",
+            "description": "End of the time range the comment refers to"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "When the comment was created"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the comment was last edited. Null or missing if never edited."
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Free text of the comment"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Username of the author of the comment"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Free text tags classifying the comment"
+          },
+          "replies": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MetricCommentReply"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replies",
+            "description": "Replies to the comment, oldest first"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MetricComment",
+        "description": "A comment attached to a metric, describing a time range of its timeseries data\n\nE.g. the hetida platform provides the comments on a signal whose time range overlaps the\nqueried interval and which existed at query time, newest first.\n\nStart and end of the time range must be provided together. They are equal for a comment on a\nsingle point in time."
+      },
+      "MetricCommentReply": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the reply, e.g. a UUID"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "When the reply was created"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the reply was last edited. Null or missing if never edited."
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Free text of the reply"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Username of the author of the reply"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MetricCommentReply",
+        "description": "A reply to a comment attached to a metric"
+      },
+      "MetricMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Id of the metric, also if another field identifies the metric in the data via dataset_metadata.metric_key. E.g. the hetida platform provides the signal id here."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Long name of the metric"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles"
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A one sentence description"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Unique id / key in external source systems. Often used to identify the metric in the metric column, i.e. as metric_key."
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id",
+            "description": "Actual platform signal id"
+          },
+          "channel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Id",
+            "description": "Actual platform channel id. Deprecated, since the platform calls channels signals now.",
+            "deprecated": true
+          },
+          "value_dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/ValueDimensionMetadata"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Value Dimensions",
+            "description": "Metadata of the value dimensions of this metric: an entry for each value column of the data, i.e. exactly the value dimension \"value\" for a SERIES. Each column may occur at most once."
+          },
+          "default_aggregation_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AggregationMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
+          },
+          "inherited": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InheritedMetricMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MetricComment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments",
+            "description": "Comments attached to the metric, describing situations in its timeseries data"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "value_dimensions"
+        ],
+        "title": "MetricMetadata",
+        "description": "Metadata of a metric, i.e. of a single, possibly multidimensional timeseries\n\nA metric is identified by its field named by dataset_metadata.metric_key, whose values occur\nin the metric column of a MULTITSFRAME. Every metric must have this field as a string,\nunique among the metrics."
+      },
+      "MultiTSFrameDatasetMetadata": {
+        "if": {
+          "properties": {
+            "ref_dataset_discrete": {
+              "const": true
+            }
+          },
+          "required": [
+            "ref_dataset_discrete"
+          ]
+        },
+        "else": {
+          "properties": {
+            "ref_interval_start_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_end_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ref_interval_start_timestamp",
+            "ref_interval_end_timestamp",
+            "ref_interval_type"
+          ]
+        },
+        "properties": {
+          "metric_key": {
+            "type": "string",
+            "title": "Metric Key",
+            "description": "Which field of the metric objects under metrics identifies a metric, i.e. occurs in the metric column of a MULTITSFRAME, e.g. \"id\" or \"external_id\"."
+          },
+          "queried_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Queried Metrics",
+            "description": "The requested metrics. Since not all queried metrics may have data in the queried interval, a metric may be missing in the data."
+          },
+          "signal_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignalGroupMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref_dataset_discrete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Dataset Discrete",
+            "description": "Whether the ref dataset should be considered as discrete, i.e. isolated datapoints instead of an interval. If true, the ref interval is not required.",
+            "default": false
+          },
+          "ref_interval_start_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval Start Timestamp",
+            "description": "Start of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_end_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval End Timestamp",
+            "description": "End of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the ref interval. Required unless ref_dataset_discrete is true."
+          },
+          "ref_data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency",
+            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". E.g. the hetida platform provides this field, currently always as null."
+          },
+          "ref_data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Offset",
+            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". E.g. the hetida platform provides this field, currently always as null."
+          },
+          "invalidation_interval_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval Start",
+            "description": "Start of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval End",
+            "description": "End of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the invalidation interval",
+            "default": "closed"
+          },
+          "invalidate_dataset": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidate Dataset",
+            "description": "Whether existing data should be invalidated: in the invalidation interval if specified, otherwise in the ref interval. If neither is specified, a closed ref interval from the first to the last datapoint is inferred. Without datapoints no invalidation can occur then. What null means is up to the adapter."
+          },
+          "delete_invalidated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete Invalidated",
+            "description": "Whether data to be invalidated should be deleted instead. What null means is up to the adapter. Adapters do not need to support deletion."
+          },
+          "invalidation_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Timestamp",
+            "description": "Invalidation timestamp for all invalidated datapoints. If null, the execution_timestamp query parameter sent to generic REST adapters or, if that is not present either, the current time should be used."
+          },
+          "only_invalidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Only Invalidate",
+            "description": "If true, existing data should only be invalidated and the new data should not be stored. Cannot be true if invalidate_dataset is false.",
+            "default": false
+          },
+          "new_data_invalidation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Data Invalidation Date",
+            "description": "An invalidation date to be stored together with all new datapoints, i.e. invalidating them in advance. Ignored if null."
+          },
+          "single_metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Single Metric",
+            "description": "If the MULTITSFRAME holds a single metric: its metric_key field value. Must not be set if more than one metric is present."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "metric_key",
+          "queried_metrics"
+        ],
+        "title": "MultiTSFrameDatasetMetadata",
+        "description": "Metadata associated with a MULTITSFRAME as a whole\n\nE.g. the queried time interval or how existing data should be handled when the dataset is\nsent to an adapter. The fields concerning invalidation and deletion are only relevant for\nadapters actually supporting these operations, like the built-in SQL adapter. Other adapters\nmay ignore them.\n\nStart and end of an interval must be provided together."
+      },
+      "MultiTSFrameMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/MultiTSFrameDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "title": "Metrics",
+            "description": "Metadata of the metrics: one for each metric in the data. Each metric must have the field named by dataset_metadata.metric_key as a string, unique among the metrics."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "MultiTSFrameMetadata",
+        "description": "hetida designer metadata conventions for a MULTITSFRAME\n\nStructure of the metadata in the attrs attribute of a MULTITSFRAME during execution, which\nis also exchanged with adapters, e.g. via the Data-Attributes header of the generic REST\nadapter multitsframe endpoint or via the __metadata__ field of the wrapped format of the\ndirect provisioning adapter.\n\nThe fields that are not required are optional. Additional fields are allowed at every level.\nTimestamps are UTC isoformat strings with explicit offset (Z or +00:00).",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "metric_key": "external_id",
+              "queried_metrics": [
+                "plant_a.pressure",
+                "plant_a.temperature"
+              ],
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "closed"
+            },
+            "metrics": [
+              {
+                "external_id": "plant_a.pressure",
+                "id": "c5a8e2f1-0b3d-4e6a-9f7c-1d2e3f4a5b6c",
+                "name": "Plant A pressure",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "pressure",
+                    "unit": "bar"
+                  }
+                ]
+              },
+              {
+                "default_aggregation_method": "MAX",
+                "external_id": "plant_a.temperature",
+                "id": "8d7c6b5a-4f3e-4d2c-8b1a-0f9e8d7c6b5a",
+                "name": "Plant A temperature",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "temperature",
+                    "unit": "\u00b0C"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "MultipleVirtualStructureAdapterSinksResponse": {
         "properties": {
@@ -10683,6 +11510,218 @@
         ],
         "title": "ScheduledJobState"
       },
+      "SeriesMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/SingleMetricDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "Metadata of the single metric: exactly one metric, which has the field named by dataset_metadata.metric_key with the value of dataset_metadata.single_metric."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "SeriesMetadata",
+        "description": "hetida designer metadata conventions for a SERIES\n\nStructure of the metadata in the attrs attribute of a SERIES during execution, which is also\nexchanged with adapters, e.g. via the Data-Attributes header of the generic REST adapter\ntimeseries endpoint (for each timeseries) or via the __metadata__ field of the wrapped format\nof the direct provisioning adapter.\n\nThe fields that are not required are optional. Additional fields are allowed at every level.\nTimestamps are UTC isoformat strings with explicit offset (Z or +00:00).",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "metric_key": "id",
+              "queried_metrics": [
+                "7ab8c419-8745-4714-b588-57c0c772cc95"
+              ],
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "closed",
+              "single_metric": "7ab8c419-8745-4714-b588-57c0c772cc95"
+            },
+            "metrics": [
+              {
+                "default_aggregation_method": "MEAN",
+                "id": "7ab8c419-8745-4714-b588-57c0c772cc95",
+                "name": "Water level north",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "level",
+                    "unit": "m"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "SharedValueDimensionMetadata": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "The actual column name in the MULTITSFRAME or SINGLETSFRAME, connecting the value dimension to its column. \"value\" for a SERIES."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the value dimension, e.g. \"temperature\". May equal column."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles. Falls back to name."
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots. Falls back to display_name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A description. Should be considered empty if missing."
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\""
+          },
+          "measurement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement",
+            "description": "The measured quantity, e.g. \"temperature\""
+          },
+          "value_data_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Data Type",
+            "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "column"
+        ],
+        "title": "SharedValueDimensionMetadata",
+        "description": "Metadata of a value dimension shared by all metrics\n\nEvery column of a MULTITSFRAME besides \"timestamp\" and \"metric\" and every column of a\nSINGLETSFRAME besides \"timestamp\" defines a value dimension for each metric. A SERIES has\nexactly one value dimension, which is \"value\"."
+      },
+      "SignalGroupMetadata": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the signal group"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the signal group"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Description of the signal group"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "SignalGroupMetadata",
+        "description": "A group of signals a dataset was read from\n\nE.g. the hetida platform provides the signal group a MULTITSFRAME was read from."
+      },
       "SimplifiedLogRecord": {
         "properties": {
           "timestamp": {
@@ -10785,6 +11824,328 @@
           "message"
         ],
         "title": "SimplifiedLogRecord"
+      },
+      "SingleMetricDatasetMetadata": {
+        "if": {
+          "properties": {
+            "ref_dataset_discrete": {
+              "const": true
+            }
+          },
+          "required": [
+            "ref_dataset_discrete"
+          ]
+        },
+        "else": {
+          "properties": {
+            "ref_interval_start_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_end_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ref_interval_start_timestamp",
+            "ref_interval_end_timestamp",
+            "ref_interval_type"
+          ]
+        },
+        "properties": {
+          "metric_key": {
+            "type": "string",
+            "title": "Metric Key",
+            "description": "Which field of the metric objects under metrics identifies a metric, i.e. occurs in the metric column of a MULTITSFRAME, e.g. \"id\" or \"external_id\"."
+          },
+          "queried_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Queried Metrics",
+            "description": "The requested metrics. Since not all queried metrics may have data in the queried interval, a metric may be missing in the data."
+          },
+          "signal_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignalGroupMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref_dataset_discrete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Dataset Discrete",
+            "description": "Whether the ref dataset should be considered as discrete, i.e. isolated datapoints instead of an interval. If true, the ref interval is not required.",
+            "default": false
+          },
+          "ref_interval_start_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval Start Timestamp",
+            "description": "Start of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_end_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval End Timestamp",
+            "description": "End of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the ref interval. Required unless ref_dataset_discrete is true."
+          },
+          "ref_data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency",
+            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". E.g. the hetida platform provides this field, currently always as null."
+          },
+          "ref_data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Offset",
+            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". E.g. the hetida platform provides this field, currently always as null."
+          },
+          "invalidation_interval_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval Start",
+            "description": "Start of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval End",
+            "description": "End of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the invalidation interval",
+            "default": "closed"
+          },
+          "invalidate_dataset": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidate Dataset",
+            "description": "Whether existing data should be invalidated: in the invalidation interval if specified, otherwise in the ref interval. If neither is specified, a closed ref interval from the first to the last datapoint is inferred. Without datapoints no invalidation can occur then. What null means is up to the adapter."
+          },
+          "delete_invalidated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete Invalidated",
+            "description": "Whether data to be invalidated should be deleted instead. What null means is up to the adapter. Adapters do not need to support deletion."
+          },
+          "invalidation_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Timestamp",
+            "description": "Invalidation timestamp for all invalidated datapoints. If null, the execution_timestamp query parameter sent to generic REST adapters or, if that is not present either, the current time should be used."
+          },
+          "only_invalidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Only Invalidate",
+            "description": "If true, existing data should only be invalidated and the new data should not be stored. Cannot be true if invalidate_dataset is false.",
+            "default": false
+          },
+          "new_data_invalidation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Data Invalidation Date",
+            "description": "An invalidation date to be stored together with all new datapoints, i.e. invalidating them in advance. Ignored if null."
+          },
+          "single_metric": {
+            "type": "string",
+            "title": "Single Metric",
+            "description": "The metric_key field value of the single metric under metrics."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "metric_key",
+          "queried_metrics",
+          "single_metric"
+        ],
+        "title": "SingleMetricDatasetMetadata",
+        "description": "Metadata associated with a SERIES or SINGLETSFRAME as a whole\n\nE.g. the queried time interval or how existing data should be handled when the dataset is\nsent to an adapter. The fields concerning invalidation and deletion are only relevant for\nadapters actually supporting these operations, like the built-in SQL adapter. Other adapters\nmay ignore them.\n\nStart and end of an interval must be provided together."
+      },
+      "SingleTSFrameMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/SingleMetricDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "Metadata of the single metric: exactly one metric, which has the field named by dataset_metadata.metric_key with the value of dataset_metadata.single_metric."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "SingleTSFrameMetadata",
+        "description": "hetida designer metadata conventions for a SINGLETSFRAME\n\nStructure of the metadata in the attrs attribute of a SINGLETSFRAME during execution, which\nis also exchanged with adapters, e.g. via the Data-Attributes header of the generic REST\nadapter singletsframe endpoint or via the __metadata__ field of the wrapped format of the\ndirect provisioning adapter.\n\nThe fields that are not required are optional. Additional fields are allowed at every level.\nTimestamps are UTC isoformat strings with explicit offset (Z or +00:00).",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "metric_key": "external_id",
+              "queried_metrics": [
+                "abc.temp"
+              ],
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "closed",
+              "single_metric": "abc.temp"
+            },
+            "metrics": [
+              {
+                "external_id": "abc.temp",
+                "id": "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+                "name": "ABC temperature",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "temperature",
+                    "unit": "\u00b0C"
+                  },
+                  {
+                    "column": "state",
+                    "name": "measurement state"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "State": {
         "type": "string",
@@ -12019,6 +13380,108 @@
         ],
         "title": "ValidationError"
       },
+      "ValueDimensionMetadata": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "The actual column name in the MULTITSFRAME or SINGLETSFRAME, connecting the value dimension to its column. \"value\" for a SERIES."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the value dimension, e.g. \"temperature\". May equal column."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles. Falls back to name."
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots. Falls back to display_name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A description. Should be considered empty if missing."
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\". Null for dimensionless quantities or if unknown."
+          },
+          "measurement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement",
+            "description": "The measured quantity, e.g. \"temperature\". Null if unknown."
+          },
+          "value_data_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Data Type",
+            "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "column",
+          "unit",
+          "measurement"
+        ],
+        "title": "ValueDimensionMetadata",
+        "description": "Metadata of a value dimension of a metric\n\nEvery column of a MULTITSFRAME besides \"timestamp\" and \"metric\" and every column of a\nSINGLETSFRAME besides \"timestamp\" defines a value dimension for each metric. A SERIES has\nexactly one value dimension, which is \"value\". Each metric provides an entry for each of its\nvalue dimensions."
+      },
       "VersionInfo": {
         "properties": {
           "version": {
@@ -13204,6 +14667,66 @@
         },
         "type": "object",
         "title": "WorkflowWiring"
+      },
+      "WrappedTimeseriesData": {
+        "properties": {
+          "__hd_wrapped_data_object__": {
+            "type": "string",
+            "enum": [
+              "SERIES",
+              "DATAFRAME"
+            ],
+            "title": "Hd Wrapped Data Object",
+            "description": "\"SERIES\" for a SERIES, \"DATAFRAME\" for a SINGLETSFRAME or MULTITSFRAME"
+          },
+          "__metadata__": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeriesMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/SingleTSFrameMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/MultiTSFrameMetadata"
+              }
+            ],
+            "title": "Metadata",
+            "description": "The metadata to check, following the schema of the data type"
+          },
+          "__data__": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "The data as for the direct provisioning adapter. If omitted, only the metadata is checked."
+          },
+          "__data_parsing_options__": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data Parsing Options",
+            "description": "Additional options for parsing the data, e.g. {\"orient\": \"split\"}",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "__hd_wrapped_data_object__",
+          "__metadata__"
+        ],
+        "title": "WrappedTimeseriesData",
+        "description": "SERIES, SINGLETSFRAME or MULTITSFRAME with metadata in the wrapped format\n\nThis is the wrapped format of the direct provisioning adapter, except that __data__ may be\nomitted to check only the metadata."
       },
       "hetdesrun__adapters__blob_storage__models__MultipleSinksResponse": {
         "properties": {

@@ -36,6 +36,22 @@ For a generic rest adapter the runtime service must know its (internal) url to b
 1. The generic rest adapter can be registered to the hetida designer runtime via the same environment variable `HETIDA_DESIGNER_ADAPTERS` as described above for the backend. **This is the preferred solution since it avoids the need for the runtime to make requests to the backend**
 2. If `HETIDA_DESIGNER_BACKEND_API_URL` is configured for the runtime service, the runtime will try to obtain registered adapters from the backend.
 
+### Validating received metadata
+
+The runtime can check the metadata it receives from a generic rest adapter when loading SERIES, SINGLETSFRAME and MULTITSFRAME data (the `Data-Attributes` header) against the [metadata conventions](../../user_guide/attached_metadata.md#specification-and-validation). This is configured per adapter id via the environment variable `GENERIC_REST_ADAPTER_METADATA_VALIDATION` of the runtime service as json object, mapping adapter ids to one of the following modes:
+
+* `"OFF"`: The metadata is not checked. This is the default for adapters not listed.
+* `"WARN"`: If the metadata does not adhere to the conventions, a warning is logged, which mentions the adapter and the source together with the found issues. Missing metadata, e.g. a response without `Data-Attributes` header, does not adhere to the conventions either.
+* `"ERROR"`: Loading fails if errors are found, i.e. the execution fails with an error message listing them. If only warnings are found, these are logged as with `"WARN"`.
+
+For example:
+
+```
+GENERIC_REST_ADAPTER_METADATA_VALIDATION={"hetida-platform-adapter": "WARN", "demo-adapter-python": "ERROR"}
+```
+
+The checks are the same as those of the [endpoint for checking metadata](../../user_guide/attached_metadata.md#checking-metadata-via-the-api), including the comparison of the metadata with the received data. DATAFRAME metadata is never checked, since there are no metadata conventions for DATAFRAMEs.
+
 ## Registering a new general custom adapter
 
 First you have to **register the webservice** of the general custom adapter to the hetida designer backend as explained above.
