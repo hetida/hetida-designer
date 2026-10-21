@@ -57,6 +57,8 @@ Metadata will be present in the resulting DataFrame's attrs attribute, following
 
 This requires a hetida platform version which provides its metadata following the metadata conventions (hetida platform 2603.1012 or newer). Otherwise the component fails with an error pointing this out.
 
+The component checks the metadata of each loaded signal against the metadata conventions for a SERIES. If it does not adhere to them, e.g. because a value dimension lacks its unit, the component logs a warning naming the signal and listing the found issues, but nevertheless returns the data. The check is skipped if the runtime validates the metadata received from the hetida platform adapter itself ("WARN" or "ERROR" configured for it via `GENERIC_REST_ADAPTER_METADATA_VALIDATION`, see [Validating received metadata](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_registration/#validating-received-metadata)), since then the runtime logs the issues or lets loading fail.
+
 You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
 
 ## Examples
@@ -105,11 +107,12 @@ from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_ts_data import load_ts_data_from_adapter
 from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.models.metadata_conventions import check_metadata_conventions
 from hetdesrun.runtime.context import (
     get_hierarchy_object_info,
 )
 from hetdesrun.webservice.auth_dependency import get_auth_headers
-from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.config import MetadataValidationMode, get_config
 
 logger = logging.getLogger(__name__)
 
@@ -668,6 +671,36 @@ def metric_metadata(attrs_from_adapter, signal_id, metric_key, metric_value):
     return metric
 
 
+def warn_about_metadata_convention_issues(attrs_from_adapter, signal_children) -> None:
+    """Log a warning for each signal whose metadata does not adhere to the metadata conventions
+
+    Skipped if the runtime validates the metadata received from the hetida platform adapter
+    itself (GENERIC_REST_ADAPTER_METADATA_VALIDATION), which then logs the issues or lets
+    loading fail.
+    """
+    validation_mode = get_config().generic_rest_adapter_metadata_validation.get(
+        HETIDA_PLATFORM_ADAPTER_KEY, MetadataValidationMode.OFF
+    )
+    if validation_mode != MetadataValidationMode.OFF:
+        return
+
+    for child in signal_children:
+        issues = check_metadata_conventions(
+            attrs_from_adapter.get(child["referenceId"]) or {}, "SERIES"
+        )
+        if len(issues) > 0:
+            logger.warning(
+                "Metadata provided by hetida platform for signal '%s' (id %s) does not adhere"
+                " to the metadata conventions. Found issues:\n%s",
+                child["name"],
+                child["referenceId"],
+                "\n".join(
+                    f"* {issue.severity} at {issue.location or 'top level'}: {issue.message}"
+                    for issue in issues
+                ),
+            )
+
+
 # %%
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -879,6 +912,8 @@ async def main(
         ],
     }
 
+    warn_about_metadata_convention_issues(attrs_from_adapter, selected_children)
+
     # log loaded data per timeseries
 
     loaded_data_points_per_metric = {
@@ -903,8 +938,6 @@ try:
 except ImportError:
     pass
 else:
-    from hetdesrun.models.metadata_conventions import check_metadata_conventions
-
     SIGNAL_ID = "7ab8c419-8745-4714-b588-57c0c772cc95"
 
     @pytest.fixture
@@ -1059,6 +1092,62 @@ else:
         }
 
         assert check_metadata_conventions(multitsframe) == []  # noqa: S101
+
+    def test_no_warning_for_metadata_following_conventions(attrs_from_adapter, caplog, monkeypatch):
+        monkeypatch.setattr(get_config(), "generic_rest_adapter_metadata_validation", {})
+
+        with caplog.at_level(logging.WARNING):
+            warn_about_metadata_convention_issues(
+                attrs_from_adapter, [signal_child(SIGNAL_ID, "water.north.level")]
+            )
+
+        assert caplog.records == []  # noqa: S101
+
+    @pytest.mark.parametrize(
+        "runtime_validation",
+        [
+            {},
+            {HETIDA_PLATFORM_ADAPTER_KEY: MetadataValidationMode.OFF},
+            {"another-adapter": MetadataValidationMode.ERROR},
+        ],
+    )
+    def test_warning_for_metadata_not_following_conventions(
+        runtime_validation, attrs_from_adapter, caplog, monkeypatch
+    ):
+        monkeypatch.setattr(
+            get_config(), "generic_rest_adapter_metadata_validation", runtime_validation
+        )
+        del attrs_from_adapter[SIGNAL_ID]["metrics"][0]["value_dimensions"][0]["unit"]
+
+        with caplog.at_level(logging.WARNING):
+            warn_about_metadata_convention_issues(
+                attrs_from_adapter, [signal_child(SIGNAL_ID, "water.north.level")]
+            )
+
+        assert len(caplog.records) == 1  # noqa: S101
+        message = caplog.records[0].getMessage()
+        assert f"signal 'name of {SIGNAL_ID}' (id {SIGNAL_ID})" in message  # noqa: S101
+        assert "* error at metrics[0].value_dimensions[0].unit:" in message  # noqa: S101
+
+    @pytest.mark.parametrize(
+        "validation_mode", [MetadataValidationMode.WARN, MetadataValidationMode.ERROR]
+    )
+    def test_no_check_if_runtime_validates_metadata(
+        validation_mode, attrs_from_adapter, caplog, monkeypatch
+    ):
+        monkeypatch.setattr(
+            get_config(),
+            "generic_rest_adapter_metadata_validation",
+            {HETIDA_PLATFORM_ADAPTER_KEY: validation_mode},
+        )
+        del attrs_from_adapter[SIGNAL_ID]["metrics"][0]["value_dimensions"][0]["unit"]
+
+        with caplog.at_level(logging.WARNING):
+            warn_about_metadata_convention_issues(
+                attrs_from_adapter, [signal_child(SIGNAL_ID, "water.north.level")]
+            )
+
+        assert caplog.records == []  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

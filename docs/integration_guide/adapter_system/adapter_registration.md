@@ -52,6 +52,8 @@ GENERIC_REST_ADAPTER_METADATA_VALIDATION={"hetida-platform-adapter": "WARN", "de
 
 The checks are the same as those of the [endpoint for checking metadata](../../user_guide/attached_metadata.md#checking-metadata-via-the-api), including the comparison of the metadata with the received data. DATAFRAME metadata is never checked, since there are no metadata conventions for DATAFRAMEs.
 
+Independent of this configuration, the base component "Hetida Platform Signal Timeseries Data" (from 0.1.12 on) logs a warning for each loaded signal whose metadata does not adhere to the conventions, unless `"WARN"` or `"ERROR"` is configured for the hetida platform adapter.
+
 ## Registering a new general custom adapter
 
 First you have to **register the webservice** of the general custom adapter to the hetida designer backend as explained above.
