@@ -9318,7 +9318,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "InheritedMetricMetadata",
-        "description": "Properties a metric inherits from objects higher up in a hierarchy\n\nArbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest\noccurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers\nonly use inherited properties as last resort and not for information describing the metric\nitself, like its unit or names.\n\nE.g. the hetida platform provides the effective property values of a signal here, keyed by\nproperty label: its own values, otherwise the value of the nearest asset above it having one."
+        "description": "Properties a metric inherits from objects higher up in a hierarchy\n\nArbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest\noccurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers\nonly use inherited properties as last resort and not for information describing the metric\nitself, like its unit or names.\n\nThe values should have the JSON type matching their meaning: numbers as numbers, booleans as\nbooleans and points in time as UTC isoformat strings, not e.g. a number as string.\n\nE.g. the hetida platform provides the effective property values of a signal here, keyed by\nproperty label: its own values, otherwise the value of the nearest asset above it having one."
       },
       "InputType": {
         "type": "string",
@@ -10157,6 +10157,79 @@
             ],
             "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
           },
+          "path": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path",
+            "description": "Location of the metric in the hierarchy of its source system: the names of the levels from the top down to the object the metric belongs to, without the metric itself, e.g. [\"Plant A\", \"Pickling Unit\", \"Influx\"]. Corresponds to the breadcrumb path of the sources of generic REST adapters."
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin",
+            "description": "Where the values come from, as free text of the source system, e.g. \"OPC_UA\", \"MQTT\" or \"FORM\" for values entered manually."
+          },
+          "recording_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecordingMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the values are recorded. Unknown if missing or null."
+          },
+          "data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency",
+            "description": "Interval in which values of the metric are recorded as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": For recording_mode periodic the interval between subsequent values, for on_change the interval after which the value is recorded again at the latest, also without a change (heartbeat). Takes precedence over dataset_metadata.ref_data_frequency for this metric."
+          },
+          "data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency Offset",
+            "description": "Offset of the timestamps against multiples of data_frequency since 1970-01-01T00:00:00Z, e.g. \"4min\". Takes precedence over dataset_metadata.ref_data_frequency_offset for this metric. Omit it if the timestamps are aligned to local time, e.g. days starting at local midnight, since then the offset changes with daylight saving time."
+          },
+          "recording_aggregation_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AggregationMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only for recording_mode periodic: how each value aggregates the values of the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX for a maximum. Null or missing if the values are samples, e.g. the value holding at the timestamp. Requires data_frequency (or dataset_metadata.ref_data_frequency)."
+          },
           "inherited": {
             "anyOf": [
               {
@@ -10308,7 +10381,7 @@
               }
             ],
             "title": "Ref Data Frequency",
-            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". E.g. the hetida platform provides this field, currently always as null."
+            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". Applies to all metrics without their own data_frequency. E.g. the hetida platform provides this field, currently always as null."
           },
           "ref_data_frequency_offset": {
             "anyOf": [
@@ -10320,7 +10393,33 @@
               }
             ],
             "title": "Ref Data Frequency Offset",
-            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". E.g. the hetida platform provides this field, currently always as null."
+            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". Applies to all metrics without their own data_frequency_offset. E.g. the hetida platform provides this field, currently always as null."
+          },
+          "query_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Timestamp",
+            "description": "The point in time whose state of the data was delivered in UTC isoformat: Data stored, changed or invalidated later is not included. A source supporting it delivers the same data again when queried for this point in time, e.g. for reproducing an execution."
+          },
+          "default_aggregation_interval": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Aggregation Interval",
+            "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
           },
           "invalidation_interval_start": {
             "anyOf": [
@@ -10489,6 +10588,7 @@
         "examples": [
           {
             "dataset_metadata": {
+              "default_aggregation_interval": "1h",
               "metric_key": "external_id",
               "queried_metrics": [
                 "plant_a.pressure",
@@ -10512,13 +10612,16 @@
                 ]
               },
               {
+                "data_frequency": "1h",
                 "default_aggregation_method": "MAX",
                 "external_id": "plant_a.temperature",
                 "id": "8d7c6b5a-4f3e-4d2c-8b1a-0f9e8d7c6b5a",
                 "name": "Plant A temperature",
+                "recording_mode": "on_change",
                 "value_dimensions": [
                   {
                     "column": "value",
+                    "deadband": 0.5,
                     "measurement": "temperature",
                     "unit": "\u00b0C"
                   }
@@ -11055,6 +11158,16 @@
         ],
         "title": "ProcessStage",
         "description": "Stages of the execution process."
+      },
+      "RecordingMode": {
+        "type": "string",
+        "enum": [
+          "periodic",
+          "on_change",
+          "irregular"
+        ],
+        "title": "RecordingMode",
+        "description": "When the values of a timeseries are recorded\n\nperiodic: one value per interval of data_frequency, timestamped with the start of the\ninterval. A missing value is a gap.\non_change: a value is recorded when it changes (by more than the deadband of its value\ndimension) and holds until the next one. Missing timestamps are no gaps, as long as\ndata_frequency (the heartbeat) is not exceeded.\nirregular: values at arbitrary points in time."
       },
       "RefIdType": {
         "type": "string",
@@ -11724,16 +11837,25 @@
               "queried_metrics": [
                 "7ab8c419-8745-4714-b588-57c0c772cc95"
               ],
+              "query_timestamp": "2026-01-02T00:05:00+00:00",
               "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
               "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
-              "ref_interval_type": "closed",
+              "ref_interval_type": "right_open",
               "single_metric": "7ab8c419-8745-4714-b588-57c0c772cc95"
             },
             "metrics": [
               {
+                "data_frequency": "15min",
                 "default_aggregation_method": "MEAN",
                 "id": "7ab8c419-8745-4714-b588-57c0c772cc95",
                 "name": "Water level north",
+                "origin": "OPC_UA",
+                "path": [
+                  "Waterworks North",
+                  "Gauge North"
+                ],
+                "recording_aggregation_method": "MEAN",
+                "recording_mode": "periodic",
                 "value_dimensions": [
                   {
                     "column": "value",
@@ -11836,6 +11958,19 @@
             ],
             "title": "Value Data Type",
             "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+          },
+          "deadband": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadband",
+            "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
           }
         },
         "additionalProperties": true,
@@ -12108,7 +12243,7 @@
               }
             ],
             "title": "Ref Data Frequency",
-            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". E.g. the hetida platform provides this field, currently always as null."
+            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". Applies to all metrics without their own data_frequency. E.g. the hetida platform provides this field, currently always as null."
           },
           "ref_data_frequency_offset": {
             "anyOf": [
@@ -12120,7 +12255,33 @@
               }
             ],
             "title": "Ref Data Frequency Offset",
-            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". E.g. the hetida platform provides this field, currently always as null."
+            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". Applies to all metrics without their own data_frequency_offset. E.g. the hetida platform provides this field, currently always as null."
+          },
+          "query_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Timestamp",
+            "description": "The point in time whose state of the data was delivered in UTC isoformat: Data stored, changed or invalidated later is not included. A source supporting it delivers the same data again when queried for this point in time, e.g. for reproducing an execution."
+          },
+          "default_aggregation_interval": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Aggregation Interval",
+            "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
           },
           "invalidation_interval_start": {
             "anyOf": [
@@ -13638,6 +13799,19 @@
             ],
             "title": "Value Data Type",
             "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+          },
+          "deadband": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadband",
+            "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
           }
         },
         "additionalProperties": true,

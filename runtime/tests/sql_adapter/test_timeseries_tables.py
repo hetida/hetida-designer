@@ -75,6 +75,11 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     assert "timestamp" in received_data["inp"].columns
 
     # metadata there?
+    # the time of the query
+    query_timestamp = received_data["inp"].attrs["dataset_metadata"].pop("query_timestamp")
+    assert abs(datetime.now(tz=timezone.utc) - datetime.fromisoformat(query_timestamp)) < timedelta(
+        minutes=1
+    )
     assert received_data["inp"].attrs == {
         "dataset_metadata": {
             "metric_key": "id",
@@ -88,9 +93,11 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
                 "id": "a",
                 "name": "a",
                 "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                "path": ["read_only_timeseries sqlite database", "ro_ts_table"],
             }
         ],
     }
+    received_data["inp"].attrs["dataset_metadata"]["query_timestamp"] = query_timestamp
     assert check_metadata_conventions(received_data["inp"]) == []
 
     # metrics as comma separated list, a metric listed twice

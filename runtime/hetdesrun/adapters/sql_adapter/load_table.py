@@ -113,6 +113,8 @@ def prepare_validate_loaded_raw_multitsframe(
     metrics_list: list[str] | None,
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
+    path: list[str] | None = None,
+    query_timestamp: datetime.datetime | None = None,
 ) -> pd.DataFrame:
     """Prepares and validates a multitsframe.
 
@@ -122,6 +124,10 @@ def prepare_validate_loaded_raw_multitsframe(
     Args:
         metrics_list (list[str] | None):
             Is only None if 'ALL' was provided in the metrics filter when calling the adapter.
+        path (list[str] | None):
+            Location of the metrics for the metadata, i.e. database and table.
+        query_timestamp (datetime.datetime | None):
+            When the data was queried, for the metadata.
 
     Returns:
         pd.DataFrame: A validated multitsframe
@@ -159,6 +165,8 @@ def prepare_validate_loaded_raw_multitsframe(
         metrics_list,
         from_datetime,
         to_datetime,
+        path=path,
+        query_timestamp=query_timestamp,
     )
 
     return validated_multi_ts_frame
@@ -170,13 +178,16 @@ def multitsframe_metadata(
     metrics_list: list[str] | None,
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
+    path: list[str] | None = None,
+    query_timestamp: datetime.datetime | None = None,
 ) -> dict:
     """Metadata of a loaded multitsframe following the metadata conventions
 
     The queried metrics are the requested ones or, if all metrics were requested (metrics_list
     is None), those occurring in the loaded data. The database provides no further information
     on the metrics, so their id serves as name and their value dimensions have neither unit nor
-    measurement.
+    measurement. path is the location of the metrics, i.e. database and table, and
+    query_timestamp the time of the query, since the database delivers its state at that time.
     """
     if metrics_list is None:
         queried_metrics = sorted(multits_frame["metric"].unique().tolist())
@@ -198,6 +209,11 @@ def multitsframe_metadata(
             "ref_interval_start_timestamp": from_datetime.isoformat(),
             "ref_interval_end_timestamp": to_datetime.isoformat(),
             "ref_interval_type": "closed",
+            **(
+                {"query_timestamp": query_timestamp.astimezone(datetime.UTC).isoformat()}
+                if query_timestamp is not None
+                else {}
+            ),
         },
         "metrics": [
             {
@@ -207,6 +223,7 @@ def multitsframe_metadata(
                     {"column": column, "unit": None, "measurement": None}
                     for column in value_columns
                 ],
+                **({"path": path} if path is not None else {}),
             }
             for metric in queried_metrics
         ],
@@ -294,6 +311,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
             metric_type=ts_table_config.metric_type,
         )
 
+        query_timestamp = datetime.datetime.now(tz=datetime.UTC)
         multits_frame = load_sql_query(db_config, statement)
 
         validated_multi_ts_frame = prepare_validate_loaded_raw_multitsframe(
@@ -303,6 +321,8 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
             metrics_list,
             from_datetime,
             to_datetime,
+            path=[db_config.name, ts_table_name],
+            query_timestamp=query_timestamp,
         )
 
         return validated_multi_ts_frame

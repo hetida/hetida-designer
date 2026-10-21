@@ -24,8 +24,8 @@ This component allows to fetch a single such timeseries from the API.
 
 ### Metadata
 The metadata of the timeseries follows the hetida designer [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) for a SERIES:
-* `dataset_metadata` contains the queried interval and, as `ref_data_frequency`, the interval in which Pegelonline provides values for the timeseries (e.g. "15min").
-* The single entry under `metrics` describes the timeseries: Its `id` is the station uuid and the measurement, e.g. "593647aa-9fea-43ec-a7d6-6476a76ae868_W". Its `name` consists of the names of station and timeseries, e.g. "BONN WASSERSTAND ROHDATEN". The value dimension "value" provides unit (e.g. "cm") and measurement ("water level" for "W", "discharge" for "Q"), and for water levels its description mentions the gauge zero. The information on the station (uuid, number, names, water, km, agency, latitude and longitude) is available under `inherited`, e.g. "latitude" or "station_shortname".
+* `dataset_metadata` contains the queried interval, as `ref_data_frequency` the interval in which Pegelonline provides values for the timeseries (e.g. "15min") and as `query_timestamp` the time of the request, since Pegelonline delivers its current state of the data.
+* The single entry under `metrics` describes the timeseries: Its `id` is the station uuid and the measurement, e.g. "593647aa-9fea-43ec-a7d6-6476a76ae868_W". Its `name` consists of the names of station and timeseries, e.g. "BONN WASSERSTAND ROHDATEN". The value dimension "value" provides unit (e.g. "cm") and measurement ("water level" for "W", "discharge" for "Q"), and for water levels its description mentions the gauge zero. Its `path` consists of the water and the station, e.g. ["RHEIN", "BONN"], its `origin` is "Pegelonline", and it is recorded `periodic` with the interval of the values as `data_frequency`. The information on the station (uuid, number, names, water, km, agency, latitude and longitude) is available under `inherited`, e.g. "latitude" or "station_shortname".
 
 This requires an additional request for the information on the timeseries (unit, interval, gauge zero).
 
@@ -33,7 +33,7 @@ This requires an additional request for the information on the timeseries (unit,
 E.g https://pegelonline.wsv.de/webservices/rest-api/v2/stations/593647aa-9fea-43ec-a7d6-6476a76ae868.json is a station that provides water level data which you can query either using the UUID or its shortname "BONN".
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pandas as pd
@@ -146,7 +146,12 @@ MEASUREMENTS = {"W": "water level", "Q": "discharge"}
 
 
 def timeseries_metadata(
-    station: dict, timeseries_info: dict, measurement: str, start: datetime, end: datetime
+    station: dict,
+    timeseries_info: dict,
+    measurement: str,
+    start: datetime,
+    end: datetime,
+    query_timestamp: datetime,
 ) -> dict:
     """Metadata of a loaded timeseries following the hetida designer metadata conventions"""
     metric_id = f"{station['uuid']}_{measurement}"
@@ -161,6 +166,7 @@ def timeseries_metadata(
         "measurement": MEASUREMENTS.get(measurement, timeseries_name),
         "value_data_type": "float",
     }
+    frequency = f"{equidistance}min" if isinstance(equidistance, int) and equidistance > 0 else None
     if gauge_zero.get("value") is not None:
         value_dimension["description"] = (
             f"Relative to the gauge zero of {gauge_zero['value']} {gauge_zero.get('unit', '')}"
@@ -174,11 +180,8 @@ def timeseries_metadata(
             "ref_interval_start_timestamp": start.isoformat(),
             "ref_interval_end_timestamp": end.isoformat(),
             "ref_interval_type": "closed",
-            **(
-                {"ref_data_frequency": f"{equidistance}min"}
-                if isinstance(equidistance, int) and equidistance > 0
-                else {}
-            ),
+            **({"ref_data_frequency": frequency} if frequency is not None else {}),
+            "query_timestamp": query_timestamp.isoformat(),
         },
         "metrics": [
             {
@@ -188,6 +191,17 @@ def timeseries_metadata(
                 + (f" on {water['longname']}" if water.get("longname") else ""),
                 "value_dimensions": [value_dimension],
                 "default_aggregation_method": "MEAN",
+                "path": [
+                    name
+                    for name in (water.get("longname"), station["longname"])
+                    if name is not None
+                ],
+                "origin": "Pegelonline",
+                **(
+                    {"recording_mode": "periodic", "data_frequency": frequency}
+                    if frequency is not None
+                    else {}
+                ),
                 "inherited": {
                     "station_uuid": station["uuid"],
                     "station_number": station.get("number"),
@@ -237,6 +251,7 @@ def main(*, station, timestampFrom, timestampTo, measurement="W"):
 
     station = get_station(station)
     start, end = resolve_interval(timestampFrom, timestampTo)
+    query_timestamp = datetime.now(tz=UTC)
     timeseries = load_pegelonline_timeseries(
         station_uuid=station["uuid"],
         start=start,
@@ -250,6 +265,7 @@ def main(*, station, timestampFrom, timestampTo, measurement="W"):
         measurement,
         start,
         end,
+        query_timestamp,
     )
 
     return {"timeseries": timeseries}
@@ -325,6 +341,11 @@ else:
 
         assert list(timeseries) == [290.0, 291.0]  # noqa: S101
         assert check_metadata_conventions(timeseries) == []  # noqa: S101
+        # the time of the request
+        query_timestamp = timeseries.attrs["dataset_metadata"].pop("query_timestamp")
+        assert abs(pd.Timestamp.now(tz="UTC") - pd.Timestamp(query_timestamp)) < pd.Timedelta(  # noqa: S101
+            "1min"
+        )
         assert timeseries.attrs["dataset_metadata"] == {  # noqa: S101
             "metric_key": "id",
             "single_metric": f"{BONN['uuid']}_W",
@@ -336,6 +357,12 @@ else:
         }
         metric = timeseries.attrs["metrics"][0]
         assert metric["name"] == "BONN WASSERSTAND ROHDATEN"  # noqa: S101
+        assert metric["path"] == ["RHEIN", "BONN"]  # noqa: S101
+        assert metric["origin"] == "Pegelonline"  # noqa: S101
+        assert (metric["recording_mode"], metric["data_frequency"]) == (  # noqa: S101
+            "periodic",
+            "15min",
+        )
         assert metric["value_dimensions"] == [  # noqa: S101
             {
                 "column": "value",

@@ -3,6 +3,7 @@ import json
 from copy import deepcopy
 from urllib.parse import quote
 
+import numpy as np
 import pandas as pd
 import pytest
 from httpx2 import AsyncClient
@@ -528,6 +529,10 @@ async def test_metadata_of_temperatures_multitsframe(async_test_client: AsyncCli
                 }
             ],
             "default_aggregation_method": "MEAN",
+            "path": ["Plant A", "Pickling Unit", "Influx"],
+            "origin": "simulated",
+            "recording_mode": "periodic",
+            "data_frequency": "1h",
         }
 
 
@@ -634,6 +639,8 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
                             }
                         ],
                         "default_aggregation_method": "MAX",
+                        # nothing is known about the recording of written data
+                        "path": ["Plant A", "Pickling Unit", "Influx"],
                     }
                 ],
             }
@@ -666,6 +673,61 @@ async def test_metadata_of_each_timeseries(async_test_client: AsyncClient) -> No
             ("Outfeed Pressure", "bar"),
             ("unknown.timeseries", None),
         ]
+        assert [df_attrs[ts_id]["metrics"][0].get("path") for ts_id in ts_ids] == [
+            ["Plant A", "Pickling Unit", "Influx"],
+            ["Plant B", "Milling Unit", "Outfeed"],
+            None,
+        ]
+        assert {df_attrs[ts_id]["metrics"][0]["data_frequency"] for ts_id in ts_ids} == {"1h"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("frequency", "expected_timestamps", "expected_values"),
+    [
+        # the first value of each interval, labelled by its start
+        ("2h", ["00:00", "02:00", "04:00"], [100.0, 120.0, 140.0]),
+        ("150min", ["00:00", "02:30", "05:00"], [100.0, 130.0, 150.0]),
+        # intervals without a value are gaps
+        ("30min", ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00"], None),
+    ],
+)
+async def test_metadata_of_resampled_timeseries(
+    async_test_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    frequency: str,
+    expected_timestamps: list[str],
+    expected_values: list[float] | None,
+) -> None:
+    # simulated hourly values 100, 110, 120, ...
+    monkeypatch.setattr(np.random, "randn", lambda n: np.arange(n, dtype=float))
+    async with async_test_client as client:
+        ts_id = "root.plantA.picklingUnit.influx.temp"
+
+        response = await client.get(
+            "/timeseries",
+            params={
+                "id": ts_id,
+                "from": "2020-01-01T00:00:00Z",
+                "to": "2020-01-01T05:00:00Z",
+                "frequency": frequency,
+            },
+        )
+
+        timeseries = pd.read_json(io.StringIO(response.text), lines=True)
+        metric = decode_attributes(response.headers["Data-Attributes"])[ts_id]["metrics"][0]
+
+        assert list(pd.to_datetime(timeseries["timestamp"]).dt.strftime("%H:%M")) == (
+            expected_timestamps
+        )
+        assert timeseries["value"].notna().all()
+        if expected_values is not None:
+            assert list(timeseries["value"]) == expected_values
+        assert {key: metric[key] for key in ("recording_mode", "data_frequency")} == {
+            "recording_mode": "periodic",
+            "data_frequency": frequency,
+        }
+        assert metric["recording_aggregation_method"] == "FIRST"
 
 
 @pytest.mark.asyncio

@@ -398,6 +398,150 @@ def test_inherited_properties_are_arbitrary() -> None:
     assert check_metadata_conventions(metadata, "SERIES") == []
 
 
+def test_recording_and_location_information() -> None:
+    metadata = with_dataset_metadata(
+        series_metadata(
+            path=["Waterworks North", "Gauge North"],
+            origin="OPC_UA",
+            recording_mode="periodic",
+            data_frequency="15min",
+            data_frequency_offset="0s",
+            recording_aggregation_method="AVG",
+        ),
+        query_timestamp="2026-10-19T00:05:00Z",
+        default_aggregation_interval="1h",
+    )
+
+    assert check_metadata_conventions(metadata, "SERIES") == []
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        # the frequency of the dataset defines the aggregated intervals
+        with_dataset_metadata(
+            series_metadata(recording_mode="periodic", recording_aggregation_method="MAX"),
+            ref_data_frequency="1h",
+        ),
+        series_metadata(
+            recording_mode="on_change",
+            data_frequency="1D",
+            value_dimensions=[value_dimension(deadband=0)],
+        ),
+        series_metadata(recording_mode="irregular"),
+        series_metadata(data_frequency="P1D"),
+    ],
+)
+def test_consistent_recording_information(metadata: dict[str, Any]) -> None:
+    assert check_metadata_conventions(metadata, "SERIES") == []
+
+
+@pytest.mark.parametrize(
+    ("metadata", "location", "message_part"),
+    [
+        (series_metadata(path="Plant A/Unit"), "metrics[0].path", "array"),
+        (series_metadata(path=["Plant A", 3]), "metrics[0].path[1]", "string"),
+        (series_metadata(recording_mode="continuous"), "metrics[0].recording_mode", "periodic"),
+        (
+            series_metadata(recording_aggregation_method="mean"),
+            "metrics[0].recording_aggregation_method",
+            "MEAN",
+        ),
+        (
+            series_metadata(value_dimensions=[value_dimension(deadband=-0.1)]),
+            "metrics[0].value_dimensions[0].deadband",
+            "greater than or equal to 0",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), query_timestamp="2026-10-19T02:05:00+02:00"),
+            "dataset_metadata.query_timestamp",
+            "UTC isoformat timestamp",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), default_aggregation_interval=60),
+            "dataset_metadata.default_aggregation_interval",
+            "string",
+        ),
+    ],
+)
+def test_recording_and_location_structure_errors(
+    metadata: Any, location: str, message_part: str
+) -> None:
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [(MetadataIssueSeverity.ERROR, location)]
+    assert message_part in issues[0].message
+
+
+@pytest.mark.parametrize(
+    ("metadata", "location", "message_part"),
+    [
+        (
+            with_dataset_metadata(series_metadata(), ref_data_frequency="every 5 minutes"),
+            "dataset_metadata.ref_data_frequency",
+            "not a Pandas date offset alias",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), ref_data_frequency_offset=""),
+            "dataset_metadata.ref_data_frequency_offset",
+            "not a Pandas date offset alias",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), default_aggregation_interval="1month"),
+            "dataset_metadata.default_aggregation_interval",
+            "not a Pandas date offset alias",
+        ),
+        (
+            series_metadata(data_frequency="hourly"),
+            "metrics[0].data_frequency",
+            "not a Pandas date offset alias",
+        ),
+        (
+            series_metadata(data_frequency="1h", data_frequency_offset="4 mins later"),
+            "metrics[0].data_frequency_offset",
+            "not a Pandas date offset alias",
+        ),
+        (
+            series_metadata(
+                recording_mode="on_change", recording_aggregation_method="MEAN", data_frequency="1h"
+            ),
+            "metrics[0].recording_aggregation_method",
+            "Only meaningful for recording_mode periodic",
+        ),
+        (
+            series_metadata(recording_aggregation_method="MEAN", data_frequency="1h"),
+            "metrics[0].recording_aggregation_method",
+            "Only meaningful for recording_mode periodic",
+        ),
+        (
+            series_metadata(recording_mode="periodic", recording_aggregation_method="MEAN"),
+            "metrics[0].recording_aggregation_method",
+            "Requires data_frequency",
+        ),
+    ],
+)
+def test_recording_consistency_errors(
+    metadata: dict[str, Any], location: str, message_part: str
+) -> None:
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [(MetadataIssueSeverity.ERROR, location)]
+    assert message_part in issues[0].message
+
+
+@pytest.mark.parametrize("recording_mode", [None, "periodic", "irregular"])
+def test_deadband_without_on_change_recording_warns(recording_mode: Any) -> None:
+    metadata = series_metadata(
+        recording_mode=recording_mode, value_dimensions=[value_dimension(deadband=0.5)]
+    )
+
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [
+        (MetadataIssueSeverity.WARNING, "metrics[0].value_dimensions[0].deadband")
+    ]
+
+
 @pytest.mark.parametrize(
     "metadata",
     [
@@ -629,6 +773,7 @@ def test_metadata_conventions_in_openapi(app_without_auth: FastAPI) -> None:
         "MetricComment",
         "AggregationMethod",
         "IntervalType",
+        "RecordingMode",
     } <= set(component_schemas)
     assert component_schemas["SeriesMetadata"]["examples"] == [SERIES_METADATA_EXAMPLE]
     assert component_schemas["MultiTSFrameMetadata"]["examples"] == [MULTITSFRAME_METADATA_EXAMPLE]

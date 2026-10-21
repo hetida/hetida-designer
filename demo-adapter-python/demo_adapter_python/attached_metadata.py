@@ -56,12 +56,42 @@ def plant_of(source_id: str) -> str | None:
     return None
 
 
-def source_name(source_id: str) -> str:
-    """The name of the source with this id, the id itself for unknown sources"""
+def find_source(source_id: str) -> dict[str, Any] | None:
     for source in get_sources(include_sub_objects=True):
         if source["id"] == source_id:
-            return str(source["name"])
-    return source_id
+            return source
+    return None
+
+
+def source_name(source_id: str) -> str:
+    """The name of the source with this id, the id itself for unknown sources"""
+    source = find_source(source_id)
+    return str(source["name"]) if source is not None else source_id
+
+
+def source_location(source_id: str) -> dict[str, Any]:
+    """The path of a known source in the hierarchy as metric metadata field
+
+    E.g. ["Plant A", "Pickling Unit", "Influx"] for the source path "Plant A / Pickling Unit /
+    Influx". Empty for unknown sources.
+    """
+    source = find_source(source_id)
+    return {"path": str(source["path"]).split(" / ")} if source is not None else {}
+
+
+def simulated_recording(frequency: str = "") -> dict[str, Any]:
+    """Recording information of the simulated values, which are generated hourly
+
+    If they are resampled to another frequency, each value is the first one of its interval.
+    """
+    if frequency == "":
+        return {"origin": "simulated", "recording_mode": "periodic", "data_frequency": "1h"}
+    return {
+        "origin": "simulated",
+        "recording_mode": "periodic",
+        "data_frequency": frequency,
+        "recording_aggregation_method": "FIRST",
+    }
 
 
 def value_dimension(timeseries_id: str, column: str = "value") -> dict[str, Any]:
@@ -88,8 +118,11 @@ def value_dimension(timeseries_id: str, column: str = "value") -> dict[str, Any]
 
 
 def metric_metadata(
-    timeseries_id: str, value_dimensions: list[dict[str, Any]] | None = None
+    timeseries_id: str,
+    value_dimensions: list[dict[str, Any]] | None = None,
+    recording: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Metadata of a timeseries, with recording information like simulated_recording()"""
     return {
         "id": timeseries_id,
         "name": source_name(timeseries_id),
@@ -99,18 +132,23 @@ def metric_metadata(
         "default_aggregation_method": (
             "MAX" if timeseries_id.endswith("anomaly_score") else "MEAN"
         ),
+        **source_location(timeseries_id),
+        **(recording or {}),
     }
 
 
 def series_metadata(
-    ts_id: str, from_timestamp: datetime.datetime, to_timestamp: datetime.datetime
+    ts_id: str,
+    from_timestamp: datetime.datetime,
+    to_timestamp: datetime.datetime,
+    recording: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Metadata of a timeseries provided via the /timeseries endpoint"""
     return {
         "dataset_metadata": dataset_metadata(
             "id", [ts_id], from_timestamp, to_timestamp, single_metric=ts_id
         ),
-        "metrics": [metric_metadata(ts_id)],
+        "metrics": [metric_metadata(ts_id, recording=recording)],
     }
 
 
@@ -128,7 +166,8 @@ def temperatures_metadata(
             "name", list(TEMPERATURE_METRICS), from_timestamp, to_timestamp
         ),
         "metrics": [
-            metric_metadata(f"{plant_id}.{timeseries_suffix}") | {"name": name}
+            metric_metadata(f"{plant_id}.{timeseries_suffix}", recording=simulated_recording())
+            | {"name": name}
             for name, timeseries_suffix in TEMPERATURE_METRICS.items()
         ],
     }
@@ -175,6 +214,7 @@ def temp_with_state_metadata(
                         "value_data_type": "string",
                     },
                 ],
+                recording=simulated_recording(),
             )
         ],
     }

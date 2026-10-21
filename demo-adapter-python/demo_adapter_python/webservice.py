@@ -23,6 +23,7 @@ from demo_adapter_python import VERSION
 from demo_adapter_python.attached_metadata import (
     TEMPERATURE_METRICS,
     series_metadata,
+    simulated_recording,
     stored_multitsframe_metadata,
     temp_with_state_metadata,
     temperatures_metadata,
@@ -620,17 +621,33 @@ async def timeseries(
         if frequency != "" and ts_id == "root.plantA.picklingUnit.influx.temp":
             ts_df.index = ts_df["timestamp"]
             try:
-                ts_df = ts_df.resample(frequency).first(numeric_only=False)
+                ts_df = ts_df.resample(frequency, label="left", closed="left").first(
+                    numeric_only=False
+                )
             except ValueError as error:
                 raise HTTPException(
                     status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
+            # As the metadata says: each value is timestamped with the start of its interval,
+            # intervals without a value are gaps.
+            ts_df["timestamp"] = ts_df.index
+            ts_df = ts_df.dropna(subset=["value"])
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
-        collected_attrs[ts_id] = series_metadata(ts_id, from_timestamp, to_timestamp)
+        collected_attrs[ts_id] = series_metadata(
+            ts_id,
+            from_timestamp,
+            to_timestamp,
+            # the anomaly scores are written to this adapter, nothing is known about them
+            recording=None
+            if ts_id.endswith("anomaly_score")
+            else simulated_recording(
+                frequency if ts_id == "root.plantA.picklingUnit.influx.temp" else ""
+            ),
+        )
 
     io_stream.seek(0)
     headers = {"Data-Attributes": encode_attributes(collected_attrs)}

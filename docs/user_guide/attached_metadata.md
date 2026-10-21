@@ -330,9 +330,22 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
 
         # Fixed frequency (timedelta between subsequent datapoints) of the timeseries as Pandas
         # date offset alias or timedelta string and its offset as Pandas date offset alias.
-        # The hetida platform includes these fields, so far always as null.
+        # They apply to all metrics without their own data_frequency / data_frequency_offset
+        # (see metric metadata below). The hetida platform includes these fields, so far always
+        # as null.
         "ref_data_frequency": "5min",
         "ref_data_frequency_offset": "4min",
+
+        # The point in time whose state of the data was delivered (UTC): data stored, changed or
+        # invalidated later is not included. A source supporting it delivers the same data again
+        # when queried for this point in time, e.g. for reproducing an execution.
+        "query_timestamp": "2023-01-02T00:05:00+00:00",
+
+        # Interval to aggregate the timeseries to by default, e.g. when components plot or report
+        # them, as Pandas date offset alias or timedelta string. The metrics are aggregated with
+        # their default_aggregation_method. E.g. a hetida platform signal group is configured
+        # with such an interval.
+        "default_aggregation_interval": "1h",
 
         # Define an invalidation dataset, separate from the ref dataset.
         "invalidation_interval_start": "2023-01-01T00:00:00+00:00",
@@ -392,10 +405,28 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
     "signal_id": "abc123-...", # actual platform signal id. Replaces "channel_id", which is
                                # deprecated, since the platform calls channels signals now.
 
+    # Location of the metric in the hierarchy of its source system: the names of the levels from
+    # the top down to the object the metric belongs to, without the metric itself. Corresponds
+    # to the breadcrumb path of the sources of generic REST adapters.
+    "path": ["Plant A", "Pickling Unit", "Influx"],
+    # Where the values come from, as free text of the source system, e.g. "OPC_UA", "MQTT" or
+    # "FORM" for values entered manually:
+    "origin": "OPC_UA",
+
+    # How the values are recorded, see "Recording of the values" below:
+    "recording_mode": "periodic", # one of "periodic", "on_change", "irregular". Unknown if
+                                  # missing or null.
+    "data_frequency": "15min", # takes precedence over dataset_metadata.ref_data_frequency
+    "data_frequency_offset": "0s", # takes precedence over dataset_metadata.ref_data_frequency_offset
+    "recording_aggregation_method": "MEAN", # only for "periodic": how each value aggregates its
+                                            # interval. Null if the values are samples.
+
     "inherited": { # properties inherited from a hierarchy: arbitrary fields
       # typically this should be "deepest wins"
       # and should not contain names, ids or descriptions.
       # Only used as last resort, see "Fallbacks and inherited properties" below
+      # The values should have the JSON type matching their meaning: numbers as numbers,
+      # booleans as booleans and points in time as UTC isoformat strings.
 
       # e.g. the hetida platform provides the effective property values of a signal here,
       # keyed by property label, like the coordinates of the plant a sensor belongs to:
@@ -440,6 +471,8 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
         # the ones from the metric itself are used for the value dimension "value"
         "description": "some description", # default: empty String ""
         "value_data_type": "float", # the hetida platform provides float, integer, string or boolean
+        "deadband": 0.5, # only for recording_mode "on_change": the change of the values, in their
+                         # unit, which has to be exceeded for a value to be recorded
       },
       ...
     ],
@@ -455,6 +488,18 @@ Remarks:
 
 - The fields concerning invalidation and deletion are only relevant if the adapter supports these operations, e.g. the SQL-adapter.
 - The comments follow what the hetida platform provides for its signals: the comments whose time range overlaps the queried interval and which existed at query time, newest first.
+
+#### Recording of the values
+
+`recording_mode`, `data_frequency`, `data_frequency_offset`, `recording_aggregation_method` and the `deadband` of the value dimensions describe how the values of a metric came about. Components, e.g. for gap detection or resampling, need this to interpret the data correctly:
+
+- `"periodic"`: One value per interval of `data_frequency`, timestamped with the start of the interval. A missing value is a gap. If `recording_aggregation_method` is set, each value aggregates the interval `[timestamp, timestamp + data_frequency)` with this method, e.g. `"MEAN"` for an average or `"MAX"` for a maximum. Otherwise the values are samples, e.g. the value holding at the timestamp.
+- `"on_change"`: A value is recorded when it changes by more than the `deadband` of its value dimension, and it holds until the next one. Missing timestamps are no gaps. If `data_frequency` is given, it is the interval after which the value is recorded again at the latest, also without a change (heartbeat), so only longer intervals without values are gaps.
+- `"irregular"`: Values at arbitrary points in time.
+
+The offset refers to UTC. Omit `data_frequency_offset` if the timestamps are aligned to local time, e.g. days starting at local midnight, since then the offset changes with daylight saving time.
+
+E.g. the hetida platform knows how it compresses incoming values: keeping every value, the value at the start of each window, the time-weighted mean, the minimum or the maximum of each window, or the values exceeding a deadband with a heartbeat.
 
 ### Fallbacks and inherited properties
 
@@ -475,11 +520,13 @@ Other information on a **metric** is looked up
 3. in `value_dimensions_shared`,
 4. in the properties the metric inherits (`inherited`), e.g. the latitude of the plant a sensor belongs to.
 
+The frequency of the recorded values of a metric (`data_frequency`, `data_frequency_offset`) falls back to `ref_data_frequency` and `ref_data_frequency_offset` of the dataset metadata.
+
 The inherited properties are the last resort, since they describe objects higher up in a hierarchy. Information which describes the metric itself, like its unit, measurement, (display) names or default aggregation method, should therefore not be taken from inherited properties at all: An inherited property "unit" of a plant, for example, is not the unit of a sensor in it.
 
 ### Specification and validation
 
-The metadata conventions are specified as JSON Schemas `SeriesMetadata`, `SingleTSFrameMetadata` and `MultiTSFrameMetadata` in the component schemas of the [openapi.json](../integration_guide/api.md) of the hetida designer backend, one for each data type, together with the schemas they reference (`SingleMetricDatasetMetadata`, `MultiTSFrameDatasetMetadata`, `SignalGroupMetadata`, `MetricMetadata`, `MetricComment`, `MetricCommentReply`, `ValueDimensionMetadata`, `SharedValueDimensionMetadata`, `InheritedMetricMetadata`, `AggregationMethod` and `IntervalType`). There they document the request body of the endpoint for checking metadata described below. Hence the metadata conventions are versioned together with the backend API: The openapi.json of a release specifies the metadata conventions of that release.
+The metadata conventions are specified as JSON Schemas `SeriesMetadata`, `SingleTSFrameMetadata` and `MultiTSFrameMetadata` in the component schemas of the [openapi.json](../integration_guide/api.md) of the hetida designer backend, one for each data type, together with the schemas they reference (`SingleMetricDatasetMetadata`, `MultiTSFrameDatasetMetadata`, `SignalGroupMetadata`, `MetricMetadata`, `MetricComment`, `MetricCommentReply`, `ValueDimensionMetadata`, `SharedValueDimensionMetadata`, `InheritedMetricMetadata`, `AggregationMethod`, `RecordingMode` and `IntervalType`). There they document the request body of the endpoint for checking metadata described below. Hence the metadata conventions are versioned together with the backend API: The openapi.json of a release specifies the metadata conventions of that release.
 
 The schemas describe the structure, i.e. the names and types of the fields described above and which of them are required. Additional fields are allowed at every level. Timestamps must be UTC isoformat strings with explicit offset, i.e. ending with `Z` or `+00:00`.
 
@@ -490,11 +537,13 @@ Furthermore the following rules apply, which the schemas cannot express:
 - Each `column` may occur at most once in the `value_dimensions` of a metric and in `value_dimensions_shared`.
 - Start and end of the ref interval, of the invalidation interval and of the time range of a comment must be provided together, and the start must not be after the end.
 - `only_invalidate` cannot be true if `invalidate_dataset` is false.
+- `ref_data_frequency`, `ref_data_frequency_offset` and `default_aggregation_interval` of the dataset metadata as well as `data_frequency` and `data_frequency_offset` of the metrics must be Pandas date offset aliases or timedelta strings, e.g. `"15min"` or `"1D"`.
+- `recording_aggregation_method` of a metric requires its `recording_mode` to be `"periodic"` and a `data_frequency` (or `ref_data_frequency` of the dataset metadata).
 - Every metric has a value dimension for each value column of the data. For a SERIES this is the value dimension "value".
 - Every metric in the metric column of a MULTITSFRAME occurs under `metrics` and in `queried_metrics`.
 - To be exchanged with adapters, metadata must be JSON serializable. In particular it must not contain NaN or Infinity values.
 
-Checking metadata reports violations of these rules and of the schemas as errors. Furthermore it warns about fields which are not defined by the conventions, since they may be misspelled (e.g. `valueDimensions` or `units`), about deprecated fields like `channel_id` of metrics, and about value dimensions for columns not occurring in the data.
+Checking metadata reports violations of these rules and of the schemas as errors. Furthermore it warns about fields which are not defined by the conventions, since they may be misspelled (e.g. `valueDimensions` or `units`), about deprecated fields like `channel_id` of metrics, about a `deadband` of a metric whose `recording_mode` is not `"on_change"`, and about value dimensions for columns not occurring in the data.
 
 #### Checking metadata via the API
 

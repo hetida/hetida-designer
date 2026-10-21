@@ -61,6 +61,25 @@ class AggregationMethod(StrEnum):
     COUNT = "COUNT"
 
 
+class RecordingMode(StrEnum):
+    """When the values of a timeseries are recorded
+
+    periodic: one value per interval of data_frequency, timestamped with the start of the
+    interval. A missing value is a gap.
+    on_change: a value is recorded when it changes (by more than the deadband of its value
+    dimension) and holds until the next one. Missing timestamps are no gaps, as long as
+    data_frequency (the heartbeat) is not exceeded.
+    irregular: values at arbitrary points in time.
+    """
+
+    PERIODIC = "periodic"
+    ON_CHANGE = "on_change"
+    IRREGULAR = "irregular"
+
+
+_FREQUENCY_FORMAT = 'as Pandas date offset alias or timedelta string, e.g. "15min" or "1D"'
+
+
 class SharedValueDimensionMetadata(BaseModel):
     """Metadata of a value dimension shared by all metrics
 
@@ -96,6 +115,13 @@ class SharedValueDimensionMetadata(BaseModel):
         description='Data type of the values, e.g. "float". E.g. the hetida platform provides one'
         ' of "float", "integer", "string" and "boolean".',
     )
+    deadband: float | None = Field(
+        None,
+        ge=0,
+        description="For a metric with recording_mode on_change: the change of the values, in"
+        " their unit, which has to be exceeded for a value to be recorded. 0 records every"
+        " change.",
+    )
 
 
 class ValueDimensionMetadata(SharedValueDimensionMetadata):
@@ -124,6 +150,9 @@ class InheritedMetricMetadata(BaseModel):
     occurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers
     only use inherited properties as last resort and not for information describing the metric
     itself, like its unit or names.
+
+    The values should have the JSON type matching their meaning: numbers as numbers, booleans as
+    booleans and points in time as UTC isoformat strings, not e.g. a number as string.
 
     E.g. the hetida platform provides the effective property values of a signal here, keyed by
     property label: its own values, otherwise the value of the nearest asset above it having one.
@@ -224,6 +253,45 @@ class MetricMetadata(BaseModel):
         " MEAN. E.g. the hetida platform provides the method it aggregates the signal with when"
         " bucketing it, for a signal group member the one configured for the member.",
     )
+    path: list[str] | None = Field(
+        None,
+        description="Location of the metric in the hierarchy of its source system: the names of"
+        " the levels from the top down to the object the metric belongs to, without the metric"
+        ' itself, e.g. ["Plant A", "Pickling Unit", "Influx"]. Corresponds to the breadcrumb'
+        " path of the sources of generic REST adapters.",
+    )
+    origin: str | None = Field(
+        None,
+        description="Where the values come from, as free text of the source system, e.g."
+        ' "OPC_UA", "MQTT" or "FORM" for values entered manually.',
+    )
+    recording_mode: RecordingMode | None = Field(
+        None, description="When the values are recorded. Unknown if missing or null."
+    )
+    data_frequency: str | None = Field(
+        None,
+        description="Interval in which values of the metric are recorded "
+        + _FREQUENCY_FORMAT
+        + ": For recording_mode periodic the interval between subsequent values, for on_change"
+        " the interval after which the value is recorded again at the latest, also without a"
+        " change (heartbeat). Takes precedence over dataset_metadata.ref_data_frequency for"
+        " this metric.",
+    )
+    data_frequency_offset: str | None = Field(
+        None,
+        description="Offset of the timestamps against multiples of data_frequency since"
+        ' 1970-01-01T00:00:00Z, e.g. "4min". Takes precedence over'
+        " dataset_metadata.ref_data_frequency_offset for this metric. Omit it if the timestamps"
+        " are aligned to local time, e.g. days starting at local midnight, since then the offset"
+        " changes with daylight saving time.",
+    )
+    recording_aggregation_method: AggregationMethod | None = Field(
+        None,
+        description="Only for recording_mode periodic: how each value aggregates the values of"
+        " the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX"
+        " for a maximum. Null or missing if the values are samples, e.g. the value holding at"
+        " the timestamp. Requires data_frequency (or dataset_metadata.ref_data_frequency).",
+    )
     inherited: InheritedMetricMetadata | None = None
     comments: list[MetricComment] | None = Field(
         None,
@@ -299,13 +367,30 @@ class _DatasetMetadataBase(BaseModel):
     ref_data_frequency: str | None = Field(
         None,
         description="Fixed frequency, i.e. timedelta between subsequent datapoints, of the"
-        ' timeseries as Pandas date offset alias or timedelta string, e.g. "5min". E.g. the'
-        " hetida platform provides this field, currently always as null.",
+        ' timeseries as Pandas date offset alias or timedelta string, e.g. "5min". Applies to'
+        " all metrics without their own data_frequency. E.g. the hetida platform provides this"
+        " field, currently always as null.",
     )
     ref_data_frequency_offset: str | None = Field(
         None,
         description='Offset of the fixed frequency as Pandas date offset alias, e.g. "4min".'
-        " E.g. the hetida platform provides this field, currently always as null.",
+        " Applies to all metrics without their own data_frequency_offset. E.g. the hetida"
+        " platform provides this field, currently always as null.",
+    )
+    query_timestamp: UtcTimestamp | None = Field(
+        None,
+        description="The point in time whose state of the data was delivered in UTC isoformat:"
+        " Data stored, changed or invalidated later is not included. A source supporting it"
+        " delivers the same data again when queried for this point in time, e.g. for"
+        " reproducing an execution.",
+    )
+    default_aggregation_interval: str | None = Field(
+        None,
+        description="Interval to aggregate the timeseries to by default, e.g. when components"
+        " plot or report them, "
+        + _FREQUENCY_FORMAT
+        + ". The metrics are aggregated with their default_aggregation_method. E.g. a hetida"
+        " platform signal group is configured with such an interval.",
     )
     invalidation_interval_start: UtcTimestamp | None = Field(
         None,
@@ -406,7 +491,8 @@ SERIES_METADATA_EXAMPLE: dict[str, Any] = {
         "queried_metrics": ["7ab8c419-8745-4714-b588-57c0c772cc95"],
         "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
         "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
-        "ref_interval_type": "closed",
+        "ref_interval_type": "right_open",
+        "query_timestamp": "2026-01-02T00:05:00+00:00",
     },
     "metrics": [
         {
@@ -414,6 +500,11 @@ SERIES_METADATA_EXAMPLE: dict[str, Any] = {
             "name": "Water level north",
             "value_dimensions": [_value_dimension("value", "m", "level")],
             "default_aggregation_method": "MEAN",
+            "path": ["Waterworks North", "Gauge North"],
+            "origin": "OPC_UA",
+            "recording_mode": "periodic",
+            "data_frequency": "15min",
+            "recording_aggregation_method": "MEAN",
         }
     ],
 }
@@ -447,6 +538,7 @@ MULTITSFRAME_METADATA_EXAMPLE: dict[str, Any] = {
         "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
         "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
         "ref_interval_type": "closed",
+        "default_aggregation_interval": "1h",
     },
     "metrics": [
         {
@@ -459,8 +551,12 @@ MULTITSFRAME_METADATA_EXAMPLE: dict[str, Any] = {
             "id": "8d7c6b5a-4f3e-4d2c-8b1a-0f9e8d7c6b5a",
             "external_id": "plant_a.temperature",
             "name": "Plant A temperature",
-            "value_dimensions": [_value_dimension("value", "°C", "temperature")],
+            "value_dimensions": [
+                _value_dimension("value", "°C", "temperature") | {"deadband": 0.5}
+            ],
             "default_aggregation_method": "MAX",
+            "recording_mode": "on_change",
+            "data_frequency": "1h",
         },
     ],
 }
@@ -625,6 +721,76 @@ def _check_interval(
     return []
 
 
+_DATASET_FREQUENCY_FIELDS = (
+    "ref_data_frequency",
+    "ref_data_frequency_offset",
+    "default_aggregation_interval",
+)
+_METRIC_FREQUENCY_FIELDS = ("data_frequency", "data_frequency_offset")
+
+
+def _is_frequency(value: str) -> bool:
+    """Whether value is a Pandas date offset alias or a timedelta string"""
+    try:
+        pd.tseries.frequencies.to_offset(value)
+    except ValueError:
+        try:
+            # an empty string gives NaT
+            return bool(pd.notna(pd.to_timedelta(value)))
+        except ValueError:
+            return False
+    return True
+
+
+def _check_frequencies(
+    obj: dict[str, Any], fields: tuple[str, ...], location: str
+) -> list[MetadataConventionIssue]:
+    return [
+        _error(
+            f"{location}.{field}",
+            f'"{obj[field]}" is not a Pandas date offset alias or timedelta string, e.g. "15min".',
+        )
+        for field in fields
+        if obj.get(field) is not None and not _is_frequency(obj[field])
+    ]
+
+
+def _check_recording(
+    metric: dict[str, Any], dataset_metadata: dict[str, Any], location: str
+) -> list[MetadataConventionIssue]:
+    """Check that the recording information of a metric fits its recording mode"""
+    issues = []
+    recording_mode = metric.get("recording_mode")
+    if metric.get("recording_aggregation_method") is not None:
+        if recording_mode != RecordingMode.PERIODIC:
+            issues.append(
+                _error(
+                    f"{location}.recording_aggregation_method",
+                    "Only meaningful for recording_mode periodic.",
+                )
+            )
+        elif metric.get("data_frequency") is None and (
+            dataset_metadata.get("ref_data_frequency") is None
+        ):
+            issues.append(
+                _error(
+                    f"{location}.recording_aggregation_method",
+                    "Requires data_frequency or dataset_metadata.ref_data_frequency, which"
+                    " defines the aggregated intervals.",
+                )
+            )
+    if recording_mode != RecordingMode.ON_CHANGE:
+        issues += [
+            _warning(
+                f"{location}.value_dimensions[{vd_index}].deadband",
+                "Only meaningful if the recording_mode of the metric is on_change.",
+            )
+            for vd_index, value_dimension in enumerate(metric["value_dimensions"])
+            if value_dimension.get("deadband") is not None
+        ]
+    return issues
+
+
 def _known_fields(model: type[BaseModel]) -> set[str]:
     return set(model.model_fields)
 
@@ -757,6 +923,8 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
         issues += _check_duplicate_columns(
             metric["value_dimensions"], f"metrics[{index}].value_dimensions"
         )
+        issues += _check_frequencies(metric, _METRIC_FREQUENCY_FIELDS, f"metrics[{index}]")
+        issues += _check_recording(metric, dataset_metadata, f"metrics[{index}]")
         for comment_index, comment in enumerate(metric.get("comments") or []):
             issues += _check_interval(
                 comment, f"metrics[{index}].comments[{comment_index}]", "start_date", "end_date"
@@ -817,6 +985,7 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
         "invalidation_interval_start",
         "invalidation_interval_end",
     )
+    issues += _check_frequencies(dataset_metadata, _DATASET_FREQUENCY_FIELDS, "dataset_metadata")
     return issues
 
 
