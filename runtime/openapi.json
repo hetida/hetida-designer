@@ -6714,10 +6714,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "descripton": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view.",
+              "description": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view.",
               "default": false,
               "title": "Use Release Wiring"
-            }
+            },
+            "description": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view."
           },
           {
             "name": "locked",
@@ -7427,88 +7428,206 @@
         "title": "AggregationMethod",
         "description": "How a timeseries should be aggregated by default, e.g. in coarser intervals\n\nAVG is an alias of MEAN."
       },
-      "AllMeasuredSteps": {
+      "AllMeasuredSteps-Input": {
         "properties": {
           "internal_full": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "internal_full"
             }
           },
           "prepare_execution_input": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "prepare_execution_input"
             }
           },
           "run_execution_input": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "run_execution_input"
             }
           },
           "runtime_service_handling": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "RUNTIME_SERVICE"
             }
           },
           "pure_execution": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "EXECUTING_COMPONENT_CODE"
             }
           },
           "load_data": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "LOADING_DATA_FROM_ADAPTERS"
             }
           },
           "send_data": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "SENDING_DATA_TO_ADAPTERS"
             }
           },
           "runtime_request_response_parsing": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "runtime_request_response_parsing"
             }
           },
           "pure_runtime_request": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "pure_runtime_request"
             }
           },
           "start_and_wf_parsing": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "RUNTIME_SERVICE_PURE_WF_PARSING"
             }
           },
           "pure_wf_parsing": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "pure_wf_parsing"
             }
           },
           "constant_providing_and_preps": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "constant_providing_and_preps"
             }
           },
           "backend_calling_runtime_request_start": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
             "default": {
               "name": "backend_calling_runtime_request_start"
             }
           },
           "runtime_sending_response_start": {
-            "$ref": "#/components/schemas/PerformanceMeasuredStep",
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Input",
+            "default": {
+              "name": "runtime_sending_response_start"
+            }
+          },
+          "loaded_data_info": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Loaded Data Info",
+            "default": {}
+          },
+          "result_data_info": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Result Data Info",
+            "default": {}
+          },
+          "runtime_memory_info": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeMemoryInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "AllMeasuredSteps"
+      },
+      "AllMeasuredSteps-Output": {
+        "properties": {
+          "internal_full": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "internal_full"
+            }
+          },
+          "prepare_execution_input": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "prepare_execution_input"
+            }
+          },
+          "run_execution_input": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "run_execution_input"
+            }
+          },
+          "runtime_service_handling": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "RUNTIME_SERVICE"
+            }
+          },
+          "pure_execution": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "EXECUTING_COMPONENT_CODE"
+            }
+          },
+          "load_data": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "LOADING_DATA_FROM_ADAPTERS"
+            }
+          },
+          "send_data": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "SENDING_DATA_TO_ADAPTERS"
+            }
+          },
+          "runtime_request_response_parsing": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "runtime_request_response_parsing"
+            }
+          },
+          "pure_runtime_request": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "pure_runtime_request"
+            }
+          },
+          "start_and_wf_parsing": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "RUNTIME_SERVICE_PURE_WF_PARSING"
+            }
+          },
+          "pure_wf_parsing": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "pure_wf_parsing"
+            }
+          },
+          "constant_providing_and_preps": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "constant_providing_and_preps"
+            }
+          },
+          "backend_calling_runtime_request_start": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
+            "default": {
+              "name": "backend_calling_runtime_request_start"
+            }
+          },
+          "runtime_sending_response_start": {
+            "$ref": "#/components/schemas/PerformanceMeasuredStep-Output",
             "default": {
               "name": "runtime_sending_response_start"
             }
@@ -8473,7 +8592,7 @@
             "title": "Tr Id"
           },
           "measured_steps": {
-            "$ref": "#/components/schemas/AllMeasuredSteps",
+            "$ref": "#/components/schemas/AllMeasuredSteps-Input",
             "default": {
               "internal_full": {
                 "name": "internal_full"
@@ -8636,7 +8755,7 @@
             "title": "Tr Id"
           },
           "measured_steps": {
-            "$ref": "#/components/schemas/AllMeasuredSteps",
+            "$ref": "#/components/schemas/AllMeasuredSteps-Output",
             "default": {
               "internal_full": {
                 "name": "internal_full"
@@ -10724,7 +10843,56 @@
         ],
         "title": "OutputWiring"
       },
-      "PerformanceMeasuredStep": {
+      "PerformanceMeasuredStep-Input": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "duration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PerformanceMeasuredStep"
+      },
+      "PerformanceMeasuredStep-Output": {
         "properties": {
           "name": {
             "type": "string",
@@ -14347,7 +14515,7 @@
             "title": "Tr Id"
           },
           "measured_steps": {
-            "$ref": "#/components/schemas/AllMeasuredSteps",
+            "$ref": "#/components/schemas/AllMeasuredSteps-Output",
             "default": {
               "internal_full": {
                 "name": "internal_full"
