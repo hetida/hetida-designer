@@ -108,10 +108,26 @@ For such cases, we recommend using the `wrapped format`, e.g.:
 {
   "__hd_wrapped_data_object__": "DATAFRAME",
   "__metadata__": {
-    "ref_data_frequency": {
-      "a": "1h",
-      "b": "1h"
-    }
+    "dataset_metadata": {
+      "metric_key": "id",
+      "queried_metrics": ["a", "b"],
+      "ref_interval_start_timestamp": "2019-08-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2019-08-01T03:00:00Z",
+      "ref_interval_type": "closed",
+      "ref_data_frequency": "1h"
+    },
+    "metrics": [
+      {
+        "id": "a",
+        "name": "Pressure A",
+        "value_dimensions": [{ "column": "value", "unit": "bar", "measurement": "pressure" }]
+      },
+      {
+        "id": "b",
+        "name": "Pressure B",
+        "value_dimensions": [{ "column": "value", "unit": "bar", "measurement": "pressure" }]
+      }
+    ]
   },
   "__data__": {
     "value": {

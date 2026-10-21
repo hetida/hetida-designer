@@ -211,9 +211,30 @@ first datapoint in the timeseries can be determined and the correct frequency is
     "timeseries": {
         "__hd_wrapped_data_object__": "SERIES",
         "__metadata__": {
-            "ref_interval_start_timestamp": "2020-01-01T00:16:00.000Z",
-            "ref_interval_end_timestamp": "2020-01-01T16:34:00.000Z",
-            "ref_data_frequency": "1min"
+            "dataset_metadata": {
+                "metric_key": "id",
+                "single_metric": "level",
+                "queried_metrics": [
+                    "level"
+                ],
+                "ref_interval_start_timestamp": "2020-01-01T00:16:00.000Z",
+                "ref_interval_end_timestamp": "2020-01-01T16:34:00.000Z",
+                "ref_interval_type": "closed",
+                "ref_data_frequency": "1min"
+            },
+            "metrics": [
+                {
+                    "id": "level",
+                    "name": "Level",
+                    "value_dimensions": [
+                        {
+                            "column": "value",
+                            "unit": "m",
+                            "measurement": "level"
+                        }
+                    ]
+                }
+            ]
         },
         "__data__": {
             "2020-01-01T01:16:00.000Z": 10.0,

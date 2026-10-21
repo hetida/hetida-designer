@@ -46,21 +46,31 @@ The JSON input of a typical component invocation for the **timeseries** input is
   "__hd_wrapped_data_object__": "SERIES",
   "__metadata__": {
     "dataset_metadata": {
+      "metric_key": "id",
+      "single_metric": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
+      "queried_metrics": [
+        "7485907a-ae39-45c6-a698-e81fbf6d2dda"
+      ],
       "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",
       "ref_interval_end_timestamp": "2026-06-08T22:00:00.000Z",
       "ref_interval_type": "closed"
     },
-    "single_metric_metadata": {
-      "structured_metadata": {
-        "metric": {
-          "name": "Tagesmittelwert",
-          "unit": "l/s",
-          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"
-        },
+    "metrics": [
+      {
+        "id": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
+        "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56",
+        "name": "Tagesmittelwert",
+        "value_dimensions": [
+          {
+            "column": "value",
+            "unit": "l/s",
+            "measurement": null
+          }
+        ],
         "comments": [],
         "inherited": {}
       }
-    }
+    ]
   },
   "__data__": {
     "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",

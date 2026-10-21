@@ -32,16 +32,36 @@ You can provide metadata when manual inputting, i.e. using the [direct provision
 }
 ```
 
-for a DATAFRAME input,
+for a DATAFRAME input, whose metadata can be any JSON object, since the metadata conventions do not cover DATAFRAMEs,
 
 ```json
 {
   "__hd_wrapped_data_object__": "DATAFRAME",
-  "__metadata__": { "test": 43 },
+  "__metadata__": {
+    "dataset_metadata": {
+      "metric_key": "id",
+      "queried_metrics": ["a", "b"],
+      "ref_interval_start_timestamp": "2023-01-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2023-01-02T00:00:00Z",
+      "ref_interval_type": "closed"
+    },
+    "metrics": [
+      {
+        "id": "a",
+        "name": "Temperature",
+        "value_dimensions": [{ "column": "value", "unit": "°C", "measurement": "temperature" }]
+      },
+      {
+        "id": "b",
+        "name": "Pressure",
+        "value_dimensions": [{ "column": "value", "unit": "bar", "measurement": "pressure" }]
+      }
+    ]
+  },
   "__data__": {
     "metric": ["a", "b"],
     "timestamp": ["2023-01-01T00:00:00.000Z", "2023-01-01T00:00:00.000Z"],
-    "value": [2.3, "t"]
+    "value": [21.3, 1.2]
   }
 }
 ```
@@ -51,12 +71,32 @@ for a MULTITSFRAME input or
 ```json
 {
   "__hd_wrapped_data_object__": "SERIES",
-  "__metadata__": { "test": 43 },
-  "__data__": [1.2, 3.7, 8.9]
+  "__metadata__": {
+    "dataset_metadata": {
+      "metric_key": "id",
+      "single_metric": "a",
+      "queried_metrics": ["a"],
+      "ref_interval_start_timestamp": "2023-01-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2023-01-02T00:00:00Z",
+      "ref_interval_type": "closed"
+    },
+    "metrics": [
+      {
+        "id": "a",
+        "name": "Temperature",
+        "value_dimensions": [{ "column": "value", "unit": "°C", "measurement": "temperature" }]
+      }
+    ]
+  },
+  "__data__": {
+    "2023-01-01T00:00:00.000Z": 21.3,
+    "2023-01-01T01:00:00.000Z": 21.7,
+    "2023-01-01T02:00:00.000Z": 22.4
+  }
 }
 ```
 
-for a SERIES input.
+for a SERIES input. The metadata of SERIES, SINGLETSFRAME and MULTITSFRAME inputs should follow the [metadata conventions](#metadata-conventions) as in these examples.
 
 Here the content of the `__data__` field can be anything which the corresponding actual DataFrame or Series parsing may understand. See below for more parsing options!
 
