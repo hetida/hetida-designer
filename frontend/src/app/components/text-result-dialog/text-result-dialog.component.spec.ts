@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { TextResultDialogComponent } from './text-result-dialog.component';
 
-describe('ConfirmImportTrafoDialog', () => {
+describe('ConfirmTextResultDialog', () => {
   let component: TextResultDialogComponent;
   let fixture: ComponentFixture<TextResultDialogComponent>;
 

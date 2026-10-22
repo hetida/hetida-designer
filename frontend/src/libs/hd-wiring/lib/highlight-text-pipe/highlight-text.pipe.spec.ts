@@ -7,7 +7,7 @@ describe('HighlightTextPipe', () => {
   } as unknown as DomSanitizer;
 
   it('create an instance', () => {
-    const pipe = new HighlightTextPipe(null as any);
+    const pipe = new HighlightTextPipe(sanitizerMock);
     expect(pipe).toBeTruthy();
   });
 

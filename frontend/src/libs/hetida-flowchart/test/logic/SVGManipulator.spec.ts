@@ -1,1 +1,1 @@
-it('SVGManipulator');
+xit('SVGManipulator');

@@ -2,7 +2,10 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "cli": {
     "analytics": false,
-    "schematicCollections": ["@angular-eslint/schematics"]
+    "schematicCollections": ["@angular-eslint/schematics"],
+    "cache": {
+      "enabled": true
+    }
   },
   "version": 1,
   "newProjectRoot": "projects",
@@ -19,7 +22,7 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
             "preserveSymlinks": true,
             "outputPath": {
@@ -40,10 +43,10 @@
               "src/silent-renew.html"
             ],
             "styles": [
-              "src/libs/hetida-flowchart/hetida-flowchart.scss",
-              "./node_modules/katex/dist/katex.css",
               "src/libs/hd-wiring/hd-wiring.scss",
-              "src/style/styles.scss"
+              "src/libs/hetida-flowchart/hetida-flowchart.scss",
+              "src/style/styles.scss",
+              "./node_modules/katex/dist/katex.css"
             ],
             "scripts": ["node_modules/plotly.js/dist/plotly.min.js"],
             "aot": false,
@@ -86,7 +89,7 @@
           "defaultConfiguration": ""
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "frontend:build"
           },
@@ -97,25 +100,32 @@
           }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "frontend:build"
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "src/tsconfig.spec.json",
             "karmaConfig": "src/karma.conf.js",
             "styles": [
+              "src/libs/hd-wiring/hd-wiring.scss",
               "src/libs/hetida-flowchart/hetida-flowchart.scss",
-              "./node_modules/katex/dist/katex.css",
-              "src/style/styles.scss"
+              "src/style/styles.scss",
+              "./node_modules/katex/dist/katex.css"
             ],
-            "scripts": [],
-            "assets": ["src/favicon.ico", "src/assets"]
+            "scripts": ["node_modules/plotly.js/dist/plotly.min.js"],
+            "assets": ["src/favicon.ico", "src/assets"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["."],
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
+            }
           }
         },
         "lint": {
@@ -125,6 +135,32 @@
           }
         }
       }
+    }
+  },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
     }
   }
 }

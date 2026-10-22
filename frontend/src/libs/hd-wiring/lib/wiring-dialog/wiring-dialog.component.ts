@@ -298,10 +298,7 @@ export class WiringDialogComponent implements OnInit {
                     .pipe(
                       switchMap(adaptorData => {
                         let foundSourceOrSink:
-                          | SourceSinkNode
-                          | ThingNode
-                          | null
-                          | undefined;
+                          SourceSinkNode | ThingNode | null | undefined;
                         if ('workflow_output_name' in wiring) {
                           foundSourceOrSink = adaptorData.sinks.find(
                             sink => sink.metadataKey === wiring.ref_key

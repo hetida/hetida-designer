@@ -9,13 +9,15 @@ export class WiringConfigService implements HdWiringConfig {
   showDownloadExampleJsonButton = true;
   showUploadJsonButton = true;
   allowManualWiring = true;
-  monacoEditorTheme: WiringTheme;
+  monacoEditorTheme: WiringTheme = WiringTheme.LightTheme;
   showDialogHeader = true;
   confirmationButtonText = 'Execute';
   enableDateRangeSelectionOnSeriesTypes = true;
 
   constructor(private readonly themeService: ThemeService) {
-    this.monacoEditorTheme = this.themeService.activeTheme as WiringTheme;
+    this.themeService.currentTheme.subscribe(currentTheme => {
+      this.monacoEditorTheme = currentTheme as WiringTheme;
+    });
   }
 
   resetToDefaults(): void {

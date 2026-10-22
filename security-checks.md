@@ -6,22 +6,22 @@ Hint: You may add `--severity HIGH,CRITICAL` to trivy commands below to further 
 
 There is a `.trivyignore.yaml` file to handle CVE exceptions.
 
-
 ## During Development
 
 ### backend / runtime
 
 To check docker-compose-dev image build, run from main directory:
+
 ```
 docker-compose -f docker-compose-dev.yml build hetida-designer-backend
 
 trivy image --ignorefile .trivyignore.yaml --ignore-unfixed hetida-designer-hetida-designer-backend:latest
 ```
 
-
 ### frontend
 
 The final image (does not scan dependencies!):
+
 ```
 docker-compose -f docker-compose-dev.yml build hetida-designer-frontend
 
@@ -29,15 +29,14 @@ trivy image --ignorefile .trivyignore.yaml --ignore-unfixed hetida-designer-heti
 ```
 
 Note: Some frontend fixes can be done via
+
 ```
 npm audit --omit=dev    # check
 npm audit fix           # apply non-breaking fixes
 npm audit fix --force   # apply possibly breaking fixes. Not recommended! Better do actual angular upgrade.
 ```
 
-
 **Note**: The final frontend docker image includes an sbom containing node dependencies so that a later trivy scan finds it and no separate scan of the source commit is necessary. A scan of the final image is enough.
-
 
 ## Check existing released versions
 
@@ -55,3 +54,4 @@ Note that this will not apply the trivyignore file. To do so you must have hetid
 trivy image --format cyclonedx hetida/designer-backend:0.13.10
 trivy image --format cyclonedx hetida/designer-runtime:0.13.10
 trivy image --format cyclonedx hetida/designer-frontend:0.13.10 # will contain node deps
+```

@@ -2,7 +2,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, Observable } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { Transformation } from 'src/app/model/transformation';
@@ -32,16 +32,25 @@ export class HomeTabComponent implements OnInit {
     private readonly configService: ConfigService
   ) {}
 
-  public lastOpened: Observable<Transformation[]>;
-  public version: string;
-  public _userInfoText: string;
+  public lastOpened: Observable<Transformation[]> = of([]);
+  public _version = '';
+  public _userInfoText: string | undefined = '';
 
   ngOnInit(): void {
     this.httpClient
       .get<string>('assets/VERSION', { responseType: 'text' as 'json' })
       .subscribe((version: string) => {
-        this.version = version;
+        // Removes the 'sourceMappingURL' comment out of file endings.
+        // Since Angular 20, it gets erroneously set in files with no file type given,
+        // at the end of the file name.
+        if (version.includes('//# sourceMappingURL=')) {
+          const versionTemp = version.split('//#');
+          this._version = versionTemp[0];
+        } else {
+          this._version = version;
+        }
       });
+
     this.lastOpened = combineLatest([
       this.localStorageService.notifier,
       this.transformationStore.select(selectHashedTransformationLookupById)
@@ -58,6 +67,7 @@ export class HomeTabComponent implements OnInit {
           );
       })
     );
+
     this.configService.getConfig().subscribe(config => {
       this._userInfoText = config.userInfoText;
     });
@@ -83,11 +93,11 @@ export class HomeTabComponent implements OnInit {
     );
   }
 
-  select(selectedItem: Transformation) {
+  public select(selectedItem: Transformation) {
     this.tabItemService.addTransformationTab(selectedItem.id);
   }
 
-  openTransformationContextMenu(
+  public openTransformationContextMenu(
     selectedItem: Transformation,
     mouseEvent: MouseEvent
   ) {
@@ -102,11 +112,11 @@ export class HomeTabComponent implements OnInit {
     componentPortalRef.instance.transformation = selectedItem;
   }
 
-  newWorkflow(): void {
+  public newWorkflow(): void {
     this.transformationActionService.newWorkflow();
   }
 
-  newComponent(): void {
+  public newComponent(): void {
     this.transformationActionService.newComponent();
   }
 }

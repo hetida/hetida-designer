@@ -9,8 +9,7 @@ module.exports = function (config) {
       require('karma-jasmine'),
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
-      require('karma-coverage-istanbul-reporter'),
-      require('@angular-devkit/build-angular/plugins/karma')
+      require('karma-coverage-istanbul-reporter')
     ],
     client: {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
@@ -26,14 +25,14 @@ module.exports = function (config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['Chrome_no_search_engine_screen'],
+    singleRun: false,
+    restartOnFileChange: true,
     customLaunchers: {
       Chrome_no_search_engine_screen: {
         base: 'Chrome',
         flags: ['--disable-search-engine-choice-screen']
       }
     },
-    singleRun: false,
-    restartOnFileChange: true,
     files: ['../node_modules/plotly.js/dist/plotly.min.js']
   });
 };
