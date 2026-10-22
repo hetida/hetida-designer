@@ -241,6 +241,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         lifespan=lifespan,
         root_path=get_config().swagger_prefix,
         middleware=get_middleware(),
+        # logfire configures the OTLP export from the OTEL_* environment variables (see below).
+        # FastAPI's automatic export configuration (opt-in via FASTAPI_OTEL_AUTO_CONFIGURE, the
+        # default in fastapi 0.142.x) would add a second exporter to the same tracer provider,
+        # sending every span twice: once more without logfire's span processing and scrubbing.
+        telemetry={"auto_configure": False} if get_config().otel_via_logfire_active else None,
     )
 
     app.router.route_class = AdditionalLoggingRoute

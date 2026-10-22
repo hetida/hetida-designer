@@ -99,6 +99,8 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     volumes:
       - lgtm_data:/data
+      # raises Tempo's attribute size limit, so that tracebacks are not cut off
+      - ./otel-lgtm/tempo-config.yaml:/otel-lgtm/tempo-config.yaml:ro
     restart: unless-stopped
     healthcheck:
       test:
