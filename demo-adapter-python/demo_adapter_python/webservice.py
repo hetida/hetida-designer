@@ -635,9 +635,11 @@ async def timeseries(
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
             # As the metadata says: each value is timestamped with the start of its interval,
-            # intervals without a value are gaps.
+            # intervals without a value are gaps. Intervals starting before the queried interval
+            # are left out, since they are only partially queried and their timestamp would lie
+            # outside the ref interval.
             ts_df["timestamp"] = ts_df.index
-            ts_df = ts_df.dropna(subset=["value"])
+            ts_df = ts_df[ts_df.index >= from_timestamp].dropna(subset=["value"])
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
@@ -933,9 +935,10 @@ async def multitsframe(
     elif mtsf_id.endswith("anomalies"):
         stored_mtsf = get_value_from_store(mtsf_id)
         stored_mtsf["timestamp"] = pd.to_datetime(stored_mtsf["timestamp"])
+        # closed ref interval, as stated by the metadata
         mtsf = stored_mtsf[
-            (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) > from_timestamp)
-            & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) < to_timestamp)
+            (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) >= from_timestamp)
+            & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) <= to_timestamp)
         ]
         # all stored metrics are queried, also those without data in the interval
         mtsf.attrs = stored_multitsframe_metadata(

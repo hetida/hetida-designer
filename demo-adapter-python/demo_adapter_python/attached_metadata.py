@@ -126,14 +126,14 @@ def value_dimension(timeseries_id: str, column: str = "value") -> dict[str, Any]
         unit = PRESSURE_UNIT_BY_PLANT.get(plant or "")
         measurement = "pressure"
     elif timeseries_id.endswith("anomaly_score"):
-        unit = None  # dimensionless
+        unit = ""  # dimensionless
         measurement = "anomaly score"
         decimals = ANOMALY_SCORE_DECIMALS
     else:
-        unit = None
+        unit = None  # unknown
         measurement = None
-    if unit is not None:
-        decimals = DECIMALS_BY_UNIT.get(unit)
+    if unit is not None and unit in DECIMALS_BY_UNIT:
+        decimals = DECIMALS_BY_UNIT[unit]
     return {
         "column": column,
         "unit": unit,
@@ -241,7 +241,7 @@ def temp_with_state_metadata(
                     {
                         "column": "state",
                         "name": "state",
-                        "unit": None,
+                        "unit": "",  # no quantity, i.e. dimensionless
                         "measurement": None,
                         "value_data_type": "string",
                     },

@@ -19,6 +19,7 @@ from hetdesrun.adapters.sql_adapter.structure import (
 )
 from hetdesrun.adapters.sql_adapter.write_table import _retrieve_metrics
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata_from_attrs
 from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
 
@@ -523,7 +524,38 @@ DELETION_ONLY_TEST_CASES = [
         "Deletion based on reference dataset.",
         id="delete_queried_metrics_of_metadata_following_conventions",
     ),
+    pytest.param(
+        {
+            # fields the hetida platform does not set are null, which counts as missing
+            "dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)
+            | {
+                "metric_key": "id",
+                "queried_metrics": ["nf"],
+                "ref_interval_start_timestamp": "1949-06-01T00:00:00+00:00",
+                "ref_interval_end_timestamp": "1949-06-10T00:00:00+00:00",
+                "only_invalidate": True,
+            },
+            "metrics": [
+                {
+                    "id": "nf",
+                    "name": "nf",
+                    "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                }
+            ],
+        },
+        10,
+        "Deletion based on reference dataset.",
+        id="null_fields_of_metadata_count_as_missing",
+    ),
 ]
+
+
+def test_null_fields_of_dataset_metadata_count_as_missing():
+    df = _create_timeseries_mtsf(
+        attrs={"dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)}, days=1
+    )
+
+    assert get_dataset_metadata_from_attrs(df) == DatasetMetadata()
 
 
 @pytest.mark.parametrize(

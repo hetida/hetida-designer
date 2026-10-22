@@ -195,7 +195,8 @@ def series(attrs: dict[str, Any]) -> pd.Series:
 def singletsframe(attrs: dict[str, Any]) -> pd.DataFrame:
     frame = pd.DataFrame(
         {
-            "timestamp": pd.date_range("2026-10-18T06:00:00Z", periods=2, freq="1h"),
+            # in the ref interval of SINGLETSFRAME_METADATA_EXAMPLE
+            "timestamp": pd.date_range("2026-01-01T06:00:00Z", periods=2, freq="1h"),
             "value": [21.3, 21.5],
             "state": [0, 1],
         }
@@ -430,6 +431,29 @@ def test_recording_and_location_information() -> None:
         ),
         series_metadata(recording_mode="irregular"),
         series_metadata(data_frequency="P1D"),
+        # calendar based frequencies and offsets of fixed duration
+        series_metadata(recording_mode="periodic", data_frequency="MS"),
+        series_metadata(data_frequency="1D", data_frequency_offset="23h"),
+        series_metadata(data_frequency="h", data_frequency_offset="59min"),
+        with_dataset_metadata(
+            series_metadata(), ref_data_frequency="1h", ref_data_frequency_offset="0s"
+        ),
+        with_dataset_metadata(series_metadata(), default_aggregation_interval="1MS"),
+        # intervals restarting at local midnight, e.g. compressed by the hetida platform
+        series_metadata(
+            recording_mode="periodic",
+            data_frequency="2h",
+            data_frequency_timezone="Europe/Berlin",
+            recording_aggregation_method="MEAN",
+        ),
+        series_metadata(
+            data_frequency="1D", data_frequency_offset="6h", data_frequency_timezone="+05:30"
+        ),
+        with_dataset_metadata(
+            series_metadata(recording_mode="periodic"),
+            ref_data_frequency="4h",
+            ref_data_frequency_timezone="America/New_York",
+        ),
     ],
 )
 def test_consistent_recording_information(metadata: dict[str, Any]) -> None:
@@ -458,6 +482,11 @@ def test_consistent_recording_information(metadata: dict[str, Any]) -> None:
             "UTC isoformat timestamp",
         ),
         (
+            with_dataset_metadata(series_metadata(), query_timestamp="2026-10-18T24:00:00Z"),
+            "dataset_metadata.query_timestamp",
+            "UTC isoformat timestamp",
+        ),
+        (
             with_dataset_metadata(series_metadata(), default_aggregation_interval=60),
             "dataset_metadata.default_aggregation_interval",
             "string",
@@ -482,9 +511,86 @@ def test_recording_and_location_structure_errors(
             "not a Pandas date offset alias",
         ),
         (
-            with_dataset_metadata(series_metadata(), ref_data_frequency_offset=""),
+            with_dataset_metadata(
+                series_metadata(), ref_data_frequency="1h", ref_data_frequency_offset=""
+            ),
             "dataset_metadata.ref_data_frequency_offset",
             "not a Pandas date offset alias",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), ref_data_frequency_offset="5min"),
+            "dataset_metadata.ref_data_frequency_offset",
+            "Requires ref_data_frequency",
+        ),
+        # the offset of the dataset only applies together with its frequency
+        (
+            with_dataset_metadata(
+                series_metadata(data_frequency_offset="5min"), ref_data_frequency="1h"
+            ),
+            "metrics[0].data_frequency_offset",
+            "Requires data_frequency",
+        ),
+        (
+            series_metadata(data_frequency="15min", data_frequency_offset="15min"),
+            "metrics[0].data_frequency_offset",
+            'not smaller than data_frequency "15min"',
+        ),
+        (
+            series_metadata(data_frequency="1D", data_frequency_offset="-1h"),
+            "metrics[0].data_frequency_offset",
+            "not a non-negative timedelta",
+        ),
+        (
+            series_metadata(data_frequency="1D", data_frequency_offset="MS"),
+            "metrics[0].data_frequency_offset",
+            "not a non-negative timedelta",
+        ),
+        (
+            series_metadata(data_frequency="1D", data_frequency_offset="1D"),
+            "metrics[0].data_frequency_offset",
+            'not smaller than data_frequency "1D"',
+        ),
+        (
+            series_metadata(data_frequency="1"),
+            "metrics[0].data_frequency",
+            "not a Pandas date offset alias",
+        ),
+        (series_metadata(data_frequency="0s"), "metrics[0].data_frequency", "not positive"),
+        (
+            series_metadata(data_frequency_timezone="Europe/Berlin"),
+            "metrics[0].data_frequency_timezone",
+            "Requires data_frequency",
+        ),
+        # the time zone of the dataset only applies together with its frequency
+        (
+            with_dataset_metadata(
+                series_metadata(data_frequency_timezone="Europe/Berlin"), ref_data_frequency="1h"
+            ),
+            "metrics[0].data_frequency_timezone",
+            "Requires data_frequency",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), ref_data_frequency_timezone="Europe/Berlin"),
+            "dataset_metadata.ref_data_frequency_timezone",
+            "Requires ref_data_frequency",
+        ),
+        (
+            series_metadata(data_frequency="2h", data_frequency_timezone="Europe/Berlinn"),
+            "metrics[0].data_frequency_timezone",
+            "IANA time zone name",
+        ),
+        (
+            with_dataset_metadata(
+                series_metadata(), ref_data_frequency="2h", ref_data_frequency_timezone="CEST"
+            ),
+            "dataset_metadata.ref_data_frequency_timezone",
+            "IANA time zone name",
+        ),
+        (series_metadata(data_frequency="-15min"), "metrics[0].data_frequency", "not positive"),
+        (
+            with_dataset_metadata(series_metadata(), default_aggregation_interval="-1MS"),
+            "dataset_metadata.default_aggregation_interval",
+            "not positive",
         ),
         (
             with_dataset_metadata(series_metadata(), default_aggregation_interval="1month"),
@@ -515,8 +621,13 @@ def test_recording_and_location_structure_errors(
         ),
         (
             series_metadata(recording_mode="periodic", recording_aggregation_method="MEAN"),
-            "metrics[0].recording_aggregation_method",
-            "Requires data_frequency",
+            "metrics[0].recording_mode",
+            "periodic requires data_frequency",
+        ),
+        (
+            series_metadata(recording_mode="periodic"),
+            "metrics[0].recording_mode",
+            "periodic requires data_frequency",
         ),
     ],
 )
@@ -539,7 +650,20 @@ def test_default_timezones(timezone: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "timezone", ["Europe/Berln", "europe/berlin", "Europe", "UTC+02:00", "+2:00", "+15:00", ""]
+    "timezone",
+    [
+        "Europe/Berln",
+        "europe/berlin",
+        "Europe",
+        "UTC+02:00",
+        "+2:00",
+        "+15:00",
+        "",
+        # files of the system's time zone database, which are no time zone names
+        "posixrules",
+        "right/UTC",
+        "localtime",
+    ],
 )
 @pytest.mark.parametrize("level", ["dataset_metadata", "metrics[0]"])
 def test_invalid_default_timezones(timezone: str, level: str) -> None:
@@ -590,7 +714,9 @@ def test_invalid_decimals(decimals: Any, message_part: str) -> None:
 @pytest.mark.parametrize("recording_mode", [None, "periodic", "irregular"])
 def test_deadband_without_on_change_recording_warns(recording_mode: Any) -> None:
     metadata = series_metadata(
-        recording_mode=recording_mode, value_dimensions=[value_dimension(deadband=0.5)]
+        recording_mode=recording_mode,
+        data_frequency="1h",
+        value_dimensions=[value_dimension(deadband=0.5)],
     )
 
     issues = check_metadata_conventions(metadata, "SERIES")
@@ -683,10 +809,115 @@ def test_metadata_not_json_serializable(metadata: dict[str, Any]) -> None:
             series_metadata(value_dimensions=[value_dimension("temperature")]),
             "metrics[0].value_dimensions",
         ),
+        (
+            "SERIES",
+            with_dataset_metadata(series_metadata(), queried_metrics=["b"]),
+            "dataset_metadata.single_metric",
+        ),
     ],
 )
 def test_consistency_errors(data_type: Any, metadata: dict[str, Any], location: str) -> None:
     assert errors_of(check_metadata_conventions(metadata, data_type)) == [location]
+
+
+@pytest.mark.parametrize(
+    ("metadata", "location"),
+    [
+        (
+            with_dataset_metadata(
+                series_metadata(), ref_interval_start_timestamp="2026-02-30T00:00:00Z"
+            ),
+            "dataset_metadata.ref_interval_start_timestamp",
+        ),
+        (
+            with_dataset_metadata(series_metadata(), query_timestamp="2026-04-31T00:00:00Z"),
+            "dataset_metadata.query_timestamp",
+        ),
+        (
+            series_metadata(comments=[platform_comment | {"end_date": "2026-02-29T00:00:00Z"}]),
+            "metrics[0].comments[0].end_date",
+        ),
+    ],
+)
+def test_timestamps_must_be_actual_points_in_time(metadata: dict[str, Any], location: str) -> None:
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [(MetadataIssueSeverity.ERROR, location)]
+    assert "not an actual point in time" in issues[0].message
+
+
+@pytest.mark.parametrize("value_data_type", ["float", "integer", "boolean", "string", None])
+def test_value_data_types(value_data_type: Any) -> None:
+    metadata = series_metadata(value_dimensions=[value_dimension(value_data_type=value_data_type)])
+
+    assert check_metadata_conventions(metadata, "SERIES") == []
+
+
+def test_unknown_value_data_type() -> None:
+    metadata = series_metadata(value_dimensions=[value_dimension(value_data_type="double")])
+
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [
+        (MetadataIssueSeverity.ERROR, "metrics[0].value_dimensions[0].value_data_type")
+    ]
+    assert "'float', 'integer', 'boolean' or 'string'" in issues[0].message
+
+
+@pytest.mark.parametrize("with_data", [True, False])
+def test_queried_metrics_without_metadata_warn(with_data: bool) -> None:
+    metadata = with_dataset_metadata(
+        multitsframe_metadata("a"), queried_metrics=["a", "without data", "b"]
+    )
+    obj = multitsframe(metadata, ["a", "b"]) if with_data else metadata
+
+    issues = check_metadata_conventions(obj, "MULTITSFRAME")
+
+    # with data, "b" is reported as metric of the data missing under metrics instead
+    assert issues_as_tuples(issues) == (
+        [(MetadataIssueSeverity.ERROR, "metrics"), (MetadataIssueSeverity.WARNING, "metrics")]
+        if with_data
+        else [(MetadataIssueSeverity.WARNING, "metrics")]
+    )
+    assert issues[-1].message.endswith('"without data"' if with_data else '"b", "without data"')
+
+
+@pytest.mark.parametrize(
+    ("ref_interval", "in_ref_interval"),
+    [
+        (("2026-10-18T06:00:00Z", "2026-10-18T07:00:00Z", "closed"), True),
+        (("2026-10-18T06:00:00Z", "2026-10-18T07:00:00Z", "right_open"), False),
+        (("2026-10-18T06:00:00Z", "2026-10-18T08:00:00Z", "right_open"), True),
+        (("2026-10-18T06:00:00Z", "2026-10-18T07:00:00Z", "left_open"), False),
+        (("2026-10-18T06:30:00Z", "2026-10-18T07:00:00Z", "closed"), False),
+        (("2026-10-18T06:00:00Z", "2026-10-18T06:30:00Z", "closed"), False),
+    ],
+)
+def test_data_outside_of_ref_interval_warns(
+    ref_interval: tuple[str, str, str], in_ref_interval: bool
+) -> None:
+    start, end, interval_type = ref_interval
+    metadata = with_dataset_metadata(
+        series_metadata(),
+        ref_interval_start_timestamp=start,
+        ref_interval_end_timestamp=end,
+        ref_interval_type=interval_type,
+    )
+
+    # the series has values at 06:00 and 07:00
+    issues = check_metadata_conventions(series(metadata))
+
+    assert issues_as_tuples(issues) == (
+        [] if in_ref_interval else [(MetadataIssueSeverity.WARNING, "dataset_metadata")]
+    )
+
+
+def test_discrete_dataset_is_not_compared_with_ref_interval() -> None:
+    metadata = with_dataset_metadata(series_metadata(), ref_dataset_discrete=True)
+    for field in ("ref_interval_start_timestamp", "ref_interval_end_timestamp"):
+        metadata["dataset_metadata"][field] = "2026-01-01T00:00:00Z"
+
+    assert check_metadata_conventions(series(metadata)) == []
 
 
 def test_consistency_is_only_checked_for_valid_structure() -> None:

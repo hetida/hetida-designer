@@ -5,7 +5,8 @@ import inspect
 import json
 import logging
 import random
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Mapping
+from copy import deepcopy
 from enum import StrEnum
 from functools import wraps
 from types import MappingProxyType
@@ -113,6 +114,22 @@ class State(StrEnum):
 class Type(StrEnum):
     COMPONENT = "COMPONENT"
     WORKFLOW = "WORKFLOW"
+
+
+def deep_merge(base: Mapping[str, Any], update: Mapping[str, Any]) -> dict[str, Any]:
+    """A new dict with the entries of update merged into base recursively
+
+    Dicts occurring in both at the same key are merged recursively. All other values of update,
+    including lists, replace the value of base. Neither base nor update is changed and the result
+    shares no dicts or lists with them.
+    """
+    merged = deepcopy(dict(base))
+    for key, value in update.items():
+        if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
 
 
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:

@@ -108,15 +108,18 @@ def test_warn_logs_issues(validation_mode: Any, caplog: pytest.LogCaptureFixture
             timeseries_sources("ts_1", "ts_2", "ts_3", "ts_4"),
         )
 
+    # one warning summarizing the issues of all sources
     warnings = [record.getMessage() for record in caplog.records]
-    assert len(warnings) == 3
-    assert f"generic REST adapter {ADAPTER_KEY} for timeseries source ts_2" in warnings[0]
+    assert len(warnings) == 1
+    assert (
+        f"generic REST adapter {ADAPTER_KEY} for timeseries 3 of 4 sources (ts_2, ts_3, ts_4)"
+        in warnings[0]
+    )
     assert "* error at metrics: Input should be a valid array" in warnings[0]
-    assert "source ts_3" in warnings[1]
-    assert "* warning at metrics[0].unit:" in warnings[1]
+    assert "(in sources ts_2)" in warnings[0]
+    assert "* warning at metrics[0].unit:" in warnings[0]
     # no metadata at all for ts_4
-    assert "source ts_4" in warnings[2]
-    assert "* error at dataset_metadata: Field required" in warnings[2]
+    assert "* error at dataset_metadata: Field required" in warnings[0]
 
 
 @pytest.mark.parametrize("validation_mode", [MetadataValidationMode.ERROR], indirect=True)
@@ -163,6 +166,42 @@ def test_error_does_not_raise_for_warnings_only(
     assert len(caplog.records) == 1
     assert "multitsframe source frame" in caplog.records[0].getMessage()
     assert "* warning at metrics[1].Unit:" in caplog.records[0].getMessage()
+
+
+@pytest.mark.parametrize("validation_mode", [MetadataValidationMode.WARN], indirect=True)
+def test_issues_of_many_sources_and_metrics_are_summarized(
+    validation_mode: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    ts_ids = [f"ts_{index}" for index in range(100)]
+    # the same unknown field in every metric of every source
+    attrs = {ts_id: series_metadata(ts_id, externalId=ts_id) for ts_id in ts_ids}
+    multitsframe = pd.DataFrame({"timestamp": [], "metric": [], "value": []})
+    multitsframe.attrs = {
+        "dataset_metadata": series_metadata("a")["dataset_metadata"]
+        | {"single_metric": None, "queried_metrics": ts_ids},
+        "metrics": [attrs[ts_id]["metrics"][0] for ts_id in ts_ids],
+    }
+
+    with caplog.at_level(logging.WARNING):
+        validate_received_metadata(
+            loaded_timeseries(attrs), ADAPTER_KEY, "timeseries", timeseries_sources(*ts_ids)
+        )
+        validate_received_metadata(
+            multitsframe,
+            ADAPTER_KEY,
+            "multitsframe",
+            [FilteredSource(ref_id="frame", type="multitsframe")],
+        )
+
+    issue = 'Unknown field "externalId". Did you mean "external_id"?'
+    timeseries_warning, multitsframe_warning = (record.getMessage() for record in caplog.records)
+    sources = "ts_0, ts_1, ts_2, ts_3, ts_4 and 95 more"
+    assert timeseries_warning.splitlines()[1:] == [
+        f"* warning at metrics[0].externalId: {issue} (in sources {sources})"
+    ]
+    assert multitsframe_warning.splitlines()[1:] == [
+        f"* warning at metrics[*].externalId: {issue} (100 times)"
+    ]
 
 
 @pytest.mark.parametrize("validation_mode", [MetadataValidationMode.ERROR], indirect=True)

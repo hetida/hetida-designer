@@ -5,6 +5,8 @@ conventions is configured per adapter via GENERIC_REST_ADAPTER_METADATA_VALIDATI
 """
 
 import logging
+import re
+from collections.abc import Mapping
 from typing import Literal
 
 import pandas as pd
@@ -62,6 +64,61 @@ def check_received_metadata(
     }
 
 
+def _listing(items: list[str], max_items: int = 5) -> str:
+    listed = ", ".join(items[:max_items])
+    if len(items) > max_items:
+        listed += f" and {len(items) - max_items} more"
+    return listed
+
+
+def summarize_issues(issues_by_source: Mapping[str, list[MetadataConventionIssue]]) -> str:
+    """The issues of the sources as lines, each distinct issue listed once
+
+    Issues which only differ in the indices of their locations, e.g. the same unknown field in
+    every metric, are listed once (with [*] instead of differing indices) with the number of their
+    occurrences and, for several sources, with the sources they occur in. So the issues of many
+    sources or metrics do not flood the logs.
+    """
+    occurrences: dict[tuple[str, str, str], list[tuple[str, str]]] = {}
+    for source_id, issues in issues_by_source.items():
+        for issue in issues:
+            key = (issue.severity, re.sub(r"\[\d+\]", "[*]", issue.location), issue.message)
+            occurrences.setdefault(key, []).append((source_id, issue.location))
+
+    lines = []
+    for (severity, location_pattern, message), found in occurrences.items():
+        locations = {location for _, location in found}
+        location = next(iter(locations)) if len(locations) == 1 else location_pattern
+        line = f"* {severity} at {location or 'top level'}: {message}"
+        sources = list(dict.fromkeys(source_id for source_id, _ in found))
+        times = f"{len(found)} times" if len(found) > len(sources) else ""
+        if len(issues_by_source) > 1:
+            line += f" ({times + ' ' if times else ''}in sources {_listing(sources)})"
+        elif times:
+            line += f" ({times})"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _not_adhering_message(
+    adapter_key: str,
+    endpoint: str,
+    issues_by_source: Mapping[str, list[MetadataConventionIssue]],
+    source_count: int,
+) -> str:
+    source_ids = list(issues_by_source)
+    sources = (
+        f"source {source_ids[0]}"
+        if len(source_ids) == 1
+        else f"{len(source_ids)} of {source_count} sources ({_listing(source_ids)})"
+    )
+    return (
+        f"Metadata received from generic REST adapter {adapter_key} for {endpoint} {sources}"
+        " does not adhere to the metadata conventions. Found issues:\n"
+        + summarize_issues(issues_by_source)
+    )
+
+
 def validate_received_metadata(
     df: pd.DataFrame,
     adapter_key: str,
@@ -72,6 +129,7 @@ def validate_received_metadata(
 
     With validation mode WARN, issues are logged as warning. With mode ERROR, errors let loading
     fail with an AdapterInputDataError, while sources with only warnings are logged as warning.
+    The issues of all sources are summarized in one message, see summarize_issues.
     """
     mode = get_config().generic_rest_adapter_metadata_validation.get(
         adapter_key, MetadataValidationMode.OFF
@@ -79,24 +137,21 @@ def validate_received_metadata(
     if mode == MetadataValidationMode.OFF:
         return
 
-    error_messages = []
-    for source_id, issues in check_received_metadata(df, endpoint, filtered_sources).items():
-        msg = (
-            f"Metadata received from generic REST adapter {adapter_key} for {endpoint} source"
-            f" {source_id} does not adhere to the metadata conventions. Found issues:\n"
-            + "\n".join(
-                f"* {issue.severity} at {issue.location or 'top level'}: {issue.message}"
-                for issue in issues
-            )
-        )
-        if mode == MetadataValidationMode.ERROR and any(
-            issue.severity == MetadataIssueSeverity.ERROR for issue in issues
-        ):
-            error_messages.append(msg)
-        else:
-            logger.warning(msg)
-
-    if len(error_messages) > 0:
-        msg = "\n".join(error_messages)
+    issues_by_source = check_received_metadata(df, endpoint, filtered_sources)
+    failing = {
+        source_id: issues
+        for source_id, issues in issues_by_source.items()
+        if mode == MetadataValidationMode.ERROR
+        and any(issue.severity == MetadataIssueSeverity.ERROR for issue in issues)
+    }
+    warned = {
+        source_id: issues
+        for source_id, issues in issues_by_source.items()
+        if source_id not in failing
+    }
+    if len(warned) > 0:
+        logger.warning(_not_adhering_message(adapter_key, endpoint, warned, len(filtered_sources)))
+    if len(failing) > 0:
+        msg = _not_adhering_message(adapter_key, endpoint, failing, len(filtered_sources))
         logger.info(msg)
         raise AdapterInputDataError(msg)

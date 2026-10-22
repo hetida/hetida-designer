@@ -53,11 +53,14 @@ Invalid property filters (e.g. an unknown condition or a missing value) abort th
 
 ### Metadata
 
-Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/): `dataset_metadata` contains the queried interval, the queried metrics and the `use_as_metric` field as `metric_key`. Under `metrics` there is an entry for each selected signal: the metadata which the hetida platform provides for the signal when loading its data, e.g. `name`, `description`, `external_id`, the inherited properties under `inherited`, the comments in the queried interval under `comments`, unit, measurement and value data type of its value dimension under `value_dimensions` and its `default_aggregation_method`. Additionally it contains the `use_as_metric` field with the value used in the metric column, if the hetida platform does not provide this field itself (e.g. "relativeNamePath" or "externalTimeSeriesId").
+Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/). It is the metadata which the hetida platform provides for each selected signal when loading its data, with everything the hetida platform provides, also fields this component does not know:
+
+* Under `metrics` there is an entry for each selected signal, e.g. with `name`, `description`, `external_id`, the inherited properties under `inherited`, the comments in the queried interval under `comments`, unit, measurement and value data type of its value dimension under `value_dimensions` and its `default_aggregation_method`. Additionally it contains the `use_as_metric` field with the value used in the metric column, if the hetida platform does not provide this field itself (e.g. "relativeNamePath" or "externalTimeSeriesId").
+* `dataset_metadata` contains the `use_as_metric` field as `metric_key` and the selected signals as `queried_metrics`. Furthermore it contains the dataset metadata the hetida platform provides for the signals, e.g. the queried interval and its type or the `query_timestamp`, if it is the same for all signals. Otherwise the metrics provide the information themselves where the metadata conventions allow it, i.e. their `default_timezone` and their `data_frequency` with its offset and time zone (unless they have their own), and other such fields are left out with a warning. The same applies to further fields the hetida platform provides on the top level besides `dataset_metadata` and `metrics`.
 
 This requires a hetida platform version which provides its metadata following the metadata conventions (hetida platform 2603.1012 or newer). Otherwise the component fails with an error pointing this out.
 
-The component checks the metadata of each loaded signal against the metadata conventions for a SERIES. If it does not adhere to them, e.g. because a value dimension lacks its unit, the component logs a warning naming the signal and listing the found issues, but nevertheless returns the data. The check is skipped if the runtime validates the metadata received from the hetida platform adapter itself ("WARN" or "ERROR" configured for it via `GENERIC_REST_ADAPTER_METADATA_VALIDATION`, see [Validating received metadata](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_registration/#validating-received-metadata)), since then the runtime logs the issues or lets loading fail.
+The component checks the metadata of each loaded signal against the metadata conventions for a SERIES. If it does not adhere to them, e.g. because a value dimension lacks its unit, the component logs a warning naming the signals and listing the found issues, each distinct issue once, but nevertheless returns the data. The check is skipped if the runtime validates the metadata received from the hetida platform adapter itself ("WARN" or "ERROR" configured for it via `GENERIC_REST_ADAPTER_METADATA_VALIDATION`, see [Validating received metadata](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/adapter_registration/#validating-received-metadata)), since then the runtime logs the issues or lets loading fail.
 
 You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
 
@@ -105,6 +108,7 @@ from pydantic import (
 from hdutils import ComponentInputValidationException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_ts_data import load_ts_data_from_adapter
+from hetdesrun.adapters.generic_rest.metadata_validation import summarize_issues
 from hetdesrun.dt_utils import resolve_interval
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.models.metadata_conventions import check_metadata_conventions
@@ -671,6 +675,116 @@ def metric_metadata(attrs_from_adapter, signal_id, metric_key, metric_value):
     return metric
 
 
+# Fields of the dataset metadata of a signal's SERIES read concerning the single signal, which the
+# MULTITSFRAME of all loaded signals defines itself
+SIGNAL_DATASET_FIELDS = ("metric_key", "single_metric", "queried_metrics")
+
+# Fields of the dataset metadata applying to all metrics without their own information, by the
+# fields of the metrics providing this information, of which the first is the decisive one
+METRIC_FIELDS_BY_DATASET_FIELDS = {
+    ("default_timezone",): ("default_timezone",),
+    ("ref_data_frequency", "ref_data_frequency_offset", "ref_data_frequency_timezone"): (
+        "data_frequency",
+        "data_frequency_offset",
+        "data_frequency_timezone",
+    ),
+}
+
+_MISSING = object()
+
+
+def common_fields(objs, ignored):
+    """The fields having the same value in all objs (copied) and the names of the other fields
+
+    A field missing in some objs, but not in all, has differing values.
+    """
+    common = {}
+    differing = []
+    for field in dict.fromkeys(field for obj in objs for field in obj):
+        if field in ignored:
+            continue
+        values = [obj.get(field, _MISSING) for obj in objs]
+        if all(value == values[0] for value in values[1:]):
+            common[field] = deepcopy(values[0])
+        else:
+            differing.append(field)
+    return common, differing
+
+
+def multitsframe_metadata(attrs_from_adapter, signal_ids, metric_values, use_as_metric, start, end):
+    """Metadata of the multitsframe of the loaded signals
+
+    Takes over everything the hetida platform adapter provides as metadata of the signals
+    following the metadata conventions for a SERIES, also fields this component does not know:
+    The metric of each signal (see metric_metadata) as well as the dataset metadata and further
+    top level fields which are the same for all signals. Dataset metadata differing between the
+    signals is moved to the metrics, as far as they can provide it themselves, see
+    METRIC_FIELDS_BY_DATASET_FIELDS. Other differing fields are left out with a warning.
+
+    metric_values maps the signal ids to the values of the use_as_metric field in the metric
+    column. The queried interval from start to end is only used if the adapter does not provide
+    it, e.g. if no signal is loaded.
+    """
+    signals_attrs = [attrs_from_adapter.get(signal_id) or {} for signal_id in signal_ids]
+    metrics = [
+        metric_metadata(
+            attrs_from_adapter,
+            signal_id,
+            metric_key=use_as_metric,
+            metric_value=metric_values[signal_id],
+        )
+        for signal_id in signal_ids
+    ]
+    signals_dataset_metadata = [
+        signal_attrs.get("dataset_metadata") or {} for signal_attrs in signals_attrs
+    ]
+
+    dataset_metadata, differing_fields = common_fields(
+        signals_dataset_metadata, ignored=SIGNAL_DATASET_FIELDS
+    )
+    for dataset_fields, metric_fields in METRIC_FIELDS_BY_DATASET_FIELDS.items():
+        if not any(field in differing_fields for field in dataset_fields):
+            continue
+        for field in dataset_fields:
+            dataset_metadata.pop(field, None)
+        differing_fields = [field for field in differing_fields if field not in dataset_fields]
+        for metric, signal_dataset_metadata in zip(metrics, signals_dataset_metadata, strict=True):
+            if metric.get(metric_fields[0]) is not None:
+                continue
+            for dataset_field, metric_field in zip(dataset_fields, metric_fields, strict=True):
+                if signal_dataset_metadata.get(dataset_field) is not None:
+                    metric[metric_field] = signal_dataset_metadata[dataset_field]
+
+    top_level_fields, differing_top_level_fields = common_fields(
+        signals_attrs, ignored=("dataset_metadata", "metrics")
+    )
+    differing_fields += differing_top_level_fields
+    if len(differing_fields) > 0:
+        logger.warning(
+            "hetida platform provided different values of the metadata fields %s for the loaded"
+            " signals, which are therefore left out of the metadata of the multitsframe.",
+            differing_fields,
+        )
+
+    # e.g. if no signal is loaded
+    for field, value in (
+        ("ref_interval_start_timestamp", start.isoformat()),
+        ("ref_interval_end_timestamp", end.isoformat()),
+        ("ref_interval_type", "closed"),
+    ):
+        if dataset_metadata.get(field) is None:
+            dataset_metadata[field] = value
+
+    return {
+        "dataset_metadata": {
+            "metric_key": use_as_metric,
+            "queried_metrics": [metric_values[signal_id] for signal_id in signal_ids],
+        }
+        | dataset_metadata,
+        "metrics": metrics,
+    } | top_level_fields
+
+
 def warn_about_metadata_convention_issues(attrs_from_adapter, signal_children) -> None:
     """Log a warning for each signal whose metadata does not adhere to the metadata conventions
 
@@ -684,21 +798,28 @@ def warn_about_metadata_convention_issues(attrs_from_adapter, signal_children) -
     if validation_mode != MetadataValidationMode.OFF:
         return
 
-    for child in signal_children:
-        issues = check_metadata_conventions(
-            attrs_from_adapter.get(child["referenceId"]) or {}, "SERIES"
-        )
-        if len(issues) > 0:
-            logger.warning(
-                "Metadata provided by hetida platform for signal '%s' (id %s) does not adhere"
-                " to the metadata conventions. Found issues:\n%s",
-                child["name"],
-                child["referenceId"],
-                "\n".join(
-                    f"* {issue.severity} at {issue.location or 'top level'}: {issue.message}"
-                    for issue in issues
-                ),
+    issues_by_signal = {
+        f"'{child['name']}' (id {child['referenceId']})": issues
+        for child in signal_children
+        if len(
+            issues := check_metadata_conventions(
+                attrs_from_adapter.get(child["referenceId"]) or {}, "SERIES"
             )
+        )
+        > 0
+    }
+    if len(issues_by_signal) > 0:
+        # one warning summarizing the issues, which are often the same for all signals
+        logger.warning(
+            "Metadata provided by hetida platform for %s does not adhere to the metadata"
+            " conventions. Found issues:\n%s",
+            (
+                f"signal {next(iter(issues_by_signal))}"
+                if len(issues_by_signal) == 1
+                else f"{len(issues_by_signal)} of {len(signal_children)} signals"
+            ),
+            summarize_issues(issues_by_signal),
+        )
 
 
 # %%
@@ -891,36 +1012,25 @@ async def main(
 
     attrs_from_adapter = loaded_ts_data.attrs
 
-    loaded_ts_data.attrs = {
-        "dataset_metadata": {
-            "metric_key": use_as_metric,
-            "queried_metrics": [
-                metric_mapping_dict[child["referenceId"]] for child in selected_children
-            ],
-            "ref_interval_start_timestamp": start.isoformat(),
-            "ref_interval_end_timestamp": end.isoformat(),
-            "ref_interval_type": "closed",
-        },
-        "metrics": [
-            metric_metadata(
-                attrs_from_adapter,
-                child["referenceId"],
-                metric_key=use_as_metric,
-                metric_value=metric_mapping_dict[child["referenceId"]],
-            )
-            for child in selected_children
-        ],
-    }
+    loaded_ts_data.attrs = multitsframe_metadata(
+        attrs_from_adapter,
+        [child["referenceId"] for child in selected_children],
+        metric_mapping_dict,
+        use_as_metric,
+        start,
+        end,
+    )
 
     warn_about_metadata_convention_issues(attrs_from_adapter, selected_children)
 
     # log loaded data per timeseries
 
+    # Counted at once instead of filtering the data for each metric, since pandas deep-copies the
+    # attrs, i.e. the metadata of all signals, on every operation creating a new object.
+    data_points_by_metric = loaded_ts_data["metric"].value_counts()
     loaded_data_points_per_metric = {
-        metric_mapping_dict[signal_id := child["referenceId"]]: len(
-            loaded_ts_data[loaded_ts_data.metric == metric_mapping_dict[signal_id]]
-        )
-        for child in selected_children
+        metric: int(data_points_by_metric.get(metric, 0))
+        for metric in (metric_mapping_dict[child["referenceId"]] for child in selected_children)
     }
 
     logger.info(
@@ -938,7 +1048,11 @@ try:
 except ImportError:
     pass
 else:
+    from datetime import UTC, datetime
+
     SIGNAL_ID = "7ab8c419-8745-4714-b588-57c0c772cc95"
+    OTHER_SIGNAL_ID = "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+    METRIC_VALUES = {SIGNAL_ID: "water.north.level", OTHER_SIGNAL_ID: "water.south.level"}
 
     @pytest.fixture
     def attrs_from_adapter():
@@ -1093,6 +1207,150 @@ else:
 
         assert check_metadata_conventions(multitsframe) == []  # noqa: S101
 
+    def with_other_signal(attrs_from_adapter):
+        other_signal_attrs = deepcopy(attrs_from_adapter[SIGNAL_ID])
+        other_signal_attrs["dataset_metadata"] |= {
+            "single_metric": OTHER_SIGNAL_ID,
+            "queried_metrics": [OTHER_SIGNAL_ID],
+        }
+        other_signal_attrs["metrics"][0] |= {
+            "id": OTHER_SIGNAL_ID,
+            "external_id": "water.south.level",
+            "name": "Water level south",
+        }
+        return attrs_from_adapter | {OTHER_SIGNAL_ID: other_signal_attrs}
+
+    def test_multitsframe_metadata_takes_over_everything_provided(attrs_from_adapter):
+        attrs_from_adapter = with_other_signal(attrs_from_adapter)
+        for signal_attrs in attrs_from_adapter.values():
+            signal_attrs["dataset_metadata"] |= {
+                "ref_interval_type": "right_open",
+                "query_timestamp": "2026-10-19T08:00:00.123Z",
+                "default_timezone": "Europe/Berlin",
+                "ref_data_frequency": None,
+                "a_future_field": {"of": "the platform"},
+            }
+            signal_attrs["a_future_top_level_field"] = [1, 2]
+
+        metadata = multitsframe_metadata(
+            attrs_from_adapter,
+            [SIGNAL_ID, OTHER_SIGNAL_ID],
+            METRIC_VALUES,
+            "external_id",
+            datetime(2026, 10, 1, tzinfo=UTC),
+            datetime(2026, 10, 2, tzinfo=UTC),
+        )
+
+        assert metadata == {  # noqa: S101
+            "dataset_metadata": {
+                "metric_key": "external_id",
+                "queried_metrics": ["water.north.level", "water.south.level"],
+                "ref_interval_start_timestamp": "2026-10-18T00:00:00Z",
+                "ref_interval_end_timestamp": "2026-10-19T00:00:00Z",
+                "ref_interval_type": "right_open",
+                "query_timestamp": "2026-10-19T08:00:00.123Z",
+                "default_timezone": "Europe/Berlin",
+                "ref_data_frequency": None,
+                "a_future_field": {"of": "the platform"},
+            },
+            "metrics": [
+                attrs_from_adapter[SIGNAL_ID]["metrics"][0],
+                attrs_from_adapter[OTHER_SIGNAL_ID]["metrics"][0],
+            ],
+            "a_future_top_level_field": [1, 2],
+        }
+        # the adapter metadata is copied, not referenced
+        attrs_from_adapter[SIGNAL_ID]["dataset_metadata"]["a_future_field"].clear()
+        assert metadata["dataset_metadata"]["a_future_field"] == {"of": "the platform"}  # noqa: S101
+
+        multitsframe = pd.DataFrame(
+            {
+                "timestamp": pd.to_datetime(["2026-10-18T06:00:00Z", "2026-10-18T06:00:00Z"]),
+                "metric": ["water.north.level", "water.south.level"],
+                "value": [2.5, 1.5],
+            }
+        )
+        multitsframe.attrs = metadata
+        # only warnings about the fields unknown to the metadata conventions
+        assert [  # noqa: S101
+            (issue.severity, issue.location) for issue in check_metadata_conventions(multitsframe)
+        ] == [
+            ("warning", "a_future_top_level_field"),
+            ("warning", "dataset_metadata.a_future_field"),
+        ]
+
+    def test_differing_dataset_metadata_is_moved_to_the_metrics(attrs_from_adapter, caplog):
+        attrs_from_adapter = with_other_signal(attrs_from_adapter)
+        attrs_from_adapter[SIGNAL_ID]["dataset_metadata"] |= {
+            "default_timezone": "Europe/Berlin",
+            "ref_data_frequency": "2h",
+            "ref_data_frequency_timezone": "Europe/Berlin",
+            "query_timestamp": "2026-10-19T08:00:00Z",
+        }
+        attrs_from_adapter[OTHER_SIGNAL_ID]["dataset_metadata"] |= {
+            "default_timezone": "America/New_York",
+            "ref_data_frequency": "1h",
+            "ref_data_frequency_offset": "30min",
+            "ref_data_frequency_timezone": "America/New_York",
+            "query_timestamp": "2026-10-19T08:00:01Z",
+        }
+        # takes precedence over the frequency of the dataset metadata including its offset
+        attrs_from_adapter[OTHER_SIGNAL_ID]["metrics"][0]["data_frequency"] = "5min"
+
+        with caplog.at_level(logging.WARNING):
+            metadata = multitsframe_metadata(
+                attrs_from_adapter,
+                [SIGNAL_ID, OTHER_SIGNAL_ID],
+                METRIC_VALUES,
+                "external_id",
+                datetime(2026, 10, 18, tzinfo=UTC),
+                datetime(2026, 10, 19, tzinfo=UTC),
+            )
+
+        assert not {  # noqa: S101
+            "default_timezone",
+            "ref_data_frequency",
+            "ref_data_frequency_offset",
+            "ref_data_frequency_timezone",
+            "query_timestamp",
+        } & set(metadata["dataset_metadata"])
+        north, south = metadata["metrics"]
+        assert (  # noqa: S101
+            north["default_timezone"],
+            north["data_frequency"],
+            north["data_frequency_timezone"],
+        ) == ("Europe/Berlin", "2h", "Europe/Berlin")
+        assert "data_frequency_offset" not in north  # noqa: S101
+        assert (south["default_timezone"], south["data_frequency"]) == (  # noqa: S101
+            "America/New_York",
+            "5min",
+        )
+        assert "data_frequency_offset" not in south  # noqa: S101
+        assert "data_frequency_timezone" not in south  # noqa: S101
+        assert len(caplog.records) == 1  # noqa: S101
+        assert "['query_timestamp']" in caplog.records[0].getMessage()  # noqa: S101
+
+    def test_multitsframe_metadata_without_signals():
+        metadata = multitsframe_metadata(
+            {},
+            [],
+            {},
+            "external_id",
+            datetime(2026, 10, 18, tzinfo=UTC),
+            datetime(2026, 10, 19, tzinfo=UTC),
+        )
+
+        assert metadata == {  # noqa: S101
+            "dataset_metadata": {
+                "metric_key": "external_id",
+                "queried_metrics": [],
+                "ref_interval_start_timestamp": "2026-10-18T00:00:00+00:00",
+                "ref_interval_end_timestamp": "2026-10-19T00:00:00+00:00",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [],
+        }
+
     def test_no_warning_for_metadata_following_conventions(attrs_from_adapter, caplog, monkeypatch):
         monkeypatch.setattr(get_config(), "generic_rest_adapter_metadata_validation", {})
 
@@ -1128,6 +1386,39 @@ else:
         message = caplog.records[0].getMessage()
         assert f"signal 'name of {SIGNAL_ID}' (id {SIGNAL_ID})" in message  # noqa: S101
         assert "* error at metrics[0].value_dimensions[0].unit:" in message  # noqa: S101
+
+    def test_one_warning_for_all_signals(attrs_from_adapter, caplog, monkeypatch):
+        monkeypatch.setattr(get_config(), "generic_rest_adapter_metadata_validation", {})
+        attrs_from_adapter = with_other_signal(attrs_from_adapter)
+        valid_signal_attrs = deepcopy(attrs_from_adapter[SIGNAL_ID])
+        valid_signal_attrs["dataset_metadata"] |= {
+            "single_metric": "valid",
+            "queried_metrics": ["valid"],
+        }
+        valid_signal_attrs["metrics"][0]["id"] = "valid"
+        for signal_attrs in attrs_from_adapter.values():
+            del signal_attrs["metrics"][0]["value_dimensions"][0]["unit"]
+        attrs_from_adapter["valid"] = valid_signal_attrs
+
+        with caplog.at_level(logging.WARNING):
+            warn_about_metadata_convention_issues(
+                attrs_from_adapter,
+                [
+                    signal_child(SIGNAL_ID, "water.north.level"),
+                    signal_child(OTHER_SIGNAL_ID, "water.south.level"),
+                    signal_child("valid", "water.east.level"),
+                ],
+            )
+
+        assert len(caplog.records) == 1  # noqa: S101
+        message = caplog.records[0].getMessage()
+        assert "for 2 of 3 signals" in message  # noqa: S101
+        expected_issue = (
+            "* error at metrics[0].value_dimensions[0].unit: Field required (in sources"
+            f" 'name of {SIGNAL_ID}' (id {SIGNAL_ID}),"
+            f" 'name of {OTHER_SIGNAL_ID}' (id {OTHER_SIGNAL_ID}))"
+        )
+        assert message.splitlines()[1:] == [expected_issue]  # noqa: S101
 
     @pytest.mark.parametrize(
         "validation_mode", [MetadataValidationMode.WARN, MetadataValidationMode.ERROR]

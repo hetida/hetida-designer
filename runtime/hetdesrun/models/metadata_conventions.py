@@ -5,9 +5,9 @@ The models in this module specify the hetida designer metadata conventions for t
 guide page on attached metadata for an introduction.
 
 The conventions are strict: Metadata adhering to them provides the required fields, possibly as
-null where the information does not apply, e.g. the unit of a dimensionless quantity. Consumers
-like components should nevertheless cope with missing metadata, since validation of metadata
-received from adapters is optional.
+null if the information is unknown, e.g. the unit of a value dimension. Consumers like components
+should nevertheless cope with missing metadata, since validation of metadata received from
+adapters is optional.
 
 The models document the request body of the backend endpoint for checking metadata. Hence they
 occur as JSON Schemas in the openapi.json of the backend, so that third party projects, e.g.
@@ -18,17 +18,19 @@ check_metadata_conventions additionally checks the rules which JSON Schema canno
 optionally against the actual data.
 """
 
+import datetime
 import difflib
 import json
 import re
 from collections import Counter
 from collections.abc import Mapping
 from enum import StrEnum
+from functools import cache
 from typing import Annotated, Any, Literal
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import available_timezones
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, PlainValidator, ValidationError
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PlainValidator, ValidationError
 
 from hdutils import parse_value
 from hetdesrun.models.dataset_metadata import IntervalType
@@ -37,11 +39,27 @@ TimeseriesDataType = Literal["SERIES", "SINGLETSFRAME", "MULTITSFRAME"]
 
 # [0-9] instead of \d, since \d also matches non-ASCII digits in some regex dialects
 UTC_TIMESTAMP_PATTERN = (
-    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|\+00:00)$"
+    r"^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])"
+    r"T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?(Z|\+00:00)$"
 )
 
+
+def _check_point_in_time(timestamp: str) -> str:
+    """Reject timestamps of the pattern which are no actual points in time, e.g. February 30"""
+    try:
+        datetime.datetime.fromisoformat(timestamp)
+    except ValueError as e:
+        raise ValueError(f"{timestamp!r} is not an actual point in time: {e}.") from e
+    return timestamp
+
+
+# The pattern specifies the format in the JSON Schema, which cannot express that the date and
+# time must exist. Pydantic's datetime type is not used, since it accepts further formats and
+# offsets, so that the check would be more lenient than the published JSON Schema.
 UtcTimestamp = Annotated[
-    str, Field(pattern=UTC_TIMESTAMP_PATTERN, json_schema_extra={"format": "date-time"})
+    str,
+    Field(pattern=UTC_TIMESTAMP_PATTERN, json_schema_extra={"format": "date-time"}),
+    AfterValidator(_check_point_in_time),
 ]
 
 
@@ -62,6 +80,15 @@ class AggregationMethod(StrEnum):
     COUNT = "COUNT"
 
 
+class ValueDataType(StrEnum):
+    """Data type of the values of a value dimension"""
+
+    FLOAT = "float"
+    INTEGER = "integer"
+    BOOLEAN = "boolean"
+    STRING = "string"
+
+
 class RecordingMode(StrEnum):
     """When the values of a timeseries are recorded
 
@@ -79,10 +106,27 @@ class RecordingMode(StrEnum):
 
 
 _FREQUENCY_FORMAT = 'as Pandas date offset alias or timedelta string, e.g. "15min" or "1D"'
+_OFFSET_DESCRIPTION = (
+    "Offset of the timestamps against the starts of the intervals of {frequency} (see"
+    ' {timezone}) as timedelta string, e.g. "4min": not negative and smaller than {frequency}. 0'
+    " if missing or null. Requires {frequency}."
+)
 
 _TIMEZONE_FORMAT = (
     'as IANA time zone name like "Europe/Berlin" or "UTC" (preferred, since it respects daylight'
     ' saving time) or as fixed UTC offset like "+02:00"'
+)
+
+_ALIGNMENT_DESCRIPTION = (
+    "Time zone the intervals of {frequency} are aligned to, "
+    + _TIMEZONE_FORMAT
+    + ". Without it, the intervals start at the multiples of {frequency} since"
+    " 1970-01-01T00:00:00Z. With it, for a {frequency} shorter than a day, the intervals restart"
+    " at each local midnight: They start at local midnight plus multiples of {frequency}, and the"
+    " last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the"
+    " day of a daylight saving time change. For a {frequency} of a day or longer, the intervals"
+    " follow the calendar of the time zone, e.g. days from local midnight to local midnight. The"
+    " offset shifts the intervals in both cases. Requires {frequency}."
 )
 _TIMEZONE_PURPOSE = (
     " Components evaluating the timeseries in calendar intervals use it, e.g. a report"
@@ -121,13 +165,12 @@ class SharedValueDimensionMetadata(BaseModel):
     description: str | None = Field(
         None, description="A description. Should be considered empty if missing."
     )
-    unit: str | None = Field(None, description='Unit of the values, e.g. "°C" or "m/s"')
-    measurement: str | None = Field(None, description='The measured quantity, e.g. "temperature"')
-    value_data_type: str | None = Field(
+    unit: str | None = Field(
         None,
-        description='Data type of the values, e.g. "float". E.g. the hetida platform provides one'
-        ' of "float", "integer", "string" and "boolean".',
+        description='Unit of the values, e.g. "°C" or "m/s", "" for dimensionless quantities',
     )
+    measurement: str | None = Field(None, description='The measured quantity, e.g. "temperature"')
+    value_data_type: ValueDataType | None = Field(None, description="Data type of the values")
     deadband: float | None = Field(
         None,
         ge=0,
@@ -156,7 +199,7 @@ class ValueDimensionMetadata(SharedValueDimensionMetadata):
 
     unit: str | None = Field(
         ...,
-        description='Unit of the values, e.g. "°C" or "m/s". Null for dimensionless quantities or'
+        description='Unit of the values, e.g. "°C" or "m/s". "" for dimensionless quantities, null'
         " if unknown.",
     )
     measurement: str | None = Field(
@@ -168,9 +211,10 @@ class InheritedMetricMetadata(BaseModel):
     """Properties a metric inherits from objects higher up in a hierarchy
 
     Arbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest
-    occurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers
-    only use inherited properties as last resort and not for information describing the metric
-    itself, like its unit or names.
+    occurrence in the hierarchy wins. Should not contain the fields the conventions define for
+    metrics and value dimensions, like "name", "id" or "unit": Consumers only use inherited
+    properties as last resort and not for information describing the metric itself, like its
+    unit or names.
 
     The values should have the JSON type matching their meaning: numbers as numbers, booleans as
     booleans and points in time as UTC isoformat strings, not e.g. a number as string.
@@ -270,8 +314,9 @@ class MetricMetadata(BaseModel):
     default_aggregation_method: AggregationMethod | None = Field(
         None,
         description="How the timeseries should be aggregated by default, e.g. when components"
-        " plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of"
-        " MEAN. E.g. the hetida platform provides the method it aggregates the signal with when"
+        " plot or report it in coarser intervals. If missing or null: LAST if the value_data_type"
+        ' of the value dimension "value" is boolean or string, otherwise MEAN. AVG is an alias'
+        " of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when"
         " bucketing it, for a signal group member the one configured for the member.",
     )
     default_timezone: str | None = Field(
@@ -295,7 +340,9 @@ class MetricMetadata(BaseModel):
         ' "OPC_UA", "MQTT" or "FORM" for values entered manually.',
     )
     recording_mode: RecordingMode | None = Field(
-        None, description="When the values are recorded. Unknown if missing or null."
+        None,
+        description="When the values are recorded. Unknown if missing or null. periodic requires"
+        " data_frequency (or dataset_metadata.ref_data_frequency).",
     )
     data_frequency: str | None = Field(
         None,
@@ -303,23 +350,25 @@ class MetricMetadata(BaseModel):
         + _FREQUENCY_FORMAT
         + ": For recording_mode periodic the interval between subsequent values, for on_change"
         " the interval after which the value is recorded again at the latest, also without a"
-        " change (heartbeat). Takes precedence over dataset_metadata.ref_data_frequency for"
-        " this metric.",
+        " change (heartbeat). Together with data_frequency_offset and data_frequency_timezone it"
+        " takes precedence over ref_data_frequency, ref_data_frequency_offset and"
+        " ref_data_frequency_timezone of the dataset metadata for this metric.",
     )
     data_frequency_offset: str | None = Field(
         None,
-        description="Offset of the timestamps against multiples of data_frequency since"
-        ' 1970-01-01T00:00:00Z, e.g. "4min". Takes precedence over'
-        " dataset_metadata.ref_data_frequency_offset for this metric. Omit it if the timestamps"
-        " are aligned to local time, e.g. days starting at local midnight, since then the offset"
-        " changes with daylight saving time.",
+        description=_OFFSET_DESCRIPTION.format(
+            frequency="data_frequency", timezone="data_frequency_timezone"
+        ),
+    )
+    data_frequency_timezone: str | None = Field(
+        None, description=_ALIGNMENT_DESCRIPTION.format(frequency="data_frequency")
     )
     recording_aggregation_method: AggregationMethod | None = Field(
         None,
         description="Only for recording_mode periodic: how each value aggregates the values of"
         " the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX"
         " for a maximum. Null or missing if the values are samples, e.g. the value holding at"
-        " the timestamp. Requires data_frequency (or dataset_metadata.ref_data_frequency).",
+        " the timestamp.",
     )
     inherited: InheritedMetricMetadata | None = None
     comments: list[MetricComment] | None = Field(
@@ -395,16 +444,22 @@ class _DatasetMetadataBase(BaseModel):
     )
     ref_data_frequency: str | None = Field(
         None,
-        description="Fixed frequency, i.e. timedelta between subsequent datapoints, of the"
-        ' timeseries as Pandas date offset alias or timedelta string, e.g. "5min". Applies to'
-        " all metrics without their own data_frequency. E.g. the hetida platform provides this"
-        " field, currently always as null.",
+        description="Frequency of the timeseries "
+        + _FREQUENCY_FORMAT
+        + ": the data_frequency of all metrics without their own, with the same meaning as"
+        " there. Together with ref_data_frequency_offset and ref_data_frequency_timezone.",
     )
     ref_data_frequency_offset: str | None = Field(
         None,
-        description='Offset of the fixed frequency as Pandas date offset alias, e.g. "4min".'
-        " Applies to all metrics without their own data_frequency_offset. E.g. the hetida"
-        " platform provides this field, currently always as null.",
+        description=_OFFSET_DESCRIPTION.format(
+            frequency="ref_data_frequency", timezone="ref_data_frequency_timezone"
+        )
+        + " Applies to all metrics without their own data_frequency.",
+    )
+    ref_data_frequency_timezone: str | None = Field(
+        None,
+        description=_ALIGNMENT_DESCRIPTION.format(frequency="ref_data_frequency")
+        + " Applies to all metrics without their own data_frequency.",
     )
     query_timestamp: UtcTimestamp | None = Field(
         None,
@@ -760,64 +815,139 @@ def _check_interval(
     return []
 
 
-_DATASET_FREQUENCY_FIELDS = (
-    "ref_data_frequency",
-    "ref_data_frequency_offset",
-    "default_aggregation_interval",
-)
-_METRIC_FREQUENCY_FIELDS = ("data_frequency", "data_frequency_offset")
-
-
 def _is_frequency(value: str) -> bool:
-    """Whether value is a Pandas date offset alias or a timedelta string"""
+    """Whether value is a Pandas date offset alias or a timedelta string
+
+    A unit is required, since e.g. "1" would be a timedelta string of 1 nanosecond.
+    """
+    if re.search("[A-Za-z]", value) is None:
+        return False
     try:
         pd.tseries.frequencies.to_offset(value)
     except ValueError:
         try:
-            # an empty string gives NaT
+            # e.g. "nan" gives NaT
             return bool(pd.notna(pd.to_timedelta(value)))
         except ValueError:
             return False
     return True
 
 
+def _duration(value: str) -> pd.Timedelta | None:
+    """The fixed duration of a frequency, None if calendar based like "MS" or no frequency"""
+    try:
+        offset = pd.tseries.frequencies.to_offset(value)
+    except ValueError:
+        try:
+            # e.g. "P1D" or "1 days"
+            duration = pd.to_timedelta(value)
+        except ValueError:
+            return None
+        return None if pd.isna(duration) else duration
+    if isinstance(offset, pd.offsets.Day):
+        # a calendar day since pandas 3, i.e. 24 hours in UTC
+        return pd.Timedelta(days=offset.n)
+    try:
+        return pd.Timedelta(offset)
+    except ValueError, TypeError:
+        return None
+
+
+def _not_a_frequency(location: str, value: str) -> MetadataConventionIssue:
+    return _error(
+        location,
+        f'"{value}" is not a Pandas date offset alias or timedelta string, e.g. "15min".',
+    )
+
+
+def _check_frequency(
+    obj: dict[str, Any], field: str, location: str
+) -> list[MetadataConventionIssue]:
+    """Check that a frequency field is a positive frequency"""
+    value = obj.get(field)
+    if value is None:
+        return []
+    if not _is_frequency(value):
+        return [_not_a_frequency(f"{location}.{field}", value)]
+    duration = _duration(value)
+    positive = (
+        duration > pd.Timedelta(0)
+        if duration is not None
+        else pd.tseries.frequencies.to_offset(value).n > 0
+    )
+    return [] if positive else [_error(f"{location}.{field}", f'"{value}" is not positive.')]
+
+
+def _check_offset(
+    obj: dict[str, Any], frequency_field: str, offset_field: str, location: str
+) -> list[MetadataConventionIssue]:
+    """Check the offset of the timestamps against the intervals of a valid frequency"""
+    offset = obj[offset_field]
+    offset_location = f"{location}.{offset_field}"
+    if not _is_frequency(offset):
+        return [_not_a_frequency(offset_location, offset)]
+    offset_duration = _duration(offset)
+    if offset_duration is None or offset_duration < pd.Timedelta(0):
+        return [
+            _error(offset_location, f'"{offset}" is not a non-negative timedelta, e.g. "4min".')
+        ]
+    # None for calendar based frequencies, which offsets cannot be compared with
+    frequency_duration = _duration(obj[frequency_field])
+    if frequency_duration is not None and offset_duration >= frequency_duration:
+        return [
+            _error(
+                offset_location,
+                f'"{offset}" is not smaller than {frequency_field} "{obj[frequency_field]}".',
+            )
+        ]
+    return []
+
+
+def _check_frequency_with_alignment(
+    obj: dict[str, Any], frequency_field: str, offset_field: str, timezone_field: str, location: str
+) -> list[MetadataConventionIssue]:
+    """Check a frequency and the fields aligning its intervals, the offset and the time zone
+
+    They are only meaningful together with the frequency on the same level, since the frequency
+    of a metric falls back to the one of the dataset metadata as a whole.
+    """
+    issues = _check_frequency(obj, frequency_field, location)
+    valid_frequency = len(issues) == 0 and obj.get(frequency_field) is not None
+    for field in (offset_field, timezone_field):
+        if obj.get(field) is not None and obj.get(frequency_field) is None:
+            issues.append(_error(f"{location}.{field}", f"Requires {frequency_field}."))
+    issues += _check_timezone(obj, location, timezone_field)
+    if obj.get(offset_field) is not None and valid_frequency:
+        issues += _check_offset(obj, frequency_field, offset_field, location)
+    return issues
+
+
 _UTC_OFFSET_PATTERN = re.compile(r"^[+-](0[0-9]|1[0-4]):[0-5][0-9]$")
+
+
+@cache
+def _timezone_names() -> set[str]:
+    # Independent of the system, unlike ZoneInfo, which also accepts e.g. "posixrules"
+    return available_timezones()
 
 
 def _is_timezone(value: str) -> bool:
     """Whether value is an IANA time zone name or a fixed UTC offset, e.g. "+02:00" """
-    if _UTC_OFFSET_PATTERN.match(value) is not None:
-        return True
-    try:
-        ZoneInfo(value)
-    except ZoneInfoNotFoundError, ValueError, OSError:
-        return False
-    return True
+    return _UTC_OFFSET_PATTERN.match(value) is not None or value in _timezone_names()
 
 
-def _check_timezone(obj: dict[str, Any], location: str) -> list[MetadataConventionIssue]:
-    timezone = obj.get("default_timezone")
+def _check_timezone(
+    obj: dict[str, Any], location: str, field: str = "default_timezone"
+) -> list[MetadataConventionIssue]:
+    timezone = obj.get(field)
     if timezone is None or _is_timezone(timezone):
         return []
     return [
         _error(
-            f"{location}.default_timezone",
+            f"{location}.{field}",
             f'"{timezone}" is neither an IANA time zone name like "Europe/Berlin" nor a UTC'
             ' offset like "+02:00".',
         )
-    ]
-
-
-def _check_frequencies(
-    obj: dict[str, Any], fields: tuple[str, ...], location: str
-) -> list[MetadataConventionIssue]:
-    return [
-        _error(
-            f"{location}.{field}",
-            f'"{obj[field]}" is not a Pandas date offset alias or timedelta string, e.g. "15min".',
-        )
-        for field in fields
-        if obj.get(field) is not None and not _is_frequency(obj[field])
     ]
 
 
@@ -827,24 +957,28 @@ def _check_recording(
     """Check that the recording information of a metric fits its recording mode"""
     issues = []
     recording_mode = metric.get("recording_mode")
-    if metric.get("recording_aggregation_method") is not None:
-        if recording_mode != RecordingMode.PERIODIC:
-            issues.append(
-                _error(
-                    f"{location}.recording_aggregation_method",
-                    "Only meaningful for recording_mode periodic.",
-                )
+    if (
+        metric.get("recording_aggregation_method") is not None
+        and recording_mode != RecordingMode.PERIODIC
+    ):
+        issues.append(
+            _error(
+                f"{location}.recording_aggregation_method",
+                "Only meaningful for recording_mode periodic.",
             )
-        elif metric.get("data_frequency") is None and (
-            dataset_metadata.get("ref_data_frequency") is None
-        ):
-            issues.append(
-                _error(
-                    f"{location}.recording_aggregation_method",
-                    "Requires data_frequency or dataset_metadata.ref_data_frequency, which"
-                    " defines the aggregated intervals.",
-                )
+        )
+    if (
+        recording_mode == RecordingMode.PERIODIC
+        and metric.get("data_frequency") is None
+        and dataset_metadata.get("ref_data_frequency") is None
+    ):
+        issues.append(
+            _error(
+                f"{location}.recording_mode",
+                "periodic requires data_frequency or dataset_metadata.ref_data_frequency, the"
+                " interval of the values.",
             )
+        )
     if recording_mode != RecordingMode.ON_CHANGE:
         issues += [
             _warning(
@@ -989,7 +1123,13 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
         issues += _check_duplicate_columns(
             metric["value_dimensions"], f"metrics[{index}].value_dimensions"
         )
-        issues += _check_frequencies(metric, _METRIC_FREQUENCY_FIELDS, f"metrics[{index}]")
+        issues += _check_frequency_with_alignment(
+            metric,
+            "data_frequency",
+            "data_frequency_offset",
+            "data_frequency_timezone",
+            f"metrics[{index}]",
+        )
         issues += _check_timezone(metric, f"metrics[{index}]")
         issues += _check_recording(metric, dataset_metadata, f"metrics[{index}]")
         for comment_index, comment in enumerate(metric.get("comments") or []):
@@ -1020,6 +1160,8 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
                 f'"{single_metric}" is not the "{metric_key}" of the metric under metrics.',
             )
         )
+    elif single_metric is not None and single_metric not in dataset_metadata["queried_metrics"]:
+        issues.append(_error("dataset_metadata.single_metric", "Missing in queried_metrics."))
 
     if dataset_metadata.get("only_invalidate") is True and (
         dataset_metadata.get("invalidate_dataset") is False
@@ -1052,23 +1194,76 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
         "invalidation_interval_start",
         "invalidation_interval_end",
     )
-    issues += _check_frequencies(dataset_metadata, _DATASET_FREQUENCY_FIELDS, "dataset_metadata")
+    issues += _check_frequency_with_alignment(
+        dataset_metadata,
+        "ref_data_frequency",
+        "ref_data_frequency_offset",
+        "ref_data_frequency_timezone",
+        "dataset_metadata",
+    )
+    issues += _check_frequency(dataset_metadata, "default_aggregation_interval", "dataset_metadata")
     issues += _check_timezone(dataset_metadata, "dataset_metadata")
     return issues
 
 
-def _check_consistency_with_data_type(
+_CLOSED_BY_INTERVAL_TYPE = {
+    "closed": "both",
+    "open": "neither",
+    "left_closed": "left",
+    "right_open": "left",
+    "right_closed": "right",
+    "left_open": "right",
+}
+
+
+def _check_data_in_ref_interval(
+    dataset_metadata: dict[str, Any], data: pd.Series | pd.DataFrame
+) -> list[MetadataConventionIssue]:
+    """Warn if the data has timestamps outside of the ref interval"""
+    start = dataset_metadata.get("ref_interval_start_timestamp")
+    end = dataset_metadata.get("ref_interval_end_timestamp")
+    interval_type = dataset_metadata.get("ref_interval_type")
+    timestamps = data.index if isinstance(data, pd.Series) else data.get("timestamp")
+    if (
+        dataset_metadata.get("ref_dataset_discrete") is True
+        or start is None
+        or end is None
+        or interval_type is None
+        or pd.Timestamp(start) > pd.Timestamp(end)
+        or timestamps is None
+        or len(timestamps) == 0
+        or not pd.api.types.is_datetime64_any_dtype(timestamps)
+    ):
+        return []
+    ref_interval = pd.Interval(
+        pd.Timestamp(start), pd.Timestamp(end), closed=_CLOSED_BY_INTERVAL_TYPE[interval_type]
+    )
+    # naive timestamps are considered to be UTC
+    first, last = (
+        timestamp if timestamp.tzinfo is not None else timestamp.tz_localize("UTC")
+        for timestamp in (timestamps.min(), timestamps.max())
+    )
+    if first in ref_interval and last in ref_interval:
+        return []
+    return [
+        _warning(
+            "dataset_metadata",
+            f"The data has timestamps outside of the {interval_type} ref interval: The first is"
+            f" {first.isoformat()}, the last {last.isoformat()}.",
+        )
+    ]
+
+
+def _check_metrics_of_data(
     attrs: dict[str, Any], data_type: TimeseriesDataType, data: pd.Series | pd.DataFrame | None
 ) -> list[MetadataConventionIssue]:
-    """Check the rules specific to the data type and whether the metadata matches the data"""
+    """Check that the metrics of the data and the queried metrics are described"""
     issues: list[MetadataConventionIssue] = []
     dataset_metadata = attrs["dataset_metadata"]
-    metrics = attrs["metrics"]
-    metric_key = dataset_metadata["metric_key"]
-
+    metric_ids = {metric.get(dataset_metadata["metric_key"]) for metric in attrs["metrics"]}
+    data_metrics: list[str] = []
     if data_type == "MULTITSFRAME" and isinstance(data, pd.DataFrame) and "metric" in data.columns:
         data_metrics = [str(metric) for metric in data["metric"].unique()]
-        metric_ids = {metric.get(metric_key) for metric in metrics}
         if len(missing := sorted(set(data_metrics) - metric_ids)) > 0:
             issues.append(
                 _error(
@@ -1085,6 +1280,28 @@ def _check_consistency_with_data_type(
                     f" {_listing(unqueried)}",
                 )
             )
+    # queried metrics occurring in the data are reported as missing under metrics above
+    undescribed_metrics = sorted(
+        set(dataset_metadata["queried_metrics"]) - metric_ids - set(data_metrics)
+    )
+    if len(undescribed_metrics) > 0:
+        issues.append(
+            _warning(
+                "metrics",
+                f"Queried metrics without metadata under metrics: {_listing(undescribed_metrics)}",
+            )
+        )
+    return issues
+
+
+def _check_consistency_with_data_type(
+    attrs: dict[str, Any], data_type: TimeseriesDataType, data: pd.Series | pd.DataFrame | None
+) -> list[MetadataConventionIssue]:
+    """Check the rules specific to the data type and whether the metadata matches the data"""
+    metrics = attrs["metrics"]
+    issues = _check_metrics_of_data(attrs, data_type, data)
+    if data is not None:
+        issues += _check_data_in_ref_interval(attrs["dataset_metadata"], data)
 
     # the value columns of frames are only known from their data
     value_columns: set[str] | None = None
@@ -1168,7 +1385,7 @@ def check_metadata_conventions(
     except ValidationError as e:
         issues = []
         for error in e.errors():
-            message = error["msg"]
+            message = error["msg"].removeprefix("Value error, ")
             if (error.get("ctx") or {}).get("pattern") == UTC_TIMESTAMP_PATTERN:
                 message = (
                     "Should be a UTC isoformat timestamp with explicit offset, i.e. ending with Z"

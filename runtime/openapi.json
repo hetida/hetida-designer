@@ -9318,7 +9318,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "InheritedMetricMetadata",
-        "description": "Properties a metric inherits from objects higher up in a hierarchy\n\nArbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest\noccurrence in the hierarchy wins. Should not contain names, ids or descriptions. Consumers\nonly use inherited properties as last resort and not for information describing the metric\nitself, like its unit or names.\n\nThe values should have the JSON type matching their meaning: numbers as numbers, booleans as\nbooleans and points in time as UTC isoformat strings, not e.g. a number as string.\n\nE.g. the hetida platform provides the effective property values of a signal here, keyed by\nproperty label: its own values, otherwise the value of the nearest asset above it having one."
+        "description": "Properties a metric inherits from objects higher up in a hierarchy\n\nArbitrary fields, e.g. the latitude of the plant a sensor belongs to. Typically the deepest\noccurrence in the hierarchy wins. Should not contain the fields the conventions define for\nmetrics and value dimensions, like \"name\", \"id\" or \"unit\": Consumers only use inherited\nproperties as last resort and not for information describing the metric itself, like its\nunit or names.\n\nThe values should have the JSON type matching their meaning: numbers as numbers, booleans as\nbooleans and points in time as UTC isoformat strings, not e.g. a number as string.\n\nE.g. the hetida platform provides the effective property values of a signal here, keyed by\nproperty label: its own values, otherwise the value of the nearest asset above it having one."
       },
       "InputType": {
         "type": "string",
@@ -9442,7 +9442,7 @@
               }
             ],
             "title": "Attrs",
-            "description": "Additional metadata that should update a attrs attribute of type dict the the loaded object after loading. This will be applied using a shallow dict update, so its entries may overwrite same-named entries in the attrs dict of the object provided by the adapter. This does only work for adapters that provide the correct object themself. E.g. It does not work for the direct_provisioning adapter which provides the filter \"value\" as is (e.g. string) and relies on parsing at a later stage in the execution process. The Virtual Structure adapter allows to set a meta_data attribute in virtual sources. Its value is provided as attrs to the actual adapter's wiring then. For SERIES, SINGLETSFRAME and MULTITSFRAME the resulting metadata should follow the metadata conventions specified by the schemas SeriesMetadata, SingleTSFrameMetadata and MultiTSFrameMetadata."
+            "description": "Additional metadata that should update a attrs attribute of type dict the the loaded object after loading. It is merged into the attrs dict of the object provided by the adapter recursively: Dicts occurring in both are merged, so that e.g. a single field of the dataset metadata can be set without losing the other ones. All other values, including lists like the metrics, replace same-named entries. This does only work for adapters that provide the correct object themself. E.g. It does not work for the direct_provisioning adapter which provides the filter \"value\" as is (e.g. string) and relies on parsing at a later stage in the execution process. The Virtual Structure adapter allows to set a meta_data attribute in virtual sources. Its value is merged into the attrs of the actual adapter's wiring the same way then, taking precedence over them. For SERIES, SINGLETSFRAME and MULTITSFRAME the resulting metadata should follow the metadata conventions specified by the schemas SeriesMetadata, SingleTSFrameMetadata and MultiTSFrameMetadata."
           }
         },
         "type": "object",
@@ -9868,7 +9868,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -9882,7 +9882,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -9896,7 +9896,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -9910,7 +9910,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -9998,7 +9998,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10012,7 +10012,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10155,7 +10155,7 @@
                 "type": "null"
               }
             ],
-            "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
+            "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. If missing or null: LAST if the value_data_type of the value dimension \"value\" is boolean or string, otherwise MEAN. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
           },
           "default_timezone": {
             "anyOf": [
@@ -10205,7 +10205,7 @@
                 "type": "null"
               }
             ],
-            "description": "When the values are recorded. Unknown if missing or null."
+            "description": "When the values are recorded. Unknown if missing or null. periodic requires data_frequency (or dataset_metadata.ref_data_frequency)."
           },
           "data_frequency": {
             "anyOf": [
@@ -10217,7 +10217,7 @@
               }
             ],
             "title": "Data Frequency",
-            "description": "Interval in which values of the metric are recorded as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": For recording_mode periodic the interval between subsequent values, for on_change the interval after which the value is recorded again at the latest, also without a change (heartbeat). Takes precedence over dataset_metadata.ref_data_frequency for this metric."
+            "description": "Interval in which values of the metric are recorded as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": For recording_mode periodic the interval between subsequent values, for on_change the interval after which the value is recorded again at the latest, also without a change (heartbeat). Together with data_frequency_offset and data_frequency_timezone it takes precedence over ref_data_frequency, ref_data_frequency_offset and ref_data_frequency_timezone of the dataset metadata for this metric."
           },
           "data_frequency_offset": {
             "anyOf": [
@@ -10229,7 +10229,19 @@
               }
             ],
             "title": "Data Frequency Offset",
-            "description": "Offset of the timestamps against multiples of data_frequency since 1970-01-01T00:00:00Z, e.g. \"4min\". Takes precedence over dataset_metadata.ref_data_frequency_offset for this metric. Omit it if the timestamps are aligned to local time, e.g. days starting at local midnight, since then the offset changes with daylight saving time."
+            "description": "Offset of the timestamps against the starts of the intervals of data_frequency (see data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than data_frequency. 0 if missing or null. Requires data_frequency."
+          },
+          "data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency Timezone",
+            "description": "Time zone the intervals of data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of data_frequency since 1970-01-01T00:00:00Z. With it, for a data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires data_frequency."
           },
           "recording_aggregation_method": {
             "anyOf": [
@@ -10240,7 +10252,7 @@
                 "type": "null"
               }
             ],
-            "description": "Only for recording_mode periodic: how each value aggregates the values of the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX for a maximum. Null or missing if the values are samples, e.g. the value holding at the timestamp. Requires data_frequency (or dataset_metadata.ref_data_frequency)."
+            "description": "Only for recording_mode periodic: how each value aggregates the values of the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX for a maximum. Null or missing if the values are samples, e.g. the value holding at the timestamp."
           },
           "inherited": {
             "anyOf": [
@@ -10348,7 +10360,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10362,7 +10374,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10393,7 +10405,7 @@
               }
             ],
             "title": "Ref Data Frequency",
-            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". Applies to all metrics without their own data_frequency. E.g. the hetida platform provides this field, currently always as null."
+            "description": "Frequency of the timeseries as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": the data_frequency of all metrics without their own, with the same meaning as there. Together with ref_data_frequency_offset and ref_data_frequency_timezone."
           },
           "ref_data_frequency_offset": {
             "anyOf": [
@@ -10405,13 +10417,25 @@
               }
             ],
             "title": "Ref Data Frequency Offset",
-            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". Applies to all metrics without their own data_frequency_offset. E.g. the hetida platform provides this field, currently always as null."
+            "description": "Offset of the timestamps against the starts of the intervals of ref_data_frequency (see ref_data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than ref_data_frequency. 0 if missing or null. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "ref_data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Timezone",
+            "description": "Time zone the intervals of ref_data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of ref_data_frequency since 1970-01-01T00:00:00Z. With it, for a ref_data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of ref_data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a ref_data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
           },
           "query_timestamp": {
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10449,7 +10473,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10463,7 +10487,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10513,7 +10537,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -10540,7 +10564,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -11961,7 +11985,7 @@
               }
             ],
             "title": "Unit",
-            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\""
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\", \"\" for dimensionless quantities"
           },
           "measurement": {
             "anyOf": [
@@ -11978,14 +12002,13 @@
           "value_data_type": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/ValueDataType"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Value Data Type",
-            "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+            "description": "Data type of the values"
           },
           "deadband": {
             "anyOf": [
@@ -12239,7 +12262,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12253,7 +12276,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12284,7 +12307,7 @@
               }
             ],
             "title": "Ref Data Frequency",
-            "description": "Fixed frequency, i.e. timedelta between subsequent datapoints, of the timeseries as Pandas date offset alias or timedelta string, e.g. \"5min\". Applies to all metrics without their own data_frequency. E.g. the hetida platform provides this field, currently always as null."
+            "description": "Frequency of the timeseries as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": the data_frequency of all metrics without their own, with the same meaning as there. Together with ref_data_frequency_offset and ref_data_frequency_timezone."
           },
           "ref_data_frequency_offset": {
             "anyOf": [
@@ -12296,13 +12319,25 @@
               }
             ],
             "title": "Ref Data Frequency Offset",
-            "description": "Offset of the fixed frequency as Pandas date offset alias, e.g. \"4min\". Applies to all metrics without their own data_frequency_offset. E.g. the hetida platform provides this field, currently always as null."
+            "description": "Offset of the timestamps against the starts of the intervals of ref_data_frequency (see ref_data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than ref_data_frequency. 0 if missing or null. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "ref_data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Timezone",
+            "description": "Time zone the intervals of ref_data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of ref_data_frequency since 1970-01-01T00:00:00Z. With it, for a ref_data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of ref_data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a ref_data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
           },
           "query_timestamp": {
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12340,7 +12375,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12354,7 +12389,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12404,7 +12439,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -12431,7 +12466,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
                 "format": "date-time"
               },
               {
@@ -13762,6 +13797,17 @@
         ],
         "title": "ValidationError"
       },
+      "ValueDataType": {
+        "type": "string",
+        "enum": [
+          "float",
+          "integer",
+          "boolean",
+          "string"
+        ],
+        "title": "ValueDataType",
+        "description": "Data type of the values of a value dimension"
+      },
       "ValueDimensionMetadata": {
         "properties": {
           "column": {
@@ -13827,7 +13873,7 @@
               }
             ],
             "title": "Unit",
-            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\". Null for dimensionless quantities or if unknown."
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\". \"\" for dimensionless quantities, null if unknown."
           },
           "measurement": {
             "anyOf": [
@@ -13844,14 +13890,13 @@
           "value_data_type": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/ValueDataType"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Value Data Type",
-            "description": "Data type of the values, e.g. \"float\". E.g. the hetida platform provides one of \"float\", \"integer\", \"string\" and \"boolean\"."
+            "description": "Data type of the values"
           },
           "deadband": {
             "anyOf": [

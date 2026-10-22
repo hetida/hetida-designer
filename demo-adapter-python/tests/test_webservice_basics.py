@@ -504,6 +504,42 @@ async def test_metadata_of_written_multitsframe(async_test_client: AsyncClient) 
 
 
 @pytest.mark.asyncio
+async def test_written_multitsframe_is_read_in_closed_interval(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        mtsf_id = "root.plantB.anomalies"
+        await client.post(
+            f"/multitsframe?id={mtsf_id}",
+            json=[
+                {"metric": "a", "timestamp": timestamp, "value": 1.0}
+                for timestamp in [
+                    "2020-01-01T00:00:00.000Z",
+                    "2020-01-01T02:00:00.000Z",
+                    "2020-01-01T04:00:00.000Z",
+                    "2020-01-01T04:00:00.001Z",
+                ]
+            ],
+        )
+
+        response = await client.get(
+            "/multitsframe",
+            params={"id": mtsf_id, "from": "2020-01-01T00:00:00Z", "to": "2020-01-01T04:00:00Z"},
+        )
+
+        mtsf = pd.read_json(io.StringIO(response.text), lines=True)
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        # the start and the end belong to the closed ref interval
+        assert df_attrs["dataset_metadata"]["ref_interval_type"] == "closed"
+        assert list(pd.to_datetime(mtsf["timestamp"]).dt.strftime("%H:%M:%S.%f")) == [
+            "00:00:00.000000",
+            "02:00:00.000000",
+            "04:00:00.000000",
+        ]
+
+
+@pytest.mark.asyncio
 async def test_metadata_of_temperatures_multitsframe(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         response = await client.get(
@@ -565,7 +601,7 @@ async def test_metadata_of_singletsframe(async_test_client: AsyncClient) -> None
         assert [
             (value_dimension["column"], value_dimension["unit"])
             for value_dimension in df_attrs["metrics"][0]["value_dimensions"]
-        ] == [("value", "°F"), ("state", None)]
+        ] == [("value", "°F"), ("state", "")]
         assert df_attrs["metrics"][0]["default_timezone"] == "America/New_York"
 
 
@@ -639,7 +675,7 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
                         "value_dimensions": [
                             {
                                 "column": "value",
-                                "unit": None,
+                                "unit": "",  # dimensionless
                                 "measurement": "anomaly score",
                                 "value_data_type": "float",
                                 "decimals": 3,
@@ -745,6 +781,43 @@ async def test_metadata_of_resampled_timeseries(
             "data_frequency": frequency,
         }
         assert metric["recording_aggregation_method"] == "FIRST"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("frequency", "expected_timestamps"),
+    [
+        # the interval starting at 00:00 is only partially queried
+        ("1h", ["01:00", "02:00", "03:00", "04:00", "05:00"]),
+        ("2h", ["02:00", "04:00"]),
+    ],
+)
+async def test_resampled_timeseries_starts_in_ref_interval(
+    async_test_client: AsyncClient, frequency: str, expected_timestamps: list[str]
+) -> None:
+    async with async_test_client as client:
+        ts_id = "root.plantA.picklingUnit.influx.temp"
+
+        response = await client.get(
+            "/timeseries",
+            params={
+                "id": ts_id,
+                "from": "2020-01-01T00:30:00Z",
+                "to": "2020-01-01T05:30:00Z",
+                "frequency": frequency,
+            },
+        )
+
+        timeseries = pd.read_json(io.StringIO(response.text), lines=True)
+        dataset_metadata = decode_attributes(response.headers["Data-Attributes"])[ts_id][
+            "dataset_metadata"
+        ]
+
+        assert list(pd.to_datetime(timeseries["timestamp"]).dt.strftime("%H:%M")) == (
+            expected_timestamps
+        )
+        assert dataset_metadata["ref_interval_start_timestamp"] == "2020-01-01T00:30:00+00:00"
+        assert dataset_metadata["ref_interval_end_timestamp"] == "2020-01-01T05:30:00+00:00"
 
 
 @pytest.mark.asyncio
