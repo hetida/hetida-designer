@@ -26,7 +26,7 @@ Example with two adapters:
 demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter    
 ```
 
-!!! note Note
+!!! note
     The registered adapters can be queried from the hetida designer backend [api](../api.md) endpoint `/api/adapters`. E.g. the hetida designer frontend obtains information of available adapters from there.
 
 ## Registering a new generic rest adapter
@@ -35,6 +35,24 @@ For a generic rest adapter the runtime service must know its (internal) url to b
 
 1. The generic rest adapter can be registered to the hetida designer runtime via the same environment variable `HETIDA_DESIGNER_ADAPTERS` as described above for the backend. **This is the preferred solution since it avoids the need for the runtime to make requests to the backend**
 2. If `HETIDA_DESIGNER_BACKEND_API_URL` is configured for the runtime service, the runtime will try to obtain registered adapters from the backend.
+
+### Validating received metadata
+
+The runtime can check the metadata it receives from a generic rest adapter when loading SERIES, SINGLETSFRAME and MULTITSFRAME data (the `Data-Attributes` header) against the [metadata conventions](../../user_guide/attached_metadata.md#specification-and-validation). This is configured per adapter id via the environment variable `GENERIC_REST_ADAPTER_METADATA_VALIDATION` of the runtime service as json object, mapping adapter ids to one of the following modes:
+
+* `"OFF"`: The metadata is not checked. This is the default for adapters not listed.
+* `"WARN"`: If the metadata does not adhere to the conventions, a warning is logged, which mentions the adapter and the sources together with the found issues. Missing metadata, e.g. a response without `Data-Attributes` header, does not adhere to the conventions either. The warning lists each distinct issue once, so that e.g. the same unknown field in the metadata of every source or metric does not flood the logs: Issues which only differ in the indices of their locations are summarized with `[*]` for the differing indices, the number of their occurrences and the sources they occur in.
+* `"ERROR"`: Loading fails if errors are found, i.e. the execution fails with an error message listing them. If only warnings are found, these are logged as with `"WARN"`.
+
+For example:
+
+```
+GENERIC_REST_ADAPTER_METADATA_VALIDATION={"hetida-platform-adapter": "WARN", "demo-adapter-python": "ERROR"}
+```
+
+The checks are the same as those of the [endpoint for checking metadata](../../user_guide/attached_metadata.md#checking-metadata-via-the-api), including the comparison of the metadata with the received data. DATAFRAME metadata is never checked, since there are no metadata conventions for DATAFRAMEs.
+
+Independent of this configuration, the base component "Hetida Platform Signal Timeseries Data" (from 0.1.12 on) logs a warning summarizing the issues of the loaded signals whose metadata does not adhere to the conventions in the same way, unless `"WARN"` or `"ERROR"` is configured for the hetida platform adapter.
 
 ## Registering a new general custom adapter
 

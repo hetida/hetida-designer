@@ -227,12 +227,17 @@ if __name__ == "__main__":
         ) and not explicit_no_development_mode
         port = int(os.environ.get("PORT", "8000"))
         worker_healthcheck_timeout = int(os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30"))
+        # Must clearly exceed the idle expiry of clients reusing connections, like the backend's
+        # httpx clients for the runtime (5 seconds). Otherwise an idle connection may be closed
+        # just as a request arrives on it, which drops the request (httpx.ReadError at the client).
+        timeout_keep_alive = int(os.environ.get("UVICORN_TIMEOUT_KEEP_ALIVE", "65"))
         log_level = os.environ.get("UVICORN_LOG_LEVEL", "info")
         web_concurrency = os.environ.get("WEB_CONCURRENCY", "UNSET")
         logger.info(
             (
                 "Start uvicorn app as host %s with port %s with uvicorn log level %s%s"
-                " with web concurrency %s and worker healthcheck timeout %s"
+                " with web concurrency %s, worker healthcheck timeout %s"
+                " and keep-alive timeout %s"
             ),
             str(host),
             str(port),
@@ -240,6 +245,7 @@ if __name__ == "__main__":
             " in reload/development mode" if reload_mode else "",
             web_concurrency,
             worker_healthcheck_timeout,
+            timeout_keep_alive,
         )
 
         uvicorn.run(
@@ -249,4 +255,5 @@ if __name__ == "__main__":
             host=host,
             port=port,
             timeout_worker_healthcheck=worker_healthcheck_timeout,
+            timeout_keep_alive=timeout_keep_alive,
         )

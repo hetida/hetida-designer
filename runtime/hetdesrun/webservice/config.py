@@ -52,6 +52,14 @@ class SchedulingInternalAuthMode(StrEnum):
     CLIENT = "CLIENT"
 
 
+class MetadataValidationMode(StrEnum):
+    """Whether metadata received from an adapter is checked against the metadata conventions"""
+
+    OFF = "OFF"
+    WARN = "WARN"
+    ERROR = "ERROR"
+
+
 class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
     pass
 
@@ -247,6 +255,19 @@ class RuntimeConfig(BaseSettings):
             " of 16 KiB is too small for this. The default of 5 MiB leaves ample room for e.g."
             " 1000 timeseries with reasonable metadata (about 0.8 MiB). The limit does not"
             " preallocate memory nor slow down responses with smaller headers."
+        ),
+    )
+    generic_rest_adapter_metadata_validation: dict[str, MetadataValidationMode] = Field(
+        {},
+        validation_alias="GENERIC_REST_ADAPTER_METADATA_VALIDATION",
+        description=(
+            "Whether the metadata received from generic REST adapters when loading SERIES,"
+            " SINGLETSFRAME and MULTITSFRAME data (Data-Attributes header) is checked against the"
+            " metadata conventions, configured per adapter key as json object:"
+            ' "OFF" (default for adapters not listed) does not check it. "WARN" logs a warning'
+            ' mentioning the adapter and the source together with the found issues. "ERROR"'
+            " lets loading fail if errors are found and logs a warning if only warnings are"
+            ' found. E.g. {"hetida-platform-adapter": "WARN", "demo-adapter-python": "ERROR"}'
         ),
     )
     allowed_callback_url_patterns: list[str] = Field(

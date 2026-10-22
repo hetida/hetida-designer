@@ -176,7 +176,8 @@ class SQLAdapterConfig(BaseSettings):
         False,
         description="If set to True, the metrics to be deleted are inferred "
         "from the metric column of the respective multitsframe. "
-        "Only if 'by_metric' and 'ref_metrics' are not set in the mutlitsframes attrs.",
+        "Only if neither 'queried_metrics' of the dataset metadata nor the legacy fields"
+        " 'by_metric' and 'ref_metrics' are set in the multitsframe's attrs.",
         validation_alias="INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT",
     )
 

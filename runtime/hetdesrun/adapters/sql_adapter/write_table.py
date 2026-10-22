@@ -235,9 +235,12 @@ def _handle_deletion(  # noqa: PLR0915, PLR0912
 
 
 def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
+    # The metrics of the dataset following the metadata conventions
+    if metrics := (data.attrs.get("dataset_metadata") or {}).get("queried_metrics") or []:
+        return [str(metric) for metric in metrics]
+    # Legacy code might use the former by_metric or the old convention of ref_metrics
     if metrics := list(data.attrs.get("by_metric", {}).keys()):
         return metrics
-    # Legacy code might use the old convention of ref_metrics
     if metrics := data.attrs.get("ref_metrics", []):
         return metrics  # type: ignore[no-any-return]
     # Fallback to building metrics from data

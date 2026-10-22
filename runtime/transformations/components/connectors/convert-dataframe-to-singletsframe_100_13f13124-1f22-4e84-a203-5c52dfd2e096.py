@@ -14,7 +14,7 @@ Convert a DataFrame into a SingleTSFrame.
 ## Details
 Every column of the DataFrame besides the timestamps becomes a value dimension of the resulting SingleTSFrame. In contrast to "Convert DataFrame to MultiTSFrame" the columns are *not* interpreted as metrics — all columns are understood as different value dimensions of one and the same timeseries.
 
-The attributes (`.attrs`) are carried over unchanged.
+The attributes (`.attrs`) are carried over unchanged. So the metadata of a SingleTSFrame converted into a DataFrame before, e.g. via "Convert SingleTSFrame to DataFrame", is kept. Metadata of other DataFrames does not necessarily follow the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) for a SINGLETSFRAME.
 
 Raises a ComponentInputValidationException if the timestamps cannot be parsed or if the DataFrame has no value column at all.
 
@@ -105,6 +105,7 @@ try:
 except ImportError:
     pass
 else:
+    from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
     @pytest.fixture
     def dataframe_with_timestamp_column():
@@ -131,6 +132,40 @@ else:
 
         assert list(singletsframe.columns) == ["timestamp", "value", "state"]  # noqa: S101
         assert list(singletsframe["value"]) == [1.0, 1.2]  # noqa: S101
+
+    @pytest.mark.parametrize("timestamps_as_index", [False, True])
+    def test_singletsframe_metadata_is_kept(dataframe_with_timestamp_column, timestamps_as_index):
+        dataframe = (
+            dataframe_with_timestamp_column.set_index("timestamp")
+            if timestamps_as_index
+            else dataframe_with_timestamp_column
+        )
+        # following the metadata conventions for a SINGLETSFRAME
+        dataframe.attrs = {
+            "dataset_metadata": {
+                "metric_key": "id",
+                "single_metric": "abc.temp",
+                "queried_metrics": ["abc.temp"],
+                "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+                "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "id": "abc.temp",
+                    "name": "Temperature",
+                    "value_dimensions": [
+                        {"column": "value", "unit": "°C", "measurement": "temperature"},
+                        {"column": "state", "unit": None, "measurement": None},
+                    ],
+                }
+            ],
+        }
+
+        singletsframe = main(dataframe=dataframe)["singletsframe"]
+
+        assert singletsframe.attrs == dataframe.attrs  # noqa: S101
+        assert check_metadata_conventions(singletsframe, "SINGLETSFRAME") == []  # noqa: S101
 
     def test_no_value_column_raises():
         dataframe = pd.DataFrame({"timestamp": ["2019-08-01T15:45:36.000Z"]})

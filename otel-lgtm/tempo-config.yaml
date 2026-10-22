@@ -1,0 +1,74 @@
+# Tempo configuration of the grafana/otel-lgtm image used in docker-compose-dev.yml,
+# mounted over /otel-lgtm/tempo-config.yaml of the image.
+#
+# Copy of https://github.com/grafana/docker-otel-lgtm/blob/v0.28.0/docker/tempo-config.yaml
+# with the only change being distributor.max_attribute_bytes. Update this copy when
+# changing the image version.
+
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9096
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "127.0.0.1:4417"
+        http:
+          endpoint: "127.0.0.1:4418"
+  # Tempo truncates longer attribute keys and values, by default at 2048 bytes. That cuts
+  # off Python tracebacks (exception.stacktrace) before their most relevant part, the end.
+  max_attribute_bytes: 16384
+
+ingester:
+  trace_idle_period: 1s
+  max_block_duration: 1s
+  flush_check_period: 1s
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+    min_ready_duration: 1s
+
+memberlist:
+  bind_addr: [127.0.0.1]
+  bind_port: 7947
+
+query_frontend:
+  mcp_server:
+    enabled: true
+
+querier:
+  frontend_worker:
+    frontend_address: 127.0.0.1:9096
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /data/tempo/wal
+    local:
+      path: /data/tempo/blocks
+
+metrics_generator:
+  processor:
+    local_blocks:
+      filter_server_spans: false
+    span_metrics:
+      dimensions:
+        - service_name
+        - operation
+        - status_code
+  traces_storage:
+    path: /data/tempo/generator/traces
+  storage:
+    path: /data/tempo/generator/wal
+    remote_write:
+      - url: http://127.0.0.1:9090/api/v1/write
+        send_exemplars: true
+
+overrides:
+  metrics_generator_processors: [service-graphs, local-blocks, span-metrics]

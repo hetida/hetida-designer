@@ -71,6 +71,8 @@ services:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
+      # executions fail if the demo adapter provides metadata not adhering to the metadata conventions
+      GENERIC_REST_ADAPTER_METADATA_VALIDATION: '{"demo-adapter-python": "ERROR"}'
 
       MAX_WORKERS: 2
       WEB_CONCURRENCY: 2
@@ -97,6 +99,8 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     volumes:
       - lgtm_data:/data
+      # raises Tempo's attribute size limit, so that tracebacks are not cut off
+      - ./otel-lgtm/tempo-config.yaml:/otel-lgtm/tempo-config.yaml:ro
     restart: unless-stopped
     healthcheck:
       test:

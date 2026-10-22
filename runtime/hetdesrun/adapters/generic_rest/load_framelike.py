@@ -25,6 +25,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_sync_session
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
+from hetdesrun.adapters.generic_rest.metadata_validation import validate_received_metadata
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.runtime.logging import job_id_context_filter
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -256,6 +257,8 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
             logger.debug("Got Data-Attributes via GET response header")
             data_attributes = resp.headers["Data-Attributes"]
             df.attrs = decode_attributes(data_attributes)
+        # also without Data-Attributes header, since then the metadata is missing
+        validate_received_metadata(df, adapter_key, endpoint, filtered_sources)
 
         logger.debug(
             "Received dataframe of form %s:\n%s",

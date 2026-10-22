@@ -17,7 +17,10 @@ from hetdesrun.adapters.sql_adapter.structure import (
     get_sources,
     get_structure,
 )
+from hetdesrun.adapters.sql_adapter.write_table import _retrieve_metrics
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata_from_attrs
+from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
 
 def test_sql_timeseries_table_structure(three_sqlite_dbs_configured):
@@ -73,23 +76,39 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     assert "timestamp" in received_data["inp"].columns
 
     # metadata there?
+    # the time of the query
+    query_timestamp = received_data["inp"].attrs["dataset_metadata"].pop("query_timestamp")
+    assert abs(datetime.now(tz=timezone.utc) - datetime.fromisoformat(query_timestamp)) < timedelta(
+        minutes=1
+    )
     assert received_data["inp"].attrs == {
         "dataset_metadata": {
+            "metric_key": "id",
+            "queried_metrics": ["a"],
             "ref_interval_end_timestamp": "2023-08-29T11:58:02+00:00",
             "ref_interval_start_timestamp": "2023-08-01T11:58:02+00:00",
             "ref_interval_type": "closed",
         },
-        "by_metric": {"a": {}},
+        "metrics": [
+            {
+                "id": "a",
+                "name": "a",
+                "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                "path": ["read_only_timeseries sqlite database", "ro_ts_table"],
+            }
+        ],
     }
+    received_data["inp"].attrs["dataset_metadata"]["query_timestamp"] = query_timestamp
+    assert check_metadata_conventions(received_data["inp"]) == []
 
-    # metrics as comma separated list
+    # metrics as comma separated list, a metric listed twice
     received_data = await load_data(
         {
             "inp": FilteredSource(
                 ref_id="read_only_timeseries_sqlite_database/ts_table/ro_ts_table",
                 ref_id_type="SOURCE",
                 filters={
-                    "metrics": "a,b",
+                    "metrics": "a,b,a",
                     "timestampFrom": "2023-08-01T11:58:02+00:00",
                     "timestampTo": "2023-08-29T12:58:02+00:00",
                 },
@@ -99,6 +118,8 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     )
     assert len(received_data["inp"]) == 2
     assert len(received_data["inp"].columns) == 3
+    assert received_data["inp"].attrs["dataset_metadata"]["queried_metrics"] == ["a", "b"]
+    assert check_metadata_conventions(received_data["inp"]) == []
 
     # ALL metrics
     received_data = await load_data(
@@ -117,6 +138,11 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     )
     assert len(received_data["inp"]) == 4
     assert len(received_data["inp"].columns) == 3
+    # the metrics occurring in the data
+    assert received_data["inp"].attrs["dataset_metadata"]["queried_metrics"] == sorted(
+        received_data["inp"]["metric"].unique()
+    )
+    assert check_metadata_conventions(received_data["inp"]) == []
 
     # Table with int metric
     received_data = await load_data(
@@ -153,6 +179,26 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     )
     assert len(received_data["inp"]) == 1
     assert len(received_data["inp"].columns) == 3
+    assert check_metadata_conventions(received_data["inp"]) == []
+
+    # Table with int metric queried in another notation: metadata as in the metric column
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ts_table_with_int_metric",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": "-01",
+                    "timestampFrom": "2023-08-01T11:58:02+00:00",
+                    "timestampTo": "2023-08-29T11:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert received_data["inp"]["metric"].to_list() == ["-1"]
+    assert received_data["inp"].attrs["dataset_metadata"]["queried_metrics"] == ["-1"]
+    assert check_metadata_conventions(received_data["inp"]) == []
 
     # TODO: test combinations of different filters
 
@@ -456,7 +502,79 @@ DELETION_ONLY_TEST_CASES = [
         "Deletion based on inferred interval",
         id="delete_inferred_dataset",
     ),
+    pytest.param(
+        {
+            "dataset_metadata": {
+                "metric_key": "id",
+                "queried_metrics": ["nf"],
+                "ref_interval_start_timestamp": "1949-06-01T00:00:00+00:00",
+                "ref_interval_end_timestamp": "1949-06-10T00:00:00+00:00",
+                "ref_interval_type": "closed",
+                "only_invalidate": True,
+            },
+            "metrics": [
+                {
+                    "id": "nf",
+                    "name": "nf",
+                    "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                }
+            ],
+        },
+        10,
+        "Deletion based on reference dataset.",
+        id="delete_queried_metrics_of_metadata_following_conventions",
+    ),
+    pytest.param(
+        {
+            # fields the hetida platform does not set are null, which counts as missing
+            "dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)
+            | {
+                "metric_key": "id",
+                "queried_metrics": ["nf"],
+                "ref_interval_start_timestamp": "1949-06-01T00:00:00+00:00",
+                "ref_interval_end_timestamp": "1949-06-10T00:00:00+00:00",
+                "only_invalidate": True,
+            },
+            "metrics": [
+                {
+                    "id": "nf",
+                    "name": "nf",
+                    "value_dimensions": [{"column": "value", "unit": None, "measurement": None}],
+                }
+            ],
+        },
+        10,
+        "Deletion based on reference dataset.",
+        id="null_fields_of_metadata_count_as_missing",
+    ),
 ]
+
+
+def test_null_fields_of_dataset_metadata_count_as_missing():
+    df = _create_timeseries_mtsf(
+        attrs={"dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)}, days=1
+    )
+
+    assert get_dataset_metadata_from_attrs(df) == DatasetMetadata()
+
+
+@pytest.mark.parametrize(
+    ("attrs", "metrics"),
+    [
+        ({"dataset_metadata": {"queried_metrics": ["a", "b"]}}, ["a", "b"]),
+        ({"dataset_metadata": {"queried_metrics": [1, 2]}}, ["1", "2"]),
+        # the metadata conventions take precedence
+        ({"dataset_metadata": {"queried_metrics": ["a"]}, "by_metric": {"b": {}}}, ["a"]),
+        ({"dataset_metadata": {"queried_metrics": []}, "by_metric": {"b": {}}}, ["b"]),
+        ({"by_metric": {"b": {}}, "ref_metrics": ["c"]}, ["b"]),
+        ({"ref_metrics": ["c"]}, ["c"]),
+        ({}, []),
+    ],
+)
+def test_retrieve_metrics_for_deletion(attrs, metrics):
+    df = _create_timeseries_mtsf(attrs=attrs, days=1)
+
+    assert _retrieve_metrics(df) == metrics
 
 
 @pytest.mark.asyncio

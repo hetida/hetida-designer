@@ -30,6 +30,7 @@ from hetdesrun.adapters.virtual_structure_adapter.config import get_vst_adapter_
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
+from hetdesrun.backend.service.metadata_conventions_router import metadata_conventions_router
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
 from hetdesrun.webservice.auth_dependency import (
     get_auth_deps,
@@ -240,6 +241,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         lifespan=lifespan,
         root_path=get_config().swagger_prefix,
         middleware=get_middleware(),
+        # logfire configures the OTLP export from the OTEL_* environment variables (see below).
+        # FastAPI's automatic export configuration (opt-in via FASTAPI_OTEL_AUTO_CONFIGURE, the
+        # default in fastapi 0.142.x) would add a second exporter to the same tracer provider,
+        # sending every span twice: once more without logfire's span processing and scrubbing.
+        telemetry={"auto_configure": False} if get_config().otel_via_logfire_active else None,
     )
 
     app.router.route_class = AdditionalLoggingRoute
@@ -312,6 +318,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         )
 
         app.include_router(virtual_structure_router, prefix="/api", dependencies=get_auth_deps())
+        app.include_router(metadata_conventions_router, prefix="/api", dependencies=get_auth_deps())
         possible_maintenance_secret = get_config().maintenance_secret
         if (
             possible_maintenance_secret is not None

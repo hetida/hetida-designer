@@ -50,6 +50,8 @@ services:
       HD_IS_BACKEND_SERVICE: "false"
       HD_USE_AUTH: "false"
       LOG_LEVEL: "INFO"
+      # executions fail if the demo adapter provides metadata not adhering to the metadata conventions
+      GENERIC_REST_ADAPTER_METADATA_VALIDATION: '{"demo-adapter-python": "ERROR"}'
 
   hetida-designer-db:
     image: postgres:latest

@@ -48,6 +48,10 @@ An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in
 
 Timeseries tables can be configured to allow deletion of rows. Refer to [Metadata field conventions](../../../user_guide/attached_metadata.md#metadata-conventions) for more information on configuring invalidation or deletion using metadata.
 
+When loading a MULTITSFRAME from a timeseries table, the sql adapter attaches metadata following the [metadata conventions](../../../user_guide/attached_metadata.md#metadata-conventions): The queried interval, the requested metrics as `queried_metrics` (with `ALL` the metrics occurring in the loaded data) and an entry under `metrics` for each of them, with the metric as `id` and `name`, the database and the table as `path` and a value dimension for each value column. Since the database provides no further information on the metrics, unit and measurement of the value dimensions are null. The time of the query is provided as `query_timestamp`.
+
+When writing a MULTITSFRAME to a timeseries table allowing deletion, only data of the metrics listed in `queried_metrics` of its dataset metadata is deleted. For metadata not following the conventions the former fields `by_metric` (its keys) and `ref_metrics` are used instead.
+
 Note that tables will be created and columns added automatically depending on the data sent to these sinks.
 
 By default, the API serving the hetida designer frontend is part of the runtime.  

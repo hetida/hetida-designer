@@ -15,6 +15,8 @@ Convert a SingleTSFrame into a MultiTSFrame with a single metric.
 ## Details
 A SINGLETSFRAME holds exactly one metric and therefore has no "metric" column — the metric is identified in the metadata. This component adds the "metric" column required for a MULTITSFRAME, filled with the single metric name, and keeps all value dimensions.
 
+The metadata (`.attrs`) is carried over. If it contains dataset metadata, its `single_metric` and `queried_metrics` are set to the metric name. The single entry under `metrics` must be identified by the metric name, too, via its field named by `dataset_metadata.metric_key` (defaulting to "id"). If this field already has another value, e.g. the id of the metric in its source, it is kept: The metric name is set in the field `metric` of the entry instead, and `metric_key` becomes "metric". So metadata following the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) for a SINGLETSFRAME follows them for the resulting MULTITSFRAME, too, also if another metric name is provided.
+
 Use this component to feed a SingleTSFrame into components or sinks that expect a MultiTSFrame.
 
 Raises a ComponentInputValidationException if no metric name is provided and none can be determined from the metadata, or if the singletsframe already has a column named "metric".
@@ -38,6 +40,34 @@ The json input of a typical call of this component is
 import copy
 
 from hdutils import ComponentInputValidationException
+
+# Field of the metric holding a provided metric name if the field identifying the metric has
+# another value, e.g. its id in the source system, which is kept this way
+METRIC_NAME_FIELD = "metric"
+
+
+def set_metric_in_metadata(attrs, metric_name):
+    """Identify the single metric of metadata following the metadata conventions by metric_name
+
+    Sets single_metric and queried_metrics as well as the metric_key field of the single entry
+    under metrics. If that field already has another value, metric_name is set in the field
+    METRIC_NAME_FIELD instead, which becomes the metric_key. Changes attrs in place. Metadata
+    without dataset metadata stays unchanged.
+    """
+    dataset_metadata = attrs.get("dataset_metadata")
+    if not isinstance(dataset_metadata, dict):
+        return
+    dataset_metadata["single_metric"] = metric_name
+    dataset_metadata["queried_metrics"] = [metric_name]
+    metrics = attrs.get("metrics")
+    if isinstance(metrics, list) and len(metrics) == 1 and isinstance(metrics[0], dict):
+        metric_key = dataset_metadata.get("metric_key") or "id"
+        if metrics[0].get(metric_key) in (None, metric_name):
+            metrics[0][metric_key] = metric_name
+        else:
+            metrics[0][METRIC_NAME_FIELD] = metric_name
+            dataset_metadata["metric_key"] = METRIC_NAME_FIELD
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -88,6 +118,8 @@ def main(*, singletsframe, metric=None):
             invalid_component_inputs=["metric"],
         )
 
+    set_metric_in_metadata(attrs, str(metric_name))
+
     multitsframe = singletsframe.copy()
     multitsframe.insert(1, "metric", str(metric_name))
     multitsframe["metric"] = multitsframe["metric"].astype("string")
@@ -104,6 +136,7 @@ try:
 except ImportError:
     pass
 else:
+    from hetdesrun.models.metadata_conventions import check_metadata_conventions
 
     @pytest.fixture
     def singletsframe():
@@ -135,6 +168,82 @@ else:
         multitsframe = main(singletsframe=singletsframe, metric="other")["multitsframe"]
 
         assert list(multitsframe["metric"]) == ["other", "other"]  # noqa: S101
+
+    @pytest.fixture
+    def singletsframe_metadata():
+        # following the metadata conventions for a SINGLETSFRAME
+        return {
+            "dataset_metadata": {
+                "metric_key": "external_id",
+                "single_metric": "abc.temp",
+                "queried_metrics": ["abc.temp"],
+                "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+                "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+                "ref_interval_type": "closed",
+            },
+            "metrics": [
+                {
+                    "id": "7ab8c419",
+                    "external_id": "abc.temp",
+                    "name": "Temperature",
+                    "value_dimensions": [
+                        {"column": "value", "unit": "°C", "measurement": "temperature"},
+                        {"column": "state", "unit": None, "measurement": None},
+                    ],
+                }
+            ],
+        }
+
+    @pytest.mark.parametrize("metric", [None, "abc.temp", "other"])
+    def test_metadata_follows_conventions(singletsframe, singletsframe_metadata, metric):
+        singletsframe.attrs = singletsframe_metadata
+        assert check_metadata_conventions(singletsframe, "SINGLETSFRAME") == []  # noqa: S101
+
+        multitsframe = main(singletsframe=singletsframe, metric=metric)["multitsframe"]
+
+        assert check_metadata_conventions(multitsframe) == []  # noqa: S101
+        metric_name = metric or "abc.temp"
+        assert multitsframe.attrs["dataset_metadata"]["queried_metrics"] == [  # noqa: S101
+            metric_name
+        ]
+        # input attrs must not be modified
+        assert singletsframe.attrs == singletsframe_metadata  # noqa: S101
+
+    @pytest.mark.parametrize("metric_key", ["id", "external_id"])
+    def test_another_metric_name_keeps_identifying_field(
+        singletsframe, singletsframe_metadata, metric_key
+    ):
+        singletsframe_metadata["dataset_metadata"]["metric_key"] = metric_key
+        singletsframe_metadata["dataset_metadata"]["single_metric"] = singletsframe_metadata[
+            "metrics"
+        ][0][metric_key]
+        singletsframe.attrs = singletsframe_metadata
+
+        multitsframe = main(singletsframe=singletsframe, metric="other")["multitsframe"]
+
+        assert check_metadata_conventions(multitsframe) == []  # noqa: S101
+        assert multitsframe.attrs["dataset_metadata"]["metric_key"] == "metric"  # noqa: S101
+        assert multitsframe.attrs["metrics"][0] == singletsframe_metadata["metrics"][0] | {  # noqa: S101
+            "metric": "other"
+        }
+
+    def test_same_metric_name_keeps_metric_key(singletsframe, singletsframe_metadata):
+        singletsframe.attrs = singletsframe_metadata
+
+        multitsframe = main(singletsframe=singletsframe, metric="abc.temp")["multitsframe"]
+
+        assert multitsframe.attrs["dataset_metadata"]["metric_key"] == "external_id"  # noqa: S101
+        assert multitsframe.attrs["metrics"] == singletsframe_metadata["metrics"]  # noqa: S101
+
+    def test_metric_name_is_set_in_missing_identifying_field(singletsframe, singletsframe_metadata):
+        del singletsframe_metadata["metrics"][0]["external_id"]
+        singletsframe.attrs = singletsframe_metadata
+
+        multitsframe = main(singletsframe=singletsframe, metric="other")["multitsframe"]
+
+        assert check_metadata_conventions(multitsframe) == []  # noqa: S101
+        assert multitsframe.attrs["dataset_metadata"]["metric_key"] == "external_id"  # noqa: S101
+        assert multitsframe.attrs["metrics"][0]["external_id"] == "other"  # noqa: S101
 
     def test_missing_metric_raises(singletsframe):
         singletsframe.attrs = {}
