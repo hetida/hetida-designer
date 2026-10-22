@@ -5,7 +5,7 @@
   "homepage": "https://fuseki.com/data-science/hetida-designer/",
   "license": "MIT",
   "engines": {
-    "node": "22.23.2"
+    "node": "22.23.4"
   },
   "repository": {
     "type": "git",
