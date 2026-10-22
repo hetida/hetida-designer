@@ -6,6 +6,7 @@ from posixpath import join as posix_urljoin
 from unittest import mock
 from uuid import UUID
 
+import httpx
 import msgspec
 import pytest
 from fastapi import HTTPException
@@ -1745,6 +1746,39 @@ async def test_execute_for_separate_runtime_container(
             assert runtime_client_mock.post.call_args.kwargs["headers"]["Accept-Encoding"] == (
                 "identity"
             )
+
+
+@pytest.mark.asyncio
+async def test_execute_for_separate_runtime_container_with_failing_runtime_request(
+    async_test_client, mocked_clean_test_db_session
+):
+    with mock.patch.object(get_config(), "is_runtime_service", False):
+        tr_component_1 = TransformationRevision(**tr_json_component_1)
+        tr_component_1.content = update_code(tr_component_1)
+        store_single_transformation_revision(tr_component_1)
+        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+        store_single_transformation_revision(tr_workflow_2)
+        update_or_create_nesting(tr_workflow_2)
+
+        # e.g. a reused connection closed by the runtime: the error has an empty message
+        runtime_client_mock = mock.Mock()
+        runtime_client_mock.post = mock.AsyncMock(side_effect=httpx.ReadError(""))
+        with mock.patch(
+            "hetdesrun.backend.execution.get_runtime_http_client",
+            return_value=runtime_client_mock,
+        ):
+            exec_by_id_input = ExecByIdInput(id=tr_workflow_2.id, wiring=tr_workflow_2.test_wiring)
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    "/api/transformations/execute",
+                    json=json.loads(exec_by_id_input.model_dump_json()),
+                )
+
+            assert response.status_code == 200
+            resp_data = response.json()
+            assert resp_data["result"] == "failure"
+            assert resp_data["error"]["message"].endswith("The actual error was:\nReadError: ")
 
 
 @pytest.mark.asyncio
