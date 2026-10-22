@@ -529,6 +529,64 @@ def test_recording_consistency_errors(
     assert message_part in issues[0].message
 
 
+@pytest.mark.parametrize("timezone", ["Europe/Berlin", "UTC", "Etc/GMT-2", "+02:00", "-05:30"])
+def test_default_timezones(timezone: str) -> None:
+    metadata = with_dataset_metadata(
+        series_metadata(default_timezone=timezone), default_timezone=timezone
+    )
+
+    assert check_metadata_conventions(metadata, "SERIES") == []
+
+
+@pytest.mark.parametrize(
+    "timezone", ["Europe/Berln", "europe/berlin", "Europe", "UTC+02:00", "+2:00", "+15:00", ""]
+)
+@pytest.mark.parametrize("level", ["dataset_metadata", "metrics[0]"])
+def test_invalid_default_timezones(timezone: str, level: str) -> None:
+    metadata = (
+        with_dataset_metadata(series_metadata(), default_timezone=timezone)
+        if level == "dataset_metadata"
+        else series_metadata(default_timezone=timezone)
+    )
+
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [(MetadataIssueSeverity.ERROR, f"{level}.default_timezone")]
+    assert "IANA time zone name" in issues[0].message
+
+
+def test_default_timezone_must_be_a_string() -> None:
+    issues = check_metadata_conventions(series_metadata(default_timezone=1), "SERIES")
+
+    assert issues_as_tuples(issues) == [
+        (MetadataIssueSeverity.ERROR, "metrics[0].default_timezone")
+    ]
+
+
+@pytest.mark.parametrize("decimals", [0, 3, None])
+def test_decimals(decimals: Any) -> None:
+    metadata = series_metadata(value_dimensions=[value_dimension(decimals=decimals)]) | {
+        "value_dimensions_shared": [{"column": "value", "decimals": decimals}]
+    }
+
+    assert check_metadata_conventions(metadata, "SERIES") == []
+
+
+@pytest.mark.parametrize(
+    ("decimals", "message_part"),
+    [(-1, "greater than or equal to 0"), (1.5, "integer"), ("2", "integer"), (True, "integer")],
+)
+def test_invalid_decimals(decimals: Any, message_part: str) -> None:
+    metadata = series_metadata(value_dimensions=[value_dimension(decimals=decimals)])
+
+    issues = check_metadata_conventions(metadata, "SERIES")
+
+    assert issues_as_tuples(issues) == [
+        (MetadataIssueSeverity.ERROR, "metrics[0].value_dimensions[0].decimals")
+    ]
+    assert message_part in issues[0].message
+
+
 @pytest.mark.parametrize("recording_mode", [None, "periodic", "irregular"])
 def test_deadband_without_on_change_recording_warns(recording_mode: Any) -> None:
     metadata = series_metadata(

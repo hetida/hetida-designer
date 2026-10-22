@@ -10157,6 +10157,18 @@
             ],
             "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
           },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Falls back to dataset_metadata.default_timezone."
+          },
           "path": {
             "anyOf": [
               {
@@ -10421,6 +10433,18 @@
             "title": "Default Aggregation Interval",
             "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
           },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Applies to all metrics without their own default_timezone."
+          },
           "invalidation_interval_start": {
             "anyOf": [
               {
@@ -10589,6 +10613,7 @@
           {
             "dataset_metadata": {
               "default_aggregation_interval": "1h",
+              "default_timezone": "Europe/Berlin",
               "metric_key": "external_id",
               "queried_metrics": [
                 "plant_a.pressure",
@@ -10622,6 +10647,7 @@
                   {
                     "column": "value",
                     "deadband": 0.5,
+                    "decimals": 1,
                     "measurement": "temperature",
                     "unit": "\u00b0C"
                   }
@@ -11847,6 +11873,7 @@
               {
                 "data_frequency": "15min",
                 "default_aggregation_method": "MEAN",
+                "default_timezone": "Europe/Berlin",
                 "id": "7ab8c419-8745-4714-b588-57c0c772cc95",
                 "name": "Water level north",
                 "origin": "OPC_UA",
@@ -11859,6 +11886,7 @@
                 "value_dimensions": [
                   {
                     "column": "value",
+                    "decimals": 2,
                     "measurement": "level",
                     "unit": "m"
                   }
@@ -11971,6 +11999,19 @@
             ],
             "title": "Deadband",
             "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals",
+            "description": "Number of decimal places numeric values should be displayed with, in their unit, e.g. 2 for 12.35. Only affects how values are displayed, e.g. in tables, tooltips or reports; the values themselves are not rounded. Up to the consumer if missing or null."
           }
         },
         "additionalProperties": true,
@@ -12282,6 +12323,18 @@
             ],
             "title": "Default Aggregation Interval",
             "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
+          },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Applies to all metrics without their own default_timezone."
           },
           "invalidation_interval_start": {
             "anyOf": [
@@ -13812,6 +13865,19 @@
             ],
             "title": "Deadband",
             "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals",
+            "description": "Number of decimal places numeric values should be displayed with, in their unit, e.g. 2 for 12.35. Only affects how values are displayed, e.g. in tables, tooltips or reports; the values themselves are not rounded. Up to the consumer if missing or null."
           }
         },
         "additionalProperties": true,

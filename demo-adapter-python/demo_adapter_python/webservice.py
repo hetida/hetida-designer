@@ -21,6 +21,7 @@ from starlette.responses import Response
 
 from demo_adapter_python import VERSION
 from demo_adapter_python.attached_metadata import (
+    LOCATION_BY_PLANT,
     TEMPERATURE_METRICS,
     series_metadata,
     simulated_recording,
@@ -188,16 +189,16 @@ async def sources(filter_str: str | None = Query(None, alias="filter")) -> Multi
 @demo_adapter_main_router.get("/sources/{sourceId}/metadata/", response_model=list[Metadatum])
 async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
-        return [
-            Metadatum(key="Max Value", value=300.0, dataType="float"),
-            Metadatum(key="Min Value", value=-100.0, dataType="float"),
+        return [  # °C
+            Metadatum(key="Max Value", value=150.0, dataType="float"),
+            Metadatum(key="Min Value", value=-75.0, dataType="float"),
             Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
     if sourceId.endswith("temp") and "plantB" in sourceId:
-        return [
-            Metadatum(key="Max Value", value=150.0, dataType="float"),
-            Metadatum(key="Min Value", value=-30.0, dataType="float"),
+        return [  # °F
+            Metadatum(key="Max Value", value=302.0, dataType="float"),
+            Metadatum(key="Min Value", value=-22.0, dataType="float"),
             Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
@@ -223,20 +224,20 @@ async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
 ) -> Metadatum:
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=300.0, dataType="float")
+        if key == "Max Value":  # °C
+            return Metadatum(key="Max Value", value=150.0, dataType="float")
         if key == "Min Value":
-            return Metadatum(key="Min Value", value=-100.0, dataType="float")
+            return Metadatum(key="Min Value", value=-75.0, dataType="float")
         if key == "Last Self-Check Okay":
             return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
     elif sourceId.endswith("temp") and "plantB" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=150.0, dataType="float")
+        if key == "Max Value":  # °F
+            return Metadatum(key="Max Value", value=302.0, dataType="float")
         if key == "Min Value":
-            return Metadatum(key="Min Value", value=-30.0, dataType="float")
+            return Metadatum(key="Min Value", value=-22.0, dataType="float")
         if key == "Last Self-Check Okay":
             return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
@@ -397,9 +398,9 @@ async def sink(sink_id: str) -> StructureSink:
 async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
-            Metadatum(key="Location", value={"lat": 53.073635, "long": 8.806422}, dataType="any"),
-            Metadatum(key="Temperature Unit", value="F", dataType="string"),
-            Metadatum(key="Pressure Unit", value="psi", dataType="string"),
+            Metadatum(key="Location", value=LOCATION_BY_PLANT["plantA"], dataType="any"),
+            Metadatum(key="Temperature Unit", value="C", dataType="string"),
+            Metadatum(key="Pressure Unit", value="bar", dataType="string"),
             Metadatum(
                 # a metadatum that is not an explicit source and calculated dynamically
                 key="Plant Age in Years",
@@ -411,8 +412,9 @@ async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
         ]
     if thingNodeId == "root.plantB":
         return [
-            Metadatum(key="Temperature Unit", value="C", dataType="string"),
-            Metadatum(key="Pressure Unit", value="bar", dataType="string"),
+            Metadatum(key="Location", value=LOCATION_BY_PLANT["plantB"], dataType="any"),
+            Metadatum(key="Temperature Unit", value="F", dataType="string"),
+            Metadatum(key="Pressure Unit", value="psi", dataType="string"),
             Metadatum(
                 # a metadatum that is not an explicit source and calculated dynamically
                 key="Plant Age in Years",
@@ -437,23 +439,21 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Location":
-            return Metadatum(
-                key="Location", value={"lat": 53.073635, "long": 8.806422}, dataType="any"
-            )
+            return Metadatum(key="Location", value=LOCATION_BY_PLANT["plantA"], dataType="any")
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
                 value=(
-                    "$^\\circ$F"
+                    "$^\\circ$C"
                     if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                    else "F"
+                    else "C"
                 ),
                 dataType="string",
             )
         if key == "Pressure Unit":
             return Metadatum(
                 key="Pressure Unit",
-                value="psi",
+                value="bar",
                 dataType="string",
             )
         if key == "Plant Age in Years":
@@ -466,20 +466,22 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return get_metadatum_from_store(thingNodeId, "Anomaly State")
 
     if thingNodeId == "root.plantB":
+        if key == "Location":
+            return Metadatum(key="Location", value=LOCATION_BY_PLANT["plantB"], dataType="any")
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
                 value=(
-                    "$^\\circ$C"
+                    "$^\\circ$F"
                     if latex_mode != "" and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                    else "C"
+                    else "F"
                 ),
                 dataType="string",
             )
         if key == "Pressure Unit":
             return Metadatum(
                 key="Pressure Unit",
-                value="bar",
+                value="psi",
                 dataType="string",
             )
         if key == "Plant Age in Years":
@@ -599,11 +601,13 @@ async def timeseries(
         logger.debug("loading timeseries dataframe with id %s", str(ts_id))
         ts_df = None
         if ts_id.endswith("temp"):
-            offset = 100.0 if "plantA" in ts_id else 30.0
-            factor = 10.0 if "plantA" in ts_id else 5.0
+            # °C in plant A, °F in plant B
+            offset = 38.0 if "plantA" in ts_id else 86.0
+            factor = 5.5 if "plantA" in ts_id else 9.0
         elif ts_id.endswith("press"):
-            offset = 14.5 if "plantA" in ts_id else 1.0
-            factor = 0.73 if "plantA" in ts_id else 0.05
+            # bar in plant A, psi in plant B
+            offset = 1.0 if "plantA" in ts_id else 14.5
+            factor = 0.05 if "plantA" in ts_id else 0.73
         elif ts_id.endswith("anomaly_score"):
             ts_df = return_stored_anomaly_score(ts_id, from_timestamp, to_timestamp)
         else:
@@ -889,14 +893,15 @@ async def multitsframe(
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
-    lower_threshold: str = Query("", examples=["93.4"]),
-    upper_threshold: str = Query("", examples=["107.9"]),
+    lower_threshold: str = Query("", examples=["34.1"]),
+    upper_threshold: str = Query("", examples=["42.2"]),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
     mtsf = None
     if mtsf_id.endswith("temperatures"):
-        offset = 100.0 if "plantA" in mtsf_id else 30.0
-        factor = 10.0 if "plantA" in mtsf_id else 5.0
+        # °C in plant A, °F in plant B
+        offset = 38.0 if "plantA" in mtsf_id else 86.0
+        factor = 5.5 if "plantA" in mtsf_id else 9.0
         mtsf_records = []
         for metric in TEMPERATURE_METRICS:
             values = np.random.randn(len(dt_range)) * factor + offset
@@ -934,6 +939,7 @@ async def multitsframe(
         ]
         # all stored metrics are queried, also those without data in the interval
         mtsf.attrs = stored_multitsframe_metadata(
+            mtsf_id,
             sorted({str(metric) for metric in stored_mtsf["metric"]}),
             from_timestamp,
             to_timestamp,
@@ -1051,8 +1057,9 @@ async def singletsframe(
             f"No singletsframe data available with provided id '{stsf_id}'.",
         )
 
-    offset = 100.0 if "plantA" in stsf_id else 30.0
-    factor = 10.0 if "plantA" in stsf_id else 5.0
+    # °C in plant A, °F in plant B
+    offset = 38.0 if "plantA" in stsf_id else 86.0
+    factor = 5.5 if "plantA" in stsf_id else 9.0
     values = np.random.randn(len(dt_range)) * factor + offset
 
     stsf = pd.DataFrame(

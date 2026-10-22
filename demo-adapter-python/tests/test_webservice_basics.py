@@ -123,11 +123,11 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
         )
 
         assert len(all_tns) == 17
-        assert len(all_srcs) == 41
+        assert len(all_srcs) == 42
         assert len(all_snks) == 17
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
-        assert len(tn_attached_metadata_dict) == 9
+        assert len(tn_attached_metadata_dict) == 10
 
         for src in all_srcs:
             response_obj = (await client.get(f"/sources/{src.id}")).json()
@@ -455,6 +455,8 @@ async def test_sending_attrs_via_get_multitsframe(
             "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
             "ref_interval_end_timestamp": "2020-01-01T00:00:00+00:00",
             "ref_interval_type": "closed",
+            # the time zone of the plant, for all written metrics
+            "default_timezone": "Europe/Berlin",
         }
         assert [metric["id"] for metric in df_attrs["metrics"]] == stored_metrics
 
@@ -488,6 +490,7 @@ async def test_metadata_of_written_multitsframe(async_test_client: AsyncClient) 
                 "ref_interval_start_timestamp": "2020-01-01T10:00:00+00:00",
                 "ref_interval_end_timestamp": "2020-01-02T00:00:00+00:00",
                 "ref_interval_type": "closed",
+                "default_timezone": "America/New_York",
             },
             "metrics": [
                 {
@@ -523,12 +526,14 @@ async def test_metadata_of_temperatures_multitsframe(async_test_client: AsyncCli
             "value_dimensions": [
                 {
                     "column": "value",
-                    "unit": "°F",
+                    "unit": "°C",
                     "measurement": "temperature",
                     "value_data_type": "float",
+                    "decimals": 1,
                 }
             ],
             "default_aggregation_method": "MEAN",
+            "default_timezone": "Europe/Berlin",
             "path": ["Plant A", "Pickling Unit", "Influx"],
             "origin": "simulated",
             "recording_mode": "periodic",
@@ -560,7 +565,8 @@ async def test_metadata_of_singletsframe(async_test_client: AsyncClient) -> None
         assert [
             (value_dimension["column"], value_dimension["unit"])
             for value_dimension in df_attrs["metrics"][0]["value_dimensions"]
-        ] == [("value", "°C"), ("state", None)]
+        ] == [("value", "°F"), ("state", None)]
+        assert df_attrs["metrics"][0]["default_timezone"] == "America/New_York"
 
 
 @pytest.mark.asyncio
@@ -636,10 +642,13 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
                                 "unit": None,
                                 "measurement": "anomaly score",
                                 "value_data_type": "float",
+                                "decimals": 3,
                             }
                         ],
                         "default_aggregation_method": "MAX",
-                        # nothing is known about the recording of written data
+                        # nothing is known about the recording of written data, but the
+                        # time zone of the plant applies
+                        "default_timezone": "Europe/Berlin",
                         "path": ["Plant A", "Pickling Unit", "Influx"],
                     }
                 ],
@@ -669,8 +678,8 @@ async def test_metadata_of_each_timeseries(async_test_client: AsyncClient) -> No
             for ts_id in ts_ids
             for metric in df_attrs[ts_id]["metrics"]
         ] == [
-            ("Influx Temperature", "°F"),
-            ("Outfeed Pressure", "bar"),
+            ("Influx Temperature", "°C"),
+            ("Outfeed Pressure", "psi"),
             ("unknown.timeseries", None),
         ]
         assert [df_attrs[ts_id]["metrics"][0].get("path") for ts_id in ts_ids] == [
@@ -679,6 +688,14 @@ async def test_metadata_of_each_timeseries(async_test_client: AsyncClient) -> No
             None,
         ]
         assert {df_attrs[ts_id]["metrics"][0]["data_frequency"] for ts_id in ts_ids} == {"1h"}
+        assert [
+            df_attrs[ts_id]["metrics"][0]["value_dimensions"][0].get("decimals") for ts_id in ts_ids
+        ] == [1, 1, None]
+        assert [df_attrs[ts_id]["metrics"][0].get("default_timezone") for ts_id in ts_ids] == [
+            "Europe/Berlin",
+            "America/New_York",
+            None,
+        ]
 
 
 @pytest.mark.asyncio
@@ -686,8 +703,8 @@ async def test_metadata_of_each_timeseries(async_test_client: AsyncClient) -> No
     ("frequency", "expected_timestamps", "expected_values"),
     [
         # the first value of each interval, labelled by its start
-        ("2h", ["00:00", "02:00", "04:00"], [100.0, 120.0, 140.0]),
-        ("150min", ["00:00", "02:30", "05:00"], [100.0, 130.0, 150.0]),
+        ("2h", ["00:00", "02:00", "04:00"], [38.0, 49.0, 60.0]),
+        ("150min", ["00:00", "02:30", "05:00"], [38.0, 54.5, 65.5]),
         # intervals without a value are gaps
         ("30min", ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00"], None),
     ],
@@ -699,7 +716,7 @@ async def test_metadata_of_resampled_timeseries(
     expected_timestamps: list[str],
     expected_values: list[float] | None,
 ) -> None:
-    # simulated hourly values 100, 110, 120, ...
+    # simulated hourly values 38, 43.5, 49, ... (°C)
     monkeypatch.setattr(np.random, "randn", lambda n: np.arange(n, dtype=float))
     async with async_test_client as client:
         ts_id = "root.plantA.picklingUnit.influx.temp"
@@ -824,7 +841,7 @@ async def test_input_wiring_free_text_filters(
             },
         )
         assert mk_response.status_code == 200
-        assert mk_response.json()["value"] == "$^\\circ$F"
+        assert mk_response.json()["value"] == "$^\\circ$C"
 
         mk_response_empty_latex_mode = await client.get(
             "/thingNodes/root.plantA/metadata/Temperature Unit",
@@ -834,7 +851,7 @@ async def test_input_wiring_free_text_filters(
             },
         )
         assert mk_response_empty_latex_mode.status_code == 200
-        assert mk_response_empty_latex_mode.json()["value"] == "F"
+        assert mk_response_empty_latex_mode.json()["value"] == "C"
 
         await client.post(
             "/dataframe",

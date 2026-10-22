@@ -347,6 +347,10 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
         # with such an interval.
         "default_aggregation_interval": "1h",
 
+        # Time zone the timeseries should be evaluated in by default, e.g. for daily aggregation,
+        # for all metrics without their own default_timezone. See "Time zones" below.
+        "default_timezone": "Europe/Berlin",
+
         # Define an invalidation dataset, separate from the ref dataset.
         "invalidation_interval_start": "2023-01-01T00:00:00+00:00",
         "invalidation_interval_end": "2023-01-02T00:00:00+00:00",
@@ -473,6 +477,9 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
         "value_data_type": "float", # the hetida platform provides float, integer, string or boolean
         "deadband": 0.5, # only for recording_mode "on_change": the change of the values, in their
                          # unit, which has to be exceeded for a value to be recorded
+        "decimals": 2, # number of decimal places numeric values should be displayed with, e.g.
+                       # in tables, tooltips or reports. The values themselves are not rounded.
+                       # Up to the consumer if missing or null.
       },
       ...
     ],
@@ -480,7 +487,10 @@ Besides `metric_key`, `single_metric` and `queried_metrics` described above, the
     # in coarser intervals. One of "MEAN", "MEDIAN", "SUM", "MIN", "MAX", "FIRST", "LAST" and
     # "COUNT". "AVG" is an alias of "MEAN". "MEAN" if missing or null. The hetida platform
     # provides the method it aggregates the signal with when bucketing it.
-    "default_aggregation_method": "MEAN"
+    "default_aggregation_method": "MEAN",
+    # Time zone the timeseries should be evaluated in by default, e.g. for daily aggregation.
+    # Falls back to dataset_metadata.default_timezone. See "Time zones" below.
+    "default_timezone": "Europe/Berlin"
   }
 ```
 
@@ -501,6 +511,14 @@ The offset refers to UTC. Omit `data_frequency_offset` if the timestamps are ali
 
 E.g. the hetida platform knows how it compresses incoming values: keeping every value, the value at the start of each window, the time-weighted mean, the minimum or the maximum of each window, or the values exceeding a deadband with a heartbeat.
 
+#### Time zones
+
+`default_timezone` of a metric is the time zone its timeseries should be evaluated in by default, e.g. the time zone of the plant a sensor belongs to. Components evaluating timeseries in calendar intervals should use it: A report aggregating daily values, for example, starts each day at midnight of this time zone, so the results differ between time zones. It falls back to `default_timezone` of the dataset metadata, which applies to all metrics without their own. In component code, [hdhelpers](#accessing-structured-metadata-inside-component-code) provides it with this fallback.
+
+The value is an IANA time zone name like `"Europe/Berlin"` or `"UTC"`, or a fixed UTC offset like `"+02:00"`. Prefer IANA time zone names, since they respect daylight saving time.
+
+This differs from the time zone of the plot target settings (`plot_target_timezone` of the `plot_target_settings` in the runtime execution context of an execution request), which determines how timestamps are displayed. That one is centered on the view, e.g. the time zone of the dashboard or user looking at a plot, while `default_timezone` belongs to the data. Providing both is relevant: A report on a plant in Germany may aggregate days in `"Europe/Berlin"` and nevertheless show its timestamps in the time zone of a viewer in New York.
+
 ### Fallbacks and inherited properties
 
 Information may be provided on different levels of the metadata. Consumers like components look for it in the following order and use the first information which is not null. Information provided as null counts as missing. Metadata adhering to the conventions provides the information on value dimensions directly for each value dimension, but consumers also handle metadata which is incomplete or follows older conventions this way.
@@ -520,7 +538,7 @@ Other information on a **metric** is looked up
 3. in `value_dimensions_shared`,
 4. in the properties the metric inherits (`inherited`), e.g. the latitude of the plant a sensor belongs to.
 
-The frequency of the recorded values of a metric (`data_frequency`, `data_frequency_offset`) falls back to `ref_data_frequency` and `ref_data_frequency_offset` of the dataset metadata.
+The frequency of the recorded values of a metric (`data_frequency`, `data_frequency_offset`) falls back to `ref_data_frequency` and `ref_data_frequency_offset` of the dataset metadata. Its `default_timezone` falls back to `default_timezone` of the dataset metadata.
 
 The inherited properties are the last resort, since they describe objects higher up in a hierarchy. Information which describes the metric itself, like its unit, measurement, (display) names or default aggregation method, should therefore not be taken from inherited properties at all: An inherited property "unit" of a plant, for example, is not the unit of a sensor in it.
 
@@ -538,6 +556,7 @@ Furthermore the following rules apply, which the schemas cannot express:
 - Start and end of the ref interval, of the invalidation interval and of the time range of a comment must be provided together, and the start must not be after the end.
 - `only_invalidate` cannot be true if `invalidate_dataset` is false.
 - `ref_data_frequency`, `ref_data_frequency_offset` and `default_aggregation_interval` of the dataset metadata as well as `data_frequency` and `data_frequency_offset` of the metrics must be Pandas date offset aliases or timedelta strings, e.g. `"15min"` or `"1D"`.
+- `default_timezone` of the dataset metadata and of the metrics must be an IANA time zone name like `"Europe/Berlin"` or a fixed UTC offset like `"+02:00"`.
 - `recording_aggregation_method` of a metric requires its `recording_mode` to be `"periodic"` and a `data_frequency` (or `ref_data_frequency` of the dataset metadata).
 - Every metric has a value dimension for each value column of the data. For a SERIES this is the value dimension "value".
 - Every metric in the metric column of a MULTITSFRAME occurs under `metrics` and in `queried_metrics`.
@@ -721,7 +740,25 @@ aggregation_method_by_metric = get_metric_info(
 )
 ```
 
-The requested information can also be a [glom](https://github.com/mahmoud/glom/) spec instead of a field name. Furthermore `get_queried_interval` provides the queried interval from the dataset metadata. See the [hdhelpers documentation](https://hetida.github.io/hdhelpers/) for details.
+The requested information can also be a [glom](https://github.com/mahmoud/glom/) spec instead of a field name.
+
+For the [default time zone](#time-zones) of the metrics, `get_default_timezones(loaded_multitsframe)` provides a defaultdict keyed by metric, `get_series_default_timezone` and `get_singlets_default_timezone` provide the one of the single metric of a SERIES or SINGLETSFRAME. As specified above, they fall back to `default_timezone` of the dataset metadata only, which is also the default value of the defaultdict, and return `None` if neither is provided. Use the default time zone for computations like bucketing days when aggregating, not for displaying timestamps, which is what the time zone of the plot target settings is for:
+
+```python
+from hdhelpers.helpers import modify_timezone
+from hdhelpers.metadata import get_series_default_timezone
+
+# each day starts at midnight of the default time zone of the data, e.g. "Europe/Berlin":
+timezone = get_series_default_timezone(loaded_series) or "UTC"
+daily_sums = modify_timezone(loaded_series, to_timezone=timezone).resample("1D").sum()
+
+# show the timestamps in the time zone of the plot target settings:
+daily_sums = modify_timezone(daily_sums)
+```
+
+Note the explicit fallback, here `"UTC"`: Without `to_timezone`, `modify_timezone` uses the time zone of the plot target settings, so the results of the computation would depend on who looks at them.
+
+Furthermore `get_queried_interval` provides the queried interval from the dataset metadata. See the [hdhelpers documentation](https://hetida.github.io/hdhelpers/) for details.
 
 ## Wrapped format parsing options
 

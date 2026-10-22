@@ -10,9 +10,16 @@ from typing import Any
 
 from demo_adapter_python.demo_data.sources import get_sources
 
-# as provided by the metadata of the plant thing nodes
-TEMPERATURE_UNIT_BY_PLANT = {"plantA": "°F", "plantB": "°C"}
-PRESSURE_UNIT_BY_PLANT = {"plantA": "psi", "plantB": "bar"}
+# Plant A is located in Bremen (Germany), plant B in Pittsburgh (USA), each with the units and
+# the time zone of its location. Units and locations are also provided by the metadata of the
+# plant thing nodes.
+LOCATION_BY_PLANT = {
+    "plantA": {"lat": 53.073635, "long": 8.806422},
+    "plantB": {"lat": 40.440624, "long": -79.995888},
+}
+TEMPERATURE_UNIT_BY_PLANT = {"plantA": "°C", "plantB": "°F"}
+PRESSURE_UNIT_BY_PLANT = {"plantA": "bar", "plantB": "psi"}
+TIMEZONE_BY_PLANT = {"plantA": "Europe/Berlin", "plantB": "America/New_York"}
 
 TEMPERATURE_METRICS = {
     "Pickling Outfeed Temperature": "picklingUnit.outfeed.temp",
@@ -69,6 +76,15 @@ def source_name(source_id: str) -> str:
     return str(source["name"]) if source is not None else source_id
 
 
+def plant_timezone(source_id: str) -> dict[str, Any]:
+    """The time zone of the plant of a source as default_timezone metadata field
+
+    Empty for sources not belonging to a plant with known location.
+    """
+    timezone = TIMEZONE_BY_PLANT.get(plant_of(source_id) or "")
+    return {"default_timezone": timezone} if timezone is not None else {}
+
+
 def source_location(source_id: str) -> dict[str, Any]:
     """The path of a known source in the hierarchy as metric metadata field
 
@@ -94,9 +110,15 @@ def simulated_recording(frequency: str = "") -> dict[str, Any]:
     }
 
 
+# decimal places to display the values with
+DECIMALS_BY_UNIT = {"°C": 1, "°F": 1, "bar": 2, "psi": 1}
+ANOMALY_SCORE_DECIMALS = 3
+
+
 def value_dimension(timeseries_id: str, column: str = "value") -> dict[str, Any]:
     """The value dimension of a timeseries, whose unit and measurement depend on its id"""
     plant = plant_of(timeseries_id)
+    decimals = None
     if timeseries_id.endswith(("temp", "temp_with_state")):
         unit = TEMPERATURE_UNIT_BY_PLANT.get(plant or "")
         measurement = "temperature"
@@ -106,14 +128,18 @@ def value_dimension(timeseries_id: str, column: str = "value") -> dict[str, Any]
     elif timeseries_id.endswith("anomaly_score"):
         unit = None  # dimensionless
         measurement = "anomaly score"
+        decimals = ANOMALY_SCORE_DECIMALS
     else:
         unit = None
         measurement = None
+    if unit is not None:
+        decimals = DECIMALS_BY_UNIT.get(unit)
     return {
         "column": column,
         "unit": unit,
         "measurement": measurement,
         "value_data_type": "float",
+        **({"decimals": decimals} if decimals is not None else {}),
     }
 
 
@@ -132,6 +158,7 @@ def metric_metadata(
         "default_aggregation_method": (
             "MAX" if timeseries_id.endswith("anomaly_score") else "MEAN"
         ),
+        **plant_timezone(timeseries_id),
         **source_location(timeseries_id),
         **(recording or {}),
     }
@@ -174,14 +201,19 @@ def temperatures_metadata(
 
 
 def stored_multitsframe_metadata(
-    metrics: list[str], from_timestamp: datetime.datetime, to_timestamp: datetime.datetime
+    mtsf_id: str,
+    metrics: list[str],
+    from_timestamp: datetime.datetime,
+    to_timestamp: datetime.datetime,
 ) -> dict[str, Any]:
     """Metadata of a multitsframe written to this adapter before
 
-    Nothing is known about the written metrics besides their values in the metric column.
+    Nothing is known about the written metrics besides their values in the metric column. As
+    data of a plant, they have the time zone of the plant, which applies to all of them.
     """
     return {
-        "dataset_metadata": dataset_metadata("id", metrics, from_timestamp, to_timestamp),
+        "dataset_metadata": dataset_metadata("id", metrics, from_timestamp, to_timestamp)
+        | plant_timezone(mtsf_id),
         "metrics": [
             {
                 "id": metric,

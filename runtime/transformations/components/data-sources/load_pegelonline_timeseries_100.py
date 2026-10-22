@@ -25,7 +25,7 @@ This component allows to fetch a single such timeseries from the API.
 ### Metadata
 The metadata of the timeseries follows the hetida designer [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) for a SERIES:
 * `dataset_metadata` contains the queried interval, as `ref_data_frequency` the interval in which Pegelonline provides values for the timeseries (e.g. "15min") and as `query_timestamp` the time of the request, since Pegelonline delivers its current state of the data.
-* The single entry under `metrics` describes the timeseries: Its `id` is the station uuid and the measurement, e.g. "593647aa-9fea-43ec-a7d6-6476a76ae868_W". Its `name` consists of the names of station and timeseries, e.g. "BONN WASSERSTAND ROHDATEN". The value dimension "value" provides unit (e.g. "cm") and measurement ("water level" for "W", "discharge" for "Q"), and for water levels its description mentions the gauge zero. Its `path` consists of the water and the station, e.g. ["RHEIN", "BONN"], its `origin` is "Pegelonline", and it is recorded `periodic` with the interval of the values as `data_frequency`. The information on the station (uuid, number, names, water, km, agency, latitude and longitude) is available under `inherited`, e.g. "latitude" or "station_shortname".
+* The single entry under `metrics` describes the timeseries: Its `id` is the station uuid and the measurement, e.g. "593647aa-9fea-43ec-a7d6-6476a76ae868_W". Its `name` consists of the names of station and timeseries, e.g. "BONN WASSERSTAND ROHDATEN". The value dimension "value" provides unit (e.g. "cm") and measurement ("water level" for "W", "discharge" for "Q"). For water levels its description mentions the gauge zero, and its `decimals` correspond to a resolution of 1 cm (0 for "cm", 2 for "m+NN" and "m+PNP"). Other values, e.g. discharges, have no `decimals`, since their resolution is not known. Its `path` consists of the water and the station, e.g. ["RHEIN", "BONN"], its `origin` is "Pegelonline", its `default_timezone` is "Europe/Berlin", since the stations are German, and it is recorded `periodic` with the interval of the values as `data_frequency`. The information on the station (uuid, number, names, water, km, agency, latitude and longitude) is available under `inherited`, e.g. "latitude" or "station_shortname".
 
 This requires an additional request for the information on the timeseries (unit, interval, gauge zero).
 
@@ -144,6 +144,10 @@ def load_pegelonline_timeseries(
 
 MEASUREMENTS = {"W": "water level", "Q": "discharge"}
 
+# Decimal places of water levels, which Pegelonline provides with a resolution of 1 cm. Values in
+# other units, e.g. discharges, get no decimals, since their resolution is not known.
+DECIMALS_BY_WATER_LEVEL_UNIT = {"cm": 0, "m+NN": 2, "m+PNP": 2}
+
 
 def timeseries_metadata(
     station: dict,
@@ -160,11 +164,14 @@ def timeseries_metadata(
     equidistance = timeseries_info.get("equidistance")
     gauge_zero = timeseries_info.get("gaugeZero") or {}
 
+    unit = timeseries_info.get("unit")
+    decimals = DECIMALS_BY_WATER_LEVEL_UNIT.get(unit) if measurement == "W" else None
     value_dimension = {
         "column": "value",
-        "unit": timeseries_info.get("unit"),
+        "unit": unit,
         "measurement": MEASUREMENTS.get(measurement, timeseries_name),
         "value_data_type": "float",
+        **({"decimals": decimals} if decimals is not None else {}),
     }
     frequency = f"{equidistance}min" if isinstance(equidistance, int) and equidistance > 0 else None
     if gauge_zero.get("value") is not None:
@@ -197,6 +204,8 @@ def timeseries_metadata(
                     if name is not None
                 ],
                 "origin": "Pegelonline",
+                # German stations, whose days start at German midnight
+                "default_timezone": "Europe/Berlin",
                 **(
                     {"recording_mode": "periodic", "data_frequency": frequency}
                     if frequency is not None
@@ -359,6 +368,7 @@ else:
         assert metric["name"] == "BONN WASSERSTAND ROHDATEN"  # noqa: S101
         assert metric["path"] == ["RHEIN", "BONN"]  # noqa: S101
         assert metric["origin"] == "Pegelonline"  # noqa: S101
+        assert metric["default_timezone"] == "Europe/Berlin"  # noqa: S101
         assert (metric["recording_mode"], metric["data_frequency"]) == (  # noqa: S101
             "periodic",
             "15min",
@@ -369,6 +379,7 @@ else:
                 "unit": "cm",
                 "measurement": "water level",
                 "value_data_type": "float",
+                "decimals": 0,
                 "description": "Relative to the gauge zero of 42.713 m. ü. NHN",
             }
         ]
@@ -393,6 +404,30 @@ else:
                 "value_data_type": "float",
             }
         ]
+
+    @pytest.mark.parametrize(
+        ("measurement", "unit", "decimals"),
+        [
+            ("W", "cm", 0),
+            ("W", "m+NN", 2),
+            ("W", "m+PNP", 2),
+            # unknown resolution
+            ("W", "mm", None),
+            ("Q", "m³/s", None),
+        ],
+    )
+    def test_decimals_of_water_levels(measurement, unit, decimals):
+        metadata = timeseries_metadata(
+            BONN,
+            {"shortname": measurement, "longname": "name", "unit": unit, "equidistance": 15},
+            measurement,
+            datetime(2026, 3, 29, tzinfo=UTC),
+            datetime(2026, 3, 30, tzinfo=UTC),
+            datetime(2026, 3, 30, tzinfo=UTC),
+        )
+
+        assert metadata["metrics"][0]["value_dimensions"][0].get("decimals") == decimals  # noqa: S101
+        assert check_metadata_conventions(metadata, "SERIES") == []  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

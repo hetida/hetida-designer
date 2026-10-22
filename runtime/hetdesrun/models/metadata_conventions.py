@@ -25,6 +25,7 @@ from collections import Counter
 from collections.abc import Mapping
 from enum import StrEnum
 from typing import Annotated, Any, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, PlainValidator, ValidationError
@@ -79,6 +80,18 @@ class RecordingMode(StrEnum):
 
 _FREQUENCY_FORMAT = 'as Pandas date offset alias or timedelta string, e.g. "15min" or "1D"'
 
+_TIMEZONE_FORMAT = (
+    'as IANA time zone name like "Europe/Berlin" or "UTC" (preferred, since it respects daylight'
+    ' saving time) or as fixed UTC offset like "+02:00"'
+)
+_TIMEZONE_PURPOSE = (
+    " Components evaluating the timeseries in calendar intervals use it, e.g. a report"
+    " aggregating days, which start at midnight of this time zone, so the results differ between"
+    " time zones. This is not the time zone timestamps are displayed in: That is the plot target"
+    " timezone of the execution context, which depends on the viewer, while this time zone belongs"
+    " to the data, e.g. the time zone of the plant."
+)
+
 
 class SharedValueDimensionMetadata(BaseModel):
     """Metadata of a value dimension shared by all metrics
@@ -121,6 +134,14 @@ class SharedValueDimensionMetadata(BaseModel):
         description="For a metric with recording_mode on_change: the change of the values, in"
         " their unit, which has to be exceeded for a value to be recorded. 0 records every"
         " change.",
+    )
+    decimals: int | None = Field(
+        None,
+        ge=0,
+        description="Number of decimal places numeric values should be displayed with, in their"
+        " unit, e.g. 2 for 12.35. Only affects how values are displayed, e.g. in tables, tooltips"
+        " or reports; the values themselves are not rounded. Up to the consumer if missing or"
+        " null.",
     )
 
 
@@ -252,6 +273,14 @@ class MetricMetadata(BaseModel):
         " plot or report it in coarser intervals. MEAN if missing or null. AVG is an alias of"
         " MEAN. E.g. the hetida platform provides the method it aggregates the signal with when"
         " bucketing it, for a signal group member the one configured for the member.",
+    )
+    default_timezone: str | None = Field(
+        None,
+        description="Time zone the timeseries should be evaluated in by default, "
+        + _TIMEZONE_FORMAT
+        + "."
+        + _TIMEZONE_PURPOSE
+        + " Falls back to dataset_metadata.default_timezone.",
     )
     path: list[str] | None = Field(
         None,
@@ -392,6 +421,14 @@ class _DatasetMetadataBase(BaseModel):
         + ". The metrics are aggregated with their default_aggregation_method. E.g. a hetida"
         " platform signal group is configured with such an interval.",
     )
+    default_timezone: str | None = Field(
+        None,
+        description="Time zone the timeseries should be evaluated in by default, "
+        + _TIMEZONE_FORMAT
+        + "."
+        + _TIMEZONE_PURPOSE
+        + " Applies to all metrics without their own default_timezone.",
+    )
     invalidation_interval_start: UtcTimestamp | None = Field(
         None,
         description="Start of an invalidation interval separate from the ref interval in UTC"
@@ -498,8 +535,9 @@ SERIES_METADATA_EXAMPLE: dict[str, Any] = {
         {
             "id": "7ab8c419-8745-4714-b588-57c0c772cc95",
             "name": "Water level north",
-            "value_dimensions": [_value_dimension("value", "m", "level")],
+            "value_dimensions": [_value_dimension("value", "m", "level") | {"decimals": 2}],
             "default_aggregation_method": "MEAN",
+            "default_timezone": "Europe/Berlin",
             "path": ["Waterworks North", "Gauge North"],
             "origin": "OPC_UA",
             "recording_mode": "periodic",
@@ -539,6 +577,7 @@ MULTITSFRAME_METADATA_EXAMPLE: dict[str, Any] = {
         "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
         "ref_interval_type": "closed",
         "default_aggregation_interval": "1h",
+        "default_timezone": "Europe/Berlin",
     },
     "metrics": [
         {
@@ -552,7 +591,7 @@ MULTITSFRAME_METADATA_EXAMPLE: dict[str, Any] = {
             "external_id": "plant_a.temperature",
             "name": "Plant A temperature",
             "value_dimensions": [
-                _value_dimension("value", "°C", "temperature") | {"deadband": 0.5}
+                _value_dimension("value", "°C", "temperature") | {"deadband": 0.5, "decimals": 1}
             ],
             "default_aggregation_method": "MAX",
             "recording_mode": "on_change",
@@ -742,6 +781,33 @@ def _is_frequency(value: str) -> bool:
     return True
 
 
+_UTC_OFFSET_PATTERN = re.compile(r"^[+-](0[0-9]|1[0-4]):[0-5][0-9]$")
+
+
+def _is_timezone(value: str) -> bool:
+    """Whether value is an IANA time zone name or a fixed UTC offset, e.g. "+02:00" """
+    if _UTC_OFFSET_PATTERN.match(value) is not None:
+        return True
+    try:
+        ZoneInfo(value)
+    except ZoneInfoNotFoundError, ValueError, OSError:
+        return False
+    return True
+
+
+def _check_timezone(obj: dict[str, Any], location: str) -> list[MetadataConventionIssue]:
+    timezone = obj.get("default_timezone")
+    if timezone is None or _is_timezone(timezone):
+        return []
+    return [
+        _error(
+            f"{location}.default_timezone",
+            f'"{timezone}" is neither an IANA time zone name like "Europe/Berlin" nor a UTC'
+            ' offset like "+02:00".',
+        )
+    ]
+
+
 def _check_frequencies(
     obj: dict[str, Any], fields: tuple[str, ...], location: str
 ) -> list[MetadataConventionIssue]:
@@ -924,6 +990,7 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
             metric["value_dimensions"], f"metrics[{index}].value_dimensions"
         )
         issues += _check_frequencies(metric, _METRIC_FREQUENCY_FIELDS, f"metrics[{index}]")
+        issues += _check_timezone(metric, f"metrics[{index}]")
         issues += _check_recording(metric, dataset_metadata, f"metrics[{index}]")
         for comment_index, comment in enumerate(metric.get("comments") or []):
             issues += _check_interval(
@@ -986,6 +1053,7 @@ def _check_consistency(attrs: dict[str, Any]) -> list[MetadataConventionIssue]:
         "invalidation_interval_end",
     )
     issues += _check_frequencies(dataset_metadata, _DATASET_FREQUENCY_FIELDS, "dataset_metadata")
+    issues += _check_timezone(dataset_metadata, "dataset_metadata")
     return issues
 
 
