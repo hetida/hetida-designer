@@ -831,10 +831,7 @@ async def main(
         loaded_ts_data.attrs = attrs
 
     # metric column
-    loaded_ts_data.rename(
-        columns={"timeseriesId": "metric"},
-        inplace=True,  # noqa:PD002
-    )
+    loaded_ts_data = loaded_ts_data.rename(columns={"timeseriesId": "metric"})
 
     # At this point, the signal id (referenceId of the node) is used in the data in metric column
     # Now we transform the data to use the field specified by use_as_metric instead!

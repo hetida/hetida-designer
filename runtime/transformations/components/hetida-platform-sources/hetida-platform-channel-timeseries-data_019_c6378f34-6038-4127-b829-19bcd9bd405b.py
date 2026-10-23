@@ -303,13 +303,10 @@ async def main(
     if len(loaded_ts_data) == 0:
         attrs = loaded_ts_data.attrs
         loaded_ts_data = pd.DataFrame(columns=["timestamp", "timeseriesId", "value"])
-        loaded_ts_data.attres = attrs
+        loaded_ts_data.attrs = attrs
 
     # metric column
-    loaded_ts_data.rename(
-        columns={"timeseriesId": "metric"},
-        inplace=True,  # noqa:PD002
-    )
+    loaded_ts_data = loaded_ts_data.rename(columns={"timeseriesId": "metric"})
 
     # At this point, "id" of child["referenceObject"] is used in the data in metric column
     # Now we transform the data to use the field specified by use_as_metric instead!

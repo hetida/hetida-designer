@@ -263,7 +263,7 @@ async def load_open_meteo(  # noqa: PLR0915
         resulting_multitsframe.attrs = attrs
 
     # guarantee unique index:
-    resulting_multitsframe.reset_index(drop=True, inplace=True)  # noqa: PD002
+    resulting_multitsframe = resulting_multitsframe.reset_index(drop=True)
 
     resulting_multitsframe.attrs["hetida-designer_filters"] = filters
 
@@ -373,7 +373,7 @@ async def load_energy_charts_info_prices(
 
     result_df.attrs["hetida-designer_filters"] = filters
 
-    result_df.reset_index(drop=True, inplace=True)  # noqa: PD002
+    result_df = result_df.reset_index(drop=True)
 
     return result_df
 

@@ -60,10 +60,7 @@ def prepare_validate_multitsframe(
             raise AdapterHandlingException(msg) from e
 
     # Column mapping
-    data_to_send.rename(
-        columns=ts_table_config.column_mapping_hd_to_db,
-        inplace=True,  # noqa:PD002
-    )
+    data_to_send = data_to_send.rename(columns=ts_table_config.column_mapping_hd_to_db)
 
     expected_columns = [
         ts_table_config.metric_col_name,
