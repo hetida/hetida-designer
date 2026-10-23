@@ -6714,10 +6714,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "descripton": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view.",
+              "description": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view.",
               "default": false,
               "title": "Use Release Wiring"
-            }
+            },
+            "description": "Whether release_wiring should be used as basis instead of the current test_wiring. Using a released trafo and its fixed release wiring guarantees reproducibility of the dashboard view."
           },
           {
             "name": "locked",
