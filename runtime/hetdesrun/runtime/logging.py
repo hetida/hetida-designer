@@ -8,6 +8,7 @@ from typing import Any, Literal, TypedDict
 from uuid import UUID
 
 import numpy as np
+from opentelemetry import trace
 from pydantic import BaseModel, Field
 
 from hetdesrun.models.code import CodeModule
@@ -75,6 +76,24 @@ class FieldRenamer:
         for orig_name, new_name in self._FIELD_MAP.items():
             if orig_name in event_dict:
                 event_dict[new_name] = event_dict.pop(orig_name)
+        return event_dict
+
+
+class TraceContextAdder:
+    """Adds the trace context of the current span to the logs
+
+    Uses the fields trace_id, span_id and trace_flags as specified by OpenTelemetry for
+    JSON logs (https://opentelemetry.io/docs/specs/otel/compatibility/logging_trace_context/)
+    to link logs and traces. Nothing is added if there is no valid span, e.g. if
+    OpenTelemetry support (HD_OTEL_VIA_LOGFIRE_ACTIVE) is not activated.
+    """
+
+    def __call__(self, logger: logging.Logger, method_name: str, event_dict: dict) -> dict:  # noqa: ARG002
+        span_context = trace.get_current_span().get_span_context()
+        if span_context.is_valid:
+            event_dict["trace_id"] = trace.format_trace_id(span_context.trace_id)
+            event_dict["span_id"] = trace.format_span_id(span_context.span_id)
+            event_dict["trace_flags"] = f"{span_context.trace_flags:02x}"
         return event_dict
 
 

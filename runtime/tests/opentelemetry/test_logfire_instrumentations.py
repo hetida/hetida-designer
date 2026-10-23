@@ -5,7 +5,6 @@ from unittest import mock
 
 import logfire
 import pytest
-import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -21,38 +20,11 @@ from hetdesrun.webservice.application import init_app
 
 
 @pytest.fixture(scope="function")  # noqa: PT003
-def activate_logfire() -> Generator:
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.otel_via_logfire_active", new=True
-    ) as _fixture:
-        yield _fixture
-
-
-@pytest.fixture(scope="function")  # noqa: PT003
 def distributed_tracing_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
     # capfire calls logfire.configure after init_app did, thereby resetting the
     # distributed_tracing=True set there to logfire's default (extract, but warn).
     # Without the argument, logfire.configure falls back to this environment variable.
     monkeypatch.setenv("LOGFIRE_DISTRIBUTED_TRACING", "true")
-
-
-@pytest.fixture(scope="function")  # noqa: PT003
-def deactivate_auth() -> Generator:
-    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", new=False) as _fixture:
-        yield _fixture
-
-
-@pytest.fixture(scope="function")  # noqa: PT003
-def app_without_auth_with_logfire(
-    deactivate_auth: Generator, activate_logfire: Generator
-) -> FastAPI:
-    return init_app()
-
-
-@pytest_asyncio.fixture(scope="function")
-async def async_test_client_with_logfire(app_without_auth_with_logfire: FastAPI) -> AsyncClient:
-    async with LifespanManager(app_without_auth_with_logfire) as manager:
-        return AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test")
 
 
 @pytest.mark.asyncio

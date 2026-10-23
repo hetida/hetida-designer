@@ -13,6 +13,7 @@ from hetdesrun.runtime.logging import (
     CustomAttributeProcessor,
     FieldRenamer,
     MinimallyMoreCapableJsonEncoder,
+    TraceContextAdder,
     execution_context_filter,
     job_id_context_filter,
 )
@@ -40,7 +41,6 @@ SHARED_PROCESSORS: list[Processor] = [
         }
     ),
     structlog.stdlib.ExtraAdder(allow=None),  # extra-information always logged
-    structlog.processors.format_exc_info,
     structlog.processors.StackInfoRenderer(),
 ]
 
@@ -69,6 +69,13 @@ def get_formatter(
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 FieldRenamer(),
                 logfire.StructlogProcessor(),
+                # Processors adding fields only to the JSON log output, not to the
+                # log spans created by logfire:
+                # Exceptions are formatted after logfire got exc_info, so that logfire
+                # records them as exception span events with the standard attributes.
+                structlog.processors.format_exc_info,
+                TraceContextAdder(),
+                FieldRenamer(),  # for the fields added above
                 structlog.processors.JSONRenderer(
                     default=MinimallyMoreCapableJsonEncoder().default
                 ),
