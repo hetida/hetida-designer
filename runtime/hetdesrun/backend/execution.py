@@ -529,7 +529,13 @@ async def run_execution_input(  # noqa: PLR0915
                 # Note: Can e.g. be triggered by running os._exit(1) in component code. But a
                 # test would of course require separated backend and runtime services and a
                 # runtime process management.
-                msg = f"Failed runtime execution request to hd runtime endpoint ({url}):\n{str(e)}"
+
+                # str() of e.g. httpx.ReadError is empty, hence the exception type
+                actual_error = f"{type(e).__name__}: {str(e)}"
+                msg = (
+                    f"Failed runtime execution request to hd runtime endpoint ({url}):\n"
+                    + actual_error
+                )
                 logger.warning(msg)
 
                 trafo_failure_exc = TrafoExecutionRuntimeUnexpectedFailure(msg)
@@ -552,7 +558,8 @@ async def run_execution_input(  # noqa: PLR0915
                 assert wf_exec_info_error is not None  # for mypy # noqa: S101
 
                 wf_exec_info_error.message = (
-                    UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE + f"\n\nThe actual error was:\n{str(e)}"
+                    UNEXPECTED_RUNTIME_FAILURE_HELP_MESSAGE
+                    + f"\n\nThe actual error was:\n{actual_error}"
                 )
                 execution_response = ExecutionResponseFrontendDto(
                     **(wf_exec_info.model_dump()),

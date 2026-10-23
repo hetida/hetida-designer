@@ -33,4 +33,6 @@ if __name__ == "__main__":
         reload=True,
         host=host,
         port=port,
+        # exceed the idle expiry of the runtime's httpx clients (5 seconds), see gunicorn_conf.py
+        timeout_keep_alive=65,
     )
