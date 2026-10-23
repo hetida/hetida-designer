@@ -138,10 +138,7 @@ def prepare_validate_loaded_raw_multitsframe(
     ].astype(str)
 
     # Column mapping
-    multits_frame.rename(
-        columns=ts_table_config.column_mapping_db_to_hd,
-        inplace=True,  # noqa:PD002
-    )
+    multits_frame = multits_frame.rename(columns=ts_table_config.column_mapping_db_to_hd)
 
     # multi ts frame validation
     try:

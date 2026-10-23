@@ -671,7 +671,7 @@ async def post_timeseries(
 ) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
-        df = pd.DataFrame.from_dict((x.model_dump() for x in ts_body), orient="columns")
+        df = pd.DataFrame([x.model_dump() for x in ts_body])
         if "timestamp" not in df.columns:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -850,7 +850,7 @@ async def post_dataframe(
     data_attributes: str | None = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
-        df = pd.DataFrame.from_dict(df_body, orient="columns")
+        df = pd.DataFrame(df_body)
         if column_names != "":
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
@@ -1005,7 +1005,7 @@ async def post_multitsframe(
     data_attributes: str | None = Header(None),
 ) -> dict:
     if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):
-        mtsf = pd.DataFrame.from_dict(mtsf_body, orient="columns")
+        mtsf = pd.DataFrame(mtsf_body)
         if metric_names != "":
             metric_name_list, error_msg = parse_string_to_list(metric_names)
             if error_msg != "":
@@ -1134,7 +1134,7 @@ async def post_singletsframe(
     data_attributes: str | None = Header(None),
 ) -> dict:
     if stsf_id in ("root.plantA.scored_anomalies", "root.plantB.scored_anomalies"):
-        stsf = pd.DataFrame.from_dict(stsf_body, orient="columns")
+        stsf = pd.DataFrame(stsf_body)
         if set(stsf.columns) != set(SINGLETSFRAME_COLUMN_NAMES):
             column_names_string = ", ".join(stsf.columns)
             singletsframe_column_names_string = ", ".join(SINGLETSFRAME_COLUMN_NAMES)
