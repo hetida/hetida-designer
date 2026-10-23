@@ -36,6 +36,7 @@ from hetdesrun.webservice.auth_dependency import (
     warn_on_permissive_ingoing_auth_config,
 )
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.telemetry import add_root_cause_to_exception_event
 
 if get_config().hd_kafka_consumer_enabled:
     from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
@@ -339,6 +340,10 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             # instrumented httpx client). Without explicitly setting this, logfire still
             # extracts the context but warns about it on the first such request.
             distributed_tracing=True,
+            # Adds queryable details to recorded exceptions (see telemetry module). The
+            # exception_callback is experimental in logfire, test_logfire_exceptions.py
+            # makes sure that it keeps working.
+            advanced=logfire.AdvancedOptions(exception_callback=add_root_cause_to_exception_event),
         )
 
         # we use the asgi instrumentation, not the fastapi instrumentation:
