@@ -63,10 +63,10 @@ Here the content of the `__data__` field can be anything which the corresponding
 This "wrapper" format is also received when using the direct provisioning adapter for outputs ("Output Only" in the execution dialog).
 
 !!! info "Unwrapped Format"
-Note that the unwrapped format (i.e. sending only the content of the `__data__` field unwrapped) also works and provides the parsed object with an empty dictionary `{}` as `.attrs` attribute.
+    Note that the unwrapped format (i.e. sending only the content of the `__data__` field unwrapped) also works and provides the parsed object with an empty dictionary `{}` as `.attrs` attribute.
 
 !!! info "Mounted Files Adapter"
-The [local file adapter](../integration_guide/adapter_system/builtin_adapters/local_file_adapter.md) does not support sending or receiving metadata in `attrs` currently.
+    The [local file adapter](../integration_guide/adapter_system/builtin_adapters/local_file_adapter.md) does not support sending or receiving metadata in `attrs` currently.
 
 ## Metadata conventions
 
@@ -183,7 +183,7 @@ Important hints:
 ```
 
 !!! info "Series => exactly one value dimension"
-A SERIES inherently has exactly one value dimension (1-dimensional timeseries), which we expect to be "value". Because of the cascading fallback behaviour described further below, metadata for this value dimension can be directly provided in the metric object, like "unit" in this example.
+    A SERIES inherently has exactly one value dimension (1-dimensional timeseries), which we expect to be "value". Because of the cascading fallback behaviour described further below, metadata for this value dimension can be directly provided in the metric object, like "unit" in this example.
 
 #### Example for SINGLETSFRAME
 
@@ -224,7 +224,7 @@ A [SINGLETSFRAME](data_types/singletsframes.md) holds exactly one metric — lik
 ```
 
 !!! info "Exactly one entry under metrics"
-Since a SINGLETSFRAME holds exactly one metric, `metrics` should contain exactly one entry, namely the one identified by `single_metric`. If `single_metric` is missing and only one metric is present, components should use that one metric.
+    Since a SINGLETSFRAME holds exactly one metric, `metrics` should contain exactly one entry, namely the one identified by `single_metric`. If `single_metric` is missing and only one metric is present, components should use that one metric.
 
 #### Example for MULTITSFRAME
 
@@ -436,6 +436,21 @@ Notes:
 - There is fallback behaviour to some older / simpler metadata formats built-in
 
 Furthermore this module provides helper functions to define your own metadata accessor functions with similar fallback behaviour, using the [glom](https://github.com/mahmoud/glom/) library: `get_value_dimension_info`, `get_series_info` and `get_metric_info`. See the source code and its docstrings for details.
+
+!!! warning "Performance with large metadata"
+    pandas deep-copies the metadata in `attrs` to every object an operation creates, e.g. when filtering rows, selecting a column or grouping. So for a MULTITSFRAME with the metadata of many metrics, e.g. with comments, a loop over the metrics like `for metric in metrics: data[data["metric"] == metric]` can take seconds or minutes instead of milliseconds. Compute on a copy without metadata instead, which shares the data and is therefore cheap, and attach the metadata to the result once at the end:
+
+    ```python
+    from copy import deepcopy
+
+    import pandas as pd
+
+    data = pd.DataFrame(multitsframe)  # under copy-on-write the data is not copied
+    data.attrs = {}
+    # e.g. many operations, also per metric:
+    result = data[data["value"] > 0]
+    result.attrs = deepcopy(multitsframe.attrs)
+    ```
 
 ## Wrapped format parsing options
 

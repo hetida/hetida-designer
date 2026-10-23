@@ -630,6 +630,9 @@ async def timeseries(
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
+            # Intervals without a value would be sent as records consisting of nulls only, i.e.
+            # also without timeseriesId, which lets loading the timeseries fail.
+            ts_df = ts_df.dropna(subset=["value"])
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
@@ -939,9 +942,10 @@ async def multitsframe(
     elif mtsf_id.endswith("anomalies"):
         stored_mtsf = get_value_from_store(mtsf_id)
         stored_mtsf["timestamp"] = pd.to_datetime(stored_mtsf["timestamp"])
+        # closed ref interval, as stated by the metadata
         mtsf = stored_mtsf[
-            (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) > from_timestamp)
-            & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) < to_timestamp)
+            (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) >= from_timestamp)
+            & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) <= to_timestamp)
         ]
         mtsf.attrs.update(
             {

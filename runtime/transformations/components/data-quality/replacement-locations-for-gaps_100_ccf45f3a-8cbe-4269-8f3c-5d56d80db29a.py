@@ -57,7 +57,8 @@ Determine timestamps at which replacement values need to be determined.
   The expected time difference between consecutive timestamps in the input **timeseries**. Must be a
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-  ) or a timedelta string, e.g. "D" or "60s".
+  ) or a timedelta string, e.g. "D" or "60s". Calendar based frequencies without fixed duration,
+  like "MS" (month start) or "W" (weeks), are not supported.
   Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
   "ref_data_frequency" that will be used if no **expected_data_frequency** is provided.
   In that case **auto_frequency_determination** will be set to false.
@@ -70,6 +71,9 @@ Determine timestamps at which replacement values need to be determined.
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
+  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
+  "ref_data_frequency_offset" that will be used if no **expected_data_frequency_offset** is
+  provided. In that case **auto_frequency_determination** will be set to false.
 
 - **all_gap_points** (Boolean, default value: true):
   If set to true, all gap intervals of size 0 are added to the replacement locations without
@@ -90,7 +94,7 @@ the **auto_freq_percentile**-th quantile of the time intervals between consecuti
 If **auto_frequency_determination** is set to false, the expected data frequency must be provided by
 the input **expected_data_frequency**.
 
-If no **expected_data_frequency_offset** is specified, the data frequency offset is determine by
+If no **expected_data_frequency_offset** is specified, the data frequency offset is determined by
 using either the timestamp of the first datapoint of the timeseries within the specified time
 interval or, if the time series is empty, the **interval_start_timestamp**.
 If neither value is specified, the start timestamp of each gap is used.
@@ -188,18 +192,37 @@ def freqstr2dateoffset(freqstr: str) -> pd.DateOffset:
 
 
 def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
-    """Transform frequency string to Pandas Timedelta."""
+    """Transform frequency string of fixed duration to Pandas Timedelta.
+
+    Calendar based frequencies like "MS" (month start) or "W" (weeks ending on Sunday) have no
+    fixed duration and are rejected.
+    """
     try:
-        return pd.to_timedelta(freqstr)
+        offset = freqstr2dateoffset(freqstr)
     except ValueError:
+        # timedelta strings which are no date offset aliases, e.g. "P1D" or "1 days"
         try:
-            return pd.to_timedelta(freqstr2dateoffset(freqstr))
-        except TypeError as err:
+            return pd.to_timedelta(freqstr)
+        except ValueError as err:
             raise ComponentInputValidationException(
-                f"The {input_name} cannot be parsed as Pandas Timedelta: {str(err)}",
+                f"The {input_name} {freqstr!r} cannot be parsed as date offset alias or timedelta"
+                f" string: {str(err)}",
                 error_code=422,
                 invalid_component_inputs=[input_name],
             ) from err
+    if isinstance(offset, pd.offsets.Day):
+        # a calendar day since pandas 3, i.e. 24 hours in UTC
+        return pd.Timedelta(days=offset.n)
+    if isinstance(offset, pd.offsets.Tick):
+        return pd.Timedelta(offset)
+    # e.g. "MS", which the timedelta string "1MS" would misinterpret as 1 millisecond
+    raise ComponentInputValidationException(
+        f"The {input_name} {freqstr!r} is a calendar based frequency ({offset.freqstr}) without"
+        ' fixed duration, which is not supported. Use a fixed frequency like "15min", "1h", "1D"'
+        ' or "7D" instead.',
+        error_code=422,
+        invalid_component_inputs=[input_name],
+    )
 
 
 class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
@@ -554,6 +577,7 @@ def constrict_intervals_df_to_interval(
     interval_start_timestamp: pd.Timestamp | None,
     interval_end_timestamp: pd.Timestamp | None,
 ) -> pd.DataFrame:
+    gap_intervals = gap_intervals.copy()  # do not change the input
     if interval_start_timestamp is not None:
         gap_start_before_interval_start_index = gap_intervals[
             gap_intervals["start_time"] < interval_start_timestamp
@@ -616,13 +640,22 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
-    intervals["overlap"] = (intervals["start_time"] >= intervals["end_time"].shift()).cumsum()
+    # An interval overlaps with the previous ones if it starts before the latest of their ends,
+    # also if it is contained in one of them which is not the previous interval.
+    intervals["overlap"] = (
+        intervals["start_time"] >= intervals["end_time"].cummax().shift()
+    ).cumsum()
+    # the end of overlapping intervals is the latest end, inclusive if one of them includes it
+    intervals["end_inclusive"] = intervals["end_inclusive"] & (
+        intervals["end_time"]
+        == intervals.groupby(intervals["overlap"])["end_time"].transform("max")
+    )
     intervals = intervals.groupby(intervals["overlap"]).agg(
         {
             "start_time": "first",
-            "end_time": "last",
+            "end_time": "max",
             "start_inclusive": "first",
-            "end_inclusive": "last",
+            "end_inclusive": "any",
         }
     )
 
@@ -754,10 +787,10 @@ def determine_expected_data_frequency_offset(
         constricted_timeseries_without_bounds is not None
         and len(constricted_timeseries_without_bounds) > 0
     ):
-        return reference_timestamp - constricted_timeseries_without_bounds.index[0]
+        return constricted_timeseries_without_bounds.index[0] - reference_timestamp
 
     if interval_start_timestamp is not None:
-        return reference_timestamp - interval_start_timestamp
+        return interval_start_timestamp - reference_timestamp
 
     return None
 
@@ -909,6 +942,186 @@ def main(
     )
 
     return {"replacement_locations": replacement_locations}
+
+
+# Testing
+try:
+    import pytest
+except ImportError:
+    pass
+else:
+    METADATA = {
+        "ref_interval_start_timestamp": "2020-01-01T01:02:00+00:00",
+        "ref_interval_end_timestamp": "2020-01-01T01:10:00+00:00",
+        "ref_data_frequency": "2min",
+        "ref_data_frequency_offset": "30s",
+    }
+
+    GAP_INTERVALS = pd.DataFrame(
+        {
+            "start_time": pd.to_datetime(["2020-01-01T01:00:30Z"]),
+            "end_time": pd.to_datetime(["2020-01-01T01:05:30Z"]),
+            "start_inclusive": [True],
+            "end_inclusive": [True],
+        }
+    )
+
+    def test_gap_intervals_input_is_not_changed():
+        gap_intervals = GAP_INTERVALS.copy()
+
+        main(
+            gap_intervals=gap_intervals,
+            interval_start_timestamp="2020-01-01T01:02:00+00:00",
+            expected_data_frequency="2min",
+        )
+
+        pd.testing.assert_frame_equal(gap_intervals, GAP_INTERVALS)
+
+    def timeseries_with_metadata(attrs):
+        timeseries = pd.Series(
+            [1.0, 2.0], index=pd.to_datetime(["2020-01-01T01:00:30Z", "2020-01-01T01:06:30Z"])
+        )
+        timeseries.attrs = attrs
+        return timeseries
+
+    @pytest.mark.parametrize(
+        "attrs",
+        [
+            METADATA,
+            {
+                "from": "2020-01-01T01:02:00+00:00",
+                "to": "2020-01-01T01:10:00+00:00",
+                "ref_data_frequency": "2min",
+                "ref_data_frequency_offset": "30s",
+            },
+        ],
+    )
+    def test_ref_interval_and_data_frequency_from_metadata(attrs):
+        result = main(gap_intervals=GAP_INTERVALS, timeseries=timeseries_with_metadata(attrs))
+
+        assert result["replacement_locations"].index.to_list() == [  # noqa: S101
+            pd.Timestamp("2020-01-01T01:02:30Z"),
+            pd.Timestamp("2020-01-01T01:04:30Z"),
+        ]
+
+    def test_inputs_take_precedence_over_metadata():
+        result = main(
+            gap_intervals=GAP_INTERVALS,
+            timeseries=timeseries_with_metadata(METADATA),
+            interval_start_timestamp="2020-01-01T01:03:00+00:00",
+            expected_data_frequency_offset="0s",
+        )
+
+        assert result["replacement_locations"].index.to_list() == [  # noqa: S101
+            pd.Timestamp("2020-01-01T01:04:00Z")
+        ]
+
+    @pytest.mark.parametrize(
+        ("freqstr", "duration"),
+        [
+            ("15min", "15min"),
+            ("h", "1h"),
+            ("1h", "1h"),
+            ("60s", "60s"),
+            ("1D", "1D"),
+            # no fixed frequency (Tick) any more since pandas 3, but a day of 24 hours here
+            ("D", "1D"),
+            ("2D", "2D"),
+            ("1D2h", "26h"),
+            ("P1D", "1D"),
+            ("1 days", "1D"),
+            ("1m", "1min"),
+        ],
+    )
+    def test_fixed_frequencies(freqstr, duration):
+        assert freqstr2timedelta(freqstr, "expected_data_frequency") == pd.Timedelta(  # noqa: S101
+            duration
+        )
+
+    @pytest.mark.parametrize("freqstr", ["1MS", "MS", "2MS", "W", "1W", "W-MON", "B", "ME", "YS"])
+    def test_calendar_based_frequencies_are_rejected(freqstr):
+        # e.g. "1MS" would be 1 millisecond as timedelta string
+        with pytest.raises(
+            ComponentInputValidationException, match="calendar based frequency"
+        ) as error:
+            freqstr2timedelta(freqstr, "expected_data_frequency")
+
+        assert error.value.extra_information == {  # noqa: S101
+            "invalid_component_inputs": ["expected_data_frequency"]
+        }
+
+    @pytest.mark.parametrize("freqstr", ["1M", "1T", "every 5 minutes"])
+    def test_unparseable_frequencies_are_rejected(freqstr):
+        with pytest.raises(ComponentInputValidationException, match="cannot be parsed"):
+            freqstr2timedelta(freqstr, "expected_data_frequency")
+
+    def test_merge_intervals_contained_in_an_earlier_interval():
+        intervals = pd.DataFrame(
+            {
+                "start_time": pd.to_datetime(
+                    ["2020-01-01T01:00:00Z", "2020-01-01T01:05:00Z", "2020-01-01T01:10:00Z"]
+                ),
+                "end_time": pd.to_datetime(
+                    ["2020-01-01T01:30:00Z", "2020-01-01T01:12:00Z", "2020-01-01T01:10:00Z"]
+                ),
+                "start_inclusive": [False, False, True],
+                "end_inclusive": [False, True, True],
+            }
+        )
+
+        merged = merge_intervals(intervals)
+
+        # the latest end wins, not the end of the last interval
+        assert merged[  # noqa: S101
+            ["start_time", "end_time", "start_inclusive", "end_inclusive"]
+        ].to_dict(orient="records") == [
+            {
+                "start_time": pd.Timestamp("2020-01-01T01:00:00Z"),
+                "end_time": pd.Timestamp("2020-01-01T01:30:00Z"),
+                "start_inclusive": False,
+                "end_inclusive": False,
+            }
+        ]
+
+    def test_offset_from_the_first_datapoint():
+        timeseries = pd.Series(
+            [1.0, 2.0], index=pd.to_datetime(["2020-01-01T01:00:30Z", "2020-01-01T01:06:30Z"])
+        )
+        timeseries.attrs = {
+            key: value
+            for key, value in METADATA.items()
+            if key not in ("ref_data_frequency", "ref_data_frequency_offset")
+        }
+
+        result = main(
+            gap_intervals=GAP_INTERVALS, timeseries=timeseries, expected_data_frequency="2min"
+        )
+
+        # the first datapoint in the ref interval from 01:02 to 01:10 is at 01:06:30
+        assert result["replacement_locations"].index.to_list() == [  # noqa: S101
+            pd.Timestamp("2020-01-01T01:02:30Z"),
+            pd.Timestamp("2020-01-01T01:04:30Z"),
+        ]
+
+    @pytest.mark.parametrize(
+        ("inputs", "field"),
+        [
+            ({"expected_data_frequency": "1MS"}, "expected_data_frequency"),
+            (
+                {"expected_data_frequency": "2min", "expected_data_frequency_offset": "MS"},
+                "expected_data_frequency_offset",
+            ),
+            (
+                {"timeseries": timeseries_with_metadata(METADATA | {"ref_data_frequency": "1MS"})},
+                'timeseries.attrs["ref_data_frequency"]',
+            ),
+        ],
+    )
+    def test_calendar_based_frequencies_of_inputs_and_metadata_are_rejected(inputs, field):
+        with pytest.raises(ComponentInputValidationException, match="calendar based") as error:
+            main(gap_intervals=GAP_INTERVALS, **inputs)
+
+        assert field in str(error.value)  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

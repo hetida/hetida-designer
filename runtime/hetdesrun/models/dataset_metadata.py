@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -42,6 +43,17 @@ class DatasetMetadata(BaseModel):
     invalidation_timestamp: datetime | None = None
     only_invalidate: bool = False
     new_data_invalidation_date: datetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def null_counts_as_missing(cls, data: Any) -> Any:
+        """Fields provided as null get their default value, as if they were missing
+
+        E.g. the hetida platform provides the fields it does not set as null.
+        """
+        if isinstance(data, dict):
+            return {key: value for key, value in data.items() if value is not None}
+        return data
 
     @model_validator(mode="after")
     def validate_constraints(self) -> DatasetMetadata:
