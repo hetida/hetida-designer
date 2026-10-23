@@ -449,7 +449,14 @@ async def test_sending_attrs_via_get_multitsframe(
         assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
         assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
         assert df_attrs["ref_interval_type"] == "closed"
-        assert df_attrs["ref_metrics"] == []
+        # the metrics stored at the queried point in time (e.g. by other tests), since it
+        # belongs to the closed ref interval
+        stored_mtsf = get_value_from_store("root.plantA.anomalies")
+        assert set(df_attrs["ref_metrics"]) == set(
+            stored_mtsf["metric"][
+                pd.to_datetime(stored_mtsf["timestamp"]) == pd.Timestamp("2020-01-01T00:00:00Z")
+            ]
+        )
 
 
 @pytest.mark.asyncio
@@ -486,6 +493,76 @@ async def test_receiving_attrs_via_post_multitsframe(
         assert "test" in df_from_store.attrs
         for key, value in df_attrs.items():
             assert df_from_store.attrs[key] == value
+
+
+@pytest.mark.asyncio
+async def test_written_multitsframe_is_read_in_closed_interval(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        mtsf_id = "root.plantB.anomalies"
+        await client.post(
+            f"/multitsframe?id={mtsf_id}",
+            json=[
+                {"metric": "a", "timestamp": timestamp, "value": 1.0}
+                for timestamp in [
+                    "2020-01-01T00:00:00.000Z",
+                    "2020-01-01T02:00:00.000Z",
+                    "2020-01-01T04:00:00.000Z",
+                    "2020-01-01T04:00:00.001Z",
+                ]
+            ],
+        )
+
+        response = await client.get(
+            "/multitsframe",
+            params={"id": mtsf_id, "from": "2020-01-01T00:00:00Z", "to": "2020-01-01T04:00:00Z"},
+        )
+
+        mtsf = pd.read_json(io.StringIO(response.text), lines=True)
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        # the start and the end belong to the closed ref interval
+        assert df_attrs["ref_interval_type"] == "closed"
+        assert list(pd.to_datetime(mtsf["timestamp"]).dt.strftime("%H:%M:%S.%f")) == [
+            "00:00:00.000000",
+            "02:00:00.000000",
+            "04:00:00.000000",
+        ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("frequency", "expected_timestamps"),
+    [
+        ("2h", ["00:00", "02:00", "04:00"]),
+        # intervals without a value are left out
+        ("30min", ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00"]),
+    ],
+)
+async def test_resampled_timeseries_without_empty_intervals(
+    async_test_client: AsyncClient, frequency: str, expected_timestamps: list[str]
+) -> None:
+    async with async_test_client as client:
+        ts_id = "root.plantA.picklingUnit.influx.temp"
+
+        response = await client.get(
+            "/timeseries",
+            params={
+                "id": ts_id,
+                "from": "2020-01-01T00:00:00Z",
+                "to": "2020-01-01T05:00:00Z",
+                "frequency": frequency,
+            },
+        )
+
+        assert response.status_code == 200
+        timeseries = pd.read_json(io.StringIO(response.text), lines=True)
+        assert list(pd.to_datetime(timeseries["timestamp"]).dt.strftime("%H:%M")) == (
+            expected_timestamps
+        )
+        assert list(timeseries["timeseriesId"].unique()) == [ts_id]
+        assert timeseries["value"].notna().all()
 
 
 @pytest.mark.asyncio

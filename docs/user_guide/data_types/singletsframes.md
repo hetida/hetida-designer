@@ -30,7 +30,7 @@ Use a SINGLETSFRAME when
 - that timeseries has more than one value dimension, or you want to keep the option open, so a SERIES is too narrow.
 
 !!! info
-hetida designer provides base components in the category "Connectors" to convert between SINGLETSFRAME and SERIES, MULTITSFRAME and DATAFRAME, in particular "Convert Series to SingleTSFrame" and "Extract SingleTSFrame from MultiTSFrame".
+    hetida designer provides base components in the category "Connectors" to convert between SINGLETSFRAME and SERIES, MULTITSFRAME and DATAFRAME, in particular "Convert Series to SingleTSFrame" and "Extract SingleTSFrame from MultiTSFrame".
 
 ## SingleTsFrame details
 
@@ -76,10 +76,10 @@ A simple json representation of a SingleTSFrame for the [direct provisioning ada
 ```
 
 !!! tip
-Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with a "timestamp" column and value columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
-`python
+    Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with a "timestamp" column and value columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+    ```python
     print(df.to_json(orient="columns", date_format="iso", indent=2))
-    `
+    ```
 
 It is possible to define metadata for the SingleTSFrame.
 Conventions for the metadata keys can be found [here](../attached_metadata.md).

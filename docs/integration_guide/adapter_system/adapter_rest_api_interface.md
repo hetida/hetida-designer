@@ -65,7 +65,7 @@ General information about the adapter.
 This endpoints allows for hierarchical browsing of data sources / data sinks. It returns exactly one level of the hierarchy (e.g. used by the hetida designer frontend for lazy loading). The nodes of the hierarchy are called thingNodes.
 
 - query parameters:
-  - `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks) and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
+    - `parentId`(optional, String): If not provided the response only consists of the root thingNodes and no sources or sinks. If provided the response contains all sources and sinks which have the `parentId` as `thingNodeId` (sources, sinks) and all thingNodes which have the `parentId` as parentId. (i.e. everything directly attached to the parentId thingNode)
 
 Response:
 
@@ -133,9 +133,9 @@ Response:
 - `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now. If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
   Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
 
-      !!! info "Handling of filters"
-          If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
-          The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
+    !!! info "Handling of filters"
+        If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
+        The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
 - a filter may provide an optional `default_value`. The execution dialog prefills the input field of that filter with it, so the user only has to enter something if the default does not fit. The prefilled value is treated like any other entered value, i.e. it is stored in the wiring and sent back to the adapter on execution - the adapter does not have to apply the default itself. Like every filter value it is transferred as a string, so structured defaults have to be provided as their json text. The built-in component adapter for example maps the default values of a component's inputs to filter default values and thus sends `{"__DEFAULT__": {"offset": 0.0, "factor": 3.0, "frequency": "1h"}}` for an input with such a value.
 
@@ -144,7 +144,7 @@ Response:
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering and is displayed below the selected source/sink in the wiring dialog.
 
 !!! info "Metadata in hierarchy"
-Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
+    Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below) for generic rest adapters:
 
 ```
 /thingNodes/{thingNodeId}/metadata/{metadataKey}
@@ -298,7 +298,7 @@ On the one side metadata endpoints tell which metadatum is available at every so
 On the other side these endpoints directly return metadata values and are accessed from the runtime-side generic rest adapter implementation to obtain wired metadata or to send them.
 
 !!! info "Not providing/receiving Metadata"
-If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
+    If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
 
 #### Query parameters for metadata endpoints
 
@@ -531,7 +531,7 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-##### Retrieving attached timeseries metadata
+##### Retrieving attached dataframe metadata
 
 Again, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
@@ -600,9 +600,9 @@ Payload:
 
 ```json
 [
-  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
-  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
-  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3},
+  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7},
+  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4},
   {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
 ]
 ```
@@ -641,7 +641,7 @@ Response (Line delimited Stream of Json records):
 This response will always have a `timestamp` entry plus at least one further entry. Each entry besides `timestamp` is a value dimension of the timeseries — in the example above `value` and `state`. `timestamp` may not be `null`, must be an ISO-8601 timestamp and should always have UTC timezone.
 
 !!! info "no metric field"
-An entry named `metric` is not forbidden, but it is _not_ interpreted as a metric — it would simply be another value dimension. If your data has several metrics, offer it as a `multitsframe` source instead.
+    An entry named `metric` is not forbidden, but it is _not_ interpreted as a metric — it would simply be another value dimension. If your data has several metrics, offer it as a `multitsframe` source instead.
 
 ##### Attaching metadata to the singletsframe
 
@@ -662,7 +662,7 @@ Payload:
 
 ```json
 [
-  {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3, "score": 0.7}
+  {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3, "score": 0.7},
   {"timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7, "score": 0.2}
 ]
 ```

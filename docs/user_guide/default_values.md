@@ -30,13 +30,13 @@ No quotation marks need to be entered for default values for inputs of the `STRI
 If you do not enter a value (by not touching the input field), the default value for all data types is set to `null` which will be parsed as `None` as mentioned above. Also an explicit `null` in the default value field (without quotation marks!) will set the default value to `None`.
 
 !!! success "Recommendation"
-We strongly recommend to explicitely enter `null` and not rely on the implicit behaviour if you want `None` as default value.
+    We strongly recommend to explicitely enter `null` and not rely on the implicit behaviour if you want `None` as default value.
 
 !!! note
-For optional STRING inputs: A default value of `null` will be parsed as `None` and not as string `"null"`.
+    For optional STRING inputs: A default value of `null` will be parsed as `None` and not as string `"null"`.
 
 !!! tip
-To get an empty string as the default value for a STRING input, enter any string and remove it again before clicking `Save`.
+    To get an empty string as the default value for a STRING input, enter any string and remove it again before clicking `Save`.
 
 Optional inputs are not displayed in the preview, but a grey bar with a white triangle in the center pointing down indicates the presence of optional inputs.
 
@@ -63,7 +63,7 @@ or a value from some adapter (e.g. manual input) to override it:
 </figure>
 
 !!! info "Important Note"
-To overwrite the default value of an optional operator input in a workflow, the respective input must be exposed (see below!).
+    To overwrite the default value of an optional operator input in a workflow, the respective input must be exposed (see below!).
 
 ## Use or overwrite default values of operators in workflows
 

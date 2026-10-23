@@ -51,7 +51,7 @@ The possible conditions are:
 
 Invalid property filters (e.g. an unknown condition or a missing value) abort the execution before any data is loaded.
 
-Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://github.com/hetida/hetida-designer/blob/release/docs/metadata_attrs.md).
+Metadata will be present in the resulting DataFrame's attrs attribute, following hetida designer [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/). Under `metrics` there is an entry for each selected signal, containing the fields of the signal from the hierarchy (e.g. `externalTimeSeriesId`, `measurement` and its own `properties`), its node in the hierarchy as `hierarchy_object` and its `relativeNamePath`. Furthermore it contains the metadata which hetida platform (2603.1012 or newer) provides for the signal when loading its data, e.g. `name`, `description`, `external_id`, the inherited properties under `inherited`, the comments in the queried interval under `comments`, unit, measurement and value data type of its value dimension under `value_dimensions` and its `default_aggregation_method`.
 
 You may also use this component as a good starting point to write your own variant for dynamical selection of signal timeseries data which fits your specific hetida platform setup and use cases.
 
@@ -586,8 +586,30 @@ def exclude_transient_signals(signal_children):
     return [child for child in signal_children if child not in transient_children]
 
 
+def adapter_metric_metadata(attrs_from_adapter, signal_id):
+    """Metric metadata of a signal as provided by the hetida platform adapter
+
+    attrs_from_adapter maps the ids of the loaded signals to their metadata, which the adapter
+    provides following the hetida designer metadata conventions for a SERIES: The metadata of a
+    signal is its single entry under "metrics", identified via dataset_metadata.metric_key.
+
+    Returns an empty dict if the adapter provides no metadata for the signal.
+    """
+    signal_attrs = attrs_from_adapter.get(signal_id) or {}
+    adapter_metric_key = (signal_attrs.get("dataset_metadata") or {}).get("metric_key") or "id"
+    signal_metrics = [
+        metric
+        for metric in signal_attrs.get("metrics") or []
+        if metric.get(adapter_metric_key) == signal_id
+    ]
+    return deepcopy(signal_metrics[0]) if len(signal_metrics) > 0 else {}
+
+
 def metric_metadata_from_child(child, attrs_from_adapter, metric_key, metric_value):
-    """Built metric metadata from hierarchy object
+    """Build metric metadata from the hierarchy object and the metadata of the adapter
+
+    The metadata the adapter provides for the signal (see adapter_metric_metadata) is added to
+    the fields of the signal's referenceObject, which it takes precedence over.
 
     metric_value is the value used for this signal in the metric column. It is set
     under metric_key, so that metadata can be matched to the data via
@@ -597,23 +619,11 @@ def metric_metadata_from_child(child, attrs_from_adapter, metric_key, metric_val
     metric_object = deepcopy(child["referenceObject"])
     metric_object.pop("schedulerJob", None)
     metric_object.pop("outputDefinitions", None)
+    metric_object.update(adapter_metric_metadata(attrs_from_adapter, child["referenceId"]))
     metric_object["hierarchy_object"] = child
 
     metric_object["relativeNamePath"] = child["relativeNamePath"]
     metric_object[metric_key] = metric_value
-
-    try:  # noqa: SIM105
-        metric_object["inherited"] = attrs_from_adapter[child["referenceId"]][
-            "single_metric_metadata"
-        ]["structured_metadata"]["inherited"]
-    except KeyError:
-        pass
-    try:  # noqa: SIM105
-        metric_object["comments"] = attrs_from_adapter[child["referenceId"]][
-            "single_metric_metadata"
-        ]["structured_metadata"]["comments"]
-    except KeyError:
-        pass
 
     return metric_object
 
@@ -878,6 +888,90 @@ async def main(
     )
 
     return {"ts_data": loaded_ts_data}
+
+
+# Testing
+try:
+    import pytest
+except ImportError:
+    pass
+else:
+    SIGNAL_ID = "7ab8c419-8745-4714-b588-57c0c772cc95"
+
+    @pytest.fixture
+    def child():
+        return {
+            "id": "1b5c4b5e-bf61-4999-bc34-878d5082041d",
+            "referenceId": SIGNAL_ID,
+            "name": "Water-lvl-north",
+            "relativeNamePath": "Pegel Nord/Water-lvl-north",
+            "referenceObject": {
+                "id": SIGNAL_ID,
+                "measurement": None,
+                "externalTimeSeriesId": "water.north.level",
+                "isTransient": False,
+                "properties": [],
+                "outputDefinitions": [],
+            },
+        }
+
+    def test_metric_metadata_contains_adapter_metadata(child):
+        adapter_metric = {
+            "id": SIGNAL_ID,
+            "name": "Water level north",
+            "inherited": {"site": "north"},
+            "comments": [{"content": "Gauge maintenance"}],
+            "value_dimensions": [{"column": "value", "unit": "m"}],
+            "default_aggregation_method": "AVG",
+        }
+        attrs_from_adapter = {
+            SIGNAL_ID: {"dataset_metadata": {"metric_key": "id"}, "metrics": [adapter_metric]}
+        }
+
+        metric = metric_metadata_from_child(
+            child,
+            attrs_from_adapter,
+            metric_key="externalTimeSeriesId",
+            metric_value="water.north.level",
+        )
+
+        expected_metric = {
+            "id": SIGNAL_ID,
+            "measurement": None,
+            "externalTimeSeriesId": "water.north.level",
+            "isTransient": False,
+            "properties": [],
+            "hierarchy_object": child,
+            "relativeNamePath": "Pegel Nord/Water-lvl-north",
+        } | adapter_metric
+        assert metric == expected_metric  # noqa: S101
+        # the adapter metadata is copied, not referenced
+        adapter_metric["comments"].clear()
+        assert len(metric["comments"]) == 1  # noqa: S101
+
+    @pytest.mark.parametrize(
+        "attrs_from_adapter",
+        [
+            {},
+            {SIGNAL_ID: {"metrics": [{"id": "another signal", "name": "other"}]}},
+            # metadata format of hetida platform versions before 2603.1012
+            {SIGNAL_ID: {"single_metric_metadata": {"structured_metadata": {"inherited": {}}}}},
+        ],
+    )
+    def test_metric_metadata_without_adapter_metadata(child, attrs_from_adapter):
+        metric = metric_metadata_from_child(
+            child, attrs_from_adapter, metric_key="id", metric_value=SIGNAL_ID
+        )
+
+        assert set(metric) == {  # noqa: S101
+            "id",
+            "measurement",
+            "externalTimeSeriesId",
+            "isTransient",
+            "properties",
+            "hierarchy_object",
+            "relativeNamePath",
+        }
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

@@ -18,6 +18,7 @@ from hetdesrun.adapters.sql_adapter.structure import (
     get_structure,
 )
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+from hetdesrun.models.dataset_metadata import DatasetMetadata, get_dataset_metadata_from_attrs
 
 
 def test_sql_timeseries_table_structure(three_sqlite_dbs_configured):
@@ -456,7 +457,30 @@ DELETION_ONLY_TEST_CASES = [
         "Deletion based on inferred interval",
         id="delete_inferred_dataset",
     ),
+    pytest.param(
+        {
+            # fields the hetida platform does not set are null, which counts as missing
+            "dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)
+            | {
+                "ref_interval_start_timestamp": "1949-06-01T00:00:00+00:00",
+                "ref_interval_end_timestamp": "1949-06-10T00:00:00+00:00",
+                "only_invalidate": True,
+            },
+            "by_metric": {"nf": {}},
+        },
+        10,
+        "Deletion based on reference dataset.",
+        id="null_fields_of_metadata_count_as_missing",
+    ),
 ]
+
+
+def test_null_fields_of_dataset_metadata_count_as_missing():
+    df = _create_timeseries_mtsf(
+        attrs={"dataset_metadata": dict.fromkeys(DatasetMetadata.model_fields)}, days=1
+    )
+
+    assert get_dataset_metadata_from_attrs(df) == DatasetMetadata()
 
 
 @pytest.mark.asyncio
