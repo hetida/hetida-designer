@@ -240,6 +240,11 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         lifespan=lifespan,
         root_path=get_config().swagger_prefix,
         middleware=get_middleware(),
+        # logfire configures the OTLP export from the OTEL_* environment variables (see below).
+        # FastAPI's automatic export configuration (opt-in via FASTAPI_OTEL_AUTO_CONFIGURE, the
+        # default in fastapi 0.142.x) would add a second exporter to the same tracer provider,
+        # sending every span twice: once more without logfire's span processing and scrubbing.
+        telemetry={"auto_configure": False} if get_config().otel_via_logfire_active else None,
     )
 
     app.router.route_class = AdditionalLoggingRoute
@@ -353,6 +358,12 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
 
         from hetdesrun.persistence.db_engine_and_session import get_db_engine
 
-        logfire.instrument_sqlalchemy(engine=get_db_engine())
+        # opentelemetry-instrumentation-sqlalchemy (0.66b1) declares support for sqlalchemy < 2.1
+        # only and otherwise logs an error and does not instrument anything. It works with 2.1
+        # though, so the dependency check is skipped. test_logfire_db_queries_produce_spans
+        # makes sure that this keeps working.
+        # The instrumentation imports sqlalchemy.ext.asyncio, which requires greenlet. Since
+        # sqlalchemy 2.1 greenlet is only installed with the asyncio extra (requirements.in).
+        logfire.instrument_sqlalchemy(engine=get_db_engine(), skip_dep_check=True)
 
     return app

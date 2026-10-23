@@ -59,7 +59,7 @@ scikit-learn
 scipy
 semver
 shapely
-sqlalchemy[mypy]>=2.0,<3
+sqlalchemy[asyncio,mypy]>=2.0,<3
 statsmodels
 structlog
 tables
