@@ -24,6 +24,11 @@ vulnerabilities:
       - "pkg:pypi/setuptools@70.3.0"
     statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects sdist building, which never happens in the image. No top-level setuptools is installed."
     expires: "2026-12-01"
+  - id: GHSA-xmj3-9gf7-h52w
+    purls:
+      - "pkg:pypi/setuptools@70.3.0"
+    statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects setuptools/wheel.py legacy egg installation on Windows only, which pip does not vendor. No top-level setuptools is installed."
+    expires: "2026-12-01"
   - id: CVE-2026-97687
     purls:
       - "pkg:pypi/urllib3@2.7.0"
