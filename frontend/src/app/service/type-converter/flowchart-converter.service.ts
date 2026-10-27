@@ -33,7 +33,7 @@ export class FlowchartConverterService {
   public convertComponentToFlowchart(
     transformation: Transformation
   ): FlowchartConfiguration {
-    const position: Position = null;
+    const position: Position | null = null;
 
     // Undefined for components and for workflow stubs (see isFullTransformation),
     // whose preview is then based on the io_interface only.
@@ -138,7 +138,7 @@ export class FlowchartConverterService {
         this.convertWorkflowOperatorsToFlowchartComponents(workflowClean),
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
-    } as FlowchartConfiguration;
+    };
 
     this.convertWorkflowConstants(workflowClean, flowchart);
 

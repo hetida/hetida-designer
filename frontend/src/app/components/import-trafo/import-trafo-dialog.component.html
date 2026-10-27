@@ -21,18 +21,23 @@
   </mat-form-field>
   <div>
     <label>
-      <mat-checkbox [(ngModel)]="updateCode">Update Code</mat-checkbox>
+      <mat-checkbox class="trafo-checkbox" [(ngModel)]="updateCode"
+        >Update Code</mat-checkbox
+      >
     </label>
   </div>
   <div>
     <label>
-      <mat-checkbox [(ngModel)]="expandCode">Expand Code</mat-checkbox>
+      <mat-checkbox class="trafo-checkbox" [(ngModel)]="expandCode"
+        >Expand Code</mat-checkbox
+      >
     </label>
   </div>
   <div>
     <label>
-      <mat-checkbox [(ngModel)]="overwriteReleased">Overwrite</mat-checkbox>
-      Released (DANGER!)
+      <mat-checkbox class="trafo-checkbox" [(ngModel)]="overwriteReleased"
+        >Overwrite Released (DANGER!)</mat-checkbox
+      >
     </label>
   </div>
 </mat-dialog-content>

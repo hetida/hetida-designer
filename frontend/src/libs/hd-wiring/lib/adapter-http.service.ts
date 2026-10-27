@@ -135,10 +135,7 @@ export interface SourceSinkNode {
   path: string;
   metadataKey?: string;
   filters?:
-    | DataSourceSinkDateRangeFilter
-    | Record<string, never>
-    | null
-    | undefined;
+    DataSourceSinkDateRangeFilter | Record<string, never> | null | undefined;
 }
 
 export interface MetaData {

@@ -33,7 +33,7 @@ const config: PlaywrightTestConfig = {
   use: {
     /* Headless */
     headless: true,
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1920, height: 1080 },
     /* HTTPS Errors */
     ignoreHTTPSErrors: true, // Firefox and Safari Webkit are throwing HTTPS Errors
     /* Video Screenshot */

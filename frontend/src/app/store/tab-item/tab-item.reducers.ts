@@ -105,32 +105,20 @@ export const tabItemReducers = createReducer(
     const transformationIdToRemove = action.payload;
     return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
   }),
-  on(
-    setHomeTab,
-    (state): ITabItemState => ({
-      ...state,
-      activeTabItemId: 'HOME'
-    })
-  ),
-  on(
-    setSchedulingTab,
-    (state): ITabItemState => ({
-      ...state,
-      activeTabItemId: 'SCHEDULING'
-    })
-  ),
-  on(
-    setActiveTabItem,
-    (state, action): ITabItemState => ({
-      ...state,
-      activeTabItemId: action.payload
-    })
-  ),
-  on(
-    unsetActiveTabItem,
-    (state): ITabItemState => ({
-      ...state,
-      activeTabItemId: null
-    })
-  )
+  on(setHomeTab, (state): ITabItemState => ({
+    ...state,
+    activeTabItemId: 'HOME'
+  })),
+  on(setSchedulingTab, (state): ITabItemState => ({
+    ...state,
+    activeTabItemId: 'SCHEDULING'
+  })),
+  on(setActiveTabItem, (state, action): ITabItemState => ({
+    ...state,
+    activeTabItemId: action.payload
+  })),
+  on(unsetActiveTabItem, (state): ITabItemState => ({
+    ...state,
+    activeTabItemId: null
+  }))
 );

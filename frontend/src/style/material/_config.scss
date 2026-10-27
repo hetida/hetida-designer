@@ -15,6 +15,7 @@ $mg-primary-palette: (
   400: colors.$hd-pink,
   500: colors.$hd-black,
   700: colors.$hd-grey-dark,
+  800: colors.$hd-white,
   A100: colors.$hd-white,
   A200: colors.$hd-grey-dark,
   A400: colors.$hd-grey,
@@ -35,6 +36,7 @@ $mg-secondary-palette: (
   400: colors.$hd-black,
   500: colors.$hd-white,
   700: colors.$hd-grey,
+  800: colors.$hd-grey-extra-dark,
   contrast: (
     100: colors.$hd-yellow,
     200: colors.$hd-yellow,
