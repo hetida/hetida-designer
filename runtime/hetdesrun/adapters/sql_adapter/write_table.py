@@ -2,6 +2,7 @@ import logging
 import operator
 
 import pandas as pd
+from hdhelpers.metadata.attached import attrs_to_json
 from hdhelpers.metadata.conventions import IntervalType
 from pydantic import ValidationError
 from sqlalchemy import MetaData, Table, and_, delete, tuple_
@@ -232,11 +233,10 @@ def _handle_deletion(  # noqa: PLR0915, PLR0912
 
 
 def _retrieve_metrics(data: pd.DataFrame) -> list[str]:
-    if metrics := list(data.attrs.get("by_metric", {}).keys()):
-        return metrics
-    # Legacy code might use the old convention of ref_metrics
-    if metrics := data.attrs.get("ref_metrics", []):
-        return metrics  # type: ignore[no-any-return]
+    # the queried metrics of the dataset metadata, also if attached as model
+    dataset_metadata = attrs_to_json(data.attrs).get("dataset_metadata") or {}
+    if metrics := dataset_metadata.get("queried_metrics") or []:
+        return [str(metric) for metric in metrics]
     # Fallback to building metrics from data
     if get_sql_adapter_config().infer_metrics_from_metric_column_for_deletion_if_not_present:
         return [str(metric) for metric in data["metric"].unique().tolist()]

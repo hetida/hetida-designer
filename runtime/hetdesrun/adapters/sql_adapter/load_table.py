@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from dtexp import DtexpParsingError
@@ -113,6 +113,8 @@ def prepare_validate_loaded_raw_multitsframe(
     metrics_list: list[str] | None,
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
+    path: list[str] | None = None,
+    query_timestamp: datetime.datetime | None = None,
 ) -> pd.DataFrame:
     """Prepares and validates a multitsframe.
 
@@ -122,6 +124,10 @@ def prepare_validate_loaded_raw_multitsframe(
     Args:
         metrics_list (list[str] | None):
             Is only None if 'ALL' was provided in the metrics filter when calling the adapter.
+        path (list[str] | None):
+            Location of the metrics for the metadata, i.e. database and table.
+        query_timestamp (datetime.datetime | None):
+            When the data was queried, for the metadata.
 
     Returns:
         pd.DataFrame: A validated multitsframe
@@ -150,20 +156,75 @@ def prepare_validate_loaded_raw_multitsframe(
         )
         raise AdapterHandlingException(msg) from e
 
-    # setting meta data (attrs)
-    validated_multi_ts_frame.attrs = {
+    validated_multi_ts_frame.attrs = multitsframe_metadata(
+        validated_multi_ts_frame,
+        ts_table_config,
+        metrics_list,
+        from_datetime,
+        to_datetime,
+        path=path,
+        query_timestamp=query_timestamp,
+    )
+
+    return validated_multi_ts_frame
+
+
+def multitsframe_metadata(
+    multits_frame: pd.DataFrame,
+    ts_table_config: TimeseriesTableConfig,
+    metrics_list: list[str] | None,
+    from_datetime: datetime.datetime,
+    to_datetime: datetime.datetime,
+    path: list[str] | None = None,
+    query_timestamp: datetime.datetime | None = None,
+) -> dict[str, Any]:
+    """Metadata of a loaded multitsframe following the metadata conventions
+
+    The queried metrics are the requested ones or, if all metrics were requested (metrics_list
+    is None), those occurring in the loaded data. The database provides no further information
+    on the metrics, so their id serves as name and their value dimensions have neither unit nor
+    measurement. path is the location of the metrics, i.e. database and table, and
+    query_timestamp the time of the query, since the database delivers its state at that time.
+    """
+    if metrics_list is None:
+        queried_metrics = sorted(multits_frame["metric"].unique().tolist())
+    elif ts_table_config.metric_type == "int":
+        # as in the metric column, e.g. "7" for a requested "07"
+        queried_metrics = [str(int(metric)) for metric in metrics_list]
+    else:
+        queried_metrics = metrics_list
+    queried_metrics = list(dict.fromkeys(queried_metrics))  # without duplicates
+
+    value_columns = [
+        column for column in multits_frame.columns if column not in ("timestamp", "metric")
+    ]
+
+    return {
         "dataset_metadata": {
+            "metric_key": "id",
+            "queried_metrics": queried_metrics,
             "ref_interval_start_timestamp": from_datetime.isoformat(),
             "ref_interval_end_timestamp": to_datetime.isoformat(),
             "ref_interval_type": "closed",
+            **(
+                {"query_timestamp": query_timestamp.astimezone(datetime.UTC).isoformat()}
+                if query_timestamp is not None
+                else {}
+            ),
         },
+        "metrics": [
+            {
+                "id": metric,
+                "name": metric,
+                "value_dimensions": [
+                    {"column": column, "unit": None, "measurement": None}
+                    for column in value_columns
+                ],
+                **({"path": path} if path is not None else {}),
+            }
+            for metric in queried_metrics
+        ],
     }
-    if metrics_list is not None:
-        validated_multi_ts_frame.attrs.update(
-            {"by_metric": {metric: {} for metric in metrics_list}}
-        )
-
-    return validated_multi_ts_frame
 
 
 def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> pd.DataFrame:
@@ -247,6 +308,7 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
             metric_type=ts_table_config.metric_type,
         )
 
+        query_timestamp = datetime.datetime.now(tz=datetime.UTC)
         multits_frame = load_sql_query(db_config, statement)
 
         validated_multi_ts_frame = prepare_validate_loaded_raw_multitsframe(
@@ -256,6 +318,8 @@ def load_table_from_provided_source_id(source_id: str, source_filters: dict) -> 
             metrics_list,
             from_datetime,
             to_datetime,
+            path=[db_config.name, ts_table_name],
+            query_timestamp=query_timestamp,
         )
 
         return validated_multi_ts_frame
