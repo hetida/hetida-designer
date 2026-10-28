@@ -1,21 +1,12 @@
 import logging
 from datetime import datetime
-from enum import StrEnum
 from typing import Any
 
 import pandas as pd
+from hdhelpers.metadata.conventions import IntervalType
 from pydantic import BaseModel, ValidationError, model_validator
 
 logger = logging.getLogger(__name__)
-
-
-class IntervalType(StrEnum):
-    CLOSED = "closed"
-    LEFT_CLOSED = "left_closed"
-    RIGHT_CLOSED = "right_closed"
-    OPEN = "open"
-    LEFT_OPEN = "left_open"
-    RIGHT_OPEN = "right_open"
 
 
 class DatasetMetadata(BaseModel):

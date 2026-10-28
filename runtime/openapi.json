@@ -6899,6 +6899,63 @@
         }
       }
     },
+    "/api/metadata-conventions/check/{data_type}": {
+      "post": {
+        "tags": [
+          "metadata conventions"
+        ],
+        "summary": "Check metadata against the metadata conventions",
+        "description": "Check metadata and optionally data against the metadata conventions\n\nExpects the metadata and optionally the data in the wrapped format of the direct provisioning\nadapter. The data is parsed like a direct provisioning input of the data type.\n\nViolations of the metadata conventions are reported as errors, likely mistakes, e.g. metadata\nnot matching the data, as warnings. Their locations refer to the request body, e.g.\n`__metadata__.metrics[0].value_dimensions[1].column` or `__data__` if the data cannot be\nparsed.",
+        "operationId": "check_metadata_conventions_endpoint_api_metadata_conventions_check__data_type__post",
+        "parameters": [
+          {
+            "name": "data_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "SERIES",
+                "SINGLETSFRAME",
+                "MULTITSFRAME"
+              ],
+              "type": "string",
+              "title": "Data Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WrappedTimeseriesData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checked, the result contains the found issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataCheckResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Request is not in the wrapped format of the data type"
+          }
+        }
+      }
+    },
     "/api/maintenance/reset_test_wiring_to_release_wiring": {
       "post": {
         "tags": [
@@ -7354,6 +7411,22 @@
           "internalUrl"
         ],
         "title": "AdapterFrontendDto"
+      },
+      "AggregationMethod": {
+        "type": "string",
+        "enum": [
+          "MEAN",
+          "AVG",
+          "MEDIAN",
+          "SUM",
+          "MIN",
+          "MAX",
+          "FIRST",
+          "LAST",
+          "COUNT"
+        ],
+        "title": "AggregationMethod",
+        "description": "Method for aggregating timeseries values into coarser intervals.\n\nMetadata lookups normalize AVG to MEAN; they are distinct enum values."
       },
       "AllMeasuredSteps-Input": {
         "properties": {
@@ -9240,6 +9313,13 @@
         ],
         "title": "InfoResponse"
       },
+      "InheritedMetricMetadata": {
+        "properties": {},
+        "additionalProperties": true,
+        "type": "object",
+        "title": "InheritedMetricMetadata",
+        "description": "Properties supplied by a source system for a metric and its parent assets.\n\nStores already-resolved values, e.g. a plant's latitude; the source system resolves the\nhierarchy. Metadata lookups use these properties as fallbacks only with\n``include_inherited=True``. Convention-defined fields such as name, id and unit belong in\nthe metric or value-dimension metadata.\n\nUse JSON types matching each value's meaning: numbers, booleans and UTC ISO timestamp\nstrings for points in time. For example, hetida platform supplies properties by label,\nusing a signal's own value or that of the nearest parent asset providing one."
+      },
       "InputType": {
         "type": "string",
         "enum": [
@@ -9370,6 +9450,19 @@
           "workflow_input_name"
         ],
         "title": "InputWiring"
+      },
+      "IntervalType": {
+        "type": "string",
+        "enum": [
+          "closed",
+          "left_closed",
+          "right_closed",
+          "open",
+          "left_open",
+          "right_open"
+        ],
+        "title": "IntervalType",
+        "description": "Which boundaries belong to a time interval\n\nclosed: both, open: none, left_closed / right_open: only the start,\nright_closed / left_open: only the end."
       },
       "KafkaAdapterStructureSink": {
         "properties": {
@@ -9700,6 +9793,893 @@
           "maintenance_secret"
         ],
         "title": "MaintenancePayload"
+      },
+      "MetadataCheckResult": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid",
+            "description": "Whether no errors were found. There may be warnings nevertheless."
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/MetadataConventionIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "issues"
+        ],
+        "title": "MetadataCheckResult",
+        "description": "Result of checking metadata against the metadata conventions"
+      },
+      "MetadataConventionIssue": {
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/MetadataIssueSeverity"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location",
+            "description": "Where the issue occurs, e.g. metrics[0].value_dimensions[1].column in the checked metadata. Empty for the checked object as a whole."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "location",
+          "message"
+        ],
+        "title": "MetadataConventionIssue",
+        "description": "A metadata validation problem, reported as an error or warning.\n\nAttributes:\n    severity (MetadataIssueSeverity): Error for a violation; warning for a likely mistake.\n    location (str): Path to the affected field, e.g. \"metrics[0].name\"; empty for the\n        metadata as a whole.\n    message (str): Explanation of the problem."
+      },
+      "MetadataIssueSeverity": {
+        "type": "string",
+        "enum": [
+          "error",
+          "warning"
+        ],
+        "title": "MetadataIssueSeverity",
+        "description": "Severity of an issue found when checking metadata against the metadata conventions\n\nerror: Violates the conventions, so helpers and components may misinterpret the metadata.\nwarning: Likely a mistake, e.g. metadata not matching the data."
+      },
+      "MetricComment": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the comment, e.g. a UUID"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date",
+            "description": "Start of the time range the comment refers to"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date",
+            "description": "End of the time range the comment refers to"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "When the comment was created"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the comment was last edited. Null or missing if never edited."
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Free text of the comment"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Username of the author of the comment"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Free text tags classifying the comment"
+          },
+          "replies": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MetricCommentReply"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replies",
+            "description": "Replies to the comment, oldest first"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MetricComment",
+        "description": "A comment attached to a metric, describing a time range of its timeseries data\n\nE.g. the hetida platform provides the comments on a signal whose time range overlaps the\nqueried interval and which existed at query time, newest first.\n\nStart and end of the time range must be provided together. They are equal for a comment on a\nsingle point in time."
+      },
+      "MetricCommentReply": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the reply, e.g. a UUID"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "When the reply was created"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the reply was last edited. Null or missing if never edited."
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Free text of the reply"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Username of the author of the reply"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MetricCommentReply",
+        "description": "A reply to a comment attached to a metric"
+      },
+      "MetricMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Id of the metric, also if another field identifies the metric in the data via dataset_metadata.metric_key. E.g. the hetida platform provides the signal id here."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Long name of the metric"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles"
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A one sentence description"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Unique id / key in external source systems. Often used to identify the metric in the metric column, i.e. as metric_key."
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id",
+            "description": "Actual platform signal id"
+          },
+          "channel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Id",
+            "description": "Actual platform channel id. Deprecated, since the platform calls channels signals now.",
+            "deprecated": true
+          },
+          "value_dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/ValueDimensionMetadata"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Value Dimensions",
+            "description": "Metadata of the value dimensions of this metric: an entry for each value column of the data, i.e. exactly the value dimension \"value\" for a SERIES. Each column may occur at most once."
+          },
+          "default_aggregation_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AggregationMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the timeseries should be aggregated by default, e.g. when components plot or report it in coarser intervals. If missing or null: LAST if the value_data_type of the value dimension \"value\" is boolean or string, otherwise MEAN. AVG is an alias of MEAN. E.g. the hetida platform provides the method it aggregates the signal with when bucketing it, for a signal group member the one configured for the member."
+          },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Falls back to dataset_metadata.default_timezone."
+          },
+          "path": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path",
+            "description": "Location of the metric in the hierarchy of its source system: the names of the levels from the top down to the object the metric belongs to, without the metric itself, e.g. [\"Plant A\", \"Pickling Unit\", \"Influx\"]. Corresponds to the breadcrumb path of the sources of generic REST adapters."
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin",
+            "description": "Where the values come from, as free text of the source system, e.g. \"OPC_UA\", \"MQTT\" or \"FORM\" for values entered manually."
+          },
+          "recording_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecordingMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the values are recorded. Unknown if missing or null. periodic requires data_frequency (or dataset_metadata.ref_data_frequency)."
+          },
+          "data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency",
+            "description": "Interval in which values of the metric are recorded as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": For recording_mode periodic the interval between subsequent values, for on_change the interval after which the value is recorded again at the latest, also without a change (heartbeat). Together with data_frequency_offset and data_frequency_timezone it takes precedence over ref_data_frequency, ref_data_frequency_offset and ref_data_frequency_timezone of the dataset metadata for this metric."
+          },
+          "data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency Offset",
+            "description": "Offset of the timestamps against the starts of the intervals of data_frequency (see data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than data_frequency. 0 if missing or null. Requires data_frequency."
+          },
+          "data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Frequency Timezone",
+            "description": "Time zone the intervals of data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of data_frequency since 1970-01-01T00:00:00Z. With it, for a data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires data_frequency."
+          },
+          "recording_aggregation_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AggregationMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only for recording_mode periodic: how each value aggregates the values of the interval [timestamp, timestamp + data_frequency), e.g. MEAN for an average or MAX for a maximum. Null or missing if the values are samples, e.g. the value holding at the timestamp."
+          },
+          "inherited": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InheritedMetricMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MetricComment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments",
+            "description": "Comments attached to the metric, describing situations in its timeseries data"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "value_dimensions"
+        ],
+        "title": "MetricMetadata",
+        "description": "Metadata of a metric, i.e. of a single, possibly multidimensional timeseries\n\nA metric is identified by its field named by dataset_metadata.metric_key, whose values occur\nin the metric column of a MULTITSFRAME. Every metric must have this field as a string,\nunique among the metrics."
+      },
+      "MultiTSFrameDatasetMetadata": {
+        "if": {
+          "properties": {
+            "ref_dataset_discrete": {
+              "const": true
+            }
+          },
+          "required": [
+            "ref_dataset_discrete"
+          ]
+        },
+        "else": {
+          "properties": {
+            "ref_interval_start_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_end_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ref_interval_start_timestamp",
+            "ref_interval_end_timestamp",
+            "ref_interval_type"
+          ]
+        },
+        "properties": {
+          "metric_key": {
+            "type": "string",
+            "title": "Metric Key",
+            "description": "Which field of the metric objects under metrics identifies a metric, i.e. occurs in the metric column of a MULTITSFRAME, e.g. \"id\" or \"external_id\"."
+          },
+          "queried_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Queried Metrics",
+            "description": "The requested metrics. Since not all queried metrics may have data in the queried interval, a metric may be missing in the data."
+          },
+          "signal_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignalGroupMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref_dataset_discrete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Dataset Discrete",
+            "description": "Whether the ref dataset should be considered as discrete, i.e. isolated datapoints instead of an interval. If true, the ref interval is not required.",
+            "default": false
+          },
+          "ref_interval_start_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval Start Timestamp",
+            "description": "Start of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_end_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval End Timestamp",
+            "description": "End of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the ref interval. Required unless ref_dataset_discrete is true."
+          },
+          "ref_data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency",
+            "description": "Frequency of the timeseries as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": the data_frequency of all metrics without their own, with the same meaning as there. Together with ref_data_frequency_offset and ref_data_frequency_timezone."
+          },
+          "ref_data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Offset",
+            "description": "Offset of the timestamps against the starts of the intervals of ref_data_frequency (see ref_data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than ref_data_frequency. 0 if missing or null. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "ref_data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Timezone",
+            "description": "Time zone the intervals of ref_data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of ref_data_frequency since 1970-01-01T00:00:00Z. With it, for a ref_data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of ref_data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a ref_data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "query_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Timestamp",
+            "description": "The point in time whose state of the data was delivered in UTC isoformat: Data stored, changed or invalidated later is not included. A source supporting it delivers the same data again when queried for this point in time, e.g. for reproducing an execution."
+          },
+          "default_aggregation_interval": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Aggregation Interval",
+            "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
+          },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Applies to all metrics without their own default_timezone."
+          },
+          "invalidation_interval_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval Start",
+            "description": "Start of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval End",
+            "description": "End of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the invalidation interval",
+            "default": "closed"
+          },
+          "invalidate_dataset": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidate Dataset",
+            "description": "Whether existing data should be invalidated: in the invalidation interval if specified, otherwise in the ref interval. If neither is specified, a closed ref interval from the first to the last datapoint is inferred. Without datapoints no invalidation can occur then. What null means is up to the adapter."
+          },
+          "delete_invalidated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete Invalidated",
+            "description": "Whether data to be invalidated should be deleted instead. What null means is up to the adapter. Adapters do not need to support deletion."
+          },
+          "invalidation_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Timestamp",
+            "description": "Invalidation timestamp for all invalidated datapoints. If null, the execution_timestamp query parameter sent to generic REST adapters or, if that is not present either, the current time should be used."
+          },
+          "only_invalidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Only Invalidate",
+            "description": "If true, existing data should only be invalidated and the new data should not be stored. Cannot be true if invalidate_dataset is false.",
+            "default": false
+          },
+          "new_data_invalidation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Data Invalidation Date",
+            "description": "An invalidation date to be stored together with all new datapoints, i.e. invalidating them in advance. Ignored if null."
+          },
+          "single_metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Single Metric",
+            "description": "If the MULTITSFRAME holds a single metric: its metric_key field value. Must not be set if more than one metric is present."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "metric_key",
+          "queried_metrics"
+        ],
+        "title": "MultiTSFrameDatasetMetadata",
+        "description": "Metadata associated with a MULTITSFRAME as a whole\n\nE.g. the queried time interval or how existing data should be handled when the dataset is\nsent to an adapter. The fields concerning invalidation and deletion are only relevant for\nadapters actually supporting these operations, like the built-in SQL adapter. Other adapters\nmay ignore them.\n\nStart and end of an interval must be provided together."
+      },
+      "MultiTSFrameMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/MultiTSFrameDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "title": "Metrics",
+            "description": "Metadata of the metrics: one for each metric in the data. Each metric must have the field named by dataset_metadata.metric_key as a string, unique among the metrics."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "MultiTSFrameMetadata",
+        "description": "Immutable metadata for a MULTITSFRAME: multiple metrics identified by a metric column.\n\nEach metric can have several value dimensions; a MULTITSFRAME may also hold one metric.\nRead from a pandas DataFrame with read_metadata. See the module documentation for storage,\nadapter exchange and common field rules.",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "default_aggregation_interval": "1h",
+              "default_timezone": "Europe/Berlin",
+              "metric_key": "external_id",
+              "queried_metrics": [
+                "plant_a.pressure",
+                "plant_a.temperature"
+              ],
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "closed"
+            },
+            "metrics": [
+              {
+                "external_id": "plant_a.pressure",
+                "id": "c5a8e2f1-0b3d-4e6a-9f7c-1d2e3f4a5b6c",
+                "name": "Plant A pressure",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "pressure",
+                    "unit": "bar"
+                  }
+                ]
+              },
+              {
+                "data_frequency": "1h",
+                "default_aggregation_method": "MAX",
+                "external_id": "plant_a.temperature",
+                "id": "8d7c6b5a-4f3e-4d2c-8b1a-0f9e8d7c6b5a",
+                "name": "Plant A temperature",
+                "recording_mode": "on_change",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "deadband": 0.5,
+                    "decimals": 1,
+                    "measurement": "temperature",
+                    "unit": "\u00b0C"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "MultipleVirtualStructureAdapterSinksResponse": {
         "properties": {
@@ -10228,6 +11208,16 @@
         ],
         "title": "ProcessStage",
         "description": "Stages of the execution process."
+      },
+      "RecordingMode": {
+        "type": "string",
+        "enum": [
+          "periodic",
+          "on_change",
+          "irregular"
+        ],
+        "title": "RecordingMode",
+        "description": "When the values of a timeseries are recorded\n\nperiodic: one value per interval of data_frequency, timestamped with the start of the\ninterval. A missing value is a gap.\non_change: a value is recorded when it changes (by more than the deadband of its value\ndimension) and holds until the next one. Missing timestamps are no gaps, as long as\ndata_frequency (the heartbeat) is not exceeded.\nirregular: values at arbitrary points in time."
       },
       "RefIdType": {
         "type": "string",
@@ -10851,6 +11841,254 @@
         ],
         "title": "ScheduledJobState"
       },
+      "SeriesMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/SingleMetricDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "Metadata of the single metric: exactly one metric, which has the field named by dataset_metadata.metric_key with the value of dataset_metadata.single_metric."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "SeriesMetadata",
+        "description": "Immutable metadata for a SERIES: one metric with a single \"value\" dimension.\n\nRead from a pandas Series with read_metadata. See the module documentation for storage,\nadapter exchange and common field rules.",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "metric_key": "id",
+              "queried_metrics": [
+                "7ab8c419-8745-4714-b588-57c0c772cc95"
+              ],
+              "query_timestamp": "2026-01-02T00:05:00+00:00",
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "right_open",
+              "single_metric": "7ab8c419-8745-4714-b588-57c0c772cc95"
+            },
+            "metrics": [
+              {
+                "data_frequency": "15min",
+                "default_aggregation_method": "MEAN",
+                "default_timezone": "Europe/Berlin",
+                "id": "7ab8c419-8745-4714-b588-57c0c772cc95",
+                "name": "Water level north",
+                "origin": "OPC_UA",
+                "path": [
+                  "Waterworks North",
+                  "Gauge North"
+                ],
+                "recording_aggregation_method": "MEAN",
+                "recording_mode": "periodic",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "decimals": 2,
+                    "measurement": "level",
+                    "unit": "m"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "SharedValueDimensionMetadata": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "The actual column name in the MULTITSFRAME or SINGLETSFRAME, connecting the value dimension to its column. \"value\" for a SERIES."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the value dimension, e.g. \"temperature\". May equal column."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles. Falls back to name."
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots. Falls back to display_name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A description. Should be considered empty if missing."
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\", \"\" for dimensionless quantities"
+          },
+          "measurement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement",
+            "description": "The measured quantity, e.g. \"temperature\""
+          },
+          "value_data_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValueDataType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Data type of the values"
+          },
+          "deadband": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadband",
+            "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals",
+            "description": "Number of decimal places numeric values should be displayed with, in their unit, e.g. 2 for 12.35. Only affects how values are displayed, e.g. in tables, tooltips or reports; the values themselves are not rounded. Up to the consumer if missing or null."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "column"
+        ],
+        "title": "SharedValueDimensionMetadata",
+        "description": "Default metadata for a value column shared across metrics.\n\nMatched by column name (\"value\" for a SERIES) and used when the corresponding field\nis missing from metric-specific metadata."
+      },
+      "SignalGroupMetadata": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Id of the signal group"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the signal group"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Description of the signal group"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "SignalGroupMetadata",
+        "description": "A group of signals a dataset was read from\n\nE.g. the hetida platform provides the signal group a MULTITSFRAME was read from."
+      },
       "SimplifiedLogRecord": {
         "properties": {
           "timestamp": {
@@ -10953,6 +12191,378 @@
           "message"
         ],
         "title": "SimplifiedLogRecord"
+      },
+      "SingleMetricDatasetMetadata": {
+        "if": {
+          "properties": {
+            "ref_dataset_discrete": {
+              "const": true
+            }
+          },
+          "required": [
+            "ref_dataset_discrete"
+          ]
+        },
+        "else": {
+          "properties": {
+            "ref_interval_start_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_end_timestamp": {
+              "type": "string"
+            },
+            "ref_interval_type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ref_interval_start_timestamp",
+            "ref_interval_end_timestamp",
+            "ref_interval_type"
+          ]
+        },
+        "properties": {
+          "metric_key": {
+            "type": "string",
+            "title": "Metric Key",
+            "description": "Which field of the metric objects under metrics identifies a metric, i.e. occurs in the metric column of a MULTITSFRAME, e.g. \"id\" or \"external_id\"."
+          },
+          "queried_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Queried Metrics",
+            "description": "The requested metrics. Since not all queried metrics may have data in the queried interval, a metric may be missing in the data."
+          },
+          "signal_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignalGroupMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref_dataset_discrete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Dataset Discrete",
+            "description": "Whether the ref dataset should be considered as discrete, i.e. isolated datapoints instead of an interval. If true, the ref interval is not required.",
+            "default": false
+          },
+          "ref_interval_start_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval Start Timestamp",
+            "description": "Start of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_end_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Interval End Timestamp",
+            "description": "End of the queried time interval (ref interval) in UTC isoformat. Required unless ref_dataset_discrete is true."
+          },
+          "ref_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the ref interval. Required unless ref_dataset_discrete is true."
+          },
+          "ref_data_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency",
+            "description": "Frequency of the timeseries as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\": the data_frequency of all metrics without their own, with the same meaning as there. Together with ref_data_frequency_offset and ref_data_frequency_timezone."
+          },
+          "ref_data_frequency_offset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Offset",
+            "description": "Offset of the timestamps against the starts of the intervals of ref_data_frequency (see ref_data_frequency_timezone) as timedelta string, e.g. \"4min\": not negative and smaller than ref_data_frequency. 0 if missing or null. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "ref_data_frequency_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Data Frequency Timezone",
+            "description": "Time zone the intervals of ref_data_frequency are aligned to, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Without it, the intervals start at the multiples of ref_data_frequency since 1970-01-01T00:00:00Z. With it, for a ref_data_frequency shorter than a day, the intervals restart at each local midnight: They start at local midnight plus multiples of ref_data_frequency, and the last interval of a day ends at the next local midnight, so it may be shorter, e.g. on the day of a daylight saving time change. For a ref_data_frequency of a day or longer, the intervals follow the calendar of the time zone, e.g. days from local midnight to local midnight. The offset shifts the intervals in both cases. Requires ref_data_frequency. Applies to all metrics without their own data_frequency."
+          },
+          "query_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Timestamp",
+            "description": "The point in time whose state of the data was delivered in UTC isoformat: Data stored, changed or invalidated later is not included. A source supporting it delivers the same data again when queried for this point in time, e.g. for reproducing an execution."
+          },
+          "default_aggregation_interval": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Aggregation Interval",
+            "description": "Interval to aggregate the timeseries to by default, e.g. when components plot or report them, as Pandas date offset alias or timedelta string, e.g. \"15min\" or \"1D\". The metrics are aggregated with their default_aggregation_method. E.g. a hetida platform signal group is configured with such an interval."
+          },
+          "default_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Timezone",
+            "description": "Time zone the timeseries should be evaluated in by default, as IANA time zone name like \"Europe/Berlin\" or \"UTC\" (preferred, since it respects daylight saving time) or as fixed UTC offset like \"+02:00\". Components evaluating the timeseries in calendar intervals use it, e.g. a report aggregating days, which start at midnight of this time zone, so the results differ between time zones. This is not the time zone timestamps are displayed in: That is the plot target timezone of the execution context, which depends on the viewer, while this time zone belongs to the data, e.g. the time zone of the plant. Applies to all metrics without their own default_timezone."
+          },
+          "invalidation_interval_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval Start",
+            "description": "Start of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Interval End",
+            "description": "End of an invalidation interval separate from the ref interval in UTC isoformat"
+          },
+          "invalidation_interval_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntervalType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of the invalidation interval",
+            "default": "closed"
+          },
+          "invalidate_dataset": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidate Dataset",
+            "description": "Whether existing data should be invalidated: in the invalidation interval if specified, otherwise in the ref interval. If neither is specified, a closed ref interval from the first to the last datapoint is inferred. Without datapoints no invalidation can occur then. What null means is up to the adapter."
+          },
+          "delete_invalidated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete Invalidated",
+            "description": "Whether data to be invalidated should be deleted instead. What null means is up to the adapter. Adapters do not need to support deletion."
+          },
+          "invalidation_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation Timestamp",
+            "description": "Invalidation timestamp for all invalidated datapoints. If null, the execution_timestamp query parameter sent to generic REST adapters or, if that is not present either, the current time should be used."
+          },
+          "only_invalidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Only Invalidate",
+            "description": "If true, existing data should only be invalidated and the new data should not be stored. Cannot be true if invalidate_dataset is false.",
+            "default": false
+          },
+          "new_data_invalidation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|\\+00:00)$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Data Invalidation Date",
+            "description": "An invalidation date to be stored together with all new datapoints, i.e. invalidating them in advance. Ignored if null."
+          },
+          "single_metric": {
+            "type": "string",
+            "title": "Single Metric",
+            "description": "The metric_key field value of the single metric under metrics."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "metric_key",
+          "queried_metrics",
+          "single_metric"
+        ],
+        "title": "SingleMetricDatasetMetadata",
+        "description": "Metadata associated with a SERIES or SINGLETSFRAME as a whole\n\nE.g. the queried time interval or how existing data should be handled when the dataset is\nsent to an adapter. The fields concerning invalidation and deletion are only relevant for\nadapters actually supporting these operations, like the built-in SQL adapter. Other adapters\nmay ignore them.\n\nStart and end of an interval must be provided together."
+      },
+      "SingleTSFrameMetadata": {
+        "properties": {
+          "value_dimensions_shared": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SharedValueDimensionMetadata"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Dimensions Shared",
+            "description": "Metadata of value dimensions that have the same meaning for all metrics. Consumers use it as fallback, but it does not replace the value dimensions of the metrics. Each column may occur at most once."
+          },
+          "dataset_metadata": {
+            "$ref": "#/components/schemas/SingleMetricDatasetMetadata"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricMetadata"
+            },
+            "type": "array",
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "Metadata of the single metric: exactly one metric, which has the field named by dataset_metadata.metric_key with the value of dataset_metadata.single_metric."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "dataset_metadata",
+          "metrics"
+        ],
+        "title": "SingleTSFrameMetadata",
+        "description": "Immutable metadata for a SINGLETSFRAME: one metric with one or more value columns.\n\nRead from a pandas DataFrame with read_metadata. See the module documentation for storage,\nadapter exchange and common field rules.",
+        "examples": [
+          {
+            "dataset_metadata": {
+              "metric_key": "external_id",
+              "queried_metrics": [
+                "abc.temp"
+              ],
+              "ref_interval_end_timestamp": "2026-01-02T00:00:00+00:00",
+              "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
+              "ref_interval_type": "closed",
+              "single_metric": "abc.temp"
+            },
+            "metrics": [
+              {
+                "external_id": "abc.temp",
+                "id": "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+                "name": "ABC temperature",
+                "value_dimensions": [
+                  {
+                    "column": "value",
+                    "measurement": "temperature",
+                    "unit": "\u00b0C"
+                  },
+                  {
+                    "column": "state",
+                    "name": "measurement state"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "State": {
         "type": "string",
@@ -12187,6 +13797,144 @@
         ],
         "title": "ValidationError"
       },
+      "ValueDataType": {
+        "type": "string",
+        "enum": [
+          "float",
+          "integer",
+          "boolean",
+          "string"
+        ],
+        "title": "ValueDataType",
+        "description": "Data type of the values of a value dimension"
+      },
+      "ValueDimensionMetadata": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "The actual column name in the MULTITSFRAME or SINGLETSFRAME, connecting the value dimension to its column. \"value\" for a SERIES."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the value dimension, e.g. \"temperature\". May equal column."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "A shorter name for labels, captions or plot titles. Falls back to name."
+          },
+          "short_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Display Name",
+            "description": "A short name for legends in plots. Falls back to display_name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "A description. Should be considered empty if missing."
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "Unit of the values, e.g. \"\u00b0C\" or \"m/s\". \"\" for dimensionless quantities, null if unknown."
+          },
+          "measurement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement",
+            "description": "The measured quantity, e.g. \"temperature\". Null if unknown."
+          },
+          "value_data_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValueDataType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Data type of the values"
+          },
+          "deadband": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadband",
+            "description": "For a metric with recording_mode on_change: the change of the values, in their unit, which has to be exceeded for a value to be recorded. 0 records every change."
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals",
+            "description": "Number of decimal places numeric values should be displayed with, in their unit, e.g. 2 for 12.35. Only affects how values are displayed, e.g. in tables, tooltips or reports; the values themselves are not rounded. Up to the consumer if missing or null."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "column",
+          "unit",
+          "measurement"
+        ],
+        "title": "ValueDimensionMetadata",
+        "description": "Metadata for one metric's value column, such as its unit and measured quantity.\n\nEach metric describes its value columns; a SERIES uses \"value\". Non-null fields take\nprecedence over shared metadata for the same column. Unit and measurement are required\nfields, but may be None if unknown."
+      },
       "VersionInfo": {
         "properties": {
           "version": {
@@ -13372,6 +15120,66 @@
         },
         "type": "object",
         "title": "WorkflowWiring"
+      },
+      "WrappedTimeseriesData": {
+        "properties": {
+          "__hd_wrapped_data_object__": {
+            "type": "string",
+            "enum": [
+              "SERIES",
+              "DATAFRAME"
+            ],
+            "title": "Hd Wrapped Data Object",
+            "description": "\"SERIES\" for a SERIES, \"DATAFRAME\" for a SINGLETSFRAME or MULTITSFRAME"
+          },
+          "__metadata__": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeriesMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/SingleTSFrameMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/MultiTSFrameMetadata"
+              }
+            ],
+            "title": "Metadata",
+            "description": "The metadata to check, following the schema of the data type"
+          },
+          "__data__": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "The data as for the direct provisioning adapter. If omitted, only the metadata is checked."
+          },
+          "__data_parsing_options__": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data Parsing Options",
+            "description": "Additional options for parsing the data, e.g. {\"orient\": \"split\"}",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "__hd_wrapped_data_object__",
+          "__metadata__"
+        ],
+        "title": "WrappedTimeseriesData",
+        "description": "SERIES, SINGLETSFRAME or MULTITSFRAME with metadata in the wrapped format\n\nThis is the wrapped format of the direct provisioning adapter, except that __data__ may be\nomitted to check only the metadata."
       },
       "hetdesrun__adapters__blob_storage__models__MultipleSinksResponse": {
         "properties": {

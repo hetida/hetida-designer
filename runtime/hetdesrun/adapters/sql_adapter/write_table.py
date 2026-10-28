@@ -2,6 +2,7 @@ import logging
 import operator
 
 import pandas as pd
+from hdhelpers.metadata.conventions import IntervalType
 from pydantic import ValidationError
 from sqlalchemy import MetaData, Table, and_, delete, tuple_
 from sqlalchemy.engine import Connection
@@ -18,7 +19,6 @@ from hetdesrun.adapters.sql_adapter.utils import (
 )
 from hetdesrun.models.dataset_metadata import (
     DatasetMetadata,
-    IntervalType,
     get_dataset_metadata_from_attrs,
 )
 
