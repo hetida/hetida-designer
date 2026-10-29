@@ -7,6 +7,7 @@ from hetdesrun.structure.db.source_sink_service import (
     fetch_collection_of_sources_from_db_by_id,
 )
 from hetdesrun.structure.models import StructureServiceSink, StructureServiceSource
+from hetdesrun.utils import deep_merge
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,13 @@ def add_vst_metadata_to_input_wiring_attrs(
     relevant_indices: list[int],
     virtual_sources: dict[UUID, StructureServiceSource],
 ) -> None:
+    """Merge the meta_data of the virtual sources into the attrs of their input wirings
+
+    The meta_data is merged recursively (see deep_merge) and takes precedence over attrs already
+    set in the input wiring.
+    """
     for idx, virtual_source in zip(relevant_indices, virtual_sources.values(), strict=True):
         if virtual_source.meta_data is not None:
-            if input_wirings[idx].attrs:
-                input_wirings[idx].attrs.update(  # type: ignore[union-attr]
-                    virtual_source.meta_data
-                )
-            else:
-                input_wirings[idx].attrs = virtual_source.meta_data
+            input_wirings[idx].attrs = deep_merge(
+                input_wirings[idx].attrs or {}, virtual_source.meta_data
+            )

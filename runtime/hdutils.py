@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import pytz
 from hdhelpers.helpers import modify_timezone  # noqa F401  # noqa F401  # noqa F401
+from hdhelpers.metadata.attached import attrs_to_json
 from plotly.graph_objects import Figure
 from pydantic import (
     BaseModel,
@@ -340,7 +341,7 @@ def parse_pydantic_series(v: pd.Series | str | dict | list) -> pd.Series:
 def serialize_series(s: pd.Series) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "SERIES",
-        "__metadata__": s.attrs,
+        "__metadata__": attrs_to_json(s.attrs),
         "__data__": json.loads(
             # double serialization/deserialization in order to serialize both NaN and NaT
             # to null
@@ -394,7 +395,7 @@ def parse_pydantic_pandas_data_frame(v: pd.DataFrame | str | dict | list) -> pd.
 def serialize_dataframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
@@ -480,7 +481,7 @@ def parse_pydantic_multi_timeseries_pandas_data_frame(
 def serialize_multitsframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
@@ -571,7 +572,7 @@ def parse_pydantic_single_timeseries_pandas_data_frame(
 def serialize_singletsframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
@@ -598,9 +599,9 @@ PydanticSingleTimeseriesPandasDataFrame = Annotated[
 def serialize_series_raw(s: pd.Series) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "SERIES",
-        # __metdata__ uncoerced on purpose; the msgspec enc_hook coerces exotic values
-        # (see hetdesrun.service.serialization_helpers):
-        "__metadata__": s.attrs,
+        # __metdata__ uncoerced on purpose apart from attached metadata models; the msgspec
+        # enc_hook coerces exotic values (see hetdesrun.service.serialization_helpers):
+        "__metadata__": attrs_to_json(s.attrs),
         "__data__": msgspec.Raw(
             s.to_json(
                 date_format="iso",
@@ -615,7 +616,7 @@ def serialize_series_raw(s: pd.Series) -> dict[str, Any]:
 def serialize_dataframe_raw(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": msgspec.Raw(df.to_json(date_format="iso").encode()),
     }
 
@@ -772,7 +773,7 @@ serializer_funcs_by_type = {
     pd.Series: serialize_series,
     pd.DataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
@@ -780,21 +781,21 @@ serializer_funcs_by_type = {
     PydanticPandasSeries: serialize_series,
     PydanticPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
     },
     PydanticMultiTimeseriesPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
     },
     PydanticSingleTimeseriesPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null

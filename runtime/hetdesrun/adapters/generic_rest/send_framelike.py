@@ -8,11 +8,13 @@ import base64
 import datetime
 import json
 import logging
+from collections.abc import Mapping
 from posixpath import join as posix_urljoin
 from typing import Any, Literal
 from uuid import UUID
 
 import httpx
+from hdhelpers.metadata.attached import attrs_to_json
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterConnectionError
@@ -26,7 +28,10 @@ logger = logging.getLogger(__name__)
 
 
 def encode_attributes(df_attrs: Any) -> str:
-    df_attrs_json_str = json.dumps(df_attrs)
+    # metadata attached as model in its JSON form
+    df_attrs_json_str = json.dumps(
+        attrs_to_json(df_attrs) if isinstance(df_attrs, Mapping) else df_attrs
+    )
     logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
     df_attrs_bytes = df_attrs_json_str.encode("utf-8")
     base64_bytes = base64.b64encode(df_attrs_bytes)
