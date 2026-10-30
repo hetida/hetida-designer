@@ -11,6 +11,7 @@ import json
 
 import pandas as pd
 import pytest
+from hdhelpers.metadata import attach_metadata
 
 from hetdesrun.component.load import import_func_from_code_wrapper
 
@@ -68,9 +69,13 @@ def multitsframe_with_metadata() -> pd.DataFrame:
         "connectors/convert-multitsframe-to-dataframe_100_ed88477a-72f5-475b-b3e6-9b0e030609b6.json",
     ],
 )
-def test_result_and_input_are_unaffected(path: str) -> None:
+@pytest.mark.parametrize("attached", [False, True])
+def test_result_and_input_are_unaffected(path: str, attached: bool) -> None:
     main = component_main(path)
     multitsframe = multitsframe_with_metadata()
+    if attached:
+        # as the runtime attaches the metadata of workflow inputs
+        assert attach_metadata(multitsframe) is not None
     expected_input = multitsframe.copy()
     expected_attrs = copy.deepcopy(multitsframe.attrs)
     without_metadata = multitsframe.copy()

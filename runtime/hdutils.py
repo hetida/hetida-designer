@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import pytz
 from hdhelpers.helpers import modify_timezone  # noqa F401  # noqa F401  # noqa F401
-from hdhelpers.metadata.attached import attrs_to_json
+from hdhelpers.metadata.attached import attrs_to_json, read_metadata
 from plotly.graph_objects import Figure
 from pydantic import (
     BaseModel,
@@ -1103,10 +1103,10 @@ def add_columns_from_metric_metadata(
     replace_metric_col_with_key: str | list[str] | None = None,
     default_value: Any = np.nan,
 ) -> pd.DataFrame:
-    """Add columns (or replace metric column) from attrs metadata in a multitsframe
+    """Add columns (or replace metric column) from the metric metadata of a multitsframe
 
-    Expects a hetida designer multitsframe with metadata according to hetida designer
-    metadata conventions.
+    Expects a hetida designer multitsframe with metadata following the hetida designer metadata
+    conventions, also if attached as model (see hdhelpers.metadata.read_metadata).
 
     For replacing the metric col using replace_metric_col_with_key this expects a
     value for each metric to be found in the metadata. If that is not the case it keeps
@@ -1117,80 +1117,52 @@ def add_columns_from_metric_metadata(
 
     Modifies in-place, but also returns the modified multitsframe.
 
-    keys is a list of json-path-like lists. For each entry a column is added, where
-    in the found metric metdata the field at subpath defined by this entry is assigned.
-    For convenience a str entry is interpreted as json path of length 1.
+    keys is a list of json-path-like lists. For each entry a column named by its last element is
+    added, where for each metric the field at this path in its metadata is assigned, with the
+    fallbacks of the conventions (e.g. the value dimension "value" and the inherited properties,
+    see the metric_info method of the metadata models). For convenience a str entry is
+    interpreted as json path of length 1.
 
-    E.g. if your attrs looks like
-        "by_metric": {
-            "a": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "AAAAA",
-                        "display_name": "some A",
-                        "short_display_name": "a",
-                        "description": "some descriptions",
-                        "external_id": "AA",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
-            "b": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "BBBBB",
-                        "display_name": "some B",
-                        "short_display_name": "b",
-                        "description": "some descriptions",
-                        "external_id": "BB",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
+    E.g. if the entries under "metrics" in attrs look like
+        {
+            "id": "a",
+            "name": "AAAAA",
+            "external_id": "AA",
+            "signal_id": "abc123-...",
+            "inherited": {"site": "north"},
+            "value_dimensions": [{"column": "value", "unit": "m", "measurement": "level"}],
         }
 
-    then you can specify to add an external_id column and an additional channel id column via
-        add_columns_from_metric_metadata(
-            multitsframe, keys=[
-                ["structured_metadata", "metric", "external_id"],
-                ["structured_metadata", "metric", "channel_id"]
-            ]
-        )
+    then you can specify to add an external_id column and a site column via
+        add_columns_from_metric_metadata(multitsframe, keys=["external_id", ["inherited", "site"]])
 
     Similarly replace_metric_col_with_key is a json-path-like list or interpreted as length 1 such
     path if a single str.
     """
 
-    metrics_metadata = extract_sub_value(multitsframe.attrs, ["by_metric"])
-
-    if metrics_metadata is None or all(
-        (x is None or len(x) == 0)
-        for x in metrics_metadata.values()  # nothin contained in the values
-    ):
-        metrics_metadata = extract_sub_value(multitsframe.attrs, ["metric_metadata"])
-
-    if metrics_metadata is None:
-        logger.warning("Did not found metric metadata for extracting data into columns.")
+    meta = read_metadata(multitsframe, "MULTITSFRAME")
+    if meta is None:
+        logger.warning(
+            "Found no metadata following the metadata conventions for extracting data into columns."
+        )
         return multitsframe
 
-    if replace_metric_col_with_key is not None:
-        key_list = (
-            [replace_metric_col_with_key]
-            if isinstance(replace_metric_col_with_key, str)
-            else replace_metric_col_with_key
-        )
+    def values_by_metric(key: str | list[str]) -> dict[str, Any]:
+        key_list = [key] if isinstance(key, str) else key
+        return {
+            metric: value
+            for metric, value in meta.metric_infos(".".join(key_list)).items()
+            if value is not None
+        }
 
+    if replace_metric_col_with_key is not None:
         multitsframe["metric"] = multitsframe["metric"].replace(
-            extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
+            values_by_metric(replace_metric_col_with_key)
         )
     if keys is not None:
         for key in keys:
-            key_list = [key] if isinstance(key, str) else key
-
-            mapping_dict = extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
-
-            mapping_dict = defaultdict(lambda: default_value, mapping_dict)
-
-            multitsframe[key_list[-1]] = multitsframe["metric"].map(mapping_dict)
+            column = key if isinstance(key, str) else key[-1]
+            mapping_dict = defaultdict(lambda: default_value, values_by_metric(key))
+            multitsframe[column] = multitsframe["metric"].map(mapping_dict)
 
     return multitsframe

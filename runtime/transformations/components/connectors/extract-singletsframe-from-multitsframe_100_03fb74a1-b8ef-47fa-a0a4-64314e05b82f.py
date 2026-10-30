@@ -21,6 +21,8 @@ The metadata (`.attrs`) is narrowed down accordingly following the [metadata con
 * the `metrics` entries are reduced to the one entry belonging to **metric** (identified via `dataset_metadata.metric_key`, defaulting to "id"),
 * everything else, in particular `value_dimensions_shared`, is carried over unchanged.
 
+If the metadata follows the metadata conventions and describes **metric**, `queried_metrics` becomes **metric**, too, and the metadata is attached to the result as model (see `read_metadata` of `hdhelpers.metadata`).
+
 Raises a ComponentInputValidationException if **metric** does not occur in the multitsframe.
 
 ## Examples
@@ -42,6 +44,8 @@ The json input of a typical call of this component is
 """
 
 import copy
+
+from hdhelpers.metadata import attrs_to_json, read_metadata, set_metadata
 
 from hdutils import ComponentInputValidationException
 
@@ -111,9 +115,13 @@ def main(*, multitsframe, metric):
             invalid_component_inputs=["metric"],
         )
 
+    meta = read_metadata(multitsframe, "MULTITSFRAME")
     singletsframe = multitsframe[multitsframe["metric"] == metric].drop(columns=["metric"])
     singletsframe = singletsframe.sort_values("timestamp").reset_index(drop=True)
-    singletsframe.attrs = narrow_metadata_to_metric(multitsframe.attrs, metric)
+    if meta is not None and metric in meta.metric_ids():
+        set_metadata(singletsframe, meta.narrowed_to(metric))
+    else:
+        singletsframe.attrs = narrow_metadata_to_metric(attrs_to_json(multitsframe.attrs), metric)
 
     return {"singletsframe": singletsframe}
 
@@ -125,6 +133,30 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import META_KEY, attach_metadata, check_metadata_conventions
+
+    MULTITSFRAME_METADATA = {
+        "dataset_metadata": {
+            "metric_key": "external_id",
+            "queried_metrics": ["a", "b"],
+            "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+            "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+            "ref_interval_type": "closed",
+        },
+        "metrics": [
+            {
+                "id": f"id of {metric}",
+                "external_id": metric,
+                "name": f"Metric {metric}",
+                "value_dimensions": [
+                    {"column": "value", "unit": "°C", "measurement": "temperature"},
+                    {"column": "state", "unit": None, "measurement": None},
+                ],
+            }
+            for metric in ("a", "b")
+        ],
+        "value_dimensions_shared": [{"column": "value", "description": "Measured"}],
+    }
 
     @pytest.fixture
     def multitsframe():
@@ -175,6 +207,21 @@ else:
         ]
         # input attrs must not be modified
         assert len(multitsframe.attrs["metrics"]) == 2  # noqa: S101
+
+    @pytest.mark.parametrize("attached", [False, True])
+    def test_metadata_following_conventions_is_narrowed(multitsframe, attached):
+        multitsframe.attrs = copy.deepcopy(MULTITSFRAME_METADATA)
+        if attached:
+            attach_metadata(multitsframe)
+
+        singletsframe = main(multitsframe=multitsframe, metric="a")["singletsframe"]
+
+        assert set(singletsframe.attrs) == {META_KEY}  # noqa: S101
+        assert check_metadata_conventions(singletsframe) == []  # noqa: S101
+        meta = read_metadata(singletsframe, "SINGLETSFRAME", required=True)
+        assert meta.dataset_metadata.queried_metrics == ("a",)  # noqa: S101
+        assert meta.metric().name == "Metric a"  # noqa: S101
+        assert meta.value_dimensions_shared[0].description == "Measured"  # noqa: S101
 
     def test_works_without_metadata(multitsframe):
         multitsframe.attrs = {}

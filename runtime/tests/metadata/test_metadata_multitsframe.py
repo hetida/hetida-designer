@@ -1,86 +1,94 @@
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
+import pytest
+from hdhelpers.metadata import attach_metadata
 
 from hdutils import add_columns_from_metric_metadata
 
 
-def test_add_columns_to_multitsframe_from_metric_metadata():
-    base_multitsframe = pd.DataFrame(
+def metric(metric_id: str, **fields: object) -> dict:
+    return {
+        "id": metric_id,
+        "name": f"name of {metric_id}",
+        "value_dimensions": [{"column": "value", "unit": "m", "measurement": None}],
+    } | fields
+
+
+@pytest.fixture(params=["plain", "attached"])
+def base_multitsframe(request: pytest.FixtureRequest) -> pd.DataFrame:
+    multitsframe = pd.DataFrame(
         {
             "metric": ["a", "b", "a", "a", "b", "c"],
             "timestamp": pd.date_range(start="2025-11-25T08:00:00+00:00", freq="1h", periods=6),
             "value": [42.1, 22.0, 42.2, 42.3, 22.1, 0.3],
         }
     )
-
-    base_multitsframe.attrs = {
-        "dataset_metadata": {},
-        "by_metric": {
-            "a": {"aks": "A"},
-            "b": {"aks": "B"},
+    multitsframe.attrs = {
+        "dataset_metadata": {
+            "metric_key": "id",
+            "queried_metrics": ["a", "b", "c"],
+            "ref_interval_start_timestamp": "2025-11-25T08:00:00+00:00",
+            "ref_interval_end_timestamp": "2025-11-25T13:00:00+00:00",
+            "ref_interval_type": "closed",
         },
+        "metrics": [
+            metric("a", external_id="AA", aks="A", inherited={"site": "north"}),
+            metric("b", external_id="BB", aks="B"),
+            metric("c"),
+        ],
     }
+    if request.param == "attached":
+        assert attach_metadata(multitsframe) is not None
+    return multitsframe
 
-    multitsframe = base_multitsframe.copy()
-    multitsframe = add_columns_from_metric_metadata(multitsframe, keys=["aks"], default_value="CCC")
-    assert "aks" in multitsframe.columns
+
+def copy_of(multitsframe: pd.DataFrame) -> pd.DataFrame:
+    copied = multitsframe.copy()
+    copied.attrs = deepcopy(multitsframe.attrs)
+    return copied
+
+
+def test_add_columns_to_multitsframe_from_metric_metadata(base_multitsframe):
+    multitsframe = add_columns_from_metric_metadata(
+        copy_of(base_multitsframe), keys=["aks"], default_value="CCC"
+    )
     assert multitsframe["aks"].to_numpy().tolist() == ["A", "B", "A", "A", "B", "CCC"]
 
-    multitsframe = base_multitsframe.copy()
-    multitsframe = add_columns_from_metric_metadata(multitsframe, keys=["aks"])
-    assert "aks" in multitsframe.columns
-    assert multitsframe["aks"].to_numpy().tolist() == ["A", "B", "A", "A", "B", np.nan]
+    multitsframe = add_columns_from_metric_metadata(copy_of(base_multitsframe), keys=["aks"])
+    assert multitsframe["aks"].to_numpy().tolist()[:5] == ["A", "B", "A", "A", "B"]
+    assert np.isnan(multitsframe["aks"].iloc[5])
 
-    multitsframe = base_multitsframe.copy()
-    multitsframe = add_columns_from_metric_metadata(multitsframe, replace_metric_col_with_key="aks")
-    assert multitsframe["metric"].to_numpy().tolist() == ["A", "B", "A", "A", "B", "c"]
-    assert "aks" not in multitsframe.columns
-
-    base_multitsframe.attrs = {
-        "dataset_metadata": {},
-        "by_metric": {
-            "a": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "AAAAA",
-                        "display_name": "some A",
-                        "short_display_name": "a",
-                        "description": "some descriptions",
-                        "external_id": "AA",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
-            "b": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "BBBBB",
-                        "display_name": "some B",
-                        "short_display_name": "b",
-                        "description": "some descriptions",
-                        "external_id": "BB",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
-        },
-    }
-    multitsframe = base_multitsframe.copy()
+    # nested fields and the fallbacks of the conventions
     multitsframe = add_columns_from_metric_metadata(
-        multitsframe,
-        keys=[
-            ["structured_metadata", "metric", "external_id"],
-            ["structured_metadata", "metric", "channel_id"],
-        ],
-        default_value="CCC",
+        copy_of(base_multitsframe), keys=[["inherited", "site"], "unit"], default_value="CCC"
     )
-    assert "external_id" in multitsframe.columns
-    assert multitsframe["external_id"].to_numpy().tolist() == ["AA", "BB", "AA", "AA", "BB", "CCC"]
-    assert "channel_id" in multitsframe.columns
+    assert multitsframe["site"].to_numpy().tolist() == ["north", "CCC", "north", "north"] + [
+        "CCC",
+        "CCC",
+    ]
+    assert set(multitsframe["unit"]) == {"m"}
 
-    multitsframe = base_multitsframe.copy()
+
+def test_replace_metric_col_from_metric_metadata(base_multitsframe):
     multitsframe = add_columns_from_metric_metadata(
-        multitsframe, replace_metric_col_with_key=["structured_metadata", "metric", "external_id"]
+        copy_of(base_multitsframe), replace_metric_col_with_key="external_id"
     )
     assert multitsframe["metric"].to_numpy().tolist() == ["AA", "BB", "AA", "AA", "BB", "c"]
     assert "external_id" not in multitsframe.columns
+
+    multitsframe = add_columns_from_metric_metadata(
+        copy_of(base_multitsframe), replace_metric_col_with_key=["inherited", "site"]
+    )
+    assert multitsframe["metric"].to_numpy().tolist() == ["north", "b", "north", "north", "b", "c"]
+
+
+def test_metadata_not_following_conventions_adds_nothing():
+    multitsframe = pd.DataFrame({"metric": ["a"], "timestamp": [pd.Timestamp.now()], "value": [1]})
+    # the older structure
+    multitsframe.attrs = {"by_metric": {"a": {"aks": "A"}}}
+
+    result = add_columns_from_metric_metadata(multitsframe, keys=["aks"])
+
+    assert list(result.columns) == ["metric", "timestamp", "value"]

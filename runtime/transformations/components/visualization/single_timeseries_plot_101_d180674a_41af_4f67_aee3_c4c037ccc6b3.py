@@ -48,27 +48,36 @@ The JSON input of a typical component invocation is:
   "__hd_wrapped_data_object__": "SERIES",
   "__metadata__": {
     "dataset_metadata": {
+      "metric_key": "id",
+      "single_metric": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
+      "queried_metrics": [
+        "7485907a-ae39-45c6-a698-e81fbf6d2dda"
+      ],
       "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",
       "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",
       "ref_interval_type": "closed"
     },
-    "single_metric_metadata": {
-      "structured_metadata": {
-        "metric": {
-          "name": "Tagesmittelwert",
-          "display_name": null,
-          "short_display_name": null,
-          "description": "Abfluss",
-          "unit": "l/s",
-          "measurement": null,
-          "value_data_type": null,
-          "external_id": "precipitation_in_mm_h",
-          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"
-        },
+    "metrics": [
+      {
+        "id": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
+        "external_id": "precipitation_in_mm_h",
+        "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56",
+        "name": "Tagesmittelwert",
+        "display_name": null,
+        "short_display_name": null,
+        "description": "Abfluss",
+        "value_dimensions": [
+          {
+            "column": "value",
+            "unit": "l/s",
+            "measurement": null,
+            "value_data_type": null
+          }
+        ],
         "comments": [],
         "inherited": {}
       }
-    }
+    ]
   },
   "__data__": {
     "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",
@@ -361,7 +370,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Tagesmittelwert",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Abfluss",\n          "unit": "l/s",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
+                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "metric_key": "id",\n      "single_metric": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n      "queried_metrics": [\n        "7485907a-ae39-45c6-a698-e81fbf6d2dda"\n      ],\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "metrics": [\n      {\n        "id": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n        "external_id": "precipitation_in_mm_h",\n        "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56",\n        "name": "Tagesmittelwert",\n        "display_name": null,\n        "short_display_name": null,\n        "description": "Abfluss",\n        "value_dimensions": [\n          {\n            "column": "value",\n            "unit": "l/s",\n            "measurement": null,\n            "value_data_type": null\n          }\n        ],\n        "comments": [],\n        "inherited": {}\n      }\n    ]\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
             },
         },
         {
@@ -426,7 +435,7 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "series",
             "filters": {
-                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "single_metric_metadata": {\n      "structured_metadata": {\n        "metric": {\n          "name": "Tagesmittelwert",\n          "display_name": null,\n          "short_display_name": null,\n          "description": "Abfluss",\n          "unit": "l/s",\n          "measurement": null,\n          "value_data_type": null,\n          "external_id": "precipitation_in_mm_h",\n          "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56"\n        },\n        "comments": [],\n        "inherited": {}\n      }\n    }\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
+                "value": '{\n  "__hd_wrapped_data_object__": "SERIES",\n  "__metadata__": {\n    "dataset_metadata": {\n      "metric_key": "id",\n      "single_metric": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n      "queried_metrics": [\n        "7485907a-ae39-45c6-a698-e81fbf6d2dda"\n      ],\n      "ref_interval_start_timestamp": "2026-06-01T22:00:00.000Z",\n      "ref_interval_end_timestamp": "2026-06-23T22:00:00.000Z",\n      "ref_interval_type": "closed"\n    },\n    "metrics": [\n      {\n        "id": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n        "external_id": "precipitation_in_mm_h",\n        "signal_id": "ff05d22b-1968-47d2-9683-e7598723cd56",\n        "name": "Tagesmittelwert",\n        "display_name": null,\n        "short_display_name": null,\n        "description": "Abfluss",\n        "value_dimensions": [\n          {\n            "column": "value",\n            "unit": "l/s",\n            "measurement": null,\n            "value_data_type": null\n          }\n        ],\n        "comments": [],\n        "inherited": {}\n      }\n    ]\n  },\n  "__data__": {\n    "name": "7485907a-ae39-45c6-a698-e81fbf6d2dda",\n    "index": [\n      "2026-06-01T22:00:00.000Z",\n      "2026-06-02T22:00:00.000Z",\n      "2026-06-03T22:00:00.000Z",\n      "2026-06-04T22:00:00.000Z",\n      "2026-06-05T22:00:00.000Z",\n      "2026-06-06T22:00:00.000Z",\n      "2026-06-07T22:00:00.000Z",\n      "2026-06-08T22:00:00.000Z",\n      "2026-06-16T22:00:00.000Z",\n      "2026-06-17T22:00:00.000Z",\n      "2026-06-18T22:00:00.000Z",\n      "2026-06-19T22:00:00.000Z",\n      "2026-06-20T22:00:00.000Z",\n      "2026-06-21T22:00:00.000Z",\n      "2026-06-22T22:00:00.000Z",\n      "2026-06-23T22:00:00.000Z"\n    ],\n    "data": [\n      567.8958333333,\n      588.36875,\n      575.3597222222,\n      592.5548611111,\n      568.5895104895,\n      573.8763888889,\n      553.086170952,\n      561.0198300283,\n      568.2150411281,\n      582.1902777778,\n      572.9930555556,\n      575.7409722222,\n      568.7248088951,\n      556.4777777778,\n      538.7477414871,\n      549.191104934\n    ]\n  },\n  "__data_parsing_options__": {\n    "orient": "split"\n  }\n}'
             },
         },
         {

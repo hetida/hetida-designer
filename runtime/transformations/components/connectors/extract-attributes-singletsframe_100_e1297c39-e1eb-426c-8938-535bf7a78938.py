@@ -12,9 +12,12 @@ Extract attributes from a SingleTSFrame.
 * **attributes** (Any): A dictionary containing the attributes of the singletsframe.
 
 ## Details
+Metadata following the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) is provided in its JSON form, also if it is attached as model.
 
 **Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key "Data-Attributes" in the header. To process the attributes, the adapter should be implemented accordingly.
 """
+
+from hdhelpers.metadata import attrs_to_json
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -43,7 +46,7 @@ def main(*, singletsframe):
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    return {"attributes": singletsframe.attrs}
+    return {"attributes": attrs_to_json(singletsframe.attrs)}
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
