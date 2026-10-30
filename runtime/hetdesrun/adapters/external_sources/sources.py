@@ -1,3 +1,4 @@
+import datetime
 import functools
 import json
 import logging
@@ -88,6 +89,64 @@ sources["energy-charts-info-prices"] = ExternalSourcesStructureSource(
         }
     },
 )
+
+
+def multitsframe_metadata(
+    metrics: list[dict[str, Any]],
+    from_datetime: datetime.datetime,
+    to_datetime: datetime.datetime,
+    query_timestamp: datetime.datetime,
+) -> dict[str, Any]:
+    """Metadata of a loaded multitsframe following the metadata conventions
+
+    metrics are the metadata entries of the queried metrics, identified by their id in the
+    metric column. query_timestamp is the time of the request, since the external source
+    delivers its state at that time, e.g. its latest forecast.
+    """
+    return {
+        "dataset_metadata": {
+            "metric_key": "id",
+            "queried_metrics": [metric["id"] for metric in metrics],
+            "ref_interval_start_timestamp": from_datetime.astimezone(datetime.UTC).isoformat(),
+            "ref_interval_end_timestamp": to_datetime.astimezone(datetime.UTC).isoformat(),
+            "ref_interval_type": "closed",
+            "query_timestamp": query_timestamp.astimezone(datetime.UTC).isoformat(),
+        },
+        "metrics": metrics,
+    }
+
+
+OPENMETEO_FREQUENCY_KEYS = ("hourly", "daily", "minutely_15")
+
+
+def openmeteo_metrics(datasets: list[dict]) -> list[dict[str, Any]]:
+    """The metadata of the weather variables of open meteo datasets
+
+    The variables occur in the metric column, also for several coordinates, which the latitude
+    and longitude columns distinguish. Their units are those open meteo provides for them.
+    """
+    metrics_by_id: dict[str, dict[str, Any]] = {}
+    for dataset in datasets:
+        for key in OPENMETEO_FREQUENCY_KEYS:
+            units = dataset.get(f"{key}_units") or {}
+            for variable in dataset.get(key) or {}:
+                if variable == "time" or variable in metrics_by_id:
+                    continue
+                unit = units.get(variable)
+                metrics_by_id[variable] = {
+                    "id": variable,
+                    "name": variable,
+                    "value_dimensions": [
+                        {
+                            "column": "value",
+                            "unit": unit if isinstance(unit, str) else None,
+                            "measurement": None,
+                        },
+                        {"column": "latitude", "unit": "°", "measurement": "latitude"},
+                        {"column": "longitude", "unit": "°", "measurement": "longitude"},
+                    ],
+                }
+    return list(metrics_by_id.values())
 
 
 def openmeteo_table_to_multitsframe(parsed_pandas_df: pd.DataFrame) -> pd.DataFrame:
@@ -191,8 +250,8 @@ async def load_open_meteo(  # noqa: PLR0915
     open_meteo_params.query_params["start_date"] = from_datetime.date().isoformat()
     open_meteo_params.query_params["end_date"] = to_datetime.date().isoformat()
 
-    from_datetime = from_datetime.replace(minute=0)
-    to_datetime = to_datetime.replace(minute=0)
+    from_datetime = from_datetime.replace(minute=0, second=0, microsecond=0)
+    to_datetime = to_datetime.replace(minute=0, second=0, microsecond=0)
     open_meteo_params.query_params["start_hour"] = from_datetime.replace(tzinfo=None).isoformat(
         timespec="minutes"
     )
@@ -207,6 +266,7 @@ async def load_open_meteo(  # noqa: PLR0915
     if possible_api_key is not None:
         open_meteo_params.query_params["apikey"] = possible_api_key
 
+    query_timestamp = datetime.datetime.now(tz=datetime.UTC)
     try:
         response = await open_meteo_api_call(base_url, open_meteo_params)
     except Exception as e:
@@ -241,7 +301,7 @@ async def load_open_meteo(  # noqa: PLR0915
     gathered_metadata: list[dict] = []
 
     for dataset in resp_json:
-        if not "hourly" in dataset and not "daily" in dataset and not "minutely_15" in dataset:
+        if not any(key in dataset for key in OPENMETEO_FREQUENCY_KEYS):
             msg = (
                 "No actual timeseries data in one of the datasets: "
                 "No hourly, daily or minutely_15 entry in json."
@@ -269,8 +329,9 @@ async def load_open_meteo(  # noqa: PLR0915
 
     resulting_multitsframe.attrs["gathered_openmeteo_metadata"] = gathered_metadata
 
-    resulting_multitsframe.attrs["ref_interval_start_timestamp"] = from_datetime.isoformat()
-    resulting_multitsframe.attrs["ref_interval_end_timestamp"] = to_datetime.isoformat()
+    resulting_multitsframe.attrs |= multitsframe_metadata(
+        openmeteo_metrics(resp_json), from_datetime, to_datetime, query_timestamp
+    )
     return resulting_multitsframe
 
 
@@ -323,6 +384,7 @@ async def load_energy_charts_info_prices(
         msg = "Loading Price data from energy charts requires a bidding zone (bzn)."
         raise AdapterHandlingException(msg)
 
+    query_timestamp = datetime.datetime.now(tz=datetime.UTC)
     try:
         response = await energy_chart_api_call(
             bzn=bzn,
@@ -362,9 +424,24 @@ async def load_energy_charts_info_prices(
             "unit": resp_json.get("unit", None),
             "deprecated": resp_json.get("deprecated", None),
         },
-        "ref_interval_start_timestamp": from_datetime.isoformat(),
-        "ref_interval_end_timestamp": to_datetime.isoformat(),
-    }
+    } | multitsframe_metadata(
+        [
+            {
+                "id": "dayahead-price",
+                "name": "Day-ahead price",
+                "value_dimensions": [
+                    {
+                        "column": "value",
+                        "unit": unit if isinstance(unit := resp_json.get("unit"), str) else None,
+                        "measurement": "price",
+                    }
+                ],
+            }
+        ],
+        from_datetime,
+        to_datetime,
+        query_timestamp,
+    )
 
     result_df["timestamp"] = pd.to_datetime(resp_json.get("unix_seconds", []), unit="s", utc=True)
     result_df["metric"] = "dayahead-price"

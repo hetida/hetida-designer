@@ -75,13 +75,16 @@ def _listing(items: list[str], max_items: int = 5) -> str:
     return listed
 
 
-def summarize_issues(issues_by_input: Mapping[str, list[MetadataConventionIssue]]) -> str:
+def summarize_issues(
+    issues_by_input: Mapping[str, list[MetadataConventionIssue]], inputs: str = "inputs"
+) -> str:
     """The issues of the inputs as lines, each distinct issue listed once
 
     Issues which only differ in the indices of their locations, e.g. the same unknown field in
     every metric, are listed once (with [*] instead of differing indices) with the number of their
     occurrences and, for several inputs, with the inputs they occur in. So the issues of many
-    inputs or metrics do not flood the logs.
+    inputs or metrics do not flood the logs. inputs is how the inputs are called in the lines,
+    e.g. "signals" for other objects than workflow inputs.
     """
     occurrences: dict[tuple[str, str, str], list[tuple[str, str]]] = {}
     for input_name, issues in issues_by_input.items():
@@ -97,7 +100,7 @@ def summarize_issues(issues_by_input: Mapping[str, list[MetadataConventionIssue]
         input_names = list(dict.fromkeys(input_name for input_name, _ in found))
         times = f"{len(found)} times" if len(found) > len(input_names) else ""
         if len(issues_by_input) > 1:
-            line += f" ({times + ' ' if times else ''}in inputs {_listing(input_names)})"
+            line += f" ({times + ' ' if times else ''}in {inputs} {_listing(input_names)})"
         elif times:
             line += f" ({times})"
         lines.append(line)
