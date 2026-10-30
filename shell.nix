@@ -32,16 +32,15 @@
 #     for all services being available but finally you should be able to reach them at
 #     the following urls:
 #       frontend: http://localhost:4200
-#       backend: http://localhost:8080/api/swagger-ui.html
-#       runtime: http://localhost:8090/docs
+#       backend and runtime: http://localhost:8080/docs
 #
 #     You can now edit source code: Changes of frontend or runtime code should automatically restart
-#     the corresponding service. For the Java backend you need to invoke
-#         mvn compile
-#     in the ./backend subdirectory to trigger a restart. We recommend to setup your Java IDE
-#     accordingly.
+#     the corresponding service.
 #
 # Notes:
+#     * The postgres database is recreated empty (in .tmp/pg_dev_db) at each start of its overmind
+#       process. So the backend deploys the base components and workflows again and all further
+#       data is lost.
 #     * Occasionally you may need to stop everything and re-enter the development environment. To do
 #       so press Ctrl+c to stop overmind and Ctrl-d to leave the nix-shell environment. After that
 #       restart everything as described above.

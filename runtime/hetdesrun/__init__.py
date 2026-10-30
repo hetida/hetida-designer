@@ -17,7 +17,11 @@ from hetdesrun.runtime.logging import (
     execution_context_filter,
     job_id_context_filter,
 )
-from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.config import (
+    get_config,
+    warn_if_database_settings_ignored,
+    warn_if_environment_file_missing,
+)
 
 migrations_invoked_from_py = False
 
@@ -173,6 +177,10 @@ setup_third_party_loggers(
 )
 
 main_logger.info("Logging setup complete.", extra={"version": VERSION})
+
+# only now, since the config is loaded before logging can be set up
+warn_if_environment_file_missing()
+warn_if_database_settings_ignored()
 
 # preload frequently used ds libraries in order to avoid overhead
 # during first call in a worker process for many workflows/components

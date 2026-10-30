@@ -327,6 +327,19 @@ def load_trafos_from_trafo_list_json_file(
     return trafo_revisions
 
 
+def load_trafos_from_json_file(path: str) -> list[TransformationRevision]:
+    """Load trafo revs from a json file containing a list of trafo revs or a single one"""
+    json_obj = json.loads(pathlib.Path(path).read_text())
+    if isinstance(json_obj, list):
+        return TrafoList.model_validate(json_obj).root
+    return [TransformationRevision.model_validate(json_obj)]
+
+
+def load_trafo_from_python_file(path: str) -> TransformationRevision:
+    """Load a component trafo rev from a python file containing its code"""
+    return transformation_revision_from_python_code(pathlib.Path(path).read_text())
+
+
 class ImportSource(BaseModel):
     path: str
     is_dir: bool
@@ -439,11 +452,18 @@ class ImportSourceConfig(BaseModel):
 def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: PLR0912
     """Get all import sources inside a directory
 
+    These are its subdirectories, its .json files (except config files) and its .py files.
+    An import source X can have a config file X.config.json. Hidden entries are ignored, e.g.
+    ..data and ..<timestamp> of a Kubernetes configmap mounted as directory, which contain
+    the actual files.
+
     Note: Does not parse/validate import sources.
     """
 
     import_sources: dict[str, dict[str, str | None | bool]] = {}
-    for sub_element in os.listdir(directory_path):
+    for sub_element in sorted(os.listdir(directory_path)):
+        if sub_element.startswith("."):
+            continue
         sub_path = os.path.join(directory_path, sub_element)
 
         if os.path.isdir(sub_path):
@@ -465,7 +485,9 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: 
                     existing_info = {"is_dir": None, "config_file": sub_path}
                 import_sources[original_path] = existing_info
 
-            elif sub_path.endswith(".json"):
+            elif sub_path.endswith(".json") or (
+                sub_path.endswith(".py") and sub_element != "__init__.py"
+            ):
                 try:
                     existing_info = import_sources[sub_path]
                     existing_info["is_dir"] = False
@@ -516,8 +538,10 @@ def load_import_source(
     if import_source.is_dir:
         trafo_revisions_dict, _ = load_transformation_revisions_from_directory(import_source.path)
         trafo_revisions = list(trafo_revisions_dict.values())
+    elif import_source.path.endswith(".py"):
+        trafo_revisions = [load_trafo_from_python_file(import_source.path)]
     else:
-        trafo_revisions = load_trafos_from_trafo_list_json_file(import_source.path)
+        trafo_revisions = load_trafos_from_json_file(import_source.path)
 
     return Importable(transformation_revisions=trafo_revisions, import_config=import_config)
 

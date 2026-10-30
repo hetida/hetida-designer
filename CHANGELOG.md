@@ -1,4 +1,5 @@
 - runtime Python dependency upgrades
+- complete refactoring of the startup behaviour: Misconfigurations that lead to silent data loss, e.g. by accidently configuring or fallback to an in-memory database, are now avoided at several places. Migrations, autodeployment do not run twice anymore as could happen before in some configurations. The backend container now refuses to start with an in-memory database unless it is allowed explicitly via `HD_ALLOW_IN_MEMORY_DB=true` to avoid misconfigurations. An in-memory database additionally requires a single web server process (`WEB_CONCURRENCY` unset or `1`). Unified [autoimport](https://hetida.github.io/hetida-designer/deployment_operation/trafo_import_export/autoimport/) behaviour with respective maintenance action. Improved parsing of the respective env variables. Added more logging and warnings for possibly undesired configurations. Improved documentation for database configuration, transformation autodeployment etc.
 
 ## 0.14.7
 

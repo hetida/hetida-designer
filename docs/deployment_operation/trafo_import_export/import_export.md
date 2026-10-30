@@ -108,7 +108,7 @@ docker run --rm \
 !!! warning "IMPORTANT"
     If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](../maintenance/backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
 
-To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can set the input parameter `allow_overwrite_released` to `False`. Components and workflows with status `DRAFT` will be overwritten in any case.
+With the input parameter `allow_overwrite_released` set to `False` (the default), existing components and workflows with status `RELEASED` or `DISABLED` are not overwritten, except for their documentation and test wiring if they differ only in these. Components and workflows with status `DRAFT` will be overwritten in any case.
 
 Simply run the following command to import the exported components and workflows from the same directory:
 
@@ -119,22 +119,24 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("/mnt/obj_repo/exported_data/", allow_overwrite_released=False, update_component_code=False);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("/mnt/obj_repo/exported_data/", allow_overwrite_released=False, update_component_code=False);'
 ```
 
-The input parameter `update_component_code` of the `import_transformation_from_dir` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
+The input parameter `update_component_code` of the `import_transformations_from_dir` function is optional and set to `False` by default, which ensures that the code is not changed, but remains exactly as it has been exported.
+When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
-Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
 
 ### Importing directly into the database
 
-If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db` to true, which is most likely faster:
+If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db` to true, which is most likely faster. The command then uses the database configured for it like for the backend, see [Database Configuration](../database_configuration.md). Without such configuration as below, this is the database of the default docker compose setup:
 
 ```shell
 docker run --rm \
   --name htdruntime_import \
+  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
+  --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("/mnt/obj_repo/exported_data/"", directly_into_db=True);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("/mnt/obj_repo/exported_data/", directly_into_db=True);'
 ```
 
 ### Importing components from python files
@@ -200,10 +202,10 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
 
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
-To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformation_from_dir` function in the commands documented above.
+To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations_from_dir` function in the commands documented above.
 
 #### More fine-granular wiring stripping
-The api endpoints which **hdctl** uses (`/api/transformations` GET and PUT) support more fine-granular control over wiring stripping behaviour. These options are not present in the `import_transformation_from_dir` functions. The addiitional url query parameters are:
+The api endpoints which **hdctl** uses (`/api/transformations` GET and PUT) support more fine-granular control over wiring stripping behaviour. These options are not present in the `import_transformations_from_dir` functions. The addiitional url query parameters are:
 
 * `strip_wirings_with_adapter_id`: strip all input wirings and output wirings with that adapter id. Can be provided multiple times
 * `keep_only_wirings_with_adapter_id`: Keep only input wirings and output wirings with that adapter id. Can be specified multiple times and then keeps only wirings having one of the specified adapter ids.
@@ -218,7 +220,7 @@ Typical use cases are:
 
 ### Deprecate older revisions when importing new ones
 
-To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformation_from_dir` function call.
+To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformations_from_dir` function call.
 If the latest revision of a revision group is stored in the database, all imported transformation revisions of this group will be deprecated.
 
 ### Generate file with paths to json files in import order
@@ -240,7 +242,7 @@ In case this directory contains also component code as `.py` files that you want
 ### Import new components and workflows added to the git repository
 
 If you (re-)start the backend container, you can use the [base trafo autodeployment feature](./base_trafo_deployment.md).
-For a running backend container you can use the function `import_transformation_from_dir`.
+For a running backend container you can use the function `import_transformations_from_dir`.
 
 The base components and example workflows provided with hetida designer are contained in the `transformations/` directory within the docker container.
 
@@ -255,5 +257,5 @@ docker run --rm \
   --name htdruntime_import \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformation_from_dir; import_transformation_from_dir("transformations/");'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations_from_dir; import_transformations_from_dir("transformations/");'
 ```

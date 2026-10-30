@@ -1,4 +1,5 @@
 import logging
+import os
 import secrets
 from collections.abc import Callable
 from typing import Annotated, Any
@@ -7,7 +8,10 @@ from uuid import UUID
 from fastapi import Body, HTTPException, Query, Response, status
 from pydantic import AwareDatetime, BaseModel, Field, SecretStr
 
-from hetdesrun.exportimport.importing import import_importables, import_transformations_from_dir
+from hetdesrun.exportimport.importing import (
+    autoimport_from_directory,
+    import_transformations_from_dir,
+)
 from hetdesrun.exportimport.purge import (
     delete_all_and_refill,
     delete_drafts,
@@ -15,7 +19,6 @@ from hetdesrun.exportimport.purge import (
     deprecate_all_but_latest_per_group,
     reset_test_wiring_to_release_wiring,
 )
-from hetdesrun.trafoutils.io.load import get_import_sources, load_import_sources
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -252,14 +255,14 @@ async def deploy_base_trafos(
 
     This deploys base trafos from the running backend, i.e. from its
     ./transformations directory. This is similar to what autodeploy does
-    at the first start, but allows to trigger this manually, e.g. when new
+    at each start of the backend, but allows to trigger this manually, e.g. when new
     or improved base trafos arrive in a new backend version.
 
     As already said, this is useful after updating the backend/runtime to a newer
     version which comes with new or improved base transformations, since
     those won't be deployed automatically even with active autodeploy if the
     HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true (see
-    https://github.com/hetida/hetida-designer/blob/release/docs/base_component_deployment.md
+    https://hetida.github.io/hetida-designer/deployment_operation/trafo_import_export/base_trafo_deployment/
     ).
 
     Activating the available query parameter options can affect existing workflow
@@ -286,10 +289,13 @@ async def deploy_base_trafos(
 
 def autoimport() -> None:
     autoimport_dir = get_config().autoimport_directory
-    logger.info("Trying autoimport from %s", autoimport_dir)
+    if not os.path.isdir(autoimport_dir):
+        raise ValueError(
+            f"The autoimport directory '{autoimport_dir}' set via HD_BACKEND_AUTOIMPORT_DIRECTORY"
+            " does not exist or is not a directory."
+        )
 
-    import_importables(load_import_sources(get_import_sources(autoimport_dir)))
-    logger.info("Finished autoimport")
+    autoimport_from_directory(autoimport_dir)
 
 
 @maintenance_router.post(
@@ -303,8 +309,8 @@ async def trigger_autoimport(
 ) -> MaintenanceActionResult:
     """Triggers autoimport from the configured autoimport directory
 
-    This uses the autoimport system which allows to provide config files
-    containing import options and filters. The autoimport directory is
+    This does the same as the autoimport at backend start, which allows to provide
+    config files containing import options and filters. The autoimport directory is
     configured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.
     """
     return handle_maintenance_operation_request(

@@ -30,7 +30,6 @@ services:
       - 8080:8090
     environment:
       - HD_DATABASE_URL=postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
-      - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
       - WEB_CONCURRENCY=1
@@ -106,7 +105,7 @@ services:
       start_period: 15s
 
   hetida-designer-db:
-    image: postgres:latest
+    image: postgres:18
     ports:
       - 5430:5432
     volumes:
