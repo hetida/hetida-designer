@@ -7247,7 +7247,7 @@
           "maintenance"
         ],
         "summary": "Deploy base trafos from the running backend",
-        "description": "Deploy base trafos from the running backend\n\nThis deploys base trafos from the running backend, i.e. from its\n./transformations directory. This is similar to what autodeploy does\nat the first start, but allows to trigger this manually, e.g. when new\nor improved base trafos arrive in a new backend version.\n\nAs already said, this is useful after updating the backend/runtime to a newer\nversion which comes with new or improved base transformations, since\nthose won't be deployed automatically even with active autodeploy if the\nHD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true (see\nhttps://github.com/hetida/hetida-designer/blob/release/docs/base_component_deployment.md\n).\n\nActivating the available query parameter options can affect existing workflow\nexecution and reproducibility if trafo revisions used in them are overwritten\nor changed. Please double-check whether this is what you want!",
+        "description": "Deploy base trafos from the running backend\n\nThis deploys base trafos from the running backend, i.e. from its\n./transformations directory. This is similar to what autodeploy does\nat each start of the backend, but allows to trigger this manually, e.g. when new\nor improved base trafos arrive in a new backend version.\n\nAs already said, this is useful after updating the backend/runtime to a newer\nversion which comes with new or improved base transformations, since\nthose won't be deployed automatically even with active autodeploy if the\nHD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true (see\nhttps://hetida.github.io/hetida-designer/deployment_operation/trafo_import_export/base_trafo_deployment/\n).\n\nActivating the available query parameter options can affect existing workflow\nexecution and reproducibility if trafo revisions used in them are overwritten\nor changed. Please double-check whether this is what you want!",
         "operationId": "deploy_base_trafos_api_maintenance_deploy_base_trafos_post",
         "parameters": [
           {
@@ -7330,7 +7330,7 @@
           "maintenance"
         ],
         "summary": "Trigger autoimport",
-        "description": "Triggers autoimport from the configured autoimport directory\n\nThis uses the autoimport system which allows to provide config files\ncontaining import options and filters. The autoimport directory is\nconfigured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.",
+        "description": "Triggers autoimport from the configured autoimport directory\n\nThis does the same as the autoimport at backend start, which allows to provide\nconfig files containing import options and filters. The autoimport directory is\nconfigured via the HD_BACKEND_AUTOIMPORT_DIRECTORY environment variable.",
         "operationId": "trigger_autoimport_api_maintenance_trigger_autoimport_post",
         "requestBody": {
           "content": {

@@ -129,6 +129,7 @@ nav = [
     { "Managing Python Dependencies" = "deployment_operation/managing_python_dependencies.md" },
     { "Security Hints" = "deployment_operation/security_hints.md" },
     { "Kubernetes Setup" = "deployment_operation/kubernetes.md" },
+    { "Database Configuration" = "deployment_operation/database_configuration.md" },
     { "Scaling" = "deployment_operation/scaling.md" },
     { "Runtime Variants" = "deployment_operation/varying_runtime_services.md" },
     { "Scheduling Configuration" = "deployment_operation/scheduling_configuration.md" },

@@ -3,16 +3,48 @@
 Usage: Call with activated virtual environment via
     python main.py
 from project directory.
+
+The docker image starts it via start.sh as
+    python main.py --container
 """
 
+import argparse
 import asyncio
 import datetime
 import logging
 import os
+import signal
 import sys
 
+container_mode = False
+
+
+def exit_on_signal(signum: int, _frame: object) -> None:
+    os.write(2, f"Received signal {signum} before serving, exiting.\n".encode())
+    sys.exit(128 + signum)
+
+
 if __name__ == "__main__":
-    if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
+    # Stop on SIGTERM (e.g. docker stop) also while preparing the db, i.e. before the server
+    # handles it. As PID 1 in a container this process otherwise ignores SIGTERM.
+    signal.signal(signal.SIGTERM, exit_on_signal)
+
+    parser = argparse.ArgumentParser(description="Start hetida designer backend and/or runtime.")
+    parser.add_argument(
+        "--container",
+        action="store_true",
+        help=(
+            "Start as in the docker image via start.sh: local_dev.env is not used by default"
+            " and an in-memory db must be allowed explicitly, see HD_ALLOW_IN_MEMORY_DB."
+        ),
+    )
+    container_mode = parser.parse_args().container
+
+    if (
+        not container_mode
+        and os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None
+        and os.path.isfile("local_dev.env")
+    ):
         # if this script is called directly, default to local dev setup.
         os.environ["HD_RUNTIME_ENVIRONMENT_FILE"] = "local_dev.env"
 
@@ -65,76 +97,9 @@ def detect_in_memory_db() -> bool:
     if not get_config().is_backend_service:
         return False
 
-    from hetdesrun.persistence.db_engine_and_session import get_db_engine
+    from hetdesrun.persistence.db_engine_and_session import is_in_memory_db
 
-    engine = get_db_engine()
-
-    backend_name = engine.url.get_backend_name()
-
-    # driver_name = engine.url.get_driver_name()  # pysqlite
-    database = engine.url.database  # ":memory:"
-
-    if backend_name.lower() == "sqlite" and (
-        (database is None) or database.lower() in (":memory:",)
-    ):
-        return True
-    return False
-
-
-def run_migrations(
-    alembic_dir: str = "./alembic",
-    connection_url=get_config().sqlalchemy_connection_string,
-) -> None:
-    """Runs alembic migrations from within Python code
-
-    Should only be used for local development server. Not recommended
-    for multi-process/thread production servers.
-
-    Note: The docker container runs migrations via prestart.sh script in the
-    production setup.
-    """
-
-    from hetdesrun import migrations_invoked_from_py
-
-    migrations_invoked_from_py = True
-
-    from alembic.config import Config
-    from pydantic import SecretStr
-
-    import hetdesrun.persistence.dbmodels
-    from alembic import command
-    from hetdesrun.persistence.db_engine_and_session import get_db_engine
-
-    engine = get_db_engine()
-
-    logger.info("Using DB engine driver: %s", str(engine.url.drivername))
-
-    if isinstance(connection_url, SecretStr):
-        connection_url_to_use = connection_url.get_secret_value()
-    else:
-        connection_url_to_use = connection_url
-
-    logger.info(
-        "Running DB migrations in %s to revision %s ",
-        alembic_dir,
-        get_config().target_alembic_revision,
-    )
-    alembic_cfg = Config()
-    alembic_cfg.set_main_option("script_location", alembic_dir)
-    # alembic_cfg.set_main_option("sqlalchemy.url", connection_url_to_use)
-    # alembic_cfg.set_section_option("logger_root", "level", "DEBUG")
-    # alembic_cfg.set_section_option("logger_alembic", "level", "DEBUG")
-    # alembic_cfg.set_section_option("logger_sqlalchemy", "level", "DEBUG")
-    command.upgrade(alembic_cfg, get_config().target_alembic_revision)
-    logger.info("Finished running migrations.")
-
-
-def run_trafo_rev_deployment():
-    from hetdesrun.exportimport.importing import import_transformations_from_dir
-
-    import_transformations_from_dir(
-        "./transformations", update_component_code=False, directly_into_db=True
-    )
+    return is_in_memory_db()
 
 
 in_memory_db = detect_in_memory_db()
@@ -148,48 +113,45 @@ print(  # noqa: T201
 )
 is_backend = get_config().is_backend_service
 
-consumption_mode_variable = os.environ.get("HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE", None)
-kafka_consumption_modus = (
-    consumption_mode_variable is not None and len(consumption_mode_variable) > 0
-)
-
-stream_mode_variable = os.environ.get("HETIDA_DESIGNER_STREAM_MODE", None)
-stream_mode_modus = stream_mode_variable is not None and len(stream_mode_variable) > 0
+# from the config, i.e. also from the environment file
+kafka_consumption_modus = get_config().hd_kafka_consumption_mode is not None
+stream_mode_modus = get_config().hd_stream_mode is not None
 
 
-prepopulate_vst_structure = os.environ.get("PREPOPULATE_VST_ADAPTER_AT_HD_STARTUP", False)
+# Each process serving the app has its own in-memory db. The server (uvicorn, gunicorn) imports
+# this module as "main" in it, after the same process possibly ran this file already as
+# "__mp_main__" (uvicorn worker / reload processes) or as "__main__" (python main.py).
+# Preparing the db only on import as "main" prepares it exactly once per serving process.
+if in_memory_db and __name__ not in {"__main__", "__mp_main__"}:
+    from hetdesrun.persistence.db_preparation import prepare_db
 
-if in_memory_db:
-    logger.info("Detected in-memory db usage: Running migrations during importing of main.py.")
-    run_migrations()
-
-    if is_backend or kafka_consumption_modus or stream_mode_modus:
-        logger.info(
-            "Detected in-memory db usage: "
-            "Running base component and example workflow deployment "
-            "during importing of main.py."
-        )
-        run_trafo_rev_deployment()
-
-        if prepopulate_vst_structure:
-            from hetdesrun.adapters.virtual_structure_adapter.structure_prepopulation import (
-                prepopulate_structure,
-            )
-
-            prepopulate_structure()
+    logger.info("Detected in-memory db usage: Preparing the db of this process.")
+    prepare_db()
 
 
 if __name__ == "__main__":
-    if not in_memory_db and is_backend:
-        logger.info("Running migrations from main.py since main.py was invoked directly.")
-        run_migrations()
+    if is_backend:
+        from hetdesrun.persistence.db_engine_and_session import db_url_for_logging
+        from hetdesrun.persistence.db_preparation import (
+            exit_unless_in_memory_db_allowed,
+            prepare_db,
+        )
 
-        if is_backend or kafka_consumption_modus or stream_mode_modus:
-            logger.info(
-                "Running base component and example workflow deployment "
-                "from main.py since main.py was invoked directly."
-            )
-            run_trafo_rev_deployment()
+        logger.info("Backend uses db %s", db_url_for_logging())
+
+        if not in_memory_db:
+            # before the web server starts, see docs/deployment_operation/database_configuration.md
+            prepare_db()
+        else:
+            exit_unless_in_memory_db_allowed(require_allowance=container_mode)
+            if kafka_consumption_modus or stream_mode_modus:
+                # no server imports this module
+                logger.info("Detected in-memory db usage: Preparing the db of this process.")
+                prepare_db()
+
+    # as before: the server handles SIGTERM itself, consumption and stream mode do not
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
     if kafka_consumption_modus:
         import asyncio
 
@@ -197,7 +159,7 @@ if __name__ == "__main__":
 
         asyncio.run(start_consumption_mode())
 
-    if stream_mode_modus:
+    elif stream_mode_modus:
         import asyncio
 
         from hetdesrun.streaming import start_streaming_mode
@@ -213,18 +175,8 @@ if __name__ == "__main__":
 
         host = os.environ.get("HOST", "127.0.0.1")
 
-        explicit_development_mode = os.environ.get("DEVELOPMENT_MODE", "")
-        explicit_no_development_mode = explicit_development_mode.lower() in {
-            "false",
-            "no",
-            "n",
-            "0",
-        }
-        explicit_development_mode = explicit_development_mode.lower() in {"true", "yes", "y", "1"}
-
-        reload_mode = (
-            host.lower() in {"localhost", "127.0.0.1"} or explicit_development_mode
-        ) and not explicit_no_development_mode
+        # DEVELOPMENT_MODE only activates uvicorn reload
+        reload_mode = os.environ.get("DEVELOPMENT_MODE", "").lower() in {"true", "yes", "y", "1"}
         port = int(os.environ.get("PORT", "8000"))
         worker_healthcheck_timeout = int(os.environ.get("UVICORN_TIMEOUT_WORKER_HEALTHCHECK", "30"))
 
@@ -254,7 +206,7 @@ if __name__ == "__main__":
         uvicorn.run(
             "main:app",
             log_level=log_level,
-            reload=explicit_development_mode,
+            reload=reload_mode,
             host=host,
             port=port,
             timeout_worker_healthcheck=worker_healthcheck_timeout,

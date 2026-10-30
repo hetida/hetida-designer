@@ -31,3 +31,5 @@ demo-adapter-python/**/nix_venv_*
 .tmp
 **/.overmind.sock
 site
+
+runtime/local_dev.env
