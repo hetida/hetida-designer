@@ -91,14 +91,20 @@ For such cases, we recommend using the `wrapped format`, e.g.:
   "__hd_wrapped_data_object__": "DATAFRAME",
   "__metadata__": {
     "dataset_metadata": {
+      "metric_key": "id",
       "single_metric": "abc.temp",
-      "metric_key": "id"
+      "queried_metrics": ["abc.temp"],
+      "ref_interval_start_timestamp": "2019-08-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2019-08-01T03:00:00Z",
+      "ref_interval_type": "closed"
     },
     "metrics": [
       {
         "id": "abc.temp",
         "name": "ABC temperature",
-        "value_dimensions": [{ "column": "value", "name": "temperature", "unit": "°C" }]
+        "value_dimensions": [
+          { "column": "value", "name": "temperature", "unit": "°C", "measurement": "temperature" }
+        ]
       }
     ]
   },
