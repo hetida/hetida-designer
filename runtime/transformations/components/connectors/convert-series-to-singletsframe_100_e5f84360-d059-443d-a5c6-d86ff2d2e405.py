@@ -84,14 +84,15 @@ def main(*, series, value_column_name="value"):
     singletsframe = singletsframe.reset_index(drop=True)
 
     attrs = copy.deepcopy(series.attrs) if series.attrs else {}
-    singletsframe.attrs = attrs
     meta = read_metadata(series, "SERIES")
-    if meta is not None:
-        set_metadata(singletsframe, meta.as_singletsframe(value_column_name))
-    elif series.name is not None:
+    if meta is None and series.name is not None:
         dataset_metadata = attrs.setdefault("dataset_metadata", {})
         if isinstance(dataset_metadata, dict) and dataset_metadata.get("single_metric") is None:
             dataset_metadata["single_metric"] = str(series.name)
+    # set after changing attrs, since pandas copies the dict when setting attrs
+    singletsframe.attrs = attrs
+    if meta is not None:
+        set_metadata(singletsframe, meta.as_singletsframe(value_column_name))
 
     return {"singletsframe": singletsframe}
 
@@ -150,6 +151,18 @@ else:
         assert singletsframe.attrs["dataset_metadata"]["metric_key"] == "external_id"  # noqa: S101
         # input attrs must not be modified
         assert "single_metric" not in series.attrs["dataset_metadata"]  # noqa: S101
+
+    @pytest.mark.parametrize("attrs", [{}, {"other": 1}])
+    def test_series_name_becomes_single_metric_without_dataset_metadata(series, attrs):
+        series.attrs = attrs
+
+        singletsframe = main(series=series)["singletsframe"]
+
+        assert singletsframe.attrs == attrs | {  # noqa: S101
+            "dataset_metadata": {"single_metric": "abc.temp"}
+        }
+        # input attrs must not be modified
+        assert "dataset_metadata" not in series.attrs  # noqa: S101
 
     def test_existing_single_metric_is_kept(series):
         series.attrs["dataset_metadata"]["single_metric"] = "already.set"
