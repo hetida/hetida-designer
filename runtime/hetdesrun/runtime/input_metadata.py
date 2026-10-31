@@ -2,13 +2,14 @@
 
 The metadata of every SERIES, SINGLETSFRAME and MULTITSFRAME workflow input wired to an adapter,
 including manual input via direct provisioning, is parsed once and attached to the data as
-immutable model (see hdhelpers.metadata.attached), if it adheres to the metadata conventions.
+immutable model (see hdhelpers.metadata.attached), if it is valid metadata of the conventions,
+i.e. as far as this can be determined without the data.
 
-How metadata not adhering to the conventions is handled is configured per adapter via
-ADAPTER_METADATA_VALIDATION: OFF (default) leaves it as it is silently, WARN logs the found issues
-and ERROR lets the execution fail on errors. With WARN and ERROR, missing metadata is an issue as
-well. Otherwise metadata that cannot be parsed would just be missing for the components, without
-any hint why.
+How metadata not adhering to the conventions, also in comparison with the data, is handled is
+configured per adapter via ADAPTER_METADATA_VALIDATION: OFF (default) leaves it as it is silently,
+WARN logs the found issues and ERROR lets the execution fail on errors. With WARN and ERROR,
+missing metadata is an issue as well. Otherwise metadata that cannot be parsed would just be
+missing for the components, without any hint why.
 """
 
 import logging

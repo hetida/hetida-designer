@@ -265,8 +265,9 @@ class RuntimeConfig(BaseSettings):
             "How the metadata of SERIES, SINGLETSFRAME and MULTITSFRAME workflow inputs is"
             " checked against the metadata conventions, configured per adapter key as json"
             ' object, e.g. {"hetida-platform-adapter": "ERROR", "direct_provisioning": "OFF"}.'
-            " Metadata adhering to the conventions is attached to the input data as model in"
-            ' any case, other metadata is left as it is. "OFF" (default for adapters not listed)'
+            " Valid metadata of the conventions (as far as this can be determined without the"
+            " data) is attached to the input data as model in any case, other metadata is left as"
+            ' it is. "OFF" (default for adapters not listed)'
             ' checks nothing. "WARN" additionally checks the metadata, also against the data,'
             " and logs a warning mentioning the adapter and the inputs together with the found"
             ' issues. "ERROR" lets the execution fail if errors are found and logs a warning if'

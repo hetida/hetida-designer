@@ -15,7 +15,7 @@ Convert a SingleTSFrame into a MultiTSFrame with a single metric.
 ## Details
 A SINGLETSFRAME holds exactly one metric and therefore has no "metric" column — the metric is identified in the metadata. This component adds the "metric" column required for a MULTITSFRAME, filled with the single metric name, and keeps all value dimensions.
 
-If the metadata follows the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/), it is converted into the metadata of a MultiTSFrame of the single metric. If **metric** differs from the id of the metric, it becomes its id: in the field named by `dataset_metadata.metric_key` if the metric does not have it, otherwise in the field "metric", which then becomes the metric key. Other metadata is carried over unchanged.
+If the metadata follows the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/), it is converted into the metadata of a MultiTSFrame of the single metric. If **metric** differs from the id of the metric, it becomes its id in the field "metric", which then becomes the metric key. The field which identified the metric before, e.g. its `id` or `external_id`, is kept. Other metadata is carried over unchanged.
 
 Use this component to feed a SingleTSFrame into components or sinks that expect a MultiTSFrame.
 

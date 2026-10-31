@@ -16,7 +16,7 @@ If you wish to attach metadata to a SingleTSFrame, please follow the conventions
 ## Details
 Adds attributes to a SingleTSFrame. Adding an attribute with a key, that is already included in the attributes of the singletsframe, will update the corresponding value. Metadata following the metadata conventions is updated in its JSON form, e.g. providing "dataset_metadata" replaces the complete dataset metadata. Afterwards it is attached to the result as model again, if it still follows the metadata conventions. The input singletsframe itself is not changed.
 
-**Note:** Selecting "Only Output" for the output singletsframe means that it is wired to the "direct provisioning" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the "Extract Attributes (SingleTSFrame)" component.
+**Note:** Selecting "Only Output" for the output singletsframe means that it is wired to the "direct provisioning" adapter, which returns the data together with its attributes (under `__metadata__`) in the wrapped format in the response. To use the attributes in the workflow, use the "Extract Attributes (SingleTSFrame)" component.
 
 **Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key "Data-Attributes" in the header. To process the attributes, the adapter should be implemented accordingly.
 """

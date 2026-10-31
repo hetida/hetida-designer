@@ -106,7 +106,7 @@ This "wrapper" format is also received when using the direct provisioning adapte
     Note that the unwrapped format (i.e. sending only the content of the `__data__` field unwrapped) also works and provides the parsed object with an empty dictionary `{}` as `.attrs` attribute.
 
 !!! info "Mounted Files Adapter"
-    The [local file adapter](../integration_guide/adapter_system/builtin_adapters/local_file_adapter.md) does not support sending or receiving metadata in `attrs` currently.
+    The [local file adapter](../integration_guide/adapter_system/builtin_adapters/local_file_adapter.md) writes the metadata in its JSON form into pickle and parquet files, from which it is read again. The other file formats do not keep metadata.
 
 ## Metadata conventions
 
@@ -550,7 +550,7 @@ Other information on a **metric** is looked up
 
 1. in the metric itself,
 2. in its value dimension "value",
-3. in `value_dimensions_shared`,
+3. in the entry for the value dimension "value" in `value_dimensions_shared`,
 4. in the properties the metric inherits (`inherited`), e.g. the latitude of the plant a sensor belongs to.
 
 The frequency of the recorded values of a metric falls back as a whole: If the metric has a `data_frequency`, it applies together with the metric's `data_frequency_offset` and `data_frequency_timezone`. Otherwise `ref_data_frequency` of the dataset metadata applies together with `ref_data_frequency_offset` and `ref_data_frequency_timezone`. A missing offset is 0 and a missing time zone means UTC in both cases. The `default_timezone` of a metric falls back to `default_timezone` of the dataset metadata.
@@ -574,7 +574,7 @@ Furthermore the following rules apply, which the schemas cannot express:
 - `ref_data_frequency` and `default_aggregation_interval` of the dataset metadata as well as `data_frequency` of the metrics must be positive Pandas date offset aliases or timedelta strings with unit, e.g. `"15min"`, `"1D"` or `"1MS"`.
 - `ref_data_frequency_offset` and `data_frequency_offset` must be non-negative timedelta strings, e.g. `"4min"`, smaller than the frequency on the same level (`ref_data_frequency` or `data_frequency`), which they require.
 - `ref_data_frequency_timezone` and `data_frequency_timezone` must be time zones like `default_timezone` (see below) and require the frequency on the same level.
-- `default_timezone` of the dataset metadata and of the metrics must be an IANA time zone name like `"Europe/Berlin"` (one of Python's `zoneinfo.available_timezones()`) or a fixed UTC offset like `"+02:00"`.
+- `default_timezone` of the dataset metadata and of the metrics must be an IANA time zone name like `"Europe/Berlin"` (one of the IANA time zone names of the Python package tzdata, independent of the time zone database of the system) or a fixed UTC offset like `"+02:00"`.
 - `recording_mode` `"periodic"` requires a `data_frequency` of the metric or `ref_data_frequency` of the dataset metadata. `recording_aggregation_method` requires `recording_mode` `"periodic"`.
 - Every metric has a value dimension for each value column of the data. For a SERIES this is the value dimension "value".
 - Every metric in the metric column of a MULTITSFRAME occurs under `metrics` and in `queried_metrics`.
@@ -686,11 +686,11 @@ Afterwards the runtime attaches the metadata as model, see below. Adapters recei
 
 ## Metadata attached as model
 
-The runtime parses the metadata of every SERIES, SINGLETSFRAME and MULTITSFRAME workflow input loaded from an adapter, including manual input, once. If it follows the conventions, it attaches the resulting immutable model under `attrs["hd_metadata"]`, in place of the keys of the conventions (`dataset_metadata`, `metrics` and `value_dimensions_shared`). Other keys of `attrs` stay as they are. Metadata not following the conventions is left as it is, see [Validating received metadata](../integration_guide/adapter_system/adapter_registration.md#validating-received-metadata) on how to get informed about it.
+The runtime parses the metadata of every SERIES, SINGLETSFRAME and MULTITSFRAME workflow input loaded from an adapter, including manual input, once. If it is valid metadata of the conventions, it attaches the resulting immutable model under `attrs["hd_metadata"]`, in place of the keys of the conventions (`dataset_metadata`, `metrics` and `value_dimensions_shared`). Other keys of `attrs` stay as they are. Valid means: the structure and all rules which do not concern the data. Whether the metadata matches the data, e.g. describes all metrics and value columns occurring in it, is only checked if configured, see [Validating received metadata](../integration_guide/adapter_system/adapter_registration.md#validating-received-metadata). There you also find how to get informed about invalid metadata, which is left as it is.
 
 pandas deep-copies `attrs` for (almost) every object derived from another one, e.g. when filtering rows. The model is immutable and is not copied but shared then, so that this stays cheap also for the metadata of many metrics.
 
-Consequently component code must not access the metadata in `attrs` directly, e.g. via `attrs["dataset_metadata"]`. Instead:
+Consequently component code must not access the metadata in `attrs` directly, e.g. via `attrs["dataset_metadata"]`. Instead use the metadata helpers of hdhelpers:
 
 - Read it via `read_metadata` of `hdhelpers.metadata`, which returns the attached model or parses the JSON form, e.g. if your own code set it. With `required=True` it raises an error describing what is missing or wrong instead of returning `None`.
 - Provide changed metadata for your results as a new version of the model, created by its `with_*` methods, and attach it via `set_metadata`.
@@ -704,11 +704,14 @@ result = series * 100
 set_metadata(result, meta.with_value_dimension(None, "value", unit="cm"))
 ```
 
-Older metadata structures, e.g. units under `column_units` or metric metadata keyed by metric under `by_metric`, are no longer supported. Base components only use metadata following the conventions.
+!!! warning "Writing the keys of the conventions into attrs"
+    Objects derived from a workflow input carry its attached model, since pandas copies `attrs`. Writing keys of the conventions into their `attrs` directly, e.g. `result.attrs["dataset_metadata"] = {...}` or `result.attrs.update({"metrics": [...]})`, has no effect then: The attached model takes precedence, for `read_metadata` in following components as well as for the JSON form sent to adapters, e.g. the write instructions for the SQL adapter. Use `set_metadata` with a changed version of the model, e.g. from `with_dataset_metadata`, or the "Add/Update Attributes" components instead.
+
+Older metadata structures, e.g. units under `column_units` or metric metadata keyed by metric under `by_metric`, are no longer supported. Base components rely on metadata following the conventions. For backwards compatibility, "Gap Detection Intervals" and "Replacement Locations for Gaps" still accept the former top-level keys like `ref_interval_start_timestamp` or `ref_data_frequency` as fallback, and the connectors carry other metadata over as before.
 
 ## Accessing structured metadata inside component code
 
-For accessing and extracting metadata which adheres to the above conventions, the package [hdhelpers](https://hetida.github.io/hdhelpers/), which is installed in the hetida designer runtime, provides `read_metadata` and helper functions in `hdhelpers.metadata`. The methods of the model returned by `read_metadata` and the helper functions, which are thin wrappers over them, implement the [fallbacks](#fallbacks-and-inherited-properties) described above. They work with metadata attached as model as well as in its JSON form. Metadata which does not follow the conventions gives no information, i.e. `None` or empty defaultdicts. The former helper functions in `hetdesrun.helpers.metadata` are thin wrappers over the ones of hdhelpers now.
+For accessing and extracting metadata which adheres to the above conventions, the package [hdhelpers](https://hetida.github.io/hdhelpers/), which is installed in the hetida designer runtime, provides `read_metadata` and helper functions in `hdhelpers.metadata`. The methods of the model returned by `read_metadata` and the helper functions, which are thin wrappers over them, implement the [fallbacks](#fallbacks-and-inherited-properties) described above. They work with metadata attached as model as well as in its JSON form. Metadata which does not follow the conventions gives no information, i.e. `None` or empty defaultdicts, the default aggregation methods their default ("MEAN") and the recordings an empty `Recording`. The former helper functions in `hetdesrun.helpers.metadata` are thin wrappers over the ones of hdhelpers now.
 
 E.g. to access the unit of each value dimension of each metric in a MULTITSFRAME you can write in your component code:
 
@@ -769,9 +772,9 @@ units_by_val_dimension = get_singlets_units(loaded_singletsframe)
 units_by_val_dimension["value"]
 ```
 
-These functions do not use inherited properties, since this information describes the metric itself. If you want them to anyway, as last resort, pass `include_inherited=True`.
+These functions do not use inherited properties, since this information describes the metric itself. If you want them to anyway, as last resort, pass `include_inherited=True`, which applies to the value dimension "value" only.
 
-For any other information on metrics, use `get_metric_info(loaded_multitsframe, "some_field")`, which provides a defaultdict keyed by metric, or `get_singlets_metric_info(loaded_singletsframe, "some_field")` for the single metric of a SINGLETSFRAME. For SERIES and value dimensions of SINGLETSFRAMEs, `get_series_info` and `get_singlets_info` provide arbitrary information analogously. All of these use the inherited properties as last resort. Pass `include_inherited=False` if the requested information describes the metric itself, e.g. its default aggregation method:
+For any other information on metrics, use `get_metric_info(loaded_multitsframe, "some_field")`, which provides a defaultdict keyed by metric, or `get_singlets_metric_info(loaded_singletsframe, "some_field")` for the single metric of a SINGLETSFRAME. For SERIES and value dimensions of SINGLETSFRAMEs, `get_series_info` and `get_singlets_info` provide arbitrary information of a value dimension: They look it up in the order for value dimensions described [above](#fallbacks-and-inherited-properties), i.e. in the value dimension before the metric. All of these use the inherited properties as last resort, `get_series_info` and `get_singlets_info` for the value dimension "value" only. Pass `include_inherited=False` if the requested information describes the metric itself, e.g. its default aggregation method:
 
 ```python
 from hdhelpers.metadata import get_metric_info
