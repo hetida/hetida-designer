@@ -26,6 +26,7 @@ from typing import Any
 
 import joblib
 
+from hetdesrun.utils import with_json_attrs
 from hetdesrun.webservice.config import get_config
 
 
@@ -69,7 +70,10 @@ def dump_obj(obj: Any, name: str, tag: str) -> None:
             '"latest" has a special meaning as a tag and cannot be used directly when'
             " dumping objects"
         )
-    joblib.dump(obj, get_object_path(name, tag))
+    # A Series or DataFrame is stored with the JSON form of metadata attached as model, so that
+    # it contains no hdhelpers classes, which might change before it is loaded again. Objects
+    # nested in other objects are stored as they are.
+    joblib.dump(with_json_attrs(obj), get_object_path(name, tag))
     symlink_latest(name, tag)
 
 

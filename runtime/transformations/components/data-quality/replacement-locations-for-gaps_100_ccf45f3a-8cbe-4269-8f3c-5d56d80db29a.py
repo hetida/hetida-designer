@@ -16,17 +16,19 @@ Determine timestamps at which replacement values need to be determined.
 
 - **interval_start_timestamp** (String, default value: null):
   Desired start timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_interval_start_timestamp" (or "from") that will be used if no **interval_start_timestamp** is
-  provided.
+  Alternatively, the start of the queried interval in the metadata of **timeseries** (see the
+  [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **interval_start_timestamp** is provided. For metadata in the former format, the key
+  "ref_interval_start_timestamp" (or "from") directly in its `.attrs` entry is used instead.
   If neither is defined, the processing range begins with the first data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
 - **interval_end_timestamp** (String, default value: null):
   Desired end timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_interval_end_timestamp" (or "to") that will be used if no **interval_end_timestamp** is
-  provided.
+  Alternatively, the end of the queried interval in the metadata of **timeseries** (see the
+  [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **interval_end_timestamp** is provided. For metadata in the former format, the key
+  "ref_interval_end_timestamp" (or "to") directly in its `.attrs` entry is used instead.
   If neither is defined, the processing range ends with the last data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
@@ -35,8 +37,9 @@ Determine timestamps at which replacement values need to be determined.
   **timeseries** index, thus **timeseries** must be provided but **expected_data_frequency** must
   not be set.
   If false, an **expected_data_frequency** must be set.
-  If "ref_data_frequency" is contained in the attributes of **timeseries** this value will be used
-  for the **expected_data_frequency** and **auto_frequency_determination** will be set to false.
+  If the metadata of **timeseries** provides a data frequency (see **expected_data_frequency**),
+  this value will be used for the **expected_data_frequency** and **auto_frequency_determination**
+  will be set to false.
 
 - **auto_freq_percentile** (Float, default value: 0.5):
   Only relevant when **auto_frequency_determination** is true.
@@ -59,8 +62,11 @@ Determine timestamps at which replacement values need to be determined.
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s". Calendar based frequencies without fixed duration,
   like "MS" (month start) or "W" (weeks), are not supported.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_data_frequency" that will be used if no **expected_data_frequency** is provided.
+  Alternatively, the frequency the values of **timeseries** are recorded with according to its
+  metadata (see the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)) is
+  used if no **expected_data_frequency** is provided: the `data_frequency` of its metric or else the
+  `ref_data_frequency` of its dataset metadata. For metadata in the former format, the key
+  "ref_data_frequency" directly in its `.attrs` entry is used instead.
   In that case **auto_frequency_determination** will be set to false.
 
 - **expected_data_frequency_offset** (String, default value: null):
@@ -71,9 +77,10 @@ Determine timestamps at which replacement values need to be determined.
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
-  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
-  "ref_data_frequency_offset" that will be used if no **expected_data_frequency_offset** is
-  provided. In that case **auto_frequency_determination** will be set to false.
+  Alternatively, the offset of the data frequency in the metadata of **timeseries** (see
+  **expected_data_frequency**) is used if no **expected_data_frequency_offset** is provided. For
+  metadata in the former format, the key "ref_data_frequency_offset" directly in its `.attrs` entry
+  is used instead. In that case **auto_frequency_determination** will be set to false.
 
 - **all_gap_points** (Boolean, default value: true):
   If set to true, all gap intervals of size 0 are added to the replacement locations without
@@ -171,6 +178,7 @@ timeseries can be found in the documentation of the "Gap Detection Intervals" co
 
 import numpy as np
 import pandas as pd
+from hdhelpers.metadata import read_metadata
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from hdutils import ComponentInputValidationException
@@ -223,6 +231,34 @@ def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
         error_code=422,
         invalid_component_inputs=[input_name],
     )
+
+
+def timeseries_metadata(timeseries: pd.Series) -> dict[str, str | None]:
+    """The ref interval and the data frequency with its offset from the metadata of timeseries
+
+    Metadata following the metadata conventions (see read_metadata of hdhelpers.metadata)
+    provides the queried interval and the frequency the values are recorded with: the
+    data_frequency of the metric or else the ref_data_frequency of the dataset metadata, each
+    with its offset. Their time zone is not taken into account. For metadata in the former
+    format, the keys directly in attrs are used instead. Missing values are None.
+    """
+    meta = read_metadata(timeseries, "SERIES")
+    if meta is not None:
+        start, end = meta.queried_interval()
+        recording = meta.recording()
+        return {
+            "start": None if start is None else start.isoformat(),
+            "end": None if end is None else end.isoformat(),
+            "frequency": recording.data_frequency,
+            "offset": recording.data_frequency_offset,
+        }
+    attrs = timeseries.attrs
+    return {
+        "start": attrs.get("ref_interval_start_timestamp", attrs.get("from")),
+        "end": attrs.get("ref_interval_end_timestamp", attrs.get("to")),
+        "frequency": attrs.get("ref_data_frequency"),
+        "offset": attrs.get("ref_data_frequency_offset"),
+    }
 
 
 class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
@@ -849,31 +885,22 @@ def main(
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     if timeseries is not None:
+        metadata = timeseries_metadata(timeseries)
         if interval_start_timestamp is None:
-            if "ref_interval_start_timestamp" in timeseries.attrs:
-                interval_start_timestamp = timeseries.attrs["ref_interval_start_timestamp"]
-            elif "from" in timeseries.attrs:
-                interval_start_timestamp = timeseries.attrs["from"]
+            interval_start_timestamp = metadata["start"]
 
         if interval_end_timestamp is None:
-            if "ref_interval_end_timestamp" in timeseries.attrs:
-                interval_end_timestamp = timeseries.attrs["ref_interval_end_timestamp"]
-            elif "to" in timeseries.attrs:
-                interval_end_timestamp = timeseries.attrs["to"]
+            interval_end_timestamp = metadata["end"]
 
-        if expected_data_frequency is None and "ref_data_frequency" in timeseries.attrs:
-            expected_data_frequency = timeseries.attrs["ref_data_frequency"]
-            freqstr2timedelta(expected_data_frequency, 'timeseries.attrs["ref_data_frequency"]')
+        if expected_data_frequency is None and metadata["frequency"] is not None:
+            expected_data_frequency = metadata["frequency"]
+            freqstr2timedelta(expected_data_frequency, "data frequency of the timeseries metadata")
             auto_frequency_determination = False
 
-        if (
-            expected_data_frequency_offset is None
-            and "ref_data_frequency_offset" in timeseries.attrs
-        ):
-            expected_data_frequency_offset = timeseries.attrs["ref_data_frequency_offset"]
+        if expected_data_frequency_offset is None and metadata["offset"] is not None:
+            expected_data_frequency_offset = metadata["offset"]
             freqstr2timedelta(
-                expected_data_frequency_offset,
-                'timeseries.attrs["ref_data_frequency_offset"]',
+                expected_data_frequency_offset, "data frequency offset of the timeseries metadata"
             )
             auto_frequency_determination = False
 
@@ -950,12 +977,40 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import attach_metadata
+
+    # the former metadata format
     METADATA = {
         "ref_interval_start_timestamp": "2020-01-01T01:02:00+00:00",
         "ref_interval_end_timestamp": "2020-01-01T01:10:00+00:00",
         "ref_data_frequency": "2min",
         "ref_data_frequency_offset": "30s",
     }
+
+    def metadata_following_conventions(dataset_fields=None, metric_fields=None):
+        return {
+            "dataset_metadata": {
+                "metric_key": "id",
+                "single_metric": "level",
+                "queried_metrics": ["level"],
+                "ref_interval_start_timestamp": "2020-01-01T01:02:00+00:00",
+                "ref_interval_end_timestamp": "2020-01-01T01:10:00+00:00",
+                "ref_interval_type": "closed",
+            }
+            | (dataset_fields or {}),
+            "metrics": [
+                {
+                    "id": "level",
+                    "name": "Level",
+                    "value_dimensions": [{"column": "value", "unit": "m", "measurement": None}],
+                }
+                | (metric_fields or {})
+            ],
+        }
+
+    def attached(timeseries):
+        assert attach_metadata(timeseries) is not None  # noqa: S101
+        return timeseries
 
     GAP_INTERVALS = pd.DataFrame(
         {
@@ -994,6 +1049,18 @@ else:
                 "ref_data_frequency": "2min",
                 "ref_data_frequency_offset": "30s",
             },
+            metadata_following_conventions(
+                {"ref_data_frequency": "2min", "ref_data_frequency_offset": "30s"}
+            ),
+            # the data frequency of the metric with its offset takes precedence
+            metadata_following_conventions(
+                {"ref_data_frequency": "5min"},
+                {
+                    "recording_mode": "periodic",
+                    "data_frequency": "2min",
+                    "data_frequency_offset": "30s",
+                },
+            ),
         ],
     )
     def test_ref_interval_and_data_frequency_from_metadata(attrs):
@@ -1113,7 +1180,17 @@ else:
             ),
             (
                 {"timeseries": timeseries_with_metadata(METADATA | {"ref_data_frequency": "1MS"})},
-                'timeseries.attrs["ref_data_frequency"]',
+                "data frequency of the timeseries metadata",
+            ),
+            (
+                {
+                    "timeseries": attached(
+                        timeseries_with_metadata(
+                            metadata_following_conventions({"ref_data_frequency": "1MS"})
+                        )
+                    )
+                },
+                "data frequency of the timeseries metadata",
             ),
         ],
     )

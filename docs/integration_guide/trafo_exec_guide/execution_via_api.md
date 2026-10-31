@@ -287,10 +287,8 @@ The response:
 ```json
 {
   "output_results_by_output_name": {
-    "intercept": 108.0310580589,
-    "slope": [
-      0
-    ],
+    "intercept": 39.7688091142,
+    "slope": 0.0,
     "limit_violation_prediction_timestamp": "NaT"
   },
   "output_types_by_output_name": {

@@ -56,6 +56,14 @@ class SchedulingInternalAuthMode(StrEnum):
     CLIENT = "CLIENT"
 
 
+class MetadataValidationMode(StrEnum):
+    """How metadata of workflow inputs not adhering to the metadata conventions is handled"""
+
+    OFF = "OFF"
+    WARN = "WARN"
+    ERROR = "ERROR"
+
+
 class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
     pass
 
@@ -248,6 +256,23 @@ class RuntimeConfig(BaseSettings):
             " of 16 KiB is too small for this. The default of 5 MiB leaves ample room for e.g."
             " 1000 timeseries with reasonable metadata (about 0.8 MiB). The limit does not"
             " preallocate memory nor slow down responses with smaller headers."
+        ),
+    )
+    adapter_metadata_validation: dict[str, MetadataValidationMode] = Field(
+        {},
+        validation_alias="ADAPTER_METADATA_VALIDATION",
+        description=(
+            "How the metadata of SERIES, SINGLETSFRAME and MULTITSFRAME workflow inputs is"
+            " checked against the metadata conventions, configured per adapter key as json"
+            ' object, e.g. {"hetida-platform-adapter": "ERROR", "direct_provisioning": "OFF"}.'
+            " Valid metadata of the conventions (as far as this can be determined without the"
+            " data) is attached to the input data as model in any case, other metadata is left as"
+            ' it is. "OFF" (default for adapters not listed)'
+            ' checks nothing. "WARN" additionally checks the metadata, also against the data,'
+            " and logs a warning mentioning the adapter and the inputs together with the found"
+            ' issues. "ERROR" lets the execution fail if errors are found and logs a warning if'
+            " only warnings are found. With WARN and ERROR, inputs without metadata are checked"
+            " as well, i.e. missing metadata is an error."
         ),
     )
     allowed_callback_url_patterns: list[str] = Field(

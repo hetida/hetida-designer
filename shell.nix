@@ -251,6 +251,9 @@ let
       ]
     '
     export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8080/adapters/sql|http://localhost:8080/adapters/sql,kafka|Kafka Adapter|http://localhost:8080/adapters/kafka|http://localhost:8080/adapters/kafka,external-sources|External Sources|http://localhost:8080/adapters/external_sources|http://localhost:8080/adapters/external_sources,component-adapter|Component Adapter|http://localhost:8080/adapters/component|http://localhost:8080/adapters/component"
+    # executions fail if the demo adapter provides metadata not adhering to the metadata
+    # conventions, which e.g. the e2e tests then reveal
+    export ADAPTER_METADATA_VALIDATION='{"demo-adapter-python": "ERROR"}'
     export HD_USE_AUTH=false
     export COMPONENT_ADAPTER_ALLOW_DRAFT_COMPONENTS=true
     export HETIDA_DESIGNER_SCHEDULING_ACTIVE=true

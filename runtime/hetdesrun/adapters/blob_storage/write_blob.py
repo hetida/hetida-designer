@@ -35,6 +35,7 @@ from hetdesrun.adapters.exceptions import (
 )
 from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.runtime.logging import _get_job_id_context
+from hetdesrun.utils import with_json_attrs
 
 logger = logging.getLogger(__name__)
 
@@ -241,7 +242,7 @@ async def write_blob_to_storage(
                     )
                 file_object.seek(0)
             else:
-                pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(with_json_attrs(data), file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)
 
             logger.info("Dumped data of size %i into BLOB", file_object.getbuffer().nbytes)

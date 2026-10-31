@@ -22,7 +22,7 @@ geopandas
 glom
 gunicorn
 h5py
-hdhelpers
+hdhelpers[plotting]>=0.1.0
 holidays
 htpy
 httptools

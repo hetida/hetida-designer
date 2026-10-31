@@ -48,12 +48,16 @@ An entry in "timeseries_tables" is a mapping of a table name to a dictionary, in
 
 Timeseries tables can be configured to allow deletion of rows. Refer to [Metadata field conventions](../../../user_guide/attached_metadata.md#metadata-conventions) for more information on configuring invalidation or deletion using metadata.
 
+When loading a MULTITSFRAME from a timeseries table, the sql adapter attaches metadata following the [metadata conventions](../../../user_guide/attached_metadata.md#metadata-conventions): The queried interval, the requested metrics as `queried_metrics` (with `ALL` the metrics occurring in the loaded data) and an entry under `metrics` for each of them, with the metric as `id` and `name`, the database and the table as `path` and a value dimension for each value column. Since the database provides no further information on the metrics, unit and measurement of the value dimensions are null. The time of the query is provided as `query_timestamp`.
+
+When writing a MULTITSFRAME to a timeseries table allowing deletion, only data of the metrics listed in `queried_metrics` of its dataset metadata is deleted. The dataset metadata may contain only the fields concerning invalidation and deletion, e.g. if set via the "Add/Update Attributes (MultiTSFrame)" component; it does not need to follow the metadata conventions completely. In component code set them via the [metadata helpers](../../../user_guide/attached_metadata.md#metadata-attached-as-model), since keys written into the attrs of data carrying an attached model have no effect. The former fields `by_metric` and `ref_metrics` are not read anymore.
+
 Note that tables will be created and columns added automatically depending on the data sent to these sinks.
 
 By default, the API serving the hetida designer frontend is part of the runtime.  
 This can be changed by setting `SQL_ADAPTER_SERVICE_IN_RUNTIME` to `false`. Then the API is part of the backend.
 
-`INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT` controls whether the metrics to delete are inferred from the data of the MULTITSFRAME, if no metric is specified in the metadata.  
+`INFER_METRICS_FROM_METRIC_COLUMN_FOR_DELETION_IF_NOT_PRESENT` controls whether the metrics to delete are inferred from the data of the MULTITSFRAME, if the dataset metadata specifies no `queried_metrics`.  
 This inference is disabled by default.
 
 Here we give an example configuration for mounting and accessing two sqlite databases and additionally access to hetida designer's own postgres db (only for demonstration, do not do this in a real setup!):

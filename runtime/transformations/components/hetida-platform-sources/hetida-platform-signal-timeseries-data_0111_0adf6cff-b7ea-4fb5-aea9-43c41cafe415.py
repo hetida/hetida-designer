@@ -661,8 +661,9 @@ COMPONENT_INFO = {
     "version_tag": "0.1.11",
     "id": "0adf6cff-b7ea-4fb5-aea9-43c41cafe415",
     "revision_group_id": "c8c22f6a-b046-4c50-9364-5cbb517cfb97",
-    "state": "RELEASED",
+    "state": "DISABLED",
     "released_timestamp": "2026-09-24T20:38:39.408266+00:00",
+    "disabled_timestamp": "2026-10-20T14:59:50.637512+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401

@@ -12,9 +12,12 @@ Extract attributes from a SingleTSFrame.
 * **attributes** (Any): A dictionary containing the attributes of the singletsframe.
 
 ## Details
+Metadata following the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) is provided in its JSON form, also if it is attached as model.
 
 **Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key "Data-Attributes" in the header. To process the attributes, the adapter should be implemented accordingly.
 """
+
+from hdhelpers.metadata import attrs_to_json
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -43,7 +46,7 @@ def main(*, singletsframe):
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    return {"attributes": singletsframe.attrs}
+    return {"attributes": attrs_to_json(singletsframe.attrs)}
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
@@ -51,7 +54,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "singletsframe",
             "filters": {
-                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "single_metric": "abc.temp"\n        }\n    },\n    "__data__": {\n        "value": {\n            "0": 1,\n            "1": 1.2,\n            "2": 0.5\n        },\n        "timestamp": {\n            "0": "2019-08-01T15:42:36.000Z",\n            "1": "2019-08-01T15:45:36.000Z",\n            "2": "2019-08-01T15:48:36.000Z"\n        }\n    }\n}'
+                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "metric_key": "id",\n            "single_metric": "abc.temp",\n            "queried_metrics": [\n                "abc.temp"\n            ],\n            "ref_interval_start_timestamp": "2019-08-01T15:00:00.000Z",\n            "ref_interval_end_timestamp": "2019-08-01T16:00:00.000Z",\n            "ref_interval_type": "closed"\n        },\n        "metrics": [\n            {\n                "id": "abc.temp",\n                "name": "ABC temperature",\n                "value_dimensions": [\n                    {\n                        "column": "value",\n                        "unit": "\\u00b0C",\n                        "measurement": "temperature"\n                    }\n                ]\n            }\n        ]\n    },\n    "__data__": {\n        "value": {\n            "0": 1,\n            "1": 1.2,\n            "2": 0.5\n        },\n        "timestamp": {\n            "0": "2019-08-01T15:42:36.000Z",\n            "1": "2019-08-01T15:45:36.000Z",\n            "2": "2019-08-01T15:48:36.000Z"\n        }\n    }\n}'
             },
         }
     ]
@@ -61,7 +64,7 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "singletsframe",
             "filters": {
-                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "single_metric": "abc.temp"\n        }\n    },\n    "__data__": {\n        "value": {\n            "0": 1,\n            "1": 1.2,\n            "2": 0.5\n        },\n        "timestamp": {\n            "0": "2019-08-01T15:42:36.000Z",\n            "1": "2019-08-01T15:45:36.000Z",\n            "2": "2019-08-01T15:48:36.000Z"\n        }\n    }\n}'
+                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "metric_key": "id",\n            "single_metric": "abc.temp",\n            "queried_metrics": [\n                "abc.temp"\n            ],\n            "ref_interval_start_timestamp": "2019-08-01T15:00:00.000Z",\n            "ref_interval_end_timestamp": "2019-08-01T16:00:00.000Z",\n            "ref_interval_type": "closed"\n        },\n        "metrics": [\n            {\n                "id": "abc.temp",\n                "name": "ABC temperature",\n                "value_dimensions": [\n                    {\n                        "column": "value",\n                        "unit": "\\u00b0C",\n                        "measurement": "temperature"\n                    }\n                ]\n            }\n        ]\n    },\n    "__data__": {\n        "value": {\n            "0": 1,\n            "1": 1.2,\n            "2": 0.5\n        },\n        "timestamp": {\n            "0": "2019-08-01T15:42:36.000Z",\n            "1": "2019-08-01T15:45:36.000Z",\n            "2": "2019-08-01T15:48:36.000Z"\n        }\n    }\n}'
             },
         }
     ]

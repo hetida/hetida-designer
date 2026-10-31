@@ -20,6 +20,15 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from demo_adapter_python import VERSION
+from demo_adapter_python.attached_metadata import (
+    LOCATION_BY_PLANT,
+    TEMPERATURE_METRICS,
+    series_metadata,
+    simulated_recording,
+    stored_multitsframe_metadata,
+    temp_with_state_metadata,
+    temperatures_metadata,
+)
 from demo_adapter_python.config import demo_adapter_config
 from demo_adapter_python.demo_data.sinks import get_sinks
 from demo_adapter_python.demo_data.sources import get_sources
@@ -180,16 +189,16 @@ async def sources(filter_str: str | None = Query(None, alias="filter")) -> Multi
 @demo_adapter_main_router.get("/sources/{sourceId}/metadata/", response_model=list[Metadatum])
 async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
-        return [
-            Metadatum(key="Max Value", value=300.0, dataType="float"),
-            Metadatum(key="Min Value", value=-100.0, dataType="float"),
+        return [  # °C
+            Metadatum(key="Max Value", value=150.0, dataType="float"),
+            Metadatum(key="Min Value", value=-75.0, dataType="float"),
             Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
     if sourceId.endswith("temp") and "plantB" in sourceId:
-        return [
-            Metadatum(key="Max Value", value=150.0, dataType="float"),
-            Metadatum(key="Min Value", value=-30.0, dataType="float"),
+        return [  # °F
+            Metadatum(key="Max Value", value=302.0, dataType="float"),
+            Metadatum(key="Min Value", value=-22.0, dataType="float"),
             Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
@@ -215,20 +224,20 @@ async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
 ) -> Metadatum:
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=300.0, dataType="float")
+        if key == "Max Value":  # °C
+            return Metadatum(key="Max Value", value=150.0, dataType="float")
         if key == "Min Value":
-            return Metadatum(key="Min Value", value=-100.0, dataType="float")
+            return Metadatum(key="Min Value", value=-75.0, dataType="float")
         if key == "Last Self-Check Okay":
             return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
     elif sourceId.endswith("temp") and "plantB" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=150.0, dataType="float")
+        if key == "Max Value":  # °F
+            return Metadatum(key="Max Value", value=302.0, dataType="float")
         if key == "Min Value":
-            return Metadatum(key="Min Value", value=-30.0, dataType="float")
+            return Metadatum(key="Min Value", value=-22.0, dataType="float")
         if key == "Last Self-Check Okay":
             return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
@@ -389,9 +398,9 @@ async def sink(sink_id: str) -> StructureSink:
 async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
-            Metadatum(key="Location", value={"lat": 53.073635, "long": 8.806422}, dataType="any"),
-            Metadatum(key="Temperature Unit", value="F", dataType="string"),
-            Metadatum(key="Pressure Unit", value="psi", dataType="string"),
+            Metadatum(key="Location", value=LOCATION_BY_PLANT["plantA"], dataType="any"),
+            Metadatum(key="Temperature Unit", value="C", dataType="string"),
+            Metadatum(key="Pressure Unit", value="bar", dataType="string"),
             Metadatum(
                 # a metadatum that is not an explicit source and calculated dynamically
                 key="Plant Age in Years",
@@ -403,8 +412,9 @@ async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
         ]
     if thingNodeId == "root.plantB":
         return [
-            Metadatum(key="Temperature Unit", value="C", dataType="string"),
-            Metadatum(key="Pressure Unit", value="bar", dataType="string"),
+            Metadatum(key="Location", value=LOCATION_BY_PLANT["plantB"], dataType="any"),
+            Metadatum(key="Temperature Unit", value="F", dataType="string"),
+            Metadatum(key="Pressure Unit", value="psi", dataType="string"),
             Metadatum(
                 # a metadatum that is not an explicit source and calculated dynamically
                 key="Plant Age in Years",
@@ -429,23 +439,21 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Location":
-            return Metadatum(
-                key="Location", value={"lat": 53.073635, "long": 8.806422}, dataType="any"
-            )
+            return Metadatum(key="Location", value=LOCATION_BY_PLANT["plantA"], dataType="any")
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
                 value=(
-                    "$^\\circ$F"
+                    "$^\\circ$C"
                     if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                    else "F"
+                    else "C"
                 ),
                 dataType="string",
             )
         if key == "Pressure Unit":
             return Metadatum(
                 key="Pressure Unit",
-                value="psi",
+                value="bar",
                 dataType="string",
             )
         if key == "Plant Age in Years":
@@ -458,20 +466,22 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return get_metadatum_from_store(thingNodeId, "Anomaly State")
 
     if thingNodeId == "root.plantB":
+        if key == "Location":
+            return Metadatum(key="Location", value=LOCATION_BY_PLANT["plantB"], dataType="any")
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
                 value=(
-                    "$^\\circ$C"
+                    "$^\\circ$F"
                     if latex_mode != "" and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
-                    else "C"
+                    else "F"
                 ),
                 dataType="string",
             )
         if key == "Pressure Unit":
             return Metadatum(
                 key="Pressure Unit",
-                value="bar",
+                value="psi",
                 dataType="string",
             )
         if key == "Plant Age in Years":
@@ -560,7 +570,6 @@ def return_stored_anomaly_score(
                 "value": stored_df["value"],
             }
         )
-        ts_df.attrs = stored_df.attrs
     else:
         ts_df = pd.DataFrame(
             {
@@ -569,15 +578,6 @@ def return_stored_anomaly_score(
                 "value": [],
             }
         )
-    # do not overwrite stored attributes!
-    ts_df.attrs.update(
-        {
-            "ref_interval_start_timestamp": from_timestamp.isoformat(),
-            "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-            "ref_interval_type": "closed",
-            "ref_metrics": [ts_id],
-        }
-    )
 
     return ts_df
 
@@ -601,11 +601,13 @@ async def timeseries(
         logger.debug("loading timeseries dataframe with id %s", str(ts_id))
         ts_df = None
         if ts_id.endswith("temp"):
-            offset = 100.0 if "plantA" in ts_id else 30.0
-            factor = 10.0 if "plantA" in ts_id else 5.0
+            # °C in plant A, °F in plant B
+            offset = 38.0 if "plantA" in ts_id else 86.0
+            factor = 5.5 if "plantA" in ts_id else 9.0
         elif ts_id.endswith("press"):
-            offset = 14.5 if "plantA" in ts_id else 1.0
-            factor = 0.73 if "plantA" in ts_id else 0.05
+            # bar in plant A, psi in plant B
+            offset = 1.0 if "plantA" in ts_id else 14.5
+            factor = 0.05 if "plantA" in ts_id else 0.73
         elif ts_id.endswith("anomaly_score"):
             ts_df = return_stored_anomaly_score(ts_id, from_timestamp, to_timestamp)
         else:
@@ -623,35 +625,39 @@ async def timeseries(
         if frequency != "" and ts_id == "root.plantA.picklingUnit.influx.temp":
             ts_df.index = ts_df["timestamp"]
             try:
-                ts_df = ts_df.resample(frequency).first(numeric_only=False)
+                ts_df = ts_df.resample(frequency, label="left", closed="left").first(
+                    numeric_only=False
+                )
             except ValueError as error:
                 raise HTTPException(
                     status.HTTP_422_UNPROCESSABLE_CONTENT,
                     f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
-            # Intervals without a value would be sent as records consisting of nulls only, i.e.
-            # also without timeseriesId, which lets loading the timeseries fail.
-            ts_df = ts_df.dropna(subset=["value"])
+            # As the metadata says: each value is timestamped with the start of its interval,
+            # intervals without a value are gaps. They would be sent as records consisting of
+            # nulls only, i.e. also without timeseriesId, which lets loading the timeseries fail.
+            # Intervals starting before the queried interval are left out, since they are only
+            # partially queried and their timestamp would lie outside the ref interval.
+            ts_df["timestamp"] = ts_df.index
+            ts_df = ts_df[ts_df.index >= from_timestamp].dropna(subset=["value"])
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
-        if len(ts_df.attrs) != 0:
-            logger.debug("which has attributes %s", str(ts_df.attrs))
-            collected_attrs[ts_id] = ts_df.attrs
-            collected_attrs[ts_id].update(
-                {
-                    "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                    "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                    "ref_interval_type": "closed",
-                    "ref_metrics": [ts_id],
-                }
-            )
+        collected_attrs[ts_id] = series_metadata(
+            ts_id,
+            from_timestamp,
+            to_timestamp,
+            # the anomaly scores are written to this adapter, nothing is known about them
+            recording=None
+            if ts_id.endswith("anomaly_score")
+            else simulated_recording(
+                frequency if ts_id == "root.plantA.picklingUnit.influx.temp" else ""
+            ),
+        ).model_dump(mode="json")
 
     io_stream.seek(0)
-    headers = {}
-    if len(collected_attrs) != 0:
-        headers["Data-Attributes"] = encode_attributes(collected_attrs)
+    headers = {"Data-Attributes": encode_attributes(collected_attrs)}
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
@@ -890,22 +896,17 @@ async def multitsframe(
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
-    lower_threshold: str = Query("", examples=["93.4"]),
-    upper_threshold: str = Query("", examples=["107.9"]),
+    lower_threshold: str = Query("", examples=["34.1"]),
+    upper_threshold: str = Query("", examples=["42.2"]),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
     mtsf = None
     if mtsf_id.endswith("temperatures"):
-        offset = 100.0 if "plantA" in mtsf_id else 30.0
-        factor = 10.0 if "plantA" in mtsf_id else 5.0
+        # °C in plant A, °F in plant B
+        offset = 38.0 if "plantA" in mtsf_id else 86.0
+        factor = 5.5 if "plantA" in mtsf_id else 9.0
         mtsf_records = []
-        metrics = [
-            "Pickling Outfeed Temperature",
-            "Pickling Influx Temperature",
-            "Milling Outfeed Temperature",
-            "Milling Influx Temperature",
-        ]
-        for metric in metrics:
+        for metric in TEMPERATURE_METRICS:
             values = np.random.randn(len(dt_range)) * factor + offset
             ts_records = [
                 {"timestamp": dt_range[idx], "metric": metric, "value": values[idx]}
@@ -931,13 +932,8 @@ async def multitsframe(
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
-        mtsf.attrs.update(
-            {
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-                "ref_metrics": metrics,
-            }
+        mtsf.attrs = temperatures_metadata(mtsf_id, from_timestamp, to_timestamp).model_dump(
+            mode="json"
         )
     elif mtsf_id.endswith("anomalies"):
         stored_mtsf = get_value_from_store(mtsf_id)
@@ -947,14 +943,13 @@ async def multitsframe(
             (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) >= from_timestamp)
             & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) <= to_timestamp)
         ]
-        mtsf.attrs.update(
-            {
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-                "ref_metrics": mtsf["metric"].unique().tolist(),
-            }
-        )
+        # all stored metrics are queried, also those without data in the interval
+        mtsf.attrs = stored_multitsframe_metadata(
+            mtsf_id,
+            sorted({str(metric) for metric in stored_mtsf["metric"]}),
+            from_timestamp,
+            to_timestamp,
+        ).model_dump(mode="json")
     else:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
@@ -1068,8 +1063,9 @@ async def singletsframe(
             f"No singletsframe data available with provided id '{stsf_id}'.",
         )
 
-    offset = 100.0 if "plantA" in stsf_id else 30.0
-    factor = 10.0 if "plantA" in stsf_id else 5.0
+    # °C in plant A, °F in plant B
+    offset = 38.0 if "plantA" in stsf_id else 86.0
+    factor = 5.5 if "plantA" in stsf_id else 9.0
     values = np.random.randn(len(dt_range)) * factor + offset
 
     stsf = pd.DataFrame(
@@ -1079,26 +1075,8 @@ async def singletsframe(
             "state": ["ok" if value > offset - factor else "suspicious" for value in values],
         }
     )
-    stsf.attrs.update(
-        {
-            "dataset_metadata": {
-                "single_metric": stsf_id,
-                "metric_key": "id",
-                "ref_interval_start_timestamp": from_timestamp.isoformat(),
-                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
-                "ref_interval_type": "closed",
-            },
-            "metrics": [
-                {
-                    "id": stsf_id,
-                    "name": "Influx Temperature With State",
-                    "value_dimensions": [
-                        {"column": "value", "name": "temperature", "unit": "°C"},
-                        {"column": "state", "name": "state", "unit": None},
-                    ],
-                }
-            ],
-        }
+    stsf.attrs = temp_with_state_metadata(stsf_id, from_timestamp, to_timestamp).model_dump(
+        mode="json"
     )
 
     headers = {}
