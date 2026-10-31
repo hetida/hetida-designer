@@ -1,5 +1,6 @@
 import base64
 import datetime
+import gzip
 import json
 import logging
 from collections.abc import AsyncGenerator, Callable
@@ -544,14 +545,35 @@ async def thing_node(
     return StructureThingNode.model_validate(requested_thing_nodes[0])
 
 
-def encode_attributes(data_attrs: Any) -> str:
+def encode_attributes(data_attrs: Any, compress: bool = False) -> str:
+    """The Data-Attributes header: metadata as base64-encoded UTF-8 JSON, optionally gzipped
+
+    With compress, the JSON is gzip-compressed before base64-encoding, which the hetida designer
+    runtime recognizes by the gzip magic bytes.
+    """
     data_attrs_json_str = json.dumps(data_attrs)
     logger.debug("df_attrs_json_str=%s", data_attrs_json_str)
     data_attrs_bytes = data_attrs_json_str.encode("utf-8")
+    if compress:
+        data_attrs_bytes = gzip.compress(data_attrs_bytes)
     base64_bytes = base64.b64encode(data_attrs_bytes)
     base64_str = base64_bytes.decode("utf-8")
     logger.debug("base64_str=%s", base64_str)
     return base64_str
+
+
+def compress_metadata(data_attributes_accept_encoding: str | None) -> bool:
+    """Whether to send the Data-Attributes gzip-compressed
+
+    The hetida designer runtime announces via the request header Data-Attributes-Accept-Encoding
+    that it understands gzip-compressed Data-Attributes. This adapter compresses only then, unless
+    switched off. Other adapters may also decide e.g. by the size of the metadata.
+    """
+    return (
+        demo_adapter_config.compress_metadata
+        and data_attributes_accept_encoding is not None
+        and "gzip" in [encoding.strip() for encoding in data_attributes_accept_encoding.split(",")]
+    )
 
 
 def return_stored_anomaly_score(
@@ -592,6 +614,7 @@ async def timeseries(
         ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
     frequency: str = Query("", examples=["5min"]),
+    data_attributes_accept_encoding: str | None = Header(None),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()
@@ -657,7 +680,11 @@ async def timeseries(
         ).model_dump(mode="json")
 
     io_stream.seek(0)
-    headers = {"Data-Attributes": encode_attributes(collected_attrs)}
+    headers = {
+        "Data-Attributes": encode_attributes(
+            collected_attrs, compress=compress_metadata(data_attributes_accept_encoding)
+        )
+    }
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
@@ -734,6 +761,7 @@ def parse_string_to_list(input_string: str) -> tuple[list, str]:
 async def dataframe(
     df_id: str = Query(..., alias="id"),
     column_names: str = Query("", examples=["""[\\\"column1\\\", \\\"column2\\\"]"""]),
+    data_attributes_accept_encoding: str | None = Header(None),
 ) -> StreamingResponse | HTTPException:
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
@@ -834,7 +862,9 @@ async def dataframe(
     logger.debug("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        headers["Data-Attributes"] = encode_attributes(df_attrs)
+        headers["Data-Attributes"] = encode_attributes(
+            df_attrs, compress=compress_metadata(data_attributes_accept_encoding)
+        )
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
@@ -888,7 +918,7 @@ async def post_dataframe(
 
 
 @demo_adapter_main_router.get("/multitsframe", response_model=None)
-async def multitsframe(
+async def multitsframe(  # noqa: PLR0913, PLR0917
     mtsf_id: str = Query(..., alias="id"),
     from_timestamp: datetime.datetime = Query(
         ..., alias="from", examples=[datetime.datetime.now(datetime.timezone.utc)]
@@ -898,6 +928,7 @@ async def multitsframe(
     ),
     lower_threshold: str = Query("", examples=["34.1"]),
     upper_threshold: str = Query("", examples=["42.2"]),
+    data_attributes_accept_encoding: str | None = Header(None),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(start=from_timestamp, end=to_timestamp, freq="h")
     mtsf = None
@@ -961,7 +992,9 @@ async def multitsframe(
     logger.debug("which has attributes %s", str(mtsf.attrs))
     df_attrs = mtsf.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        headers["Data-Attributes"] = encode_attributes(df_attrs)
+        headers["Data-Attributes"] = encode_attributes(
+            df_attrs, compress=compress_metadata(data_attributes_accept_encoding)
+        )
 
     io_stream = StringIO()
     mtsf.to_json(io_stream, lines=True, orient="records", date_format="iso")
@@ -1048,6 +1081,7 @@ async def singletsframe(
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
+    data_attributes_accept_encoding: str | None = Header(None),
 ) -> StreamingResponse | HTTPException:
     """Provide a single, multi-dimensional timeseries
 
@@ -1084,7 +1118,9 @@ async def singletsframe(
     logger.debug("which has attributes %s", str(stsf.attrs))
     df_attrs = stsf.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        headers["Data-Attributes"] = encode_attributes(df_attrs)
+        headers["Data-Attributes"] = encode_attributes(
+            df_attrs, compress=compress_metadata(data_attributes_accept_encoding)
+        )
 
     io_stream = StringIO()
     stsf.to_json(io_stream, lines=True, orient="records", date_format="iso")

@@ -395,6 +395,36 @@ The runtime parses the received metadata of SERIES, SINGLETSFRAME and MULTITSFRA
 
 In the other direction, the designer runtime sends metadata as `Data-Attributes` request header to the POST endpoints. Here, the HTTP server of your adapter determines the allowed size. Many servers limit request headers to 8 KiB to 16 KiB by default (e.g. Tomcat, nginx, uvicorn). If you expect large metadata, increase this limit in your adapter's server configuration.
 
+#### Compressed metadata
+
+The `Data-Attributes` header of the responses of the GET endpoints may contain the metadata gzip-compressed: the UTF-8-encoded JSON is compressed with gzip before base64-encoding, i.e. `base64(gzip(json))` instead of `base64(json)`. Since metadata repeats many field names and values, this typically shrinks the header 4 to 14 times, e.g. for 1000 timeseries with reasonable metadata. So compressing helps to stay below the header size limits above, also of reverse proxies and of the HTTP server of your adapter.
+
+The runtime recognizes compressed metadata by the gzip magic bytes `1f 8b` after base64-decoding, which JSON text never starts with. So there is no further header to set, and uncompressed metadata keeps working. The runtime announces that it understands compressed metadata by sending the request header `Data-Attributes-Accept-Encoding: gzip`. Your adapter may use this to decide whether to compress, but it may also compress without it, e.g. depending on the size of the metadata. hetida designer runtimes up to version 0.14.7 cannot decode compressed metadata and do not send this request header.
+
+Compressed metadata is decompressed up to at most 64 MiB, which protects the runtime against decompression bombs. Larger metadata lets loading fail. This limit can be adjusted via the `GENERIC_REST_ADAPTER_MAX_DECOMPRESSED_METADATA_SIZE` environment variable (in bytes, default `67108864`) on the runtime service. Invalid or truncated gzip data lets loading fail as well.
+
+For example in Python:
+
+```python
+import base64
+import gzip
+import json
+
+header_value = base64.b64encode(gzip.compress(json.dumps(metadata).encode("utf-8"))).decode("ascii")
+```
+
+or in Java:
+
+```java
+ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
+    gzip.write(metadataJson.getBytes(StandardCharsets.UTF_8));
+}
+String headerValue = Base64.getEncoder().encodeToString(compressed.toByteArray());
+```
+
+Do not use the `Content-Encoding` response header for this: it applies to the body only. The body may be compressed independently of the metadata as usual.
+
 #### /timeseries (GET)
 
 This endpoint streams several timeseries together. This endpoint is only necessary if the adapter provides timeseries data.
@@ -424,7 +454,7 @@ Type of value must be the datatype of the timeseries source, i.e. if the timeser
 
 Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
-For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata. The metadata of each timeseries should follow the metadata conventions for SERIES, which are specified by the `SeriesMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). Additional fields are allowed, like `anomalies` in the following example. Checking metadata warns about them, in case they are misspelled.
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String (optionally gzip-compressed, see [Compressed metadata](#compressed-metadata)) representing a mapping from timeseries ids to their metadata. The metadata of each timeseries should follow the metadata conventions for SERIES, which are specified by the `SeriesMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). Additional fields are allowed, like `anomalies` in the following example. Checking metadata warns about them, in case they are misspelled.
 
 ```json
 {
@@ -543,7 +573,7 @@ There is a special convention on "timestamp" columns: If a timestamp column exis
 
 Additionally, [metadata](../../user_guide/attached_metadata.md) in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
 
-For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String (optionally gzip-compressed, see [Compressed metadata](#compressed-metadata)) representing the metadata, e.g.:
 
 ```json
 {
@@ -610,7 +640,7 @@ This response will always have the entries `metric`, `timestamp` and `value`. Ne
 
 Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../user_guide/attached_metadata.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
-For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata. It should follow the metadata conventions for MULTITSFRAME, which are specified by the `MultiTSFrameMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). An example:
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String (optionally gzip-compressed, see [Compressed metadata](#compressed-metadata)) representing the metadata. It should follow the metadata conventions for MULTITSFRAME, which are specified by the `MultiTSFrameMetadata` schema in the [openapi.json](../api.md) of the backend. You can check your metadata via the backend API, see [Specification and validation](../../user_guide/attached_metadata.md#specification-and-validation). An example:
 
 ```json
 {
@@ -735,7 +765,7 @@ This response will always have a `timestamp` entry plus at least one further ent
 
 ##### Attaching metadata to the singletsframe
 
-Analogous to `/multitsframe`, the response is allowed to send a header `Data-Attributes` containing a base64 encoded UTF8-encoded JSON String representing the metadata that is attached to the Pandas DataFrame objects' `attrs` attribute.
+Analogous to `/multitsframe`, the response is allowed to send a header `Data-Attributes` containing a base64 encoded UTF8-encoded JSON String (optionally gzip-compressed, see [Compressed metadata](#compressed-metadata)) representing the metadata that is attached to the Pandas DataFrame objects' `attrs` attribute.
 
 It should follow the metadata conventions for SINGLETSFRAME, which are specified by the `SingleTSFrameMetadata` schema in the [openapi.json](../api.md) of the backend. Since a singletsframe has exactly one metric, that metric is named via `dataset_metadata.single_metric` — see the [SINGLETSFRAME metadata example](../../user_guide/attached_metadata.md#example-for-singletsframe).
 

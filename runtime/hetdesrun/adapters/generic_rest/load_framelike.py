@@ -8,6 +8,7 @@ import base64
 import datetime
 import json
 import logging
+import zlib
 from posixpath import join as posix_urljoin
 from typing import Any, BinaryIO, Literal
 from uuid import UUID
@@ -37,6 +38,13 @@ logger = logging.getLogger(__name__)
 # single JSON record (one row); 1 MiB is ample for the adapter's per-row records.
 _PYARROW_JSON_READ_BLOCK_SIZE = 1024 * 1024
 
+# gzip data starts with these bytes, which JSON text never starts with
+GZIP_MAGIC_BYTES = b"\x1f\x8b"
+
+# Request header telling adapters that gzip-compressed Data-Attributes are understood. Only a hint:
+# adapters may also send them compressed without it, e.g. depending on the size of the metadata.
+DATA_ATTRIBUTES_ACCEPT_ENCODING_HEADER = "Data-Attributes-Accept-Encoding"
+
 
 def create_empty_ts_df(data_type: ExternalType, attrs: Any | None = None) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
@@ -54,14 +62,52 @@ def create_empty_ts_df(data_type: ExternalType, attrs: Any | None = None) -> pd.
     return df_empty(dtype_dict, attrs=attrs)
 
 
+def decompress_gzip(data: bytes, max_size: int) -> bytes:
+    """Decompress gzip data, at most max_size bytes, protecting against decompression bombs
+
+    Raises ValueError if the data is no valid gzip data, is truncated, has trailing data or exceeds
+    max_size bytes when decompressed.
+    """
+    decompressor = zlib.decompressobj(wbits=zlib.MAX_WBITS | 16)  # gzip container
+    try:
+        decompressed = decompressor.decompress(data, max_size)
+    except zlib.error as e:
+        raise ValueError(f"Invalid gzip data: {e}") from e
+    if decompressor.unconsumed_tail:
+        raise ValueError(
+            f"It exceeds {max_size} bytes when decompressed, the limit configured via"
+            " GENERIC_REST_ADAPTER_MAX_DECOMPRESSED_METADATA_SIZE."
+        )
+    if not decompressor.eof:
+        raise ValueError("The gzip data is truncated.")
+    if decompressor.unused_data:
+        raise ValueError("The gzip data is followed by further data.")
+    return decompressed
+
+
 def decode_attributes(data_attributes: str) -> Any:
-    base64_bytes = data_attributes.encode("utf-8")
-    logger.debug("data_attributes=%s", data_attributes)
-    df_attrs_bytes = base64.b64decode(base64_bytes)
-    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-    df_attrs = json.loads(df_attrs_json_str)
-    return df_attrs
+    """The metadata of a Data-Attributes header
+
+    The header contains the metadata as base64-encoded UTF-8 JSON, optionally gzip-compressed
+    before base64-encoding. Compressed data is recognized by the gzip magic bytes and decompressed
+    up to GENERIC_REST_ADAPTER_MAX_DECOMPRESSED_METADATA_SIZE bytes.
+
+    Raises ValueError if the header cannot be decoded.
+    """
+    data = base64.b64decode(data_attributes.encode("utf-8"))
+    if data[:2] == GZIP_MAGIC_BYTES:
+        compressed_size = len(data)
+        data = decompress_gzip(
+            data, get_config().generic_rest_adapter_max_decompressed_metadata_size
+        )
+        logger.debug(
+            "Decompressed gzip-compressed Data-Attributes from %d to %d bytes",
+            compressed_size,
+            len(data),
+        )
+    else:
+        logger.debug("Decoded Data-Attributes of %d bytes", len(data))
+    return json.loads(data.decode("utf-8"))
 
 
 def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str]:
@@ -182,6 +228,7 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
         )
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
+    headers = headers | {DATA_ATTRIBUTES_ACCEPT_ENCODING_HEADER: "gzip"}
 
     # One cached (blocking) niquests session per adapter, so the connection pool is reused across
     # requests. Blocking is acceptable here: we stream the body synchronously into pyarrow.
@@ -254,8 +301,15 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
 
         if "Data-Attributes" in resp.headers:
             logger.debug("Got Data-Attributes via GET response header")
-            data_attributes = resp.headers["Data-Attributes"]
-            df.attrs = decode_attributes(data_attributes)
+            try:
+                df.attrs = decode_attributes(resp.headers["Data-Attributes"])
+            except ValueError as e:
+                msg = (
+                    f"Could not decode the Data-Attributes header (metadata) received from"
+                    f" generic rest adapter {adapter_key} at {url}: {e}"
+                )
+                logger.info(msg)
+                raise AdapterHandlingException(msg) from e
 
         logger.debug(
             "Received dataframe of form %s:\n%s",

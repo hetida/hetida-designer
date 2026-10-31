@@ -258,6 +258,17 @@ class RuntimeConfig(BaseSettings):
             " preallocate memory nor slow down responses with smaller headers."
         ),
     )
+    generic_rest_adapter_max_decompressed_metadata_size: int = Field(
+        64 * 1024 * 1024,
+        gt=0,
+        validation_alias="GENERIC_REST_ADAPTER_MAX_DECOMPRESSED_METADATA_SIZE",
+        description=(
+            "Maximum size (in bytes) a gzip-compressed Data-Attributes header (metadata) of a"
+            " generic REST adapter response may have when decompressed. Larger metadata lets"
+            " loading fail. Protects against decompression bombs: gzip compresses uniform JSON"
+            " extremely, e.g. a header of 265 KiB can decompress to 200 MiB."
+        ),
+    )
     adapter_metadata_validation: dict[str, MetadataValidationMode] = Field(
         {},
         validation_alias="ADAPTER_METADATA_VALIDATION",
