@@ -112,7 +112,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from pydantic import BaseModel, ValidationError, model_validator
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -158,7 +158,13 @@ def plot_series_and_ranges(
     fill_color: str,
 ) -> go.Figure:
     series_to_plot = series.sort_index()
-    fig = go.Figure([go.Scatter(x=series_to_plot.index, y=series_to_plot, mode="lines+markers")])
+    fig = go.Figure(
+        [
+            go.Scatter(
+                x=plotly_datetimes(series_to_plot.index), y=series_to_plot, mode="lines+markers"
+            )
+        ]
+    )
 
     time_delta = series_to_plot.index.max() - series_to_plot.index.min()
     num_intervals = len(interval_dict)

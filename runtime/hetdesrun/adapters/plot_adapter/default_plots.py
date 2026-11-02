@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from pandas.api.types import is_datetime64_any_dtype
 
-from hdutils import DataType, plotly_fig_to_json_dict
+from hdutils import DataType, plotly_datetimes, plotly_fig_to_json_dict
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ def single_plotly_timeseries_plot(
 
     df = pd.DataFrame({"value": series, "timestamp": series.index}, index=series.index).sort_index()
 
-    fig = go.Figure([go.Scatter(x=df.index, y=df["value"], mode="lines")])
+    fig = go.Figure([go.Scatter(x=plotly_datetimes(df.index), y=df["value"], mode="lines")])
 
     layout_opts: dict = {
         "xaxis_title": "",  # TODO
@@ -252,7 +252,7 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame) -> go.Figure:
         yaxis = "y" + str(i + 1) * (i > 0)
         plotly_data.append(
             plotly.graph_objs.Scatter(
-                x=metric_series.index,
+                x=plotly_datetimes(metric_series.index),
                 y=metric_series,
                 name=col,
                 line={"color": colors[i % len(colors)]},

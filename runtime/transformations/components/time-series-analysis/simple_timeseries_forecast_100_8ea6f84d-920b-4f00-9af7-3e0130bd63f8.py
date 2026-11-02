@@ -101,7 +101,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_fig_to_json_dict
 
 ### Set some default values
 # clean_time_series_by_interpolation
@@ -690,14 +690,14 @@ def build_forecast_plot(
         [
             go.Scatter(
                 name="Original",
-                x=series.index,
+                x=plotly_datetimes(series.index),
                 y=series.values,
                 mode="lines",
                 line={"color": "#2FAE53"},
             ),
             go.Scatter(
                 name="Forecast",
-                x=combined.index,
+                x=plotly_datetimes(combined.index),
                 y=combined.values,
                 mode="lines",
                 line={"color": "#EB7C45"},

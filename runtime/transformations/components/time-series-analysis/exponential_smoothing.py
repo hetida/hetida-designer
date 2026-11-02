@@ -94,7 +94,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_fig_to_json_dict
 
 
 def resample_time_series_if_needed(series: pd.Series):
@@ -540,7 +540,7 @@ def timeseries_plot_including_predictions(
             [
                 go.Scatter(
                     name="Confidence Interval",
-                    x=conf_interval_upper_limit.index,
+                    x=plotly_datetimes(conf_interval_upper_limit.index),
                     y=conf_interval_upper_limit,
                     mode="lines",
                     line={"width": 0},
@@ -548,7 +548,7 @@ def timeseries_plot_including_predictions(
                 ),
                 go.Scatter(
                     name="Confidence Interval",
-                    x=conf_interval_lower_limit.index,
+                    x=plotly_datetimes(conf_interval_lower_limit.index),
                     y=conf_interval_lower_limit,
                     mode="lines",
                     line={"width": 0},
@@ -558,21 +558,21 @@ def timeseries_plot_including_predictions(
                 ),
                 go.Scatter(
                     name="Out-of-Sample Forecast",
-                    x=out_of_sample_forecast.index,
+                    x=plotly_datetimes(out_of_sample_forecast.index),
                     y=out_of_sample_forecast,
                     mode="lines+markers" if plot_marker else "lines",
                     line={"color": "#fc7d0b"},
                 ),
                 go.Scatter(
                     name="In-Sample Forecast",
-                    x=in_sample_forecast.index,
+                    x=plotly_datetimes(in_sample_forecast.index),
                     y=in_sample_forecast,
                     mode="lines+markers" if plot_marker else "lines",
                     line={"color": "#fc7d0b", "dash": "dash"},
                 ),
                 go.Scatter(
                     name="Observed Value",
-                    x=series.index,
+                    x=plotly_datetimes(series.index),
                     y=series,
                     mode="lines+markers" if plot_marker else "lines",
                     line={"color": "#1f77b4"},
@@ -584,7 +584,7 @@ def timeseries_plot_including_predictions(
             [
                 go.Scatter(
                     name="Confidence Interval",
-                    x=conf_interval_upper_limit.index,
+                    x=plotly_datetimes(conf_interval_upper_limit.index),
                     y=conf_interval_upper_limit,
                     mode="lines",
                     line={"width": 0},
@@ -592,7 +592,7 @@ def timeseries_plot_including_predictions(
                 ),
                 go.Scatter(
                     name="Confidence Interval",
-                    x=conf_interval_lower_limit.index,
+                    x=plotly_datetimes(conf_interval_lower_limit.index),
                     y=conf_interval_lower_limit,
                     mode="lines",
                     line={"width": 0},
@@ -602,14 +602,14 @@ def timeseries_plot_including_predictions(
                 ),
                 go.Scatter(
                     name="Forecast",
-                    x=out_of_sample_forecast.index,
+                    x=plotly_datetimes(out_of_sample_forecast.index),
                     y=out_of_sample_forecast,
                     mode="lines+markers" if plot_marker else "lines",
                     line={"color": "#fc7d0b"},
                 ),
                 go.Scatter(
                     name="Observed Value",
-                    x=series.index,
+                    x=plotly_datetimes(series.index),
                     y=series,
                     mode="lines+markers" if plot_marker else "lines",
                     line={"color": "#1f77b4"},

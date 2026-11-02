@@ -76,7 +76,7 @@ import plotly.express as px
 import plotly.io as pio
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -195,7 +195,7 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame):
         yaxis = "y" + str(i + 1) * (i > 0)
         plotly_data.append(
             plotly.graph_objs.Scatter(
-                x=df.index,
+                x=plotly_datetimes(df.index),
                 y=df[col],
                 name=col,
                 line={"color": colors[i % len(colors)]},

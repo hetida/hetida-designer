@@ -142,7 +142,7 @@ from hdhelpers import (
 )
 from hdhelpers.metadata import get_queried_interval, get_series_name, get_series_unit
 
-from hdutils import plotly_fig_to_json_dict
+from hdutils import plotly_datetimes, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -322,7 +322,14 @@ def main(
     mode = "lines" if 0 <= marker_threshold < len(series) else "lines+markers"
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
     fig = go.Figure(
-        [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
+        [
+            go.Scatter(
+                x=plotly_datetimes(series_with_tz.index),
+                y=series_with_tz,
+                mode=mode,
+                connectgaps=False,
+            )
+        ]
     )
 
     fig.update_traces(
