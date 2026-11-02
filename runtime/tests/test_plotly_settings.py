@@ -3,10 +3,11 @@
 import json
 import os
 
+import pandas as pd
 import plotly.graph_objects as go
 import pytest
 
-from hdutils import PlotTargetSettings, plotly_fig_to_json_dict
+from hdutils import PlotTargetSettings, plotly_datetimes, plotly_fig_to_json_dict
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.runtime.context import RuntimeExecutionContext
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
@@ -73,3 +74,27 @@ def test_plotly_fig_to_json_dict_keeps_auto_ticks_for_overlaying_axes():
     assert "tickmode" not in layout["yaxis4"]
     # axes which are not overlaying are left alone
     assert "tickmode" not in layout.get("yaxis", {})
+
+
+def test_plotly_datetimes_keeps_wall_clock_times():
+    index = pd.DatetimeIndex(["2024-10-27T00:30:00Z", "2024-10-27T01:30:00Z"]).tz_convert(
+        "Europe/Berlin"
+    )
+
+    naive = plotly_datetimes(index)
+
+    assert naive.tz is None
+    assert list(naive) == [pd.Timestamp("2024-10-27T02:30"), pd.Timestamp("2024-10-27T02:30")]
+    # plotly shows the same wall-clock times as for the timezone-aware index
+    tz_aware_x = plotly_fig_to_json_dict(go.Figure(go.Scatter(x=index, y=[1, 2])))["data"][0]["x"]
+    naive_x = plotly_fig_to_json_dict(go.Figure(go.Scatter(x=naive, y=[1, 2])))["data"][0]["x"]
+    assert [x[:19] for x in tz_aware_x] == [x[:19] for x in naive_x]
+
+
+def test_plotly_datetimes_leaves_other_values_unchanged():
+    naive_index = pd.DatetimeIndex(["2024-01-01T00:00:00"])
+    range_index = pd.RangeIndex(3)
+
+    assert plotly_datetimes(naive_index) is naive_index
+    assert plotly_datetimes(range_index) is range_index
+    assert plotly_datetimes([1, 2]) == [1, 2]

@@ -167,6 +167,7 @@ import pytz
 from hdhelpers.helpers import modify_timezone  # noqa F401  # noqa F401  # noqa F401
 from hdhelpers.metadata.attached import attrs_to_json, read_metadata
 from plotly.graph_objects import Figure
+from plotly.utils import PlotlyJSONEncoder
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -907,17 +908,60 @@ optional_data_type_map: dict[DataType | None, Any] = {
 }
 
 
+# Plotly's public JSON encoder, for the values the json module cannot encode itself,
+# e.g. numpy arrays, pandas and datetime objects
+_plotly_json_default = PlotlyJSONEncoder().default
+
+
+def _json_constant_to_null(_constant: str) -> None:
+    """Turn NaN, Infinity and -Infinity into null, like PlotlyJSONEncoder"""
+
+
 def serialize_plotly_fig(v: dict[str, Any] | Figure) -> Any:
+    """Turn a Plotly figure into a JSON-compatible dict
+
+    Dicts are returned unchanged.
+
+    The result consists of JSON types only, so it can be passed on and encoded anywhere,
+    and it is compatible with plotly.js since Plotly's own encoder creates it. It is
+    identical to json.loads(fig.to_json(validate=False)), which was used before, but
+    faster. tests/test_plotly_fig_serialization.py checks this, so that it is noticed if
+    a future Plotly version behaves differently.
+
+    fig.to_json() takes fig.to_dict() and
+    1. removes the uid of all traces,
+    2. encodes it with json.dumps, calling PlotlyJSONEncoder.default for values json
+       cannot encode itself (e.g. numpy arrays, pandas and datetime objects),
+    3. parses and encodes the whole text again if "NaN" or "Infinity" occurs anywhere in
+       it, in order to turn NaN, Infinity and -Infinity into null,
+    4. escapes "<", ">" and "/" for embedding into HTML.
+
+    Steps 1 and 2 are done the same way here. Step 3 happens while parsing the text into
+    a dict, which is needed anyway, and step 4 is left out:
+    * Plotly's check in step 3 looks at the text, so it also parses and encodes again for
+      titles containing "NaN" or base64-encoded numeric arrays containing "NaN" by chance.
+      The latter happens for large plots, e.g. "Single Timeseries Plot" with a million
+      points, where this takes about a quarter of the time.
+    * json.loads undoes the escaping of step 4 anyway.
+
+    Differences to using fig.to_json():
+    * Steps 1 and 3 are reimplemented here. If a future Plotly version changes them or
+      adds steps to fig.to_json(), this function does not follow automatically. The tests
+      compare both ways and fail in that case.
+    * plotly.io.json.config.default_engine is ignored: This always uses the json module.
+      fig.to_json() would switch to orjson if it were installed.
+    """
     if isinstance(v, dict):
         return v
 
-    # possibly quite inefficient (multiple serialisation / deserialization) but
-    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
-    # should be definitely compatible with the plotly javascript library:
+    fig_dict = v.to_dict()
+    for trace in fig_dict.get("data", []):
+        trace.pop("uid", None)
 
-    # Whats the difference using json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
-    # or employing fig.to_plotly_json()
-    return json.loads(v.to_json(validate=False))
+    return json.loads(
+        json.dumps(fig_dict, default=_plotly_json_default, separators=(",", ":")),
+        parse_constant=_json_constant_to_null,
+    )
 
 
 serializer_funcs_by_type = {
@@ -954,7 +998,7 @@ serializer_funcs_by_type = {
     np.ndarray: lambda v: v.tolist(),
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
-    Figure: serialize_plotly_fig,  # lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+    Figure: serialize_plotly_fig,
     NoneType: lambda x: x,
     None: lambda x: x,
 }
@@ -1183,6 +1227,22 @@ def keep_auto_ticks_for_overlaying_axes(fig_dict_obj: dict[str, Any]) -> None:
             and not ({"tickmode", "tickvals", "dtick"} & axis.keys())
         ):
             axis["tickmode"] = "auto"
+
+
+def plotly_datetimes(values: Any) -> Any:
+    """Prepare trace coordinates like x=series.index for a Plotly figure
+
+    Removes the timezone of a timezone-aware DatetimeIndex, keeping its wall-clock
+    times. Other values are returned unchanged.
+
+    plotly.js ignores UTC offsets and always shows the wall-clock time, so this does
+    not change the plot. But Plotly turns a timezone-aware DatetimeIndex into an object
+    array of Timestamps, which it deep-copies and JSON-encodes one by one. That is very
+    slow for long timeseries, while a timezone-naive DatetimeIndex is handled vectorized.
+    """
+    if isinstance(values, pd.DatetimeIndex) and values.tz is not None:
+        return values.tz_localize(None)
+    return values
 
 
 def plotly_fig_to_json_dict(

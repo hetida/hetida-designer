@@ -142,7 +142,7 @@ from hdhelpers import (
 )
 from hdhelpers.metadata import get_queried_interval, get_series_name, get_series_unit
 
-from hdutils import plotly_fig_to_json_dict
+from hdutils import plotly_datetimes, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -317,12 +317,19 @@ def main(
     series_with_gaps = apply_maximum_gap_size(series=series, maximum_gap_size=maximum_gap_size)
 
     # timezone handling for series
-    series_with_tz = modify_timezone(series_with_gaps)
+    series_with_tz = modify_timezone(series_with_gaps, to_timezone=target_timezone)
 
     mode = "lines" if 0 <= marker_threshold < len(series) else "lines+markers"
     shape = CONNECTION_TYPE_MAP.get(connection_type, "linear")
     fig = go.Figure(
-        [go.Scatter(x=series_with_tz.index, y=series_with_tz, mode=mode, connectgaps=False)]
+        [
+            go.Scatter(
+                x=plotly_datetimes(series_with_tz.index),
+                y=series_with_tz,
+                mode=mode,
+                connectgaps=False,
+            )
+        ]
     )
 
     fig.update_traces(
@@ -533,3 +540,14 @@ def test_using_keywords_no_metadata(optional_arguments):
 
     result = main(series=series, **optional_arguments)
     assert result_is_valid_json(result)  # noqa S101
+
+
+def test_target_timezone_applies_to_data_and_x_range():
+    series = pd.Series(
+        [1.0, 2.0], index=pd.DatetimeIndex(["2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z"])
+    )
+
+    plot = main(series=series, target_timezone="Europe/Berlin")["plot"]
+
+    assert plot["data"][0]["x"][0].startswith("2024-01-01T01:00:00")  # noqa: S101
+    assert plot["layout"]["xaxis"]["range"][0].startswith("2024-01-01T01:00:00")  # noqa: S101
