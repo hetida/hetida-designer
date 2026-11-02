@@ -34,7 +34,7 @@ hover readout.
 * The component visualizes the input **timeseries** as a µplot line chart with point markers and no area fill.
 * If **ymin** and **ymax** are not specified, the y-axis range is automatically extended by 5% above and below the data range.
 * If the series is empty, the y-axis range defaults to `0` to `1` and the x-axis range is left to µplot's automatic scaling.
-* Timestamps are rendered in the target timezone; the time-axis tick labels, the hover readout and the legend labels are localized according to **locale**.
+* Timestamps are rendered in the target timezone, also across daylight saving time changes: When the clocks are set back, the repeated hour appears twice on the time axis, when they are set forward, the skipped hour is left out. The hover readout shows the UTC offset of the timestamp, e.g. "GMT+2". The time-axis tick labels, the hover readout and the legend labels are localized according to **locale**.
 * **Interactivity**: drag a rectangle to zoom into both axes, double-click to reset to the full (configured) range, and hold **Shift** while dragging to pan. Hovering shows the timestamp and value in the legend.
 
 ## Example
@@ -99,6 +99,7 @@ The JSON input of a typical component invocation for the **timeseries** input is
 """
 
 import base64
+import datetime
 import json
 import uuid
 from string import Template
@@ -439,17 +440,41 @@ def get_y_title(series: pd.Series, ylabel: str | None) -> str:
     return ""
 
 
-def _to_adjusted_epoch(ts: pd.Timestamp) -> int:
+def _iana_timezone_name(tz: datetime.tzinfo | None) -> str | None:
+    """IANA name of a timezone like "Europe/Berlin", None e.g. for a fixed UTC offset."""
+    name = getattr(tz, "key", None) or getattr(tz, "zone", None)  # zoneinfo / pytz
+    return name if isinstance(name, str) else None
+
+
+def _offset_label(tz: datetime.tzinfo | None) -> str:
+    """Fixed UTC offset of a timezone like Intl's timeZoneName "shortOffset" shows it,
+    e.g. "GMT+2", "GMT-3:30" or "GMT+0". Empty for naive timestamps or timezones
+    without a fixed offset."""
+    offset = tz.utcoffset(None) if tz is not None else None
+    if offset is None:
+        return ""
+    minutes = int(offset.total_seconds() // 60)
+    sign = "-" if minutes < 0 else "+"
+    hours, minutes_of_hour = divmod(abs(minutes), 60)
+    return f"GMT{sign}{hours}:{minutes_of_hour:02d}" if minutes_of_hour else f"GMT{sign}{hours}"
+
+
+def _to_epoch_seconds(index: pd.DatetimeIndex, *, wall_clock: bool) -> list[int] | list[float]:
     """
-    uPlot wants plain epoch seconds. To make the wall-clock digits come out
-    right for an arbitrary source timezone regardless of the viewer's own
-    timezone, we bake the UTC offset into the epoch value itself (the JS
-    side then formats with timeZone:"UTC").
+    Epoch seconds as uPlot wants them, with millisecond precision.
+
+    With `wall_clock`, the UTC offset is baked into the epoch values, i.e. the
+    wall-clock time is taken as UTC (the JS side then formats with
+    timeZone:"UTC"). This only works for a fixed UTC offset: With daylight
+    saving time, the timestamps would not be ascending when the clocks are set
+    back.
     """
-    epoch = ts.timestamp()
-    off = ts.utcoffset()
-    offset_seconds = off.total_seconds() if off is not None else 0
-    return int(round(epoch + offset_seconds))
+    if wall_clock and index.tz is not None:
+        index = index.tz_localize(None)
+    ms = index.as_unit("ms").asi8
+    if (ms % 1000 == 0).all():
+        return (ms // 1000).tolist()
+    return (ms / 1000).tolist()
 
 
 def prepare_timeseries(
@@ -491,11 +516,22 @@ def prepare_timeseries(
     tz = s.index.tz
     tz_label = str(tz) if tz is not None else "no timezone (naive)"
 
-    timestamps = [_to_adjusted_epoch(ts) for ts in s.index]
+    # uPlot needs ascending timestamps. So for a timezone with a name, which may
+    # have daylight saving time, the actual epoch seconds are plotted and shown
+    # in that timezone. Fixed UTC offsets and naive timestamps are baked in
+    # instead, which avoids depending on the browser's support of offset
+    # timezones.
+    timezone_name = _iana_timezone_name(tz)
+    wall_clock = timezone_name is None
+
+    timestamps = _to_epoch_seconds(s.index, wall_clock=wall_clock)
     values = s.astype(float).tolist()
 
     x_range = (
-        [_to_adjusted_epoch(xmin_to_use), _to_adjusted_epoch(xmax_to_use)]
+        [
+            _to_epoch_seconds(pd.DatetimeIndex([ts]), wall_clock=wall_clock)[0]
+            for ts in (xmin_to_use, xmax_to_use)
+        ]
         if xmin_to_use is not None and xmax_to_use is not None
         else None
     )
@@ -514,6 +550,9 @@ def prepare_timeseries(
         "x_range": x_range,
         "y_range": [ymin_to_use, ymax_to_use],
         "locale": locale_to_use,
+        "timezone": timezone_name if timezone_name is not None else "UTC",
+        # None: the hover readout shows the UTC offset of each timestamp itself
+        "offset_label": None if timezone_name is not None else _offset_label(tz),
     }
 
 
@@ -522,28 +561,36 @@ def prepare_timeseries(
 # ---------------------------------------------------------------------------
 
 
-def _fmt_value_fn(loc_js: str) -> _RawJS:
-    """Cursor / legend readout: full localized date-time.
+def _fmt_value_fn(loc_js: str, tz_js: str, offset_label: str | None) -> _RawJS:
+    """Cursor / legend readout: full localized date-time with UTC offset, e.g.
+    "GMT+2", which also tells apart the repeated hour when daylight saving time
+    ends.
 
-    The timestamps have the source timezone's UTC offset baked in, so their
-    UTC fields equal the desired wall-clock time -- hence timeZone:"UTC".
-    `loc_js` is the locale already rendered as a JS literal ("en-US" or null).
+    `loc_js` and `tz_js` are the locale ("en-US" or null) and the timezone
+    already rendered as JS literals. If the UTC offset is baked into the
+    timestamps (see `_to_epoch_seconds`), `tz_js` is "UTC" and the fixed
+    `offset_label` is appended instead.
     """
+    if offset_label is None:
+        offset_option, suffix = ', timeZoneName: "shortOffset"', ""
+    else:
+        offset_option = ""
+        suffix = " + " + json.dumps(" " + offset_label) if offset_label else ""
     return _RawJS(
         '(u, v) => v == null ? "" : new Intl.DateTimeFormat(' + loc_js + " || undefined, {\n"
-        '  timeZone: "UTC", hourCycle: "h23",\n'
+        "  timeZone: " + tz_js + ', hourCycle: "h23",\n'
         '  year: "numeric", month: "short", day: "2-digit",\n'
-        '  hour: "2-digit", minute: "2-digit", second: "2-digit"\n'
-        "}).format(new Date(v * 1000))"
+        '  hour: "2-digit", minute: "2-digit", second: "2-digit"' + offset_option + "\n"
+        "}).format(new Date(v * 1000))" + suffix
     )
 
 
-def _fmt_ticks_fn(loc_js: str) -> _RawJS:
+def _fmt_ticks_fn(loc_js: str, tz_js: str) -> _RawJS:
     """Axis tick labels: granularity chosen from uPlot's increment so labels
     stay readable at any zoom level."""
     return _RawJS(
         "(u, splits, axisIdx, foundSpace, foundIncr) => {\n"
-        '  const o = { timeZone: "UTC", hourCycle: "h23" };\n'
+        "  const o = { timeZone: " + tz_js + ', hourCycle: "h23" };\n'
         '  if (foundIncr >= 27 * 86400) { o.year = "numeric"; o.month = "short"; }\n'
         '  else if (foundIncr >= 86400) { o.month = "short"; o.day = "2-digit"; }\n'
         '  else if (foundIncr >= 60) { o.hour = "2-digit"; o.minute = "2-digit"; }\n'
@@ -554,15 +601,11 @@ def _fmt_ticks_fn(loc_js: str) -> _RawJS:
     )
 
 
-def _tz_date_fn() -> _RawJS:
-    """Keeps uPlot's internal tick placement aligned to the target timezone's
-    day/hour boundaries; the Intl formatters above handle display."""
-    return _RawJS(
-        "(ts) => {\n"
-        "  const d = new Date(ts * 1000);\n"
-        "  return new Date(d.getTime() + d.getTimezoneOffset() * 60000);\n"
-        "}"
-    )
+def _tz_date_fn(tz_js: str) -> _RawJS:
+    """Keeps uPlot's internal tick placement aligned to the timezone's day/hour
+    boundaries, also across daylight saving time changes; the Intl formatters
+    above handle display."""
+    return _RawJS("(ts) => uPlot.tzDate(new Date(ts * 1000), " + tz_js + ")")
 
 
 def _pan_plugin() -> _RawJS:
@@ -631,6 +674,7 @@ def timeseries_to_uplot_opts(prepared: dict) -> tuple[list, dict]:
     fields are `_RawJS` markers so the wrapper emits them as live JS.
     """
     loc_js = json.dumps(prepared["locale"])  # JS literal: "en-US" or null
+    tz_js = json.dumps(prepared["timezone"])  # JS literal: "Europe/Berlin" or "UTC"
     color = prepared["color"]
 
     series_line = {
@@ -673,7 +717,7 @@ def timeseries_to_uplot_opts(prepared: dict) -> tuple[list, dict]:
         )
 
     opts = {
-        "tzDate": _tz_date_fn(),
+        "tzDate": _tz_date_fn(tz_js),
         "cursor": {
             # Drag a box to zoom both axes; double-click resets to the
             # configured range. Shift+drag pans (see `_pan_plugin`).
@@ -683,11 +727,14 @@ def timeseries_to_uplot_opts(prepared: dict) -> tuple[list, dict]:
         },
         "plugins": [_pan_plugin()],
         "series": [
-            {"label": prepared["x_label"], "value": _fmt_value_fn(loc_js)},
+            {
+                "label": prepared["x_label"],
+                "value": _fmt_value_fn(loc_js, tz_js, prepared["offset_label"]),
+            },
             series_line,
         ],
         "axes": [
-            {"grid": {"stroke": "#eee"}, "values": _fmt_ticks_fn(loc_js)},
+            {"grid": {"stroke": "#eee"}, "values": _fmt_ticks_fn(loc_js, tz_js)},
             {"grid": {"stroke": "#eee"}, "label": prepared["ytitle"]},
         ],
         "scales": {
@@ -910,3 +957,50 @@ RELEASE_WIRING = {
         },
     ]
 }
+
+
+def test_daylight_saving_time_change_keeps_timestamps_ascending():
+    # the clocks in Berlin are set back from 03:00 to 02:00 at 01:00 UTC
+    index = pd.date_range("2026-10-25T00:00Z", "2026-10-25T02:00Z", freq="30min")
+    series = pd.Series(range(len(index)), index=index, dtype=float)
+
+    prepared = prepare_timeseries(series, target_timezone="Europe/Berlin")
+    html = timeseries_to_uplot_html(series, target_timezone="Europe/Berlin")
+
+    assert prepared["timestamps"] == index.as_unit("s").asi8.tolist()  # noqa: S101
+    assert prepared["timezone"] == "Europe/Berlin"  # noqa: S101
+    assert prepared["offset_label"] is None  # noqa: S101
+    assert 'uPlot.tzDate(new Date(ts * 1000), "Europe/Berlin")' in html  # noqa: S101
+    assert 'timeZoneName: "shortOffset"' in html  # noqa: S101
+
+
+def test_fixed_utc_offset_is_baked_into_timestamps():
+    index = pd.date_range("2026-10-25T00:00Z", periods=2, freq="1h")
+    series = pd.Series([1.0, 2.0], index=index)
+
+    prepared = prepare_timeseries(
+        series, target_timezone="-03:30", xmin="2026-10-25T00:00Z", xmax="2026-10-25T01:00Z"
+    )
+    html = timeseries_to_uplot_html(series, target_timezone="-03:30")
+
+    expected = [ts - 12600 for ts in index.as_unit("s").asi8.tolist()]
+    assert prepared["timestamps"] == expected  # noqa: S101
+    assert prepared["x_range"] == expected  # noqa: S101
+    assert prepared["timezone"] == "UTC"  # noqa: S101
+    assert prepared["offset_label"] == "GMT-3:30"  # noqa: S101
+    assert '}).format(new Date(v * 1000)) + " GMT-3:30"' in html  # noqa: S101
+
+
+def test_sub_second_timestamps_keep_milliseconds():
+    index = pd.DatetimeIndex(["2026-01-01T00:00:00.250Z", "2026-01-01T00:00:00.500Z"])
+
+    prepared = prepare_timeseries(pd.Series([1.0, 2.0], index=index), target_timezone="UTC")
+
+    assert prepared["timestamps"] == [1767225600.25, 1767225600.5]  # noqa: S101
+    assert prepared["offset_label"] == "GMT+0"  # noqa: S101
+
+
+def test_empty_series():
+    result = main(timeseries=pd.Series(dtype=float))
+
+    assert result["uplot"]["content_type"] == "text/html"  # noqa: S101
