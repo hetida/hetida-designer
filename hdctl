@@ -1185,6 +1185,22 @@ def keep_auto_ticks_for_overlaying_axes(fig_dict_obj: dict[str, Any]) -> None:
             axis["tickmode"] = "auto"
 
 
+def plotly_datetimes(values: Any) -> Any:
+    """Prepare trace coordinates like x=series.index for a Plotly figure
+
+    Removes the timezone of a timezone-aware DatetimeIndex, keeping its wall-clock
+    times. Other values are returned unchanged.
+
+    plotly.js ignores UTC offsets and always shows the wall-clock time, so this does
+    not change the plot. But Plotly turns a timezone-aware DatetimeIndex into an object
+    array of Timestamps, which it deep-copies and JSON-encodes one by one. That is very
+    slow for long timeseries, while a timezone-naive DatetimeIndex is handled vectorized.
+    """
+    if isinstance(values, pd.DatetimeIndex) and values.tz is not None:
+        return values.tz_localize(None)
+    return values
+
+
 def plotly_fig_to_json_dict(
     fig: Figure, add_config_settings: bool = True, update_x_axes_tickformat: bool = True
 ) -> Any:
