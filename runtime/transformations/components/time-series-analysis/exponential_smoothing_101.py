@@ -116,7 +116,7 @@ from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_
 def resample_time_series_if_needed(series: pd.Series):
     """Return a regularly sampled copy of the time series if needed."""
 
-    if not series:
+    if series.empty:
         raise ComponentInputValidationException(
             "The input data must not be empty!",
             error_code="EmptyDataFrame",
@@ -973,3 +973,27 @@ RELEASE_WIRING = {
         {"workflow_input_name": "seasonal_periods", "filters": {"value": "7"}},
     ]
 }
+
+
+def test_empty_series_is_rejected():
+    error_code = None
+    try:
+        main(series=pd.Series(dtype=float), number_of_forecast_steps=3)
+    except ComponentInputValidationException as e:
+        error_code = e.error_code
+
+    assert error_code == "EmptyDataFrame"  # noqa: S101
+
+
+def test_forecast_of_regular_series():
+    index = pd.date_range("2026-01-01", periods=48, freq="1h", tz="UTC")
+    series = pd.Series(10 + np.sin(np.arange(48) * 2 * np.pi / 24), index=index)
+
+    result = main(
+        series=series,
+        number_of_forecast_steps=3,
+        seasonal_periods=24,
+        hyperparameter_tuning_iterations=2,
+    )
+
+    assert "plot" in result  # noqa: S101
