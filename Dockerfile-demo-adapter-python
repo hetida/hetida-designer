@@ -15,7 +15,7 @@ WORKDIR /app
 
 ENV PIPT_PIP_INSTALL_ARGS "--no-cache-dir"
 ENV PIPT_PIP_SYNC_PIP_ARGS "--no-cache-dir --no-deps"
-RUN UV_NO_CACHE=true ./pipt sync-system --prod
+RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content
 FROM base AS application_base
@@ -29,7 +29,7 @@ RUN chmod +x /app/start.sh
 #     docker build --target test -f Dockerfile-demo-adapter-python . -t hetdes_demo_adapter_python
 FROM application_base AS test
 WORKDIR /app
-RUN UV_NO_CACHE=true ./pipt sync-system --dev
+RUN UV_NO_CACHE=true UV_COMPILE_BYTECODE=1 ./pipt sync-system --dev
 RUN python3 -m pytest --cov=demo_adapter_python --cov-report xml --junitxml test_results.xml tests
 RUN bash /app/scripts/gen_ruff_report.sh
 
