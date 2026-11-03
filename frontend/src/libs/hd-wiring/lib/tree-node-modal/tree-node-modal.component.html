@@ -1,5 +1,11 @@
 <div class="hd-d-flex hd-content-space-between" mat-dialog-title>
-  <h4 class="hd-m-0">Search Sources</h4>
+  @if (data.nodeSourceType === 'SOURCE') {
+    <h4 class="hd-m-0">Search Sources</h4>
+  }
+  @if (data.nodeSourceType === 'SINK') {
+    <h4 class="hd-m-0">Search Sinks</h4>
+  }
+
   <div>
     <button
       (click)="onCancel()"
