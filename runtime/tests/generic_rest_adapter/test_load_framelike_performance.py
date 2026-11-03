@@ -34,6 +34,17 @@ a big pytest parent would otherwise swamp the measurement), and (b) the import p
 production helper pulls in the hetdesrun stack) would otherwise mask the parse. The subprocess also
 pins pyarrow to one thread (see ``__main__``) so the peak is deterministic. Linux-only; the memory
 test skips elsewhere. Locally ~0.1; asserted < 0.75.
+
+Timestamps: the timestamp column is parsed with ``format="ISO8601"``, which accepts ISO-8601
+timestamps of differing precision in the same response, instead of the format pandas infers from the
+first timestamp. A further test guards that this stays in the range of the inferred
+format: it times the production ``parse_timeseries_timestamps`` against ``pd.to_datetime`` without a
+format on the same timestamp column, as pyarrow hands it over, of timestamps all having the same
+precision (otherwise the inferred format fails). Both are single-threaded pandas, so the ratio is
+stable across machines. A single parse takes only ~10 ms, so CPU contention would hit whole blocks
+of repetitions unequally: the two alternate in each repetition, and the minimum over more of them is
+taken. Locally ~0.8-0.9 (also on 1-2 cores shared with busy processes, at most ~0.95); asserted
+< 1.2.
 """
 
 import gc
@@ -46,9 +57,13 @@ from collections.abc import Callable
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.json as pa_json
 import pytest
 
-from hetdesrun.adapters.generic_rest.load_framelike import parse_framelike_response_stream
+from hetdesrun.adapters.generic_rest.load_framelike import (
+    parse_framelike_response_stream,
+    parse_timeseries_timestamps,
+)
 
 # A size large enough that the measurement dominates fixed overhead, yet small enough to stay fast
 # and memory-light on constrained CI (the old chain peaks at only ~40 MiB above baseline here).
@@ -58,6 +73,9 @@ _MEM_MEASURE_RUNS = 3
 # The new chain must take / allocate less than this fraction of the old chain.
 _MAX_TIME_RATIO = 0.75
 _MAX_MEM_RATIO = 0.75
+# Parsing timestamps with format="ISO8601" must take less than this multiple of the inferred format.
+_MAX_ISO8601_TIME_RATIO = 1.2
+_TIMESTAMP_REPETITIONS = 21
 
 
 def _make_timeseries_ndjson(num_rows: int) -> bytes:
@@ -78,6 +96,11 @@ def _parse_old(raw: bytes) -> pd.DataFrame:
 def _parse_new(raw: bytes) -> pd.DataFrame:
     """The production parse core, as load_framelike_data invokes it (timeseries endpoint)."""
     return parse_framelike_response_stream(io.BytesIO(raw), "timeseries")
+
+
+def _parse_timestamps_inferred(timestamps: pd.Series) -> pd.Series:
+    """Reference baseline (removed from production): the format inferred from the first one."""
+    return pd.to_datetime(timestamps, utc=True)
 
 
 def _best_time(parse: Callable[[bytes], pd.DataFrame], raw: bytes) -> float:
@@ -175,6 +198,36 @@ def test_new_framelike_parse_chain_is_faster_than_old() -> None:
         "New framelike parse chain is not sufficiently faster than the old pd.read_json baseline: "
         f"new={new_best * 1000:.1f}ms old={old_best * 1000:.1f}ms "
         f"ratio={ratio:.3f} (must be < {_MAX_TIME_RATIO})"
+    )
+
+
+@pytest.mark.performance
+def test_iso8601_timestamp_parsing_is_not_slower_than_inferred_format() -> None:
+    # the timestamp strings as the parse chain hands them over (pyarrow -> pandas string dtype)
+    timestamps = pa_json.read_json(io.BytesIO(_make_timeseries_ndjson(_NUM_ROWS))).to_pandas()[
+        "timestamp"
+    ]
+
+    # Both must produce the same timestamps (this also warms up).
+    expected = _parse_timestamps_inferred(timestamps)
+    assert parse_timeseries_timestamps(timestamps).equals(expected)
+    assert expected.nunique() == _NUM_ROWS  # unique timestamps: no cache effects
+
+    inferred_best = iso8601_best = float("inf")
+    for _ in range(_TIMESTAMP_REPETITIONS):  # alternating, see module docstring
+        start = time.perf_counter()
+        _parse_timestamps_inferred(timestamps)
+        inferred_best = min(inferred_best, time.perf_counter() - start)
+        start = time.perf_counter()
+        parse_timeseries_timestamps(timestamps)
+        iso8601_best = min(iso8601_best, time.perf_counter() - start)
+
+    assert inferred_best > 0.0  # guard against a degenerate (unmeasurably small) baseline
+    ratio = iso8601_best / inferred_best
+    assert iso8601_best < _MAX_ISO8601_TIME_RATIO * inferred_best, (
+        "Parsing the timestamps with format='ISO8601' is not in the range of the inferred format: "
+        f"ISO8601={iso8601_best * 1000:.1f}ms inferred={inferred_best * 1000:.1f}ms "
+        f"ratio={ratio:.3f} (must be < {_MAX_ISO8601_TIME_RATIO})"
     )
 
 
