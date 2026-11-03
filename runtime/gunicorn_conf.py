@@ -35,7 +35,12 @@ errorlog_var = os.getenv("ERROR_LOG", "-")
 use_errorlog = errorlog_var or None
 graceful_timeout_str = os.getenv("GRACEFUL_TIMEOUT", "120")
 timeout_str = os.getenv("TIMEOUT", "120")
-keepalive_str = os.getenv("KEEP_ALIVE", "5")
+
+# Keepalive must clearly exceed the idle expiry of clients reusing connections, like
+# httpx clients (5 seconds).
+# Otherwise an idle connection may be closed just as a request arrives on it,
+# which drops the request.
+keepalive_str = os.getenv("KEEP_ALIVE", "65")
 
 # Gunicorn config variables
 loglevel = use_loglevel

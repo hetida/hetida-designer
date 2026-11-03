@@ -23,6 +23,9 @@ overmind s
 
 to start all services. You can abort overmind using ++ctrl+s++ and leave the nix-shell using ++ctrl+d++ in most terminals.
 
+!!! note
+    The PostgreSQL database of this setup is recreated empty at each start of its overmind process, e.g. at each `overmind s`. So all components, workflows and further data stored in it are lost, except for the base components and workflows which the backend deploys again.
+
 
 ## Containerized development setup
 
@@ -75,12 +78,16 @@ Now a development web server using a sqlite in-memory db can be started via
 HOST=127.0.0.1 PORT=8000 python main.py
 ```
 
+If `HD_RUNTIME_ENVIRONMENT_FILE` is not set, `main.py` started directly like this from the `runtime` directory uses the environment file `local_dev.env` there, which sets `HD_DATABASE_URL` to the in-memory database. This database is migrated and filled with the base components and workflows at each start, also at each restart of the web server due to code changes with `DEVELOPMENT_MODE=true`. Unlike in the docker image, it does not need to be allowed via `HD_ALLOW_IN_MEMORY_DB`, but `WEB_CONCURRENCY` greater than 1 is refused with it, since each web server process would have its own in-memory database.
+
 If you want to develop against the postgres db running in the docker compose dev environment the command is
 ```shell
 HOST=127.0.0.1 PORT=8000  HD_DATABASE_URL="postgresql+psycopg://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
 ```
 
-In both cases the OpenAPI UI can be found at http://localhost:8000/docs.
+The environment variable takes precedence over `HD_DATABASE_URL` from `local_dev.env`. To configure the database via `HD_DB_HOST`, `HD_DB_PORT` etc. instead, additionally set `HD_RUNTIME_ENVIRONMENT_FILE=""`, since `HD_DATABASE_URL` takes precedence over them, see [Database Configuration](../deployment_operation/database_configuration.md). Before starting the web server, `main.py` prepares the database like in the docker image, see [database preparation](../deployment_operation/database_configuration.md#database-preparation-at-backend-start).
+
+In both cases the OpenAPI UI can be found at http://localhost:8000/docs. Set `DEVELOPMENT_MODE=true` to restart the web server automatically on code changes.
 
 !!! note
     This starts runtime+backend combined. If you only want one of both you have to deactivate the other one by setting one of the environment variables `HD_IS_BACKEND_SERVICE` or `HD_IS_RUNTIME_SERVICE` to `false`.

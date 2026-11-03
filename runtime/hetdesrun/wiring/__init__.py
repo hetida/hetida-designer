@@ -2,12 +2,15 @@ import logging
 from collections import defaultdict
 from typing import Any
 
+from hdhelpers.metadata.attached import attrs_to_json
+
 from hdutils import DataType
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, to_correct_obj
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowOutput
+from hetdesrun.utils import deep_merge
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +18,19 @@ logger = logging.getLogger(__name__)
 def update_with_metadata_from_input_wiring(obj: Any, input_wiring: InputWiring) -> None:
     """Updates an attrs dict attribute if it exists and input wirings has attrs set
 
+    The attrs of the input wiring are merged into the attrs of the object recursively (see
+    deep_merge), e.g. a single field of the dataset metadata can be set without losing the other
+    fields provided by the adapter. Metadata the adapter attached as model is merged in its JSON
+    form, so that the result is parsed again when the metadata of the inputs is attached.
+
     Warns (logging) if the input wiring has attrs, but the object does not have an "attrs"
     attribute of type dict.
     """
     if input_wiring.attrs is not None:
         if hasattr(obj, "attrs") and isinstance(obj.attrs, dict):
-            # shallow, i.e. possibly completely overriding main fields:
-            obj.attrs.update(input_wiring.attrs)  # type: ignore [union-attr]
+            merged_attrs = deep_merge(attrs_to_json(obj.attrs), input_wiring.attrs)
+            obj.attrs.clear()
+            obj.attrs.update(merged_attrs)
         else:  # pragma: no cover
             msg = (
                 f"Input wiring for input {input_wiring.workflow_input_name} "

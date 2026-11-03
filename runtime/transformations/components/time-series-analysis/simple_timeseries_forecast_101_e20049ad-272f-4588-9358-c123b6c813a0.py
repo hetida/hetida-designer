@@ -104,7 +104,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_datetimes, plotly_fig_to_json_dict
 
 ### Set some default values
 # clean_time_series_by_interpolation
@@ -829,14 +829,14 @@ def build_forecast_plot(
         [
             go.Scatter(
                 name="Original",
-                x=series.index,
+                x=plotly_datetimes(series.index),
                 y=series.values,
                 mode="lines",
                 line={"color": "#2FAE53"},
             ),
             go.Scatter(
                 name="Forecast",
-                x=combined.index,
+                x=plotly_datetimes(combined.index),
                 y=combined.values,
                 mode="lines",
                 line={"color": "#EB7C45"},
@@ -848,7 +848,7 @@ def build_forecast_plot(
         fig.add_trace(
             go.Scatter(
                 name="Forecast Upper",
-                x=upper.index,
+                x=plotly_datetimes(upper.index),
                 y=upper.values,
                 mode="lines",
                 line={"color": "rgba(235,124,69,0.25)", "width": 0},
@@ -858,7 +858,7 @@ def build_forecast_plot(
         fig.add_trace(
             go.Scatter(
                 name="Forecast Interval",
-                x=lower.index,
+                x=plotly_datetimes(lower.index),
                 y=lower.values,
                 mode="lines",
                 line={"color": "rgba(235,124,69,0.25)", "width": 0},

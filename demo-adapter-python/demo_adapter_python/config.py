@@ -36,6 +36,16 @@ class PythonDemoAdapterConfig(BaseSettings):
         alias="ALLOWED_ORIGINS",
         examples=["http://exampledomain.com,http://anotherexampledomain.de"],
     )
+    compress_metadata: bool = Field(
+        True,
+        description=(
+            "Whether the Data-Attributes header (metadata) of GET responses is sent"
+            " gzip-compressed, if the request announces via the header"
+            ' "Data-Attributes-Accept-Encoding: gzip" that the hetida designer runtime'
+            " understands it"
+        ),
+        alias="COMPRESS_METADATA",
+    )
 
 
 environment_file = os.environ.get("HD_DEMO_ADAPTER_PYTHON_ENVIRONMENT_FILE", None)

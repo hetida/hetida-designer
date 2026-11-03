@@ -4,6 +4,7 @@ import json
 import logging
 from functools import cache
 from typing import Any
+from urllib.parse import parse_qs, unquote
 from uuid import UUID
 
 from pydantic import SecretStr
@@ -81,6 +82,43 @@ def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engin
     logger.debug("Created DB Engine with url: %s", repr(engine.url))
 
     return engine  # type: ignore
+
+
+def is_in_memory_db() -> bool:
+    """Whether the configured db is an in-memory SQLite db
+
+    Such a db exists only in the process using it. This includes temporary dbs,
+    see https://www.sqlite.org/inmemorydb.html
+    """
+    engine = get_db_engine()
+    if engine.dialect.name != "sqlite":
+        return False
+
+    # interpret the filename like sqlite does, with the arguments the driver passes to it
+    (filename, *_), connect_kwargs = engine.dialect.create_connect_args(engine.url)
+    if connect_kwargs.get("uri", False) and filename.startswith("file:"):
+        # URI filename, see https://www.sqlite.org/uri.html
+        path, _, query = filename.removeprefix("file:").partition("?")
+        if path.startswith("//"):
+            _authority, slash, path = path.removeprefix("//").partition("/")
+            path = slash + path
+        return path in ("", ":memory:") or "memory" in parse_qs(query).get("mode", [])
+
+    return filename in ("", ":memory:")
+
+
+def db_url_for_logging(url: URL | None = None) -> str:
+    """Url of the configured db (or the given url) without password, for logging"""
+    if url is None:
+        url = get_db_engine().url
+
+    # drivers may also accept passwords as query parameters
+    password_query_keys = [key for key in url.query if "password" in key.lower()]
+    if len(password_query_keys) > 0:
+        url = url.update_query_dict(dict.fromkeys(password_query_keys, "***"))
+
+    # unquoted for readability, e.g. sqlite+pysqlite:///:memory:
+    return unquote(url.render_as_string(hide_password=True))
 
 
 Session = sessionmaker(get_db_engine())

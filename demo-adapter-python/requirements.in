@@ -1,6 +1,8 @@
 -c requirements-base.txt
 fastapi>=0.65.2
 gunicorn
+# the models of the metadata conventions, without the plotting extra
+hdhelpers>=0.1.0
 httptools
 httpx2
 numpy

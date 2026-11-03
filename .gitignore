@@ -42,3 +42,8 @@ demo-adapter-python/settings/*
 .jupyter
 
 site/
+/*.md
+!/README.md
+!/CHANGELOG.md
+!/CONTRIBUTING.md
+!/security-checks.md

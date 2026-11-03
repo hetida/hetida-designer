@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from hdutils import DataType, parsing_not_identical
 from hetdesrun.adapters import AdapterHandlingException
+from hetdesrun.adapters.exceptions import AdapterInputDataError
 from hetdesrun.component.load import prepare_component_import_context
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
@@ -37,6 +38,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
 )
 from hetdesrun.runtime.engine.plain.workflow import mark_discarded_outputs, obtain_all_nodes
 from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
+from hetdesrun.runtime.input_metadata import attach_input_metadata
 from hetdesrun.runtime.logging import (
     _get_execution_context,
     execution_context_filter,
@@ -315,6 +317,29 @@ async def runtime_service_handling(  # noqa: PLR0911, PLR0912, PLR0915
             except WorkflowInputDataValidationError as exc:
                 runtime_logger.info(
                     "Input Data Validation Error during data provision",
+                    exc_info=True,
+                )
+                return WorkflowExecutionResult.from_exception(
+                    exc,
+                    currently_executed_process_stage,
+                    runtime_input.job_id,
+                    tr_name=runtime_input.workflow.tr_name,
+                    tr_tag=runtime_input.workflow.tr_tag,
+                    tr_id=runtime_input.workflow.tr_id,
+                    measured_steps=measured_steps,
+                    mem_info=RuntimeMemoryInfo.complete_now(memory_at_runtime_service_start_kb),
+                )
+
+            # after parsing, since directly provisioned data is parsed only then
+            try:
+                attach_input_metadata(
+                    parsed_non_optional_data | parsed_optional_data,
+                    runtime_input.workflow_wiring,
+                    inp_name_to_datatype_map,
+                )
+            except AdapterInputDataError as exc:
+                runtime_logger.info(
+                    "Metadata of input data not adhering to the metadata conventions",
                     exc_info=True,
                 )
                 return WorkflowExecutionResult.from_exception(

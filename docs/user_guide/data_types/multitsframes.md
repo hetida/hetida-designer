@@ -29,10 +29,10 @@ that it is more storage-efficient in case that multiple timeseries do not have t
 | 2024-12-01T03:00:00+00:00 |       |       |       | 45.99 |
 
 !!! info
-Note that hetida designer provides base components to convert into "wide" format dataframes and vice versa in the category "Connectors".
+    Note that hetida designer provides base components to convert into "wide" format dataframes and vice versa in the category "Connectors".
 
 !!! tip "Only one metric?"
-If your data consists of exactly one timeseries, the `metric` column is constant and therefore redundant. In that case use a [SingleTSFrame](singletsframes.md) instead — it has the same representation minus the `metric` column, and still supports arbitrarily many value dimensions. The base component "Extract SingleTSFrame from MultiTSFrame" converts a single metric of a MultiTSFrame into a SingleTSFrame.
+    If your data consists of exactly one timeseries, the `metric` column is constant and therefore redundant. In that case use a [SingleTSFrame](singletsframes.md) instead — it has the same representation minus the `metric` column, and still supports arbitrarily many value dimensions. The base component "Extract SingleTSFrame from MultiTSFrame" converts a single metric of a MultiTSFrame into a SingleTSFrame.
 
 ## MultiTsFrame details
 
@@ -94,10 +94,10 @@ A simple json representation of a MultiTSFrame for the [direct provisioning adap
 ```
 
 !!! tip
-Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with these 3 columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
-`python
+    Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with these 3 columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+    ```python
     print(df.to_json(orient="columns", date_format="iso", indent=2))
-    `
+    ```
 
 It is possible to define metadata for the MultiTSFrame.
 Conventions for the metadata keys can be found [here](../attached_metadata.md).
@@ -108,10 +108,26 @@ For such cases, we recommend using the `wrapped format`, e.g.:
 {
   "__hd_wrapped_data_object__": "DATAFRAME",
   "__metadata__": {
-    "ref_data_frequency": {
-      "a": "1h",
-      "b": "1h"
-    }
+    "dataset_metadata": {
+      "metric_key": "id",
+      "queried_metrics": ["a", "b"],
+      "ref_interval_start_timestamp": "2019-08-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2019-08-01T03:00:00Z",
+      "ref_interval_type": "closed",
+      "ref_data_frequency": "1h"
+    },
+    "metrics": [
+      {
+        "id": "a",
+        "name": "Pressure A",
+        "value_dimensions": [{ "column": "value", "unit": "bar", "measurement": "pressure" }]
+      },
+      {
+        "id": "b",
+        "name": "Pressure B",
+        "value_dimensions": [{ "column": "value", "unit": "bar", "measurement": "pressure" }]
+      }
+    ]
   },
   "__data__": {
     "value": {

@@ -2416,7 +2416,7 @@ async def transformation_dashboard(
     ),
     use_release_wiring: bool = Query(
         False,
-        descripton=(
+        description=(
             "Whether release_wiring should be used as basis instead of the current test_wiring."
             " Using a released trafo and its fixed release wiring guarantees reproducibility of"
             " the dashboard view."

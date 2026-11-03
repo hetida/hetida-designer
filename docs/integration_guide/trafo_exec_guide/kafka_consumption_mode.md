@@ -12,6 +12,8 @@ First you need the Kafka adapter to be active and registered and Kafka configura
 
 Then you can set up a separate container using the hetida designer runtime Docker image running in consumption mode by setting the environment variable `HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE` to a json object which is equal to the execution payload (described for example [here](./execution_via_api.md)) except that no `job_id` is set. Consumption mode will automatically create a new job id for each execution triggered by a Kafka message.
 
+Unless `HD_IS_BACKEND_SERVICE` is set to `false`, such a container prepares the database at its start like the backend, i.e. it runs the migrations, the deployment of base components and workflows etc., see [Database Configuration](../../deployment_operation/database_configuration.md#database-preparation-at-backend-start).
+
 The provided input wiring determines to which topic consumption mode will listen continuously. Note that all other functionalities like backend/runtime API endpoints will not run on a container in consumption mode.
 
 Example:

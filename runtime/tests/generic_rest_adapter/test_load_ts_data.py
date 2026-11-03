@@ -14,7 +14,10 @@ from hetdesrun.adapters.generic_rest import (
     load_grouped_timeseries_data_together,
 )
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
-from hetdesrun.adapters.generic_rest.load_ts_data import load_ts_data_from_adapter
+from hetdesrun.adapters.generic_rest.load_ts_data import (
+    extract_one_channel_series_from_loaded_data,
+    load_ts_data_from_adapter,
+)
 from hetdesrun.models.data_selection import FilteredSource
 
 
@@ -414,3 +417,20 @@ async def test_end_to_end_load_ts_with_exception():
                 },
                 adapter_key="end_to_end_only_ts_data",
             )
+
+
+def test_extract_one_channel_series_keeps_the_attrs_of_the_loaded_data():
+    loaded_data = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2020-01-01T00:00:00Z", "2020-01-01T00:00:00Z"]),
+            "timeseriesId": pd.array(["id_1", "id_2"], dtype="string"),
+            "value": [1.0, 2.0],
+        }
+    )
+    loaded_data.attrs = {"id_1": {"a": "b"}, "id_2": {"c": 5}}
+
+    series = extract_one_channel_series_from_loaded_data(loaded_data, "id_2")
+
+    assert series.to_list() == [2.0]
+    assert series.attrs == {"c": 5}
+    assert loaded_data.attrs == {"id_1": {"a": "b"}, "id_2": {"c": 5}}

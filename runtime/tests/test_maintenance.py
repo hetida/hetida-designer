@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from pydantic import SecretStr
 
 from hetdesrun.backend.service.maintenance_router import (
+    autoimport,
     delete_all_and_refill,
     delete_unused_deprecated,
     handle_maintenance_operation_request,
@@ -87,3 +88,36 @@ def test_maintenance_arbitrary_error(maintenance_secret_set):
     assert not maint_response.success
     assert maint_response.error is not None
     assert resp_mock.status_code == 500
+
+
+def test_maintenance_autoimport(tmp_path):
+    with (
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.autoimport_directory", str(tmp_path)
+        ),
+        mock.patch(
+            "hetdesrun.backend.service.maintenance_router.autoimport_from_directory"
+        ) as mocked_autoimport,
+    ):
+        autoimport()
+    mocked_autoimport.assert_called_once_with(str(tmp_path))
+
+
+@pytest.mark.parametrize("autoimport_dir", ["", "/non/existing/dir"])
+def test_maintenance_autoimport_missing_dir(autoimport_dir, maintenance_secret_set):
+    with (
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.autoimport_directory", autoimport_dir
+        ),
+        mock.patch(
+            "hetdesrun.backend.service.maintenance_router.autoimport_from_directory"
+        ) as mocked_autoimport,
+    ):
+        response = mock.Mock()
+        result = handle_maintenance_operation_request(
+            "trigger_autoimport", SecretStr("testsecret"), autoimport, response=response
+        )
+    mocked_autoimport.assert_not_called()
+    assert result.success is False
+    assert "does not exist or is not a directory" in result.error
+    assert response.status_code == 500

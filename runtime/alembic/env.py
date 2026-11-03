@@ -70,13 +70,18 @@ def run_migrations_online():
     logger = logging.getLogger("hetdesrun")
 
     alembic_logger = logging.getLogger("alembic")
-    configure_logging(alembic_logger)
+    if not alembic_logger.handlers:  # migrations may run several times in a process
+        configure_logging(alembic_logger)
 
-    from hetdesrun.persistence.db_engine_and_session import get_db_engine
+    from hetdesrun.persistence.db_engine_and_session import db_url_for_logging, get_db_engine
 
     connectable = get_db_engine()
 
-    logger.info("Running online migrations with driver %s", connectable.url.get_driver_name())
+    logger.info(
+        "Running online migrations with driver %s on db %s",
+        connectable.url.get_driver_name(),
+        db_url_for_logging(connectable.url),
+    )
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=get_target_metadata())

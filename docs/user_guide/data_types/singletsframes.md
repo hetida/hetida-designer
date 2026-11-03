@@ -30,7 +30,7 @@ Use a SINGLETSFRAME when
 - that timeseries has more than one value dimension, or you want to keep the option open, so a SERIES is too narrow.
 
 !!! info
-hetida designer provides base components in the category "Connectors" to convert between SINGLETSFRAME and SERIES, MULTITSFRAME and DATAFRAME, in particular "Convert Series to SingleTSFrame" and "Extract SingleTSFrame from MultiTSFrame".
+    hetida designer provides base components in the category "Connectors" to convert between SINGLETSFRAME and SERIES, MULTITSFRAME and DATAFRAME, in particular "Convert Series to SingleTSFrame" and "Extract SingleTSFrame from MultiTSFrame".
 
 ## SingleTsFrame details
 
@@ -76,10 +76,10 @@ A simple json representation of a SingleTSFrame for the [direct provisioning ada
 ```
 
 !!! tip
-Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with a "timestamp" column and value columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
-`python
+    Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) with a "timestamp" column and value columns you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+    ```python
     print(df.to_json(orient="columns", date_format="iso", indent=2))
-    `
+    ```
 
 It is possible to define metadata for the SingleTSFrame.
 Conventions for the metadata keys can be found [here](../attached_metadata.md).
@@ -91,14 +91,20 @@ For such cases, we recommend using the `wrapped format`, e.g.:
   "__hd_wrapped_data_object__": "DATAFRAME",
   "__metadata__": {
     "dataset_metadata": {
+      "metric_key": "id",
       "single_metric": "abc.temp",
-      "metric_key": "id"
+      "queried_metrics": ["abc.temp"],
+      "ref_interval_start_timestamp": "2019-08-01T00:00:00Z",
+      "ref_interval_end_timestamp": "2019-08-01T03:00:00Z",
+      "ref_interval_type": "closed"
     },
     "metrics": [
       {
         "id": "abc.temp",
         "name": "ABC temperature",
-        "value_dimensions": [{ "column": "value", "name": "temperature", "unit": "°C" }]
+        "value_dimensions": [
+          { "column": "value", "name": "temperature", "unit": "°C", "measurement": "temperature" }
+        ]
       }
     ]
   },

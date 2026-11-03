@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 from hetdesrun.component.code import ParseDefaultValueError
+from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     import_using_api,
@@ -19,18 +20,25 @@ from hetdesrun.persistence.dbservice.exceptions import (
 )
 from hetdesrun.persistence.dbservice.revision import (
     ComponentImportComponentError,
+    nof_db_entries,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     Importable,
     ImportSource,
+    ImportSourceConfig,
     MultipleTrafosUpdateConfig,
+    get_import_sources,
+    load_import_source,
     load_import_sources,
     load_transformation_revisions_from_directory,
 )
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -257,7 +265,6 @@ class AutoImportSettings(BaseSettings):
     deprecate_older_revisions: bool = Field(
         alias="HD_BACKEND_AUTOIMPORT_DIRECTORY_DEPRECATE_OLDER_REVISIONS", default=False
     )
-    directly_into_db: bool = True
 
 
 def import_transformations_from_dir(
@@ -328,6 +335,118 @@ def import_transformations_from_dir(
             importable.import_config.update_config = update_config
 
         _ = import_importables(importables)
+
+
+def autodeploy_base_transformations(base_trafos_dir: str = "./transformations/") -> None:
+    """Deploy the base components and workflows into the db as configured for backend start
+
+    Follows HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS, HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY
+    and HD_BACKEND_ALLOW_OVERWRITE_RELEASED.
+    """
+    if not get_config().autodeploy_base_transformations:
+        logger.info(
+            "Skipping base trafo autodeployment since"
+            " HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS is false."
+        )
+        return
+
+    nof_entries = nof_db_entries()
+    if nof_entries == 0:
+        logger.info("Running base trafo autodeployment into empty db.")
+        import_transformations_from_dir(
+            base_trafos_dir, directly_into_db=True, update_component_code=False
+        )
+        return
+
+    if get_config().preserve_db_on_autodeploy:
+        logger.info(
+            "Skipping base trafo autodeployment since db contains %i trafo revisions"
+            " and HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY is true.",
+            nof_entries,
+        )
+        return
+
+    allow_overwrite_released = get_config().autodeploy_allow_overwrite_released
+    logger.info(
+        "Running base trafo autodeployment into db containing %i trafo revisions,"
+        " possibly overwriting them%s.",
+        nof_entries,
+        "" if allow_overwrite_released else " except for released and deprecated ones",
+    )
+    import_transformations_from_dir(
+        base_trafos_dir,
+        directly_into_db=True,
+        allow_overwrite_released=allow_overwrite_released,
+        update_component_code=False,
+    )
+
+
+def autoimport_from_directory(autoimport_dir: str) -> None:
+    """Import all import sources in the autoimport directory
+
+    Used at backend start and by the maintenance endpoint trigger_autoimport, see
+    docs/deployment_operation/trafo_import_export/autoimport.md: The import sources without
+    config file are imported together, following the HD_BACKEND_AUTOIMPORT_DIRECTORY_*
+    environment variables. Afterwards the import sources with config file are imported
+    following it, in the order of their paths.
+    """
+    logger.info("Trying autoimport from %s", autoimport_dir)
+
+    import_sources = sorted(get_import_sources(autoimport_dir), key=lambda source: source.path)
+
+    trafos_without_config: dict[UUID, TransformationRevision] = {}
+    importables_with_config: list[Importable] = []
+    for import_source in import_sources:
+        try:
+            importable = load_import_source(import_source)
+        except (ValueError, OSError, ComponentCodeImportError) as e:
+            logger.error(
+                "Could not load import source %s%s. It is not imported. Error was: %s",
+                import_source.path,
+                ""
+                if import_source.config_file is None
+                else f" with config file {import_source.config_file}",
+                str(e),
+            )
+            continue
+
+        if import_source.config_file is None:
+            trafos_without_config.update(
+                {trafo.id: trafo for trafo in importable.transformation_revisions}
+            )
+        else:
+            importables_with_config.append(importable)
+
+    importables = [
+        Importable(
+            transformation_revisions=list(trafos_without_config.values()),
+            import_config=ImportSourceConfig(
+                filter_params=FilterParams(),
+                update_config=MultipleTrafosUpdateConfig(**AutoImportSettings().model_dump()),
+            ),
+        ),
+        *importables_with_config,
+    ]
+    import_importables(importables)
+    logger.info("Finished autoimport from %s", autoimport_dir)
+
+
+def autoimport_at_backend_start() -> None:
+    """Run the autoimport from HD_BACKEND_AUTOIMPORT_DIRECTORY if it is set"""
+    autoimport_dir = get_config().autoimport_directory
+    if autoimport_dir == "":
+        return
+
+    if not os.path.isdir(autoimport_dir):
+        logger.warning(
+            "The autoimport directory %s set via HD_BACKEND_AUTOIMPORT_DIRECTORY does not exist"
+            " or is not a directory (resolved path %s). Nothing is imported from it!",
+            autoimport_dir,
+            os.path.abspath(autoimport_dir),
+        )
+        return
+
+    autoimport_from_directory(autoimport_dir)
 
 
 def generate_import_order_file(

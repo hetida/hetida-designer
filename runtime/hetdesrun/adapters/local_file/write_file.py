@@ -16,6 +16,7 @@ from hetdesrun.adapters.local_file.utils import (
     to_url_representation,
 )
 from hetdesrun.runtime.logging import _get_job_id_context
+from hetdesrun.utils import with_json_attrs
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +132,9 @@ def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
         )
 
     try:
-        file_support_handler.write_handler_func(data_obj, possible_local_file.path, **write_kwargs)
+        file_support_handler.write_handler_func(
+            with_json_attrs(data_obj), possible_local_file.path, **write_kwargs
+        )
     except Exception as e:  # noqa: BLE001
         msg = (
             f"Failed to write local file \n{str(possible_local_file)}\n with "

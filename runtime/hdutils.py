@@ -14,7 +14,9 @@ import numpy as np
 import pandas as pd
 import pytz
 from hdhelpers.helpers import modify_timezone  # noqa F401  # noqa F401  # noqa F401
+from hdhelpers.metadata.attached import attrs_to_json, read_metadata
 from plotly.graph_objects import Figure
+from plotly.utils import PlotlyJSONEncoder
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -340,7 +342,7 @@ def parse_pydantic_series(v: pd.Series | str | dict | list) -> pd.Series:
 def serialize_series(s: pd.Series) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "SERIES",
-        "__metadata__": s.attrs,
+        "__metadata__": attrs_to_json(s.attrs),
         "__data__": json.loads(
             # double serialization/deserialization in order to serialize both NaN and NaT
             # to null
@@ -394,7 +396,7 @@ def parse_pydantic_pandas_data_frame(v: pd.DataFrame | str | dict | list) -> pd.
 def serialize_dataframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
@@ -480,7 +482,7 @@ def parse_pydantic_multi_timeseries_pandas_data_frame(
 def serialize_multitsframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
@@ -571,7 +573,7 @@ def parse_pydantic_single_timeseries_pandas_data_frame(
 def serialize_singletsframe(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": json.loads(
             df.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
@@ -598,9 +600,9 @@ PydanticSingleTimeseriesPandasDataFrame = Annotated[
 def serialize_series_raw(s: pd.Series) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "SERIES",
-        # __metdata__ uncoerced on purpose; the msgspec enc_hook coerces exotic values
-        # (see hetdesrun.service.serialization_helpers):
-        "__metadata__": s.attrs,
+        # __metdata__ uncoerced on purpose apart from attached metadata models; the msgspec
+        # enc_hook coerces exotic values (see hetdesrun.service.serialization_helpers):
+        "__metadata__": attrs_to_json(s.attrs),
         "__data__": msgspec.Raw(
             s.to_json(
                 date_format="iso",
@@ -615,7 +617,7 @@ def serialize_series_raw(s: pd.Series) -> dict[str, Any]:
 def serialize_dataframe_raw(df: pd.DataFrame) -> dict[str, Any]:
     return {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": df.attrs,
+        "__metadata__": attrs_to_json(df.attrs),
         "__data__": msgspec.Raw(df.to_json(date_format="iso").encode()),
     }
 
@@ -755,24 +757,67 @@ optional_data_type_map: dict[DataType | None, Any] = {
 }
 
 
+# Plotly's public JSON encoder, for the values the json module cannot encode itself,
+# e.g. numpy arrays, pandas and datetime objects
+_plotly_json_default = PlotlyJSONEncoder().default
+
+
+def _json_constant_to_null(_constant: str) -> None:
+    """Turn NaN, Infinity and -Infinity into null, like PlotlyJSONEncoder"""
+
+
 def serialize_plotly_fig(v: dict[str, Any] | Figure) -> Any:
+    """Turn a Plotly figure into a JSON-compatible dict
+
+    Dicts are returned unchanged.
+
+    The result consists of JSON types only, so it can be passed on and encoded anywhere,
+    and it is compatible with plotly.js since Plotly's own encoder creates it. It is
+    identical to json.loads(fig.to_json(validate=False)), which was used before, but
+    faster. tests/test_plotly_fig_serialization.py checks this, so that it is noticed if
+    a future Plotly version behaves differently.
+
+    fig.to_json() takes fig.to_dict() and
+    1. removes the uid of all traces,
+    2. encodes it with json.dumps, calling PlotlyJSONEncoder.default for values json
+       cannot encode itself (e.g. numpy arrays, pandas and datetime objects),
+    3. parses and encodes the whole text again if "NaN" or "Infinity" occurs anywhere in
+       it, in order to turn NaN, Infinity and -Infinity into null,
+    4. escapes "<", ">" and "/" for embedding into HTML.
+
+    Steps 1 and 2 are done the same way here. Step 3 happens while parsing the text into
+    a dict, which is needed anyway, and step 4 is left out:
+    * Plotly's check in step 3 looks at the text, so it also parses and encodes again for
+      titles containing "NaN" or base64-encoded numeric arrays containing "NaN" by chance.
+      The latter happens for large plots, e.g. "Single Timeseries Plot" with a million
+      points, where this takes about a quarter of the time.
+    * json.loads undoes the escaping of step 4 anyway.
+
+    Differences to using fig.to_json():
+    * Steps 1 and 3 are reimplemented here. If a future Plotly version changes them or
+      adds steps to fig.to_json(), this function does not follow automatically. The tests
+      compare both ways and fail in that case.
+    * plotly.io.json.config.default_engine is ignored: This always uses the json module.
+      fig.to_json() would switch to orjson if it were installed.
+    """
     if isinstance(v, dict):
         return v
 
-    # possibly quite inefficient (multiple serialisation / deserialization) but
-    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
-    # should be definitely compatible with the plotly javascript library:
+    fig_dict = v.to_dict()
+    for trace in fig_dict.get("data", []):
+        trace.pop("uid", None)
 
-    # Whats the difference using json.loads(json.dumps(fig_dict_obj, cls=PlotlyJSONEncoder))
-    # or employing fig.to_plotly_json()
-    return json.loads(v.to_json(validate=False))
+    return json.loads(
+        json.dumps(fig_dict, default=_plotly_json_default, separators=(",", ":")),
+        parse_constant=_json_constant_to_null,
+    )
 
 
 serializer_funcs_by_type = {
     pd.Series: serialize_series,
     pd.DataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
@@ -780,21 +825,21 @@ serializer_funcs_by_type = {
     PydanticPandasSeries: serialize_series,
     PydanticPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
         ),
     },
     PydanticMultiTimeseriesPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
     },
     PydanticSingleTimeseriesPandasDataFrame: lambda v: {
         "__hd_wrapped_data_object__": "DATAFRAME",
-        "__metadata__": v.attrs,
+        "__metadata__": attrs_to_json(v.attrs),
         "__data__": json.loads(
             v.to_json(date_format="iso")
         ),  # in order to serialize both NaN and NaT to null
@@ -802,7 +847,7 @@ serializer_funcs_by_type = {
     np.ndarray: lambda v: v.tolist(),
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
-    Figure: serialize_plotly_fig,  # lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+    Figure: serialize_plotly_fig,
     NoneType: lambda x: x,
     None: lambda x: x,
 }
@@ -1033,6 +1078,22 @@ def keep_auto_ticks_for_overlaying_axes(fig_dict_obj: dict[str, Any]) -> None:
             axis["tickmode"] = "auto"
 
 
+def plotly_datetimes(values: Any) -> Any:
+    """Prepare trace coordinates like x=series.index for a Plotly figure
+
+    Removes the timezone of a timezone-aware DatetimeIndex, keeping its wall-clock
+    times. Other values are returned unchanged.
+
+    plotly.js ignores UTC offsets and always shows the wall-clock time, so this does
+    not change the plot. But Plotly turns a timezone-aware DatetimeIndex into an object
+    array of Timestamps, which it deep-copies and JSON-encodes one by one. That is very
+    slow for long timeseries, while a timezone-naive DatetimeIndex is handled vectorized.
+    """
+    if isinstance(values, pd.DatetimeIndex) and values.tz is not None:
+        return values.tz_localize(None)
+    return values
+
+
 def plotly_fig_to_json_dict(
     fig: Figure, add_config_settings: bool = True, update_x_axes_tickformat: bool = True
 ) -> Any:
@@ -1102,10 +1163,10 @@ def add_columns_from_metric_metadata(
     replace_metric_col_with_key: str | list[str] | None = None,
     default_value: Any = np.nan,
 ) -> pd.DataFrame:
-    """Add columns (or replace metric column) from attrs metadata in a multitsframe
+    """Add columns (or replace metric column) from the metric metadata of a multitsframe
 
-    Expects a hetida designer multitsframe with metadata according to hetida designer
-    metadata conventions.
+    Expects a hetida designer multitsframe with metadata following the hetida designer metadata
+    conventions, also if attached as model (see hdhelpers.metadata.read_metadata).
 
     For replacing the metric col using replace_metric_col_with_key this expects a
     value for each metric to be found in the metadata. If that is not the case it keeps
@@ -1116,80 +1177,52 @@ def add_columns_from_metric_metadata(
 
     Modifies in-place, but also returns the modified multitsframe.
 
-    keys is a list of json-path-like lists. For each entry a column is added, where
-    in the found metric metdata the field at subpath defined by this entry is assigned.
-    For convenience a str entry is interpreted as json path of length 1.
+    keys is a list of json-path-like lists. For each entry a column named by its last element is
+    added, where for each metric the field at this path in its metadata is assigned, with the
+    fallbacks of the conventions (e.g. the value dimension "value" and the inherited properties,
+    see the metric_info method of the metadata models). For convenience a str entry is
+    interpreted as json path of length 1.
 
-    E.g. if your attrs looks like
-        "by_metric": {
-            "a": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "AAAAA",
-                        "display_name": "some A",
-                        "short_display_name": "a",
-                        "description": "some descriptions",
-                        "external_id": "AA",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
-            "b": {
-                "structured_metadata": {
-                    "metric": {  # metadata associated to the current metric. These are
-                        "name": "BBBBB",
-                        "display_name": "some B",
-                        "short_display_name": "b",
-                        "description": "some descriptions",
-                        "external_id": "BB",
-                        "channel_id": "abc123-...",
-                    }
-                }
-            },
+    E.g. if the entries under "metrics" in attrs look like
+        {
+            "id": "a",
+            "name": "AAAAA",
+            "external_id": "AA",
+            "signal_id": "abc123-...",
+            "inherited": {"site": "north"},
+            "value_dimensions": [{"column": "value", "unit": "m", "measurement": "level"}],
         }
 
-    then you can specify to add an external_id column and an additional channel id column via
-        add_columns_from_metric_metadata(
-            multitsframe, keys=[
-                ["structured_metadata", "metric", "external_id"],
-                ["structured_metadata", "metric", "channel_id"]
-            ]
-        )
+    then you can specify to add an external_id column and a site column via
+        add_columns_from_metric_metadata(multitsframe, keys=["external_id", ["inherited", "site"]])
 
     Similarly replace_metric_col_with_key is a json-path-like list or interpreted as length 1 such
     path if a single str.
     """
 
-    metrics_metadata = extract_sub_value(multitsframe.attrs, ["by_metric"])
-
-    if metrics_metadata is None or all(
-        (x is None or len(x) == 0)
-        for x in metrics_metadata.values()  # nothin contained in the values
-    ):
-        metrics_metadata = extract_sub_value(multitsframe.attrs, ["metric_metadata"])
-
-    if metrics_metadata is None:
-        logger.warning("Did not found metric metadata for extracting data into columns.")
+    meta = read_metadata(multitsframe, "MULTITSFRAME")
+    if meta is None:
+        logger.warning(
+            "Found no metadata following the metadata conventions for extracting data into columns."
+        )
         return multitsframe
 
-    if replace_metric_col_with_key is not None:
-        key_list = (
-            [replace_metric_col_with_key]
-            if isinstance(replace_metric_col_with_key, str)
-            else replace_metric_col_with_key
-        )
+    def values_by_metric(key: str | list[str]) -> dict[str, Any]:
+        key_list = [key] if isinstance(key, str) else key
+        return {
+            metric: value
+            for metric, value in meta.metric_infos(".".join(key_list)).items()
+            if value is not None
+        }
 
+    if replace_metric_col_with_key is not None:
         multitsframe["metric"] = multitsframe["metric"].replace(
-            extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
+            values_by_metric(replace_metric_col_with_key)
         )
     if keys is not None:
         for key in keys:
-            key_list = [key] if isinstance(key, str) else key
-
-            mapping_dict = extract_sub_mapping(metrics_metadata, key_list)  # type: ignore
-
-            mapping_dict = defaultdict(lambda: default_value, mapping_dict)
-
-            multitsframe[key_list[-1]] = multitsframe["metric"].map(mapping_dict)
+            column = key if isinstance(key, str) else key[-1]
+            mapping_dict = defaultdict(lambda: default_value, values_by_metric(key))
+            multitsframe[column] = multitsframe["metric"].map(mapping_dict)
 
     return multitsframe

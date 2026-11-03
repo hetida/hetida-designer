@@ -5,14 +5,17 @@ import inspect
 import json
 import logging
 import random
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Mapping
+from copy import deepcopy
 from enum import StrEnum
 from functools import wraps
 from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
+import pandas as pd
 import requests  # noqa: F401
+from hdhelpers.metadata.attached import META_KEY, attrs_to_json
 from pydantic import BaseModel
 
 from hetdesrun.webservice.config import get_config
@@ -113,6 +116,36 @@ class State(StrEnum):
 class Type(StrEnum):
     COMPONENT = "COMPONENT"
     WORKFLOW = "WORKFLOW"
+
+
+def deep_merge(base: Mapping[str, Any], update: Mapping[str, Any]) -> dict[str, Any]:
+    """A new dict with the entries of update merged into base recursively
+
+    Dicts occurring in both at the same key are merged recursively. All other values of update,
+    including lists, replace the value of base. Neither base nor update is changed and the result
+    shares no dicts or lists with them.
+    """
+    merged = deepcopy(dict(base))
+    for key, value in update.items():
+        if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
+
+
+def with_json_attrs[T](obj: T) -> T:
+    """The object or, if it has metadata attached as model, a shallow copy with JSON attrs
+
+    For writing pandas objects to files or storage: The copy has the metadata in its JSON form
+    (see attrs_to_json), so that e.g. pickles contain no hdhelpers classes and to_parquet, which
+    stores attrs as JSON, works. The object itself keeps its attached model.
+    """
+    if isinstance(obj, pd.Series | pd.DataFrame) and META_KEY in obj.attrs:
+        copied = obj.copy(deep=False)
+        copied.attrs = attrs_to_json(obj.attrs)
+        return copied  # type: ignore[no-any-return]
+    return obj
 
 
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:

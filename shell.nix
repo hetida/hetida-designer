@@ -32,16 +32,15 @@
 #     for all services being available but finally you should be able to reach them at
 #     the following urls:
 #       frontend: http://localhost:4200
-#       backend: http://localhost:8080/api/swagger-ui.html
-#       runtime: http://localhost:8090/docs
+#       backend and runtime: http://localhost:8080/docs
 #
 #     You can now edit source code: Changes of frontend or runtime code should automatically restart
-#     the corresponding service. For the Java backend you need to invoke
-#         mvn compile
-#     in the ./backend subdirectory to trigger a restart. We recommend to setup your Java IDE
-#     accordingly.
+#     the corresponding service.
 #
 # Notes:
+#     * The postgres database is recreated empty (in .tmp/pg_dev_db) at each start of its overmind
+#       process. So the backend deploys the base components and workflows again and all further
+#       data is lost.
 #     * Occasionally you may need to stop everything and re-enter the development environment. To do
 #       so press Ctrl+c to stop overmind and Ctrl-d to leave the nix-shell environment. After that
 #       restart everything as described above.
@@ -50,7 +49,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/871b9fd269ff6246794583ce4ee1031e1da71895.tar.gz")
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/718f670e845328e9c2cecdd832835712b2cbd065.tar.gz")
 {
   config = {
     permittedInsecurePackages = [
@@ -252,6 +251,9 @@ let
       ]
     '
     export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8080/adapters/sql|http://localhost:8080/adapters/sql,kafka|Kafka Adapter|http://localhost:8080/adapters/kafka|http://localhost:8080/adapters/kafka,external-sources|External Sources|http://localhost:8080/adapters/external_sources|http://localhost:8080/adapters/external_sources,component-adapter|Component Adapter|http://localhost:8080/adapters/component|http://localhost:8080/adapters/component"
+    # executions fail if the demo adapter provides metadata not adhering to the metadata
+    # conventions, which e.g. the e2e tests then reveal
+    export ADAPTER_METADATA_VALIDATION='{"demo-adapter-python": "ERROR"}'
     export HD_USE_AUTH=false
     export COMPONENT_ADAPTER_ALLOW_DRAFT_COMPONENTS=true
     export HETIDA_DESIGNER_SCHEDULING_ACTIVE=true

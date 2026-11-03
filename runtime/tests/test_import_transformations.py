@@ -1,19 +1,27 @@
+import json
 import logging
 import os
 import shutil
+from contextlib import ExitStack
+from pathlib import Path
 from unittest import mock
+from uuid import UUID
 
 import pytest
 
 from hetdesrun.component.code import ParseDefaultValueError
 from hetdesrun.datatypes import DataType
 from hetdesrun.exportimport.importing import (
+    autodeploy_base_transformations,
+    autoimport_at_backend_start,
+    autoimport_from_directory,
     generate_import_order_file,
     import_importable,
     import_importables,
     import_transformations_from_dir,
 )
 from hetdesrun.exportimport.utils import update_or_create_transformation_revision
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
 )
@@ -338,3 +346,169 @@ def test_import_importable():
             strip_release_wirings_with_adapter_ids=set(),
             keep_only_release_wirings_with_adapter_ids=set(),
         )
+
+
+@pytest.mark.parametrize(
+    ("settings", "nof_entries", "expected_import_kwargs"),
+    [
+        ({}, 0, {}),
+        ({}, 5, {"allow_overwrite_released": True}),
+        ({"autodeploy_base_transformations": False}, 0, None),
+        ({"autodeploy_base_transformations": False}, 5, None),
+        ({"preserve_db_on_autodeploy": True}, 0, {}),
+        ({"preserve_db_on_autodeploy": True}, 5, None),
+        ({"autodeploy_allow_overwrite_released": False}, 0, {}),
+        ({"autodeploy_allow_overwrite_released": False}, 5, {"allow_overwrite_released": False}),
+    ],
+)
+def test_autodeploy_base_transformations(settings, nof_entries, expected_import_kwargs):
+    settings = {
+        "autodeploy_base_transformations": True,
+        "preserve_db_on_autodeploy": False,
+        "autodeploy_allow_overwrite_released": True,
+        **settings,
+    }
+    with ExitStack() as stack:
+        for name, value in settings.items():
+            stack.enter_context(
+                mock.patch(f"hetdesrun.webservice.config.runtime_config.{name}", value)
+            )
+        mocked_nof_db_entries = stack.enter_context(
+            mock.patch("hetdesrun.exportimport.importing.nof_db_entries", return_value=nof_entries)
+        )
+        mocked_import = stack.enter_context(
+            mock.patch("hetdesrun.exportimport.importing.import_transformations_from_dir")
+        )
+        autodeploy_base_transformations()
+
+    if not settings["autodeploy_base_transformations"]:
+        mocked_nof_db_entries.assert_not_called()
+
+    if expected_import_kwargs is None:
+        mocked_import.assert_not_called()
+    else:
+        mocked_import.assert_called_once_with(
+            "./transformations/",
+            directly_into_db=True,
+            update_component_code=False,
+            **expected_import_kwargs,
+        )
+
+
+def test_autoimport_at_backend_start(tmp_path, caplog):
+    with mock.patch(
+        "hetdesrun.exportimport.importing.autoimport_from_directory"
+    ) as mocked_autoimport:
+        with mock.patch("hetdesrun.webservice.config.runtime_config.autoimport_directory", ""):
+            autoimport_at_backend_start()
+        mocked_autoimport.assert_not_called()
+
+        with (
+            mock.patch(
+                "hetdesrun.webservice.config.runtime_config.autoimport_directory", str(tmp_path)
+            ),
+            caplog.at_level(logging.WARNING),
+        ):
+            autoimport_at_backend_start()
+        assert "HD_BACKEND_AUTOIMPORT_DIRECTORY" not in caplog.text
+        mocked_autoimport.assert_called_once_with(str(tmp_path))
+
+
+@pytest.mark.parametrize("missing", ["missing_dir", "a_file"])
+def test_autoimport_at_backend_start_missing_dir(tmp_path, caplog, missing):
+    (tmp_path / "a_file").write_text("")
+    autoimport_dir = tmp_path / missing
+
+    with (
+        mock.patch(
+            "hetdesrun.webservice.config.runtime_config.autoimport_directory", str(autoimport_dir)
+        ),
+        mock.patch(
+            "hetdesrun.exportimport.importing.autoimport_from_directory"
+        ) as mocked_autoimport,
+        caplog.at_level(logging.WARNING),
+    ):
+        autoimport_at_backend_start()
+
+    mocked_autoimport.assert_not_called()
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelno == logging.WARNING
+    assert "set via HD_BACKEND_AUTOIMPORT_DIRECTORY does not exist" in caplog.text
+    assert str(autoimport_dir) in caplog.text
+
+
+def released_base_components(number: int) -> list[dict]:
+    components = []
+    for path in sorted(Path("./transformations/components").rglob("*.json")):
+        trafo = json.loads(path.read_text())
+        if trafo["state"] == "RELEASED" and "COMPONENT_INFO" in trafo["content"]:
+            components.append(trafo)
+        if len(components) == number:
+            return components
+    raise AssertionError("Not enough base components")
+
+
+def write_autoimport_directory(directory: Path, components: list[dict]) -> None:
+    """Import sources of all kinds, list.json with a config file filtering out components[2]"""
+    (directory / "subdir" / "category").mkdir(parents=True)
+    (directory / "subdir" / "category" / "c0.json").write_text(json.dumps(components[0]))
+    (directory / "list.json").write_text(json.dumps([components[1], components[2]]))
+    (directory / "list.json.config.json").write_text(
+        json.dumps({"filter_params": {"names": [components[1]["name"]]}, "update_config": {}})
+    )
+    (directory / "single.json").write_text(json.dumps(components[3]))
+    (directory / "c4.py").write_text(components[4]["content"])
+    (directory / "broken.json").write_text("{")
+
+
+def test_autoimport_from_directory(tmp_path, caplog, mocked_clean_test_db_session):
+    components = released_base_components(5)
+    write_autoimport_directory(tmp_path, components)
+
+    with caplog.at_level(logging.ERROR):
+        autoimport_from_directory(str(tmp_path))
+    errors = [record.getMessage() for record in caplog.records if record.levelno >= logging.ERROR]
+
+    # the broken import source does not prevent importing the others
+    assert len(errors) == 1
+    assert "Could not load import source" in errors[0]
+    assert str(tmp_path / "broken.json") in errors[0]
+
+    for index in (0, 1, 3, 4):
+        assert (
+            read_single_transformation_revision(components[index]["id"]).name
+            == (components[index]["name"])
+        )
+    with pytest.raises(DBNotFoundError):  # filtered out via config file
+        read_single_transformation_revision(components[2]["id"])
+
+
+def test_autoimport_from_directory_import_configs(tmp_path, monkeypatch):
+    components = released_base_components(5)
+    write_autoimport_directory(tmp_path, components)
+    (tmp_path / "broken.json").unlink()
+    (tmp_path / "another.json").write_text(json.dumps(components[2]))
+    (tmp_path / "another.json.config.json").write_text(
+        json.dumps({"filter_params": {}, "update_config": {"strip_wirings": True}})
+    )
+    monkeypatch.setenv("HD_BACKEND_AUTOIMPORT_DIRECTORY_ALLOW_OVERWRITE_RELEASED", "true")
+    monkeypatch.setenv("HD_BACKEND_AUTOIMPORT_DIRECTORY_UPDATE_COMPONENT_CODE", "false")
+
+    with mock.patch("hetdesrun.exportimport.importing.import_importables") as mocked_import:
+        autoimport_from_directory(str(tmp_path))
+
+    importables = mocked_import.call_args.args[0]
+    assert len(importables) == 3
+
+    # import sources without config file together, following the environment variables
+    assert {trafo.id for trafo in importables[0].transformation_revisions} == {
+        UUID(components[index]["id"]) for index in (0, 3, 4)
+    }
+    assert importables[0].import_config.update_config.allow_overwrite_released is True
+    assert importables[0].import_config.update_config.update_component_code is False
+
+    # then the import sources with config file following it, in the order of their paths
+    assert importables[1].import_config.update_config.strip_wirings is True
+    assert importables[1].import_config.update_config.allow_overwrite_released is False
+    assert importables[2].import_config.filter_params.names == [components[1]["name"]]
+    assert importables[2].import_config.update_config.update_component_code is True

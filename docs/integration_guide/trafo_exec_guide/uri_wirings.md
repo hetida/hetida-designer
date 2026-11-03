@@ -45,4 +45,4 @@ Furthermore it allows to configuratively upgrade/change such wirings by simply c
 Using [hetida platform](https://hetida.io/), typically the following wiring shortcuts are configured:
 
 * `hd://assets` — points to the hetida platform source component "Hetida Platform Assets" that provides assets as a dataframe at the current point in the hierarchy.
-* `hd://timeseries` — points to the hetida platform source component "Hetida Platform Channel Timeseries Data" that provides dynamic collections of timeseries data at and below the current asset as a multitsframe.
+* `hd://timeseries` — points to (a revision of) the hetida platform source component "Hetida Platform Signal Timeseries Data" that provides dynamic collections of timeseries data at and below the current asset as a multitsframe.

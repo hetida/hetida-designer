@@ -15,7 +15,7 @@ Convert a Series into a SingleTSFrame.
 ## Details
 A SERIES and a SINGLETSFRAME both represent a single timeseries. The difference is that a SERIES is one-dimensional and carries its timestamps in the index, while a SINGLETSFRAME carries its timestamps in a "timestamp" column and can have arbitrarily many value dimensions. This component therefore moves the index into a "timestamp" column and the values into a single value column.
 
-The attributes (`.attrs`) of the series are carried over unchanged, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types, namely via `dataset_metadata.single_metric`. If the series has a name and no `single_metric` is set in the metadata, the series name is used as `single_metric`.
+The attributes (`.attrs`) of the series are carried over, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types, namely via `dataset_metadata.single_metric`. If the metadata follows the conventions, its value dimension "value" is renamed to **value_column_name**. Otherwise, if the series has a name and no `single_metric` is set in the metadata, the series name is used as `single_metric`.
 
 Raises a ComponentInputValidationException if the index of the series cannot be interpreted as timestamps.
 
@@ -34,6 +34,7 @@ The json input of a typical call of this component is
 import copy
 
 import pandas as pd
+from hdhelpers.metadata import read_metadata, set_metadata
 
 from hdutils import ComponentInputValidationException
 
@@ -83,11 +84,15 @@ def main(*, series, value_column_name="value"):
     singletsframe = singletsframe.reset_index(drop=True)
 
     attrs = copy.deepcopy(series.attrs) if series.attrs else {}
-    if series.name is not None:
+    meta = read_metadata(series, "SERIES")
+    if meta is None and series.name is not None:
         dataset_metadata = attrs.setdefault("dataset_metadata", {})
         if isinstance(dataset_metadata, dict) and dataset_metadata.get("single_metric") is None:
             dataset_metadata["single_metric"] = str(series.name)
+    # set after changing attrs, since pandas copies the dict when setting attrs
     singletsframe.attrs = attrs
+    if meta is not None:
+        set_metadata(singletsframe, meta.as_singletsframe(value_column_name))
 
     return {"singletsframe": singletsframe}
 
@@ -98,6 +103,28 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import META_KEY, attrs_to_json, check_metadata_conventions
+
+    SERIES_METADATA = {
+        "dataset_metadata": {
+            "metric_key": "id",
+            "single_metric": "abc.temp",
+            "queried_metrics": ["abc.temp"],
+            "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+            "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+            "ref_interval_type": "closed",
+        },
+        "metrics": [
+            {
+                "id": "abc.temp",
+                "name": "Temperature",
+                "value_dimensions": [
+                    {"column": "value", "unit": "°C", "measurement": "temperature"}
+                ],
+            }
+        ],
+        "value_dimensions_shared": [{"column": "value", "description": "Measured"}],
+    }
 
     @pytest.fixture
     def series():
@@ -125,6 +152,18 @@ else:
         # input attrs must not be modified
         assert "single_metric" not in series.attrs["dataset_metadata"]  # noqa: S101
 
+    @pytest.mark.parametrize("attrs", [{}, {"other": 1}])
+    def test_series_name_becomes_single_metric_without_dataset_metadata(series, attrs):
+        series.attrs = attrs
+
+        singletsframe = main(series=series)["singletsframe"]
+
+        assert singletsframe.attrs == attrs | {  # noqa: S101
+            "dataset_metadata": {"single_metric": "abc.temp"}
+        }
+        # input attrs must not be modified
+        assert "dataset_metadata" not in series.attrs  # noqa: S101
+
     def test_existing_single_metric_is_kept(series):
         series.attrs["dataset_metadata"]["single_metric"] = "already.set"
 
@@ -136,6 +175,23 @@ else:
         singletsframe = main(series=series, value_column_name="temperature")["singletsframe"]
 
         assert list(singletsframe.columns) == ["timestamp", "temperature"]  # noqa: S101
+
+    @pytest.mark.parametrize("value_column_name", ["value", "temperature"])
+    def test_metadata_following_conventions_is_converted(series, value_column_name):
+        series.attrs = copy.deepcopy(SERIES_METADATA) | {"other": 1}
+
+        singletsframe = main(series=series, value_column_name=value_column_name)["singletsframe"]
+
+        assert set(singletsframe.attrs) == {META_KEY, "other"}  # noqa: S101
+        # only other information besides the metadata
+        assert [  # noqa: S101
+            issue.location for issue in check_metadata_conventions(singletsframe, "SINGLETSFRAME")
+        ] == ["other"]
+        attrs = attrs_to_json(singletsframe.attrs)
+        assert attrs["metrics"][0]["value_dimensions"][0]["column"] == value_column_name  # noqa: S101
+        assert attrs["value_dimensions_shared"][0]["column"] == value_column_name  # noqa: S101
+        # input attrs must not be modified
+        assert series.attrs == SERIES_METADATA | {"other": 1}  # noqa: S101
 
     def test_invalid_value_column_name(series):
         with pytest.raises(ComponentInputValidationException):

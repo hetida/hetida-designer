@@ -27,6 +27,8 @@ If there is a timestamp where not all metrics have a value, the corresponding po
 Raises a ComponentInputValidationException if the inputs are ill-formatted or conflicting.
 """
 
+import copy
+
 import numpy as np
 import pandas as pd
 
@@ -65,6 +67,12 @@ from hdutils import parse_default_value  # noqa: E402, F401
 def main(*, multitsframe, handle_multiple_value_columns="drop", flattening_delimiter="."):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
+
+    # Without the metadata, since pandas copies it on every operation below. Under copy-on-write
+    # this neither copies the data nor changes the input, e.g. when converting its metric column.
+    attrs = multitsframe.attrs
+    multitsframe = pd.DataFrame(multitsframe)
+    multitsframe.attrs = {}
 
     # "value" must be in the columns
     if "value" not in multitsframe.columns:
@@ -106,6 +114,9 @@ def main(*, multitsframe, handle_multiple_value_columns="drop", flattening_delim
 
     # sort dataframe and reset index
     pivoted_df = pivoted_df.sort_values(by="timestamp").reset_index(drop=True)
+
+    # the metadata of the input, as pandas would have passed it on
+    pivoted_df.attrs = copy.deepcopy(attrs)
 
     return {"wide_format_timeseries_dataframe": pivoted_df}
 
@@ -222,6 +233,22 @@ else:
 
         if not output_df.equals(control_df):
             pytest.fail(f"Expected \n {control_df} \n but got \n {output_df}")
+
+    def test_metadata_is_passed_on_and_input_is_not_changed(multitsframe):
+        multitsframe.attrs = {
+            "dataset_metadata": {"metric_key": "id", "queried_metrics": ["a", "b", "c"]},
+            "metrics": [{"id": "a", "comments": [{"content": "maintenance"}]}],
+        }
+        expected_attrs = copy.deepcopy(multitsframe.attrs)
+        expected_input = multitsframe.copy()
+
+        output_df = main(multitsframe=multitsframe)["wide_format_timeseries_dataframe"]
+
+        assert output_df.attrs == expected_attrs  # noqa: S101
+        output_df.attrs["metrics"][0]["comments"].clear()
+        assert multitsframe.attrs == expected_attrs  # noqa: S101
+        # e.g. the dtype of its metric column
+        pd.testing.assert_frame_equal(multitsframe, expected_input)
 
     def test_run_with_multicols(multitsframe, wide_format_timeseries_dataframe):
         for multcols in ["drop", "flatten", "hierarchical"]:

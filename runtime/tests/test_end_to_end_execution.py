@@ -1,6 +1,9 @@
 import json
+import logging
 import os
+from copy import deepcopy
 from typing import Any
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -21,6 +24,7 @@ from hetdesrun.trafoutils.io.load import (
     load_json,
     transformation_revision_from_python_code,
 )
+from hetdesrun.webservice.config import MetadataValidationMode
 
 
 async def run_workflow_with_client(
@@ -316,6 +320,104 @@ async def test_direct_provisioning_singletsframe_metadata(
                 "state": {"0": "ok"},
             },
         }
+
+
+SERIES_METADATA_FOLLOWING_CONVENTIONS = {
+    "dataset_metadata": {
+        "metric_key": "id",
+        "single_metric": "a",
+        "queried_metrics": ["a"],
+        "ref_interval_start_timestamp": "2026-10-18T00:00:00Z",
+        "ref_interval_end_timestamp": "2026-10-19T00:00:00Z",
+        "ref_interval_type": "closed",
+    },
+    "metrics": [
+        {
+            "id": "a",
+            "name": "A",
+            "value_dimensions": [{"column": "value", "unit": "m", "measurement": None}],
+        }
+    ],
+}
+
+
+def wrapped_series(metadata: dict) -> str:
+    return json.dumps(
+        {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": metadata,
+            "__data__": {"2026-10-18T06:00:00Z": 2.3, "2026-10-18T07:00:00Z": 2.4},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_direct_provisioning_metadata_following_conventions(
+    async_test_client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The metadata is attached as model, the output contains its JSON form"""
+    metadata = deepcopy(SERIES_METADATA_FOLLOWING_CONVENTIONS)
+    # an optional field as null, which the JSON form of the model omits
+    metadata["metrics"][0]["display_name"] = None
+
+    async with async_test_client as client:
+        with caplog.at_level(logging.WARNING, logger="hetdesrun.runtime.input_metadata"):
+            exec_result = await run_single_component(
+                (
+                    "./transformations/components/connectors/"
+                    "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
+                ),
+                {"input": wrapped_series(metadata)},
+                client,
+            )
+
+    assert exec_result.result == "ok"
+    output = exec_result.model_dump()["output_results_by_output_name"]["output"]
+    assert output["__metadata__"] == SERIES_METADATA_FOLLOWING_CONVENTIONS
+    assert caplog.text == ""
+
+
+@pytest.mark.asyncio
+async def test_direct_provisioning_metadata_not_following_conventions(
+    async_test_client: AsyncClient,
+) -> None:
+    metadata = deepcopy(SERIES_METADATA_FOLLOWING_CONVENTIONS)
+    metadata["metrics"][0]["value_dimensions"] = []
+
+    async with async_test_client as client:
+        with mock.patch(
+            "hetdesrun.webservice.config.runtime_config.adapter_metadata_validation",
+            {"direct_provisioning": MetadataValidationMode.ERROR},
+        ):
+            exec_result = await run_single_component(
+                (
+                    "./transformations/components/connectors/"
+                    "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
+                ),
+                {"input": wrapped_series(metadata)},
+                client,
+            )
+
+        assert exec_result.result == "failure"
+        assert exec_result.error is not None
+        assert exec_result.error.process_stage == ProcessStage.PARSING_LOADED_DATA
+        assert exec_result.error.type == "AdapterInputDataError"
+        assert "adapter direct_provisioning for workflow input input" in exec_result.error.message
+        assert "metrics[0].value_dimensions" in exec_result.error.message
+
+        # with the default OFF the metadata stays as it is
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
+            ),
+            {"input": wrapped_series(metadata)},
+            client,
+        )
+
+    assert exec_result.result == "ok"
+    output = exec_result.model_dump()["output_results_by_output_name"]["output"]
+    assert output["__metadata__"] == metadata
 
 
 @pytest.mark.asyncio

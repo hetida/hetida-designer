@@ -53,7 +53,7 @@ import pandas as pd
 import plotly.io as pio
 from plotly.graph_objects import Figure
 
-from hdutils import plotly_fig_to_json_dict
+from hdutils import plotly_datetimes, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -132,7 +132,7 @@ def substituted_data_plot(
     ) = handle_substitutions(s1, s2)
 
     fig.add_scatter(
-        x=completely_handled_series.index,
+        x=plotly_datetimes(completely_handled_series.index),
         y=completely_handled_series,
         mode="markers+lines",
         name=(raw_values.name + "_substituted" if raw_values.name else "raw_values_substituted"),
@@ -141,7 +141,7 @@ def substituted_data_plot(
     )  # Not what is desired - need a line
 
     fig.add_scatter(
-        x=replaced_originals.index,
+        x=plotly_datetimes(replaced_originals.index),
         y=replaced_originals,
         mode="markers",
         name="replaced raw values",
@@ -150,7 +150,7 @@ def substituted_data_plot(
     )  # Not what is desired - need a line
 
     fig.add_scatter(
-        x=deleted.index,
+        x=plotly_datetimes(deleted.index),
         y=deleted,
         mode="markers",
         name="ignored raw values",
@@ -159,7 +159,7 @@ def substituted_data_plot(
     )  # Not what is desired - need a line
 
     fig.add_scatter(
-        x=new_values.index,
+        x=plotly_datetimes(new_values.index),
         y=new_values,
         mode="markers",
         name="added values",

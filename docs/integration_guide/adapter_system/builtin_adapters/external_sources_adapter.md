@@ -23,6 +23,8 @@ or
 {"latitude": "51.4817,51.45657", "longitude": "7.2165,7.01228", "hourly": "temperature_2m,precipitation", "daily": "temperature"}
 ```
 
+The MULTITSFRAME has metadata following the [metadata conventions](../../../user_guide/attached_metadata.md#metadata-conventions): The queried interval (the explicit time range, cut to full hours), the time of the request as `query_timestamp` and an entry under `metrics` for each weather variable, with the variable as `id` and `name`. Its value dimensions are the value, with the unit Open Meteo provides for the variable, and the latitude and longitude columns. The further information of the Open Meteo response, e.g. the elevation of the coordinates, is provided under `gathered_openmeteo_metadata`.
+
 ### Energy-Charts.info API /price endpoint
 Energy-Charts.info by Fraunhofer ISE offers data around central european / german energy markets, power usage and distribution.
 
@@ -35,6 +37,6 @@ Note that there is at the time of writing (2024-09) neither explicit commercial 
 * your usage of this API via hetida designer is in agreement with the current conditions and terms of energy-charts.info!
 * your usage of the provided data is in accordance with the provided license.
 
-The source returns a MULTITSFRAME containing a single metric "dayahead-price".
+The source returns a MULTITSFRAME containing a single metric "dayahead-price". Its metadata follows the [metadata conventions](../../../user_guide/attached_metadata.md#metadata-conventions), with the queried interval, the time of the request as `query_timestamp` and the unit of the prices provided by the API.
 
 

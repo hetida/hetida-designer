@@ -22,7 +22,7 @@ geopandas
 glom
 gunicorn
 h5py
-hdhelpers
+hdhelpers[plotting]>=0.1.0
 holidays
 htpy
 httptools
@@ -59,7 +59,7 @@ scikit-learn
 scipy
 semver
 shapely
-sqlalchemy[mypy]>=2.0,<3
+sqlalchemy[asyncio,mypy]>=2.0,<3
 statsmodels
 structlog
 tables

@@ -26,6 +26,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objs
 import plotly.io as pio
+from hdhelpers.metadata import get_singlets_display_names, get_singlets_units
 from pandas.api.types import is_bool_dtype, is_numeric_dtype
 
 from hdutils import InsufficientPlottingData, plotly_fig_to_json_dict
@@ -60,22 +61,10 @@ def compute_plot_positions(num_y_axes, horizontal_relative_space_per_y_axis=0.06
 def trace_names_from_metadata(singletsframe, value_columns):
     """Trace name per value dimension, using metadata if it follows the conventions
 
-    Falls back to the plain column name if no metadata is available or if the metadata
-    helpers are not importable.
+    Falls back to the plain column name if no metadata is available.
     """
-    names = dict.fromkeys(value_columns)
-    units = dict.fromkeys(value_columns)
-
-    try:
-        from hetdesrun.helpers.metadata import (  # noqa: PLC0415
-            get_singlets_display_names,
-            get_singlets_units,
-        )
-
-        names = get_singlets_display_names(singletsframe)
-        units = get_singlets_units(singletsframe)
-    except Exception:  # noqa: BLE001, S110
-        pass
+    names = get_singlets_display_names(singletsframe)
+    units = get_singlets_units(singletsframe)
 
     trace_names = {}
     for column in value_columns:
@@ -183,6 +172,7 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import META_KEY, attach_metadata
 
     @pytest.fixture
     def singletsframe():
@@ -197,12 +187,27 @@ else:
             }
         )
         singletsframe.attrs = {
-            "dataset_metadata": {"single_metric": "abc.temp"},
+            "dataset_metadata": {
+                "metric_key": "id",
+                "single_metric": "abc.temp",
+                "queried_metrics": ["abc.temp"],
+                "ref_interval_start_timestamp": "2019-08-01T15:00:00+00:00",
+                "ref_interval_end_timestamp": "2019-08-01T16:00:00+00:00",
+                "ref_interval_type": "closed",
+            },
             "metrics": [
                 {
                     "id": "abc.temp",
+                    "name": "Temperature of abc",
                     "value_dimensions": [
-                        {"column": "value", "name": "temperature", "unit": "°C"},
+                        {
+                            "column": "value",
+                            "name": "temperature",
+                            "unit": "°C",
+                            "measurement": "temperature",
+                        },
+                        {"column": "score", "unit": "", "measurement": None},
+                        {"column": "state", "unit": None, "measurement": None},
                     ],
                 }
             ],
@@ -216,6 +221,14 @@ else:
         assert len(plot["data"]) == 2  # noqa: S101
         assert plot["data"][0]["name"] == "temperature [°C]"  # noqa: S101
         assert plot["data"][1]["name"] == "score"  # noqa: S101
+
+    def test_attached_metadata(singletsframe):
+        attach_metadata(singletsframe, "SINGLETSFRAME")
+        assert META_KEY in singletsframe.attrs  # noqa: S101
+
+        plot = main(singletsframe=singletsframe)["plot"]
+
+        assert plot["data"][0]["name"] == "temperature [°C]"  # noqa: S101
 
     def test_no_metadata_falls_back_to_column_names(singletsframe):
         singletsframe.attrs = {}
@@ -234,7 +247,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "singletsframe",
             "filters": {
-                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "single_metric": "abc.temp"\n        },\n        "metrics": [\n            {\n                "id": "abc.temp",\n                "value_dimensions": [\n                    {\n                        "column": "value",\n                        "name": "temperature",\n                        "unit": "\\u00b0C"\n                    }\n                ]\n            }\n        ]\n    },\n    "__data__": {\n        "timestamp": {\n            "0": "2022-07-01T13:00:00.000Z",\n            "1": "2022-07-01T14:00:00.000Z",\n            "2": "2022-07-01T15:00:00.000Z",\n            "3": "2022-07-01T16:00:00.000Z",\n            "4": "2022-07-01T17:00:00.000Z"\n        },\n        "value": {\n            "0": 21.4,\n            "1": 22.1,\n            "2": 23.7,\n            "3": 22.9,\n            "4": 21.8\n        },\n        "score": {\n            "0": 0.1,\n            "1": 0.15,\n            "2": 0.8,\n            "3": 0.4,\n            "4": 0.05\n        }\n    }\n}'
+                "value": '{\n    "__hd_wrapped_data_object__": "DATAFRAME",\n    "__metadata__": {\n        "dataset_metadata": {\n            "metric_key": "id",\n            "single_metric": "abc.temp",\n            "queried_metrics": [\n                "abc.temp"\n            ],\n            "ref_interval_start_timestamp": "2022-07-01T13:00:00.000Z",\n            "ref_interval_end_timestamp": "2022-07-01T17:00:00.000Z",\n            "ref_interval_type": "closed"\n        },\n        "metrics": [\n            {\n                "id": "abc.temp",\n                "name": "ABC temperature",\n                "value_dimensions": [\n                    {\n                        "column": "value",\n                        "name": "temperature",\n                        "unit": "\\u00b0C",\n                        "measurement": "temperature"\n                    },\n                    {\n                        "column": "score",\n                        "unit": null,\n                        "measurement": null\n                    }\n                ]\n            }\n        ]\n    },\n    "__data__": {\n        "timestamp": {\n            "0": "2022-07-01T13:00:00.000Z",\n            "1": "2022-07-01T14:00:00.000Z",\n            "2": "2022-07-01T15:00:00.000Z",\n            "3": "2022-07-01T16:00:00.000Z",\n            "4": "2022-07-01T17:00:00.000Z"\n        },\n        "value": {\n            "0": 21.4,\n            "1": 22.1,\n            "2": 23.7,\n            "3": 22.9,\n            "4": 21.8\n        },\n        "score": {\n            "0": 0.1,\n            "1": 0.15,\n            "2": 0.8,\n            "3": 0.4,\n            "4": 0.05\n        }\n    }\n}'
             },
         }
     ]

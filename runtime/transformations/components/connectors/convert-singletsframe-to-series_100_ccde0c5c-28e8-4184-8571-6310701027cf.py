@@ -15,7 +15,7 @@ Convert one value dimension of a SingleTSFrame into a Series.
 ## Details
 A SERIES is one-dimensional while a SINGLETSFRAME can have arbitrarily many value dimensions. Therefore exactly one value column has to be selected. If the SingleTSFrame has exactly one value column, that column is used regardless of the **value_column** input.
 
-The "timestamp" column becomes the index of the resulting series. The attributes (`.attrs`) are carried over unchanged, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types. The name of the resulting series is set to `dataset_metadata.single_metric` if available, and to the name of the value column otherwise.
+The "timestamp" column becomes the index of the resulting series. The attributes (`.attrs`) are carried over, since the [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/) identify the single metric the same way for both types. If the metadata follows the conventions, only the value dimension of the selected value column is kept, renamed to "value". The name of the resulting series is set to `dataset_metadata.single_metric` if available, and to the name of the value column otherwise.
 
 Raises a ComponentInputValidationException if the requested value column is not present and the SingleTSFrame has more than one value column.
 
@@ -38,6 +38,7 @@ The json input of a typical call of this component is
 import copy
 
 import pandas as pd
+from hdhelpers.metadata import attrs_to_json, read_metadata, set_metadata
 
 from hdutils import ComponentInputValidationException
 
@@ -81,11 +82,23 @@ def main(*, singletsframe, value_column="value"):
             invalid_component_inputs=["value_column"],
         )
 
-    attrs = copy.deepcopy(singletsframe.attrs) if singletsframe.attrs else {}
+    meta = read_metadata(singletsframe, "SINGLETSFRAME")
+    if meta is not None and selected_column in {
+        value_dimension.column for value_dimension in meta.metric().value_dimensions
+    }:
+        series_meta = meta.as_series(selected_column)
+        attrs = copy.deepcopy(singletsframe.attrs)
+    else:
+        # carried over as JSON, also metadata of the SINGLETSFRAME without value dimension of
+        # the selected column, which is no metadata of a SERIES
+        series_meta = None
+        attrs = copy.deepcopy(attrs_to_json(singletsframe.attrs) if singletsframe.attrs else {})
 
     series_name = selected_column
     dataset_metadata = attrs.get("dataset_metadata")
-    if isinstance(dataset_metadata, dict) and dataset_metadata.get("single_metric") is not None:
+    if series_meta is not None:
+        series_name = series_meta.dataset_metadata.single_metric
+    elif isinstance(dataset_metadata, dict) and dataset_metadata.get("single_metric") is not None:
         series_name = dataset_metadata["single_metric"]
 
     series = pd.Series(
@@ -94,6 +107,8 @@ def main(*, singletsframe, value_column="value"):
         name=series_name,
     ).sort_index()
     series.attrs = attrs
+    if series_meta is not None:
+        set_metadata(series, series_meta)
 
     return {"series": series}
 
@@ -104,6 +119,28 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import META_KEY, attach_metadata, check_metadata_conventions
+
+    SINGLETSFRAME_METADATA = {
+        "dataset_metadata": {
+            "metric_key": "id",
+            "single_metric": "abc.temp",
+            "queried_metrics": ["abc.temp"],
+            "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+            "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+            "ref_interval_type": "closed",
+        },
+        "metrics": [
+            {
+                "id": "abc.temp",
+                "name": "Temperature",
+                "value_dimensions": [
+                    {"column": "value", "unit": "°C", "measurement": "temperature"},
+                    {"column": "state", "unit": None, "measurement": None},
+                ],
+            }
+        ],
+    }
 
     @pytest.fixture
     def singletsframe():
@@ -140,6 +177,32 @@ else:
 
         assert list(series) == [1.0, 1.2]  # noqa: S101
         assert series.name == "value"  # noqa: S101
+
+    @pytest.mark.parametrize("attached", [False, True])
+    def test_metadata_following_conventions_is_converted(singletsframe, attached):
+        singletsframe.attrs = copy.deepcopy(SINGLETSFRAME_METADATA)
+        if attached:
+            attach_metadata(singletsframe)
+
+        series = main(singletsframe=singletsframe, value_column="state")["series"]
+
+        assert series.name == "abc.temp"  # noqa: S101
+        assert set(series.attrs) == {META_KEY}  # noqa: S101
+        assert check_metadata_conventions(series) == []  # noqa: S101
+        meta = read_metadata(series, "SERIES", required=True)
+        # only the value dimension of the selected column, as "value"
+        assert [vd.column for vd in meta.metric().value_dimensions] == ["value"]  # noqa: S101
+        assert meta.unit() is None  # noqa: S101
+
+    def test_metadata_without_value_dimension_of_the_column_is_carried_over(singletsframe):
+        singletsframe.attrs = copy.deepcopy(SINGLETSFRAME_METADATA)
+        attach_metadata(singletsframe)
+        singletsframe["score"] = [0.1, 0.2]
+
+        series = main(singletsframe=singletsframe, value_column="score")["series"]
+
+        assert series.attrs == SINGLETSFRAME_METADATA  # noqa: S101
+        assert series.name == "abc.temp"  # noqa: S101
 
     def test_ambiguous_choice_raises(singletsframe):
         with pytest.raises(ComponentInputValidationException):

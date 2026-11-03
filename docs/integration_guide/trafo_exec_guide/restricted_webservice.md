@@ -9,11 +9,13 @@ This enables to offer execution of one or more transformation revisions
 
 Another use case is employing a hetida designer workflow and an adapter for data ingestion: The workflow may do some necessary data cleanup / preparation and its output is wired to a configured adapter. The resulting webservice can be exposed separately to data pushing services.
 
-Using this, you probably want to let both `HD_IS_BACKEND` and `HD_IS_RUNTIME` remain true — especially the latter enables actual execution in the same container.
+Using this, you probably want to let both `HD_IS_BACKEND_SERVICE` and `HD_IS_RUNTIME_SERVICE` remain true — especially the latter enables actual execution in the same container.
 
 Furthermore it is recommended to enable the caching of non-draft transformations for execution in order to avoid reloading non-draft transformation revisions on handling each request: This is achieved by setting the environment variable `HD_ENABLE_CACHING_FOR_NON_DRAFT_TRAFOS_FOR_EXEC` to `true`.
 
 Additionally you should deactivate [scheduling](../../user_guide/scheduling.md) for such an additional backend service by setting `HETIDA_DESIGNER_SCHEDULING_ACTIVE=false`.
+
+Likewise, since such an additional backend service prepares the database at its start like the main backend, you may deactivate the deployment of base components and workflows for it by setting `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=false`, see [Database Configuration](../../deployment_operation/database_configuration.md#database-preparation-at-backend-start).
 
 And you should only [register](../adapter_system/adapter_registration.md) those adapters that should be allowed to be used.
 

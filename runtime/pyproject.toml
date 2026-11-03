@@ -8,7 +8,7 @@ target-version = "py314"
 
 lint.select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "INP", "PIE", "T20", "PT", "Q", "RET", "SIM", "ARG", "PD"]
 
-lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PLR0913", "UP017", "ISC001", "PLR0917"]
+lint.ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PLR0913", "UP017", "ISC001", "PLR0917", "ICN001"]
 
 extend-exclude = ["tests/data"]
 
@@ -29,11 +29,11 @@ src = [".", "runtime", "demo-adapter-python"]
 # Note: We need the beginning "**" since vscode extension calls ruff from the project
 # main dir, while manual invocations from the runtime subdir should also work.
 # (see https://docs.rs/globset/latest/globset/#syntax for glob syntax.)
-"**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912"]
+"**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001", "S113", "S603", "PLR0912", "ICN001"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
 "**/tests/auth/test_outgoing_auth.py" = ["S106"]
-"**/transformations/components/*/*.py" = ["INP001", "E501", "PLR0912"]
+"**/transformations/components/*/*.py" = ["INP001", "E501", "PLR0912", "ICN001"]
 "**/webservice/application.py" = ["PLC0415"]
 
 

@@ -1,7 +1,9 @@
 import datetime
+import logging
 import os
 import re
 from enum import StrEnum
+from pathlib import Path
 from uuid import UUID
 
 from pydantic import (
@@ -19,6 +21,8 @@ from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 from hetdesrun.models.execution import ExecByIdBase
 from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
+
+logger = logging.getLogger(__name__)
 
 maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
 
@@ -52,15 +56,20 @@ class SchedulingInternalAuthMode(StrEnum):
     CLIENT = "CLIENT"
 
 
+class MetadataValidationMode(StrEnum):
+    """How metadata of workflow inputs not adhering to the metadata conventions is handled"""
+
+    OFF = "OFF"
+    WARN = "WARN"
+    ERROR = "ERROR"
+
+
 class RoleToRuntimeEngineUrlMapping(RootModel[dict[str, str]]):
     pass
 
 
 class RuntimeConfig(BaseSettings):
-    """Configuration for Hetida Designer Runtime
-
-    There is an example .env file /runtime/settings/example.env
-    """
+    """Configuration for Hetida Designer Runtime"""
 
     log_level: LogLevel = Field(
         LogLevel.INFO,
@@ -249,6 +258,34 @@ class RuntimeConfig(BaseSettings):
             " preallocate memory nor slow down responses with smaller headers."
         ),
     )
+    generic_rest_adapter_max_decompressed_metadata_size: int = Field(
+        64 * 1024 * 1024,
+        gt=0,
+        validation_alias="GENERIC_REST_ADAPTER_MAX_DECOMPRESSED_METADATA_SIZE",
+        description=(
+            "Maximum size (in bytes) a gzip-compressed Data-Attributes header (metadata) of a"
+            " generic REST adapter response may have when decompressed. Larger metadata lets"
+            " loading fail. Protects against decompression bombs: gzip compresses uniform JSON"
+            " extremely, e.g. a header of 265 KiB can decompress to 200 MiB."
+        ),
+    )
+    adapter_metadata_validation: dict[str, MetadataValidationMode] = Field(
+        {},
+        validation_alias="ADAPTER_METADATA_VALIDATION",
+        description=(
+            "How the metadata of SERIES, SINGLETSFRAME and MULTITSFRAME workflow inputs is"
+            " checked against the metadata conventions, configured per adapter key as json"
+            ' object, e.g. {"hetida-platform-adapter": "ERROR", "direct_provisioning": "OFF"}.'
+            " Valid metadata of the conventions (as far as this can be determined without the"
+            " data) is attached to the input data as model in any case, other metadata is left as"
+            ' it is. "OFF" (default for adapters not listed)'
+            ' checks nothing. "WARN" additionally checks the metadata, also against the data,'
+            " and logs a warning mentioning the adapter and the inputs together with the found"
+            ' issues. "ERROR" lets the execution fail if errors are found and logs a warning if'
+            " only warnings are found. With WARN and ERROR, inputs without metadata are checked"
+            " as well, i.e. missing metadata is an error."
+        ),
+    )
     allowed_callback_url_patterns: list[str] = Field(
         default_factory=list,
         validation_alias="HD_ALLOWED_CALLBACK_URL_PATTERNS",
@@ -319,12 +356,6 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
-    ensure_db_schema: bool = Field(
-        True,
-        validation_alias="HD_ENSURE_DB_SCHEMA",
-        description=("Currently not in use!"),
-    )
-
     allowed_origins: str = Field(
         (
             "http://localhost:4200,http://localhost:80,localhost"
@@ -366,7 +397,12 @@ class RuntimeConfig(BaseSettings):
         "hetida-designer-db", validation_alias="HD_DB_HOST", examples=["hetida-designer-db"]
     )
 
-    sqlalchemy_db_port: int = Field(5432, validation_alias="HD_DATABASE_PORT", examples=[5432])
+    sqlalchemy_db_port: int = Field(
+        5432,
+        # HD_DATABASE_PORT is the older name
+        validation_alias=AliasChoices("HD_DB_PORT", "HD_DATABASE_PORT"),
+        examples=[5432],
+    )
 
     sqlalchemy_db_database: str = Field(
         "hetida_designer_db", validation_alias="HD_DB_DATABASE", examples=["hetida_designer_db"]
@@ -626,6 +662,39 @@ class RuntimeConfig(BaseSettings):
         "",
         description="Path to directory where to look for import sources during autoimport",
         validation_alias="HD_BACKEND_AUTOIMPORT_DIRECTORY",
+    )
+
+    autodeploy_base_transformations: bool = Field(
+        True,
+        description="Whether the backend deploys the base components and workflows at start",
+        validation_alias="HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS",
+    )
+
+    preserve_db_on_autodeploy: bool = Field(
+        False,
+        description=(
+            "Whether the deployment of the base components and workflows at backend start"
+            " is skipped if the db is not empty"
+        ),
+        validation_alias="HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY",
+    )
+
+    autodeploy_allow_overwrite_released: bool = Field(
+        True,
+        description=(
+            "Whether the deployment of the base components and workflows at backend start"
+            " overwrites released and deprecated ones in the db"
+        ),
+        validation_alias="HD_BACKEND_ALLOW_OVERWRITE_RELEASED",
+    )
+
+    allow_in_memory_db: bool = Field(
+        False,
+        description=(
+            "Whether the backend may use an in-memory db when started in the docker image."
+            " All data stored in it is lost when the backend stops."
+        ),
+        validation_alias="HD_ALLOW_IN_MEMORY_DB",
     )
 
     otel_via_logfire_active: bool = Field(
@@ -959,3 +1028,65 @@ runtime_config = RuntimeConfig(
 
 def get_config() -> RuntimeConfig:
     return runtime_config
+
+
+def warn_if_environment_file_missing() -> None:
+    """Warn if the environment file set via HD_RUNTIME_ENVIRONMENT_FILE does not exist
+
+    The config silently ignores a missing environment file, like pydantic-settings does.
+    """
+    if not environment_file:
+        return
+
+    path = Path(environment_file).expanduser()
+    if not (path.is_file() or path.is_fifo()):
+        logger.warning(
+            "The environment file %s set via HD_RUNTIME_ENVIRONMENT_FILE was not found"
+            " (resolved path %s). Its configuration is not used!",
+            environment_file,
+            path.resolve(),
+        )
+
+
+# the database settings which HD_DATABASE_URL makes ineffective
+database_url_parts = (
+    "sqlalchemy_db_host",
+    "sqlalchemy_db_port",
+    "sqlalchemy_db_database",
+    "sqlalchemy_db_drivername",
+    "sqlalchemy_db_user",
+    "sqlalchemy_db_password",
+)
+
+
+def setting_variable_names(field_name: str) -> str:
+    """The variable name(s) of a setting for messages, e.g. HD_DB_PORT (or HD_DATABASE_PORT)"""
+    alias = RuntimeConfig.model_fields[field_name].validation_alias
+    if isinstance(alias, AliasChoices):
+        first, *others = (str(choice) for choice in alias.choices)
+        return f"{first} (or {', '.join(others)})"
+    return str(alias)
+
+
+def warn_if_database_settings_ignored() -> None:
+    """Warn if database settings are set which are ignored since HD_DATABASE_URL is set"""
+    config = get_config()
+    if (
+        not config.is_backend_service
+        or "sqlalchemy_connection_string" not in config.model_fields_set
+    ):
+        return
+
+    ignored = [
+        setting_variable_names(field)
+        for field in database_url_parts
+        if field in config.model_fields_set
+    ]
+    if len(ignored) > 0:
+        logger.warning(
+            "HD_DATABASE_URL is set%s. Hence the database settings %s are ignored!",
+            f" (as environment variable or in the environment file {environment_file})"
+            if environment_file
+            else "",
+            ", ".join(ignored),
+        )

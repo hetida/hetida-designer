@@ -13,6 +13,7 @@ documentation
 **/__pycache__*
 *.pyc
 *.pyo
+*.md
 **/.ruff_cache/
 .pytest_cache
 .mypy_cache
@@ -30,3 +31,5 @@ demo-adapter-python/**/nix_venv_*
 .tmp
 **/.overmind.sock
 site
+
+runtime/local_dev.env

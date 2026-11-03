@@ -693,7 +693,7 @@ def test_direct_provisioning_output_handling():
 
     # Now fix tghis actively by setting some kwargs for read_json:
     round_trip_series_without_inference = pd.read_json(
-        StringIO(series.to_json()), typ="series", convert_axes=False, convert_dates=False
+        StringIO(series.to_json()), typ="series", convert_axes=False, dtype=False
     )
 
     assert pd.api.types.is_string_dtype(round_trip_series_without_inference.dtype)

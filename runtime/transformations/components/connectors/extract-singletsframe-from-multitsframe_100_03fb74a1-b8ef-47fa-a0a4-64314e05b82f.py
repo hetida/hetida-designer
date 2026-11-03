@@ -7,10 +7,10 @@ Extract the data of a single metric of a MultiTSFrame as a SingleTSFrame.
 
 ## Inputs
 * **multitsframe** (MultiTSFrame): The input MultiTSFrame.
-* **metric** (String): The metric to extract. Must occur in the "metric" column of the multitsframe.
+* **metric** (String): The metric to extract. Must occur in the "metric" column of the multitsframe or be known from its metadata, i.e. be listed in `dataset_metadata.queried_metrics` or have an entry under `metrics`.
 
 ## Outputs
-* **singletsframe** (SingleTSFrame): The rows of the multitsframe belonging to **metric**, with the "metric" column removed.
+* **singletsframe** (SingleTSFrame): The rows of the multitsframe belonging to **metric**, with the "metric" column removed. Empty if **metric** is only known from the metadata, e.g. a queried metric without data in the queried interval.
 
 ## Details
 A MULTITSFRAME holds multiple metrics, distinguished by its "metric" column. A SINGLETSFRAME holds exactly one metric and therefore has no "metric" column — the metric is identified in the metadata instead. This component selects the rows of one metric, drops the "metric" column and keeps all value dimensions (all remaining columns besides "timestamp").
@@ -21,7 +21,11 @@ The metadata (`.attrs`) is narrowed down accordingly following the [metadata con
 * the `metrics` entries are reduced to the one entry belonging to **metric** (identified via `dataset_metadata.metric_key`, defaulting to "id"),
 * everything else, in particular `value_dimensions_shared`, is carried over unchanged.
 
-Raises a ComponentInputValidationException if **metric** does not occur in the multitsframe.
+If the metadata follows the metadata conventions and describes **metric**, `queried_metrics` becomes **metric**, too, and the metadata is attached to the result as model (see `read_metadata` of `hdhelpers.metadata`).
+
+Following the metadata conventions, a queried metric may have no data, e.g. in the queried interval. For a metric which does not occur in the "metric" column, but is listed in `dataset_metadata.queried_metrics` or has an entry under `metrics` (identified via `dataset_metadata.metric_key`), the result is an empty SINGLETSFRAME with the columns of the multitsframe besides "metric" and the metadata narrowed down as described.
+
+Raises a ComponentInputValidationException if **metric** neither occurs in the multitsframe nor is known from its metadata in this way.
 
 ## Examples
 The json input of a typical call of this component is
@@ -42,6 +46,9 @@ The json input of a typical call of this component is
 """
 
 import copy
+
+import pandas as pd
+from hdhelpers.metadata import attrs_to_json, read_metadata, set_metadata
 
 from hdutils import ComponentInputValidationException
 
@@ -77,6 +84,30 @@ def narrow_metadata_to_metric(attrs, metric):
     return narrowed
 
 
+def metric_known_from_metadata(meta, attrs, metric):
+    """Whether the metadata lists the metric as queried or describes it under metrics
+
+    meta is the metadata following the conventions, None otherwise. Then the metric is looked
+    up in attrs, under "metrics" via the field named by dataset_metadata.metric_key (defaulting
+    to "id"). Such a metric may have no data, e.g. in the queried interval.
+    """
+    if meta is not None:
+        return metric in meta.dataset_metadata.queried_metrics or metric in meta.metric_ids()
+
+    dataset_metadata = attrs.get("dataset_metadata")
+    if not isinstance(dataset_metadata, dict):
+        dataset_metadata = {}
+    queried_metrics = dataset_metadata.get("queried_metrics")
+    if isinstance(queried_metrics, list) and metric in queried_metrics:
+        return True
+    metric_key = dataset_metadata.get("metric_key") or "id"
+    metrics = attrs.get("metrics")
+    return isinstance(metrics, list) and any(
+        isinstance(metric_metadata, dict) and metric_metadata.get(metric_key) == metric
+        for metric_metadata in metrics
+    )
+
+
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
@@ -103,17 +134,27 @@ from hdutils import parse_default_value  # noqa: E402, F401
 def main(*, multitsframe, metric):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
+    meta = read_metadata(multitsframe, "MULTITSFRAME")
     occurring_metrics = multitsframe["metric"].unique().tolist()
-    if metric not in occurring_metrics:
+    if metric not in occurring_metrics and not metric_known_from_metadata(
+        meta, attrs_to_json(multitsframe.attrs) if meta is None else {}, metric
+    ):
         raise ComponentInputValidationException(
             f'The metric "{metric}" does not occur in the "metric" column of the provided '
-            f"MultiTSFrame, which contains the metrics {occurring_metrics}.",
+            f"MultiTSFrame, which contains the metrics {occurring_metrics}, nor in its metadata"
+            " as queried metric or under metrics.",
             invalid_component_inputs=["metric"],
         )
 
     singletsframe = multitsframe[multitsframe["metric"] == metric].drop(columns=["metric"])
+    if not isinstance(singletsframe["timestamp"].dtype, pd.DatetimeTZDtype):
+        # e.g. the timestamp column of a MultiTSFrame without any rows
+        singletsframe["timestamp"] = pd.to_datetime(singletsframe["timestamp"], utc=True)
     singletsframe = singletsframe.sort_values("timestamp").reset_index(drop=True)
-    singletsframe.attrs = narrow_metadata_to_metric(multitsframe.attrs, metric)
+    if meta is not None and metric in meta.metric_ids():
+        set_metadata(singletsframe, meta.narrowed_to(metric))
+    else:
+        singletsframe.attrs = narrow_metadata_to_metric(attrs_to_json(multitsframe.attrs), metric)
 
     return {"singletsframe": singletsframe}
 
@@ -125,6 +166,30 @@ try:
 except ImportError:
     pass
 else:
+    from hdhelpers.metadata import META_KEY, attach_metadata, check_metadata_conventions
+
+    MULTITSFRAME_METADATA = {
+        "dataset_metadata": {
+            "metric_key": "external_id",
+            "queried_metrics": ["a", "b"],
+            "ref_interval_start_timestamp": "2019-08-01T15:00:00Z",
+            "ref_interval_end_timestamp": "2019-08-01T16:00:00Z",
+            "ref_interval_type": "closed",
+        },
+        "metrics": [
+            {
+                "id": f"id of {metric}",
+                "external_id": metric,
+                "name": f"Metric {metric}",
+                "value_dimensions": [
+                    {"column": "value", "unit": "°C", "measurement": "temperature"},
+                    {"column": "state", "unit": None, "measurement": None},
+                ],
+            }
+            for metric in ("a", "b")
+        ],
+        "value_dimensions_shared": [{"column": "value", "description": "Measured"}],
+    }
 
     @pytest.fixture
     def multitsframe():
@@ -176,6 +241,21 @@ else:
         # input attrs must not be modified
         assert len(multitsframe.attrs["metrics"]) == 2  # noqa: S101
 
+    @pytest.mark.parametrize("attached", [False, True])
+    def test_metadata_following_conventions_is_narrowed(multitsframe, attached):
+        multitsframe.attrs = copy.deepcopy(MULTITSFRAME_METADATA)
+        if attached:
+            attach_metadata(multitsframe)
+
+        singletsframe = main(multitsframe=multitsframe, metric="a")["singletsframe"]
+
+        assert set(singletsframe.attrs) == {META_KEY}  # noqa: S101
+        assert check_metadata_conventions(singletsframe) == []  # noqa: S101
+        meta = read_metadata(singletsframe, "SINGLETSFRAME", required=True)
+        assert meta.dataset_metadata.queried_metrics == ("a",)  # noqa: S101
+        assert meta.metric().name == "Metric a"  # noqa: S101
+        assert meta.value_dimensions_shared[0].description == "Measured"  # noqa: S101
+
     def test_works_without_metadata(multitsframe):
         multitsframe.attrs = {}
 
@@ -187,6 +267,50 @@ else:
     def test_unknown_metric_raises(multitsframe):
         with pytest.raises(ComponentInputValidationException):
             main(multitsframe=multitsframe, metric="not_present")
+
+    @pytest.mark.parametrize("attached", [False, True])
+    def test_metric_without_data_known_from_metadata(multitsframe, attached):
+        attrs = copy.deepcopy(MULTITSFRAME_METADATA)
+        attrs["dataset_metadata"]["queried_metrics"].append("c")
+        attrs["metrics"].append(attrs["metrics"][0] | {"id": "id of c", "external_id": "c"})
+        multitsframe.attrs = attrs
+        if attached:
+            attach_metadata(multitsframe)
+
+        singletsframe = main(multitsframe=multitsframe, metric="c")["singletsframe"]
+
+        assert len(singletsframe) == 0  # noqa: S101
+        assert list(singletsframe.columns) == ["timestamp", "value", "state"]  # noqa: S101
+        assert isinstance(singletsframe["timestamp"].dtype, pd.DatetimeTZDtype)  # noqa: S101
+        assert check_metadata_conventions(singletsframe) == []  # noqa: S101
+        meta = read_metadata(singletsframe, "SINGLETSFRAME", required=True)
+        assert meta.dataset_metadata.single_metric == "c"  # noqa: S101
+
+    @pytest.mark.parametrize(
+        "attrs",
+        [
+            # only listed as queried metric, without metric metadata
+            {"dataset_metadata": {"metric_key": "external_id", "queried_metrics": ["a", "c"]}},
+            # only described under metrics, in metadata not following the conventions
+            {"dataset_metadata": {"metric_key": "external_id"}, "metrics": [{"external_id": "c"}]},
+        ],
+    )
+    def test_metric_without_data_known_from_other_metadata(multitsframe, attrs):
+        multitsframe.attrs = attrs
+
+        singletsframe = main(multitsframe=multitsframe, metric="c")["singletsframe"]
+
+        assert len(singletsframe) == 0  # noqa: S101
+        assert singletsframe.attrs["dataset_metadata"]["single_metric"] == "c"  # noqa: S101
+
+    def test_empty_multitsframe_with_queried_metric():
+        multitsframe = pd.DataFrame({"timestamp": [], "metric": [], "value": []})
+        multitsframe.attrs = {"dataset_metadata": {"queried_metrics": ["a"]}}
+
+        singletsframe = main(multitsframe=multitsframe, metric="a")["singletsframe"]
+
+        assert list(singletsframe.columns) == ["timestamp", "value"]  # noqa: S101
+        assert isinstance(singletsframe["timestamp"].dtype, pd.DatetimeTZDtype)  # noqa: S101
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

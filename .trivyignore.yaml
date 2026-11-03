@@ -7,12 +7,17 @@ vulnerabilities:
   # Vendored copies inside pip itself (pip/_vendor/msgpack, pip/_vendor/pkg_resources,
   # pip/_vendor/urllib3), surfaced via pip's own CycloneDX SBOM at
   # site-packages/pip/_vendor/bom.cdx.json.
-  # Not our dependencies: we ship msgpack >= 1.2.2, urllib3 >= 2.8.0 and no top-level setuptools.
+  # Not our dependencies: we ship msgpack >= 1.2.4, urllib3 >= 2.8.0 and no top-level setuptools.
   # Scoped by purl, so a genuine finding in our own packages still surfaces.
   - id: GHSA-6v7p-g79w-8964
     purls:
       - "pkg:pypi/msgpack@1.1.2"
-    statement: "msgpack vendored in pip (pip/_vendor/msgpack); only reachable via pip's CacheControl HTTP cache, and pip is not run in the image. Our own msgpack is 1.2.2."
+    statement: "msgpack vendored in pip (pip/_vendor/msgpack); only reachable via pip's CacheControl HTTP cache, and pip is not run in the image. Our own msgpack is 1.2.4."
+    expires: "2026-12-01"
+  - id: CVE-2026-114613
+    purls:
+      - "pkg:pypi/msgpack@1.1.2"
+    statement: "msgpack vendored in pip (pip/_vendor/msgpack); map deserialization is only reachable via pip's CacheControl HTTP cache, and pip is not run in the image. Our own msgpack is 1.2.4. pip main already vendors msgpack 1.2.4 (unreleased as of pip 26.2.2)."
     expires: "2026-12-01"
   - id: CVE-2025-47273
     purls:
@@ -23,6 +28,11 @@ vulnerabilities:
     purls:
       - "pkg:pypi/setuptools@70.3.0"
     statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects sdist building, which never happens in the image. No top-level setuptools is installed."
+    expires: "2026-12-01"
+  - id: GHSA-xmj3-9gf7-h52w
+    purls:
+      - "pkg:pypi/setuptools@70.3.0"
+    statement: "setuptools vendored in pip (pip/_vendor/pkg_resources); affects setuptools/wheel.py legacy egg installation on Windows only, which pip does not vendor. No top-level setuptools is installed."
     expires: "2026-12-01"
   - id: CVE-2026-97687
     purls:
@@ -38,4 +48,30 @@ vulnerabilities:
     purls:
       - "pkg:pypi/urllib3@2.7.0"
     statement: "urllib3 vendored in pip (pip/_vendor/urllib3); chunked deflate streaming is only reachable via pip's network access, and pip is not run in the image. Our own urllib3 is 2.8.0."
+    expires: "2026-12-01"
+
+  # rustls compiled into the uv / uvx binaries (usr/local/bin/uv, usr/local/bin/uvx).
+  # uv is only used to install dependencies at image build time (also in derived images,
+  # see docs/deployment_operation/managing_python_dependencies.md), never by the running service.
+  # uv 0.13.6 (latest) bundles rustls 0.23.45; uv main already has 0.23.46.
+  # Scoped by purl, so the ignores lapse once an upgraded uv ships a fixed rustls.
+  - id: GHSA-c8m5-c952-6cm4
+    purls:
+      - "pkg:cargo/rustls@0.23.45"
+    statement: "rustls in uv/uvx; only exposes secrets if a session is Debug-formatted (e.g. logged) during uv's TLS connections at image build time. uv is not run by the service."
+    expires: "2026-12-01"
+  - id: GHSA-h2v8-394m-p7vv
+    purls:
+      - "pkg:cargo/rustls@0.23.45"
+    statement: "rustls in uv/uvx; memory exhaustion only via a malicious package index server during uv's TLS connections at image build time. uv is not run by the service."
+    expires: "2026-12-01"
+  - id: GHSA-vp88-798v-h67f
+    purls:
+      - "pkg:cargo/rustls@0.23.45"
+    statement: "rustls in uv/uvx; ECH rejection only affects uv's TLS connections at image build time. uv is not run by the service."
+    expires: "2026-12-01"
+  - id: GHSA-w44r-93j7-qv28
+    purls:
+      - "pkg:cargo/rustls@0.23.45"
+    statement: "rustls in uv/uvx; ServerHello poisoning only affects uv's TLS connections at image build time. uv is not run by the service."
     expires: "2026-12-01"

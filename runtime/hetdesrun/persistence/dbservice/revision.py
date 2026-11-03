@@ -4,7 +4,7 @@ from typing import NamedTuple
 from uuid import UUID
 
 from pydantic import StrictInt, StrictStr
-from sqlalchemy import delete, distinct, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only
 from sqlalchemy.sql.selectable import Select
@@ -780,13 +780,14 @@ def filter_unused_transformation_ids(transformation_ids: list[UUID]) -> set[UUID
         # non-deprecated containing workflow
         used_ids = set(
             session.execute(
-                select(distinct(NestingDBModel.nested_transformation_id))
+                select(NestingDBModel.nested_transformation_id)
                 .join(
                     TransformationRevisionDBModel,
                     TransformationRevisionDBModel.id == NestingDBModel.workflow_id,
                 )
                 .where(NestingDBModel.nested_transformation_id.in_(transformation_ids))
                 .where(TransformationRevisionDBModel.state != State.DISABLED)
+                .distinct()
             )
             .scalars()
             .all()

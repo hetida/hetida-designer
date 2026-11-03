@@ -93,7 +93,7 @@ where the `message_identifier` and the colon can be left out and even the comple
 - If `value_key` is non-empty the output data is send in a multi-value-message together with all other output data with the same (possibly empty) `message_identifier`
 
 !!! tip
-You only need to set an actual non-empty `message_identifier` if you want to send more than one message _to the same_ topic from the same kafka_config. This is rarely the case! In typical scenarios a transformation execution should only send one (possibly multi-value-)message to a topic.
+    You only need to set an actual non-empty `message_identifier` if you want to send more than one message _to the same_ topic from the same kafka_config. This is rarely the case! In typical scenarios a transformation execution should only send one (possibly multi-value-)message to a topic.
 
 For inputs the filter has the same name. If your topics receives multi-value-messages you have to provide the `value_key` part for an input in order to specify which data in the multi value message is transferred to the wired input.
 

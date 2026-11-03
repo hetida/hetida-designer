@@ -52,8 +52,12 @@ async def load_ts_data_from_adapter(
 
 
 def extract_one_channel_series_from_loaded_data(df: pd.DataFrame, ts_id: str) -> pd.Series:
+    # Without the attrs of df, i.e. the metadata of all loaded timeseries, since pandas
+    # deep-copies the attrs on every operation creating a new object. The constructor does not.
+    data = pd.DataFrame(df)
+    data.attrs = {}
     try:
-        extracted_df = df[df["timeseriesId"] == ts_id].copy()
+        extracted_df = data[data["timeseriesId"] == ts_id].copy()
         extracted_df.index = extracted_df["timestamp"]
         extracted_series = extracted_df["value"].sort_index()
         extracted_series.attrs = df.attrs.get(ts_id, {})
