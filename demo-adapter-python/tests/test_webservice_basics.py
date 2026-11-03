@@ -33,6 +33,15 @@ async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     assert "swagger-ui" in response.text.lower()
 
 
+def json_type(value: object) -> str:
+    """JSON type of a value as pyarrow's JSON reader infers it (numbers may mix int and float)"""
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int | float):
+        return "number"
+    return type(value).__name__
+
+
 async def walk_thing_nodes(  # noqa: PLR0913, PLR0917
     parent_id: str,
     tn_append_list: list[StructureThingNode],
@@ -198,10 +207,15 @@ async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915, PLR
             if src.type.startswith("dataframe"):
                 response = await client.get(f"/dataframe?id={src.id}")
                 lines = response.text.splitlines()
+                json_types: dict[str, set[str]] = {}
                 for line in lines:
                     print(line)
                     if len(line) > 0:
-                        json.loads(line)
+                        for key, value in json.loads(line).items():
+                            if value is not None:
+                                json_types.setdefault(key, set()).add(json_type(value))
+                # the runtime's JSON reader (pyarrow) rejects columns changing their JSON type
+                assert all(len(types) == 1 for types in json_types.values()), json_types
 
             if src.type.startswith("multitsframe"):
                 response = await client.get(

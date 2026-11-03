@@ -817,7 +817,9 @@ async def dataframe(
                     "plant_country",
                     "num_current_employees",
                 ],
-                "value": ["2012-12-07T00:00:00.000Z", "US", 17],
+                # all values as strings: the runtime's JSON reader (pyarrow) rejects columns
+                # whose values change their JSON type, e.g. from string to number
+                "value": ["2012-12-07T00:00:00.000Z", "US", "17"],
             }
         )
         df.attrs.update({"ref_metrics": ["name", "value"]})
@@ -829,7 +831,8 @@ async def dataframe(
                     "plant_country",
                     "num_current_employees",
                 ],
-                "value": ["2017-08-22T00:00:00.000Z", "DE", 13],
+                # all values as strings, see plantA.masterdata
+                "value": ["2017-08-22T00:00:00.000Z", "DE", "13"],
             }
         )
         df.attrs.update({"ref_metrics": ["name", "value"]})
