@@ -122,6 +122,36 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
     return True, ""
 
 
+def parse_timeseries_timestamps(timestamps: pd.Series) -> pd.Series:
+    """Parse the ISO-8601 timestamps of timeseries, multitsframes and singletsframes as UTC
+
+    format="ISO8601" accepts timestamps of differing precision in the same response, e.g.
+    "2026-10-26T16:46:27Z" next to "2026-10-26T16:46:27.123Z" as Java's ISO_INSTANT (the Jackson
+    default for Instant) writes them, omitting the fraction of whole seconds. Without a format
+    pandas infers one from the first timestamp and requires all others to match it exactly. Both
+    use the same ISO-8601 parser, so this is not slower (see test_load_framelike_performance).
+    """
+    return pd.to_datetime(timestamps, format="ISO8601", utc=True)
+
+
+def parse_dataframe_timestamps(timestamps: pd.Series) -> pd.Series:
+    """Parse the timestamp column of a dataframe
+
+    ISO-8601 strings are parsed like those of timeseries (see parse_timeseries_timestamps), but not
+    converted to UTC. Since dataframes may have timestamps in other formats, these and non-string
+    columns (e.g. integers as epoch nanoseconds, which pandas deprecates parsing with a format) are
+    parsed with the format pandas infers from the first timestamp.
+
+    Raises ValueError or TypeError if the timestamps cannot be parsed.
+    """
+    if pd.api.types.is_string_dtype(timestamps):
+        try:
+            return pd.to_datetime(timestamps, format="ISO8601")
+        except ValueError:
+            pass
+    return pd.to_datetime(timestamps)
+
+
 def parse_framelike_response_stream(
     stream: BinaryIO,
     endpoint: Literal["timeseries", "dataframe", "multitsframe", "singletsframe"],
@@ -163,7 +193,7 @@ def parse_framelike_response_stream(
     if "timestamp" in df.columns:
         if endpoint == "dataframe":
             try:
-                parsed_timestamps = pd.to_datetime(df["timestamp"])
+                parsed_timestamps = parse_dataframe_timestamps(df["timestamp"])
             except (ValueError, TypeError) as e:
                 logger.info(
                     "Column 'timestamp' of dataframe from %s could not be parsed and therefore"
@@ -177,9 +207,10 @@ def parse_framelike_response_stream(
         else:
             # timeseries / multitsframe / singletsframe: reproduce the tz-aware datetime
             # "timestamp" column that
-            # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings,
-            # and downstream code relies on this column being datetime, e.g. as a series index).
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+            # pd.read_json used to infer automatically (pyarrow leaves ISO timestamps as strings
+            # unless all of them are whole seconds, and downstream code relies on this column being
+            # datetime, e.g. as a series index).
+            df["timestamp"] = parse_timeseries_timestamps(df["timestamp"])
 
     return df
 

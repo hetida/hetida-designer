@@ -1,3 +1,5 @@
+- fix: The generic REST adapters accept ISO-8601 timestamps of differing precision in the same response, e.g. `2026-10-26T16:46:27Z` next to `2026-10-26T16:46:27.123Z` as Java's `DateTimeFormatter.ISO_INSTANT` (the Jackson default for `Instant`) writes them, omitting the fraction of whole seconds. Loading timeseries, MULTITSFRAMEs and SINGLETSFRAMEs failed with a ValueError, since Pandas inferred the format from the first timestamp and required all others to match it, and a DataFrame silently got the default RangeIndex instead of its timestamp column. The timestamps are now parsed with `format="ISO8601"`, which is not slower; timestamp columns of DataFrames in other formats are parsed as before.
+
 ## 0.14.8
 
 - runtime Python dependency upgrades
