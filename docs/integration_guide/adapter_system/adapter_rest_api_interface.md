@@ -444,7 +444,7 @@ Response (Line delimited Stream of Json records):
 {"timeseriesId": STRING, "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
 ```
 
-The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timezone and nanosecond resolution. Their precision may differ within a response, e.g. `2020-03-11T13:45:18Z` next to `2020-03-11T13:45:18.194Z` as Java's `DateTimeFormatter.ISO_INSTANT` (the Jackson default for `Instant`) writes them.
+The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timezone and nanosecond resolution. Their precision may differ within a response, e.g. `2020-03-11T13:45:18Z` next to `2020-03-11T13:45:18.194Z` as Java's `DateTimeFormatter.ISO_INSTANT` (the Jackson default for `Instant`) writes them. Timestamps without offset are taken as UTC. Every record must have a timestamp, with at most 9 fractional digits and in the range of nanosecond timestamps (1677-09-21 to 2262-04-11), otherwise loading the data fails.
 
 `timeseriesId` is always one of the ids provided by the id query parameter.
 
@@ -634,7 +634,7 @@ Response (Line delimited Stream of Json records):
 {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
 ```
 
-This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timezone and nanosecond resolution. Their precision may differ within a response like for `/timeseries`.
+This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timezone and nanosecond resolution. Like for `/timeseries` their precision may differ within a response, and they must be in the range of nanosecond timestamps.
 
 ##### Attaching metadata to the multitsframe
 
@@ -758,7 +758,7 @@ Response (Line delimited Stream of Json records):
 {"timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4, "state": "suspicious"}
 ```
 
-This response will always have a `timestamp` entry plus at least one further entry. Each entry besides `timestamp` is a value dimension of the timeseries — in the example above `value` and `state`. `timestamp` may not be `null`, must be an ISO-8601 timestamp and should always have UTC timezone. The precision of the timestamps may differ within a response like for `/timeseries`.
+This response will always have a `timestamp` entry plus at least one further entry. Each entry besides `timestamp` is a value dimension of the timeseries — in the example above `value` and `state`. `timestamp` may not be `null`, must be an ISO-8601 timestamp and should always have UTC timezone. Like for `/timeseries` the precision of the timestamps may differ within a response, and they must be in the range of nanosecond timestamps.
 
 !!! info "no metric field"
     An entry named `metric` is not forbidden, but it is _not_ interpreted as a metric — it would simply be another value dimension. If your data has several metrics, offer it as a `multitsframe` source instead.
