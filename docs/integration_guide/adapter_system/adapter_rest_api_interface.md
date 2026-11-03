@@ -565,7 +565,7 @@ Response (Line delimited Stream of Json records):
 {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ```
 
-This response can have arbitrary entries in the record which then correspond to columns of a table of data. Coming from a table of data imposes restrictions which should be clear, like every key should occur in every record.
+This response can have arbitrary entries in the record which then correspond to columns of a table of data. Coming from a table of data imposes restrictions which should be clear, like every key should occur in every record. The runtime parses the columns with the [JSON reader of Apache Arrow](https://arrow.apache.org/docs/python/json.html), so all entries of a column must have the same JSON type or be `null`, e.g. not a string in one record and a number in another. Integers and floating point numbers may be mixed.
 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes (ISO-8601 timestamps, also of differing precision, or another format Pandas infers from the first entry) and if this is successful will set the index of the Pandas DataFrame to this column and sort by it. If that does not work the index of the resulting Pandas DataFrame will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
