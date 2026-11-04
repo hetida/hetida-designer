@@ -108,5 +108,32 @@ def main(
     return {"data": pd.concat(ts_dfs).sort_values("timestamp").reset_index(drop=True)}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {"workflow_input_name": "timestampTo", "filters": {"value": "2020-01-01T06:00:00Z"}},
+        {"workflow_input_name": "timestampFrom", "filters": {"value": "2020-01-01T00:00:00Z"}},
+        {
+            "workflow_input_name": "frequency",
+            "use_default_value": True,
+            "filters": {"value": "5min"},
+        },
+        {
+            "workflow_input_name": "metrics",
+            "use_default_value": True,
+            "filters": {"value": '["timeseries1", "timeseries2"]'},
+        },
+        {
+            "workflow_input_name": "random_seed",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "metrics_parameters",
+            "use_default_value": True,
+            "filters": {
+                "value": '{"__DEFAULT__": {"offset": 0.0, "factor": 3.0, "frequency": "1h"}}'
+            },
+        },
+    ]
+}
 RELEASE_WIRING = None

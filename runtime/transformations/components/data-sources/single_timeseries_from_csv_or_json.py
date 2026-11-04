@@ -156,10 +156,11 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '[\n  {\n    "timestamp":"2025-01-22T08:28:28.301Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:38.333Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:48.376Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:58.416Z",\n    "metric":"Battery_Power",\n    "value":1528.0\n  },\n  {\n    "timestamp":"2025-01-22T08:29:08.462Z",\n    "metric":"Battery_Power",\n    "value":1530.0\n  }\n  ]\n  '
             },
-        }
+        },
+        {"workflow_input_name": "decimal", "use_default_value": True, "filters": {"value": "."}},
+        {"workflow_input_name": "sep", "use_default_value": True, "filters": {"value": ","}},
     ]
 }
-
 RELEASE_WIRING = {
     "input_wirings": [
         {
@@ -167,6 +168,8 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '[\n  {\n    "timestamp":"2025-01-22T08:28:28.301Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:38.333Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:48.376Z",\n    "metric":"Battery_Power",\n    "value":1531.0\n  },\n  {\n    "timestamp":"2025-01-22T08:28:58.416Z",\n    "metric":"Battery_Power",\n    "value":1528.0\n  },\n  {\n    "timestamp":"2025-01-22T08:29:08.462Z",\n    "metric":"Battery_Power",\n    "value":1530.0\n  }\n  ]\n  '
             },
-        }
+        },
+        {"workflow_input_name": "decimal", "use_default_value": True, "filters": {"value": "."}},
+        {"workflow_input_name": "sep", "use_default_value": True, "filters": {"value": ","}},
     ]
 }

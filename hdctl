@@ -834,6 +834,44 @@ ParsedAny = Annotated[
 ]
 
 
+def parse_any_input(v: Any) -> Any:
+    """Parse ANY input data, turning the wrapped format of SERIES / DATAFRAME into Pandas objects
+
+    Otherwise a Pandas object could not be provided to an ANY input via direct provisioning
+    (e.g. manual input), since this yields the json object as is. The metadata in __metadata__
+    is written to the attrs of the Pandas object as is.
+
+    Only for inputs: Outputs are checked via ParsedAny, so that a component may still output a
+    dict in the wrapped format via an ANY output.
+    """
+    parsed = parse_any(v)
+    if not isinstance(parsed, dict) or "__hd_wrapped_data_object__" not in parsed:
+        return parsed
+
+    try:
+        wrapped_data = MetaDataWrapped.model_validate(parsed)
+    except ValidationError as e:
+        raise ValueError(
+            "ANY input data with key __hd_wrapped_data_object__ is not valid wrapped data"
+            f" of a SERIES or DATAFRAME: {str(e)}"
+        ) from e
+
+    return wrap_metadata_as_attrs(
+        parse_pandas_data_content(
+            wrapped_data.data__,
+            "series" if wrapped_data.hd_wrapped_data_object__ == "SERIES" else "frame",
+            wrapped_data.data_parsing_options__,
+        ),
+        wrapped_data.metadata__,
+    )
+
+
+ParsedAnyInput = Annotated[
+    Any,
+    BeforeValidator(parse_any_input),
+]
+
+
 def parse_plotly_json_dict(v: dict) -> dict:
     if isinstance(v, dict):
         # TODO: check structure more thoroughly
@@ -907,6 +945,17 @@ optional_data_type_map: dict[DataType | None, Any] = {
     None: NoneType | None,
 }
 
+# for parsing input data, e.g. provided via an adapter or as default value
+input_data_type_map: dict[DataType | None, type] = {
+    **data_type_map,
+    DataType.Any: ParsedAnyInput,
+}
+
+optional_input_data_type_map: dict[DataType | None, Any] = {
+    **optional_data_type_map,
+    DataType.Any: ParsedAnyInput | None,
+}
+
 
 # Plotly's public JSON encoder, for the values the json module cannot encode itself,
 # e.g. numpy arrays, pandas and datetime objects
@@ -964,6 +1013,27 @@ def serialize_plotly_fig(v: dict[str, Any] | Figure) -> Any:
     )
 
 
+def serialize_any(v: Any) -> Any:
+    """Serialize Pandas Series and DataFrames of ANY outputs in the wrapped format
+
+    The counterpart of parse_any_input. Other objects are left as they are.
+    """
+    if isinstance(v, pd.Series):
+        return serialize_series(v)
+    if isinstance(v, pd.DataFrame):
+        return serialize_dataframe(v)
+    return v
+
+
+def serialize_any_raw(v: Any) -> Any:
+    """Raw-splicing counterpart of serialize_any"""
+    if isinstance(v, pd.Series):
+        return serialize_series_raw(v)
+    if isinstance(v, pd.DataFrame):
+        return serialize_dataframe_raw(v)
+    return v
+
+
 serializer_funcs_by_type = {
     pd.Series: serialize_series,
     pd.DataFrame: lambda v: {
@@ -999,21 +1069,25 @@ serializer_funcs_by_type = {
     datetime.datetime: lambda v: v.isoformat(),
     UUID: lambda v: str(v),  # alternatively: v.hex
     Figure: serialize_plotly_fig,
+    ParsedAny: serialize_any,
     NoneType: lambda x: x,
     None: lambda x: x,
 }
 
 
-# Only the pandas payload types get the ``msgspec.Raw`` splicing treatment (they are the large ones
-# and the only ones that paid the json.loads round-trip). Every other output type is left uncoerced
-# and handed straight to the encoder, whose ``enc_hook`` (pydantic's ``to_jsonable_python``) coerces
-# any exotic values in a single encode pass - so numpy scalars, plotly dicts, datetimes etc.
-# serialize (and fail) exactly as pydantic's ``model_dump(mode="json")`` did.
+# Only the pandas payload types, also as ANY outputs, get the ``msgspec.Raw`` splicing treatment
+# (they are the large ones and the only ones that paid the json.loads round-trip). Every other output
+# type is left uncoerced and handed straight to the encoder, whose ``enc_hook`` (pydantic's
+# ``to_jsonable_python``) coerces any exotic values in a single encode pass - so numpy scalars,
+# plotly dicts, datetimes etc. serialize (and fail) exactly as pydantic's ``model_dump(mode="json")``
+# did.
 raw_pandas_serializer_funcs_by_type = {
     PydanticPandasSeries: serialize_series_raw,
     PydanticPandasDataFrame: serialize_dataframe_raw,
     PydanticMultiTimeseriesPandasDataFrame: serialize_multitsframe_raw,
     PydanticSingleTimeseriesPandasDataFrame: serialize_singletsframe_raw,
+    # ANY outputs may be Pandas objects as well:
+    ParsedAny: serialize_any_raw,
 }
 
 
@@ -1158,9 +1232,10 @@ def parsing_not_identical(
 def parse_dynamically_from_datatypes(
     entries: list[NamedDataTypedValue], nullable: bool = False
 ) -> Any:
+    """Parse input data dynamically according to the data types of the entries"""
     return parse_via_pydantic(
         entries,
-        type_map=data_type_map if nullable is False else optional_data_type_map,
+        type_map=input_data_type_map if nullable is False else optional_input_data_type_map,
         null_str_to_None=nullable,  # interpretation of "null" string values as None
     )
 

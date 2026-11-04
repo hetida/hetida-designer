@@ -383,12 +383,12 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "ymin",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "ymax",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "color",
@@ -398,17 +398,17 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "ylabel",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "xmin",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "xmax",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "connection_type",
@@ -418,7 +418,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "maximum_gap_size",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "marker_threshold",
@@ -428,12 +428,12 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "locale",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "target_timezone",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
     ]
 }
@@ -448,12 +448,12 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "ymin",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "ymax",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "color",
@@ -463,17 +463,17 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "ylabel",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "xmin",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "xmax",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "connection_type",
@@ -483,7 +483,7 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "maximum_gap_size",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "marker_threshold",
@@ -493,12 +493,12 @@ RELEASE_WIRING = {
         {
             "workflow_input_name": "locale",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
         {
             "workflow_input_name": "target_timezone",
             "use_default_value": True,
-            "filters": {"value": ""},
+            "filters": {"value": "null"},
         },
     ]
 }

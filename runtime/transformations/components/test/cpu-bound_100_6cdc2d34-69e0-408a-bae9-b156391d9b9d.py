@@ -97,5 +97,15 @@ def main(*, rounds, bind):
     )
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {"workflow_input_name": "rounds", "filters": {"value": "100000"}},
+        {"workflow_input_name": "bind", "filters": {"value": "single"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {"workflow_input_name": "rounds", "filters": {"value": "100000"}},
+        {"workflow_input_name": "bind", "filters": {"value": "single"}},
+    ]
+}

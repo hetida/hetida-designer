@@ -25,7 +25,7 @@ import pandas as pd
 
 def cumsum_resetting_at_nan(orig):
     """Compute a cumsum but resetting at every nan value"""
-    cumsum = orig.cumsum().fillna(method="ffill")
+    cumsum = orig.cumsum().ffill()
 
     # take cumsum at nan positions and then diff to last
     # position before with nan value. This gives the
@@ -46,13 +46,13 @@ def dupl_count_at_duplicated_positions(orig, dupl_counts):
     Return a series where the total number of duplicates in a sequence is written at every duplicate
     position.
     """
-    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
-    return dupl_counts.where(last_duplicated_position | (dupl_counts == 0), np.nan).backfill()
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1, fill_value=False))
+    return dupl_counts.where(last_duplicated_position | (dupl_counts == 0), np.nan).bfill()
 
 
 def dupl_delta_to_next(orig):
     """Delta to next different timestamp at every position"""
-    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1, fill_value=False))
     timestamps_after = (
         (orig.shift(-1)).where(last_duplicated_position, orig.where(~orig.duplicated())).bfill()
     )
@@ -92,7 +92,7 @@ def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: s
     # mark as True from second occurences onwards:
     duplicates_marked = working_timestamp_series.duplicated()
 
-    duplicates_true_other_nan = duplicates_marked.where(duplicates_marked, np.nan)
+    duplicates_true_other_nan = duplicates_marked.astype("float64").where(duplicates_marked)
 
     factors_at_duplicate_positions = cumsum_resetting_at_nan(duplicates_true_other_nan)
 
@@ -168,5 +168,27 @@ def main(*, timeseries_df, max_distribution_delta, new_name):
     }
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "timeseries_df",
+            "filters": {
+                "value": '{\n    "timestamp": [\n        "2020-01-01T00:00:00.000Z",\n        "2020-01-01T01:00:00.000Z",\n        "2020-01-01T02:00:00.000Z",\n        "2020-01-01T00:00:00.000Z",\n        "2020-01-01T01:00:00.000Z",\n        "2020-01-01T02:00:00.000Z"\n    ],\n    "metric": [\n        "sensor_1",\n        "sensor_1",\n        "sensor_1",\n        "sensor_2",\n        "sensor_2",\n        "sensor_2"\n    ],\n    "value": [\n        12.1,\n        12.8,\n        13.5,\n        12.3,\n        12.7,\n        13.6\n    ]\n}'
+            },
+        },
+        {"workflow_input_name": "max_distribution_delta", "filters": {"value": "10min"}},
+        {"workflow_input_name": "new_name", "filters": {"value": "temperature"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "timeseries_df",
+            "filters": {
+                "value": '{\n    "timestamp": [\n        "2020-01-01T00:00:00.000Z",\n        "2020-01-01T01:00:00.000Z",\n        "2020-01-01T02:00:00.000Z",\n        "2020-01-01T00:00:00.000Z",\n        "2020-01-01T01:00:00.000Z",\n        "2020-01-01T02:00:00.000Z"\n    ],\n    "metric": [\n        "sensor_1",\n        "sensor_1",\n        "sensor_1",\n        "sensor_2",\n        "sensor_2",\n        "sensor_2"\n    ],\n    "value": [\n        12.1,\n        12.8,\n        13.5,\n        12.3,\n        12.7,\n        13.6\n    ]\n}'
+            },
+        },
+        {"workflow_input_name": "max_distribution_delta", "filters": {"value": "10min"}},
+        {"workflow_input_name": "new_name", "filters": {"value": "temperature"}},
+    ]
+}

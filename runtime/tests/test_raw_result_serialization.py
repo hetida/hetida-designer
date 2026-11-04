@@ -101,6 +101,8 @@ def _mixed_outputs() -> tuple[dict, dict[str, DataType]]:
         "out_float64": np.float64(3.14),  # pydantic coerces this; msgspec alone would not
         "out_plot": {"data": [{"x": [1, 2], "y": [1.0, None]}], "layout": {}},
         "out_any": {"k": [1, 2, 3]},
+        "out_any_series": series,
+        "out_any_df": df,
         "out_none": None,
     }
     types = {
@@ -114,6 +116,8 @@ def _mixed_outputs() -> tuple[dict, dict[str, DataType]]:
         "out_float64": DataType.Float,
         "out_plot": DataType.PlotlyJson,
         "out_any": DataType.Any,
+        "out_any_series": DataType.Any,
+        "out_any_df": DataType.Any,
         "out_none": DataType.Any,
     }
     return outputs, types
@@ -147,6 +151,24 @@ def test_metadata_wrapper_is_preserved() -> None:
     assert df_out["__data__"] == {"a": {"0": 1.0, "1": 2.0}}
     assert s_out["__hd_wrapped_data_object__"] == "SERIES"
     assert s_out["__data_parsing_options__"] == {"orient": "split"}
+
+
+def test_pandas_objects_of_any_outputs_are_serialized_wrapped() -> None:
+    df = pd.DataFrame({"a": [1.0, 2.0]})
+    series = pd.Series([1.0, 2.0])
+    series.attrs = {"unit": "kW"}
+
+    decoded = _decode_new(
+        _make_result({"df": df, "s": series}, {"df": DataType.Any, "s": DataType.Any})
+    )
+    df_out = decoded["output_results_by_output_name"]["df"]
+    s_out = decoded["output_results_by_output_name"]["s"]
+
+    assert df_out["__hd_wrapped_data_object__"] == "DATAFRAME"
+    assert df_out["__data__"] == {"a": {"0": 1.0, "1": 2.0}}
+    assert s_out["__hd_wrapped_data_object__"] == "SERIES"
+    assert s_out["__metadata__"] == {"unit": "kW"}
+    assert s_out["__data__"] == {"name": None, "index": [0, 1], "data": [1.0, 2.0]}
 
 
 def test_dataframe_payload_roundtrips_back_to_equal_object() -> None:

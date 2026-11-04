@@ -67,6 +67,8 @@ For simple types (like STRING, FLOAT, INT) you can enter data directly in the in
 
 Note that for SERIES, DATAFRAME, MULTITSFRAME and SINGLETSFRAME you can add metadata (which is attached to pandas `.attrs` attribute) by using the wrapped json format described [here](../../../user_guide/attached_metadata.md). This also allows to specifiy some json parsing options for these types and may be required, e.g. when you want to enter/send data with duplicate index entries.
 
+For ANY inputs the entered json is handed to the component as it is, unless it uses the wrapped format of SERIES or DATAFRAME: Then the component receives a Pandas Series or DataFrame, see [ANY](../../../user_guide/data_types/any.md#pandas-series-and-dataframes-via-any-inputsoutputs).
+
 This dialog additionally allows to import a json or csv file from disk via clicking on "Import JSON/CSV". For json files the required format agrees with the format for entering data into the dialogs editor. This format and the format required for CSVs is described below.
 
 !!! warning

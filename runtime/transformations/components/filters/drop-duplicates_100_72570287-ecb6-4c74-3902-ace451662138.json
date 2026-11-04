@@ -1,6 +1,6 @@
 {
   "category": "Filters",
-  "content": "\"\"\"Documentation for Drop duplicates\n\n# Drop duplicates\n\n## Description\nDrop duplicated rows.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Values must be numeric.\n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object without duplicates.\n\n## Details\nThe component calls Pandas' drop_duplicates method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Drop duplicates\",\n    \"category\": \"Filters\",\n    \"description\": \"Drop duplicated rows\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"72570287-ecb6-4c74-3902-ace451662138\",\n    \"revision_group_id\": \"72570287-ecb6-4c74-3902-ace451662138\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:35.419589+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.drop_duplicates()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
+  "content": "\"\"\"Documentation for Drop duplicates\n\n# Drop duplicates\n\n## Description\nDrop duplicated rows.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Values must be numeric.\n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object without duplicates.\n\n## Details\nThe component calls Pandas' drop_duplicates method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Drop duplicates\",\n    \"category\": \"Filters\",\n    \"description\": \"Drop duplicated rows\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"72570287-ecb6-4c74-3902-ace451662138\",\n    \"revision_group_id\": \"72570287-ecb6-4c74-3902-ace451662138\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:35.419589+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.drop_duplicates()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"data\",\n            \"filters\": {\n                \"value\": '{\\n    \"__hd_wrapped_data_object__\": \"SERIES\",\\n    \"__metadata__\": {},\\n    \"__data__\": {\\n        \"2020-01-01T00:00:00.000Z\": 12.1,\\n        \"2020-01-01T01:00:00.000Z\": 12.8,\\n        \"2020-01-01T02:00:00.000Z\": 12.8,\\n        \"2020-01-01T03:00:00.000Z\": 13.5,\\n        \"2020-01-01T04:00:00.000Z\": 12.1,\\n        \"2020-01-01T05:00:00.000Z\": 14.9\\n    }\\n}'\n            },\n        }\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"data\",\n            \"filters\": {\n                \"value\": '{\\n    \"__hd_wrapped_data_object__\": \"SERIES\",\\n    \"__metadata__\": {},\\n    \"__data__\": {\\n        \"2020-01-01T00:00:00.000Z\": 12.1,\\n        \"2020-01-01T01:00:00.000Z\": 12.8,\\n        \"2020-01-01T02:00:00.000Z\": 12.8,\\n        \"2020-01-01T03:00:00.000Z\": 13.5,\\n        \"2020-01-01T04:00:00.000Z\": 12.1,\\n        \"2020-01-01T05:00:00.000Z\": 14.9\\n    }\\n}'\n            },\n        }\n    ]\n}\n",
   "description": "Drop duplicated rows",
   "documentation": "# Drop duplicates\n\n## Description\nDrop duplicated rows.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Values must be numeric. \n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object without duplicates.\n\n## Details\nThe component calls Pandas' drop_duplicates method with no parameters on the provided input data and returns the result.\n",
   "id": "72570287-ecb6-4c74-3902-ace451662138",
@@ -24,7 +24,16 @@
   "name": "Drop duplicates",
   "release_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"__hd_wrapped_data_object__\": \"SERIES\",\n    \"__metadata__\": {},\n    \"__data__\": {\n        \"2020-01-01T00:00:00.000Z\": 12.1,\n        \"2020-01-01T01:00:00.000Z\": 12.8,\n        \"2020-01-01T02:00:00.000Z\": 12.8,\n        \"2020-01-01T03:00:00.000Z\": 13.5,\n        \"2020-01-01T04:00:00.000Z\": 12.1,\n        \"2020-01-01T05:00:00.000Z\": 14.9\n    }\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "data"
+      }
+    ],
     "output_wirings": []
   },
   "released_timestamp": "2022-02-09T17:33:35.419589+00:00",
@@ -32,7 +41,16 @@
   "state": "RELEASED",
   "test_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"__hd_wrapped_data_object__\": \"SERIES\",\n    \"__metadata__\": {},\n    \"__data__\": {\n        \"2020-01-01T00:00:00.000Z\": 12.1,\n        \"2020-01-01T01:00:00.000Z\": 12.8,\n        \"2020-01-01T02:00:00.000Z\": 12.8,\n        \"2020-01-01T03:00:00.000Z\": 13.5,\n        \"2020-01-01T04:00:00.000Z\": 12.1,\n        \"2020-01-01T05:00:00.000Z\": 14.9\n    }\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "data"
+      }
+    ],
     "output_wirings": []
   },
   "type": "COMPONENT",

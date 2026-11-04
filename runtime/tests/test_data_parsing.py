@@ -1,3 +1,4 @@
+import json
 import re
 from io import StringIO
 from uuid import uuid4
@@ -14,6 +15,7 @@ from hdutils import (
     PydanticPandasSeries,
     parse_obj_as_type,
     parse_pandas_data_content,
+    parse_value,
     parse_wrapped_content,
     parsing_not_identical,
     wrap_metadata_as_attrs,
@@ -505,6 +507,48 @@ def test_any_parsing():
     assert len(result.list_object_double_string_encoded) == 3
 
     assert result.actual_str_as_any == "some_string"
+
+
+def test_any_input_parsing_of_wrapped_format():
+    wrapped_series = {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": {"source": "manual"},
+        "__data__": {"2020-01-01T00:00:00.000Z": 1.5, "2020-01-01T01:00:00.000Z": 2.5},
+    }
+    wrapped_dataframe = {
+        "__hd_wrapped_data_object__": "DATAFRAME",
+        "__metadata__": {},
+        "__data__": {"a": {"0": 1, "1": 2}, "b": {"0": 3.5, "1": 4.5}},
+    }
+    result = parse_dynamically_from_datatypes(
+        [
+            {"name": "series", "type": DataType.Any, "value": wrapped_series},
+            {"name": "series_json", "type": DataType.Any, "value": json.dumps(wrapped_series)},
+            {"name": "dataframe", "type": DataType.Any, "value": json.dumps(wrapped_dataframe)},
+            {"name": "other_dict", "type": DataType.Any, "value": '{"__data__": [1, 2]}'},
+        ]
+    )
+
+    for series in (result.series, result.series_json):
+        assert isinstance(series, pd.Series)
+        assert series.tolist() == [1.5, 2.5]
+        assert is_datetime64_any_dtype(series.index.dtype)
+        assert series.attrs == {"source": "manual"}
+
+    assert isinstance(result.dataframe, pd.DataFrame)
+    assert result.dataframe["b"].tolist() == [3.5, 4.5]
+
+    assert result.other_dict == {"__data__": [1, 2]}
+
+    # same for optional inputs and default values
+    assert isinstance(parse_value(json.dumps(wrapped_series), "ANY", True), pd.Series)
+    assert parse_value("null", "ANY", True) is None
+
+    with pytest.raises(ValidationError, match="not valid wrapped data"):
+        parse_value('{"__hd_wrapped_data_object__": "SERIES", "__data__": [1]}', "ANY", False)
+
+    # ANY outputs in the wrapped format are not parsed, i.e. they are correctly typed
+    assert len(parsing_not_identical({"output": wrapped_series}, {"output": DataType.Any})) == 0
 
 
 def test_pydantic_pandas_series_wrapped_metadata_parsing():

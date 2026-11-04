@@ -210,5 +210,27 @@ def main(*, data, start, stop):
     return {"interval": data}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "2020-01-01T00:00:00.000Z": 12.1,\n        "2020-01-01T01:00:00.000Z": 12.8,\n        "2020-01-01T02:00:00.000Z": 13.5,\n        "2020-01-01T03:00:00.000Z": 14.9,\n        "2020-01-01T04:00:00.000Z": 16.2,\n        "2020-01-01T05:00:00.000Z": 17.0,\n        "2020-01-01T06:00:00.000Z": 16.4,\n        "2020-01-01T07:00:00.000Z": 15.1,\n        "2020-01-01T08:00:00.000Z": 13.8,\n        "2020-01-01T09:00:00.000Z": 13.0\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "start", "filters": {"value": "2020-01-01T02:00:00+00:00"}},
+        {"workflow_input_name": "stop", "filters": {"value": "2020-01-01T05:00:00+00:00"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "2020-01-01T00:00:00.000Z": 12.1,\n        "2020-01-01T01:00:00.000Z": 12.8,\n        "2020-01-01T02:00:00.000Z": 13.5,\n        "2020-01-01T03:00:00.000Z": 14.9,\n        "2020-01-01T04:00:00.000Z": 16.2,\n        "2020-01-01T05:00:00.000Z": 17.0,\n        "2020-01-01T06:00:00.000Z": 16.4,\n        "2020-01-01T07:00:00.000Z": 15.1,\n        "2020-01-01T08:00:00.000Z": 13.8,\n        "2020-01-01T09:00:00.000Z": 13.0\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "start", "filters": {"value": "2020-01-01T02:00:00+00:00"}},
+        {"workflow_input_name": "stop", "filters": {"value": "2020-01-01T05:00:00+00:00"}},
+    ]
+}

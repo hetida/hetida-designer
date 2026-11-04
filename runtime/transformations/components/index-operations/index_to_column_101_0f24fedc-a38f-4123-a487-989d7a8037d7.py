@@ -144,7 +144,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
 RELEASE_WIRING = {
     "input_wirings": [
         {
-            "workflow_input_name": "df_to_reset_index",
+            "workflow_input_name": "df",
             "filters": {
                 "value": '{\n    "value": {\n        "2019-08-01T15:45:36.000Z": 1.0,\n        "2019-08-02T11:33:41.000Z": 1.2,\n       "2019-08-03T11:57:41.000Z": 1.2\n    }\n}'
             },

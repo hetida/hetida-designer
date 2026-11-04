@@ -1,6 +1,6 @@
 {
   "category": "Index Operations",
-  "content": "\"\"\"Documentation for Sort by Index\n\n# Sort Index\n\n## Description\nThe component sorts values by index.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted.\n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Sort by Index\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Sort values by Index\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"revision_group_id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.487436+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.sort_index()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
+  "content": "\"\"\"Documentation for Sort by Index\n\n# Sort Index\n\n## Description\nThe component sorts values by index.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted.\n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n\"\"\"\n\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"data\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Sort by Index\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Sort values by Index\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"revision_group_id\": \"7f315341-d095-1f4b-b72c-e85dc3d7c508\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.487436+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"data\": data.sort_index()}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"data\",\n            \"filters\": {\n                \"value\": '{\\n    \"__hd_wrapped_data_object__\": \"SERIES\",\\n    \"__metadata__\": {},\\n    \"__data__\": {\\n        \"2020-01-01T03:00:00.000Z\": 14.9,\\n        \"2020-01-01T01:00:00.000Z\": 12.8,\\n        \"2020-01-01T00:00:00.000Z\": 12.1,\\n        \"2020-01-01T02:00:00.000Z\": 13.5\\n    }\\n}'\n            },\n        }\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"data\",\n            \"filters\": {\n                \"value\": '{\\n    \"__hd_wrapped_data_object__\": \"SERIES\",\\n    \"__metadata__\": {},\\n    \"__data__\": {\\n        \"2020-01-01T03:00:00.000Z\": 14.9,\\n        \"2020-01-01T01:00:00.000Z\": 12.8,\\n        \"2020-01-01T00:00:00.000Z\": 12.1,\\n        \"2020-01-01T02:00:00.000Z\": 13.5\\n    }\\n}'\n            },\n        }\n    ]\n}\n",
   "description": "Sort values by Index",
   "documentation": "# Sort Index\n\n## Description\nThe component sorts values by index. \n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data to be sorted. \n\n## Outputs\n* **data** (Pandas Series or Pandas DataFrame): The Pandas object sorted by index.\n\n## Details\nJust calls Pandas' sort_index method with no parameters on the provided input data and returns the result.\n",
   "id": "7f315341-d095-1f4b-b72c-e85dc3d7c508",
@@ -24,7 +24,16 @@
   "name": "Sort by Index",
   "release_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"__hd_wrapped_data_object__\": \"SERIES\",\n    \"__metadata__\": {},\n    \"__data__\": {\n        \"2020-01-01T03:00:00.000Z\": 14.9,\n        \"2020-01-01T01:00:00.000Z\": 12.8,\n        \"2020-01-01T00:00:00.000Z\": 12.1,\n        \"2020-01-01T02:00:00.000Z\": 13.5\n    }\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "data"
+      }
+    ],
     "output_wirings": []
   },
   "released_timestamp": "2022-02-09T17:33:31.487436+00:00",
@@ -32,7 +41,16 @@
   "state": "RELEASED",
   "test_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"__hd_wrapped_data_object__\": \"SERIES\",\n    \"__metadata__\": {},\n    \"__data__\": {\n        \"2020-01-01T03:00:00.000Z\": 14.9,\n        \"2020-01-01T01:00:00.000Z\": 12.8,\n        \"2020-01-01T00:00:00.000Z\": 12.1,\n        \"2020-01-01T02:00:00.000Z\": 13.5\n    }\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "data"
+      }
+    ],
     "output_wirings": []
   },
   "type": "COMPONENT",

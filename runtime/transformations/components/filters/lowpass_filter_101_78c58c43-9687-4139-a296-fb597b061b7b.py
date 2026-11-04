@@ -521,5 +521,16 @@ RELEASE_WIRING = {
             },
         },
         {"workflow_input_name": "cutoff_frequency", "filters": {"value": "0.25"}},
+        {
+            "workflow_input_name": "frequency_as_periods_per_unit",
+            "use_default_value": True,
+            "filters": {"value": "s"},
+        },
+        {"workflow_input_name": "order", "use_default_value": True, "filters": {"value": "1"}},
+        {
+            "workflow_input_name": "forward_backward",
+            "use_default_value": True,
+            "filters": {"value": "true"},
+        },
     ]
 }

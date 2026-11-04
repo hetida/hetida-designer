@@ -1872,7 +1872,62 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": '{\n    "2020-01-01T01:16:00.000Z": 10.0,\n    "2020-01-01T01:18:00.000Z": 10.0,\n    "2020-01-01T01:19:00.000Z": 10.0,\n    "2020-01-01T01:20:00.000Z": 10.0,\n    "2020-01-01T01:22:00.000Z": 20.0,\n    "2020-01-01T01:23:00.000Z": 20.0,\n    "2020-01-01T01:25:00.000Z": 20.0,\n    "2020-01-01T08:28:00.000Z": 20.0,\n    "2020-01-01T08:30:00.000Z": 30.0,\n    "2020-01-01T08:31:00.000Z": 30.0,\n    "2020-01-01T16:34:00.000Z": 30.0\n}'
             },
-        }
+        },
+        {
+            "workflow_input_name": "interval_start_timestamp",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "interval_end_timestamp",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "auto_frequency_determination",
+            "use_default_value": True,
+            "filters": {"value": "True"},
+        },
+        {
+            "workflow_input_name": "auto_freq_percentile",
+            "use_default_value": True,
+            "filters": {"value": "0.5"},
+        },
+        {
+            "workflow_input_name": "auto_freq_min_amount_datapoints",
+            "use_default_value": True,
+            "filters": {"value": "11"},
+        },
+        {
+            "workflow_input_name": "expected_data_frequency",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "expected_data_freq_allowed_variance_factor",
+            "use_default_value": True,
+            "filters": {"value": "1.0"},
+        },
+        {
+            "workflow_input_name": "expected_data_frequency_offset",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "externally_determined_gap_timestamps",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "externally_determined_gap_intervals",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "deactivate_freq_based_gap_detection",
+            "use_default_value": True,
+            "filters": {"value": "False"},
+        },
     ]
 }
 RELEASE_WIRING = {
@@ -1882,6 +1937,61 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '{\n    "2020-01-01T01:16:00.000Z": 10.0,\n    "2020-01-01T01:18:00.000Z": 10.0,\n    "2020-01-01T01:19:00.000Z": 10.0,\n    "2020-01-01T01:20:00.000Z": 10.0,\n    "2020-01-01T01:22:00.000Z": 20.0,\n    "2020-01-01T01:23:00.000Z": 20.0,\n    "2020-01-01T01:25:00.000Z": 20.0,\n    "2020-01-01T08:28:00.000Z": 20.0,\n    "2020-01-01T08:30:00.000Z": 30.0,\n    "2020-01-01T08:31:00.000Z": 30.0,\n    "2020-01-01T16:34:00.000Z": 30.0\n}'
             },
-        }
+        },
+        {
+            "workflow_input_name": "interval_start_timestamp",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "interval_end_timestamp",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "auto_frequency_determination",
+            "use_default_value": True,
+            "filters": {"value": "True"},
+        },
+        {
+            "workflow_input_name": "auto_freq_percentile",
+            "use_default_value": True,
+            "filters": {"value": "0.5"},
+        },
+        {
+            "workflow_input_name": "auto_freq_min_amount_datapoints",
+            "use_default_value": True,
+            "filters": {"value": "11"},
+        },
+        {
+            "workflow_input_name": "expected_data_frequency",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "expected_data_freq_allowed_variance_factor",
+            "use_default_value": True,
+            "filters": {"value": "1.0"},
+        },
+        {
+            "workflow_input_name": "expected_data_frequency_offset",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "externally_determined_gap_timestamps",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "externally_determined_gap_intervals",
+            "use_default_value": True,
+            "filters": {"value": "null"},
+        },
+        {
+            "workflow_input_name": "deactivate_freq_based_gap_detection",
+            "use_default_value": True,
+            "filters": {"value": "False"},
+        },
     ]
 }
