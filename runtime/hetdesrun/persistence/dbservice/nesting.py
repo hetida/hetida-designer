@@ -23,9 +23,10 @@ def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> N
             str(nesting.workflow_id),
         )
     # session.add (not session.merge): update_nesting deletes all of this workflow's
-    # nestings first, so a row cannot already exist. merge would issue a redundant
-    # existence SELECT per row (N+1); add stages the row to be flushed in bulk. Integrity
-    # errors are handled where the flush happens (in update_nesting).
+    # nestings first and skips duplicate descendants, so a row cannot already exist. merge
+    # would issue a redundant existence SELECT per row (N+1); add stages the row to be
+    # flushed in bulk. Integrity errors are handled where the flush happens (in
+    # update_nesting).
     session.add(nesting)
 
 
@@ -128,7 +129,17 @@ def update_nesting(
                 descendants = find_all_nested_transformation_revisions(
                     session, child.transformation_id
                 )
+                # The nestings of the child do not record the path below the child's own
+                # operators: if the child contains the same workflow more than once, its
+                # operators occur as several descendants with the same depth and operator
+                # id, which would violate the primary key here. Store each only once.
+                staged_descendant_keys: set[tuple[int, UUID]] = set()
                 for descendant in descendants:
+                    disallowed_ancestors.add(descendant.transformation_id)
+                    descendant_key = (descendant.depth, descendant.operator_id)
+                    if descendant_key in staged_descendant_keys:
+                        continue
+                    staged_descendant_keys.add(descendant_key)
                     add_single_nesting(
                         session,
                         NestingDBModel(
@@ -140,7 +151,6 @@ def update_nesting(
                             nested_operator_id=descendant.operator_id,
                         ),
                     )
-                    disallowed_ancestors.add(descendant.transformation_id)
 
         session.flush()
     except IntegrityError as e:

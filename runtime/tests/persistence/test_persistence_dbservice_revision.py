@@ -1047,3 +1047,36 @@ def test_select_containing_workflows(mocked_clean_test_db_session):
 
     with pytest.raises(DBNotFoundError):
         select_containing_workflows(get_uuid_from_seed("inexistent transformation revision"))
+
+
+def test_storing_workflow_with_repeated_sub_workflow_two_levels_down(
+    mocked_clean_test_db_session,
+):
+    # Top contains Middle, which contains Inner twice. The operators of both Inner
+    # instances have the same ids, so seen from Top they are the same nested operator via
+    # the same Middle operator at the same depth, i.e. nestings with identical primary keys.
+    connectors_dir = os.path.join("transformations", "components", "connectors")
+    with TrafoCollection(save_to_db=True) as tc:
+        pt_string = tc.add_from_json_file(
+            os.path.join(
+                connectors_dir, "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json"
+            )
+        )
+        with WorkflowConstructor(trafo_collector=tc, name="Inner", version_tag="1.0.0") as inner:
+            inner.op(pt_string)
+        with WorkflowConstructor(trafo_collector=tc, name="Middle", version_tag="1.0.0") as middle:
+            middle.op(inner.result, "first")
+            middle.op(inner.result, "second")
+        with WorkflowConstructor(trafo_collector=tc, name="Top", version_tag="1.0.0") as top:
+            top.op(middle.result)
+
+    assert set(get_all_nested_transformation_revisions(top.result)) == {
+        middle.result.id,
+        inner.result.id,
+        pt_string.id,
+    }
+    assert [cw.name for cw in select_containing_workflows(pt_string.id)] == [
+        "Inner",
+        "Middle",
+        "Top",
+    ]
