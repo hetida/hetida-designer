@@ -9,13 +9,16 @@ usage() {
     echo "  - deps:upgrade    :    resolves and locks Python dependencies, upgrading them all"
     echo "  - deps:sync       :    syncs currently activated virtual environment with locked Python dev dependencies."
     echo "  - shell           :    Activate virtual environment, thereby creating and syncing if necessary"
-    echo "  - test            :    run pytest on hetdesrun code"
+    echo "  - test            :    run pytest on hetdesrun code, passing ARGS on to pytest."
+    echo "                         --extended also runs the tests which do not run by default"
+    echo "                         (performance, executing all base transformations)"
     echo "  - comptest        :    run pytest base component tests"
     echo "  - lint            :    call ruff"
     echo "  - typecheck       :    run mypy static type check"
     echo "  - format          :    run ruff format"
     echo "  - seccheck        :    run bandit security checks"
-    echo "  - check           :    run format check, tests, typechecking"
+    echo "  - check           :    run format check, tests, typechecking."
+    echo "                         --extended runs the tests as test --extended does"
 }
 
 fn_exists() {
@@ -76,8 +79,16 @@ seccheck() {
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
+    local test_options=()
+    for arg in "$@"; do
+        case "$arg" in
+        --extended) test_options+=(--extended) ;;
+        *) echo "Unknown option for check: $arg" >&2 && return 1 ;;
+        esac
+    done
+
     echo "--> Running ruff format in check mode" && ruff format hetdesrun transformations/components tests --check &&
-        echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
+        echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests "${test_options[@]}" &&
         echo "--> Running base component tests" &&  python -m pytest --doctest-modules --cov=transformations/components --cov-report=term-missing transformations/components/*/*.py &&
         echo "--> Running mypy" && mypy hetdesrun &&
         echo "--> Running ruff" && ruff check hetdesrun transformations/components tests &&

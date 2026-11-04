@@ -1,6 +1,6 @@
 {
   "category": "Index Operations",
-  "content": "\"\"\"Documentation for Timeshifted Value Table\n\n# Timeshifted Value Table\n\n## Description\nThe component takes a Series and returns a DataFrame of regular time shifted values.\n\n## Inputs\n* **timeseries** (Pandas Series): Should be a Pandas Series with a DateTime Index.\n* **freq** (String): Frequency String. For example \"20d\", \"m\" or \"12min\".\n* **periods** (Integer): Number of times the series is shifted by the **freq**. Can be negative for negative shifts.\n\n## Outputs\n* **timeshifted_values** (Pandas DataFrame): The resulting DataFrame containing one column for every shift. NaN Values may occur.\n\n## Details\nShifts the given series **periods** times by the given frequency and gathers all such resulting shifted series into one DataFrame.\n\"\"\"\n\n# add your own imports here\n\nimport pandas as pd\n\n\ndef past_values(series: pd.Series, periods, frequency) -> pd.DataFrame():\n    df = pd.DataFrame()\n\n    sign = -1 if periods < 0 else 1\n\n    for n in range(sign * periods):\n        shift_no = sign * (n + 1)\n        df[\"shifted_\" + str(shift_no) + \"_times_\" + frequency] = series.shift(\n            periods=shift_no, freq=frequency\n        )\n    return df\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"timeseries\": {\"data_type\": \"SERIES\"},\n        \"freq\": {\"data_type\": \"STRING\"},\n        \"periods\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"timeshifted_values\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Timeshifted Value Table\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Take a Series and get a DataFrame of regular time shifted values\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"e4541a9d-7b3e-3dd6-869d-eff30ad997c3\",\n    \"revision_group_id\": \"e4541a9d-7b3e-3dd6-869d-eff30ad997c3\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.442649+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, timeseries, freq, periods):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"timeshifted_values\": past_values(timeseries, periods, freq)}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
+  "content": "\"\"\"Documentation for Timeshifted Value Table\n\n# Timeshifted Value Table\n\n## Description\nThe component takes a Series and returns a DataFrame of regular time shifted values.\n\n## Inputs\n* **timeseries** (Pandas Series): Should be a Pandas Series with a DateTime Index.\n* **freq** (String): Frequency String. For example \"20d\", \"m\" or \"12min\".\n* **periods** (Integer): Number of times the series is shifted by the **freq**. Can be negative for negative shifts.\n\n## Outputs\n* **timeshifted_values** (Pandas DataFrame): The resulting DataFrame containing one column for every shift. NaN Values may occur.\n\n## Details\nShifts the given series **periods** times by the given frequency and gathers all such resulting shifted series into one DataFrame.\n\"\"\"\n\n# add your own imports here\n\nimport pandas as pd\n\n\ndef past_values(series: pd.Series, periods, frequency) -> pd.DataFrame():\n    df = pd.DataFrame()\n\n    sign = -1 if periods < 0 else 1\n\n    for n in range(sign * periods):\n        shift_no = sign * (n + 1)\n        df[\"shifted_\" + str(shift_no) + \"_times_\" + frequency] = series.shift(\n            periods=shift_no, freq=frequency\n        )\n    return df\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"timeseries\": {\"data_type\": \"SERIES\"},\n        \"freq\": {\"data_type\": \"STRING\"},\n        \"periods\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"timeshifted_values\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Timeshifted Value Table\",\n    \"category\": \"Index Operations\",\n    \"description\": \"Take a Series and get a DataFrame of regular time shifted values\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"e4541a9d-7b3e-3dd6-869d-eff30ad997c3\",\n    \"revision_group_id\": \"e4541a9d-7b3e-3dd6-869d-eff30ad997c3\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.442649+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, timeseries, freq, periods):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"timeshifted_values\": past_values(timeseries, periods, freq)}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"timeseries\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T00:00:00.000Z\": 12.1,\\n    \"2020-01-01T01:00:00.000Z\": 12.8,\\n    \"2020-01-01T02:00:00.000Z\": 13.5,\\n    \"2020-01-01T03:00:00.000Z\": 14.9,\\n    \"2020-01-01T04:00:00.000Z\": 16.2,\\n    \"2020-01-01T05:00:00.000Z\": 17.0,\\n    \"2020-01-01T06:00:00.000Z\": 16.4,\\n    \"2020-01-01T07:00:00.000Z\": 15.1,\\n    \"2020-01-01T08:00:00.000Z\": 13.8,\\n    \"2020-01-01T09:00:00.000Z\": 13.0\\n}'\n            },\n        },\n        {\"workflow_input_name\": \"freq\", \"filters\": {\"value\": \"h\"}},\n        {\"workflow_input_name\": \"periods\", \"filters\": {\"value\": \"3\"}},\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"timeseries\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T00:00:00.000Z\": 12.1,\\n    \"2020-01-01T01:00:00.000Z\": 12.8,\\n    \"2020-01-01T02:00:00.000Z\": 13.5,\\n    \"2020-01-01T03:00:00.000Z\": 14.9,\\n    \"2020-01-01T04:00:00.000Z\": 16.2,\\n    \"2020-01-01T05:00:00.000Z\": 17.0,\\n    \"2020-01-01T06:00:00.000Z\": 16.4,\\n    \"2020-01-01T07:00:00.000Z\": 15.1,\\n    \"2020-01-01T08:00:00.000Z\": 13.8,\\n    \"2020-01-01T09:00:00.000Z\": 13.0\\n}'\n            },\n        },\n        {\"workflow_input_name\": \"freq\", \"filters\": {\"value\": \"h\"}},\n        {\"workflow_input_name\": \"periods\", \"filters\": {\"value\": \"3\"}},\n    ]\n}\n",
   "description": "Take a Series and get a DataFrame of regular time shifted values",
   "documentation": "# Timeshifted Value Table\n\n## Description\nThe component takes a Series and returns a DataFrame of regular time shifted values.\n\n## Inputs\n* **timeseries** (Pandas Series): Should be a Pandas Series with a DateTime Index.\n* **freq** (String): Frequency String. For example \"20d\", \"m\" or \"12min\".\n* **periods** (Integer): Number of times the series is shifted by the **freq**. Can be negative for negative shifts.\n\n## Outputs\n* **timeshifted_values** (Pandas DataFrame): The resulting DataFrame containing one column for every shift. NaN Values may occur.\n\n## Details\nShifts the given series **periods** times by the given frequency and gathers all such resulting shifted series into one DataFrame.\n",
   "id": "e4541a9d-7b3e-3dd6-869d-eff30ad997c3",
@@ -36,7 +36,32 @@
   "name": "Timeshifted Value Table",
   "release_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T00:00:00.000Z\": 12.1,\n    \"2020-01-01T01:00:00.000Z\": 12.8,\n    \"2020-01-01T02:00:00.000Z\": 13.5,\n    \"2020-01-01T03:00:00.000Z\": 14.9,\n    \"2020-01-01T04:00:00.000Z\": 16.2,\n    \"2020-01-01T05:00:00.000Z\": 17.0,\n    \"2020-01-01T06:00:00.000Z\": 16.4,\n    \"2020-01-01T07:00:00.000Z\": 15.1,\n    \"2020-01-01T08:00:00.000Z\": 13.8,\n    \"2020-01-01T09:00:00.000Z\": 13.0\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "h"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "freq"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "3"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "periods"
+      }
+    ],
     "output_wirings": []
   },
   "released_timestamp": "2022-02-09T17:33:31.442649+00:00",
@@ -44,7 +69,32 @@
   "state": "RELEASED",
   "test_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T00:00:00.000Z\": 12.1,\n    \"2020-01-01T01:00:00.000Z\": 12.8,\n    \"2020-01-01T02:00:00.000Z\": 13.5,\n    \"2020-01-01T03:00:00.000Z\": 14.9,\n    \"2020-01-01T04:00:00.000Z\": 16.2,\n    \"2020-01-01T05:00:00.000Z\": 17.0,\n    \"2020-01-01T06:00:00.000Z\": 16.4,\n    \"2020-01-01T07:00:00.000Z\": 15.1,\n    \"2020-01-01T08:00:00.000Z\": 13.8,\n    \"2020-01-01T09:00:00.000Z\": 13.0\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "h"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "freq"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "3"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "periods"
+      }
+    ],
     "output_wirings": []
   },
   "type": "COMPONENT",

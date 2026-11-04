@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "\"\"\"Documentation for Name Series\n\n# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n        \"name\": {\"data_type\": \"STRING\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Name Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Give a name to a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"revision_group_id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.594509+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input, name):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    input.name = name\n    return {\"output\": input}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\nRELEASE_WIRING = {}\n",
+  "content": "\"\"\"Documentation for Name Series\n\n# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n        \"name\": {\"data_type\": \"STRING\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Name Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Give a name to a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"revision_group_id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.594509+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input, name):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    input.name = name\n    return {\"output\": input}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"input\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T00:00:00.000Z\": 12.1,\\n    \"2020-01-01T01:00:00.000Z\": 12.8,\\n    \"2020-01-01T02:00:00.000Z\": 13.5,\\n    \"2020-01-01T03:00:00.000Z\": 14.9,\\n    \"2020-01-01T04:00:00.000Z\": 16.2,\\n    \"2020-01-01T05:00:00.000Z\": 17.0,\\n    \"2020-01-01T06:00:00.000Z\": 16.4,\\n    \"2020-01-01T07:00:00.000Z\": 15.1,\\n    \"2020-01-01T08:00:00.000Z\": 13.8,\\n    \"2020-01-01T09:00:00.000Z\": 13.0\\n}'\n            },\n        },\n        {\"workflow_input_name\": \"name\", \"filters\": {\"value\": \"temperature\"}},\n    ]\n}\nRELEASE_WIRING = {\n    \"input_wirings\": [\n        {\n            \"workflow_input_name\": \"input\",\n            \"filters\": {\n                \"value\": '{\\n    \"2020-01-01T00:00:00.000Z\": 12.1,\\n    \"2020-01-01T01:00:00.000Z\": 12.8,\\n    \"2020-01-01T02:00:00.000Z\": 13.5,\\n    \"2020-01-01T03:00:00.000Z\": 14.9,\\n    \"2020-01-01T04:00:00.000Z\": 16.2,\\n    \"2020-01-01T05:00:00.000Z\": 17.0,\\n    \"2020-01-01T06:00:00.000Z\": 16.4,\\n    \"2020-01-01T07:00:00.000Z\": 15.1,\\n    \"2020-01-01T08:00:00.000Z\": 13.8,\\n    \"2020-01-01T09:00:00.000Z\": 13.0\\n}'\n            },\n        },\n        {\"workflow_input_name\": \"name\", \"filters\": {\"value\": \"temperature\"}},\n    ]\n}\n",
   "description": "Give a name to a series",
   "documentation": "# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n",
   "id": "a4064897-66d3-9601-328e-5ae9036665c5",
@@ -30,7 +30,24 @@
   "name": "Name Series",
   "release_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T00:00:00.000Z\": 12.1,\n    \"2020-01-01T01:00:00.000Z\": 12.8,\n    \"2020-01-01T02:00:00.000Z\": 13.5,\n    \"2020-01-01T03:00:00.000Z\": 14.9,\n    \"2020-01-01T04:00:00.000Z\": 16.2,\n    \"2020-01-01T05:00:00.000Z\": 17.0,\n    \"2020-01-01T06:00:00.000Z\": 16.4,\n    \"2020-01-01T07:00:00.000Z\": 15.1,\n    \"2020-01-01T08:00:00.000Z\": 13.8,\n    \"2020-01-01T09:00:00.000Z\": 13.0\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "input"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "temperature"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "name"
+      }
+    ],
     "output_wirings": []
   },
   "released_timestamp": "2022-02-09T17:33:34.594509+00:00",
@@ -38,7 +55,24 @@
   "state": "RELEASED",
   "test_wiring": {
     "dashboard_positionings": [],
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T00:00:00.000Z\": 12.1,\n    \"2020-01-01T01:00:00.000Z\": 12.8,\n    \"2020-01-01T02:00:00.000Z\": 13.5,\n    \"2020-01-01T03:00:00.000Z\": 14.9,\n    \"2020-01-01T04:00:00.000Z\": 16.2,\n    \"2020-01-01T05:00:00.000Z\": 17.0,\n    \"2020-01-01T06:00:00.000Z\": 16.4,\n    \"2020-01-01T07:00:00.000Z\": 15.1,\n    \"2020-01-01T08:00:00.000Z\": 13.8,\n    \"2020-01-01T09:00:00.000Z\": 13.0\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "input"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "temperature"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "name"
+      }
+    ],
     "output_wirings": []
   },
   "type": "COMPONENT",

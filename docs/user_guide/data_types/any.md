@@ -46,6 +46,26 @@ Doing this comes with the drawback that such a generic workflow/component now ha
 !!! tip
     Often it is a better idea to have explicit variants (e.g. an "Add Series" component).
 
+### Pandas Series and DataFrames via ANY inputs/outputs
+
+JSON provided to an ANY input, e.g. via [manual input](../../integration_guide/adapter_system/builtin_adapters/direct_provisioning.md#manual-input), is usually handed to the component as it is, e.g. as a dict. To provide a Pandas Series or DataFrame instead, use the wrapped format of SERIES and DATAFRAME with `"__hd_wrapped_data_object__"` set to `"SERIES"` or `"DATAFRAME"`:
+
+```json
+{
+  "__hd_wrapped_data_object__": "SERIES",
+  "__metadata__": {},
+  "__data__": {
+    "2020-01-01T00:00:00.000Z": 12.1,
+    "2020-01-01T01:00:00.000Z": 12.8,
+    "2020-01-01T02:00:00.000Z": 13.5
+  }
+}
+```
+
+The content of `__data__` has the same format as for SERIES or DATAFRAME inputs, see [JSON formats](../../integration_guide/adapter_system/builtin_adapters/direct_provisioning.md#json-formats), and `__metadata__` is written to the `attrs` of the Pandas object as it is. A dict with the key `"__hd_wrapped_data_object__"` which is not valid wrapped data lets the execution fail. This applies to default values of ANY inputs as well.
+
+Vice versa, a Pandas Series or DataFrame returned via an ANY output, e.g. by the "Add" component for a Series, is returned in this wrapped format, like for SERIES and DATAFRAME outputs.
+
 ## ANY for Visualizations and Files
 
 The hetida designer frontend as well as the [experimental dashboarding](../dashboarding.md) renders some ANY outputs visually. The general form is a json serializable Python dict of from

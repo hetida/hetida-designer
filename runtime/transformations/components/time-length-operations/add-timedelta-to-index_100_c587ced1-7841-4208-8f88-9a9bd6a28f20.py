@@ -123,5 +123,25 @@ def main(*, df_or_series, timedelta):
     return {"df_or_series": df_or_series}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "df_or_series",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "2020-01-01T00:00:00.000Z": 12.1,\n        "2020-01-01T01:00:00.000Z": 12.8,\n        "2020-01-01T02:00:00.000Z": 13.5,\n        "2020-01-01T03:00:00.000Z": 14.9\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "timedelta", "filters": {"value": "-30min"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "df_or_series",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "2020-01-01T00:00:00.000Z": 12.1,\n        "2020-01-01T01:00:00.000Z": 12.8,\n        "2020-01-01T02:00:00.000Z": 13.5,\n        "2020-01-01T03:00:00.000Z": 14.9\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "timedelta", "filters": {"value": "-30min"}},
+    ]
+}

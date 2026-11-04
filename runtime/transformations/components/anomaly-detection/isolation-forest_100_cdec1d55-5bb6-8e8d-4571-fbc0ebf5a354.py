@@ -375,5 +375,39 @@ def main(*, n_estimators, test_data, train_data):
     return {"decision_function_values": dec_vals, "trained_model": iso_forest}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {"workflow_input_name": "n_estimators", "filters": {"value": "100"}},
+        {
+            "workflow_input_name": "test_data",
+            "filters": {
+                "value": '{\n    "x": [\n        1.5,\n        1.4,\n        -0.6,\n        0.2\n    ],\n    "y": [\n        1.9,\n        1.7,\n        0.1,\n        0.3\n    ]\n}'
+            },
+        },
+        {
+            "workflow_input_name": "train_data",
+            "filters": {
+                "value": '{\n    "x": [\n        1.49,\n        1.45,\n        1.55,\n        1.78,\n        1.25,\n        1.6,\n        1.63,\n        1.34,\n        1.58,\n        1.51,\n        1.31,\n        1.36\n    ],\n    "y": [\n        2.09,\n        1.64,\n        1.89,\n        2.43,\n        1.26,\n        2.57,\n        1.83,\n        1.66,\n        1.78,\n        2.06,\n        1.19,\n        1.39\n    ]\n}'
+            },
+        },
+    ],
+    "output_wirings": [{"workflow_output_name": "trained_model", "adapter_id": "drop"}],
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {"workflow_input_name": "n_estimators", "filters": {"value": "100"}},
+        {
+            "workflow_input_name": "test_data",
+            "filters": {
+                "value": '{\n    "x": [\n        1.5,\n        1.4,\n        -0.6,\n        0.2\n    ],\n    "y": [\n        1.9,\n        1.7,\n        0.1,\n        0.3\n    ]\n}'
+            },
+        },
+        {
+            "workflow_input_name": "train_data",
+            "filters": {
+                "value": '{\n    "x": [\n        1.49,\n        1.45,\n        1.55,\n        1.78,\n        1.25,\n        1.6,\n        1.63,\n        1.34,\n        1.58,\n        1.51,\n        1.31,\n        1.36\n    ],\n    "y": [\n        2.09,\n        1.64,\n        1.89,\n        2.43,\n        1.26,\n        2.57,\n        1.83,\n        1.66,\n        1.78,\n        2.06,\n        1.19,\n        1.39\n    ]\n}'
+            },
+        },
+    ],
+    "output_wirings": [{"workflow_output_name": "trained_model", "adapter_id": "drop"}],
+}

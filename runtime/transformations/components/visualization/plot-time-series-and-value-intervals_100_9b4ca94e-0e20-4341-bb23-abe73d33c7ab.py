@@ -312,6 +312,16 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
                 "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'
             },
         },
+        {
+            "workflow_input_name": "line_color",
+            "use_default_value": True,
+            "filters": {"value": "rgb(40, 251, 0)"},
+        },
+        {
+            "workflow_input_name": "fill_color",
+            "use_default_value": True,
+            "filters": {"value": "rgba(40, 251, 0, 0.15)"},
+        },
     ]
 }
 RELEASE_WIRING = {
@@ -327,6 +337,16 @@ RELEASE_WIRING = {
             "filters": {
                 "value": '{\n    "[10,20]": {\n        "min_value": 10.0,\n        "max_value": 20.0,\n        "min_value_inclusive": true,\n        "max_value_inclusive": true,\n        "display_name": "Intv. 1"\n    },\n    "(20,30)": {\n        "min_value": 20.0,\n        "max_value": 30.0,\n        "min_value_inclusive": false,\n        "max_value_inclusive": false,\n        "line_color": "rgb(40,20,250)",\n        "fill_color": "rgba(40,20,250,0.15)"\n    }\n}'
             },
+        },
+        {
+            "workflow_input_name": "line_color",
+            "use_default_value": True,
+            "filters": {"value": "rgb(40, 251, 0)"},
+        },
+        {
+            "workflow_input_name": "fill_color",
+            "use_default_value": True,
+            "filters": {"value": "rgba(40, 251, 0, 0.15)"},
         },
     ]
 }

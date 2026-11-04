@@ -139,6 +139,8 @@ The runtime directory contains a `run` bash script with multiple subcommands whi
 
 In particular the `./run check` command runs several checks exiting with non-zero status if one of them fails.
 
+Some tests do not run by default since they take long, e.g. performance tests and executing all base transformations. `./run test --extended` and `./run check --extended` include them.
+
 ### Quality Gates: Github actions
 
 Some of the qa tools mentioned above are run as part of github actions to ensure code quality.

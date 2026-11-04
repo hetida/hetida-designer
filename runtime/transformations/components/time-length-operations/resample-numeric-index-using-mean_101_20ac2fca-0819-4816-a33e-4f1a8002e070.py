@@ -81,5 +81,25 @@ def main(*, data, d):
     return {"resampled": data_reindex.reindex(pd.RangeIndex(data.index[0], data.index[-1] + 1, d))}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "0": 1.0,\n        "2": 3.0,\n        "3": 2.5,\n        "6": 4.0,\n        "8": 5.0\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "d", "filters": {"value": "2"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "__hd_wrapped_data_object__": "SERIES",\n    "__metadata__": {},\n    "__data__": {\n        "0": 1.0,\n        "2": 3.0,\n        "3": 2.5,\n        "6": 4.0,\n        "8": 5.0\n    }\n}'
+            },
+        },
+        {"workflow_input_name": "d", "filters": {"value": "2"}},
+    ]
+}

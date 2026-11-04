@@ -358,7 +358,13 @@
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": []
+    "output_wirings": [
+      {
+        "adapter_id": "drop",
+        "filters": {},
+        "workflow_output_name": "example_class_object"
+      }
+    ]
   },
   "released_timestamp": "2023-02-10T13:45:52.982547+00:00",
   "revision_group_id": "039f8445-93e8-4006-a5b2-47f60ee240e8",
@@ -391,7 +397,13 @@
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": []
+    "output_wirings": [
+      {
+        "adapter_id": "drop",
+        "filters": {},
+        "workflow_output_name": "example_class_object"
+      }
+    ]
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

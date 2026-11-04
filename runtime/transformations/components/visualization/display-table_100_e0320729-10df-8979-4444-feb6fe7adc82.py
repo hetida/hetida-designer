@@ -93,5 +93,23 @@ def main(*, data):
     return {"table": plotly_fig_to_json_dict(fig)}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "col_1": [\n        "a",\n        "a",\n        "a",\n        "b",\n        "c",\n        "d",\n        "b"\n    ],\n    "col_2": [\n        2,\n        3,\n        2,\n        4,\n        4,\n        4,\n        4\n    ]\n}'
+            },
+        }
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "col_1": [\n        "a",\n        "a",\n        "a",\n        "b",\n        "c",\n        "d",\n        "b"\n    ],\n    "col_2": [\n        2,\n        3,\n        2,\n        4,\n        4,\n        4,\n        4\n    ]\n}'
+            },
+        }
+    ]
+}

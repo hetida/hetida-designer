@@ -137,8 +137,7 @@ def main(*, data, level, hysteresis, edge_type):
     )
     crossings = crossings[crossings != 0]
 
-    crossings.values[1:] = np.diff(crossings) / 2
-    crossings = crossings[1:]
+    crossings = (crossings.diff().iloc[1:] // 2).astype("int64")
 
     if edge_type > 0:
         crossings = crossings[crossings == 1]
@@ -150,10 +149,34 @@ def main(*, data, level, hysteresis, edge_type):
 
     crossings = crossings.cumsum()
     crossings = crossings.reindex(data.index)
-    crossings[0] = 0
+    crossings.iloc[0] = 0
 
-    return {"result": crossings.fillna(method="pad").astype("int64")}
+    return {"result": crossings.ffill().astype("int64")}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "2019-08-01T15:20:00.000Z": 1.0,\n    "2019-08-01T15:20:10.000Z": 7.0,\n    "2019-08-01T15:20:20.000Z": 5.0,\n    "2019-08-01T15:20:30.000Z": 4.0,\n    "2019-08-01T15:20:40.000Z": 2.0,\n    "2019-08-01T15:20:50.000Z": 5.0,\n    "2019-08-01T15:21:00.000Z": 1.0,\n    "2019-08-01T15:21:10.000Z": 8.0\n}'
+            },
+        },
+        {"workflow_input_name": "level", "filters": {"value": "5"}},
+        {"workflow_input_name": "hysteresis", "filters": {"value": "2"}},
+        {"workflow_input_name": "edge_type", "filters": {"value": "0"}},
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "2019-08-01T15:20:00.000Z": 1.0,\n    "2019-08-01T15:20:10.000Z": 7.0,\n    "2019-08-01T15:20:20.000Z": 5.0,\n    "2019-08-01T15:20:30.000Z": 4.0,\n    "2019-08-01T15:20:40.000Z": 2.0,\n    "2019-08-01T15:20:50.000Z": 5.0,\n    "2019-08-01T15:21:00.000Z": 1.0,\n    "2019-08-01T15:21:10.000Z": 8.0\n}'
+            },
+        },
+        {"workflow_input_name": "level", "filters": {"value": "5"}},
+        {"workflow_input_name": "hysteresis", "filters": {"value": "2"}},
+        {"workflow_input_name": "edge_type", "filters": {"value": "0"}},
+    ]
+}

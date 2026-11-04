@@ -169,4 +169,17 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
     ]
 }
-RELEASE_WIRING = {}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "singletsframe",
+            "filters": {
+                "value": '{\n    "value": [\n        1,\n        1.2,\n        0.5\n    ],\n    "timestamp": [\n        "2019-08-01T15:42:36.000Z",\n        "2019-08-01T15:45:36.000Z",\n        "2019-08-01T15:48:36.000Z"\n    ]\n}'
+            },
+        },
+        {
+            "workflow_input_name": "attributes",
+            "filters": {"value": '{\n    "a": true,\n    "b": 31.56\n}'},
+        },
+    ]
+}

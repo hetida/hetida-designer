@@ -85,5 +85,23 @@ def main(*, data):
     return {"integral": integrate.trapezoid(y, x)}
 
 
-TEST_WIRING_FROM_PY_FILE_IMPORT = {}
-RELEASE_WIRING = {}
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "2019-08-01T15:20:10.000Z": 1.7,\n    "2019-08-01T15:20:20.000Z": null,\n    "2019-08-01T15:20:25.000Z": 0.3,\n    "2019-08-01T15:20:30.000Z": 0.5\n}'
+            },
+        }
+    ]
+}
+RELEASE_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "data",
+            "filters": {
+                "value": '{\n    "2019-08-01T15:20:10.000Z": 1.7,\n    "2019-08-01T15:20:20.000Z": null,\n    "2019-08-01T15:20:25.000Z": 0.3,\n    "2019-08-01T15:20:30.000Z": 0.5\n}'
+            },
+        }
+    ]
+}

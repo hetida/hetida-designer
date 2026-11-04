@@ -11,6 +11,7 @@ from keyword import iskeyword
 
 import black
 
+from hdutils import parse_any
 from hetdesrun.component.code_utils import (
     CodeParsingException,
     format_code_with_black,
@@ -79,15 +80,11 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
         DataType.DataFrame,
         DataType.MultiTSFrame,
         DataType.SingleTSFrame,
+        DataType.Any,
     ):
-        return repr(
-            parse_single_value_dynamically(
-                name=inp.name if inp.name is not None else "UNKNOWN",
-                value=inp.value,
-                data_type=DataType.Any,  # to get an object corresponding to the json
-                nullable=True,
-            )
-        )
+        # The object corresponding to the json. Parsing ANY input data would turn the wrapped
+        # format of SERIES / DATAFRAME into a Pandas object.
+        return repr(parse_any(inp.value))
 
     try:
         return repr(
