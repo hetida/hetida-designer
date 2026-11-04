@@ -205,10 +205,8 @@ def estimate_seasonal_periods_acf(train: pd.Series, acf_threshold: float = 0.3) 
     max_by_len = max(2, n // 2)
     max_by_freq = max_by_len
     if isinstance(train.index, pd.DatetimeIndex):
-        try:
-            freq = pd.infer_freq(train.index)
-        except ValueError:
-            freq = None
+        # pandas warns that infer_freq will return an offset instead of a string
+        freq = pd.DatetimeIndex(train.index, freq="infer").freqstr
         if freq:
             f = freq.upper()
             if f.startswith("H"):
@@ -356,6 +354,8 @@ def hyper_tuning_grid_search(
         )
 
     train = train.sort_index()
+    # statsmodels infers the frequency of the index as well, but warns if it has none
+    train = train.set_axis(pd.DatetimeIndex(train.index, freq="infer"))
 
     # Parameter tuning
     best_alpha, best_beta, best_gamma, best_phi, best_score = (
@@ -485,6 +485,8 @@ def train_exponential_smoothing(
         )
 
     train = train.sort_index()
+    # statsmodels infers the frequency of the index as well, but warns if it has none
+    train = train.set_axis(pd.DatetimeIndex(train.index, freq="infer"))
 
     # Model training
     # If no seasonal_periods are provided, enforce non-seasonal model

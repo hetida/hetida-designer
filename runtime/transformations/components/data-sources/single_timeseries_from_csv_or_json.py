@@ -133,7 +133,7 @@ def main(*, data_content, decimal=".", sep=","):
     else:
         # expects json object created via .to_json(orient="records", date_format="iso"))
         # to enter into manual input field: df.to_json(orient="records", date_format="iso", indent=2))
-        df = pd.DataFrame.from_dict(data_content)
+        df = pd.DataFrame(data_content)
         df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     unique_metrics = df["metric"].unique()

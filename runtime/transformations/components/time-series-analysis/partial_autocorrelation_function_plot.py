@@ -160,7 +160,7 @@ def create_pacf_plot(
         array = pacf(data_sorted, nlags=lags, alpha=confidence_level)
         title = "Partial Autocorrelation (PACF) Plot"
     else:
-        array = acf(data_sorted, nlags=lags, alpha=confidence_level)
+        array = acf(data_sorted, nlags=lags, alpha=confidence_level, result_object=True)
         title = "Autocorrelation (ACF) Plot"
 
     lower_values = array[1][:, 0] - array[0]

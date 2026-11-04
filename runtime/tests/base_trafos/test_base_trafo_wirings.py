@@ -9,9 +9,11 @@ Executing all base transformations takes about 20 s, so it only runs with --exec
 """
 
 import json
+import warnings
 from uuid import UUID
 
 import pytest
+from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.exportimport.importing import import_transformations_from_dir
@@ -81,6 +83,22 @@ NOT_EXECUTED: dict[UUID, str] = {
     }.items()
 }
 
+# Warnings expected when executing base transformations with their test wiring, by id
+EXPECTED_WARNINGS: dict[UUID, list[tuple[type[Warning], str]]] = {
+    # Simple Scatter Map Plot 1.0.0, deprecated in favor of 1.0.1 using scatter_map
+    UUID("dc909fa2-93fa-3205-e31d-b05f944cbd29"): [
+        (DeprecationWarning, r"\*scatter_?mapbox\* is deprecated")
+    ],
+    # Exponential Smoothing 1.0.0 and 1.0.1: fitting the model to the test data does not
+    # converge for some parameters tried by the hyperparameter search
+    UUID("61ef085b-0a83-443b-a4ee-dc1cc6ce1077"): [
+        (ConvergenceWarning, "Optimization failed to converge")
+    ],
+    UUID("8c5f6a7e-2b1d-4f6c-9d9e-c7e3b4a2c1d0"): [
+        (ConvergenceWarning, "Optimization failed to converge")
+    ],
+}
+
 BASE_TRAFOS, BASE_TRAFO_PATHS = load_transformation_revisions_from_directory("./transformations")
 
 
@@ -146,6 +164,7 @@ def test_wirings_of_base_trafos_are_complete():
 
     assert NOT_WIRED.keys() <= BASE_TRAFOS.keys()
     assert NOT_EXECUTED.keys() <= BASE_TRAFOS.keys()
+    assert EXPECTED_WARNINGS.keys() <= BASE_TRAFOS.keys()
 
 
 @pytest.mark.base_trafo_execution
@@ -160,15 +179,18 @@ async def test_base_trafos_execute_with_their_test_wiring(
         for tr in BASE_TRAFOS.values():
             if tr.id in NOT_WIRED or tr.id in NOT_EXECUTED:
                 continue
-            # like the user interface, which sends the test wiring
-            resp = await ac.post(
-                "/api/transformations/execute",
-                json={
-                    "id": str(tr.id),
-                    "wiring": json.loads(tr.test_wiring.model_dump_json()),
-                    "run_pure_plot_operators": True,
-                },
-            )
+            with warnings.catch_warnings():
+                for category, message in EXPECTED_WARNINGS.get(tr.id, []):
+                    warnings.filterwarnings("ignore", message, category)
+                # like the user interface, which sends the test wiring
+                resp = await ac.post(
+                    "/api/transformations/execute",
+                    json={
+                        "id": str(tr.id),
+                        "wiring": json.loads(tr.test_wiring.model_dump_json()),
+                        "run_pure_plot_operators": True,
+                    },
+                )
             if resp.status_code != 200:
                 failures[BASE_TRAFO_PATHS[tr.id]] = f"status {resp.status_code}: {resp.text}"
             elif (error := resp.json()["error"]) is not None:
