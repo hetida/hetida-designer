@@ -1,11 +1,15 @@
 import logging
 from uuid import UUID
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, func, select
 from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.persistence.db_engine_and_session import SQLAlchemySession, get_session
-from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
+from hetdesrun.persistence.dbmodels import (
+    Descendant,
+    NestingDBModel,
+    TransformationRevisionDBModel,
+)
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNestingCycleDetected
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -22,11 +26,11 @@ def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> N
             str(nesting.nested_transformation_id),
             str(nesting.workflow_id),
         )
-    # session.add (not session.merge): update_nesting deletes all of this workflow's
+    # session.add (not session.merge): store_own_nestings deletes all of this workflow's
     # nestings first and skips duplicate descendants, so a row cannot already exist. merge
     # would issue a redundant existence SELECT per row (N+1); add stages the row to be
     # flushed in bulk. Integrity errors are handled where the flush happens (in
-    # update_nesting).
+    # store_own_nestings).
     session.add(nesting)
 
 
@@ -92,14 +96,19 @@ def delete_single_nesting(
     )
 
 
-def update_nesting(
+def store_own_nestings(
     session: SQLAlchemySession, workflow_id: UUID, workflow_content: WorkflowContent
-) -> None:
+) -> set[Descendant]:
+    """Replace the nestings of the workflow by those its operators determine
+
+    They are derived from the nestings of the workflows it contains directly, which must be
+    up to date. Returns the descendants of the workflow according to its new nestings.
+    """
     if get_config().log_nestings_and_descendants:
-        logger.debug("update nesting of workflow %s", str(workflow_id))
+        logger.debug("store nestings of workflow %s", str(workflow_id))
     delete_own_nestings(session, workflow_id)
 
-    disallowed_ancestors: set[UUID] = {workflow_id}
+    descendants: set[Descendant] = set()
 
     # Stage all nestings and flush them in bulk. The try wraps the whole staging phase so
     # that a foreign key violation (e.g. an operator referencing a transformation that is
@@ -120,13 +129,14 @@ def update_nesting(
                     nested_operator_id=child.id,
                 ),
             )
+            descendants.add(Descendant(1, child.transformation_id, child.id))
             if child.transformation_id == workflow_id:
                 raise DBNestingCycleDetected(
                     f"Direct cycle detected: Trying to insert workflow {workflow_id} into itself"
                 )
 
             if child.type == Type.WORKFLOW:
-                descendants = find_all_nested_transformation_revisions(
+                child_descendants = find_all_nested_transformation_revisions(
                     session, child.transformation_id
                 )
                 # The nestings of the child do not record the path below the child's own
@@ -136,8 +146,7 @@ def update_nesting(
                 # their transformation revision are different nestings, e.g. if the child
                 # contains two revisions of a workflow, which keep the operator ids, and an
                 # operator was upgraded in one of them.
-                for descendant in set(descendants):
-                    disallowed_ancestors.add(descendant.transformation_id)
+                for descendant in set(child_descendants):
                     add_single_nesting(
                         session,
                         NestingDBModel(
@@ -149,6 +158,13 @@ def update_nesting(
                             nested_operator_id=descendant.operator_id,
                         ),
                     )
+                    descendants.add(
+                        Descendant(
+                            1 + descendant.depth,
+                            descendant.transformation_id,
+                            descendant.operator_id,
+                        )
+                    )
 
         session.flush()
     except IntegrityError as e:
@@ -159,8 +175,30 @@ def update_nesting(
         logger.error(msg)
         raise DBIntegrityError(msg) from e
 
+    return descendants
+
+
+def update_nesting(
+    session: SQLAlchemySession, workflow_id: UUID, workflow_content: WorkflowContent
+) -> None:
+    """Store the nestings of the workflow and update those of the workflows containing it
+
+    The nestings of a workflow are derived from those of the workflows it contains directly.
+    So if the transformation revisions nested in a workflow change, e.g. by adding, removing
+    or upgrading an operator of a DRAFT workflow, the nestings of all workflows containing it
+    change as well. Otherwise e.g. executing them would fail. They are updated from the
+    innermost to the outermost.
+    """
+    if get_config().log_nestings_and_descendants:
+        logger.debug("update nesting of workflow %s", str(workflow_id))
+    previous_descendants = set(find_all_nested_transformation_revisions(session, workflow_id))
+    descendants = store_own_nestings(session, workflow_id, workflow_content)
+
     # check ancestors to disallow possible introduction of cycles
 
+    disallowed_ancestors = {workflow_id} | {
+        descendant.transformation_id for descendant in descendants
+    }
     sup_nestings = find_all_nestings(session, workflow_id)
     for ancestor in sup_nestings:
         if ancestor.workflow_id in disallowed_ancestors:
@@ -171,6 +209,32 @@ def update_nesting(
                 f" {ancestor.workflow_id}"
                 f" but occurs as a dependency of it as well!"
             )
+
+    if descendants == previous_descendants:
+        return
+
+    # A workflow containing another one which contains this workflow contains it at a
+    # greater depth than the other one does. So ordered by the maximal depth, the nestings
+    # of each workflow are derived from up to date nestings of the workflows it contains.
+    containing_workflow_ids = list(
+        session.execute(
+            select(NestingDBModel.workflow_id)
+            .where(NestingDBModel.nested_transformation_id == workflow_id)
+            .group_by(NestingDBModel.workflow_id)
+            .order_by(func.max(NestingDBModel.depth))
+        ).scalars()
+    )
+    for containing_workflow_id in containing_workflow_ids:
+        containing_workflow_content = session.execute(
+            select(TransformationRevisionDBModel.workflow_content).where(
+                TransformationRevisionDBModel.id == containing_workflow_id
+            )
+        ).scalar_one()
+        store_own_nestings(
+            session,
+            containing_workflow_id,
+            WorkflowContent.model_validate(containing_workflow_content),
+        )
 
 
 def update_or_create_nesting(transformation_revision: TransformationRevision) -> None:

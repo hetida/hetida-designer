@@ -5044,7 +5044,7 @@
           "transformations"
         ],
         "summary": "Returns the workflows containing the transformation revision directly or nested.",
-        "description": "Get the workflows which contain the transformation revision\n\nThis includes workflows which contain it only nested, i.e. as operator of a workflow\nwhich is itself contained in them, at arbitrary nesting depth. Imports of components\nin the code of other components are not taken into account.\n\nA workflow is listed as it was stored the last time: Changes of a DRAFT workflow nested\nin another DRAFT workflow are only reflected after the latter is stored again, e.g. by\nupgrading its operators.",
+        "description": "Get the workflows which contain the transformation revision\n\nThis includes workflows which contain it only nested, i.e. as operator of a workflow\nwhich is itself contained in them, at arbitrary nesting depth. Imports of components\nin the code of other components are not taken into account.",
         "operationId": "get_containing_workflows_api_transformations__id__containing_workflows_get",
         "parameters": [
           {

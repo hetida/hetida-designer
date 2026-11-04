@@ -16,11 +16,14 @@ from hetdesrun.persistence.dbservice.nesting import find_all_nested_transformati
 from hetdesrun.persistence.dbservice.revision import (
     add_tr,
     get_all_nested_transformation_revisions,
+    update_tr,
 )
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
 from hetdesrun.trafoutils.upgrade_operators import upgrade_workflow_operator_in_place
 from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
+from hetdesrun.utils import State
+from tests.persistence.nesting_world import NestingWorld
 
 
 def drop_all_tables(engine: Engine) -> None:
@@ -168,3 +171,46 @@ def test_nested_transformation_in_nestings_primary_key(migration_db_engine):
     assert len(descendants_of_top_downgraded) == 4
     assert descendants_of_top_downgraded <= {*descendants_of_top_before, lost_descendant}
     assert descendants(middle.result.id) == descendants_of_middle
+
+
+def test_deprecation_flags_of_operators_are_removed(migration_db_engine):
+    command.upgrade(alembic_config(), "ad713bfdec0f")
+
+    world = NestingWorld()
+    component = world.component()
+    draft = world.workflow([world.component()])
+    released = world.release(world.workflow([component]))
+    workflow = world.workflow([component, draft, released])
+    world.deprecate(component)
+
+    # flags as stored by previous versions, including an outdated one of the operator
+    # instantiating the DRAFT, which contains no deprecated transformation revision
+    for trafo in (released, workflow):
+        stored = world.get(trafo)
+        assert isinstance(stored.content, WorkflowContent)
+        for operator in stored.content.operators:
+            operator.state = State.DISABLED
+            operator.name = operator.name.removeprefix("(DRAFT) ")
+        with get_session()() as session, session.begin():
+            update_tr(session, stored)
+
+    command.upgrade(alembic_config(), "2a99b886851b")
+
+    transformation_revisions = sa.table(
+        "transformation_revisions", sa.column("workflow_content", sa.JSON())
+    )
+    with migration_db_engine.connect() as connection:
+        stored_operators = {
+            operator["transformation_id"]: (operator["state"], operator["name"])
+            for content in connection.execute(
+                sa.select(transformation_revisions.c.workflow_content)
+            ).scalars()
+            if content is not None
+            for operator in content["operators"]
+        }
+    assert stored_operators[str(component.id)] == ("RELEASED", component.name)
+    assert stored_operators[str(draft.id)] == ("DRAFT", f"(DRAFT) {draft.name}")
+    assert stored_operators[str(released.id)] == ("RELEASED", released.name)
+    # the operators instantiating the deprecated component and the released workflow
+    # containing it are flagged when providing the workflows
+    world.check()

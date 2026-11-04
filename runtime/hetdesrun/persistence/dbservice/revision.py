@@ -1,5 +1,6 @@
 import datetime
 import logging
+from collections.abc import Iterable
 from typing import NamedTuple
 from uuid import UUID
 
@@ -62,6 +63,8 @@ def store_single_transformation_revision(
     transformation_revision: TransformationRevision,
 ) -> None:
     with get_session()() as session, session.begin():
+        if isinstance(transformation_revision.content, WorkflowContent):
+            normalize_operator_states(session, transformation_revision.content)
         add_tr(session, transformation_revision)
 
         if transformation_revision.type == Type.WORKFLOW:
@@ -321,23 +324,6 @@ def update_tr(session: SQLAlchemySession, transformation_revision: Transformatio
         raise DBIntegrityError(msg) from e
 
 
-def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> None:
-    logger.debug("pass on deprecation for transformation revision %s", str(transformation_id))
-
-    sup_nestings = find_all_nestings(session, transformation_id)
-
-    for nesting in sup_nestings:
-        transformation_revision = select_tr_by_id(session, nesting.workflow_id)
-        assert isinstance(  # noqa: S101
-            transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-        for operator in transformation_revision.content.operators:
-            if operator.id == nesting.via_operator_id:
-                operator.state = State.DISABLED
-
-        update_tr(session, transformation_revision)
-
-
 def tr_same_except_for_wiring_and_docu(
     tr_A: TransformationRevision, tr_B: TransformationRevision
 ) -> bool:
@@ -386,108 +372,100 @@ def is_modifiable(
     return True, ""
 
 
-def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.debug(
-        "check if transformation revision %s contains deprecated operators",
-        str(transformation_id),
-    )
-    transformation_revision = read_single_transformation_revision(transformation_id)
-
-    if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"transformation revision {transformation_id} is not a workflow!"
-        logger.error(msg)
-        raise DBIntegrityError(msg)
-
-    assert isinstance(  # noqa: S101
-        transformation_revision.content, WorkflowContent
-    )  # hint for mypy
-    found_some_disabled: bool = False
-    for operator in transformation_revision.content.operators:
-        if operator.state is State.DISABLED:
-            logger.debug(
-                "operator with transformation id %s has status %s",
-                str(operator.transformation_id),
-                operator.state,
-            )
-            found_some_disabled = True
-
-    return found_some_disabled
-
-
-def refresh_deprecated_operator_states(
+def normalize_operator_states(
     session: SQLAlchemySession, workflow_content: WorkflowContent
 ) -> None:
-    """Flag operators that reference a deprecated (DISABLED) transformation.
+    """Store no deprecation flags in operators
 
-    operator.state is a denormalized snapshot of the referenced transformation's state
-    (used e.g. by the frontend to indicate operators whose transformation is deprecated).
-    It can be stale in incoming content -- most notably when importing a workflow whose
-    referenced transformation was already deprecated, so that pass_on_deprecation never
-    reached this workflow. Recompute the DISABLED flag from the db.
+    An operator stores the state of the transformation revision it instantiates as it was
+    when instantiating it, DRAFT or RELEASED. Whether it instantiates a deprecated (DISABLED)
+    transformation revision or a workflow containing one is determined when providing the
+    workflow, see flag_deprecated_operators. Storing it would change the contents of
+    released workflows when deprecating a transformation revision nested in them, and the
+    flags would get outdated, e.g. when the contents of DRAFT workflows nested in them change.
 
-    This uses a single query projecting only the ids of the referenced transformations
-    that are deprecated (no full transformation contents are loaded), so it stays cheap
-    even though workflows are stored on every edit.
+    So replace the flags provided e.g. by the frontend or in imported workflows by the
+    state of the instantiated transformation revision, DRAFT or otherwise RELEASED.
     """
-    operators = workflow_content.operators
-    if not operators:
+    flagged_operators = [
+        operator for operator in workflow_content.operators if operator.state is State.DISABLED
+    ]
+    if len(flagged_operators) == 0:
         return
 
-    referenced_ids = {operator.transformation_id for operator in operators}
-    disabled_ids = set(
+    draft_ids = set(
         session.execute(
             select(TransformationRevisionDBModel.id).where(
-                TransformationRevisionDBModel.id.in_(referenced_ids),
-                TransformationRevisionDBModel.state == State.DISABLED,
+                TransformationRevisionDBModel.id.in_(
+                    {operator.transformation_id for operator in flagged_operators}
+                ),
+                TransformationRevisionDBModel.state == State.DRAFT,
             )
         )
         .scalars()
         .all()
     )
+    for operator in flagged_operators:
+        # names as WorkflowContent.operator_names_represent_state, which ran before
+        if operator.transformation_id in draft_ids:
+            operator.state = State.DRAFT
+            if not operator.name.startswith("(DRAFT) "):
+                operator.name = NonEmptyValidStr("(DRAFT) " + operator.name)
+        else:
+            operator.state = State.RELEASED
+            operator.name = NonEmptyValidStr(operator.name.removeprefix("(DRAFT) "))
 
-    for operator in operators:
-        if operator.transformation_id in disabled_ids:
-            operator.state = State.DISABLED
+
+def flag_deprecated_operators(transformation_revisions: Iterable[TransformationRevision]) -> None:
+    """Flag operators of workflows containing deprecated transformation revisions
+
+    Sets the state of operators instantiating a deprecated (DISABLED) transformation revision
+    or a workflow containing one at any depth to DISABLED, e.g. so that the frontend
+    indicates them. This is determined from the nestings with a single query for all given
+    workflows when providing them, since it is not stored, see normalize_operator_states.
+
+    The given transformation revisions are changed, so they must not be shared, e.g. cached.
+    """
+    workflows_by_id = {
+        transformation_revision.id: transformation_revision
+        for transformation_revision in transformation_revisions
+        if isinstance(transformation_revision.content, WorkflowContent)
+    }
+    if len(workflows_by_id) == 0:
+        return
+
+    with get_session()() as session, session.begin():
+        flagged_operator_ids = {
+            (row.workflow_id, row.via_operator_id)
+            for row in session.execute(
+                select(NestingDBModel.workflow_id, NestingDBModel.via_operator_id)
+                .join(
+                    TransformationRevisionDBModel,
+                    TransformationRevisionDBModel.id == NestingDBModel.nested_transformation_id,
+                )
+                .where(
+                    NestingDBModel.workflow_id.in_(workflows_by_id),
+                    TransformationRevisionDBModel.state == State.DISABLED,
+                )
+                .distinct()
+            )
+        }
+
+    for workflow_id, workflow in workflows_by_id.items():
+        assert isinstance(workflow.content, WorkflowContent)  # noqa: S101 # hint for mypy
+        for operator in workflow.content.operators:
+            if (workflow_id, operator.id) in flagged_operator_ids:
+                operator.state = State.DISABLED
 
 
 def update_content(
     updated_transformation_revision: TransformationRevision,
-    existing_transformation_revision: TransformationRevision | None = None,
     do_expand_code: bool = False,
-    session: SQLAlchemySession | None = None,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(updated_transformation_revision)
         if do_expand_code:
             updated_transformation_revision.content = expand_code(updated_transformation_revision)
-        return updated_transformation_revision
-
-    assert isinstance(  # noqa: S101
-        updated_transformation_revision.content, WorkflowContent
-    )  # hint for mypy
-
-    # keep each operator's deprecation flag in sync with the referenced transformation,
-    # so that operators referencing an already-deprecated transformation are flagged even
-    # when they enter the db via import rather than through pass_on_deprecation
-    if session is not None:
-        refresh_deprecated_operator_states(session, updated_transformation_revision.content)
-
-    if existing_transformation_revision is not None:
-        assert isinstance(  # noqa: S101
-            existing_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        existing_operator_ids: list[UUID] = []
-        for operator in existing_transformation_revision.content.operators:
-            existing_operator_ids.append(operator.id)
-
-        for operator in updated_transformation_revision.content.operators:
-            if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
-                operator.state = (
-                    State.DISABLED
-                    if contains_deprecated(operator.transformation_id)
-                    else operator.state
-                )
     return updated_transformation_revision
 
 
@@ -639,17 +617,21 @@ def update_or_create_single_transformation_revision(
             check_direct_component_imports(
                 transformation_revision, session=session
             )  # in particular checks all imports are released if component is RELEASED
+        else:
+            assert isinstance(  # noqa: S101
+                transformation_revision.content, WorkflowContent
+            )  # hint for mypy
+            # before comparing with the stored content, which contains no deprecation flags
+            normalize_operator_states(session, transformation_revision.content)
 
         try:
             existing_transformation_revision = select_tr_by_id(
                 session, transformation_revision.id, log_error=False
             )
         except DBNotFoundError:
-            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+            if update_component_code:
                 transformation_revision = update_content(
-                    transformation_revision,
-                    do_expand_code=expand_component_code,
-                    session=session,
+                    transformation_revision, do_expand_code=expand_component_code
                 )
 
             add_tr(session, transformation_revision)
@@ -667,12 +649,9 @@ def update_or_create_single_transformation_revision(
                 existing_transformation_revision, transformation_revision
             )
 
-            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+            if update_component_code:
                 transformation_revision = update_content(
-                    transformation_revision,
-                    existing_transformation_revision,
-                    do_expand_code=expand_component_code,
-                    session=session,
+                    transformation_revision, do_expand_code=expand_component_code
                 )
 
             update_tr(session, transformation_revision)
@@ -687,9 +666,6 @@ def update_or_create_single_transformation_revision(
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
             update_nesting(session, transformation_revision.id, transformation_revision.content)
-
-        if transformation_revision.state == State.DISABLED:
-            pass_on_deprecation(session, transformation_revision.id)
 
         return select_tr_by_id(session, transformation_revision.id)
 
@@ -799,10 +775,8 @@ def filter_unused_transformation_ids(transformation_ids: list[UUID]) -> set[UUID
 def select_containing_workflows(transformation_id: UUID) -> list[ContainingWorkflow]:
     """Determine the workflows containing a transformation revision directly or nested
 
-    This relies on the nestings stored with each workflow. They reflect the nested
-    workflows as they were when the containing workflow was stored the last time, i.e.
-    changes of a DRAFT workflow nested in another DRAFT workflow only show up after the
-    latter is stored again, e.g. by upgrading its operators.
+    This relies on the nestings stored with each workflow, which are updated whenever a
+    workflow nested in it changes.
 
     The result is ordered by name and version tag of the containing workflows.
 

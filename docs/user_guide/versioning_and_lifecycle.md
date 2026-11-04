@@ -36,9 +36,9 @@ You can deprecate a revision of a component that you do not want to be used anym
 
 * The deprecated revision does not occur in the component sidebar anymore by default. There is a toggle that allows to show deprecated revisions.
 * Deprecated revisions cannot be dragged into workflows which prevents new uses of it.
-* In every workflow where instances of this component revision are used, they are marked as deprecated. If the workflow itself can be edited (i.e. is in DRAFT mode) you can rightclick on such an instance and choose to replace it with another (probably newer) revision. This will replace the instance and hetida designer tries to keep connections that are not changed.
+* In every workflow where instances of this component revision are used, they are marked as deprecated, as well as instances of workflows containing it, also nested in further workflows. If the workflow itself can be edited (i.e. is in DRAFT mode) you can rightclick on such an instance and choose to replace it with another (probably newer) revision. This will replace the instance and hetida designer tries to keep connections that are not changed. Workflows already opened in the user interface show the marks only after reloading the page.
 * The deprecated component can still be executed, e.g. by external systems via API or in hetida designer UI if you toggle showing deprecated revisions.
-* All workflows with deprecated component revision instances will still work as before. In particular note that workflow revisions which itself are RELEASED cannot be changed even through deprecating. Instead you need to create a new revision for the workflow itself in this case.
+* All workflows with deprecated component revision instances will still work as before. In particular note that workflow revisions which itself are RELEASED cannot be changed even through deprecating, the marks are not stored in them. Instead you need to create a new revision for the workflow itself in this case.
 
 Note again: Deprecated revisions are never deleted, they are still present in the hetida designer database and this guarantees that old versions of components or workflows will execute as before.
 
