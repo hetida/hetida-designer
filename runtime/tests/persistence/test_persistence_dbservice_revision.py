@@ -35,6 +35,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
+from hetdesrun.trafoutils.upgrade_operators import upgrade_workflow_operator_in_place
 from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
@@ -1080,3 +1081,51 @@ def test_storing_workflow_with_repeated_sub_workflow_two_levels_down(
         "Middle",
         "Top",
     ]
+
+
+def test_storing_workflow_with_two_revisions_of_a_sub_workflow_two_levels_down(
+    mocked_clean_test_db_session,
+):
+    # Top contains Middle, which contains Inner and its new revision, in which the operator
+    # is upgraded. New revisions keep the operator ids and upgrading an operator keeps its
+    # id, so seen from Top both operators are nested via the same Middle operator at the
+    # same depth with the same operator id, but with different transformation revisions.
+    connectors_dir = os.path.join("transformations", "components", "connectors")
+    with TrafoCollection(save_to_db=True) as tc:
+        pt_string = tc.add_from_json_file(
+            os.path.join(
+                connectors_dir, "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json"
+            )
+        )
+        pt_string_new = tc.add(
+            pt_string.model_copy(update={"id": uuid4(), "version_tag": "1.0.1"}, deep=True)
+        )
+        with WorkflowConstructor(trafo_collector=tc, name="Inner", version_tag="1.0.0") as inner:
+            inner_op = inner.op(pt_string)
+        inner_new = inner.result.model_copy(
+            update={"id": uuid4(), "version_tag": "1.0.1"}, deep=True
+        )
+        assert isinstance(inner_new.content, WorkflowContent)
+        upgrade_workflow_operator_in_place(
+            inner_new, inner_op.operator.id, inner_new.content.operators[0], pt_string_new
+        )
+        tc.add(inner_new)
+        with WorkflowConstructor(trafo_collector=tc, name="Middle", version_tag="1.0.0") as middle:
+            middle.op(inner.result)
+            middle.op(inner_new)
+        with WorkflowConstructor(trafo_collector=tc, name="Top", version_tag="1.0.0") as top:
+            top.op(middle.result)
+
+    assert set(get_all_nested_transformation_revisions(top.result)) == {
+        middle.result.id,
+        inner.result.id,
+        inner_new.id,
+        pt_string.id,
+        pt_string_new.id,
+    }
+    for pt_string_id in (pt_string.id, pt_string_new.id):
+        assert [cw.name for cw in select_containing_workflows(pt_string_id)] == [
+            "Inner",
+            "Middle",
+            "Top",
+        ]

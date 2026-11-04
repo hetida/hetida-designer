@@ -131,15 +131,13 @@ def update_nesting(
                 )
                 # The nestings of the child do not record the path below the child's own
                 # operators: if the child contains the same workflow more than once, its
-                # operators occur as several descendants with the same depth and operator
-                # id, which would violate the primary key here. Store each only once.
-                staged_descendant_keys: set[tuple[int, UUID]] = set()
-                for descendant in descendants:
+                # operators occur as several equal descendants, which would violate the
+                # primary key here. Store each only once. Descendants differing only in
+                # their transformation revision are different nestings, e.g. if the child
+                # contains two revisions of a workflow, which keep the operator ids, and an
+                # operator was upgraded in one of them.
+                for descendant in set(descendants):
                     disallowed_ancestors.add(descendant.transformation_id)
-                    descendant_key = (descendant.depth, descendant.operator_id)
-                    if descendant_key in staged_descendant_keys:
-                        continue
-                    staged_descendant_keys.add(descendant_key)
                     add_single_nesting(
                         session,
                         NestingDBModel(
