@@ -37,6 +37,7 @@ from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 from hetdesrun.utils import State, get_uuid_from_seed
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
+from tests.persistence.nesting_world import NestingWorld
 
 
 @pytest.fixture()
@@ -2582,3 +2583,33 @@ async def test_put_releasing_drafts(async_test_client, mocked_clean_test_db_sess
         trafo_from_resp = TransformationRevision(**response.json())
 
         assert trafo_from_resp.state is State.RELEASED
+
+
+@pytest.mark.asyncio
+async def test_operators_containing_deprecated_are_flagged_when_providing_workflows(
+    async_test_client, mocked_clean_test_db_session
+):
+    world = NestingWorld()
+    component = world.component()
+    inner = world.release(world.workflow([component]))
+    outer = world.workflow([inner, world.component()])
+    world.deprecate(component)
+
+    async with async_test_client as ac:
+        response = await ac.get(posix_urljoin("/api/transformations/", str(outer.id)))
+        listed = await ac.get("/api/transformations", params={"id": [str(outer.id)]})
+        # e.g. the frontend storing the workflow provided to it
+        updated = await ac.put(
+            posix_urljoin("/api/transformations/", str(outer.id)), json=response.json()
+        )
+
+    for provided in (response.json(), listed.json()[0], updated.json()):
+        assert [operator["state"] for operator in provided["content"]["operators"]] == [
+            "DISABLED",
+            "RELEASED",
+        ]
+    # the stored workflow contains no flags
+    assert [operator.state for operator in world.get(outer).content.operators] == [
+        State.RELEASED,
+        State.RELEASED,
+    ]

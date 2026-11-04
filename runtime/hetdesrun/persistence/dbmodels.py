@@ -100,11 +100,13 @@ class NestingDBModel(Base):
         default=uuid4,
     )
     depth: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    # part of the primary key, since the operators of two revisions of a workflow have the
+    # same ids, see update_nesting
     nested_transformation_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),
         ForeignKey(TransformationRevisionDBModel.id),
+        primary_key=True,
         default=uuid4,
-        nullable=False,
     )
     nested_operator_id: Mapped[UUIDType] = mapped_column(
         UUIDType(binary=False),

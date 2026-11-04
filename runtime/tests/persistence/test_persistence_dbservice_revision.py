@@ -12,6 +12,7 @@ from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFo
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     filter_unused_transformation_ids,
+    flag_deprecated_operators,
     get_all_nested_transformation_revisions,
     get_distinct_categories,
     get_multiple_transformation_revisions,
@@ -35,8 +36,10 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.trafo_collection import TrafoCollection
+from hetdesrun.trafoutils.upgrade_operators import upgrade_workflow_operator_in_place
 from hetdesrun.trafoutils.workflow_construction import WorkflowConstructor
 from hetdesrun.utils import State, Type, get_uuid_from_seed
+from tests.persistence.nesting_world import NestingWorld
 
 # Note: foreign key enforcement for sqlite is enabled centrally in
 # hetdesrun.persistence.db_engine_and_session.get_db_engine, so the tests below that rely
@@ -925,7 +928,7 @@ def test_create_disabled_workflow_populates_nesting(mocked_clean_test_db_session
     assert tr_component.id in nested_trafos
 
 
-def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
+def test_storing_workflow_stores_no_deprecation_flags(
     mocked_clean_test_db_session,
 ):
     # a component that ends up deprecated in the db
@@ -986,13 +989,22 @@ def test_storing_workflow_flags_operators_referencing_deprecated_trafo(
         test_wiring=WorkflowWiring(),
     )
 
-    # storing the workflow (as when importing it) must flag the operator that references
-    # the now-deprecated component, even though the incoming operator state is stale
+    # when storing the workflow (as when importing it), the operator referencing the
+    # now-deprecated component keeps the state of the component when instantiating it, but
+    # is flagged when providing the workflow
     stored_workflow = update_or_create_single_transformation_revision(tr_workflow)
     assert isinstance(stored_workflow.content, WorkflowContent)
     stored_operator = stored_workflow.content.operators[0]
     assert stored_operator.transformation_id == tr_component.id
-    assert stored_operator.state == State.DISABLED
+    assert stored_operator.state == State.RELEASED
+
+    flag_deprecated_operators([stored_workflow])
+    assert stored_workflow.content.operators[0].state == State.DISABLED
+
+    # flags provided e.g. by the frontend are not stored either
+    stored_workflow = update_or_create_single_transformation_revision(stored_workflow)
+    assert isinstance(stored_workflow.content, WorkflowContent)
+    assert stored_workflow.content.operators[0].state == State.RELEASED
 
 
 def test_select_containing_workflows(mocked_clean_test_db_session):
@@ -1080,3 +1092,170 @@ def test_storing_workflow_with_repeated_sub_workflow_two_levels_down(
         "Middle",
         "Top",
     ]
+
+
+def test_storing_workflow_with_two_revisions_of_a_sub_workflow_two_levels_down(
+    mocked_clean_test_db_session,
+):
+    # Top contains Middle, which contains Inner and its new revision, in which the operator
+    # is upgraded. New revisions keep the operator ids and upgrading an operator keeps its
+    # id, so seen from Top both operators are nested via the same Middle operator at the
+    # same depth with the same operator id, but with different transformation revisions.
+    connectors_dir = os.path.join("transformations", "components", "connectors")
+    with TrafoCollection(save_to_db=True) as tc:
+        pt_string = tc.add_from_json_file(
+            os.path.join(
+                connectors_dir, "pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json"
+            )
+        )
+        pt_string_new = tc.add(
+            pt_string.model_copy(update={"id": uuid4(), "version_tag": "1.0.1"}, deep=True)
+        )
+        with WorkflowConstructor(trafo_collector=tc, name="Inner", version_tag="1.0.0") as inner:
+            inner_op = inner.op(pt_string)
+        inner_new = inner.result.model_copy(
+            update={"id": uuid4(), "version_tag": "1.0.1"}, deep=True
+        )
+        assert isinstance(inner_new.content, WorkflowContent)
+        upgrade_workflow_operator_in_place(
+            inner_new, inner_op.operator.id, inner_new.content.operators[0], pt_string_new
+        )
+        tc.add(inner_new)
+        with WorkflowConstructor(trafo_collector=tc, name="Middle", version_tag="1.0.0") as middle:
+            middle.op(inner.result)
+            middle.op(inner_new)
+        with WorkflowConstructor(trafo_collector=tc, name="Top", version_tag="1.0.0") as top:
+            top.op(middle.result)
+
+    assert set(get_all_nested_transformation_revisions(top.result)) == {
+        middle.result.id,
+        inner.result.id,
+        inner_new.id,
+        pt_string.id,
+        pt_string_new.id,
+    }
+    for pt_string_id in (pt_string.id, pt_string_new.id):
+        assert [cw.name for cw in select_containing_workflows(pt_string_id)] == [
+            "Inner",
+            "Middle",
+            "Top",
+        ]
+
+
+# The following tests check the nestings and everything relying on them after each
+# operation via NestingWorld.check, see also test_nesting_combinations.py.
+
+
+@pytest.fixture()
+def world(mocked_clean_test_db_session) -> NestingWorld:
+    return NestingWorld()
+
+
+# scenarios with a DRAFT workflow changed after a workflow containing it was stored
+
+
+def test_changing_nested_draft_updates_containing_workflows(world):
+    middle = world.workflow([world.component()])
+    world.workflow([world.workflow([middle])])
+    world.add_operator(middle, world.component())
+    world.check()
+
+
+def test_overwriting_released_workflow_updates_containing_workflows(world):
+    # like the deployment of the base trafos
+    inner = world.release(world.workflow([world.component()]))
+    world.workflow([world.release(world.workflow([inner]))])
+    world.add_operator(inner, world.component(), allow_overwrite_released=True)
+    world.check()
+
+
+def test_cycle_via_changed_nested_drafts_is_rejected(world):
+    component = world.component()
+    first, second = world.workflow([component]), world.workflow([component])
+    outer = world.workflow([first])
+    world.add_operator(first, second)
+    last = world.workflow([component])
+    world.add_operator(second, last)
+    # closes the cycle outer > first > second > last > outer
+    assert world.add_operator(last, outer) is None
+    world.check()
+
+
+def test_deleting_component_removed_from_nested_draft(world):
+    component = world.component(released=False)
+    middle = world.workflow([component, world.component()])
+    world.workflow([world.workflow([middle])])
+    world.remove_operator(middle, component)
+    world.delete(component)
+    world.check()
+
+
+def test_deprecation_is_passed_on_via_changed_nested_draft(world):
+    middle = world.workflow([world.component()])
+    world.workflow([world.workflow([middle])])
+    component = world.component()
+    world.add_operator(middle, component)
+    world.deprecate(component)
+    world.check()
+
+
+# scenarios with operators instantiating workflows which contain deprecated transformations
+
+
+def test_new_workflow_containing_deprecated_is_flagged(world):
+    component = world.component()
+    inner = world.release(world.workflow([component]))
+    world.deprecate(component)
+    # e.g. imported or created via the API with its operators
+    world.workflow([inner])
+    world.check()
+
+
+def test_upgrade_to_revision_containing_deprecated_is_flagged(world):
+    first, second = world.component(), world.component()
+    inner = world.release(world.workflow([first]))
+    inner_new = world.new_revision(inner)
+    world.upgrade_operator(inner_new, first, world.new_revision(first))
+    world.add_operator(inner_new, second)
+    world.deprecate(second)
+    outer = world.workflow([inner])
+    world.upgrade_operator(outer, inner, inner_new)
+    world.check()
+
+
+def test_nested_draft_gaining_deprecated_is_flagged(world):
+    component = world.component()
+    inner = world.release(world.workflow([component]))
+    world.deprecate(component)
+    middle = world.workflow([world.component()])
+    world.workflow([middle])
+    world.add_operator(middle, inner)
+    world.check()
+
+
+def test_flags_of_operators_no_longer_containing_deprecated_are_removed(world):
+    component = world.component()
+    middle = world.workflow([component, world.component()])
+    world.workflow([world.workflow([middle])])
+    world.deprecate(component)
+    world.check()
+    world.remove_operator(middle, component)
+    world.check()
+
+
+def test_deprecating_does_not_change_released_workflows(world):
+    component = world.component()
+    inner = world.release(world.workflow([component]))
+    outer = world.release(world.workflow([inner, inner]))
+    stored_before = world.get(outer)
+    world.deprecate(component)
+    assert world.get(outer) == stored_before
+    world.check()
+
+    # so importing a released workflow provided with flags, e.g. exported, which is otherwise
+    # unchanged, does not fail as a forbidden modification
+    provided = world.get(outer)
+    flag_deprecated_operators([provided])
+    assert isinstance(provided.content, WorkflowContent)
+    assert {operator.state for operator in provided.content.operators} == {State.DISABLED}
+    assert update_or_create_single_transformation_revision(provided) == stored_before

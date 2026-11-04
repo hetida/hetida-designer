@@ -78,6 +78,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
 from hetdesrun.persistence.dbservice.revision import (
     ComponentImportComponentError,
     delete_single_transformation_revision,
+    flag_deprecated_operators,
     get_multiple_transformation_revisions,
     read_component_imports_recursively,
     read_single_transformation_revision,
@@ -208,6 +209,7 @@ async def create_transformation_revision(
             extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
         )
 
+    flag_deprecated_operators([persisted_transformation_revision])
     return persisted_transformation_revision
 
 
@@ -462,6 +464,7 @@ async def get_all_transformation_revisions(
                 component_tr, expand_component_code, update_component_code
             )
 
+    flag_deprecated_operators(transformation_revision_list)
     return transformation_revision_list + code_list
 
 
@@ -673,6 +676,7 @@ async def get_selected_transformation_revisions_of_revision_groups(
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
+    flag_deprecated_operators(transformation_revisions)
     return transformation_revisions
 
 
@@ -795,6 +799,7 @@ async def get_selected_transformation_revision_of_revision_group(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
+    flag_deprecated_operators([transformation_revision])
     return transformation_revision
 
 
@@ -880,6 +885,7 @@ async def get_transformation_revision_by_id(
 
     logger.debug(transformation_revision.model_dump_json())
 
+    flag_deprecated_operators([transformation_revision])
     return transformation_revision
 
 
@@ -904,10 +910,6 @@ async def get_containing_workflows(
     This includes workflows which contain it only nested, i.e. as operator of a workflow
     which is itself contained in them, at arbitrary nesting depth. Imports of components
     in the code of other components are not taken into account.
-
-    A workflow is listed as it was stored the last time: Changes of a DRAFT workflow nested
-    in another DRAFT workflow are only reflected after the latter is stored again, e.g. by
-    upgrading its operators.
     """
     logger.info("get workflows containing transformation revision %s", id)
 
@@ -1312,6 +1314,7 @@ async def upgrade_workflow_operator_with_new_rev(  # noqa: PLR0915, PLR0912
 
     logger.debug(persisted_transformation_revision.model_dump_json(indent=2))
 
+    flag_deprecated_operators([persisted_transformation_revision])
     return persisted_transformation_revision
 
 
@@ -1449,6 +1452,7 @@ async def upgrade_workflow_operators(  # noqa: PLR0915, PLR0912
             extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
         )
 
+    flag_deprecated_operators([persisted_transformation_revision])
     return persisted_transformation_revision
 
 
@@ -1569,6 +1573,7 @@ async def update_transformation_revision(
             extra={"updated_trafo": persisted_transformation_revision.model_dump(mode="json")},
         )
 
+    flag_deprecated_operators([persisted_transformation_revision])
     return persisted_transformation_revision
 
 

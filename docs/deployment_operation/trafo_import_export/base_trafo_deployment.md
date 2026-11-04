@@ -34,7 +34,7 @@ Not setting `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` or `HD_BACKEND_ALLOW_OV
 
 ### What is overwritten
 
-The auto-deployment identifies base components and workflows by their id. It does not change components and workflows with other ids, e.g. the ones you created, including new revisions of base components and workflows, except that operators of deprecated base components and workflows are marked as deprecated in workflows using them, as always when deprecating. It adds base components and workflows missing in the database, also if you deleted them.
+The auto-deployment identifies base components and workflows by their id. It does not change components and workflows with other ids, e.g. the ones you created, including new revisions of base components and workflows. Operators of deprecated base components and workflows are marked as deprecated in workflows using them, as always for deprecated components and workflows. It adds base components and workflows missing in the database, also if you deleted them.
 
 For base components and workflows already in the database, it depends on `HD_BACKEND_ALLOW_OVERWRITE_RELEASED`:
 
@@ -45,7 +45,7 @@ For base components and workflows already in the database, it depends on `HD_BAC
 | The image contains a different version of it, e.g. a fix | overwritten by the version in the image, including documentation and test wiring | kept as it is, including documentation and test wiring |
 | The image contains it deprecated | deprecated, otherwise kept as it is | deprecated, otherwise kept as it is |
 
-With `HD_BACKEND_ALLOW_OVERWRITE_RELEASED=false`, the backend logs a warning for each base component or workflow it keeps as it is, at each start. This also applies to base workflows containing base components you deprecated.
+With `HD_BACKEND_ALLOW_OVERWRITE_RELEASED=false`, the backend logs a warning for each base component or workflow it keeps as it is, at each start.
 
 Only `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY=true` or `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=false` keep all your changes of base components and workflows in a non-empty database.
 
