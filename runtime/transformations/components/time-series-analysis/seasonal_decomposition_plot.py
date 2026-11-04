@@ -129,6 +129,8 @@ def decompose_time_series(
 
     # Generate the decomposition of the time series
     series = series.sort_index().dropna()
+    # seasonal_decompose infers the frequency of the index as well, which pandas warns about
+    series = series.set_axis(pd.DatetimeIndex(series.index, freq="infer"))
     decomposition = seasonal_decompose(series, model=model, period=seasonal_periods)
 
     # Combine the components with the original data

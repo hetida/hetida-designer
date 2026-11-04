@@ -247,6 +247,8 @@ def hyper_tuning_grid_search(
         )
 
     train = train.sort_index()
+    # statsmodels infers the frequency of the index as well, but warns if it has none
+    train = train.set_axis(pd.DatetimeIndex(train.index, freq="infer"))
 
     # Parameter tuning
     best_alpha, best_beta, best_gamma, best_phi, best_score = (
@@ -369,6 +371,8 @@ def train_exponential_smoothing(
         )
 
     train = train.sort_index()
+    # statsmodels infers the frequency of the index as well, but warns if it has none
+    train = train.set_axis(pd.DatetimeIndex(train.index, freq="infer"))
 
     # Model training
     model = ExponentialSmoothing(

@@ -145,6 +145,9 @@ def main(
 
     else:
         interpol_index = prepared_ts.index
+        if isinstance(interpol_index, pd.DatetimeIndex) and interpol_index.tz is not None:
+            # in UTC as .values returned it, which is deprecated with a time zone
+            interpol_index = interpol_index.tz_convert(None)
 
     prepared_numeric_index = pd.Series(prepared_ts.values, index=interpol_index.values)
 
