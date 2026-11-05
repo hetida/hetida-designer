@@ -1,3 +1,4 @@
+import datetime
 import io
 import warnings
 
@@ -85,6 +86,17 @@ def test_parse_timeseries_timestamps_without_offset_as_utc() -> None:
     assert pd.DatetimeIndex(df["timestamp"]).equals(
         pd.DatetimeIndex(["2026-10-26T16:46:27Z", "2026-10-26T16:46:28.5Z", "2026-10-27T00:00:00Z"])
     )
+
+
+@pytest.mark.parametrize("endpoint", TIMESERIES_ENDPOINTS)
+@pytest.mark.parametrize("fraction", [".123", ".123456789"], ids=["us", "ns"])
+def test_parse_timeseries_timestamps_with_utc_timezone_of_pandas(
+    endpoint: str, fraction: str
+) -> None:
+    df = parse_framelike_response_stream(ndjson([f"2026-10-26T16:46:27{fraction}Z"]), endpoint)
+
+    # not pyarrow's zoneinfo.ZoneInfo("UTC")
+    assert df["timestamp"].dt.tz is datetime.timezone.utc
 
 
 def test_parse_timeseries_timestamp_column_comes_first() -> None:

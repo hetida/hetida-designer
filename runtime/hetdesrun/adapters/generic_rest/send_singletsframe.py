@@ -1,14 +1,15 @@
 import asyncio
-import datetime
 
 import numpy as np
 import pandas as pd
-import pytz
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
-from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
+from hetdesrun.adapters.generic_rest.send_framelike import (
+    UTC_TIMEZONES,
+    post_framelike_records,
+)
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -60,7 +61,7 @@ def singletsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
             f"Got {str(df['timestamp'].dtype)} index dtype instead."
         )
 
-    if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+    if df["timestamp"].dt.tz not in UTC_TIMEZONES:
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have UTC timezone "
             "but generic rest adapter only accepts UTC timeseries data. "

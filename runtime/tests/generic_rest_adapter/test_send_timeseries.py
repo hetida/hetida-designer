@@ -1,13 +1,17 @@
+import datetime
+import zoneinfo
 from unittest import mock
 
 import numpy as np
 import pandas as pd
 import pytest
+import pytz
 
 from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError, AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
+from hetdesrun.adapters.generic_rest.send_ts_data import ts_to_list_of_dicts
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -224,6 +228,20 @@ async def test_end_to_end_send_only_timeseries_data_exception_handling(
             {"outp": series_input},
             adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
         )
+
+
+@pytest.mark.parametrize(
+    "tz",
+    [datetime.timezone.utc, zoneinfo.ZoneInfo("UTC"), pytz.UTC],
+    ids=["datetime", "zoneinfo", "pytz"],
+)
+def test_ts_to_list_of_dicts_accepts_utc_timezone_of_any_library(tz: datetime.tzinfo) -> None:
+    # e.g. zoneinfo's from pyarrow, which pandas does not use for "UTC" itself
+    series = pd.Series([1.0], index=pd.DatetimeIndex(["2026-10-26T16:46:27.123Z"]).tz_convert(tz))
+
+    assert ts_to_list_of_dicts(series, "timeseries(float)") == [
+        {"value": 1.0, "timestamp": "2026-10-26T16:46:27.123000000+00:00"}
+    ]
 
 
 @pytest.mark.parametrize(

@@ -86,7 +86,8 @@ build_and_push() {
   SERVICE_VERSION=$2
   DOCKERFILE_SUFFIX="${3:-"$SERVICE_NAME"}"
   echo "Build service $SERVICE_NAME version $SERVICE_VERSION"
-  $cmd docker build -t "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest -f Dockerfile-"$DOCKERFILE_SUFFIX" .
+  # --pull: use the current digests of the base image tags, never stale locally tagged images
+  $cmd docker build --pull -t "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest -f Dockerfile-"$DOCKERFILE_SUFFIX" .
   echo "Tag service $SERVICE_NAME version $SERVICE_VERSION"
   $cmd docker tag "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":"$SERVICE_VERSION"
   echo "Push service $SERVICE_NAME version $SERVICE_VERSION with tag latest"

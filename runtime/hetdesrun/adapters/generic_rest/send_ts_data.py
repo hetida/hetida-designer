@@ -1,15 +1,16 @@
 import asyncio
-import datetime
 
 import numpy as np
 import pandas as pd
-import pytz
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.client import get_generic_rest_adapter_client
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
-from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
+from hetdesrun.adapters.generic_rest.send_framelike import (
+    UTC_TIMEZONES,
+    post_framelike_records,
+)
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -67,11 +68,11 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
             "index dtype instead."
         )
 
-    if not series.index.tz in (pytz.UTC, datetime.timezone.utc):
+    if series.index.tz not in UTC_TIMEZONES:
         raise AdapterOutputDataError(
             "Received Pandas Series index does not have UTC timezone but generic rest adapter "
             "only accepts UTC timeseries data."
-            f" Got {str(series.index.dtype)} index dtype instead."
+            f" Got {series.index.tz!r} timezone instead."
         )
     validate_series_dtype(series, sink_type)
 
