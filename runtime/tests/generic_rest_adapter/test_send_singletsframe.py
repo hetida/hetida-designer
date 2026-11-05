@@ -1,13 +1,17 @@
+import datetime
+import zoneinfo
 from unittest import mock
 
 import numpy as np
 import pandas as pd
 import pytest
+import pytz
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
+from hetdesrun.adapters.generic_rest.send_singletsframe import singletsframe_to_list_of_dicts
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -201,3 +205,24 @@ async def test_send_singletsframe_non_utc_timestamps(mocked_url, mocked_api) -> 
             {"outp": stsf},
             adapter_key="test_send_singletsframe_non_utc_timestamps",
         )
+
+
+@pytest.mark.parametrize(
+    "tz",
+    [datetime.timezone.utc, zoneinfo.ZoneInfo("UTC"), pytz.UTC],
+    ids=["datetime", "zoneinfo", "pytz"],
+)
+def test_singletsframe_to_list_of_dicts_accepts_utc_timezone_of_any_library(
+    tz: datetime.tzinfo,
+) -> None:
+    # e.g. zoneinfo's from pyarrow, which pandas does not use for "UTC" itself
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2026-10-26T16:46:27.123Z"]).tz_convert(tz),
+            "value": [1.0],
+        }
+    )
+
+    assert singletsframe_to_list_of_dicts(df) == [
+        {"timestamp": "2026-10-26T16:46:27.123000000+00:00", "value": 1.0}
+    ]

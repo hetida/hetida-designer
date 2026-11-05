@@ -1,13 +1,17 @@
+import datetime
+import zoneinfo
 from unittest import mock
 
 import numpy as np
 import pandas as pd
 import pytest
+import pytz
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
+from hetdesrun.adapters.generic_rest.send_multitsframe import multitsframe_to_list_of_dicts
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -321,3 +325,25 @@ async def test_send_multitsframe_extra_columns(mocked_url, mocked_api) -> None:
     )
 
     assert mocked_api.called  # we got through to actually posting!
+
+
+@pytest.mark.parametrize(
+    "tz",
+    [datetime.timezone.utc, zoneinfo.ZoneInfo("UTC"), pytz.UTC],
+    ids=["datetime", "zoneinfo", "pytz"],
+)
+def test_multitsframe_to_list_of_dicts_accepts_utc_timezone_of_any_library(
+    tz: datetime.tzinfo,
+) -> None:
+    # e.g. zoneinfo's from pyarrow, which pandas does not use for "UTC" itself
+    df = pd.DataFrame(
+        {
+            "metric": ["a"],
+            "timestamp": pd.to_datetime(["2026-10-26T16:46:27.123Z"]).tz_convert(tz),
+            "value": [1.0],
+        }
+    )
+
+    assert multitsframe_to_list_of_dicts(df) == [
+        {"metric": "a", "timestamp": "2026-10-26T16:46:27.123000000+00:00", "value": 1.0}
+    ]

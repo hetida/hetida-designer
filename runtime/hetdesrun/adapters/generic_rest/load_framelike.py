@@ -226,6 +226,12 @@ def parse_framelike_response_stream(
     # stay as pandas' (arrow-backed) string dtype.
     df = table.to_pandas(self_destruct=True, split_blocks=True, use_threads=True)
 
+    if not is_dataframe:
+        # pyarrow converts the timezone "UTC" to zoneinfo.ZoneInfo("UTC"), but pandas uses
+        # datetime.timezone.utc for "UTC" (e.g. utc=True), as did the generic REST adapters before
+        # pyarrow parsed the timestamps. Code may compare with it. The conversion copies no data.
+        df["timestamp"] = df["timestamp"].dt.tz_convert(datetime.timezone.utc)
+
     if is_dataframe and "timestamp" in df.columns:
         try:
             parsed_timestamps = parse_dataframe_timestamps(df["timestamp"])
