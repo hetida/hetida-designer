@@ -1,3 +1,5 @@
+## 0.14.10
+
 - fix: Timeseries (SERIES), MULTITSFRAMEs and SINGLETSFRAMEs loaded from a generic REST adapter can be sent to a generic REST adapter again without explicit timezone conversion necessary in component code.
 
 ## 0.14.9
