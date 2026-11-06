@@ -9,7 +9,7 @@ from pydantic_core import (
     to_jsonable_python,
 )
 
-from hdutils import serialize_output_results_raw
+from hdutils import DataType, serialize_output_results_raw
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.run import ProcessStage, WorkflowExecutionResult
 from hetdesrun.webservice.config import get_config
@@ -24,6 +24,62 @@ _OUTPUT_RESULTS_FIELD = "output_results_by_output_name"
 # no pre-walk, while numpy scalars & co. are still coerced and genuinely non-serializable user
 # output still raises (and is caught below).
 _runtime_result_encoder = msgspec.json.Encoder(enc_hook=to_jsonable_python)
+
+
+class ResultSerializationError(Exception):
+    """The execution result, i.e. usually the result of a workflow output, cannot be serialized"""
+
+
+# Results of these output types are serialized as they are, so they may contain arbitrary objects
+_ARBITRARY_RESULT_DATA_TYPES = (DataType.Any, DataType.PlotlyJson)
+
+
+def _explain_serialization_error(
+    exc: Exception,
+    output_results_by_output_name: dict[str, Any],
+    output_types_by_output_name: dict[str, DataType | None],
+) -> ResultSerializationError:
+    """A ResultSerializationError with a clearer message than exc, caused by exc
+
+    Only uses information at hand: the message of exc and the names, types and top-level Python
+    types of the output results. It deliberately does not serialize anything again (e.g. output by
+    output to find the failing one), so that the error path stays cheap, even if many executions
+    fail at once. The traceback of exc is kept, so that the error location stays the same.
+    """
+    message = str(exc) or type(exc).__name__
+    lines = [f"The execution result could not be serialized to JSON: {message}"]
+
+    # Single values of these types are serializable, so only outputs with other results may fail
+    candidate_types_by_output_name: dict[str, DataType | None] = {}
+    for output_name, result in output_results_by_output_name.items():
+        data_type = output_types_by_output_name.get(output_name)
+        if (
+            data_type in _ARBITRARY_RESULT_DATA_TYPES
+            and result is not None
+            and not isinstance(result, str | int | float | bool)
+        ):
+            candidate_types_by_output_name[output_name] = data_type
+    if candidate_types_by_output_name:
+        lines.append(
+            "Results of ANY and PLOTLYJSON outputs are serialized as they are and must therefore"
+            " consist of JSON serializable objects only. Outputs which may cause this error: "
+            + ", ".join(
+                f"'{output_name}' ({data_type})"
+                for output_name, data_type in candidate_types_by_output_name.items()
+            )
+            + "."
+        )
+    if isinstance(exc, RecursionError):
+        lines.append("This may be caused by an object containing itself or by very deep nesting.")
+    if "<class 'pandas." in message and DataType.Any in candidate_types_by_output_name.values():
+        lines.append(
+            "Pandas Series and DataFrames are only serialized if they are the direct result of an"
+            " ANY output itself, not if they are nested in an ANY output, e.g. in a dict or list."
+        )
+
+    explained = ResultSerializationError("\n".join(lines)).with_traceback(exc.__traceback__)
+    explained.__cause__ = exc
+    return explained
 
 
 class MsgSpecJSONResponse(JSONResponse):
@@ -54,6 +110,7 @@ def encode_workflow_execution_result(wf_exec_result: WorkflowExecutionResult) ->
     circular reference (``RecursionError``), an unencodable dict key, etc. - is turned into a
     structured failure result. Serialization should never surface as a 5xx from the runtime, so the
     guard is deliberately a broad ``except Exception`` and not a curated list of exception types.
+    The error message names the outputs whose results may be the cause (without serializing again).
     """
     try:
         envelope = wf_exec_result.model_dump(mode="json", exclude={_OUTPUT_RESULTS_FIELD})
@@ -65,7 +122,11 @@ def encode_workflow_execution_result(wf_exec_result: WorkflowExecutionResult) ->
         return _runtime_result_encoder.encode(envelope)
     except Exception as exc:  # noqa: BLE001  # serialization of untrusted output should never 500
         error_result = WorkflowExecutionResult.from_exception(
-            exc,
+            _explain_serialization_error(
+                exc,
+                wf_exec_result.output_results_by_output_name,
+                wf_exec_result.output_types_by_output_name,
+            ),
             ProcessStage.SERIALIZING_EXEC_RESULT,
             wf_exec_result.job_id,
             tr_name=wf_exec_result.tr_name,
@@ -169,7 +230,11 @@ def handle_frontend_exec_response_dict_serialisation(
     except Exception as exc:  # noqa: BLE001  # serialization of untrusted output should never 500
         exec_resp_frontend_dto_with_serialization_errors = (
             ExecutionResponseFrontendDto.from_exception(
-                exc,
+                _explain_serialization_error(
+                    exc,
+                    exec_resp_frontend_dto.output_results_by_output_name,
+                    exec_resp_frontend_dto.output_types_by_output_name,
+                ),
                 ProcessStage.SERIALIZING_EXEC_RESULT,
                 exec_resp_frontend_dto.job_id,
                 tr_name=exec_resp_frontend_dto.tr_name,
