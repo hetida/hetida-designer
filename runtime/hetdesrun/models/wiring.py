@@ -52,6 +52,44 @@ class UriFragmentWiringInfo(BaseModel):
     # When parsed from uri fragment, misspelled fields should be detected:
     model_config = ConfigDict(extra="forbid")
 
+    @field_validator("attrs", mode="before")
+    @classmethod
+    def parse_attrs_json(cls, v: Any) -> Any:
+        # In the uri fragment attrs can only be provided as (url encoded) json text
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"attrs is not valid json: {str(e)}") from e
+        return v
+
+    @classmethod
+    def from_uri_fragment(cls, fragment: str) -> Self:
+        """Parse the fragment of a uri wiring
+
+        The fragment has the form of a query string, e.g.
+        "ref_key=my_key&ref_id_type=THINGNODE". Each field may occur at most once.
+        """
+        parsed_fragment: dict[str, list[str]] = parse_qs(fragment)
+
+        repeated_keys = sorted(key for key, values in parsed_fragment.items() if len(values) > 1)
+        if len(repeated_keys) > 0:
+            raise ValueError(f"The uri fragment contains the keys {repeated_keys} more than once.")
+
+        return cls.model_validate({key: values[0] for key, values in parsed_fragment.items()})
+
+
+def check_deferred_until_uri_expanded(info: ValidationInfo) -> bool:
+    """Whether a check across fields that a uri may set must wait for the uri expansion
+
+    Field validators first run on the fields as provided, i.e. before the uri is
+    expanded into them. A wiring is then revalidated after the uri expansion, so checks
+    involving fields like adapter_id, ref_id or ref_key are done there instead.
+    """
+    return info.data.get("uri") is not None and not (
+        info.context is not None and info.context.get("uri_already_expanded", False)
+    )
+
 
 class OutputWiring(BaseModel):
     workflow_output_name: str = Field(..., alias="workflow_output_name")
@@ -130,6 +168,8 @@ class OutputWiring(BaseModel):
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
+        if check_deferred_until_uri_expanded(info):
+            return v
         # The builtin drop and plot sinks do not reference anything in an external
         # system and ignore the wiring's type (plot uses the workflow output's type),
         # so a metadata type left over from a previous wiring must not be rejected.
@@ -151,6 +191,8 @@ class OutputWiring(BaseModel):
     def ref_id_set_for_non_direct_provisioning(
         cls, v: str | None, info: ValidationInfo
     ) -> str | None:
+        if check_deferred_until_uri_expanded(info):
+            return v
         if info.data["adapter_id"] not in {"direct_provisioning", 1, "drop", "plot"} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning output wirings")
         return v
@@ -309,6 +351,8 @@ class InputWiring(BaseModel):
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
+        if check_deferred_until_uri_expanded(info):
+            return v
         if (
             v is not None
             and info.data["adapter_id"] not in {"direct_provisioning", 1, "component-adapter"}
@@ -326,6 +370,8 @@ class InputWiring(BaseModel):
     def ref_id_set_for_non_direct_provisioning(
         cls, v: str | None, info: ValidationInfo
     ) -> str | None:
+        if check_deferred_until_uri_expanded(info):
+            return v
         if info.data["adapter_id"] not in {"direct_provisioning", 1, "drop", "plot"} and v is None:
             raise ValueError("ref_id must be provided for non direct_provisioning input wirings")
         return v
@@ -437,25 +483,20 @@ def update_wiring_from_uri(wiring: InputWiring | OutputWiring) -> None:
 
     if wiring.uri.fragment:
         # update other, less used, wiring fields from fragment
-        parsed_fragment: dict[str, list[str]] = parse_qs(wiring.uri.query)
+        uri_fragment_info = UriFragmentWiringInfo.from_uri_fragment(wiring.uri.fragment)
+        fragment_fields = uri_fragment_info.model_fields_set
 
-        uri_fragment_info = UriFragmentWiringInfo(**parsed_fragment)
-
-        if uri_fragment_info.ref_id_type is not None and "ref_id_type" in parsed_fragment:
+        if uri_fragment_info.ref_id_type is not None and "ref_id_type" in fragment_fields:
             wiring.ref_id_type = uri_fragment_info.ref_id_type
-        if uri_fragment_info.ref_key is not None and "ref_key" in parsed_fragment:
+        if uri_fragment_info.ref_key is not None and "ref_key" in fragment_fields:
             wiring.ref_key = uri_fragment_info.ref_key
         if (
             uri_fragment_info.attrs is not None
-            and "attrs" in parsed_fragment
+            and "attrs" in fragment_fields
             and isinstance(wiring, InputWiring)
         ):
             wiring.attrs = uri_fragment_info.attrs
-        if (
-            uri_fragment_info.use_default_value is not None
-            and "use_default_value" in parsed_fragment
-            and isinstance(wiring, InputWiring)
-        ):
+        if "use_default_value" in fragment_fields and isinstance(wiring, InputWiring):
             wiring.use_default_value = uri_fragment_info.use_default_value
 
 
