@@ -34,7 +34,7 @@ output
 
   // The navigation is filled on page load, so it has to be told about the
   // component that was created through the api afterwards.
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await hetidaDesigner.reloadPage();
 
   // Act
   await hetidaDesigner.clickComponentsInNavigation();

@@ -55,7 +55,7 @@ test('Reset the test wiring of a released component to its release wiring', asyn
 
   // The navigation is filled on page load, so it has to be told about the
   // component that was created through the api afterwards.
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await hetidaDesigner.reloadPage();
 
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
@@ -106,7 +106,7 @@ test('Reset the wiring of a schedule to the release wiring of its component', as
   );
 
   // Schedules and the navigation are loaded on page load.
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await hetidaDesigner.reloadPage();
 
   await hetidaDesigner.clickTabInNavigation(1);
   await page
