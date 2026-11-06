@@ -64,7 +64,7 @@ JSON provided to an ANY input, e.g. via [manual input](../../integration_guide/a
 
 The content of `__data__` has the same format as for SERIES or DATAFRAME inputs, see [JSON formats](../../integration_guide/adapter_system/builtin_adapters/direct_provisioning.md#json-formats), and `__metadata__` is written to the `attrs` of the Pandas object as it is. A dict with the key `"__hd_wrapped_data_object__"` which is not valid wrapped data lets the execution fail. This applies to default values of ANY inputs as well.
 
-Vice versa, a Pandas Series or DataFrame returned via an ANY output, e.g. by the "Add" component for a Series, is returned in this wrapped format, like for SERIES and DATAFRAME outputs.
+Vice versa, a Pandas Series or DataFrame returned via an ANY output, e.g. by the "Add" component for a Series, is returned in this wrapped format, like for SERIES and DATAFRAME outputs. This applies only to the result of the ANY output itself: Pandas objects nested in it, e.g. in a dict of Series, cannot be serialized and let the execution fail. This is symmetric to ANY inputs, which only receive a Pandas object for the wrapped format at the top level.
 
 ## ANY for Visualizations and Files
 

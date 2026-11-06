@@ -13,7 +13,8 @@ These tests pin that the new encoder:
 * round-trips pandas payloads back into equal objects,
 * coerces non-pandas outputs exactly as pydantic did (e.g. ``numpy`` scalars serialize, ``ndarray``
   does not), and
-* still turns a non-serializable output into a structured failure result instead of raising.
+* still turns a non-serializable output into a structured failure result instead of raising, whose
+  message names the outputs which may cause it.
 """
 
 import json
@@ -263,6 +264,68 @@ def test_pathological_user_output_never_escapes_as_an_error() -> None:
         assert decoded["error"]["process_stage"] == "SERIALIZING_EXEC_RESULT", label
 
 
+_PANDAS_HINT = (
+    "Pandas Series and DataFrames are only serialized if they are the direct result of an ANY"
+    " output itself, not if they are nested in an ANY output, e.g. in a dict or list."
+)
+
+
+def test_serialization_failure_message_names_outputs_which_may_cause_it() -> None:
+    decoded = _decode_new(
+        _make_result(
+            {
+                "series_dict": {"a": pd.Series([1.0]), "b": pd.Series([2.0])},
+                "plot": {"data": []},
+                "any_str": "x",
+                "any_none": None,
+                "count": 3,
+            },
+            {
+                "series_dict": DataType.Any,
+                "plot": DataType.PlotlyJson,
+                "any_str": DataType.Any,
+                "any_none": DataType.Any,
+                "count": DataType.Integer,
+            },
+        )
+    )
+
+    assert decoded["result"] == "failure"
+    assert decoded["error"]["type"] == "ResultSerializationError"
+    assert decoded["error"]["message"] == (
+        "The execution result could not be serialized to JSON:"
+        " Unable to serialize unknown type: <class 'pandas.Series'>\n"
+        "Results of ANY and PLOTLYJSON outputs are serialized as they are and must therefore"
+        " consist of JSON serializable objects only. Outputs which may cause this error:"
+        " 'series_dict' (ANY), 'plot' (PLOTLYJSON).\n" + _PANDAS_HINT
+    )
+    # The location and the traceback stay those of the original error
+    assert decoded["error"]["location"]["function_name"] == "encode_workflow_execution_result"
+    assert "PydanticSerializationError" in decoded["traceback"]
+
+
+def test_serialization_failure_message_hints_only_where_applicable() -> None:
+    not_pandas = _decode_new(_make_result({"o": [np.array([1.0])]}, {"o": DataType.Any}))
+    assert not_pandas["error"]["message"].startswith(
+        "The execution result could not be serialized to JSON:"
+        " Unable to serialize unknown type: <class 'numpy.ndarray'>\n"
+    )
+    assert _PANDAS_HINT not in not_pandas["error"]["message"]
+
+    pandas_in_plot = _decode_new(
+        _make_result({"o": {"data": [{"y": pd.Series([1.0])}]}}, {"o": DataType.PlotlyJson})
+    )
+    assert "'o' (PLOTLYJSON)" in pandas_in_plot["error"]["message"]
+    assert _PANDAS_HINT not in pandas_in_plot["error"]["message"]
+
+    circular: dict = {}
+    circular["self"] = circular
+    circular_ref = _decode_new(_make_result({"o": circular}, {"o": DataType.Any}))
+    assert circular_ref["error"]["message"].endswith(
+        "\nThis may be caused by an object containing itself or by very deep nesting."
+    )
+
+
 # --- backend -> caller boundary (ExecutionResponseFrontendDto) ---------------------------------
 # The same guard must hold at the frontend boundary, which is where a combined backend+runtime
 # service serializes live user output. ``infer_naive_result_serialization=False`` forces that
@@ -299,6 +362,18 @@ def test_frontend_boundary_guards_pathological_output_as_structured_failure() ->
         assert decoded["result"] == "failure", label
         assert decoded["error"]["process_stage"] == "SERIALIZING_EXEC_RESULT", label
         assert msgspec.json.encode(decoded), label
+
+
+def test_frontend_boundary_failure_message_names_outputs_which_may_cause_it() -> None:
+    decoded = handle_frontend_exec_response_dict_serialisation(
+        _make_frontend_dto({"o": {"a": pd.Series([1.0])}}, {"o": "ANY"}),
+        infer_naive_result_serialization=False,
+    )
+
+    assert decoded["result"] == "failure"
+    assert decoded["error"]["type"] == "ResultSerializationError"
+    assert "Outputs which may cause this error: 'o' (ANY)." in decoded["error"]["message"]
+    assert decoded["error"]["message"].endswith(_PANDAS_HINT)
 
 
 def test_relay_splices_raw_output_verbatim() -> None:
