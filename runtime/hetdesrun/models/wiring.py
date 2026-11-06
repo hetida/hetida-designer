@@ -130,9 +130,13 @@ class OutputWiring(BaseModel):
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, info: ValidationInfo
     ) -> ExternalType | None:
+        # The builtin drop and plot sinks do not reference anything in an external
+        # system and ignore the wiring's type (plot uses the workflow output's type),
+        # so a metadata type left over from a previous wiring must not be rejected.
         if (
             v is not None
-            and info.data["adapter_id"] not in {"direct_provisioning", 1, "component-adapter"}
+            and info.data["adapter_id"]
+            not in {"direct_provisioning", 1, "component-adapter", "drop", "plot"}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (info.data["ref_id_type"] is None or info.data["ref_key"] is None)
         ):

@@ -79,6 +79,21 @@ def test_output_wiring_validator_metadata_type_includes_addtional_fields() -> No
         OutputWiring(**output_wiring_missing_additional_metadata_fields)
 
 
+@pytest.mark.parametrize("adapter_id", ["drop", "plot"])
+def test_output_wiring_metadata_type_without_additional_fields_accepted_for_drop_and_plot(
+    adapter_id: str,
+) -> None:
+    # Switching a metadata output wiring to "Drop Result" or "Plot" in the frontend
+    # can leave the metadata type behind while ref_id and ref_key are reset.
+    output_wiring = OutputWiring(
+        workflow_output_name="wf_output",
+        adapter_id=adapter_id,
+        ref_id_type="THINGNODE",
+        type="metadata(any)",
+    )
+    assert output_wiring.adapter_id == adapter_id
+
+
 def test_output_wiring_validator_no_reserved_filter_keys() -> None:
     output_wiring_with_reserved_filter_keys_dict = deepcopy(direct_provisioning_output_wiring_dict)
     output_wiring_with_reserved_filter_keys_dict["filters"] = {"to": "somewhere"}

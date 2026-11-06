@@ -705,6 +705,11 @@ ${this._timestampRangeQueryDelimiter}${tmpInputWiring.filters.timestampTo}`;
         this._getControlOrFail(formGroup, 'nodePath').reset();
         this._getControlOrFail(formGroup, 'displayName').reset();
         this._getControlOrFail(formGroup, 'metaDataKey').reset();
+        // Type and ref id type belong to the previously selected node. If they
+        // were kept, switching from a metadata sink to "Drop Result" would send
+        // a stale "metadata(any)" type without ref key along.
+        this._getControlOrFail(formGroup, 'nodeType').reset();
+        this._getControlOrFail(formGroup, 'refIdType').reset();
         this._getControlOrFail(formGroup, 'timestampRangeQuery').reset();
         this._getControlOrFail(formGroup, 'timestampRangePickerHidden').reset(
           false

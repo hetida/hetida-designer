@@ -1,3 +1,5 @@
+- fix: Output wirings switched from a metadata sink to "Drop Result" or "Plot" in the wiring dialog can be saved again. Previously saving failed with 422 "metadata datatype in OutputWiring requires additional fields", because the metadata type of the former sink was kept.
+
 ## 0.14.10
 
 - fix: Timeseries (SERIES), MULTITSFRAMEs and SINGLETSFRAMEs loaded from a generic REST adapter can be sent to a generic REST adapter again without explicit timezone conversion necessary in component code.
