@@ -73,7 +73,7 @@ describe('WiringDialogComponent', () => {
   let mockMatDialog: MatDialog;
   const mockAdapterService = jasmine.createSpyObj<AdapterHttpService>(
     'AdapterHttpService',
-    ['getNodesOfAdapter', 'getOneSource']
+    ['getNodesOfAdapter', 'getOneSource', 'getOneSink']
   );
 
   beforeEach(waitForAsync(() => {
@@ -692,5 +692,94 @@ describe('WiringDialogComponent', () => {
     expect(uiWiring.displayName).toBe('releaseNode');
     expect(uiWiring.nodePath).toBe('release/node/path');
     expect(uiWiring.rawValue).toBeNull();
+  });
+
+  it('should not keep the metadata type of a sink when switching to drop', () => {
+    // Arrange
+    const MOCK_OUTPUT_WIRING_NAME = 'mockWiringOutput';
+
+    const adapterList: Adapter[] = [
+      {
+        id: 'testid',
+        name: 'my test adapter',
+        url: 'https://dummy.de'
+      },
+      {
+        id: 'drop',
+        name: 'Drop Result',
+        url: ''
+      }
+    ];
+
+    const mockTransformation: WiringItem = {
+      id: 'mockWiringId1',
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: [
+          {
+            workflow_output_name: MOCK_OUTPUT_WIRING_NAME,
+            adapter_id: adapterList[0].id,
+            ref_id: 'someSinkId',
+            ref_id_type: 'SINK',
+            ref_key: 'someMetadataKey',
+            type: AdapterDataType.METADATA_ANY,
+            filters: {}
+          }
+        ]
+      },
+      io_interface: {
+        inputs: [],
+        outputs: [
+          {
+            id: 'mockOutput1Id',
+            name: MOCK_OUTPUT_WIRING_NAME,
+            data_type: IOType.ANY,
+            type: IOTypeOption.REQUIRED
+          }
+        ]
+      },
+      name: 'mockWiring',
+      version_tag: '1.1.1.mock'
+    };
+
+    TestBed.overrideProvider(MAT_DIALOG_DATA, {
+      useValue: {
+        title: 'test20',
+        wiringItem: mockTransformation,
+        adapterList
+      }
+    });
+
+    mockAdapterService.getOneSink.and.returnValue(
+      of({
+        id: 'someSinkId',
+        name: 'someSink',
+        thingNodeId: 'oneTestThingNodeId',
+        type: AdapterDataType.METADATA_ANY,
+        visible: true
+      } as SourceSinkNode)
+    );
+
+    const fixtureLocal = TestBed.createComponent(WiringDialogComponent);
+    const componentLocal = fixtureLocal.componentInstance;
+    fixtureLocal.detectChanges();
+
+    const confirmSpy = spyOn(componentLocal.confirmClick, 'emit');
+
+    // Act
+    componentLocal.outputFormArray.controls[0]
+      .get('adapterId')
+      ?.setValue('drop');
+    componentLocal._onOk();
+
+    // Assert
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    const outputWiring =
+      confirmSpy.calls.mostRecent().args[0]?.test_wiring.output_wirings[0];
+    expect(outputWiring?.adapter_id).toBe('drop');
+    expect(outputWiring?.ref_id).toBeUndefined();
+    expect(outputWiring?.ref_id_type).toBeUndefined();
+    expect(outputWiring?.ref_key).toBeUndefined();
+    expect(outputWiring?.type).toBeUndefined();
   });
 });
