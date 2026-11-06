@@ -1,0 +1,9 @@
+<div matSnackBarLabel>
+  @for (part of parts; track $index) {
+    @if (isIcon(part)) {
+      <mat-icon class="notification-message__icon">{{ part.icon }}</mat-icon>
+    } @else {
+      <span>{{ part }}</span>
+    }
+  }
+</div>
