@@ -15,6 +15,19 @@ export class HetidaDesigner {
     await this.browserContext.clearCookies();
   }
 
+  /**
+   * Reloads the page, e.g. so that the navigation shows transformations
+   * created through the rest api.
+   *
+   * Waits for the fonts of the current page first: reloading while they are
+   * still downloading makes firefox abort the downloads and log "downloadable
+   * font: download failed" console errors, which fail the test.
+   */
+  public async reloadPage(): Promise<void> {
+    await this.page.evaluate(() => document.fonts.ready);
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+  }
+
   // TODO: use test ids
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {

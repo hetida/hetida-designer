@@ -337,8 +337,13 @@
     }
   }
 
+  // Notifications are shown on top of the toolbar. Slightly transparent, so
+  // that its buttons remain recognizable, e.g. a button a message refers to.
+  // More transparency lowers the contrast of the white text below 4.5:1.
+  $notification-background: rgba(colors.$hd-pink, 0.8);
+
   .mat-mdc-snack-bar-container .mat-mdc-snackbar-surface {
-    background-color: colors.$hd-pink !important;
+    background-color: $notification-background !important;
     --mat-snackbar-container-color: $hd-pink !important;
   }
 
@@ -346,7 +351,7 @@
     & .mat-mdc-snack-bar-container .mat-mdc-snackbar-surface {
       color: colors.$hd-white;
       --mat-snackbar-supporting-text-color: $hd-white;
-      background-color: colors.$hd-pink;
+      background-color: $notification-background;
       --mat-snackbar-container-color: $hd-pink;
     }
   }

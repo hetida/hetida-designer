@@ -1,0 +1,19 @@
+// Like the simple snack bar of Angular Material, which this component replaces.
+:host {
+  display: flex;
+  cursor: pointer;
+}
+
+.mat-mdc-snack-bar-label {
+  max-height: 50vh;
+  overflow: auto;
+}
+
+// Shown inline in the message text, so the user recognizes the button meant.
+// Sized to fit into the text line without increasing its height.
+.notification-message__icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}

@@ -46,7 +46,7 @@ test('Show the workflows using a component in its properties dialog', async ({
   });
 
   // The navigation is filled on page load.
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await hetidaDesigner.reloadPage();
 
   // Act
   await hetidaDesigner.clickComponentsInNavigation();

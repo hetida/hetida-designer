@@ -31,7 +31,7 @@ test('Cancelling the wiring dialog of a schedule leaves the execute dialog uncha
   });
 
   // Schedules and the navigation are loaded on page load.
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await hetidaDesigner.reloadPage();
 
   // Act
   await hetidaDesigner.clickTabInNavigation(1);

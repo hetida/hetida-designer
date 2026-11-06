@@ -378,11 +378,13 @@ export class TransformationActionService {
     }
 
     if (this.containsDraftOperators(transformation)) {
-      this.notificationService.warn(
-        `This ${transformation.type.toLowerCase()} contains DRAFT operators and cannot be published.
-        Consider releasing all used transformations and upgrading all operators via 
-        the respective toolbar button.`
-      );
+      this.notificationService.warn([
+        `This ${transformation.type.toLowerCase()} contains DRAFT operators and cannot be published. ` +
+          'Consider releasing all used transformations and then upgrading all operators via the toolbar button ',
+        // Same icon as the "Upgrade workflow operators" button in the toolbar.
+        { icon: 'auto_awesome' },
+        ' (Upgrade workflow operators) here in the workflow toolbar.'
+      ]);
       return;
     }
 
