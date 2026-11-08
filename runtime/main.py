@@ -203,10 +203,20 @@ if __name__ == "__main__":
             timeout_keep_alive,
         )
 
+        # With a persistent db, restarting the web server does not deploy changed base trafos, so
+        # changing them requires no restart. The nix shell development setup deploys them instead.
+        # An in-memory db is prepared again at each restart, which deploys them.
+        reload_excludes = (
+            [os.path.join(os.path.dirname(os.path.abspath(__file__)), "transformations")]
+            if reload_mode and not in_memory_db
+            else None
+        )
+
         uvicorn.run(
             "main:app",
             log_level=log_level,
             reload=reload_mode,
+            reload_excludes=reload_excludes,
             host=host,
             port=port,
             timeout_worker_healthcheck=worker_healthcheck_timeout,

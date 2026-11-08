@@ -1,6 +1,7 @@
 - fix: Output wirings switched from a metadata sink to "Drop Result" or "Plot" in the wiring dialog can be saved again.
 - improved ui messages
 - fix: URI wirings now apply the fragment (`#ref_key=...&ref_id_type=...`, `attrs`, `use_default_value`). Previously it was ignored, and wirings with both filters and a fragment were rejected. Metadata URI wirings and URI wirings with `"ref_id": null` are also accepted when an `adapter_id` field is given.
+- The nix shell development setup deploys changed or added base components and workflows (in `runtime/transformations`) into the running backend, overwriting them also if they are released (overmind process `basetrafos`). The backend is no longer restarted when base components change, since restarting the web server did not deploy them. With an in-memory database, as with `local_dev.env`, it still restarts and deploys them again. `overmind restart runtime` works again, which failed since the database already existed. See [Nix Shell based development setup](https://hetida.github.io/hetida-designer/development/development-setup/#nix-shell-based-development-setup).
 
 ## 0.14.10
 
