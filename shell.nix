@@ -35,7 +35,9 @@
 #       backend and runtime: http://localhost:8080/docs
 #
 #     You can now edit source code: Changes of frontend or runtime code should automatically restart
-#     the corresponding service.
+#     the corresponding service. Changed or added base components and workflows (in
+#     runtime/transformations) are deployed into the running backend, overwriting them also if they
+#     are released (overmind process "basetrafos").
 #
 # Notes:
 #     * The postgres database is recreated empty (in .tmp/pg_dev_db) at each start of its overmind
@@ -274,7 +276,8 @@ let
     done
 
     echo "CREATING DB SCHEMA"
-    python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence.db_engine_and_session import get_db_engine; create_database(get_db_engine().url);"
+    # it already exists if only the runtime is restarted, e.g. via overmind restart runtime
+    python -c "from sqlalchemy_utils import create_database, database_exists; from hetdesrun.persistence.db_engine_and_session import get_db_engine; url = get_db_engine().url; database_exists(url) or create_database(url);"
 
     echo "STARTING RUNTIME"
     HOST=127.0.0.1 PORT=8080 \
@@ -307,6 +310,99 @@ let
     ' python main.py
   '';
 
+  # Deploys changed base components and workflows like the autodeployment at backend start, i.e.
+  # overwriting them also if they are released. Only the changed files are deployed, via the
+  # endpoint for importing transformations, which orders them by dependency. Deleted files are
+  # ignored, i.e. their transformations stay in the db.
+  deploy-changed-base-trafos = writeText "deploy_changed_base_trafos.py" ''
+    import json
+    import os
+    import pathlib
+    import time
+    import urllib.error
+    import urllib.request
+
+    from watchfiles import Change, DefaultFilter, watch
+
+    URL = (
+        "http://localhost:8080/api/transformations"
+        "?allow_overwrite_released=true&update_component_code=false"
+    )
+    # e.g. while the backend restarts
+    RETRY_INTERVAL_SECONDS = 2
+    MAX_RETRIES = 60
+
+
+    class TrafoFileFilter(DefaultFilter):
+        def __call__(self, change, path):
+            return (
+                change != Change.deleted
+                and path.endswith((".py", ".json"))
+                and os.path.basename(path) != "__init__.py"
+                and super().__call__(change, path)
+            )
+
+
+    def trafos_in(path):
+        """Component code of a .py file or the transformation(s) of a .json file"""
+        text = pathlib.Path(path).read_text(encoding="utf-8")
+        if path.endswith(".py"):
+            return [text]
+        trafos = json.loads(text)
+        return trafos if isinstance(trafos, list) else [trafos]
+
+
+    def deploy(trafos):
+        """Summary of the deployment of each transformation by id"""
+        request = urllib.request.Request(
+            URL,
+            data=json.dumps(trafos).encode(),
+            headers={"Content-Type": "application/json"},
+            method="PUT",
+        )
+        for _ in range(MAX_RETRIES):
+            try:
+                with urllib.request.urlopen(request) as response:
+                    return json.loads(response.read())
+            except urllib.error.HTTPError as error:
+                print(f"Deployment failed with status {error.code}: {error.read().decode()}")
+                return {}
+            except urllib.error.URLError, ConnectionError:
+                time.sleep(RETRY_INTERVAL_SECONDS)
+        print("Deployment failed: The backend is not reachable.")
+        return {}
+
+
+    print(f"Watching {os.path.abspath('transformations')} for changed base trafos", flush=True)
+    for changes in watch("transformations", watch_filter=TrafoFileFilter()):
+        trafos = []
+        # the summary of component code which cannot be parsed is keyed by the code
+        files_of_code = {}
+        for path in sorted({path for _change, path in changes}):
+            try:
+                trafos_of_file = trafos_in(path)
+            except (OSError, ValueError) as error:
+                print(f"Skipping {path}: {error}", flush=True)
+                continue
+            print(f"Deploying {os.path.relpath(path)}", flush=True)
+            trafos.extend(trafos_of_file)
+            files_of_code.update(
+                {trafo: os.path.relpath(path) for trafo in trafos_of_file if isinstance(trafo, str)}
+            )
+        for key, summary in (deploy(trafos) if trafos else {}).items():
+            trafo = files_of_code.get(key, f"{summary['name']} ({summary['version_tag']}, {key})")
+            message = f" {summary['msg']}" if summary["msg"] else ""
+            print(f"{summary['status']}: {trafo}{message}", flush=True)
+  '';
+
+  start-base-trafo-watcher = writeShellScriptBin "start-hd-base-trafo-watcher" ''
+    set -e
+    # the runtime venv is prepared when entering the nix shell
+    export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${symlinks_to_libs}") ]}
+    cd ${runtimeDir}
+    ${venvDirRuntime}/bin/python -u ${deploy-changed-base-trafos}
+  '';
+
   start-frontend = writeShellScriptBin "start-hd-frontend" ''
     cd ${frontendDir}
     npm run start
@@ -317,6 +413,7 @@ let
     frontend: ${start-frontend}/bin/start-hd-frontend
     postgres: ${start-postgres}/bin/start-hd-postgres
     pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
+    basetrafos: ${start-base-trafo-watcher}/bin/start-hd-base-trafo-watcher
 
   '';
 
@@ -380,7 +477,7 @@ pkgs.mkShell rec {
 
   OVERMIND_PROCFILE = procfile;
   OVERMIND_NO_PORT = "1";
-  OVERMIND_CAN_DIE = "runtime";
+  OVERMIND_CAN_DIE = "runtime,basetrafos";
 
   RUNTIME_VENV_ACTIVATE_COMMAND="${prepare-runtime-venv}/bin/prepare-runtime-venv";
   # To manually activate runtime venv in

@@ -26,6 +26,8 @@ to start all services. You can abort overmind using ++ctrl+s++ and leave the nix
 !!! note
     The PostgreSQL database of this setup is recreated empty at each start of its overmind process, e.g. at each `overmind s`. So all components, workflows and further data stored in it are lost, except for the base components and workflows which the backend deploys again.
 
+Changes of the base components and workflows in `runtime/transformations` are deployed into the running backend automatically by the overmind process `basetrafos`: The components and workflows of each changed or added file are imported via the backend API like at the deployment at backend start, i.e. they overwrite those in the database, also released ones and also changes made to them in the user interface, without updating the component code. Its output shows the result for each of them, e.g. if component code cannot be parsed. Deleted files are ignored, i.e. their components and workflows stay in the database. Reload the page in the user interface to see the changes. The backend itself is not restarted when base components change. `overmind restart runtime` restarts it and deploys all base components and workflows again.
+
 
 ## Containerized development setup
 
