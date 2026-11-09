@@ -13,7 +13,7 @@ import threading
 from enum import StrEnum
 from functools import cache
 from posixpath import join as posix_urljoin
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 from httpx import AsyncClient, HTTPError, Response
 from pydantic import (
@@ -98,7 +98,7 @@ class TokenType(StrEnum):
 
     bearer = "bearer", str, "Bearer", "BEARER"
 
-    def __new__(cls, *values: Any) -> Self:
+    def __new__(cls, *values: Any) -> TokenType:
         obj = str.__new__(cls, values[0])  #  type: ignore
 
         # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)
