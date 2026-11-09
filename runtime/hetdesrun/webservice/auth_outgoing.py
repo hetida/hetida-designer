@@ -6,28 +6,36 @@ auth provider, e.g. keycloak.
 """
 
 import asyncio
-import datetime
+import datetime as dt
 import json
 import logging
 import threading
 from enum import StrEnum
 from functools import cache
 from posixpath import join as posix_urljoin
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from httpx import AsyncClient, HTTPError, Response
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationError,
+    field_serializer,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def json_serialize_dt(obj: datetime.datetime | datetime.date) -> str:
+def json_serialize_dt(obj: dt.datetime | dt.date) -> str:
     """JSON serializer including datetime objects
 
     usage: json.dumps(my_object, default=json_serialize_dt)
     """
 
-    if isinstance(obj, datetime.datetime | datetime.date):
+    if isinstance(obj, dt.datetime | dt.date):
         return obj.isoformat()
     raise TypeError(f"Type {str(type(obj))} not json serializable")
 
@@ -39,22 +47,32 @@ class ServiceAuthenticationError(Exception):
 class PasswordGrantCredentials(BaseModel):
     grant_type: Literal["password"] = "password"
     username: str
-    password: str
+    password: SecretStr
     client_id: str
-    client_secret: str | None = None
+    client_secret: SecretStr | None = None
+
+    @field_serializer("client_secret", "password")
+    def dump_secret(self, v: SecretStr | None) -> str | None:
+        # the secrets are sent to the auth provider, so they are dumped in plain text
+        return None if v is None else v.get_secret_value()
 
 
 class ClientCredentialsGrantCredentials(BaseModel):
     grant_type: Literal["client_credentials"] = "client_credentials"
     client_id: str
-    client_secret: str
+    client_secret: SecretStr
+
+    @field_serializer("client_secret")
+    def dump_secret(self, v: SecretStr) -> str:
+        # the secret is sent to the auth provider, so it is dumped in plain text
+        return v.get_secret_value()
 
 
 class ServiceCredentials(BaseModel):
     """Bundles auth setup information together with the grant credentials"""
 
     realm: str
-    auth_url: str
+    auth_url: AnyHttpUrl
     audience: str | None = Field("account")
     grant_credentials: PasswordGrantCredentials | ClientCredentialsGrantCredentials
     post_client_kwargs: dict[str, Any] = Field(
@@ -80,7 +98,7 @@ class TokenType(StrEnum):
 
     bearer = "bearer", str, "Bearer", "BEARER"
 
-    def __new__(cls, *values: Any) -> TokenType:
+    def __new__(cls, *values: Any) -> Self:
         obj = str.__new__(cls, values[0])  #  type: ignore
 
         # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)
@@ -113,7 +131,7 @@ class TokenResponse(BaseModel):
     )
     session_state: str = ""
     scope: str
-    issue_timestamp: datetime.datetime = Field(
+    issue_timestamp: dt.datetime = Field(
         ...,
         description=(
             "UTC zoned timestamp shortly before requesting token."
@@ -142,12 +160,11 @@ async def post_to_auth_provider(
     post_kwargs: dict[str, Any],
 ) -> Response:
     async with AsyncClient(**(async_client_kwargs)) as client:  # noqa: S113
-        resp = await client.post(
+        return await client.post(
             url=url,
             data=data,
             **(post_kwargs),
         )
-    return resp
 
 
 async def obtain_token_from_auth_provider(
@@ -159,9 +176,9 @@ async def obtain_token_from_auth_provider(
         ServiceAuthenticationError - in case of connection problems or invalid credentials
     """
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     url = posix_urljoin(
-        service_user_credentials.auth_url,
+        str(service_user_credentials.auth_url),
         "realms",
         service_user_credentials.realm,
         "protocol/openid-connect/token",
@@ -204,9 +221,9 @@ async def refresh_token_from_auth_provider(
     Raises:
         ServiceAuthenticationError - in case of connection problems or invalid credentials
     """
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     url = posix_urljoin(
-        service_user_credentials.auth_url,
+        str(service_user_credentials.auth_url),
         "realms",
         service_user_credentials.realm,
         "protocol/openid-connect/token",
@@ -248,7 +265,7 @@ async def refresh_token_from_auth_provider(
 
 def access_token_still_valid_enough(token_info: TokenResponse) -> bool:
     """Checks whether access token expiration may still allow making requests with it"""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
 
     time_since_issue_in_seconds = (now - token_info.issue_timestamp).total_seconds()
 
@@ -260,7 +277,7 @@ def should_try_refresh(token_info: TokenResponse) -> bool:
     if token_info.refresh_token is None:
         logger.debug("No refresh token found in token info.")
         return False
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
 
     time_since_issue_in_seconds = (now - token_info.issue_timestamp).total_seconds()
 

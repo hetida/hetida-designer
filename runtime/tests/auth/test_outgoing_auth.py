@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 from httpx import HTTPError
+from pydantic import ValidationError
 
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
@@ -525,3 +526,70 @@ def test_get_access_token_manager(service_credentials, obtain_token_works, resul
 
     # load cached works
     token_mgr = create_or_get_named_access_token_manager(test_uuid_key, service_credentials)
+
+
+def test_grant_credentials_hide_secrets_in_repr():
+    password_creds = PasswordGrantCredentials(
+        client_id="my-client", username="user1", password="mYpAsSwOrD", client_secret="abcd"
+    )
+    client_creds = ClientCredentialsGrantCredentials(client_id="my-client", client_secret="abcd")
+
+    assert "mYpAsSwOrD" not in repr(password_creds)
+    assert "abcd" not in repr(password_creds)
+    assert "abcd" not in repr(client_creds)
+
+
+def test_grant_credentials_dump_secrets_in_plain_text():
+    # the dumped credentials are sent to the auth provider
+    assert PasswordGrantCredentials(
+        client_id="my-client", username="user1", password="mYpAsSwOrD", client_secret="abcd"
+    ).model_dump() == {
+        "grant_type": "password",
+        "username": "user1",
+        "password": "mYpAsSwOrD",
+        "client_id": "my-client",
+        "client_secret": "abcd",
+    }
+    assert ClientCredentialsGrantCredentials(
+        client_id="my-client", client_secret="abcd"
+    ).model_dump() == {
+        "grant_type": "client_credentials",
+        "client_id": "my-client",
+        "client_secret": "abcd",
+    }
+
+
+def test_password_grant_credentials_without_client_secret_can_be_dumped():
+    creds = PasswordGrantCredentials(client_id="my-client", username="user1", password="mYpAsSwOrD")
+
+    assert creds.model_dump()["client_secret"] is None
+    assert "client_secret" not in creds.model_dump(exclude_none=True)
+
+
+def test_service_credentials_reject_invalid_auth_url():
+    with pytest.raises(ValidationError):
+        ServiceCredentials(
+            realm="my-realm",
+            grant_credentials=ClientCredentialsGrantCredentials(
+                client_id="my-client", client_secret="abcd"
+            ),
+            auth_url="not a url",
+        )
+
+
+@pytest.mark.asyncio
+async def test_outgoing_auth_token_fetching_with_auth_url_without_path(mocked_token_request):
+    await obtain_token_from_auth_provider(
+        ServiceCredentials(
+            realm="my-realm",
+            grant_credentials=ClientCredentialsGrantCredentials(
+                client_id="my-client", client_secret="abcd"
+            ),
+            auth_url="https://test.com",
+        )
+    )
+
+    assert (
+        mocked_token_request.last_called_kwargs["url"]
+        == "https://test.com/realms/my-realm/protocol/openid-connect/token"
+    )
