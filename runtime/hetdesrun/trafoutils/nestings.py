@@ -2,12 +2,13 @@
 
 Workflows can contain operators which are instances of workflows themselves.
 This allows arbitrary nesting. This module contains helper functions for identifying
-this structure.
+this structure, including the order of components importing each other via import_comp.
 """
 
 import logging
 from uuid import UUID
 
+from hetdesrun.component.code_utils import CodeParsingException, get_global_component_imports
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type
@@ -130,6 +131,9 @@ def structure_ids_by_nesting_level(
     Generally the nesting level of a workflow is:
         maximum(nesting levels of trafo revisions of its operators) + 1
 
+    The components are ordered such that components imported by other components via import_comp
+    come before them, see order_by_component_imports.
+
     Raises:
     * NestingLevelCycleDetected: If a dependency cycle is detected while recursively traversing
       from transformation_id down into its operators.
@@ -150,4 +154,51 @@ def structure_ids_by_nesting_level(
             level,
         )
 
+    if 0 in ids_by_nesting_level:
+        ids_by_nesting_level[0] = order_by_component_imports(
+            ids_by_nesting_level[0], transformation_dict
+        )
+
     return ids_by_nesting_level
+
+
+def component_imports(transformation: TransformationRevision) -> list[UUID]:
+    """The ids of the components a component imports via import_comp"""
+    if transformation.type is not Type.COMPONENT or not isinstance(transformation.content, str):
+        return []
+    try:
+        # the ids are strings, despite the type hint
+        return [
+            UUID(str(trafo_id)) for trafo_id in get_global_component_imports(transformation.content)
+        ]
+    except CodeParsingException, NotImplementedError:
+        # reported when the component is stored
+        return []
+
+
+def order_by_component_imports(
+    component_ids: list[UUID], transformation_dict: dict[UUID, TransformationRevision]
+) -> list[UUID]:
+    """Order components such that the components they import via import_comp come first
+
+    A released component can only be stored if the components it imports are stored already.
+    Apart from that, the order of the components is kept. Imported components which are not among
+    the given ones and cycles of imports, which only draft components may have, are ignored.
+    """
+    ordered: list[UUID] = []
+    visited: set[UUID] = set()
+    given = set(component_ids)
+
+    def add_with_imports(component_id: UUID) -> None:
+        if component_id in visited:
+            return
+        visited.add(component_id)
+        for imported_id in component_imports(transformation_dict[component_id]):
+            if imported_id in given:
+                add_with_imports(imported_id)
+        ordered.append(component_id)
+
+    for component_id in component_ids:
+        add_with_imports(component_id)
+
+    return ordered
