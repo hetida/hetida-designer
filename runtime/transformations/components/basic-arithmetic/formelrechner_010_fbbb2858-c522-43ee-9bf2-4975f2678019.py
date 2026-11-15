@@ -27,8 +27,9 @@ Diese Komponente gibt es auch auf Englisch: "Formula Calculator".
 * **formel** (STRING): Die Formel, z. B. `(a + b) / 2`.
 * **zeitzone_aus_metadaten** (BOOLEAN, optional, Standard True): Berechnet die Formel in der
   Zeitzone aus den Metadaten der Zeitreihen, z. B. für Tage von Mitternacht bis Mitternacht
-  deutscher Zeit, siehe die Beispiele zu Zeitzonen. Schalten Sie es mit False aus, um die Formel
-  in den Zeitzonen zu berechnen, die die Zeitreihen haben, meist UTC.
+  deutscher Zeit, oder, wenn ihre Metadaten keine angeben, in der Zeitzone, in der das aufrufende
+  System Zeitpunkte anzeigt, siehe die Beispiele zu Zeitzonen. Schalten Sie es mit False aus, um
+  die Formel in den Zeitzonen zu berechnen, die die Zeitreihen haben, meist UTC.
 
 ## Ausgänge
 * **ergebnis** (SERIES): Das Ergebnis der Formel für jeden Zeitpunkt.
@@ -230,10 +231,14 @@ ausgewertet werden sollen (`default_timezone`), z. B. in deutscher Zeit für Zei
 Anlage in Deutschland, auch an den Tagen mit 23 oder 25 Stunden, an denen die Sommerzeit beginnt
 oder endet. Dasselbe gilt für Uhrzeiten, Wochentage, Wochen und Monate. Dazu werden die Zeitreihen,
 die die Formel verwendet, vor der Berechnung in diese Zeitzone umgerechnet. Geben ihre Metadaten
-unterschiedliche Zeitzonen an, wird die Formel in UTC berechnet. Zeitreihen ohne Metadaten, z. B.
-manuelle Eingaben, werden ebenfalls in UTC berechnet, oder in der Zeitzone der anderen Zeitreihen.
-Ist der Eingang zeitzone_aus_metadaten ausgeschaltet (False), werden die Zeitreihen nicht
-umgerechnet, sodass die Formel in den Zeitzonen berechnet wird, die sie haben, meist UTC. Das
+unterschiedliche Zeitzonen an, wird die Formel in UTC berechnet. Zeitreihen ohne Zeitzone in ihren
+Metadaten, z. B. manuelle Eingaben, werden in der Zeitzone der anderen Zeitreihen berechnet. Gibt
+keine der Zeitreihen eine Zeitzone an, wird die Formel in der Zeitzone berechnet, in der das
+aufrufende System Zeitpunkte anzeigt (`plot_target_timezone`), z. B. in der hetida Plattform die
+Zeitzone des Mandanten oder des Benutzers, der sich das Ergebnis ansieht. In diese Zeitzone rechnet
+auch `modify_timezone(a)` ohne Zeitzone um. Ohne sie, z. B. im hetida designer, wird die Formel in
+UTC berechnet. Ist der Eingang zeitzone_aus_metadaten ausgeschaltet (False), werden die Zeitreihen
+nicht umgerechnet, sodass die Formel in den Zeitzonen berechnet wird, die sie haben, meist UTC. Das
 Ergebnis hat seine Zeitpunkte wieder in UTC, wie die Zeitreihen von Datenquellen, z. B. die
 Tagessumme des 28. März deutscher Zeit um 23:00 Uhr UTC am 27. März.
 
@@ -332,9 +337,9 @@ für den die Zeitreihen abgefragt wurden, siehe die
   zuerst auf gemeinsame Zeitpunkte, z. B. mit
   `a.resample("15min").mean() + b.resample("15min").mean()` oder mit der Komponente "Resample
   Datetime Index using Mean".
-* **Tage** beginnen um Mitternacht in der Zeitzone aus den Metadaten der Zeitreihen, sonst in UTC,
-  siehe die Beispiele zu Zeitzonen. Der Eingang zeitzone_aus_metadaten schaltet das aus. Das
-  Ergebnis ist in UTC.
+* **Tage** beginnen um Mitternacht in der Zeitzone aus den Metadaten der Zeitreihen, sonst in der
+  Zeitzone, in der das aufrufende System Zeitpunkte anzeigt, sonst in UTC, siehe die Beispiele zu
+  Zeitzonen. Der Eingang zeitzone_aus_metadaten schaltet das aus. Das Ergebnis ist in UTC.
 * **Fehlende Werte**: Wo ein Wert fehlt, fehlt auch das Ergebnis, außer bei Methoden, die fehlende
   Werte weglassen, wie `a.mean()` oder `abcde.mean(axis=1)`. Damit fehlende Werte als 0 zählen,
   schreiben Sie z. B. `a.add(b, fill_value=0)` statt `a + b`, siehe die Beispiele zu fehlenden
@@ -378,9 +383,13 @@ Das Ergebnis hat weder einen Namen noch Metadaten, da die Formel eine neue Grö�
 
 Die Formel wird in der `default_timezone` der Zeitreihen berechnet, die sie verwendet (mit dem
 Rückfall auf die Metadaten des Datensatzes), wenn alle davon, die eine haben, dieselbe angeben,
-sonst in UTC. Dazu werden die Zeitpunkte dieser Zeitreihen in diese Zeitzone umgerechnet, außer
-sie haben keine Zeitzone oder zeitzone_aus_metadaten ist False. Die Zeitpunkte des Ergebnisses werden in UTC umgerechnet, wenn sie eine
-Zeitzone haben, da z. B. generische REST-Adapter nur Zeitreihen in UTC annehmen.
+und in UTC, wenn sie unterschiedliche angeben. Hat keine davon eine, wird sie in der
+`plot_target_timezone` der Plot-Einstellungen des Ausführungskontexts berechnet, auf die auch
+`modify_timezone` zurückfällt, z. B. für Versionen der hetida Plattform, die dort die Zeitzone des
+Mandanten liefern, aber noch nicht in den Metadaten, und ohne sie in UTC. Dazu werden die
+Zeitpunkte dieser Zeitreihen in diese Zeitzone umgerechnet, außer sie haben keine Zeitzone oder
+zeitzone_aus_metadaten ist False. Die Zeitpunkte des Ergebnisses werden in UTC umgerechnet, wenn
+sie eine Zeitzone haben, da z. B. generische REST-Adapter nur Zeitreihen in UTC annehmen.
 """
 
 import re
@@ -650,6 +659,26 @@ def test_time_zone_from_metadata_can_be_switched_off(zeitzone_aus_metadaten, day
 
     result = main(
         formel='a.resample("1D").sum()', a=a, zeitzone_aus_metadaten=zeitzone_aus_metadaten
+    )["ergebnis"]
+
+    assert result.index.tolist() == pd.to_datetime(days).tolist()
+
+
+@pytest.mark.parametrize(
+    ("zeitzone_aus_metadaten", "days"),
+    [(True, ["2026-03-27T23:00:00Z", "2026-03-28T23:00:00Z"]), (False, ["2026-03-28T00:00:00Z"])],
+)
+def test_without_time_zone_in_the_metadata_days_are_days_in_the_plot_target_time_zone(
+    zeitzone_aus_metadaten, days
+):
+    # from 21:00 to 00:00 in German time, without metadata
+    a = pd.Series(1.0, index=pd.date_range("2026-03-28T20:00:00Z", periods=4, freq="h"))
+
+    result = formula_calculator.with_plot_target_time_zone(
+        "Europe/Berlin",
+        lambda: main(
+            formel='a.resample("1D").sum()', a=a, zeitzone_aus_metadaten=zeitzone_aus_metadaten
+        ),
     )["ergebnis"]
 
     assert result.index.tolist() == pd.to_datetime(days).tolist()

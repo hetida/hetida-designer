@@ -19,7 +19,10 @@ der Wert um Mitternacht zum Tag gehört, der dann endet. Für Zeitpunkte am Anfa
 * **zeitreihe** (SERIES): Die Werte, die aufsummiert werden.
 * **zeitzone** (STRING, optional): Die Zeitzone, in der die Tage um Mitternacht beginnen, z. B.
   `Europe/Berlin` für deutsche Zeit. Ohne Angabe die Zeitzone aus den Metadaten der Zeitreihe
-  (`default_timezone`) und, wenn diese keine angeben, UTC.
+  (`default_timezone`) oder, wenn diese keine angeben, die Zeitzone, in der das aufrufende System
+  Zeitpunkte anzeigt (`plot_target_timezone`), z. B. in der hetida Plattform die Zeitzone des
+  Mandanten oder des Benutzers, der sich das Ergebnis ansieht. Ohne sie, z. B. im hetida designer,
+  UTC.
 * **faktor_zeiteinheit** (FLOAT, optional, Standard 1.0): Faktor, mit dem jeder Wert vor dem
   Aufsummieren multipliziert wird, z. B. 300 für 5-Minuten-Werte einer Größe pro Sekunde wie mg/s
   oder 0.25 für 15-Minuten-Werte einer Größe pro Stunde wie kW.
@@ -73,9 +76,11 @@ Zeitzonen werden wie in der IANA-Zeitzonendatenbank geschrieben, z. B. `Europe/B
 auch als feste Abstände zu UTC wie `+01:00`. Die Zeitzone aus den Metadaten ist die
 `default_timezone` der Metrik, sonst die des Datensatzes, wie es die
 [Metadaten-Konventionen](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)
-(auf Englisch) festlegen. Die Zeitzone, in der Diagramme Zeitpunkte anzeigen sollen
-(`plot_target_timezone`), spielt keine Rolle, damit die Summen nicht davon abhängen, wer die
-Komponente ausführt.
+(auf Englisch) festlegen. Geben weder der Eingang zeitzone noch die Metadaten eine Zeitzone an,
+beginnen die Tage wie im Formelrechner in der `plot_target_timezone` der Plot-Einstellungen des
+Ausführungskontexts, auf die auch `modify_timezone` zurückfällt, z. B. für Versionen der hetida
+Plattform, die dort die Zeitzone des Mandanten liefern, aber noch nicht in den Metadaten, und ohne
+sie in UTC.
 """
 
 import contextvars
@@ -84,6 +89,7 @@ import pandas as pd
 import pytest
 from hdhelpers import modify_timezone
 from hdhelpers.metadata import get_series_default_timezone
+from hdhelpers.plot_target_settings import get_plot_target_settings
 
 from hdutils import ComponentInputValidationException, parse_value
 from hetdesrun.runtime.context import RuntimeExecutionContext, set_runtime_exec_context
@@ -115,9 +121,10 @@ def is_time_zone(time_zone):
 def day_time_zone(zeitreihe, zeitzone):
     """The time zone in which the days start at midnight
 
-    The given one, otherwise the default_timezone of the metadata, otherwise UTC. Not the time zone
-    of the plot target settings, to which modify_timezone falls back for None: It is a display
-    preference of the caller, and the sums should not depend on who executes the component.
+    The given one, otherwise the default_timezone of the metadata, otherwise the time zone of the
+    plot target settings, like modify_timezone(zeitreihe, None) and the Formula Calculator, e.g. the
+    tenant's time zone, which hetida platform versions provide there before their metadata specify
+    it, otherwise UTC.
     """
     if zeitzone is not None and zeitzone.strip() != "":
         time_zone = zeitzone.strip()
@@ -131,7 +138,12 @@ def day_time_zone(zeitreihe, zeitzone):
 
     # None also for metadata not following the conventions, e.g. with an unknown time zone
     time_zone = get_series_default_timezone(zeitreihe)
-    return time_zone if time_zone is not None else "UTC"
+    if time_zone is not None:
+        return time_zone
+
+    # the plot target settings modify_timezone falls back to, blank like missing
+    plot_target_time_zone = (get_plot_target_settings().plot_target_timezone or "").strip()
+    return plot_target_time_zone if plot_target_time_zone != "" else "UTC"
 
 
 def in_time_zone(values, time_zone):
@@ -412,29 +424,65 @@ def test_time_zone_is_given_or_from_metadata_or_utc(metadata_time_zone, zeitzone
     )
 
 
-def test_days_do_not_depend_on_the_time_zone_of_plots():
-    def execute_with_plot_target_time_zone():
-        # as provided by the caller, e.g. from the browser of a user in Germany
-        set_runtime_exec_context(
-            RuntimeExecutionContext(plot_target_settings={"plot_target_timezone": "Europe/Berlin"})
-        )
-        return main(zeitreihe=timeseries([1.0] * 6, "2026-01-01T21:00:00Z", freq="h"))
+def with_plot_target_time_zone(time_zone, function):
+    """The result of the function, executed with the time zone in the plot target settings
 
-    # in a copy of the context, so that the time zone of plots does not apply to other tests
-    result = contextvars.copy_context().run(execute_with_plot_target_time_zone)
+    As the hetida platform provides it, e.g. the tenant's time zone. In a copy of the context, so
+    that the time zone does not apply to other tests.
+    """
+
+    def execute():
+        set_runtime_exec_context(
+            RuntimeExecutionContext(plot_target_settings={"plot_target_timezone": time_zone})
+        )
+        return function()
+
+    return contextvars.copy_context().run(execute)
+
+
+@pytest.mark.parametrize(
+    ("metadata_time_zone", "zeitzone", "plot_target_time_zone", "expected"),
+    [
+        # neither given nor in the metadata
+        (None, None, "Europe/Berlin", BERLIN_DAYS),
+        (None, "", "Europe/Berlin", BERLIN_DAYS),
+        (None, None, "UTC", UTC_DAYS),
+        (None, None, " ", UTC_DAYS),
+        # the given time zone and the time zone of the metadata first
+        (None, "UTC", "Europe/Berlin", UTC_DAYS),
+        ("UTC", None, "Europe/Berlin", UTC_DAYS),
+        ("Europe/Berlin", None, "UTC", BERLIN_DAYS),
+    ],
+)
+def test_without_time_zone_given_or_in_the_metadata_days_are_days_in_the_plot_target_time_zone(
+    metadata_time_zone, zeitzone, plot_target_time_zone, expected
+):
+    # hourly from 21:00 UTC, midnight in German time is at 23:00 UTC in winter
+    zeitreihe = timeseries([1.0] * 6, "2026-01-01T21:00:00Z", freq="h")
+    if metadata_time_zone is not None:
+        zeitreihe = with_time_zone(zeitreihe, metadata_time_zone)
+
+    result = with_plot_target_time_zone(
+        plot_target_time_zone, lambda: main(zeitreihe=zeitreihe, zeitzone=zeitzone)
+    )["kumulierte_summe"]
 
     pd.testing.assert_series_equal(
-        result["kumulierte_summe"],
-        timeseries(UTC_DAYS, "2026-01-01T21:00:00Z", freq="h"),
-        check_freq=False,
+        result, timeseries(expected, "2026-01-01T21:00:00Z", freq="h"), check_freq=False
     )
 
 
-def test_points_in_time_without_time_zone_are_taken_in_the_time_zone():
+@pytest.mark.parametrize(
+    ("zeitzone", "plot_target_time_zone"), [("Europe/Berlin", None), (None, "Europe/Berlin")]
+)
+def test_points_in_time_without_time_zone_are_taken_in_the_time_zone(
+    zeitzone, plot_target_time_zone
+):
     # as from a manual input without Z
     zeitreihe = timeseries([1.0] * 3, "2026-01-01T23:00:00", freq="h")
 
-    result = main(zeitreihe=zeitreihe, zeitzone="Europe/Berlin")["kumulierte_summe"]
+    result = with_plot_target_time_zone(
+        plot_target_time_zone, lambda: main(zeitreihe=zeitreihe, zeitzone=zeitzone)
+    )["kumulierte_summe"]
 
     pd.testing.assert_series_equal(
         result, timeseries([1.0, 2.0, 1.0], "2026-01-01T22:00:00Z", freq="h"), check_freq=False

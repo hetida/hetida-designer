@@ -25,8 +25,9 @@ There is also a German version of this component: "Formelrechner".
 * **formula** (STRING): The formula, e.g. `(a + b) / 2`.
 * **time_zone_from_metadata** (BOOLEAN, optional, default True): Calculates the formula in the
   time zone of the metadata of the timeseries, e.g. for days from midnight to midnight in German
-  time, see the examples for time zones. Switch it off with False to calculate the formula in the
-  time zones the timeseries have, usually UTC.
+  time, or, if their metadata specify none, in the time zone in which the calling system shows
+  points in time, see the examples for time zones. Switch it off with False to calculate the
+  formula in the time zones the timeseries have, usually UTC.
 
 ## Outputs
 * **result** (SERIES): The result of the formula for each point in time.
@@ -216,12 +217,16 @@ their metadata (`default_timezone`), e.g. in German time for timeseries from a p
 also on the days with 23 or 25 hours on which daylight saving time starts or ends. The same
 applies to hours of the day, weekdays, weeks and months. For this, the timeseries used in the
 formula are converted to this time zone before the calculation. If their metadata specify
-different time zones, the formula is calculated in UTC. Timeseries without metadata, e.g. manual
-inputs, are calculated in UTC as well, or in the time zone of the other timeseries. With the input
-time_zone_from_metadata switched off (False), the timeseries are not converted, so that the
-formula is calculated in the time zones they have, usually UTC. The result has its points in time
-in UTC again, like the timeseries of data sources, e.g. the daily total of 28
-March in German time at 23:00 UTC on 27 March.
+different time zones, the formula is calculated in UTC. Timeseries without a time zone in their
+metadata, e.g. manual inputs, are calculated in the time zone of the other timeseries. If none of
+the timeseries specifies a time zone, the formula is calculated in the time zone in which the
+calling system shows points in time (`plot_target_timezone`), e.g. in the hetida platform the
+time zone of the tenant or of the user viewing the result. `modify_timezone(a)` without a time
+zone converts to this time zone as well. Without it, e.g. in hetida designer, the formula is
+calculated in UTC. With the input time_zone_from_metadata switched off (False), the timeseries
+are not converted, so that the formula is calculated in the time zones they have, usually UTC.
+The result has its points in time in UTC again, like the timeseries of data sources, e.g. the
+daily total of 28 March in German time at 23:00 UTC on 27 March.
 
 `modify_timezone(a, "Europe/Berlin")` converts the points in time of a to German time, e.g. for
 timeseries without metadata. Points in time without a time zone are taken as German time then.
@@ -315,9 +320,9 @@ timeseries were queried, see the
   value there. If your timeseries have different points in time, first bring them to common
   points in time, e.g. with `a.resample("15min").mean() + b.resample("15min").mean()` or with the
   component "Resample Datetime Index using Mean".
-* **Days** start at midnight in the time zone of the metadata of the timeseries, otherwise in UTC,
-  see the examples for time zones. The input time_zone_from_metadata switches this off. The
-  result is in UTC.
+* **Days** start at midnight in the time zone of the metadata of the timeseries, otherwise in the
+  time zone in which the calling system shows points in time, otherwise in UTC, see the examples
+  for time zones. The input time_zone_from_metadata switches this off. The result is in UTC.
 * **Missing values**: Where a value is missing, the result is missing, too, except for methods
   which leave out missing values like `a.mean()` or `abcde.mean(axis=1)`. To count missing values
   as 0, use e.g. `a.add(b, fill_value=0)` instead of `a + b`, see the examples for missing values.
@@ -358,13 +363,18 @@ their names and metadata, so that e.g. the functions of hdhelpers can read their
 result has neither a name nor metadata, since the formula calculates a new quantity.
 
 The formula is calculated in the `default_timezone` of the timeseries used in it (with the
-fallback to the dataset metadata) if all of them which have one specify the same, otherwise in
-UTC. For this, the points in time of these timeseries are converted to this time zone, unless they
-have no time zone or time_zone_from_metadata is False. The points in time of the result are converted to UTC if they have a time zone, since e.g. generic
-REST adapters only accept timeseries in UTC.
+fallback to the dataset metadata) if all of them which have one specify the same, and in UTC if
+they specify different ones. If none of them has one, it is calculated in the
+`plot_target_timezone` of the plot target settings of the execution context, to which
+`modify_timezone` falls back as well, e.g. for hetida platform versions providing the time zone
+of the tenant there, but not yet in the metadata, and without one in UTC. For this, the points in
+time of these timeseries are converted to this time zone, unless they have no time zone or
+time_zone_from_metadata is False. The points in time of the result are converted to UTC if they
+have a time zone, since e.g. generic REST adapters only accept timeseries in UTC.
 """
 
 import ast
+import contextvars
 import dataclasses
 import types
 import warnings
@@ -387,6 +397,7 @@ from hdhelpers.metadata import (
 from hdhelpers.metadata.conventions import MetricMetadata, ValueDimensionMetadata
 
 from hdutils import ComponentInputValidationException, parse_value
+from hetdesrun.runtime.context import RuntimeExecutionContext, set_runtime_exec_context
 
 SERIES_INPUT_NAMES = ("a", "b", "c", "d", "e")
 
@@ -730,14 +741,26 @@ def calculation_time_zone(inputs: list[pd.Series]) -> str:
     """The time zone in which the formula is calculated, e.g. for days from midnight to midnight
 
     The default_timezone of the metadata of the inputs if those which have one agree on it,
-    otherwise UTC. Inputs without, e.g. manual inputs, do not count.
+    otherwise UTC. Inputs without, e.g. manual inputs, do not count. If none of them has one, the
+    time zone of the plot target settings, like modify_timezone(a, None), e.g. the tenant's time
+    zone, which hetida platform versions provide there before their metadata specify it, and UTC
+    without one.
     """
     time_zones = {
         time_zone
         for series in inputs
         if (time_zone := get_series_default_timezone(series)) is not None
     }
-    return time_zones.pop() if len(time_zones) == 1 else "UTC"
+    if len(time_zones) == 1:
+        return time_zones.pop()
+    if len(time_zones) == 0:
+        # the plot target settings modify_timezone falls back to, blank like missing
+        plot_target_time_zone = (
+            hdhelpers.plot_target_settings.get_plot_target_settings().plot_target_timezone or ""
+        ).strip()
+        if plot_target_time_zone != "":
+            return plot_target_time_zone
+    return "UTC"
 
 
 def in_time_zone(series: pd.Series, time_zone: str) -> pd.Series:
@@ -1309,6 +1332,37 @@ UTC_DAYS = ("UTC", [2.0, 12.0, 1.0])
 NEW_YORK_DAYS = ("America/New_York", [4.0, 11.0])
 
 
+def inputs_with_time_zones(time_zones):
+    """The inputs a, b, ... with metadata specifying the time zones, without metadata for None"""
+    inputs = {
+        name: utc_timeseries_around_start_of_daylight_saving_time()
+        for name in SERIES_INPUT_NAMES[: len(time_zones)]
+    }
+    for (name, series), time_zone in zip(inputs.items(), time_zones, strict=True):
+        if time_zone is not None:
+            inputs[name] = with_time_zone(series, time_zone)
+            series.attrs["metrics"][0]["inherited"] = {"max": 0.0}
+    return inputs
+
+
+def assert_days(result, days):
+    """Assert that the result has the daily totals of the days in the time zone, in UTC"""
+    time_zone, expected = days
+    pd.testing.assert_series_equal(
+        result,
+        pd.Series(
+            expected,
+            index=pd.date_range(
+                pd.Timestamp("2026-03-28T20:00:00Z").tz_convert(time_zone).normalize(),
+                periods=len(expected),
+                freq="D",
+            ).tz_convert("UTC"),
+        ),
+        check_freq=False,
+        check_names=False,
+    )
+
+
 @pytest.mark.parametrize(
     ("time_zones", "formula", "days"),
     [
@@ -1335,31 +1389,76 @@ NEW_YORK_DAYS = ("America/New_York", [4.0, 11.0])
     ],
 )
 def test_days_are_days_in_the_time_zone_of_the_metadata(time_zones, formula, days):
-    inputs = {
-        name: utc_timeseries_around_start_of_daylight_saving_time()
-        for name in SERIES_INPUT_NAMES[: len(time_zones)]
-    }
-    for (name, series), time_zone in zip(inputs.items(), time_zones, strict=True):
-        if time_zone is not None:
-            inputs[name] = with_time_zone(series, time_zone)
-            series.attrs["metrics"][0]["inherited"] = {"max": 0.0}
+    result = main(formula=formula, **inputs_with_time_zones(time_zones))["result"]
 
-    result = main(formula=formula, **inputs)["result"]
+    assert_days(result, days)
 
-    time_zone, expected = days
-    pd.testing.assert_series_equal(
-        result,
-        pd.Series(
-            expected,
-            index=pd.date_range(
-                pd.Timestamp("2026-03-28T20:00:00Z").tz_convert(time_zone).normalize(),
-                periods=len(expected),
-                freq="D",
-            ).tz_convert("UTC"),
+
+def with_plot_target_time_zone(time_zone, function):
+    """The result of the function, executed with the time zone in the plot target settings
+
+    As the hetida platform provides it, e.g. the tenant's time zone. In a copy of the context, so
+    that the time zone does not apply to other tests.
+    """
+
+    def execute():
+        set_runtime_exec_context(
+            RuntimeExecutionContext(plot_target_settings={"plot_target_timezone": time_zone})
+        )
+        return function()
+
+    return contextvars.copy_context().run(execute)
+
+
+@pytest.mark.parametrize(
+    ("time_zones", "plot_target_time_zone", "formula", "days"),
+    [
+        # no time zone in the metadata
+        ([None], "Europe/Berlin", 'a.resample("1D").sum()', BERLIN_DAYS),
+        ([None, None], "America/New_York", '(a + b).resample("1D").sum() / 2', NEW_YORK_DAYS),
+        ([None], "UTC", 'a.resample("1D").sum()', UTC_DAYS),
+        ([None], " ", 'a.resample("1D").sum()', UTC_DAYS),
+        # the time zone of the metadata first
+        (["UTC"], "Europe/Berlin", 'a.resample("1D").sum()', UTC_DAYS),
+        (["America/New_York"], "Europe/Berlin", 'a.resample("1D").sum()', NEW_YORK_DAYS),
+        (
+            ["Europe/Berlin", None],
+            "America/New_York",
+            '(a + b).resample("1D").sum() / 2',
+            BERLIN_DAYS,
         ),
-        check_freq=False,
-        check_names=False,
-    )
+        # different time zones in the metadata
+        (
+            ["Europe/Berlin", "America/New_York"],
+            "Europe/Berlin",
+            '(a + b).resample("1D").sum() / 2',
+            UTC_DAYS,
+        ),
+        # other time zones in the formula
+        ([None], "Europe/Berlin", 'modify_timezone(a, "UTC").resample("1D").sum()', UTC_DAYS),
+    ],
+)
+def test_without_time_zone_in_the_metadata_days_are_days_in_the_plot_target_time_zone(
+    time_zones, plot_target_time_zone, formula, days
+):
+    inputs = inputs_with_time_zones(time_zones)
+
+    result = with_plot_target_time_zone(
+        plot_target_time_zone, lambda: main(formula=formula, **inputs)
+    )["result"]
+
+    assert_days(result, days)
+
+
+def test_plot_target_time_zone_is_not_used_if_time_zone_from_metadata_is_switched_off():
+    inputs = inputs_with_time_zones([None])
+
+    result = with_plot_target_time_zone(
+        "Europe/Berlin",
+        lambda: main(formula='a.resample("1D").sum()', time_zone_from_metadata=False, **inputs),
+    )["result"]
+
+    assert_days(result, UTC_DAYS)
 
 
 @pytest.mark.parametrize(
@@ -1382,20 +1481,7 @@ def test_time_zone_from_metadata_can_be_switched_off(time_zone_from_metadata, fo
         "result"
     ]
 
-    time_zone, expected = days
-    pd.testing.assert_series_equal(
-        result,
-        pd.Series(
-            expected,
-            index=pd.date_range(
-                pd.Timestamp("2026-03-28T20:00:00Z").tz_convert(time_zone).normalize(),
-                periods=len(expected),
-                freq="D",
-            ).tz_convert("UTC"),
-        ),
-        check_freq=False,
-        check_names=False,
-    )
+    assert_days(result, days)
 
 
 def test_inputs_without_time_zone_are_not_converted():
