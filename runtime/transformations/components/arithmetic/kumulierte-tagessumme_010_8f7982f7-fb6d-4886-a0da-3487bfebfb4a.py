@@ -15,6 +15,9 @@ Standardmäßig markieren die Zeitpunkte das Ende des Intervalls ihres Wertes (r
 der Wert um Mitternacht zum Tag gehört, der dann endet. Für Zeitpunkte am Anfang der Intervalle
 (linksbündig) schalten Sie rechtsbuendig aus.
 
+Beginnt der abgefragte Zeitraum mitten am Tag, z. B. bei den letzten 24 Stunden, fehlen die Werte
+vom Anfang dieses Tages. Die Komponente verwirft ihn daher und beginnt mit dem nächsten Tag.
+
 ## Eingänge
 * **zeitreihe** (SERIES): Die Werte, die aufsummiert werden.
 * **zeitzone** (STRING, optional): Die Zeitzone, in der die Tage um Mitternacht beginnen, z. B.
@@ -35,9 +38,10 @@ der Wert um Mitternacht zum Tag gehört, der dann endet. Für Zeitpunkte am Anfa
   dann zum neuen Tag.
 
 ## Ausgänge
-* **kumulierte_summe** (SERIES): Die bisherige Summe des Tages zu jedem Zeitpunkt der Zeitreihe,
-  mit den Zeitpunkten in UTC. Die Summe des ganzen Tages ist der Wert um Mitternacht am Ende des
-  Tages, mit rechtsbuendig False der letzte Wert vor Mitternacht, z. B. um 23:55 Uhr.
+* **kumulierte_summe** (SERIES): Die bisherige Summe des Tages zu jedem Zeitpunkt der Zeitreihe ab
+  dem ersten vollständigen Tag, mit den Zeitpunkten in UTC. Die Summe des ganzen Tages ist der Wert
+  um Mitternacht am Ende des Tages, mit rechtsbuendig False der letzte Wert vor Mitternacht, z. B.
+  um 23:55 Uhr.
 
 ## Beispiel
 Für die 5-Minuten-Werte eines Massenstroms in mg/s ab 23:50 Uhr deutscher Zeit mit der zeitzone
@@ -58,6 +62,14 @@ Im Ergebnis stehen diese Summen bei denselben Zeitpunkten in UTC, im Winter also
 ## Gut zu wissen
 * **Tage** beginnen um Mitternacht in der Zeitzone, auch an den Tagen mit 23 oder 25 Stunden, an
   denen die Sommerzeit beginnt oder endet.
+* **Unvollständige Tage am Anfang** werden verworfen: Beginnt der abgefragte Zeitraum aus den
+  Metadaten der Zeitreihe nicht um Mitternacht in der Zeitzone, z. B. bei den letzten 24 Stunden ab
+  10:00 Uhr, wären die Summen dieses ersten Tages zu klein. Die Summen beginnen dann erst mit dem
+  nächsten Tag, also mit dem Wert um 00:05 Uhr, mit rechtsbuendig False mit dem Wert um 00:00 Uhr.
+  Beginnt der Zeitraum um Mitternacht, ist sein erster Tag vollständig. Ein Wert genau um diese
+  Mitternacht gehört standardmäßig (rechtsbuendig) aber zum Vortag und wird mit ihm verworfen.
+  Reicht der Zeitraum nicht bis zum nächsten Tag, ist das Ergebnis leer. Ohne abgefragten Zeitraum
+  in den Metadaten, z. B. bei manuellen Eingaben, werden alle Werte aufsummiert.
 * **Zeitpunkte ohne Zeitzone**, z. B. von manuellen Eingaben ohne `Z` am Ende, werden als
   Zeitpunkte in der Zeitzone genommen.
 * **Fehlende Werte** werden übersprungen: Zu ihrem Zeitpunkt fehlt auch die Summe, danach wird mit
@@ -71,6 +83,17 @@ Die Summen werden wie mit der pandas-Formel
 für die nach ihren Zeitpunkten sortierte Zeitreihe a berechnet. `closed="right"` zählt den Wert um
 Mitternacht zum Tag, der dann endet. Mit rechtsbuendig False ist es `closed="left"`, das den Wert
 um Mitternacht zum neuen Tag zählt.
+
+Vorher werden die Werte vor dem ersten vollständigen Tag verworfen, mit rechtsbuendig wie mit
+`a[a.index > erster_tag]`, sonst wie mit `a[a.index >= erster_tag]`. erster_tag ist die erste
+Mitternacht in der Zeitzone ab dem Beginn des abgefragten Zeitraums
+(`ref_interval_start_timestamp` in den Metadaten des Datensatzes), also der Beginn selbst, wenn er
+auf Mitternacht fällt. Mit rechtsbuendig False gilt das nur, wenn der Zeitraum laut
+`ref_interval_type` an seinem Anfang geschlossen ist (`closed`, `left_closed` oder `right_open`)
+und so den Wert um diese Mitternacht enthält, sonst ist erster_tag die Mitternacht danach. Für
+diskrete Datensätze (`ref_dataset_discrete`),
+d. h. einzelne Zeitpunkte statt eines Zeitraums, und Metadaten, die den Konventionen nicht folgen,
+wird nichts verworfen.
 
 Zeitzonen werden wie in der IANA-Zeitzonendatenbank geschrieben, z. B. `Europe/Berlin` oder `UTC`,
 auch als feste Abstände zu UTC wie `+01:00`. Die Zeitzone aus den Metadaten ist die
@@ -88,7 +111,7 @@ import contextvars
 import pandas as pd
 import pytest
 from hdhelpers import modify_timezone
-from hdhelpers.metadata import get_series_default_timezone
+from hdhelpers.metadata import get_series_default_timezone, read_metadata
 from hdhelpers.plot_target_settings import get_plot_target_settings
 
 from hdutils import ComponentInputValidationException, parse_value
@@ -164,6 +187,49 @@ def in_time_zone(values, time_zone):
         ) from error
 
 
+# ref interval types which contain the start of the interval
+CONTAINING_START = {"closed", "left_closed", "right_open"}
+
+
+def start_of_day(date, time_zone):
+    """The first point in time of the date (without time zone) in the time zone
+
+    Midnight, or where the clocks are changed at midnight, e.g. in America/Santiago, the first
+    point in time existing on the day, where the day also starts when grouping by days.
+    """
+    return date.tz_localize(time_zone, ambiguous=True, nonexistent="shift_forward")
+
+
+def start_of_first_whole_day(zeitreihe, time_zone, rechtsbuendig):
+    """The start of the first day whose values all are in the queried interval of the timeseries
+
+    The queried interval is the ref interval of the metadata. None without it, e.g. for manual
+    inputs, metadata not following the conventions or discrete datasets, which are isolated points
+    in time instead of an interval, so that no day is dropped. Days start at midnight in the time
+    zone.
+
+    The day on which the interval starts is whole if the interval starts at its midnight. With
+    rechtsbuendig, the values of the day are after midnight, so the interval need not contain its
+    start. Otherwise the value at midnight is the first value of the day, which only intervals
+    closed at the start contain.
+    """
+    meta = read_metadata(zeitreihe, "SERIES")
+    if (
+        meta is None
+        or meta.dataset_metadata.ref_dataset_discrete
+        or meta.dataset_metadata.ref_interval_start_timestamp is None
+    ):
+        return None
+    # the conventions require the type with the start unless the dataset is discrete
+    start = pd.Timestamp(meta.dataset_metadata.ref_interval_start_timestamp)
+    contains_start = meta.dataset_metadata.ref_interval_type in CONTAINING_START
+
+    date = start.tz_convert(time_zone).tz_localize(None).normalize()
+    if start == start_of_day(date, time_zone) and (rechtsbuendig or contains_start):
+        return start
+    return start_of_day(date + pd.Timedelta(days=1), time_zone)
+
+
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
@@ -213,8 +279,17 @@ def main(
             "zeitreihe",
         )
 
-    # the time zone from zeitreihe, since pd.to_numeric drops the metadata
-    local_values = in_time_zone(values.sort_index(), day_time_zone(zeitreihe, zeitzone))
+    # the time zone and the queried interval from zeitreihe, since pd.to_numeric drops the metadata
+    time_zone = day_time_zone(zeitreihe, zeitzone)
+    local_values = in_time_zone(values.sort_index(), time_zone)
+    # the sums of the days before would be too small, since the values of their start are missing
+    first_day = start_of_first_whole_day(zeitreihe, time_zone, rechtsbuendig)
+    if first_day is not None:
+        # with rechtsbuendig, the value at midnight belongs to the day before
+        in_whole_days = (
+            local_values.index > first_day if rechtsbuendig else local_values.index >= first_day
+        )
+        local_values = local_values[in_whole_days]
     # closed="right": the value at midnight belongs to the day ending then, since its point in time
     # marks the end of the interval of the value. closed="left": it belongs to the new day.
     days = pd.Grouper(freq="D", closed="right" if rechtsbuendig else "left")
@@ -299,18 +374,24 @@ def timeseries(values, start, freq="5min"):
     )
 
 
-def with_time_zone(series, time_zone):
-    """The series with metadata following the conventions, specifying the time zone"""
+def with_metadata(
+    series, time_zone=None, start="2025-12-31T00:00:00+00:00", interval_type="right_open"
+):
+    """The series with metadata following the conventions
+
+    With the time zone, if given, and the queried interval from the start. The default start is
+    more than a day before the values of the tests, so that no values are dropped.
+    """
     series.attrs = {
         "dataset_metadata": {
             "metric_key": "id",
             "single_metric": "flow",
             "queried_metrics": ["flow"],
-            "ref_interval_start_timestamp": "2026-01-01T00:00:00+00:00",
-            "ref_interval_end_timestamp": "2026-01-03T00:00:00+00:00",
-            "ref_interval_type": "right_open",
-            "default_timezone": time_zone,
-        },
+            "ref_interval_start_timestamp": start,
+            "ref_interval_end_timestamp": "2027-01-01T00:00:00+00:00",
+            "ref_interval_type": interval_type,
+        }
+        | ({} if time_zone is None else {"default_timezone": time_zone}),
         "metrics": [
             {
                 "id": "flow",
@@ -415,7 +496,7 @@ def test_time_zone_is_given_or_from_metadata_or_utc(metadata_time_zone, zeitzone
     # hourly from 21:00 UTC, midnight in German time is at 23:00 UTC in winter
     zeitreihe = timeseries([1.0] * 6, "2026-01-01T21:00:00Z", freq="h")
     if metadata_time_zone is not None:
-        zeitreihe = with_time_zone(zeitreihe, metadata_time_zone)
+        zeitreihe = with_metadata(zeitreihe, metadata_time_zone)
 
     result = main(zeitreihe=zeitreihe, zeitzone=zeitzone)["kumulierte_summe"]
 
@@ -460,7 +541,7 @@ def test_without_time_zone_given_or_in_the_metadata_days_are_days_in_the_plot_ta
     # hourly from 21:00 UTC, midnight in German time is at 23:00 UTC in winter
     zeitreihe = timeseries([1.0] * 6, "2026-01-01T21:00:00Z", freq="h")
     if metadata_time_zone is not None:
-        zeitreihe = with_time_zone(zeitreihe, metadata_time_zone)
+        zeitreihe = with_metadata(zeitreihe, metadata_time_zone)
 
     result = with_plot_target_time_zone(
         plot_target_time_zone, lambda: main(zeitreihe=zeitreihe, zeitzone=zeitzone)
@@ -509,8 +590,142 @@ def test_missing_values_are_skipped():
     )
 
 
+def hourly_values(**metadata):
+    """1.0 every hour from 21:00 on 2026-01-14 to 02:00 on 2026-01-16 in German time
+
+    Midnight in German time is at 23:00 UTC in winter.
+    """
+    return with_metadata(timeseries([1.0] * 30, "2026-01-14T20:00:00Z", freq="h"), **metadata)
+
+
+GERMAN_MIDNIGHT = "2026-01-14T23:00:00Z"
+
+
+@pytest.mark.parametrize(
+    ("start", "interval_type", "rechtsbuendig", "first_result"),
+    [
+        # 20:30 in German time: from the next day on
+        ("2026-01-14T19:30:00Z", "right_open", True, "2026-01-15T00:00:00Z"),
+        ("2026-01-14T19:30:00Z", "right_open", False, GERMAN_MIDNIGHT),
+        # midnight in UTC is 01:00 in German time
+        ("2026-01-15T00:00:00Z", "right_open", True, "2026-01-16T00:00:00Z"),
+        ("2026-01-15T00:00:00Z", "right_open", False, "2026-01-15T23:00:00Z"),
+        # midnight in German time: the day is whole, but the value at midnight belongs to the day
+        # before with rechtsbuendig
+        (GERMAN_MIDNIGHT, "right_open", True, "2026-01-15T00:00:00Z"),
+        (GERMAN_MIDNIGHT, "right_open", False, GERMAN_MIDNIGHT),
+        (GERMAN_MIDNIGHT, "closed", True, "2026-01-15T00:00:00Z"),
+        (GERMAN_MIDNIGHT, "closed", False, GERMAN_MIDNIGHT),
+        (GERMAN_MIDNIGHT, "left_closed", False, GERMAN_MIDNIGHT),
+        # without the value at midnight, which only starts the day without rechtsbuendig
+        (GERMAN_MIDNIGHT, "left_open", True, "2026-01-15T00:00:00Z"),
+        (GERMAN_MIDNIGHT, "left_open", False, "2026-01-15T23:00:00Z"),
+        (GERMAN_MIDNIGHT, "open", False, "2026-01-15T23:00:00Z"),
+    ],
+)
+def test_days_the_queried_interval_does_not_contain_whole_at_its_start_are_dropped(
+    start, interval_type, rechtsbuendig, first_result
+):
+    zeitreihe = hourly_values(time_zone="Europe/Berlin", start=start, interval_type=interval_type)
+
+    result = main(zeitreihe=zeitreihe, rechtsbuendig=rechtsbuendig)["kumulierte_summe"]
+
+    # the sums of the following days are unchanged and start with a new day
+    all_days = main(
+        zeitreihe=hourly_values(time_zone="Europe/Berlin"), rechtsbuendig=rechtsbuendig
+    )["kumulierte_summe"]
+    pd.testing.assert_series_equal(
+        result, all_days[all_days.index >= pd.Timestamp(first_result)], check_freq=False
+    )
+    assert result.iloc[0] == 1.0
+
+
+@pytest.mark.parametrize(
+    ("metadata_time_zone", "zeitzone", "plot_target_time_zone", "first_result"),
+    [
+        # 01:00 in German time: from the next day on
+        ("Europe/Berlin", None, None, "2026-01-16T00:00:00Z"),
+        (None, "Europe/Berlin", None, "2026-01-16T00:00:00Z"),
+        (None, None, "Europe/Berlin", "2026-01-16T00:00:00Z"),
+        # midnight in UTC: the day is whole, but the value at midnight belongs to the day before
+        ("Europe/Berlin", "UTC", None, "2026-01-15T01:00:00Z"),
+        (None, None, "UTC", "2026-01-15T01:00:00Z"),
+        (None, None, None, "2026-01-15T01:00:00Z"),
+    ],
+)
+def test_days_start_at_midnight_in_the_time_zone_of_the_days(
+    metadata_time_zone, zeitzone, plot_target_time_zone, first_result
+):
+    def daily_sums(start):
+        zeitreihe = hourly_values(time_zone=metadata_time_zone, start=start)
+        return with_plot_target_time_zone(
+            plot_target_time_zone, lambda: main(zeitreihe=zeitreihe, zeitzone=zeitzone)
+        )["kumulierte_summe"]
+
+    result = daily_sums("2026-01-15T00:00:00Z")
+
+    all_days = daily_sums("2025-12-31T00:00:00Z")
+    pd.testing.assert_series_equal(
+        result, all_days[all_days.index >= pd.Timestamp(first_result)], check_freq=False
+    )
+    assert result.iloc[0] == 1.0
+
+
+@pytest.mark.parametrize("rechtsbuendig", [True, False])
+@pytest.mark.parametrize(("start_after_midnight", "dropped_days"), [("0h", 0), ("1h", 1)])
+# daylight saving time starts on 2026-03-29 and ends on 2026-10-25
+@pytest.mark.parametrize("first_day", ["2026-03-29", "2026-10-25"])
+def test_whole_days_also_with_23_or_25_hours(
+    first_day, start_after_midnight, dropped_days, rechtsbuendig
+):
+    # 1.0 every 5 minutes for two days in German time, from 00:05 to 00:00 if the points in time
+    # mark the end of the intervals of the values, otherwise from 00:00 to 23:55
+    first_midnight = pd.Timestamp(first_day, tz="Europe/Berlin")
+    first_value = first_midnight + pd.Timedelta("5min" if rechtsbuendig else "0min")
+    index = pd.date_range(
+        first_value, first_value + pd.offsets.Day(2) - pd.Timedelta("5min"), freq="5min"
+    )
+    start = (first_midnight + pd.Timedelta(start_after_midnight)).tz_convert("UTC").isoformat()
+    zeitreihe = with_metadata(
+        pd.Series(1.0, index=index.tz_convert("UTC")), "Europe/Berlin", start=start
+    )
+
+    result = main(zeitreihe=zeitreihe, rechtsbuendig=rechtsbuendig)["kumulierte_summe"]
+
+    first_result = first_value + pd.offsets.Day(dropped_days)
+    assert result.index.equals(zeitreihe.index[zeitreihe.index >= first_result])
+    assert result.iloc[0] == 1.0
+
+
+def test_result_is_empty_if_the_queried_interval_does_not_reach_the_next_day():
+    # from 10:00 to 16:00 in German time
+    zeitreihe = with_metadata(
+        timeseries([1.0] * 7, "2026-01-15T09:00:00Z", freq="h"),
+        "Europe/Berlin",
+        start="2026-01-15T09:00:00Z",
+    )
+
+    result = main(zeitreihe=zeitreihe)["kumulierte_summe"]
+
+    assert len(result) == 0
+    assert str(result.index.tz) == "UTC"
+    assert result.dtype == "float64"
+
+
+def test_no_day_is_dropped_for_discrete_datasets():
+    zeitreihe = hourly_values(time_zone="Europe/Berlin", start="2026-01-15T00:00:00Z")
+    expected = main(zeitreihe=hourly_values(time_zone="Europe/Berlin"))["kumulierte_summe"]
+    # isolated points in time instead of an interval, for which the type is not required
+    zeitreihe.attrs["dataset_metadata"]["ref_dataset_discrete"] = True
+    del zeitreihe.attrs["dataset_metadata"]["ref_interval_type"]
+
+    result = main(zeitreihe=zeitreihe)["kumulierte_summe"]
+
+    pd.testing.assert_series_equal(result, expected)
+
+
 def test_result_has_neither_name_nor_metadata_and_input_is_unchanged():
-    zeitreihe = with_time_zone(
+    zeitreihe = with_metadata(
         timeseries([1000.0, 2000.0], "2026-01-01T00:05:00Z").rename("Massenstrom"),
         "Europe/Berlin",
     )
