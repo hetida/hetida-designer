@@ -1,3 +1,4 @@
+- reduce log level of some generic rest adapter log messages
 - fix: Output wirings switched from a metadata sink to "Drop Result" or "Plot" in the wiring dialog can be saved again.
 - improved ui messages
 - fix: URI wirings now apply the fragment (`#ref_key=...&ref_id_type=...`, `attrs`, `use_default_value`). Previously it was ignored, and wirings with both filters and a fragment were rejected. Metadata URI wirings and URI wirings with `"ref_id": null` are also accepted when an `adapter_id` field is given.

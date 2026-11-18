@@ -300,11 +300,6 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
     session = get_generic_rest_adapter_sync_session(adapter_key)
     try:
         start_time = datetime.datetime.now(datetime.timezone.utc)
-        logger.info(
-            "Start receiving generic rest adapter %s framelike data at %s",
-            adapter_key,
-            start_time.isoformat(),
-        )
         query_params: list[tuple[str, Any]] = [
             ("id", (str(filtered_source.ref_id))) for filtered_source in filtered_sources
         ] + additional_params
@@ -342,27 +337,23 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
             )
             logger.info(msg)
             raise AdapterConnectionError(msg)
-        logger.info("Start reading in and parsing framelike data")
+        logger.debug("Start reading in and parsing framelike data")
 
         # Stream the response body straight into the parse core (parse_framelike_response_stream).
         raw = resp.raw
         assert raw is not None  # streamed 200 response always has a raw body  # noqa: S101
         raw.decode_content = True  # transparently decompress gzip/deflate while streaming
         df = parse_framelike_response_stream(raw, endpoint, error_source=url)
-        end_time = datetime.datetime.now(datetime.timezone.utc)
         logger.info(
             (
-                "Finished receiving generic rest framelike data (including dataframe parsing)"
-                " at %s. DataFrame shape is %s with columns %s"
+                "Received framelike data from generic rest adapter %s in %s"
+                " (including dataframe parsing). DataFrame shape is %s"
             ),
-            end_time.isoformat(),
+            adapter_key,
+            str(datetime.datetime.now(datetime.timezone.utc) - start_time),
             str(df.shape),
-            str(df.columns),
         )
-        logger.info(
-            ("Receiving generic rest adapter framelike data took (including dataframe parsing) %s"),
-            str(end_time - start_time),
-        )
+        logger.debug("Received DataFrame has columns %s", str(df.columns))
 
         if "Data-Attributes" in resp.headers:
             logger.debug("Got Data-Attributes via GET response header")
@@ -389,7 +380,6 @@ async def load_framelike_data(  # noqa: PLR0915,PLR0912
 
         logger.info(msg)
         raise AdapterConnectionError(msg) from e
-    logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
             return create_empty_ts_df(ExternalType(common_data_type), attrs=df.attrs)

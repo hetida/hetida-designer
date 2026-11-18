@@ -80,12 +80,7 @@ async def post_framelike_records(
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
     start_time = datetime.datetime.now(datetime.timezone.utc)
-    logger.info(
-        "Start sending framelike data at %s to %s for id %s",
-        start_time.isoformat(),
-        url,
-        ref_id,
-    )
+    logger.debug("Start sending framelike data to %s for id %s", url, ref_id)
 
     try:
         response = await client.post(
@@ -110,8 +105,9 @@ async def post_framelike_records(
         )
         raise AdapterConnectionError(msg)
     logger.info(
-        "Successfully finished posting framelike data to %s for id %s at %s",
+        "Posted %s framelike records to %s for id %s in %s",
+        len(list_of_records),
         url,
         ref_id,
-        datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        str(datetime.datetime.now(datetime.timezone.utc) - start_time),
     )
