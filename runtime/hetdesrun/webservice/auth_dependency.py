@@ -161,6 +161,7 @@ bearer_verifier = BearerVerifier.from_verifier_options(
     allowed_algorithms=[
         alg.strip() for alg in get_config().auth_allowed_algorithms.split(",") if alg.strip()
     ],
+    leeway=get_config().auth_leeway_seconds,
 )
 
 

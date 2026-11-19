@@ -96,6 +96,7 @@ Using the default settings, backend and runtime will use the access token when m
 * `HD_AUTH_ALLOWED_ALGORITHMS` is a comma sperated string of asymmetric JWT signature algorithms, defaulting to a set of secure algorithms. We recommend to restrict it to the exact algorithm your setup employs.
 * `HD_AUTH_AUDIENCE`: Defaults to `account`. We recommend to explicitely set this to the expected audience claim. Will check for claim being present and correct. Empty string will disable audience check (not recommended!)
 * `HD_AUTH_ISSUER`: Unset by default. If set to a string, tokens must contain a macthing `iss` claim. Recommendation is to explicitely set this and configure your auth provider to provide issuer claims.
+* `HD_AUTH_LEEWAY_SECONDS`: Defaults to `30`. Tolerated clock skew in seconds between your auth provider and hetida designer when checking the time based claims `exp` (expiration), `nbf` (not before) and `iat` (issued at) of tokens. If the clock of the auth provider is slightly ahead, tokens used right after being issued are otherwise rejected with `invalid_claim: The token was issued in the future`. Keep it small, at most a few minutes, since expired tokens are accepted for this long. `0` disables the leeway.
 
 
 ## Enabling Authentication for adapters

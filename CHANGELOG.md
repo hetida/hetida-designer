@@ -1,3 +1,4 @@
+- fix: Bearer tokens are no longer rejected with `invalid_claim: The token was issued in the future` (logged as "Failing to verify Bearer Token") if the clock of the auth provider is slightly ahead. Checking the time based claims `exp`, `nbf` and `iat` of tokens tolerates a clock skew of 30 seconds by default, configurable via `HD_AUTH_LEEWAY_SECONDS` (`0` restores the previous strict behaviour). See [Further auth configuration](https://hetida.github.io/hetida-designer/deployment_operation/authentication/#further-auth-configuration).
 - reduce log level of some generic rest adapter log messages
 - fix: Output wirings switched from a metadata sink to "Drop Result" or "Plot" in the wiring dialog can be saved again.
 - improved ui messages

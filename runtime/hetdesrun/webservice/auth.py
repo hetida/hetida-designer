@@ -18,8 +18,9 @@ class AuthentificationError(Exception):
 
 
 # Options steering claims validation. Signature verification is always performed
-# by joserfc and cannot be disabled. Expiration (exp) and not-before (nbf) timestamps
-# are validated whenever the respective claim is present in the token; "require_exp"
+# by joserfc and cannot be disabled. Expiration (exp), not-before (nbf) and issued-at
+# (iat) timestamps are validated whenever the respective claim is present in the
+# token, tolerating a clock skew of the configured leeway; "require_exp"
 # additionally makes a missing exp claim an error, since a token without expiration
 # should not be accepted. If an expected audience / issuer is configured, the
 # respective claim must be present in the token and match — a token lacking the
@@ -34,6 +35,12 @@ DEFAULT_OPTIONS = {
 # may be listed here. These cover the algorithms commonly offered by OpenID Connect providers such
 # as Keycloak.
 DEFAULT_ALLOWED_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+
+# Tolerated clock skew in seconds between the auth provider issuing tokens and this
+# service when validating the exp, nbf and iat claims. Without it, a token used right
+# after being issued is rejected ("The token was issued in the future") if the clock
+# of the auth provider is only slightly ahead.
+DEFAULT_LEEWAY_SECONDS = 30
 
 
 class FrontendAuthOptions(BaseModel):
@@ -68,6 +75,12 @@ class BearerVerifierOptions(BaseModel):
         " key), otherwise algorithm-confusion attacks become possible.",
     )
     verify_ssl: bool = Field(True)
+    leeway: int = Field(
+        DEFAULT_LEEWAY_SECONDS,
+        ge=0,
+        description="Tolerated clock skew in seconds when validating the time based"
+        " claims exp, nbf and iat of bearer tokens.",
+    )
 
 
 class BearerVerifier:
@@ -95,6 +108,7 @@ class BearerVerifier:
         default_decoding_options: dict = DEFAULT_OPTIONS,
         allowed_algorithms: list[str] | None = None,
         verify_ssl: bool = True,
+        leeway: int = DEFAULT_LEEWAY_SECONDS,
     ) -> BearerVerifier:
         """Return a 'BearerVerifier' object bases on the provided parameters."""
         return cls(
@@ -111,6 +125,7 @@ class BearerVerifier:
                     else list(DEFAULT_ALLOWED_ALGORITHMS)
                 ),
                 verify_ssl=verify_ssl,
+                leeway=leeway,
             )
         )
 
@@ -133,8 +148,9 @@ class BearerVerifier:
 
         If an expected audience / issuer is configured, the respective claim is
         required ("essential") in the token and validated against the configured
-        value — tokens lacking the claim are rejected. exp and nbf timestamps are
-        validated whenever present.
+        value — tokens lacking the claim are rejected. exp, nbf and iat timestamps
+        are validated whenever present, tolerating a clock skew of the configured
+        leeway.
         """
         claims_options: dict = {
             "exp": {"essential": options.get("require_exp", False)},
@@ -150,7 +166,7 @@ class BearerVerifier:
                 "essential": True,
                 "value": self.verifier_options.issuer,
             }
-        return jwt.JWTClaimsRegistry(**claims_options)
+        return jwt.JWTClaimsRegistry(leeway=self.verifier_options.leeway, **claims_options)
 
     async def verify_token(
         self,
