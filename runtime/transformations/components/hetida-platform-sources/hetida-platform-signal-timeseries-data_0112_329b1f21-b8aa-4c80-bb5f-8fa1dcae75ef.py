@@ -774,7 +774,7 @@ def multitsframe_metadata(attrs_from_adapter, signal_ids, metric_values, use_as_
     for field, value in (
         ("ref_interval_start_timestamp", start.isoformat()),
         ("ref_interval_end_timestamp", end.isoformat()),
-        ("ref_interval_type", "closed"),
+        ("ref_interval_type", "right_open"),
     ):
         if dataset_metadata.get(field) is None:
             dataset_metadata[field] = value
@@ -1075,7 +1075,7 @@ else:
                     "queried_metrics": [SIGNAL_ID],
                     "ref_interval_start_timestamp": "2026-10-18T00:00:00Z",
                     "ref_interval_end_timestamp": "2026-10-19T00:00:00Z",
-                    "ref_interval_type": "closed",
+                    "ref_interval_type": "right_open",
                 },
                 "metrics": [
                     {
@@ -1203,7 +1203,7 @@ else:
                 "queried_metrics": ["water.north.level"],
                 "ref_interval_start_timestamp": "2026-10-18T00:00:00+00:00",
                 "ref_interval_end_timestamp": "2026-10-19T00:00:00+00:00",
-                "ref_interval_type": "closed",
+                "ref_interval_type": "right_open",
             },
             "metrics": [
                 metric_metadata(
@@ -1234,7 +1234,7 @@ else:
         attrs_from_adapter = with_other_signal(attrs_from_adapter)
         for signal_attrs in attrs_from_adapter.values():
             signal_attrs["dataset_metadata"] |= {
-                "ref_interval_type": "right_open",
+                "ref_interval_type": "left_open",
                 "query_timestamp": "2026-10-19T08:00:00.123Z",
                 "default_timezone": "Europe/Berlin",
                 "ref_data_frequency": None,
@@ -1257,7 +1257,7 @@ else:
                 "queried_metrics": ["water.north.level", "water.south.level"],
                 "ref_interval_start_timestamp": "2026-10-18T00:00:00Z",
                 "ref_interval_end_timestamp": "2026-10-19T00:00:00Z",
-                "ref_interval_type": "right_open",
+                "ref_interval_type": "left_open",
                 "query_timestamp": "2026-10-19T08:00:00.123Z",
                 "default_timezone": "Europe/Berlin",
                 "ref_data_frequency": None,
@@ -1356,7 +1356,7 @@ else:
                 "queried_metrics": [],
                 "ref_interval_start_timestamp": "2026-10-18T00:00:00+00:00",
                 "ref_interval_end_timestamp": "2026-10-19T00:00:00+00:00",
-                "ref_interval_type": "closed",
+                "ref_interval_type": "right_open",
             },
             "metrics": [],
         }
