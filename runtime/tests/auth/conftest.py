@@ -324,6 +324,26 @@ def second_valid_access_token(key_pair):
 
 
 @pytest.fixture()
+def access_token_with_shifted_time_claims(key_pair):
+    """Factory for validly signed tokens with time claims shifted relative to now.
+
+    Keyword arguments map a time claim (iat, nbf, exp) to an offset in seconds from
+    now, e.g. iat=20 for a token issued 20 seconds in the future, as happens if the
+    clock of the auth provider is ahead.
+    """
+
+    def _generate(**offsets_by_claim: int) -> str:
+        now = datetime_to_unix_seconds(datetime.datetime.now())  # noqa: DTZ005
+        return generate_token(
+            algorithm="RS256",
+            key=key_pair[0],
+            payload={claim: now + offset for claim, offset in offsets_by_claim.items()},
+        )
+
+    return _generate
+
+
+@pytest.fixture()
 def wrong_key_access_token(wrong_key_pair):
     return generate_token(algorithm="RS256", key=wrong_key_pair[0])
 

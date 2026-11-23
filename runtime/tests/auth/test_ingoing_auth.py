@@ -4,10 +4,13 @@ from unittest import mock
 
 import pytest
 
+from hetdesrun.webservice.auth import AuthentificationError, BearerVerifier
 from hetdesrun.webservice.auth_dependency import (
+    bearer_verifier,
     get_auth_headers,
     warn_on_permissive_ingoing_auth_config,
 )
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.mark.asyncio
@@ -342,3 +345,66 @@ async def test_auth_role_checking_rejects_non_list_role_claim(
             headers={"Authorization": "Bearer " + valid_access_token_with_string_role},
         )
         assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("offsets_by_claim", "expected_status_code"),
+    [
+        # clocks of auth provider ahead by less than the default leeway of 30 s
+        ({"iat": 20}, 200),
+        ({"nbf": 20}, 200),
+        ({"iat": 20, "nbf": 20}, 200),
+        # expired less than the leeway ago
+        ({"exp": -20}, 200),
+        # beyond the leeway
+        ({"iat": 120}, 401),
+        ({"nbf": 120}, 401),
+        ({"exp": -120}, 401),
+    ],
+)
+async def test_auth_tolerates_clock_skew_within_leeway(
+    open_async_test_client_with_auth,
+    mocked_clean_test_db_session,
+    access_token_with_shifted_time_claims,
+    mocked_public_key_fetching,
+    offsets_by_claim,
+    expected_status_code,
+):
+    """Tokens are accepted if their time claims are off by less than the leeway.
+
+    Without leeway, a token used right after being issued by an auth provider whose
+    clock is slightly ahead is rejected with "The token was issued in the future".
+    """
+    client = open_async_test_client_with_auth
+    response = await client.get(
+        "/api/transformations/",
+        headers={
+            "Authorization": "Bearer " + access_token_with_shifted_time_claims(**offsets_by_claim)
+        },
+    )
+    assert response.status_code == expected_status_code
+
+
+def test_bearer_verifier_uses_configured_leeway():
+    assert bearer_verifier.verifier_options.leeway == get_config().auth_leeway_seconds
+
+
+@pytest.mark.asyncio
+async def test_bearer_verifier_leeway_is_configurable(
+    access_token_with_shifted_time_claims,
+    mocked_public_key_fetching,
+):
+    token_issued_in_50_s = access_token_with_shifted_time_claims(iat=50)
+
+    with pytest.raises(AuthentificationError):
+        await BearerVerifier.from_verifier_options(auth_url="", leeway=0).verify_token(
+            access_token_with_shifted_time_claims(iat=5)
+        )
+    with pytest.raises(AuthentificationError):
+        await BearerVerifier.from_verifier_options(auth_url="").verify_token(token_issued_in_50_s)
+
+    claims = await BearerVerifier.from_verifier_options(auth_url="", leeway=60).verify_token(
+        token_issued_in_50_s
+    )
+    assert claims["sub"] == "test_case"

@@ -19,7 +19,7 @@ from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 from hetdesrun.models.execution import ExecByIdBase
-from hetdesrun.webservice.auth import FrontendAuthOptions
+from hetdesrun.webservice.auth import DEFAULT_LEEWAY_SECONDS, FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 logger = logging.getLogger(__name__)
@@ -496,6 +496,19 @@ class RuntimeConfig(BaseSettings):
         ),
         validation_alias="HD_AUTH_ALLOWED_ALGORITHMS",
         examples=["RS256", "RS256,ES256"],
+    )
+
+    auth_leeway_seconds: int = Field(
+        DEFAULT_LEEWAY_SECONDS,
+        ge=0,
+        description=(
+            "Tolerated clock skew in seconds between the auth provider and this service"
+            " when validating the time based claims of bearer tokens: exp (expiration),"
+            " nbf (not before) and iat (issued at). Without leeway, tokens used right after"
+            " being issued are rejected with 'The token was issued in the future' if the"
+            " clock of the auth provider is slightly ahead. Set to 0 to disable."
+        ),
+        validation_alias="HD_AUTH_LEEWAY_SECONDS",
     )
 
     auth_verify_certs: bool = Field(True, validation_alias="HD_AUTH_VERIFY_CERTS")

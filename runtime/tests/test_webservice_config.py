@@ -171,3 +171,22 @@ def test_no_database_settings_warning_without_backend(monkeypatch, caplog):
         warn_if_database_settings_ignored()
 
     assert "HD_DATABASE_URL is set" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("env_value", "expected"),
+    [(None, 30), ("60", 60), ("0", 0)],
+)
+def test_auth_leeway_seconds(monkeypatch, env_value, expected):
+    monkeypatch.delenv("HD_AUTH_LEEWAY_SECONDS", raising=False)
+    if env_value is not None:
+        monkeypatch.setenv("HD_AUTH_LEEWAY_SECONDS", env_value)
+
+    assert RuntimeConfig(_env_file=None).auth_leeway_seconds == expected  # type: ignore[call-arg]
+
+
+def test_auth_leeway_seconds_must_not_be_negative(monkeypatch):
+    monkeypatch.setenv("HD_AUTH_LEEWAY_SECONDS", "-1")
+
+    with pytest.raises(ValidationError, match="HD_AUTH_LEEWAY_SECONDS"):
+        RuntimeConfig(_env_file=None)  # type: ignore[call-arg]
