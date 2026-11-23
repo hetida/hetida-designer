@@ -46,7 +46,7 @@ ortools
 pandas
 pendulum
 pillow
-plotly<7
+plotly>=7
 psycopg[c]
 pyarrow
 pydantic[dotenv]<3,>=2.11

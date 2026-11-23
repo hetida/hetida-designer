@@ -85,10 +85,6 @@ NOT_EXECUTED: dict[UUID, str] = {
 
 # Warnings expected when executing base transformations with their test wiring, by id
 EXPECTED_WARNINGS: dict[UUID, list[tuple[type[Warning], str]]] = {
-    # Simple Scatter Map Plot 1.0.0, deprecated in favor of 1.0.1 using scatter_map
-    UUID("dc909fa2-93fa-3205-e31d-b05f944cbd29"): [
-        (DeprecationWarning, r"\*scatter_?mapbox\* is deprecated")
-    ],
     # Exponential Smoothing 1.0.0 and 1.0.1: fitting the model to the test data does not
     # converge for some parameters tried by the hyperparameter search
     UUID("61ef085b-0a83-443b-a4ee-dc1cc6ce1077"): [

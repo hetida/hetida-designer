@@ -663,7 +663,7 @@ DASHBOARD_HEAD_ELEMENTS = (
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css",
         rel="stylesheet",
     ),
-    script(src="https://cdn.plot.ly/plotly-2.35.2.min.js", charset="utf-8"),
+    script(src="https://cdn.plot.ly/plotly-4.3.0.min.js", charset="utf-8"),
     link(
         href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css",
         rel="stylesheet",
