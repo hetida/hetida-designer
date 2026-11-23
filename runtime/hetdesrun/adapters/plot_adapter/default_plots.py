@@ -1,11 +1,12 @@
 import logging
+from collections.abc import Callable
 from typing import Any
 
 import pandas as pd
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
-from pandas.api.types import is_datetime64_any_dtype
+from pandas.api.types import is_datetime64_any_dtype, is_scalar
 
 from hdutils import DataType, plotly_datetimes, plotly_fig_to_json_dict
 from hetdesrun.adapters.exceptions import AdapterHandlingException
@@ -13,118 +14,158 @@ from hetdesrun.adapters.exceptions import AdapterHandlingException
 logger = logging.getLogger(__name__)
 
 
-def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: DataType) -> Any:  # noqa: PLR0911, PLR0912, PLR0915
-    """Decide on Python type / DataType and provide corresponding plotly json dict"""
+def plotly_json_or_raise(
+    plot_func: Callable[[Any], Any],
+    value: Any,
+    plot_description: str,
+    filtered_sink_type: DataType,
+) -> Any:
+    """Apply plot_func, raising an AdapterHandlingException if that fails"""
+    try:
+        return plot_func(value)
+    except Exception as e:  # pragma: no cover
+        msg = (
+            f"Plot adapter could not generate {plot_description} for value"
+            f" with type {str(type(value))} "
+            f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from e
+
+
+def provide_plotly_fig_json_for_arbitrary_value(value: Any, filtered_sink_type: DataType) -> Any:  # noqa: PLR0911
+    """Decide on DataType / Python type and provide corresponding plotly json dict
+
+    For ANY outputs the plot is chosen by the value, see plotly_json_for_any_value.
+    """
+    if filtered_sink_type == DataType.Any:
+        return plotly_json_for_any_value(value)
+
     if isinstance(value, (str, int, float, bool)) and filtered_sink_type in {
         DataType.Boolean,
         DataType.Float,
         DataType.Integer,
         DataType.String,
     }:
-        try:
-            plotly_json_obj = simple_value_plotly_json(value)
-        except Exception as e:  # pragma: no cover
-            msg = (
-                f"Plot adapter could not generate indicator plotly plot for value"
-                f" with type {str(type(value))} "
-                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
-        return plotly_json_obj
+        return plotly_json_or_raise(
+            simple_value_plotly_json, value, "indicator plotly plot", filtered_sink_type
+        )
 
-    if isinstance(value, pd.Series) and (filtered_sink_type in (DataType.Series, DataType.Any)):
-        try:
-            plotly_json_obj = single_series_plotly_json(value)
-        except Exception as e:  # pragma: no cover
-            msg = (
-                f"Plot adapter could not generate timeseries plot for value"
-                f" with type {str(type(value))} "
-                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
-        return plotly_json_obj
+    if isinstance(value, pd.Series) and filtered_sink_type == DataType.Series:
+        return plotly_json_or_raise(
+            single_series_plotly_json, value, "timeseries plot", filtered_sink_type
+        )
 
     if isinstance(value, pd.DataFrame) and filtered_sink_type == DataType.MultiTSFrame:
-        try:
-            plotly_json_obj = multi_series_plotly_json(value)
-        except Exception as e:  # pragma: no cover
-            msg = (
-                f"Plot adapter could not generate multitsframe plot for value"
-                f" with type {str(type(value))} "
-                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
-        return plotly_json_obj
+        return plotly_json_or_raise(
+            multi_series_plotly_json, value, "multitsframe plot", filtered_sink_type
+        )
 
     if isinstance(value, pd.DataFrame) and filtered_sink_type == DataType.SingleTSFrame:
-        try:
-            plotly_json_obj = singlets_frame_plotly_json(value)
-        except Exception as e:  # pragma: no cover
-            msg = (
-                f"Plot adapter could not generate singletsframe plot for value"
-                f" with type {str(type(value))} "
-                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
-        return plotly_json_obj
+        return plotly_json_or_raise(
+            singlets_frame_plotly_json, value, "singletsframe plot", filtered_sink_type
+        )
 
     if isinstance(value, pd.DataFrame) and filtered_sink_type == DataType.DataFrame:
-        if (
-            "timestamp" in value.columns
-        ):  # wide format dataframe of timeseries data # pragma: no cover
-            try:
-                plotly_json_obj = plotly_fig_to_json_dict(
-                    px.line(
-                        value,
-                        x="timestamp",
-                        y=value.columns.drop("timestamp"),
-                        template="none",
-                        markers=True,
-                    )
-                )
-                return plotly_json_obj
-            except Exception:  # noqa: S110, BLE001 # pragma: no cover # nosec
-                pass
-
-        try:
-            plotly_json_obj = table_plotly_json(value)
-        except Exception as e:  # pragma: no cover
-            msg = (
-                f"Plot adapter could not generate dataframe table for value"
-                f" with type {str(type(value))} "
-                f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from e
-        return plotly_json_obj
+        return dataframe_plotly_json(value, filtered_sink_type)
 
     if filtered_sink_type == DataType.PlotlyJson:  # pragma: no cover
         return value
-
-    if filtered_sink_type == DataType.Any:
-        if isinstance(value, pd.DataFrame):  # pragma: no cover
-            try:
-                plotly_json_obj = plotly_fig_to_json_dict(table_fig_plotly_json(value))
-            except Exception as e:  # pragma: no cover
-                msg = (
-                    f"Plot adapter could not generate dataframe table for value"
-                    f" with type {str(type(value))} "
-                    f"with FilteredSink.type {str(filtered_sink_type)}. Exception was:\n{str(e)}"
-                )
-                logger.error(msg)
-                raise AdapterHandlingException(msg) from e
-
-        return simple_value_plotly_json("Unplottable ANY object")
 
     msg = (  # pragma: no cover
         f"Unfitting type combination for Plot adapter: value type is {str(type(value))}."
         f" DataType from FilteredSink is {str(filtered_sink_type)}"
     )
     raise AdapterHandlingException(msg)  # pragma: no cover
+
+
+def plotly_json_for_any_value(value: Any) -> Any:  # noqa: PLR0911
+    """Plotly json dict for the value of an ANY output, chosen by the value
+
+    * plotly figures and plotly json dicts (e.g. from a PLOTLYJSON output) are shown as they are
+    * single values (strings, numbers, booleans, None, ...) are shown as text, like for STRING,
+      FLOAT, INT and BOOLEAN outputs
+    * Series like for SERIES outputs
+    * DataFrames with the columns of a MultiTSFrame, i.e. "timestamp" with datetimes, "metric"
+      and "value", like for MULTITSFRAME outputs
+    * other DataFrames like for DATAFRAME outputs
+    * other values (lists, other dicts, numpy arrays, ...) are not plotted, a text says so
+    """
+    if isinstance(value, go.Figure):
+        # copy, since plotly_fig_to_json_dict may update the figure
+        return plotly_json_or_raise(
+            lambda fig: plotly_fig_to_json_dict(go.Figure(fig)),
+            value,
+            "plot from plotly figure",
+            DataType.Any,
+        )
+
+    if is_plotly_json_dict(value):
+        return value
+
+    if is_scalar(value):
+        return plotly_json_or_raise(
+            simple_value_plotly_json, value, "indicator plotly plot", DataType.Any
+        )
+
+    if isinstance(value, pd.Series):
+        return plotly_json_or_raise(
+            single_series_plotly_json, value, "timeseries plot", DataType.Any
+        )
+
+    if isinstance(value, pd.DataFrame):
+        if has_multitsframe_columns(value):
+            try:
+                return multi_series_plotly_json(value)
+            except Exception:  # noqa: BLE001
+                logger.debug(
+                    "Plot adapter could not plot DataFrame with MultiTSFrame columns"
+                    " of ANY output as MultiTSFrame. Plotting it as DataFrame instead.",
+                    exc_info=True,
+                )
+        return dataframe_plotly_json(value, DataType.Any)
+
+    return simple_value_plotly_json("Unplottable ANY object")
+
+
+def is_plotly_json_dict(value: Any) -> bool:
+    """Whether value has the structure of the json dict of a plotly figure
+
+    Only checks the top level keys and that the traces in "data" are dicts.
+    """
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("data"), list)
+        and all(isinstance(trace, dict) for trace in value["data"])
+        and isinstance(value.get("layout", {}), dict)
+        and value.keys() <= {"data", "layout", "config", "frames"}
+    )
+
+
+def has_multitsframe_columns(df: pd.DataFrame) -> bool:
+    """Whether df has the columns timestamp (with datetimes), metric and value of a MultiTSFrame"""
+    return {"timestamp", "metric", "value"} <= set(df.columns) and is_datetime64_any_dtype(
+        df["timestamp"]
+    )
+
+
+def dataframe_plotly_json(df: pd.DataFrame, filtered_sink_type: DataType) -> Any:
+    """Line plot for wide format timeseries data with a timestamp column, otherwise a table"""
+    if "timestamp" in df.columns:  # wide format dataframe of timeseries data
+        try:
+            return plotly_fig_to_json_dict(
+                px.line(
+                    df,
+                    x="timestamp",
+                    y=df.columns.drop("timestamp"),
+                    template="none",
+                    markers=True,
+                )
+            )
+        except Exception:  # noqa: S110, BLE001 # nosec
+            pass
+
+    return plotly_json_or_raise(table_plotly_json, df, "dataframe table", filtered_sink_type)
 
 
 def value_fig(value: Any) -> go.Figure:

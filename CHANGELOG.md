@@ -1,3 +1,9 @@
+- upgrade to plotly 7 in the runtime and plotly.js 4 in the frontend. Plots of all base components and example workflows look the same as before.
+  - **POSSIBLY BREAKING CHANGE** for component code: plotly 7 removes the Mapbox based plots, e.g. `px.scatter_mapbox` and `go.Scattermapbox` (use the MapLibre based `px.scatter_map` and `go.Scattermap` instead), the deprecated figure factory functions like `create_distplot` or `create_annotated_heatmap`, and the `engine` argument of the image export functions. See the [plotly.py changelog](https://github.com/plotly/plotly.py/blob/main/CHANGELOG.md) for details. plotly.js 4 interprets some color strings differently: `rgb()` / `rgba()` with channel values as fractions from 0 to 1 and `hsv()` colors are no longer supported, and `rgb(255, 0, 0, 0.5)` is now half transparent. Labels in pie slices may be white instead of dark for better contrast.
+  - The deprecated base component "Simple Scatter Map Plot" (1.0.0) is no longer delivered. It fails with plotly 7 in installations which still contain it. Workflows using it should use revision 1.0.1.
+  - Experimental dashboards load plotly.js 4.3.0 instead of 2.35.2.
+- fix: The plot adapter chooses the visualization of ANY outputs by their value. Besides Series, now also DataFrames (like for MULTITSFRAME outputs if they have its columns, otherwise like for DATAFRAME outputs), single values, plotly figures and plotly json objects are visualized instead of showing "Unplottable ANY object". See [Plot adapter](https://hetida.github.io/hetida-designer/integration_guide/adapter_system/builtin_adapters/plot_adapter/).
+
 # 0.14.11
 
 - fix: Bearer tokens "leeway" is now 30 seconds by default and can be configured. See [Further auth configuration](https://hetida.github.io/hetida-designer/deployment_operation/authentication/#further-auth-configuration).
