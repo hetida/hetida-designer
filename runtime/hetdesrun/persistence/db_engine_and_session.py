@@ -7,7 +7,7 @@ from typing import Any
 from urllib.parse import parse_qs, unquote
 from uuid import UUID
 
-from pydantic import SecretStr
+from pydantic import AnyUrl, SecretStr
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import URL
 from sqlalchemy.future.engine import Engine
@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 def _default(val: Any) -> Any:
     if isinstance(val, UUID):
+        return str(val)
+    if isinstance(val, AnyUrl):  # e.g. uri of uri wirings
         return str(val)
     if isinstance(val, Filter):
         return {

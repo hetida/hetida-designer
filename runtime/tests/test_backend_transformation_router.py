@@ -1338,6 +1338,37 @@ async def test_update_transformation_revision_with_workflow(
 
 
 @pytest.mark.asyncio
+async def test_update_transformation_revision_with_uri_wiring(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
+    )
+
+    uri = "hd://component-adapter/57eea09f-d28e-89af-4e81-2027697a3f0f?input=55"
+    tr_json_with_uri_wiring = deepcopy(tr_json_workflow_2_update)
+    tr_json_with_uri_wiring["test_wiring"]["input_wirings"] = [
+        {"workflow_input_name": "wf_input", "adapter_id": "uri", "uri": uri}
+    ]
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            posix_urljoin("/api/transformations/", str(get_uuid_from_seed("workflow 2"))),
+            json=tr_json_with_uri_wiring,
+        )
+
+    assert response.status_code == 201
+
+    workflow_tr_in_db = read_single_transformation_revision(get_uuid_from_seed("workflow 2"))
+    input_wiring = workflow_tr_in_db.test_wiring.input_wirings[0]
+    assert str(input_wiring.uri) == uri
+    assert input_wiring.adapter_id == "component-adapter"
+    assert input_wiring.ref_id == "57eea09f-d28e-89af-4e81-2027697a3f0f"
+    assert input_wiring.filters == {"input": "55"}
+
+
+@pytest.mark.asyncio
 async def test_update_transformation_revision_with_invalid_name_workflow(
     async_test_client, mocked_clean_test_db_session
 ):

@@ -1,10 +1,16 @@
+import json
 from unittest import mock
 
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-from hetdesrun.persistence.db_engine_and_session import db_url_for_logging, is_in_memory_db
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.db_engine_and_session import (
+    db_url_for_logging,
+    dumps,
+    is_in_memory_db,
+)
 
 
 @pytest.mark.filterwarnings("ignore:Selection of the SingletonThreadPool")
@@ -70,3 +76,19 @@ def test_db_url_for_logging(db_url, expected):
         return_value=mock.Mock(url=make_url(db_url)),
     ):
         assert db_url_for_logging() == expected
+
+
+def test_dumps_wiring_with_uri():
+    """Wirings are stored in json columns via model_dump(), which keeps uris as AnyUrl"""
+    input_uri = "hd://component-adapter/57eea09f-d28e-89af-4e81-2027697a3f0f?input=55"
+    output_uri = "hd://direct_provisioning"
+    wiring = WorkflowWiring(
+        input_wirings=[{"workflow_input_name": "input", "uri": input_uri}],
+        output_wirings=[{"workflow_output_name": "output", "uri": output_uri}],
+    )
+
+    dumped = json.loads(dumps(wiring.model_dump()))
+
+    assert dumped["input_wirings"][0]["uri"] == input_uri
+    assert dumped["output_wirings"][0]["uri"] == output_uri
+    assert WorkflowWiring.model_validate(dumped) == wiring

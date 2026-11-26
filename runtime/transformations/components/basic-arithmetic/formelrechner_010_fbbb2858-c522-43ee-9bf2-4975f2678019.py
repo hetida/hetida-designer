@@ -19,6 +19,10 @@ Zeitpunkt.
 Auch die Metadaten der Zeitreihen, wie die Properties ihrer Signale, können verwendet werden, z. B.
 `a > meta.a.max` für die Zeitpunkte, zu denen a größer als seine Property max ist.
 
+Auch Python kann verwendet werden: seine eingebauten Funktionen wie `len`, Ausdrücke wie
+`0 if b.empty else b` oder `lambda x: x * 2` und Zeilen mit Python-Code vor der Formel, die z. B.
+Hilfsfunktionen definieren, siehe die Beispiele zu Python.
+
 Diese Komponente gibt es auch auf Englisch: "Formula Calculator".
 
 ## Eingänge
@@ -58,13 +62,22 @@ Schreiben Sie Formeln wie in Excel oder auf einem Taschenrechner:
 * `modify_timezone(a, "Europe/Berlin")` für a mit seinen Zeitpunkten in deutscher Zeit, z. B. für
   Tage von Mitternacht bis Mitternacht deutscher Zeit, wenn a keine Metadaten hat, siehe die
   Beispiele zu Zeitzonen unten.
+* `max_at_noon(a)` für den größten Wert von a an jedem Tag um 12:00 Uhr des Tages, siehe die
+  Beispiele zu Zeitzonen unten.
 * `pd`, `np` und `hdhelpers` für die Python-Bibliotheken pandas, numpy und hdhelpers, z. B.
   `pd.Grouper(freq="D")`, `np.sign(a)` oder `hdhelpers.metadata.get_series_info(a, "max")`.
 * Text in Anführungszeichen, z. B. Zeitdauern wie `"1h"` für eine Stunde in
   `a.rolling("1h").mean()`.
+* Die eingebauten Funktionen von Python, z. B. `len(a)` für die Anzahl der Zeitpunkte von a.
+* Python-Ausdrücke wie `0 if b.empty else b` (0, wenn b keine Werte hat, sonst b) oder
+  `lambda x: x * 2` (eine Funktion, die ihren Wert verdoppelt), siehe die Beispiele zu Python
+  unten.
+* Zeilen mit Python-Code vor der Formel, die z. B. Hilfsfunktionen definieren, die die Formel in
+  der letzten Zeile verwendet, siehe die Beispiele zu Python unten.
 
-Leerzeichen spielen keine Rolle: `a+b` ist dasselbe wie `a + b`. Groß- und Kleinschreibung aber
-schon: Schreiben Sie `a` und `sqrt`, nicht `A` und `SQRT`.
+Leerzeichen spielen keine Rolle: `a+b` ist dasselbe wie `a + b`, außer bei der Einrückung von
+Zeilen mit Python-Code. Groß- und Kleinschreibung aber schon: Schreiben Sie `a` und `sqrt`, nicht
+`A` und `SQRT`.
 
 ## Unterschiede zu Excel
 * Die Eingänge a, b, c, d, e treten an die Stelle von Zellen wie A1 oder B2.
@@ -249,6 +262,9 @@ Zeitzonen werden wie `"Europe/London"` oder `"UTC"` geschrieben.
   wieder neu beginnt
 * `a.where(a.index.hour < 6)` : a nur von Mitternacht bis 6:00 Uhr
 * `a.where(a.index.day_of_week < 5)` : a nur von Montag bis Freitag
+* `max_at_noon(a)` : der größte Wert von a an jedem Tag um 12:00 Uhr des Tages, auch an den Tagen,
+  an denen die Sommerzeit beginnt oder endet. `(max_at_noon(a) * b).dropna()` ist dieser Wert mal
+  dem Wert von b um 12:00 Uhr des Tages, ohne die Tage, an denen a oder b keinen Wert hat.
 * `modify_timezone(a, "Europe/Berlin").resample("1D").sum()` : Tagessummen für die Tage in
   deutscher Zeit, auch wenn die Metadaten von a keine oder eine andere Zeitzone angeben
 * `modify_timezone(a, "UTC").resample("1D").sum()` : Tagessummen für die Tage in UTC
@@ -319,6 +335,36 @@ für den die Zeitreihen abgefragt wurden, siehe die
   a zu allen Zeitpunkten des abgefragten Zeitraums gemäß seiner Datenfrequenz, mit fehlenden
   Werten, wo a keinen Wert hat, z. B. um Lücken zu finden
 
+### Python
+Auch die eingebauten Funktionen von Python und Python-Ausdrücke, die pandas eval selbst nicht
+berechnet, wie `x if bedingung else y`, `lambda` und List Comprehensions, können verwendet werden.
+Sie werden nach den Regeln von Python berechnet: `and`, `or`, `not` und `if` funktionieren mit
+einzelnen Werten wie `b.empty` oder `x > 0`, aber nicht mit Zeitreihen, und `sum`, `min` und `max`
+rechnen mit einzelnen Werten, z. B. `max(a.max(), b.max())`, nicht zu jedem Zeitpunkt wie
+`abcde.max(axis=1)`.
+* `a + (0 if b.empty else b)` : a plus b, oder a, wenn b gar keine Werte hat (dann hat `a + b`
+  keine Werte)
+* `a.apply(lambda x: x * 2 if x > 0 else 0)` : zweimal a, wo a größer als 0 ist, sonst 0, mit einer
+  Python-Funktion (lambda) für jeden Wert berechnet
+* `a.resample("1D").apply(lambda day: day.max() - day.min())` : Differenz zwischen dem größten und
+  dem kleinsten Wert von a an jedem Tag
+* `a / max(a.max(), b.max())` : a geteilt durch den größten Wert von a und b
+* `round(a, 2)` : a gerundet auf 2 Nachkommastellen, wie `a.round(2)`
+
+Vor der Formel können Zeilen mit Python-Code Hilfsfunktionen und Variablen definieren, die die
+Formel in der letzten Zeile verwendet. Zum Beispiel berechnet Folgendes den größten Wert von a an
+jedem Tag um 12:00 Uhr, mal b geteilt durch 1000, wobei b als 0 zählt, wenn es gar keine Werte hat:
+
+```python
+def if_empty(series, default=0):
+    return default if series.empty else series
+
+max_at_noon(a) * if_empty(b) / 1000
+```
+
+Auch die Werte von b müssen um 12:00 Uhr sein, da Werte zu gleichen Zeitpunkten miteinander
+verrechnet werden.
+
 ### Beispiele aus dem Alltag
 * `a * 1000` : Kubikmeter in Liter
 * `a / 3.6` : km/h in m/s
@@ -364,9 +410,19 @@ die [pandas-Dokumentation von Series](https://pandas.pydata.org/docs/reference/s
 `exp`, `expm1`, `log`, `log1p`, `log10`, `abs`, `floor`, `ceil`, `sin`, `cos`, `tan`, `arcsin`,
 `arccos`, `arctan`, `arctan2`, `sinh`, `cosh`, `tanh`, `arcsinh`, `arccosh` und `arctanh`.
 Zusätzlich zu pandas eval können `pi`, `abcde`, `meta`, die Python-Bibliotheken pandas als `pd`,
-numpy als `np` und hdhelpers als `hdhelpers` und die Funktion `modify_timezone` von hdhelpers
-verwendet werden, siehe die [hdhelpers-Dokumentation](https://hetida.github.io/hdhelpers/) (auf
-Englisch), und die Formel darf mit `=` beginnen.
+numpy als `np` und hdhelpers als `hdhelpers`, die Funktion `modify_timezone` von hdhelpers, siehe
+die [hdhelpers-Dokumentation](https://hetida.github.io/hdhelpers/) (auf Englisch), die Funktion
+`max_at_noon` und die eingebauten Funktionen von Python verwendet werden, und die Formel darf mit
+`=` beginnen.
+
+Die Teile der Formel, die pandas eval nicht berechnet, wie `x if bedingung else y`, `lambda`,
+Comprehensions, Dictionaries, Sets, f-Strings, `is` und `*` oder `**` in Aufrufen, werden mit
+Python berechnet, bevor pandas eval die Formel berechnet. Zeilen mit Python-Code vor der Formel
+werden zuerst ausgeführt. Sie können dieselben Namen wie die Formel verwenden, wobei die Funktionen
+wie `sqrt` die von numpy sind, und die Formel kann die Namen verwenden, die sie definieren. Fehler
+darin nennen die Zeile, gezählt ab der ersten Zeile des Eingangs formel. Eine Formel über mehrere
+Zeilen, z. B. aus einem Text mit Zeilenumbrüchen kopiert, wird als eine Zeile gelesen, wenn das
+möglich ist, und sonst als Zeilen mit Code vor der Formel in der letzten Zeile.
 
 `meta.a.max` liest das Feld max der Metadaten von a, wie es die
 [Metadaten-Konventionen](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/)
@@ -390,6 +446,11 @@ Mandanten liefern, aber noch nicht in den Metadaten, und ohne sie in UTC. Dazu w
 Zeitpunkte dieser Zeitreihen in diese Zeitzone umgerechnet, außer sie haben keine Zeitzone oder
 zeitzone_aus_metadaten ist False. Die Zeitpunkte des Ergebnisses werden in UTC umgerechnet, wenn
 sie eine Zeitzone haben, da z. B. generische REST-Adapter nur Zeitreihen in UTC annehmen.
+
+`max_at_noon(a)` ist `a.resample("1D").max()` um 12:00 Uhr statt um Mitternacht in der Zeitzone
+der Zeitpunkte von a, d. h. der, in der die Formel berechnet wird, oder ohne Zeitzone, wenn a
+keine hat. Tage ohne Werte von a dazwischen haben keinen Wert. Hat a gar keine Werte, z. B. eine
+leere manuelle Eingabe ohne Zeitpunkte, ist `max_at_noon(a)` a.
 """
 
 import re
@@ -412,6 +473,15 @@ MESSAGES = {
         " mit Punkt geschrieben, z. B. 1.5, Vergleiche mit == und != statt = und <>, und Prozent"
         " als / 100, z. B. a * 19 / 100."
     ),
+    "syntax_line": " Python meldet in Zeile {line}: {error}.",
+    "last_line": (
+        "Die letzte Zeile muss die Formel sein, z. B. a * 2, nach den Zeilen mit Python-Code, z. B."
+        " Definitionen von Hilfsfunktionen."
+    ),
+    "one_formula": (
+        "Mehrere Zeilen berechnen etwas, aber nur die letzte Zeile ist die Formel. Die Zeilen davor"
+        " können Hilfsfunktionen und Variablen definieren, z. B. faktor = 2."
+    ),
     "power": "Potenzen werden mit ** statt ^ geschrieben, z. B. a**2 für a zum Quadrat.",
     "decimal_comma": "Dezimalzahlen werden mit Punkt statt Komma geschrieben: 1.5 statt 1,5.",
     "not_connected": (
@@ -421,9 +491,10 @@ MESSAGES = {
     "uppercase_input": "Die Eingänge werden kleingeschrieben: {lower} statt {name}.",
     "unknown_name": (
         "{name} ist unbekannt. Die Formel kann die Eingänge a, b, c, d, e (kleingeschrieben), die"
-        " Tabelle abcde aus allen, ihre Metadaten wie meta.a.max, Zahlen, die Zahl pi, die Funktion"
-        " modify_timezone und die Python-Bibliotheken pandas als pd, numpy als np und hdhelpers"
-        " verwenden."
+        " Tabelle abcde aus allen, ihre Metadaten wie meta.a.max, Zahlen, die Zahl pi, die"
+        " Funktionen modify_timezone und max_at_noon, die eingebauten Funktionen von Python wie"
+        " len, die Python-Bibliotheken pandas als pd, numpy als np und hdhelpers und Namen"
+        " verwenden, die Zeilen mit Python-Code vor der Formel definieren."
     ),
     "metadata_input": (
         "Nach meta folgt der Eingang, dessen Metadaten die Formel verwendet, z. B. meta.a.max für"
@@ -449,7 +520,14 @@ MESSAGES = {
     "function_without_brackets": "{name} ist eine Funktion und braucht Klammern, z. B. {example}.",
     "unknown_function": "Die Funktion {name} gibt es hier nicht.",
     "replacement": " Schreiben Sie stattdessen z. B. {replacement}.",
-    "functions": " Verfügbare Funktionen: {functions}.",
+    "functions": (
+        " Verfügbare Funktionen: {functions}, die eingebauten Funktionen von Python wie len und"
+        " Funktionen, die Zeilen mit Python-Code vor der Formel definieren."
+    ),
+    "sum": (
+        "sum(a, b) von Python addiert b zur Summe aller Werte von a. Für die Summe zu jedem"
+        " Zeitpunkt schreiben Sie a + b oder abcde.sum(axis=1)."
+    ),
     "multiplication": "Zum Multiplizieren braucht es ein *, z. B. a * (b + c) statt a(b + c).",
     "one_value": "{name} braucht genau einen Wert in den Klammern, z. B. {example}.",
     "two_values": (
@@ -468,6 +546,7 @@ MESSAGES = {
         " werden, z. B. a - a.mean()."
     ),
     "failed": "Die Formel konnte nicht berechnet werden: {error}",
+    "failed_in_line": "Die Formel konnte wegen Zeile {line} nicht berechnet werden: {error}",
 }
 
 GERMAN = formula_calculator.Language(formula_input_name="formel", messages=MESSAGES)
@@ -639,6 +718,12 @@ def test_documented_examples_are_those_of_the_formula_calculator():
     assert documented_example_formulas(__doc__) == formulas
 
 
+def test_documented_code_is_that_of_the_formula_calculator():
+    assert formula_calculator.documented_code(__doc__) == formula_calculator.documented_code(
+        formula_calculator.__doc__
+    )
+
+
 def test_messages_are_translated():
     def placeholders(messages):
         return {key: sorted(re.findall(r"{(\w+)}", message)) for key, message in messages.items()}
@@ -735,8 +820,27 @@ def test_all_inputs_are_used():
         ("a.Mean()", "formel", "konnte nicht berechnet werden: 'Series' object has no attribute"),
         ('a.rolling("one hour").mean()', "formel", "konnte nicht berechnet werden"),
         ("a.where(x > 0)", "formel", "x ist unbekannt"),
-        ("a + x", "formel", "pandas als pd, numpy als np und hdhelpers verwenden."),
-        ("quadrat(a)", "formel", ", arctan2, modify_timezone."),
+        (
+            "a + x",
+            "formel",
+            "die eingebauten Funktionen von Python wie len, die Python-Bibliotheken",
+        ),
+        ("quadrat(a)", "formel", ", arctan2, modify_timezone, max_at_noon, die eingebauten"),
+        (
+            "def verdoppelt(x):\n    return 2 * x\n",
+            "formel",
+            "Die letzte Zeile muss die Formel sein",
+        ),
+        ("def f(x)\n    return x\n\nf(a)", "formel", "Python meldet in Zeile 1: expected ':'."),
+        (
+            "def f(x):\n    return x.Mean()\n\nf(a)",
+            "formel",
+            "Die Formel konnte wegen Zeile 2 nicht berechnet werden: 'Series' object has no",
+        ),
+        ("def f(x):\n    return x * c\n\nf(a)", "c", "mit dem Eingang c ist keine Zeitreihe"),
+        ("sum(a, b)", "formel", "addiert b zur Summe aller Werte von a"),
+        ("a * 2\nb * 3", "formel", "nur die letzte Zeile ist die Formel"),
+        ("max(a, b)", "formel", "Schreiben Sie stattdessen z. B. abcde.max(axis=1)."),
         ("pd(a)", "formel", "Die Funktion pd gibt es hier nicht."),
     ],
 )

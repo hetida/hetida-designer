@@ -1,3 +1,6 @@
+- feature: The base components "Formula Calculator" and "Formelrechner" (0.1.0, changed in place) accept Python in formulas: the built-in functions of Python like `len(a)`, Python expressions which pandas eval does not calculate itself, like `0 if b.empty else b`, `lambda` and comprehensions, and lines of Python code before the formula, e.g. defining helper functions, with the formula in the last line. The new function `max_at_noon(a)` gives the largest value of a on each day at 12:00 of the day, also on the days on which daylight saving time starts or ends, e.g. `(max_at_noon(a) * b).dropna()` for this value times the value of b at 12:00. Formulas which could be calculated before give the same results.
+- fix: Transformations and schedules with URI wirings (`uri` field) can now be saved. Saving failed with an internal server error ("Object of type AnyUrl is not JSON serializable").
+
 # 0.14.12
 
 - **POSSIBLY BREAKING CHANGE:** upgrade to plotly 7 in the runtime and plotly.js 4 in the frontend. This may break existing components. Note that plotly 7 e.g. removes the Mapbox based plots, e.g. `px.scatter_mapbox` and `go.Scattermapbox` (use the MapLibre based `px.scatter_map` and `go.Scattermap` instead).

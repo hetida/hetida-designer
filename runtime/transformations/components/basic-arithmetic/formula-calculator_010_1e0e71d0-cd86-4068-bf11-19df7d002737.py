@@ -17,6 +17,10 @@ the standard deviation of all connected timeseries at each point in time.
 The metadata of the timeseries, like the properties of their signals, can be used as well, e.g.
 `a > meta.a.max` for the points in time at which a is larger than its property max.
 
+Python can be used as well: its built-in functions like `len`, expressions like
+`0 if b.empty else b` or `lambda x: x * 2`, and lines of Python code before the formula, e.g.
+defining helper functions, see the examples for Python.
+
 There is also a German version of this component: "Formelrechner".
 
 ## Inputs
@@ -53,12 +57,19 @@ Write formulas like in Excel or on a calculator:
 * `modify_timezone(a, "Europe/Berlin")` for a with its points in time in German time, e.g. for
   days from midnight to midnight in German time if a has no metadata, see the examples for time
   zones below.
+* `max_at_noon(a)` for the largest value of a on each day at 12:00 of the day, see the examples
+  for time zones below.
 * `pd`, `np` and `hdhelpers` for the Python libraries pandas, numpy and hdhelpers, e.g.
   `pd.Grouper(freq="D")`, `np.sign(a)` or `hdhelpers.metadata.get_series_info(a, "max")`.
 * Text in quotes, e.g. durations like `"1h"` for one hour in `a.rolling("1h").mean()`.
+* The built-in functions of Python, e.g. `len(a)` for the number of points in time of a.
+* Python expressions like `0 if b.empty else b` (0 if b has no values, otherwise b) or
+  `lambda x: x * 2` (a function doubling its value), see the examples for Python below.
+* Lines of Python code before the formula, e.g. defining helper functions, which the formula in
+  the last line uses, see the examples for Python below.
 
-Spaces do not matter: `a+b` is the same as `a + b`. But uppercase and lowercase letters matter:
-Write `a` and `sqrt`, not `A` and `SQRT`.
+Spaces do not matter: `a+b` is the same as `a + b`, except for the indentation of lines of Python
+code. But uppercase and lowercase letters matter: Write `a` and `sqrt`, not `A` and `SQRT`.
 
 ## Differences to Excel
 * The inputs a, b, c, d, e take the place of cells like A1 or B2.
@@ -235,6 +246,9 @@ Other time zones are written like `"Europe/London"` or `"UTC"`.
   every day
 * `a.where(a.index.hour < 6)` : a only from midnight to 6:00
 * `a.where(a.index.day_of_week < 5)` : a only from Monday to Friday
+* `max_at_noon(a)` : the largest value of a on each day at 12:00 of the day, also on the days on
+  which daylight saving time starts or ends. `(max_at_noon(a) * b).dropna()` is this value times
+  the value of b at 12:00 of the day, without the days on which a or b has no value.
 * `modify_timezone(a, "Europe/Berlin").resample("1D").sum()` : daily totals for the days in German
   time, also if the metadata of a specify no or another time zone
 * `modify_timezone(a, "UTC").resample("1D").sum()` : daily totals for the days in UTC
@@ -304,6 +318,35 @@ timeseries were queried, see the
   a at all points in time of the queried period according to its data frequency, with missing
   values where a has no value, e.g. to find gaps
 
+### Python
+The built-in functions of Python and Python expressions, which pandas eval does not calculate
+itself, like `x if condition else y`, `lambda` and list comprehensions, can be used as well. They
+are calculated with the rules of Python: `and`, `or`, `not` and `if` work with single values like
+`b.empty` or `x > 0`, but not with timeseries, and `sum`, `min` and `max` calculate with single
+values, e.g. `max(a.max(), b.max())`, not at each point in time like `abcde.max(axis=1)`.
+* `a + (0 if b.empty else b)` : a plus b, or a if b has no values at all (then `a + b` has no
+  values)
+* `a.apply(lambda x: x * 2 if x > 0 else 0)` : twice a where a is greater than 0, otherwise 0,
+  calculated with a Python function (lambda) for each value
+* `a.resample("1D").apply(lambda day: day.max() - day.min())` : difference between the largest
+  and the smallest value of a on each day
+* `a / max(a.max(), b.max())` : a divided by the largest value of a and b
+* `round(a, 2)` : a rounded to 2 decimal places, like `a.round(2)`
+
+Before the formula, lines of Python code can define helper functions and variables, which the
+formula in the last line uses. For example, the following calculates the largest value of a on
+each day at 12:00, times b divided by 1000, in which b counts as 0 if it has no values at all:
+
+```python
+def if_empty(series, default=0):
+    return default if series.empty else series
+
+max_at_noon(a) * if_empty(b) / 1000
+```
+
+The values of b have to be at 12:00 as well, since values are combined at the same points in
+time.
+
 ### Everyday examples
 * `a * 1000` : cubic meters to liters
 * `a / 3.6` : km/h to m/s
@@ -346,9 +389,18 @@ pandas Series, and of `abcde`, which is a pandas DataFrame, see the
 `exp`, `expm1`, `log`, `log1p`, `log10`, `abs`, `floor`, `ceil`, `sin`, `cos`, `tan`, `arcsin`,
 `arccos`, `arctan`, `arctan2`, `sinh`, `cosh`, `tanh`, `arcsinh`, `arccosh` and `arctanh`. In
 addition to pandas eval, `pi`, `abcde`, `meta`, the Python libraries pandas as `pd`, numpy as `np`
-and hdhelpers as `hdhelpers` and the function `modify_timezone` of hdhelpers can be used, see the
-[hdhelpers documentation](https://hetida.github.io/hdhelpers/), and the formula may start with
-`=`.
+and hdhelpers as `hdhelpers`, the function `modify_timezone` of hdhelpers, see the
+[hdhelpers documentation](https://hetida.github.io/hdhelpers/), the function `max_at_noon` and
+the built-in functions of Python can be used, and the formula may start with `=`.
+
+The parts of the formula which pandas eval does not calculate, like `x if condition else y`,
+`lambda`, comprehensions, dictionaries, sets, f-strings, `is` and `*` or `**` in calls, are
+calculated with Python before pandas eval calculates the formula. Lines of Python code before the
+formula are executed first. They can use the same names as the formula, in which the functions
+like `sqrt` are those of numpy, and the formula can use the names they define. Errors in them
+report the line, counted from the first line of the formula input. A formula spanning several
+lines, e.g. copied from a text with line breaks, is read as one line if this is possible, and
+otherwise as lines of code before the formula in the last line.
 
 `meta.a.max` reads the field max of the metadata of a as specified by the
 [metadata conventions](https://hetida.github.io/hetida-designer/user_guide/attached_metadata/):
@@ -371,11 +423,19 @@ of the tenant there, but not yet in the metadata, and without one in UTC. For th
 time of these timeseries are converted to this time zone, unless they have no time zone or
 time_zone_from_metadata is False. The points in time of the result are converted to UTC if they
 have a time zone, since e.g. generic REST adapters only accept timeseries in UTC.
+
+`max_at_noon(a)` is `a.resample("1D").max()` at 12:00 instead of midnight in the time zone of the
+points in time of a, i.e. the one the formula is calculated in, or without a time zone if a has
+none. Days without values of a in between have no value. If a has no values at all, e.g. an empty
+manual input without points in time, `max_at_noon(a)` is a.
 """
 
 import ast
+import builtins
 import contextvars
 import dataclasses
+import textwrap
+import traceback
 import types
 import warnings
 from typing import Any
@@ -429,15 +489,75 @@ FUNCTIONS = dict.fromkeys(
     1,
 ) | {"arctan2": 2}
 
+# The FUNCTIONS in the lines of Python code before the formula, calculated with numpy like pandas
+# eval does, e.g. for sqrt(x) in a helper function. abs is the built-in function of Python there.
+PYTHON_FUNCTIONS = {name: getattr(np, name) for name in FUNCTIONS if name != "abs"}
+
+# The built-in functions of Python, e.g. for len(a) or round(a, 2) in a formula, except abs, which
+# is the function of pandas eval in formulas
+BUILTINS = {
+    name: value
+    for name, value in vars(builtins).items()
+    if not name.startswith("_") and name not in FUNCTIONS
+}
+
+# Python syntax which pandas eval does not calculate, e.g. 0 if b.empty else b or lambda x: x * 2.
+# It is calculated in Python before pandas eval calculates the rest of the formula.
+PYTHON_SYNTAX = (
+    ast.IfExp,
+    ast.Lambda,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+    ast.Dict,
+    ast.Set,
+    ast.NamedExpr,
+    ast.JoinedStr,
+)
+
+# The names of the values of the Python syntax in the formula pandas eval calculates, numbered
+PYTHON_VALUE_NAME = "__python_value_{}"
+
+# The file name of the lines of Python code before the formula, e.g. in tracebacks
+CODE_FILE_NAME = "<code before the formula>"
+
 CONSTANTS = {"pi": np.pi}
 
 # The Python libraries pandas, numpy and hdhelpers, e.g. for pd.Grouper(freq="D"), np.sign(a) or
 # the metadata functions of hdhelpers in a formula
 MODULES = {"pd": pd, "np": np, "hdhelpers": hdhelpers}
 
-# Functions of hdhelpers, which are called in Python, unlike the FUNCTIONS of pandas eval, e.g.
-# for modify_timezone(a, "Europe/Berlin") in a formula
-HELPER_FUNCTIONS = {"modify_timezone": hdhelpers.modify_timezone}
+
+def max_at_noon(series: pd.Series) -> pd.Series:
+    """The largest value of the series on each day, at 12:00 of the day
+
+    Like series.resample("1D").max(), i.e. for the days from midnight to midnight in the time zone
+    of the points in time of the series, but at 12:00 instead of midnight, also on the days with
+    23 or 25 hours on which daylight saving time starts or ends, on which midnight plus 12 hours is
+    13:00 or 11:00. A series without values, e.g. an empty manual input without points in time,
+    stays as it is.
+
+    >>> a = pd.Series(
+    ...     [1.0, 3.0, 2.0],
+    ...     index=pd.DatetimeIndex(["2026-03-29T01:00", "2026-03-29T23:00", "2026-03-30T08:00"]),
+    ... )
+    >>> max_at_noon(a.tz_localize("Europe/Berlin"))
+    2026-03-29 12:00:00+02:00    3.0
+    2026-03-30 12:00:00+02:00    2.0
+    Freq: D, dtype: float64
+    """
+    if series.empty:
+        return series
+    maximum = series.resample("1D").max()
+    # at 12:00 local time, which is not midnight plus 12 hours on days with 23 or 25 hours
+    noon = maximum.index.tz_localize(None) + pd.Timedelta(hours=12)
+    return maximum.set_axis(noon.tz_localize(maximum.index.tz))
+
+
+# Functions which are called in Python, unlike the FUNCTIONS of pandas eval, e.g. for
+# modify_timezone(a, "Europe/Berlin") or max_at_noon(a) * b in a formula
+HELPER_FUNCTIONS = {"modify_timezone": hdhelpers.modify_timezone, "max_at_noon": max_at_noon}
 
 # The names formulas can use in addition to the inputs, abcde and meta
 PREDEFINED_NAMES = CONSTANTS | MODULES | HELPER_FUNCTIONS
@@ -510,6 +630,15 @@ MESSAGES = {
         " point, e.g. 1.5, comparisons with == and != instead of = and <>, and percent as / 100,"
         " e.g. a * 19 / 100."
     ),
+    "syntax_line": " Python reports in line {line}: {error}.",
+    "last_line": (
+        "The last line has to be the formula, e.g. a * 2, after the lines of Python code, e.g."
+        " definitions of helper functions."
+    ),
+    "one_formula": (
+        "Several lines calculate something, but only the last line is the formula. The lines"
+        " before it can define helper functions and variables, e.g. factor = 2."
+    ),
     "power": "Powers are written with ** instead of ^, e.g. a**2 for a squared.",
     "decimal_comma": (
         "Decimal numbers are written with a point instead of a comma: 1.5 instead of 1,5."
@@ -522,8 +651,9 @@ MESSAGES = {
     "unknown_name": (
         "{name} is unknown. The formula can use the inputs a, b, c, d, e (in lowercase letters),"
         " the table abcde of all of them, their metadata like meta.a.max, numbers, the number pi,"
-        " the function modify_timezone and the Python libraries pandas as pd, numpy as np and"
-        " hdhelpers."
+        " the functions modify_timezone and max_at_noon, the built-in functions of Python like"
+        " len, the Python libraries pandas as pd, numpy as np and hdhelpers, and names defined in"
+        " lines of Python code before the formula."
     ),
     "metadata_input": (
         "meta is followed by the input whose metadata the formula uses, e.g. meta.a.max for the"
@@ -548,7 +678,14 @@ MESSAGES = {
     "function_without_brackets": "{name} is a function and needs brackets, e.g. {example}.",
     "unknown_function": "The function {name} does not exist here.",
     "replacement": " Write for example {replacement} instead.",
-    "functions": " Available functions: {functions}.",
+    "functions": (
+        " Available functions: {functions}, the built-in functions of Python like len and"
+        " functions defined in lines of Python code before the formula."
+    ),
+    "sum": (
+        "sum(a, b) of Python adds b to the sum of all values of a. For the sum at each point in"
+        " time write a + b or abcde.sum(axis=1)."
+    ),
     "multiplication": "Multiplying needs a *, e.g. a * (b + c) instead of a(b + c).",
     "one_value": "{name} needs exactly one value in its brackets, e.g. {example}.",
     "two_values": (
@@ -563,6 +700,7 @@ MESSAGES = {
         " e, e.g. a * 2. Single values like a.mean() can be used in a formula, e.g. a - a.mean()."
     ),
     "failed": "The formula could not be calculated: {error}",
+    "failed_in_line": "The formula could not be calculated because of line {line}: {error}",
 }
 
 
@@ -603,23 +741,38 @@ def function_example(name: str) -> str:
     return "arctan2(b, a)" if FUNCTIONS[name] == 2 else f"{name}(a)"
 
 
-def check_function_call(call: ast.Call, language: Language) -> None:
+def check_function_call(call: ast.Call, language: Language, defined: set[str]) -> None:
     """Explain mistakes in calls of functions like sqrt(a)
 
     pandas eval only knows the functions in FUNCTIONS, in addition to methods like a.mean().
-    The HELPER_FUNCTIONS are called in Python like methods.
+    The HELPER_FUNCTIONS, the BUILTINS and the functions defined in the lines of Python code before
+    the formula are called in Python like methods.
     """
-    if not isinstance(call.func, ast.Name) or call.func.id in SERIES_INPUT_NAMES:
+    if not isinstance(call.func, ast.Name) or (
+        call.func.id in SERIES_INPUT_NAMES and call.func.id not in defined
+    ):
         # a missing * between a number or input and a bracket, like in 2(a + b) or a(b + c)
         raise formula_error(language.messages["multiplication"], language)
     name = call.func.id
-    if name in HELPER_FUNCTIONS:
+    if name in defined or name in HELPER_FUNCTIONS:
         # Python checks the values in the brackets
+        return
+    if name in BUILTINS:
+        if (
+            name == "sum"
+            and len(call.args) == 2
+            and isinstance(call.args[0], ast.Name)
+            and call.args[0].id in (*SERIES_INPUT_NAMES, DATAFRAME_NAME)
+        ):
+            # like SUM(a, b) in Excel, but adding b to the sum of all values of a
+            raise formula_error(language.messages["sum"], language)
         return
     if name not in FUNCTIONS:
         replacement = REPLACEMENTS.get(name.lower())
         if replacement is None and name.lower() in FUNCTIONS:
             replacement = function_example(name.lower())
+        if replacement is None and name.lower() in BUILTINS:
+            replacement = f"{name.lower()}(a)"
         raise formula_error(
             language.messages["unknown_function"].format(name=name)
             + (
@@ -642,7 +795,18 @@ def check_function_call(call: ast.Call, language: Language) -> None:
         raise formula_error(message, language)
 
 
-def check_name(name: str, series_inputs: dict[str, pd.Series | None], language: Language) -> None:
+def check_name(
+    name: str,
+    series_inputs: dict[str, pd.Series | None],
+    language: Language,
+    defined: set[str] | frozenset[str] = frozenset(),
+) -> None:
+    """Explain mistakes in names, e.g. of inputs which are not connected
+
+    The names in defined are defined in the lines of Python code before the formula.
+    """
+    if name in defined:
+        return
     if name in SERIES_INPUT_NAMES:
         if series_inputs[name] is None:
             raise invalid_input_error(
@@ -656,7 +820,7 @@ def check_name(name: str, series_inputs: dict[str, pd.Series | None], language: 
     elif name == METADATA_NAME:
         # without an input, which check_node checks for meta.a
         raise formula_error(language.messages["metadata_input"], language)
-    elif name in PREDEFINED_NAMES:
+    elif name in PREDEFINED_NAMES or name in BUILTINS:
         return
     elif name.lower() in SERIES_INPUT_NAMES:
         raise formula_error(
@@ -692,13 +856,86 @@ def check_metadata_input(
     check_name(input_name, series_inputs, language)
 
 
+def is_python_syntax(node: ast.AST) -> bool:
+    """Whether the node is Python syntax which pandas eval does not calculate, e.g. a lambda"""
+    if isinstance(node, PYTHON_SYNTAX):
+        return True
+    if isinstance(node, ast.Compare):
+        # comparisons with is, e.g. whether b is None
+        return any(isinstance(operator, ast.Is | ast.IsNot) for operator in node.ops)
+    if isinstance(node, ast.Call):
+        # calls with values unpacked by * or **, e.g. f(*values)
+        return any(isinstance(argument, ast.Starred) for argument in node.args) or any(
+            keyword.arg is None for keyword in node.keywords
+        )
+    if isinstance(node, ast.List | ast.Tuple):
+        # lists or tuples with values unpacked by *, e.g. [*values, 1]
+        return any(isinstance(element, ast.Starred) for element in node.elts)
+    return False
+
+
+def python_syntax(node: ast.AST) -> list[ast.expr]:
+    """The outermost parts of the node which are Python syntax pandas eval does not calculate"""
+    if is_python_syntax(node):
+        return [node]
+    return [part for child in ast.iter_child_nodes(node) for part in python_syntax(child)]
+
+
+def without_python_syntax(expression: str, parts: list[ast.expr]) -> str:
+    """The formula with the parts replaced by the names of their values, for pandas eval
+
+    The parts are those of the expression, numbered like in PYTHON_VALUE_NAME. Replaced in the
+    expression, not with ast.unparse, since pandas eval gives & and | a lower precedence than
+    Python, so that dropping brackets could change the result.
+
+    >>> expression = "a * (0 if b.empty else b) + c.apply(lambda x: x)"
+    >>> without_python_syntax(expression, python_syntax(ast.parse(expression, mode="eval")))
+    'a * ((__python_value_0)) + c.apply((__python_value_1))'
+    """
+    # the positions of the parts in the formula in one line are in bytes of UTF-8
+    source = expression.encode()
+    for number, part in sorted(enumerate(parts), key=lambda item: -item[1].col_offset):
+        source = (
+            source[: part.col_offset]
+            + f"({PYTHON_VALUE_NAME.format(number)})".encode()
+            + source[part.end_col_offset :]
+        )
+    return source.decode()
+
+
+def defined_names(statements: list[ast.stmt]) -> set[str]:
+    """The names the lines of Python code before the formula define, e.g. of helper functions
+
+    Including names defined inside of functions, for which Python explains the mistake if the
+    formula uses them.
+    """
+    names = set()
+    for node in ast.walk(ast.Module(body=statements, type_ignores=[])):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            names.add(node.name)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        elif isinstance(node, ast.alias):
+            # e.g. import scipy.signal
+            names.add((node.asname or node.name).partition(".")[0])
+    return names
+
+
 def check_node(
-    node: ast.AST, series_inputs: dict[str, pd.Series | None], language: Language
+    node: ast.AST,
+    series_inputs: dict[str, pd.Series | None],
+    language: Language,
+    defined: set[str],
 ) -> None:
     """Explain typical mistakes in the formula, which pandas eval reports less helpfully
 
-    Everything else, e.g. methods like a.mean(), is left to pandas eval.
+    Everything else, e.g. methods like a.mean(), is left to pandas eval, and Python syntax which
+    pandas eval does not calculate, e.g. lambda x: x * 2, to Python. The names in defined are
+    defined in the lines of Python code before the formula.
     """
+    if is_python_syntax(node):
+        # Python explains its mistakes, e.g. unknown names, see calculation_error
+        return
     if (
         isinstance(node, ast.Attribute | ast.Subscript)
         and (input_name := metadata_input(node.value)) is not None
@@ -711,17 +948,17 @@ def check_node(
         check_metadata_input(input_name, series_inputs, language)
         raise formula_error(language.messages["metadata_field"].format(name=input_name), language)
     elif isinstance(node, ast.Call) and not isinstance(node.func, ast.Attribute):
-        check_function_call(node, language)
+        check_function_call(node, language, defined)
         children = [*node.args, *node.keywords]
     elif isinstance(node, ast.Name):
-        check_name(node.id, series_inputs, language)
+        check_name(node.id, series_inputs, language, defined)
         children = []
     elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitXor):
         raise formula_error(language.messages["power"], language)
     else:
         children = list(ast.iter_child_nodes(node))
     for child in children:
-        check_node(child, series_inputs, language)
+        check_node(child, series_inputs, language, defined)
 
 
 def as_numbers(series: pd.Series, input_name: str, language: Language) -> pd.Series:
@@ -862,6 +1099,119 @@ def missing_metadata_error(
     )
 
 
+@dataclasses.dataclass(frozen=True)
+class Formula:
+    """A formula, possibly in the last line after lines of Python code, e.g. helper functions"""
+
+    # the lines of Python code before the formula, empty without
+    statements: list[ast.stmt]
+    # the formula in one line, since pandas eval does not calculate formulas spanning several
+    # lines
+    expression: str
+    # the syntax tree of the formula
+    tree: ast.Expression
+
+
+def parse_expression(expression: str) -> ast.Expression:
+    with warnings.catch_warnings():
+        # e.g. "'int' object is not callable" for 2(a + b), which check_function_call explains
+        warnings.simplefilter("ignore", SyntaxWarning)
+        return ast.parse(expression, mode="eval")
+
+
+def syntax_error(
+    error: SyntaxError, language: Language, *, several_lines: bool
+) -> ComponentInputValidationException:
+    """Explain the syntax error, with the line Python reports for formulas with several lines"""
+    message = language.messages["syntax"]
+    if several_lines:
+        message += language.messages["syntax_line"].format(line=error.lineno, error=error.msg)
+    return formula_error(message, language)
+
+
+def parse_formula(formula: str | None, language: Language) -> Formula:
+    """The formula, possibly after lines of Python code, e.g. defining helper functions
+
+    A formula in several lines which can be read in one line is a formula without lines of code,
+    e.g. copied from a text with line breaks.
+    """
+    expression = " ".join((formula or "").split()).removeprefix("=").strip()
+    if expression == "":
+        raise formula_error(language.messages["empty"], language)
+    try:
+        return Formula(statements=[], expression=expression, tree=parse_expression(expression))
+    except SyntaxError as error:
+        one_line_error = error
+
+    # lines of Python code with the formula in the last line
+    code = textwrap.dedent(formula or "")
+    several_lines = "\n" in code.strip()
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            statements = ast.parse(code, filename=CODE_FILE_NAME).body
+    except SyntaxError as error:
+        raise syntax_error(
+            error if several_lines else one_line_error, language, several_lines=several_lines
+        ) from error
+    if len(statements) == 0:
+        # only comments
+        raise formula_error(language.messages["empty"], language)
+    if not isinstance(statements[-1], ast.Expr):
+        if len(statements) == 1 and isinstance(statements[0], ast.Assign):
+            # e.g. a = b instead of a == b
+            raise syntax_error(one_line_error, language, several_lines=False) from one_line_error
+        raise formula_error(language.messages["last_line"], language)
+    if any(
+        isinstance(statement, ast.Expr) and not isinstance(statement.value, ast.Call | ast.Constant)
+        for statement in statements[:-1]
+    ):
+        # e.g. a formula in each line, of which only the last one would be the result
+        raise formula_error(language.messages["one_formula"], language)
+    expression = " ".join(ast.get_source_segment(code, statements[-1].value).split())
+    try:
+        tree = parse_expression(expression)
+    except SyntaxError as error:
+        # e.g. after a backslash at the end of a line, which cannot be written in one line
+        raise syntax_error(error, language, several_lines=False) from error
+    return Formula(statements=statements[:-1], expression=expression, tree=tree)
+
+
+def code_line(error: BaseException) -> int | None:
+    """The line of Python code before the formula the error occurred in, None if not in them"""
+    lines = [
+        frame.lineno
+        for frame in traceback.extract_tb(error.__traceback__)
+        if frame.filename == CODE_FILE_NAME
+    ]
+    return lines[-1] if lines else None
+
+
+def calculation_error(
+    error: Exception, tree: ast.Expression, defined: set[str], language: Language
+) -> ComponentInputValidationException:
+    """Explain why the formula could not be calculated, e.g. which line of code failed"""
+    if (line := code_line(error)) is not None:
+        message = language.messages["failed_in_line"].format(line=line, error=error)
+    else:
+        message = language.messages["failed"].format(error=error)
+    if isinstance(error, TypeError | ValueError):
+        # e.g. max(a, b), which Python cannot calculate for timeseries, unlike MAX(a, b) in Excel
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in BUILTINS
+                and node.func.id not in defined
+                and (replacement := REPLACEMENTS.get(node.func.id)) is not None
+            ):
+                # after the error of pandas or Python, which often ends without a point
+                message = message.rstrip(".") + "."
+                message += language.messages["replacement"].format(replacement=replacement)
+                break
+    return formula_error(message, language)
+
+
 def calculate(
     formula: str | None,
     series_inputs: dict[str, pd.Series | None],
@@ -873,24 +1223,30 @@ def calculate(
 
     Calculates the formula in the time zone of the metadata of the inputs if
     time_zone_from_metadata is True. Explains mistakes in the formula in the given language.
+
+    The formula may follow lines of Python code, e.g. defining helper functions. They are executed
+    first, then the parts of the formula which are Python syntax pandas eval does not calculate,
+    e.g. 0 if b.empty else b, and then the formula with pandas eval.
     """
-    # in one line, since pandas eval does not calculate formulas spanning several lines
-    expression = " ".join((formula or "").split()).removeprefix("=").strip()
-    if expression == "":
-        raise formula_error(language.messages["empty"], language)
-    try:
-        with warnings.catch_warnings():
-            # e.g. "'int' object is not callable" for 2(a + b), which is explained below
-            warnings.simplefilter("ignore", SyntaxWarning)
-            tree = ast.parse(expression, mode="eval")
-    except SyntaxError as error:
-        raise formula_error(language.messages["syntax"], language) from error
+    parsed = parse_formula(formula, language)
+    tree = parsed.tree
     if isinstance(tree.body, ast.Tuple):
         # e.g. a * 1,5
         raise formula_error(language.messages["decimal_comma"], language)
-    check_node(tree, series_inputs, language)
+    defined = defined_names(parsed.statements)
+    check_node(tree, series_inputs, language, defined)
+    try:
+        code = compile(ast.Module(body=parsed.statements, type_ignores=[]), CODE_FILE_NAME, "exec")
+    except SyntaxError as error:
+        # e.g. return outside of a function, which ast.parse accepts
+        raise syntax_error(error, language, several_lines=True) from error
 
-    used_names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+    used_names = {
+        node.id
+        for root in [*parsed.statements, tree]
+        for node in ast.walk(root)
+        if isinstance(node, ast.Name)
+    }
     numbers = {
         name: as_numbers(series, name, language)
         for name, series in series_inputs.items()
@@ -899,7 +1255,8 @@ def calculate(
     if time_zone_from_metadata:
         time_zone = calculation_time_zone([series_inputs[name] for name in numbers])
         numbers = {name: in_time_zone(series, time_zone) for name, series in numbers.items()}
-    variables = {name: numbers[name] for name in SERIES_INPUT_NAMES if name in used_names}
+    # without inputs which are not connected, for which Python raises a NameError explained below
+    variables = {name: series for name, series in numbers.items() if name in used_names}
     if DATAFRAME_NAME in used_names:
         variables[DATAFRAME_NAME] = pd.concat(numbers, axis=1, sort=True)
     if METADATA_NAME in used_names:
@@ -910,18 +1267,40 @@ def calculate(
                 if series is not None
             }
         )
+    # the global names of Python for the lines of code and the Python syntax in the formula
+    namespace = {"__builtins__": builtins, **PYTHON_FUNCTIONS, **PREDEFINED_NAMES, **variables}
+    python_parts = python_syntax(tree)
     try:
         # numpy warns about impossible calculations if pandas eval does not use numexpr
         with np.errstate(all="ignore"):
-            # the expression, not ast.unparse(tree), since pandas eval gives & and | a lower
-            # precedence than Python, so that dropping brackets could change the result
-            result = pd.eval(expression, local_dict=variables | PREDEFINED_NAMES, global_dict={})
+            exec(code, namespace)  # noqa: S102 # the lines of code are part of the formula
+            for number, part in enumerate(python_parts):
+                namespace[PYTHON_VALUE_NAME.format(number)] = eval(  # noqa: S307 # as the code
+                    compile(ast.Expression(body=part), "<formula>", "eval"), namespace
+                )
+            result = pd.eval(
+                without_python_syntax(parsed.expression, python_parts),
+                local_dict=BUILTINS
+                | {
+                    name: value
+                    for name, value in namespace.items()
+                    # the FUNCTIONS of pandas eval, unless the lines of code define their own
+                    if name != "__builtins__"
+                    and not (name in PYTHON_FUNCTIONS and value is PYTHON_FUNCTIONS[name])
+                },
+                global_dict={},
+            )
     except MissingMetadataError as error:
         raise missing_metadata_error(
             error.input_name, error.field, series_inputs[error.input_name], language
         ) from error
-    except Exception as error:  # noqa: BLE001 # pandas eval raises various exceptions
-        raise formula_error(language.messages["failed"].format(error=error), language) from error
+    except NameError as error:
+        if type(error) is NameError and error.name is not None:
+            # e.g. an input which is not connected, used in the lines of code before the formula
+            check_name(error.name, series_inputs, language, defined)
+        raise calculation_error(error, tree, defined, language) from error
+    except Exception as error:  # noqa: BLE001 # pandas eval and Python raise various exceptions
+        raise calculation_error(error, tree, defined, language) from error
     if not isinstance(result, pd.Series):
         raise formula_error(language.messages["no_timeseries"], language)
     if isinstance(result.index, pd.DatetimeIndex) and result.index.tz is not None:
@@ -1109,6 +1488,162 @@ def test_documented_examples_can_be_calculated():
         assert 1 <= len(result) <= 24, formula
 
 
+def documented_code(documentation):
+    """The formulas after lines of Python code in the documentation, in blocks of Python code"""
+    return [block.split("\n```")[0] for block in documentation.split("```python\n")[1:]]
+
+
+def noon_in_german_time(days):
+    """12:00 in German time on the days of March 2026, in UTC"""
+    return pd.DatetimeIndex(
+        [pd.Timestamp(f"2026-03-{day}T12:00", tz="Europe/Berlin") for day in days]
+    ).tz_convert("UTC")
+
+
+@pytest.mark.parametrize(
+    ("b_values", "expected"),
+    [([1000.0, 2000.0, 3000.0], [1.0, 2.0, 3.0]), ([], [0.0, 0.0, 0.0])],
+)
+def test_documented_code_can_be_calculated(b_values, expected):
+    (code,) = documented_code(__doc__)
+    # days in German time from 28 to 30 March, on the 29th of which daylight saving time starts
+    a = with_time_zone(utc_timeseries_around_start_of_daylight_saving_time(), "Europe/Berlin")
+    b = pd.Series(
+        b_values, index=noon_in_german_time([28, 29, 30])[: len(b_values)], dtype="float64"
+    )
+
+    result = main(formula=code, a=a, b=b)["result"]
+
+    pd.testing.assert_series_equal(
+        result, pd.Series(expected, index=noon_in_german_time([28, 29, 30])), check_freq=False
+    )
+
+
+# helper functions written by a user, with the formula after them
+HELPER_FUNCTIONS_AND_FORMULA = """def if_empty(series, default=0):
+    return default if series.empty else series
+
+
+def noon_index(series):
+    result = series.copy()
+    result.index = result.index.normalize() + pd.Timedelta(hours=12)
+    return result
+
+noon_index(a.resample('D').max()) * if_empty(b) / 1000
+"""
+
+
+@pytest.mark.parametrize(("b_values", "expected"), [([2.0, 4.0], [6.0, 20.0]), ([], [0.0, 0.0])])
+def test_formulas_can_use_helper_functions_defined_before(b_values, expected):
+    a = pd.Series(
+        [1000.0, 3000.0, 2000.0, 5000.0],
+        index=pd.date_range("2026-01-01T06:00:00Z", periods=4, freq="12h"),
+    )
+    noon = pd.DatetimeIndex(["2026-01-01T12:00:00Z", "2026-01-02T12:00:00Z"])
+    b = pd.Series(b_values, index=noon[: len(b_values)], dtype="float64")
+
+    result = main(formula=HELPER_FUNCTIONS_AND_FORMULA, a=a, b=b)["result"]
+
+    pd.testing.assert_series_equal(result, pd.Series(expected, index=noon), check_freq=False)
+
+
+def numbered_hours(days, time_zone):
+    """0, 1, 2, ... for the hours of each of the days in the time zone, in UTC"""
+    index = pd.date_range(
+        days[0], pd.Timestamp(days[-1]) + pd.Timedelta(days=1), freq="1h", tz=time_zone
+    )[:-1]
+    numbers = index.to_series().groupby(index.date).cumcount()
+    return pd.Series(numbers.to_numpy(dtype="float64"), index=index.tz_convert("UTC"))
+
+
+@pytest.mark.parametrize(
+    ("time_zone", "days", "hours"),
+    [
+        # daylight saving time starts on 29 March 2026 and ends on 25 October 2026
+        ("Europe/Berlin", ["2026-03-28", "2026-03-29", "2026-03-30"], [24, 23, 24]),
+        ("Europe/Berlin", ["2026-10-24", "2026-10-25", "2026-10-26"], [24, 25, 24]),
+        ("UTC", ["2026-03-28", "2026-03-29", "2026-03-30"], [24, 24, 24]),
+    ],
+)
+def test_max_at_noon_is_the_largest_value_of_each_day_at_noon(time_zone, days, hours):
+    a = with_time_zone(numbered_hours(days, time_zone), time_zone)
+
+    result = main(formula="max_at_noon(a)", a=a)["result"]
+
+    noon = pd.DatetimeIndex([pd.Timestamp(f"{day}T12:00", tz=time_zone) for day in days])
+    expected = pd.Series([count - 1.0 for count in hours], index=noon.tz_convert("UTC"))
+    pd.testing.assert_series_equal(result, expected, check_freq=False, check_index_type=False)
+
+
+def test_max_at_noon_has_no_value_on_days_without_values():
+    # points in time without a time zone, e.g. of a manual input
+    a = pd.Series(
+        [1.0, 3.0, 2.0],
+        index=pd.DatetimeIndex(["2026-03-29T01:00", "2026-03-29T23:00", "2026-03-31T08:00"]),
+    )
+
+    result = main(formula="max_at_noon(a)", a=a)["result"]
+
+    noon = pd.DatetimeIndex(["2026-03-29T12:00", "2026-03-30T12:00", "2026-03-31T12:00"])
+    pd.testing.assert_series_equal(
+        result, pd.Series([3.0, np.nan, 2.0], index=noon), check_freq=False, check_index_type=False
+    )
+
+
+# an empty manual input without points in time, and an empty timeseries of a data source
+EMPTY_TIMESERIES = [
+    pd.Series(dtype="float64"),
+    pd.Series(dtype="float64", index=pd.DatetimeIndex([], tz="UTC")),
+]
+
+
+@pytest.mark.parametrize("a", EMPTY_TIMESERIES)
+def test_max_at_noon_of_a_timeseries_without_values_is_the_timeseries(a):
+    pd.testing.assert_series_equal(main(formula="max_at_noon(a)", a=a)["result"], a)
+
+
+DAILY_MAXIMUM_TIMES_VALUE_AT_NOON = "(max_at_noon(a) * b).dropna()"
+
+
+@pytest.mark.parametrize(
+    ("b_days", "expected_days"),
+    [([28, 29, 30], [28, 29, 30]), ([28, 30], [28, 30]), ([29, 31], [29])],
+)
+def test_daily_maximum_can_be_multiplied_by_the_value_at_noon(b_days, expected_days):
+    # 1.0 on the days in German time from 28 to 30 March
+    a = with_time_zone(utc_timeseries_around_start_of_daylight_saving_time(), "Europe/Berlin")
+    b = pd.Series([float(day) for day in b_days], index=noon_in_german_time(b_days))
+
+    result = main(formula=DAILY_MAXIMUM_TIMES_VALUE_AT_NOON, a=a, b=b)["result"]
+
+    pd.testing.assert_series_equal(
+        result,
+        pd.Series([float(day) for day in expected_days], index=noon_in_german_time(expected_days)),
+        check_freq=False,
+    )
+
+
+@pytest.mark.parametrize(
+    ("a", "b"),
+    [
+        (a, b)
+        for a in [None, *EMPTY_TIMESERIES]
+        for b in [None, *EMPTY_TIMESERIES]
+        if a is not None or b is not None
+    ],
+)
+def test_daily_maximum_times_value_at_noon_has_no_values_without_values(a, b):
+    """None stands for a timeseries with values"""
+    if a is None:
+        a = with_time_zone(utc_timeseries_around_start_of_daylight_saving_time(), "Europe/Berlin")
+    if b is None:
+        b = pd.Series(2.0, index=noon_in_german_time([28, 29]))
+
+    result = main(formula=DAILY_MAXIMUM_TIMES_VALUE_AT_NOON, a=a, b=b)["result"]
+
+    assert result.empty
+
+
 A = (4.0, 16.0, 2.5, -2.5)
 B = (2.0, 8.0, 0.0, 1.0)
 C = (1.0, -1.0, 0.0, 1.0)
@@ -1173,6 +1708,59 @@ def test_formulas(formula, expected):
     pd.testing.assert_series_equal(
         result, pd.Series(expected, index=timeseries(*A).index), check_dtype=False
     )
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected"),
+    [
+        # built-in functions of Python
+        ("a * len(a)", [16.0, 64.0, 10.0, -10.0]),
+        ("round(a / 3, 2)", [1.33, 5.33, 0.83, -0.83]),
+        ("a / max(a.max(), b.max())", [0.25, 1.0, 0.15625, -0.15625]),
+        ("sum([a, b, c])", [7.0, 23.0, 2.5, -0.5]),
+        # Python syntax which pandas eval does not calculate
+        ("a + (0 if b.empty else b)", [6.0, 24.0, 2.5, -1.5]),
+        ("a.apply(lambda x: x * 2 if x > 3 else 0)", [8.0, 32.0, 0.0, 0.0]),
+        ("a * sum(x for x in [1, 2])", [12.0, 48.0, 7.5, -7.5]),
+        ("a * sum([x for x in range(3)])", [12.0, 48.0, 7.5, -7.5]),
+        ('a * {"double": 2}["double"]', [8.0, 32.0, 5.0, -5.0]),
+        ("a * len({1, 2})", [8.0, 32.0, 5.0, -5.0]),
+        ('a * int(f"{len(a)}")', [16.0, 64.0, 10.0, -10.0]),
+        ("a * (b is not None)", [4.0, 16.0, 2.5, -2.5]),
+        ("a.clip(*[0, 10])", [4.0, 10.0, 2.5, 0.0]),
+        ('a.clip(**{"lower": 0})', [4.0, 16.0, 2.5, 0.0]),
+        # outside of Python syntax, pandas eval calculates & after comparisons
+        ("a > 3 & (b if b.empty else b) > 1", [True, True, False, False]),
+        # lines of Python code before the formula
+        ("x = 2; a * x", [8.0, 32.0, 5.0, -5.0]),
+        ("factor = 2\na * factor", [8.0, 32.0, 5.0, -5.0]),
+        ("# a doubled\na * 2", [8.0, 32.0, 5.0, -5.0]),
+        ("\n    factor = 2\n    a * factor\n", [8.0, 32.0, 5.0, -5.0]),
+        ("def double(x):\n    return 2 * x\n\ndouble(a)", [8.0, 32.0, 5.0, -5.0]),
+        (
+            "def root(x):\n    return sqrt(x)\n\nroot(a.clip(lower=0))",
+            [2.0, 4.0, np.sqrt(2.5), 0.0],
+        ),
+        ("import math\nround(a * math.pi, 1)", [12.6, 50.3, 7.9, -7.9]),
+        ("a = a.clip(lower=0)\na + b", [6.0, 24.0, 2.5, 1.0]),
+        ("d = a * 2\nd + 1", [9.0, 33.0, 6.0, -4.0]),
+        ("total = (a +\n    b)\ntotal / 2", [3.0, 12.0, 1.25, -0.75]),
+    ],
+)
+def test_python_can_be_used(formula, expected):
+    result = main(formula=formula, a=timeseries(*A), b=timeseries(*B), c=timeseries(*C))["result"]
+
+    pd.testing.assert_series_equal(
+        result, pd.Series(expected, index=timeseries(*A).index), check_dtype=False
+    )
+
+
+def test_inputs_used_only_in_lines_of_code_are_calculated_in_the_time_zone_of_the_metadata():
+    a = with_time_zone(utc_timeseries_around_start_of_daylight_saving_time(), "Europe/Berlin")
+
+    result = main(formula='daily_totals = a.resample("1D").sum()\ndaily_totals', a=a)["result"]
+
+    assert_days(result, BERLIN_DAYS)
 
 
 def test_unused_inputs_are_ignored():
@@ -1590,13 +2178,45 @@ def test_result_has_neither_name_nor_metadata():
         ("a.Mean()", "formula", "could not be calculated: 'Series' object has no attribute"),
         ('a.rolling("one hour").mean()', "formula", "could not be calculated"),
         ("a.where(x > 0)", "formula", "x is unknown"),
-        ("a + x", "formula", "pandas as pd, numpy as np and hdhelpers."),
-        ("quadrat(a)", "formula", ", arctan2, modify_timezone."),
+        ("a + x", "formula", "the built-in functions of Python like len, the Python libraries"),
+        ("quadrat(a)", "formula", ", arctan2, modify_timezone, max_at_noon, the built-in"),
         ("pd(a)", "formula", "The function pd does not exist here."),
         ('modify_timezone(a, "Mars/Olympus")', "formula", "could not be calculated"),
     ],
 )
 def test_errors_explain_what_to_change(formula, invalid_input, message_part):
+    with pytest.raises(ComponentInputValidationException) as exc_info:
+        main(formula=formula, a=timeseries(1.0), b=timeseries(2.0), d=timeseries(3.0))
+
+    assert exc_info.value.extra_information["invalid_component_inputs"] == [invalid_input]
+    assert message_part in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("formula", "invalid_input", "message_part"),
+    [
+        ("# only a comment", "formula", "enter a formula"),
+        ("def double(x):\n    return 2 * x\n", "formula", "The last line has to be the formula"),
+        ("factor = 2\nfactor = 3", "formula", "The last line has to be the formula"),
+        ("a * 2\nb * 3", "formula", "only the last line is the formula"),
+        ("def double(x)\n    return 2 * x\n\ndouble(a)", "formula", "in line 1: expected ':'."),
+        ("factor = 2\nreturn factor\na", "formula", "in line 2: 'return' outside function."),
+        (
+            "def f(x):\n    return x.Mean()\n\nf(a)",
+            "formula",
+            "because of line 2: 'Series' object has no attribute 'Mean'",
+        ),
+        ("def f(x):\n    return x * c\n\nf(a)", "c", "no timeseries connected to the input c"),
+        ("def f(x):\n    return x * B\n\nf(a)", "formula", "b instead of B"),
+        ("a + (0 if c.empty else c)", "c", "no timeseries connected to the input c"),
+        ("a.apply(lambda x: x * y)", "formula", "y is unknown"),
+        ("sum(a, b)", "formula", "adds b to the sum of all values of a"),
+        ("max(a, b)", "formula", "Write for example abcde.max(axis=1) instead."),
+        ("int(a)", "formula", "Write for example floor(a) instead."),
+        ("LEN(a)", "formula", "Write for example len(a) instead."),
+    ],
+)
+def test_errors_in_python_explain_what_to_change(formula, invalid_input, message_part):
     with pytest.raises(ComponentInputValidationException) as exc_info:
         main(formula=formula, a=timeseries(1.0), b=timeseries(2.0), d=timeseries(3.0))
 
